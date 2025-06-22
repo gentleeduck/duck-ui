@@ -5,7 +5,7 @@ import { cn } from '@gentleduck/libs/cn'
 import { Button } from '../button'
 import { Slot } from '@gentleduck/aria-feather/slot'
 import { Root, Trigger as PopoverPrimitiveTrigger } from '@gentleduck/aria-feather/popover'
-import { AnimDialogVariants, AnimPopoverArrowVariants, AnimPopoverVariants, AnimVariants } from '@gentleduck/motion/anim'
+import { AnimDialogVariants, AnimPopoverVariants, AnimVariants } from '@gentleduck/motion/anim'
 import { useDialogContext } from '@gentleduck/aria-feather/dialog'
 
 function Popover({ hoverable = false, mode = "dialog", ...props }: React.ComponentPropsWithoutRef<typeof Root>) {
@@ -46,7 +46,7 @@ function PopoverContent({
     <dialog ref={ref}
       style={{ '--position-anchor': `--${id}` } as React.CSSProperties}
       closedby="any" id={id} popover="auto"
-      className={cn(AnimVariants({ motionBackdrop: overlay }), AnimDialogVariants(), AnimPopoverVariants({ side: side }),AnimPopoverArrowVariants(), className)}
+      className={cn(AnimVariants({ motionBackdrop: overlay }), AnimDialogVariants(), AnimPopoverVariants({ side: side }), className)}
       {...props}>
       {children}
     </dialog>

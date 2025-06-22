@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { cn } from '@gentleduck/libs/cn'
 import { Root as Popover, Trigger as PopoverPrimitiveTrigger } from '@gentleduck/aria-feather/popover'
-import { AnimDialogVariants, AnimPopoverArrowVariants, AnimPopoverVariants, AnimTooltipVariants, AnimVariants } from '@gentleduck/motion/anim'
+import { AnimDialogVariants, AnimPopoverVariants, AnimTooltipVariants, AnimVariants } from '@gentleduck/motion/anim'
 import { PopoverTrigger } from '../popover/_popover'
 import { useDialogContext } from '@gentleduck/aria-feather/dialog'
 

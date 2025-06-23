@@ -1,28 +1,33 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.0.4/schema.json",
   "linter": {
-    "ignore": [
-      "**/node_modules/**",
-      "**/dist/**",
-      "**/build/**",
-      "**/test/**",
-      "**/public/**",
-      "**/.next/**",
-      "**/.velite/**",
-      "./apps/old_react_docs/",
-      "./apps/docs/",
-      "./apps/upload-api/",
-      "./apps/www/",
-      "./packages/___/",
-      "./packages/_oldstuff_refactor/",
-      "./packages/duck-state/",
-      "./packages/duck-benchmark/",
-      "./packages/duck-ui/",
-      "./packages/benchmark/",
-      "**/upload/**",
-      "**/table/**",
-      "**/combobox.tsx",
-      "./**/_*/**"
+    "includes": [
+      "**",
+      "!**/@*",
+      "!**/.*/**",
+      "!**/old_*/**",
+      "!**/_*/**",
+      "!**/node_modules/**",
+      "!**/dist/**",
+      "!**/build/**",
+      "!**/test/**",
+      "!**/public/**",
+      "!apps/docs/**",
+      "!**/website/**",
+      "!apps/upload-api/**",
+      "!apps/www/**",
+      "!packages/___/**",
+      "!packages/_oldstuff_refactor/**",
+      "!packages/duck-state/**",
+      "!packages/duck-benchmark/**",
+      "!packages/registry-build-duckui/**",
+      "!**/duck-state/**",
+      "!packages/duck-ui/**",
+      "!packages/sandbox-server/**",
+      "!packages/benchmark/**",
+      "!**/upload/**",
+      "!**/table/**",
+      "!**/combobox.tsx"
     ],
     "enabled": true,
     "rules": {
@@ -31,15 +36,14 @@
         "noForEach": "error",
         "noStaticOnlyClass": "error",
         "noUselessSwitchCase": "error",
-        "useFlatMap": "error"
+        "useFlatMap": "error",
+        "useWhile": "error"
       },
       "style": {
         "noNegationElse": "error",
         "useNodejsImportProtocol": "error",
         "useNumberNamespace": "error",
-        "noVar": "error",
         "useConst": "error",
-        "useWhile": "error",
         "noNonNullAssertion": "off",
         "useDefaultSwitchClause": "error"
       },
@@ -47,24 +51,26 @@
         "noDoubleEquals": "error",
         "noThenProperty": "error",
         "useIsArray": "error",
-        "useGetterReturn": "error"
+        "useGetterReturn": "error",
+        "noVar": "error"
       }
     }
   },
   "formatter": {
-    "ignore": [
-      "**/node_modules/**",
-      "**/dist/**",
-      "**/build/**",
-      "**/public/**",
-      "**/.next/**",
-      "**/.velite/**",
-      "./apps/old_react_docs/",
-      "./packages/___/",
-      "./packages/_oldstuff_refactor/",
-      "./packages/benchmark/",
-      "./packages/duck-orm-skitch/**",
-      "./**/_*/**"
+    "includes": [
+      "**",
+      "!**/node_modules/**",
+      "!**/dist/**",
+      "!**/website/**",
+      "!**/build/**",
+      "!**/public/**",
+      "!**/.*/**",
+      "!**/old_*/**",
+      "!**/_*/**",
+      "!packages/___/",
+      "!packages/_oldstuff_refactor/",
+      "!packages/benchmark/",
+      "!packages/duck-orm-skitch/**"
     ],
     "enabled": true,
     "formatWithErrors": false,
@@ -75,11 +81,13 @@
     "attributePosition": "multiline",
     "bracketSpacing": true
   },
-  "organizeImports": {
-    "enabled": true
-  },
-  "assists": {
-    "enabled": true
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   },
   "javascript": {
     "globals": ["Global1"],
@@ -97,19 +105,9 @@
   },
   "overrides": [
     {
-      "include": ["*.json"],
+      "includes": ["**/*.json"],
       "formatter": {
         "indentWidth": 2
-      }
-    },
-    {
-      "include": ["tests/**"],
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noDoubleEquals": "off"
-          }
-        }
       }
     }
   ]

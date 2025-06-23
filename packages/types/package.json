@@ -17,7 +17,11 @@
     "format": "biome format --write ./",
     "lint": "biome lint --write ./"
   },
-  "keywords": ["type", "typescript", "typescript-utilities"],
+  "keywords": [
+    "type",
+    "typescript",
+    "typescript-utilities"
+  ],
   "author": "gentleduck",
   "license": "MIT",
   "dependencies": {},

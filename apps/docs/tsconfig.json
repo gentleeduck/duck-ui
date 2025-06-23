@@ -25,6 +25,13 @@
       }
     ]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".velite"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".velite",
+    "../../packages/_oldstuff_refactor/ui"
+  ],
   "exclude": ["node_modules", "dist"]
 }

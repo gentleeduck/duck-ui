@@ -1,0 +1,1 @@
+../../../../../../../../home/wildduck/.pnpm-store/wavesurfer.js@7.9.5/node_modules/wavesurfer.js

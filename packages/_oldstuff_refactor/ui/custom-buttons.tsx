@@ -10,13 +10,7 @@ export interface LikeButtonProps extends Omit<ButtonProps, 'onClick'> {
   user: TaggedUserType
   showLikes?: boolean
   likes: LikedType
-  onClick?: ({
-    e,
-    state,
-  }: {
-    e: React.MouseEvent<HTMLButtonElement>
-    state: LikeState
-  }) => void
+  onClick?: ({ e, state }: { e: React.MouseEvent<HTMLButtonElement>; state: LikeState }) => void
 }
 
 export interface LikeState {
@@ -71,8 +65,7 @@ const LikeButton: React.FC<LikeButtonProps> = ({
       //   children: (likeState.hasLiked ? IoHeart : IoMdHeartEmpty) as LucideIcon,
       //   className: 'text-[#e2264d]',
       // }}
-      {...props}
-    >
+      {...props}>
       {showLikes && (
         <div
           className={cn(

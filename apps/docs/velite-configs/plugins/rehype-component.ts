@@ -78,13 +78,7 @@ export function get_component_source(files: RegistryItemFile[]): ItemType[] {
   return item
 }
 
-export function componentSource({
-  node,
-  srcPath,
-}: {
-  node: UnistNode
-  srcPath?: string
-}) {
+export function componentSource({ node, srcPath }: { node: UnistNode; srcPath?: string }) {
   const name = getNodeAttributeByName(node, 'name')?.value as string
 
   if (!name && !srcPath) {

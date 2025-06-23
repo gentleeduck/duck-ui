@@ -16,8 +16,16 @@
     "url": "https://github.com/gentleduck/ui/issues"
   },
   "homepage": "https://github.com/gentleduck/ui/tree/master/packages/duck-benchmark#readme",
-  "files": ["dist"],
-  "keywords": ["components", "ui", "tailwind", "radix-ui", "duck-ui"],
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "components",
+    "ui",
+    "tailwind",
+    "radix-ui",
+    "duck-ui"
+  ],
   "type": "module",
   "types": "./dist/index.d.ts",
   "exports": {

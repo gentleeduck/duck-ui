@@ -29,7 +29,11 @@ export const KeyProvider: React.FC<{ debug?: boolean; timeoutMs?: number; childr
   debug = false,
   timeoutMs = 600,
   children,
-}: { debug?: boolean; timeoutMs?: number; children: ReactNode }) => {
+}: {
+  debug?: boolean
+  timeoutMs?: number
+  children: ReactNode
+}) => {
   const registry = new Registry(debug)
   const handler = new KeyHandler(registry, timeoutMs)
 

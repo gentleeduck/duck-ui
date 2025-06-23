@@ -22,8 +22,8 @@ import { Button, ButtonProps, buttonVariants, CommandType } from '../../button'
 export interface DropdownMenuOptionsDataType
   extends Partial<
     React.ComponentPropsWithoutRef<typeof DropdownMenuCheckboxItem> &
-    React.ComponentPropsWithoutRef<typeof DropdownMenuItem> &
-    React.ComponentPropsWithoutRef<typeof DropdownMenuRadioItem>
+      React.ComponentPropsWithoutRef<typeof DropdownMenuItem> &
+      React.ComponentPropsWithoutRef<typeof DropdownMenuRadioItem>
   > {
   actionType: 'drawer' | 'dialog' | 'sheet' | 'item'
   command?: React.ComponentPropsWithoutRef<typeof DropdownMenuShortcut> & CommandType
@@ -64,11 +64,7 @@ export const useDropdownMenuContext = () => {
   return context
 }
 
-export const DropdownMenuProvider = ({
-  children,
-}: {
-  children: React.ReactNode
-}) => {
+export const DropdownMenuProvider = ({ children }: { children: React.ReactNode }) => {
   const [open, setOpen] = React.useState<ItemActionOpenState | null>(null)
   return <DropdownMenuContext.Provider value={{ open, setOpen }}>{children}</DropdownMenuContext.Provider>
 }
@@ -151,11 +147,7 @@ export function DropdownWrapperTrigger({
   )
 }
 
-export function DropdownWrapperLabel({
-  label,
-}: {
-  label?: React.ComponentProps<typeof DropdownMenuLabel>
-}) {
+export function DropdownWrapperLabel({ label }: { label?: React.ComponentProps<typeof DropdownMenuLabel> }) {
   const { className, ...props } = label ?? {}
   return (
     label && (
@@ -239,11 +231,7 @@ export function DropdownWrapperContentItem({
   )
 }
 
-export function DropdownWrapperSubTrigger({
-  trigger,
-}: {
-  trigger: DropdownMenuOptionsDataType
-}) {
+export function DropdownWrapperSubTrigger({ trigger }: { trigger: DropdownMenuOptionsDataType }) {
   const { children, className, icon, ...props } = trigger
   return (
     // @ts-ignore

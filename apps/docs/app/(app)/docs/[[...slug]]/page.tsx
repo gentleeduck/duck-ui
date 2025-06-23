@@ -43,11 +43,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   return SLUG_METADATA(doc)
 }
 
-const PostLayout = async ({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}) => {
+const PostLayout = async ({ params }: { params: Promise<{ slug: string }> }) => {
   const _param = await params
   const doc = docs.find((post) => {
     return _param.slug.includes(post?.title)

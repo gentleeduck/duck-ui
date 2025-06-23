@@ -1,4 +1,4 @@
-import { DrawerDirection } from "./src/types"
+import { DrawerDirection } from './src/types'
 
 export interface DrawerContextType {
   open: boolean

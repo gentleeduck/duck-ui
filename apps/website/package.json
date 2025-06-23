@@ -79,7 +79,6 @@
     }
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
     "@content-collections/core": "^0.8.2",
     "@content-collections/vite": "^0.2.5",
     "@types/react": "catalog:react19",

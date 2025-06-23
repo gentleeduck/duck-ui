@@ -3,9 +3,17 @@
 import * as React from 'react'
 import { cn } from '@gentleduck/libs/cn'
 
-interface SliderProps extends React.InputHTMLAttributes<HTMLInputElement> {}
-
-function Slider({ className, value, min = 0, max = 100, ...props }: SliderProps) {
+function Slider({
+  className,
+  value,
+  onValueChange,
+  min = 0,
+  max = 100,
+  ...props
+}: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value'> & {
+  value?: number
+  onValueChange?: (value: number) => void
+}) {
   return (
     <input
       type="range"
@@ -29,6 +37,8 @@ function Slider({ className, value, min = 0, max = 100, ...props }: SliderProps)
         'disabled:pointer-events-none disabled:opacity-50',
         className,
       )}
+      onChange={(e) => onValueChange?.(e.target.valueAsNumber)}
+      value={value}
       {...props}
     />
   )

@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { KeyHandler, Registry } from '../command'
 
-function createTestKeyboardEvent(
-  key: string,
-  options: Partial<KeyboardEvent> = {}
-): KeyboardEvent {
+function createTestKeyboardEvent(key: string, options: Partial<KeyboardEvent> = {}): KeyboardEvent {
   return new KeyboardEvent('keydown', {
     key,
     bubbles: true,
@@ -84,4 +81,3 @@ describe('KeyHandler & Registry', () => {
     expect(fn).toHaveBeenCalled()
   })
 })
-

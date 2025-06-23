@@ -10,7 +10,9 @@
   },
   "github": "https://github.com/TheDuckUI/shortcut",
   "homepage": "https://github.com/TheDuckUI/shortcut",
-  "files": ["/dist"],
+  "files": [
+    "/dist"
+  ],
   "private": false,
   "scripts": {
     "dev": "vite",

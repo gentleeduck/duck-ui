@@ -12,11 +12,7 @@ import { Block } from '@gentleduck/registers'
 import { Tabs, TabsContent } from '@gentleduck/registry-ui-duckui/tabs'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@gentleduck/registry-ui-duckui/resizable'
 
-export function CodePreview({
-  block,
-}: {
-  block: Block & { hasLiftMode: boolean }
-}) {
+export function CodePreview({ block }: { block: Block & { hasLiftMode: boolean } }) {
   const [config] = useConfig()
   const { isLiftMode } = useLiftMode(block.name)
   const [isLoading, setIsLoading] = React.useState(true)

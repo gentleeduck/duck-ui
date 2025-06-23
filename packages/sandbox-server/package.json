@@ -1,0 +1,53 @@
+{
+  "name": "upload-api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Your project description",
+  "type": "module",
+  "main": "src/main.ts",
+  "scripts": {
+    "dev": "nodemon --exec tsx ./src/main.ts && npm run format && npm run lint",
+    "lint": "npx @biomejs/biome lint --write ./src",
+    "lint:fix": "npx @biomejs/biome lint --write --unsafe ./src",
+    "format": "npx @biomejs/biome format --write ./",
+    "drizzle:check": "drizzle-kit check",
+    "drizzle:migrate": "drizzle-kit migrate",
+    "drizzle:push": "drizzle-kit push",
+    "drizzle:pull": "drizzle-kit pull",
+    "drizzle:generate": "drizzle-kit generate",
+    "drizzle:studio": "drizzle-kit studio --verbose --port 4040"
+  },
+  "dependencies": {
+    "@automerge/automerge": "^2.2.9",
+    "@electric-sql/pglite": "^0.2.15",
+    "@hono/node-server": "^1.13.7",
+    "@hono/trpc-server": "^0.3.4",
+    "@trpc/server": "11.0.0-rc.700",
+    "axios": "^1.7.9",
+    "chalk": "5.2.0",
+    "chokidar": "^4.0.3",
+    "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.38.4",
+    "drizzle-zod": "^0.6.1",
+    "hono": "^4.6.16",
+    "minio": "^8.0.3",
+    "nodemon": "^3.1.9",
+    "pg": "^8.13.1",
+    "redis": "^5.5.6",
+    "std": "^0.1.40",
+    "superjson": "^2.2.2",
+    "trpc-panel": "^1.3.4",
+    "trpc-ui": "^1.0.11",
+    "uuidv7": "^1.0.2",
+    "ws": "^8.18.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/minio": "^7.1.1",
+    "@types/pg": "^8.11.10",
+    "@types/ws": "^8.5.14",
+    "drizzle-kit": "^0.30.2",
+    "tsx": "^4.17.0",
+    "typescript": "^5"
+  }
+}

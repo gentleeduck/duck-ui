@@ -8,8 +8,16 @@
   },
   "license": "MIT",
   "author": "wildduck (https://github.com/wildduck2)",
-  "files": ["dist"],
-  "keywords": ["components", "ui", "tailwind", "radix-ui", "duck-ui"],
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "components",
+    "ui",
+    "tailwind",
+    "radix-ui",
+    "duck-ui"
+  ],
   "type": "module",
   "exports": "./dist/index.js",
   "bin": {

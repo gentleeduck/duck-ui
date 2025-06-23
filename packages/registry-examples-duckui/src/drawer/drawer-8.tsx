@@ -176,9 +176,7 @@ export function HI(props: {
   )
 }
 
-export function HI2(props: {
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>
-}) {
+export function HI2(props: { setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
   const { setOpen } = props
   return (
     <>

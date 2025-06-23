@@ -310,8 +310,7 @@ export const KanbanColumnAddRowTemplate: React.FC<KanbanColumnAddRowBodyArgs> = 
           <div className="flex items-center gap-2 mb-1rem mx-2 border-1 border-transparent">
             <Button
               // variant={'secondary'}
-              className={cn('w-full')}
-            >
+              className={cn('w-full')}>
               <Plus className={cn('size-6')} />
             </Button>
           </div>

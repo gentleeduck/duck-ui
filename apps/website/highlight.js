@@ -1,0 +1,1 @@
+../../../../../../../../home/wildduck/.pnpm-store/highlight.js@11.11.1/node_modules/highlight.js

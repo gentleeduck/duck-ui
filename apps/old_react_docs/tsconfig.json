@@ -1,20 +1,12 @@
 {
   "extends": "@gentleduck/typescript-config/base.json",
   "compilerOptions": {
-    "lib": [
-      "ES2022",
-      "dom",
-      "dom.iterable"
-    ],
+    "lib": ["ES2022", "dom", "dom.iterable"],
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "~/*": [
-        "./*"
-      ],
-      "contentlayer/generated": [
-        "./.contentlayer/generated"
-      ]
+      "~/*": ["./*"],
+      "contentlayer/generated": ["./.contentlayer/generated"]
     },
     "plugins": [
       {
@@ -33,7 +25,5 @@
     ".contentlayer/generated",
     "../../packages/registry-ui-duckui/**/*.{ts,tsx}"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

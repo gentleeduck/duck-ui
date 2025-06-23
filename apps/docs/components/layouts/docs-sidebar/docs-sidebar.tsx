@@ -28,13 +28,7 @@ export function DocsSidebarNav({ config }: DocsSidebarNavProps) {
 }
 
 // Memoized category component to prevent unnecessary re-renders
-const CategoryItem = ({
-  item,
-  pathname,
-}: {
-  item: SidebarNavItem
-  pathname: string | null
-}) => {
+const CategoryItem = ({ item, pathname }: { item: SidebarNavItem; pathname: string | null }) => {
   return (
     <div className="flex flex-col gap-1 mb-2">
       <div className="flex items-center justify-between w-full text-start text-sm font-semibold [&>div]:justify-between [&>div]:w-full h-[36px]">
@@ -70,13 +64,7 @@ export function DocsSidebarNavItems({ items, pathname, className }: DocsSidebarN
   )
 }
 
-export function DocsSidebarNavItem({
-  item,
-  pathname,
-}: {
-  item: SidebarNavItem
-  pathname: string | null
-}) {
+export function DocsSidebarNavItem({ item, pathname }: { item: SidebarNavItem; pathname: string | null }) {
   if (item.href && !item.disabled) {
     return (
       <li className={cn(pathname === item.href && 'border-l border-primary')}>

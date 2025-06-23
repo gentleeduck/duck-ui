@@ -8,7 +8,9 @@
   "exports": {
     "./*": "./src/*/index.ts"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsdown",
     "lint": "biome lint --write ./",

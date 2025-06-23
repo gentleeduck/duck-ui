@@ -6,7 +6,10 @@
   "type": "module",
   "types": "index.ts",
   "main": "index.ts",
-  "keywords": ["tsdown", "tsdown-config"],
+  "keywords": [
+    "tsdown",
+    "tsdown-config"
+  ],
   "author": "gentleduck",
   "license": "MIT",
   "scripts": {
@@ -23,6 +26,6 @@
   },
   "packageManager": "pnpm@10.10.0",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.2.0"
   }
 }

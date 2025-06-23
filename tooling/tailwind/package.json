@@ -17,8 +17,8 @@
   },
   "dependencies": {},
   "devDependencies": {},
-  "packageManager": "pnpm@10.10.0",
+  "packageManager": "pnpm@10.11.1",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.2.0"
   }
 }

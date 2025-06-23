@@ -6,7 +6,9 @@
   "private": false,
   "version": "0.1.10",
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": "./dist/index.js"
   },

@@ -28,7 +28,4 @@ echo "🧼 [biome] Polishing source files with DuckShine™..."
 $RUN biome format --write ./ 
 echo "✨ [biome] All files formatted with ultra precision 🔍"
 
-echo "🦆 [Git] Committing changes...  🦆"
-$RUN git add .
-
 echo "🦆💨 [husky] Pre-commit gentelduck™ finished. You may now quack with confidence! ✅"

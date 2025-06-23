@@ -42,7 +42,10 @@
     ],
     "ignoredBuiltDependencies": [
       "rolldown"
-    ]
+    ],
+      "overrides": {
+        "vite": "npm:rolldown-vite@latest"
+      }
   },
   "packageManager": "pnpm@10.11.1",
   "engines": {

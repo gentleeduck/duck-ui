@@ -1,6 +1,7 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
+    "strictNullChecks": true,
     "strict": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
@@ -15,9 +16,10 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./app/*"],
+      "~/*": ["./src/*"],
       "content-collections": ["./.content-collections/generated"]
     },
     "noEmit": true
   }
 }
+

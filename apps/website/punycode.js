@@ -1,1 +1,0 @@
-../../../../../../../../home/wildduck/.pnpm-store/punycode.js@2.3.1/node_modules/punycode.js

@@ -1,1 +1,0 @@
-../../../../../../../../home/wildduck/.pnpm-store/isomorphic.js@0.2.5/node_modules/isomorphic.js

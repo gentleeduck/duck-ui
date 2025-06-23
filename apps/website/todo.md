@@ -1,4 +1,0 @@
-- [ ] change the color to our accent
-- [ ] make a dynamic page for each product
-- [ ] add some art to the home page and each page
-- [ ] fulfill the about page the brand, brand story and roadmap

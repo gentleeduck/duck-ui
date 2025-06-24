@@ -1,11 +1,10 @@
 'use client'
 
+import { cn } from '@gentleduck/libs/cn'
 import { CheckIcon, ChevronDown, ChevronDownIcon, ChevronUp } from 'lucide-react'
 import * as React from 'react'
-
-import { cn } from '@gentleduck/libs/cn'
 import { Button, buttonVariants } from '../button'
-import { useHandleKeyDown } from '../command'
+// import { useHandleKeyDown } from '../command'
 import { useSelectInit, useSelectScroll } from './select.hooks'
 
 export interface SelectContextType {
@@ -41,18 +40,19 @@ function Select({
     open ?? false,
     onOpenChange,
   )
-  useSelectScroll(itemsRef, selectedItemRef, contentRef)
+  // useSelectScroll(itemsRef, selectedItemRef, contentRef)
 
-  useHandleKeyDown(
-    itemsRef,
-    (item) => {
-      selectedItemRef.current = item
-    },
-    itemsRef,
-    triggerRef as React.RefObject<HTMLButtonElement | null>,
-    contentRef,
-    onOpenChange,
-  )
+  // TODO: FIX: keyboard command crash's the app
+  // useHandleKeyDown(
+  //   itemsRef,
+  //   (item) => {
+  //     selectedItemRef.current = item
+  //   },
+  //   itemsRef,
+  //   triggerRef as React.RefObject<HTMLButtonElement | null>,
+  //   contentRef,
+  //   onOpenChange,
+  // )
 
   return (
     <SelectContext.Provider
@@ -63,7 +63,7 @@ function Select({
         contentRef,
         groupsRef,
         open: false,
-        onOpenChange: () => {},
+        onOpenChange: () => { },
         triggerRef,
       }}>
       <div ref={wrapperRef} {...props} duck-select="">
@@ -114,7 +114,7 @@ function SelectTrigger({
       {...props}
       duck-dropdown-menu-trigger="">
       {children}
-      <span className="[&>svg]:size-4 [&>svg]:opacity-50 [&>svg]:shrink-0">
+      <span className="[&>svg]:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0">
         {customIndicator ? customIndicator : <ChevronDownIcon />}
       </span>
     </div>
@@ -137,7 +137,7 @@ function SelectContent({
       className={cn(
         'relative bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border shadow-md p-1 mt-1',
         position === 'popper' &&
-          'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
+        'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
         // 'h-fit',
 
         className,
@@ -175,7 +175,7 @@ function SelectItem({ children, ref, className, ...props }: React.HTMLProps<HTML
       id={id}
       {...props}
       duck-select-item=""
-      className="relative flex cursor-default select-none items-center px-2 py-1.5 text-sm outline-hidden data-[disabled=true]:pointer-events-none data-[selected='true']:bg-accent data-[selected=true]:text-accent-foreground data-[disabled=true]:opacity-50 flex gap-2 hover:bg-muted cursor-pointer transition-color duration-300 will-change-300 hover:text-accent-foreground [&[aria-selected]]:bg-secondary rounded-sm [&[aria-selected]>#select-indicator]:bg-secondary">
+      className="relative flex flex items-center gap-2 data-[selected='true']:bg-accent [&[aria-selected]]:bg-secondary [&[aria-selected]>#select-indicator]:bg-secondary hover:bg-muted data-[disabled=true]:opacity-50 px-2 py-1.5 rounded-sm outline-hidden text-sm transition-color duration-300 data-[selected=true]:text-accent-foreground hover:text-accent-foreground cursor-default cursor-pointer data-[disabled=true]:pointer-events-none select-none will-change-300">
       <div
         className={cn(
           'truncate relative select-none flex items-center rounded-xs gap-2 text-sm outline-hidden',
@@ -185,7 +185,7 @@ function SelectItem({ children, ref, className, ...props }: React.HTMLProps<HTML
       </div>
       {selectedItem?.id === id && (
         <span
-          className="absolute ltr:right-2 rtl:left-2 ltr:pl-2 rtl:pr-2 flex items-center justify-center"
+          className="ltr:right-2 rtl:left-2 absolute flex justify-center items-center rtl:pr-2 ltr:pl-2"
           id="select-indicator">
           <CheckIcon className="!size-3.5 shrink-0" />
         </span>

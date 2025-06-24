@@ -68,7 +68,7 @@
   },
   "dependencies": {
     "esbuild": "^0.25.5",
-    "vite": "^6.1.6"
+    "vite": "catalog:"
   },
   "engines": {
     "node": ">=22.0.0"

@@ -53,6 +53,9 @@
         "useIsArray": "error",
         "useGetterReturn": "error",
         "noVar": "error"
+      },
+      "nursery": {
+        "useSortedClasses": "warn"
       }
     }
   },

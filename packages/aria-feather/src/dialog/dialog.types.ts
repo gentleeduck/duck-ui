@@ -14,5 +14,5 @@ export type DialogProps = {
   openProp?: boolean 
   lockScroll?: boolean 
   hoverable?: boolean
-  mode: "dialog" | "popover"
+  mode?: "dialog" | "popover"
 }

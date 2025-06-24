@@ -52,6 +52,7 @@ import Dialog from './example/dialog'
 import Popover from './example/popover'
 import Tooltip from './example/tooltip'
 import HoverCard from './example/hover-card'
+import Select from './example/select'
 // import Command from './example/command'
 
 // import Command from "./example/command/duck"
@@ -102,15 +103,15 @@ import HoverCard from './example/hover-card'
 function App() {
   return (
     <div className="flex flex-col justify-center items-center gap-4 mx-10 h-500">
-      <Popover  />
+      <Select  />
+      {/* <Popover  />
       <Popover  />
       <Tooltip  />
       <Tooltip  />
       <HoverCard  />
       <HoverCard  />
-      
       <Dialog />
-      <Popover  />
+      <Popover  /> */}
     </div>
   )
 }

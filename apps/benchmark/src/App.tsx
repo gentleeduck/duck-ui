@@ -102,7 +102,7 @@ import Select from './example/select'
 
 function App() {
   return (
-    <div className="flex flex-col justify-center items-center gap-4 mx-10 h-500">
+    <div className="mx-10 flex h-screen flex-col items-center justify-center gap-4">
       <Select  />
       {/* <Popover  />
       <Popover  />

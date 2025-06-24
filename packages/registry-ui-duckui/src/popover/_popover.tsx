@@ -35,8 +35,8 @@ function PopoverTrigger({
 function PopoverContent({
   className,
   children,
-  overlay = "nothing",
   side = "bottom",
+  overlay = "nothing",
   ...props
 }: React.ComponentProps<'dialog'> & { overlay?: "default" | "nothing" } = { overlay: "nothing" }) {
 
@@ -53,15 +53,11 @@ function PopoverContent({
   )
 }
 
-// function PopoverAnchor({
-//   ...props
-// }: React.ComponentProps<'dialog'>) {
-//   return <dialog {...props} />
-// }
-
 export {
   Popover, PopoverTrigger, PopoverContent,
 }
+
+
 
 // PopoverWrapper Component
 // export interface PopoverWrapperProps {

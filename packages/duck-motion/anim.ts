@@ -10,7 +10,7 @@ export const AnimVariants = cva('', {
     motionBackdrop: {
       default:
         'backdrop:transition-[inherit] backdrop:duration-[inherit] backdrop:ease-[inherit] backdrop:bg-black/50  backdrop:opacity-0 starting:open:backdrop:opacity-0 open:backdrop:opacity-100',
-      nothing: "backdrop:opacity-0"
+      nothing: 'backdrop:opacity-0',
     },
     motionAlive: {
       default: 'transition-all transition-discrete ease-(--duck-motion-ease) duration-[200ms,150ms]',
@@ -33,7 +33,7 @@ export const AnimDialogVariants = cva(
     variants: {
       animation: {
         default: 'opacity-0 scale-90 starting:open:opacity-0 starting:open:scale-90 open:opacity-100 open:scale-100',
-        nothing: ""
+        nothing: '',
       },
     },
     defaultVariants: {
@@ -41,8 +41,6 @@ export const AnimDialogVariants = cva(
     },
   },
 )
-
-
 
 export const AnimPopoverVariants = cva(
   `bg-popover text-popover-foreground inset-auto absolute max-h-none p-4 w-fit
@@ -114,9 +112,7 @@ export const AnimTooltipVariants = cva(
   `px-3 py-1.5 !text-primary-foreground bg-primary border-primary text-xs text-balance`,
 )
 
-export const AnimDialogModalVariants = cva(
-  `inset-1/2 -translate-1/2 sm:max-w-lg w-full`,
-)
+export const AnimDialogModalVariants = cva(`inset-1/2 -translate-1/2 sm:max-w-lg w-full`)
 
 // export const AnimPopoverArrowVariants = cva(
 //   `after:-translate-x-7 overflow-visible after:border-[inherit] after:w-0 after:h-0 after:absolute after:border-[inherit] after:[position-anchor:var(--position-anchor)] after:[position-area:inherit]`,
@@ -124,16 +120,16 @@ export const AnimDialogModalVariants = cva(
 //     variants: {
 //       side: {
 //         top: `
-//             after:border-x-8 after:border-x-transparent after:border-t-10 
+//             after:border-x-8 after:border-x-transparent after:border-t-10
 //           `,
 //         bottom: `
-//             after:border-x-8 after:border-x-transparent after:border-b-10 
+//             after:border-x-8 after:border-x-transparent after:border-b-10
 //         `,
 //         left: `
-//             after:border-y-8 after:border-y-transparent after:border-r-10 
+//             after:border-y-8 after:border-y-transparent after:border-r-10
 //             `,
 //         right: `
-//             after:border-y-8 after:border-y-transparent after:border-l-10 
+//             after:border-y-8 after:border-y-transparent after:border-l-10
 //         `,
 //       },
 //     },
@@ -143,44 +139,40 @@ export const AnimDialogModalVariants = cva(
 //   },
 // )
 
-
-export const AnimSheetVariants = cva(
-  `duration-400 pointer-events-auto border-0 rounded-none`,
-  {
-    variants: {
-      side: {
-        top: `
+export const AnimSheetVariants = cva(`duration-400 pointer-events-auto border-0 rounded-none`, {
+  variants: {
+    side: {
+      top: `
           max-w-full w-full
           border-b
           rounded-b-lg
           -translate-y-full starting:open:-translate-y-full open:translate-y-0  
           bottom-auto
           `,
-        bottom: `
+      bottom: `
           max-w-full w-full
           border-t
           rounded-t-lg
           translate-y-full starting:open:translate-y-full open:translate-y-0
           top-auto
         `,
-        left: `
+      left: `
           max-h-screen h-screen
           border-l 
           rounded-r-lg
           -translate-x-full starting:open:-translate-x-full open:translate-x-0
           end-auto
           `,
-        right: `
+      right: `
           max-h-screen h-screen
           border-r 
           rounded-l-lg
           translate-x-full starting:open:translate-x-full open:translate-x-0
           start-auto
         `,
-      },
-    },
-    defaultVariants: {
-      side: 'left',
     },
   },
-)
+  defaultVariants: {
+    side: 'left',
+  },
+})

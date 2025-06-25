@@ -1,14 +1,14 @@
 'use client'
 
-import * as React from 'react'
-import { cn } from '@gentleduck/libs/cn'
-import { Button } from '../button'
-import { Slot } from '@gentleduck/aria-feather/slot'
-import { Root, Trigger as PopoverPrimitiveTrigger } from '@gentleduck/aria-feather/popover'
-import { AnimDialogVariants, AnimPopoverVariants, AnimVariants } from '@gentleduck/motion/anim'
 import { useDialogContext } from '@gentleduck/aria-feather/dialog'
+import { Trigger as PopoverPrimitiveTrigger, Root } from '@gentleduck/aria-feather/popover'
+import { cn } from '@gentleduck/libs/cn'
+import { AnimDialogVariants, AnimPopoverVariants, AnimVariants } from '@gentleduck/motion/anim'
+import { VariantProps } from '@gentleduck/variants'
+import * as React from 'react'
+import { Button } from '../button'
 
-function Popover({ hoverable = false, mode = "dialog", ...props }: React.ComponentPropsWithoutRef<typeof Root>) {
+function Popover({ hoverable = false, mode = 'dialog', ...props }: React.ComponentPropsWithoutRef<typeof Root>) {
   return <Root {...props} hoverable={hoverable} mode={mode} />
 }
 
@@ -18,11 +18,9 @@ function PopoverTrigger({
   children,
   asChild,
   ...props
-}: React.ComponentPropsWithRef<typeof Slot> & {
+}: React.ComponentPropsWithRef<typeof Button> & {
   open?: boolean
-  asChild?: boolean
 }): React.JSX.Element {
-
   return (
     <PopoverPrimitiveTrigger>
       <Button {...props} asChild={asChild}>
@@ -32,32 +30,48 @@ function PopoverTrigger({
   )
 }
 
+// TODO: Add the rest of the radix API props.
+// TODO: Add the slign and the sides sepretaly.
+// TODO: Fix the variants and make it work like radix.
+// FIX: When i click on the sec ttrigger in a group of two triggers the click close the opened one
+// it should close the other and proceed with click action on the current button i am attempting to
+// click.
+// FIX: the hooks timing to match each component.
+// FIX: the tooltip in general i want it identical (e.g., animation, timing).
+// FIX: the hoverCard in general i want it identical (e.g., animation, timing).
 function PopoverContent({
   className,
   children,
-  side = "bottom",
-  overlay = "nothing",
+  side = 'bottom',
+  overlay = 'nothing',
   ...props
-}: React.ComponentProps<'dialog'> & { overlay?: "default" | "nothing" } = { overlay: "nothing" }) {
-
+}: React.ComponentProps<'dialog'> &
+  VariantProps<typeof AnimPopoverVariants> & {
+    overlay?: 'default' | 'nothing'
+    closedby?: string
+  }) {
   const { id, ref } = useDialogContext()
 
   return (
-    <dialog ref={ref}
+    <dialog
+      ref={ref}
       style={{ '--position-anchor': `--${id}` } as React.CSSProperties}
-      closedby="any" id={id} popover="auto"
-      className={cn(AnimVariants({ motionBackdrop: overlay }), AnimDialogVariants(), AnimPopoverVariants({ side: side }), className)}
+      closedby="any"
+      id={id}
+      popover="auto"
+      className={cn(
+        AnimVariants({ motionBackdrop: overlay }),
+        AnimDialogVariants(),
+        AnimPopoverVariants({ side: side }),
+        className,
+      )}
       {...props}>
       {children}
     </dialog>
   )
 }
 
-export {
-  Popover, PopoverTrigger, PopoverContent,
-}
-
-
+export { Popover, PopoverTrigger, PopoverContent }
 
 // PopoverWrapper Component
 // export interface PopoverWrapperProps {

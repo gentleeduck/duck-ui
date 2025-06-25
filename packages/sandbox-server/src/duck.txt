@@ -1,5 +1,6 @@
-hello
+"Hey Daniel, really appreciate you taking the time to meet. I know this was framed as a sales-style intro call, but I’ll be transparent—after digging into Onlook, this quickly became more of a 'how can I work with you' call for me. I think you’re building something really special, and I’d love to be part of it."
 
-welcom to wilddck
-this is why i hate this 
-well well well 
+
+"Just to set the context, I’m a fullstack engineer with a strong frontend/design focus, and I’ve built some serious work in real-time collaboration and developer tools. Onlook honestly overlaps with everything I love building — so rather than just pitch you something, I want to talk about how I can help Onlook grow and ship faster."
+
+

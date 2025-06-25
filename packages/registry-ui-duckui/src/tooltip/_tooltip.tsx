@@ -11,24 +11,34 @@ const Tooltip = Popover
 
 const TooltipTrigger = PopoverTrigger
 
-function TooltipContent({
-  className,
-  children,
-  overlay = "nothing",
-  ...props
-}: React.ComponentProps<'dialog'> & { overlay?: "default" | "nothing" } = { overlay: "nothing" }) {
-
+function TooltipContent(
+  {
+    className,
+    children,
+    overlay = 'nothing',
+    ...props
+  }: React.ComponentProps<'dialog'> & { overlay?: 'default' | 'nothing' } = { overlay: 'nothing' },
+) {
   const { id, ref } = useDialogContext()
   return (
     <>
-    <dialog 
-      ref={ref} 
-      role='tooltip' style={{ '--position-anchor': `--${id}` } as React.CSSProperties}
-      closedby="any" id={id} popover="auto"
-      className={cn(AnimVariants({ motionBackdrop: overlay }), AnimDialogVariants(), AnimPopoverVariants(), AnimTooltipVariants(), className)}
-      {...props}>
-      {children}
-    </dialog>
+      <dialog
+        ref={ref}
+        role="tooltip"
+        style={{ '--position-anchor': `--${id}` } as React.CSSProperties}
+        closedby="any"
+        id={id}
+        popover="auto"
+        className={cn(
+          AnimVariants({ motionBackdrop: overlay }),
+          AnimDialogVariants(),
+          AnimPopoverVariants(),
+          AnimTooltipVariants(),
+          className,
+        )}
+        {...props}>
+        {children}
+      </dialog>
     </>
   )
 }
@@ -40,7 +50,6 @@ function TooltipContent({
 // }
 
 export { Tooltip, TooltipTrigger, TooltipContent }
-
 
 // PopoverWrapper Component
 // export interface PopoverWrapperProps {

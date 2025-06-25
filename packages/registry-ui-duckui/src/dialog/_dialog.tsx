@@ -1,8 +1,8 @@
+import DialogPrimitive, { useDialogContext } from '@gentleduck/aria-feather/dialog'
 import { cn } from '@gentleduck/libs/cn'
 import { AnimDialogModalVariants, AnimDialogVariants, AnimVariants } from '@gentleduck/motion/anim'
 import { X } from 'lucide-react'
 import React from 'react'
-import DialogPrimitive, { ShouldRender, useDialogContext } from '@gentleduck/aria-feather/dialog'
 import { Button } from '../button'
 
 function Dialog({ ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>) {
@@ -61,10 +61,14 @@ function DialogContent({
   const { open, ref } = useDialogContext()
 
   return (
-    <dialog closedby="any" ref={ref} className={cn(AnimVariants(), AnimDialogVariants(), AnimDialogModalVariants(), className)}  {...props}>
+    <dialog
+      closedby="any"
+      ref={ref}
+      className={cn(AnimVariants(), AnimDialogVariants(), AnimDialogModalVariants(), className)}
+      {...props}>
       {/* <ShouldRender ref={ref} once={renderOnce} open={open}> */}
-        <DialogClose />
-        {children}
+      <DialogClose />
+      {children}
       {/* </ShouldRender> */}
     </dialog>
   )

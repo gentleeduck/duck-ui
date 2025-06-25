@@ -1,6 +1,6 @@
-import { VariantProps } from 'class-variance-authority'
-import { tooltipVariants } from './tooltip.constants'
+import { VariantProps } from '@gentleduck/variants'
 import { Button } from '../button'
+import { tooltipVariants } from './tooltip.constants'
 
 export interface TooltipProps extends React.HTMLProps<HTMLDivElement> {
   /** If true, the tooltip will render its child element directly, inheriting its styles. */

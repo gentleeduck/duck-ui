@@ -1,7 +1,8 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.0.4/schema.json",
   "linter": {
-    "includes": [
+    "enabled": true,
+    "include": [
       "**",
       "!**/@*",
       "!**/.*/**",
@@ -29,15 +30,13 @@
       "!**/table/**",
       "!**/combobox.tsx"
     ],
-    "enabled": true,
     "rules": {
       "recommended": false,
       "complexity": {
         "noForEach": "error",
         "noStaticOnlyClass": "error",
         "noUselessSwitchCase": "error",
-        "useFlatMap": "error",
-        "useWhile": "error"
+        "useFlatMap": "error"
       },
       "style": {
         "noNegationElse": "error",
@@ -51,8 +50,7 @@
         "noDoubleEquals": "error",
         "noThenProperty": "error",
         "useIsArray": "error",
-        "useGetterReturn": "error",
-        "noVar": "error"
+        "useGetterReturn": "error"
       },
       "nursery": {
         "useSortedClasses": "warn"
@@ -60,7 +58,8 @@
     }
   },
   "formatter": {
-    "includes": [
+    "enabled": true,
+    "include": [
       "**",
       "!**/node_modules/**",
       "!**/dist/**",
@@ -75,7 +74,6 @@
       "!packages/benchmark/",
       "!packages/duck-orm-skitch/**"
     ],
-    "enabled": true,
     "formatWithErrors": false,
     "indentStyle": "space",
     "indentWidth": 2,
@@ -84,7 +82,7 @@
     "attributePosition": "multiline",
     "bracketSpacing": true
   },
-  "assist": {
+  "assists": {
     "enabled": true,
     "actions": {
       "source": {
@@ -93,7 +91,9 @@
     }
   },
   "javascript": {
-    "globals": ["Global1"],
+    "globals": [
+      "Global1"
+    ],
     "formatter": {
       "jsxQuoteStyle": "double",
       "quoteProperties": "asNeeded",
@@ -108,7 +108,9 @@
   },
   "overrides": [
     {
-      "includes": ["**/*.json"],
+      "include": [
+        "**/*.json"
+      ],
       "formatter": {
         "indentWidth": 2
       }

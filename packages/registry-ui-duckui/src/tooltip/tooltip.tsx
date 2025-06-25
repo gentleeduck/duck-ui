@@ -1,10 +1,10 @@
 'use client'
 
-import * as React from 'react'
 import { cn } from '@gentleduck/libs/cn'
-import { tooltipVariants, tooltipArrowVariants } from './tooltip.constants'
-import type { TooltipContentProps, TooltipProps, TooltipTriggerProps } from './tooltip.types'
+import * as React from 'react'
 import { Button } from '../button'
+import { tooltipArrowVariants, tooltipVariants } from './tooltip.constants'
+import type { TooltipContentProps, TooltipProps, TooltipTriggerProps } from './tooltip.types'
 
 function Tooltip({
   delayDuration = 500,
@@ -18,7 +18,7 @@ function Tooltip({
   return (
     <div
       data-method={open ? 'forced' : 'hover'}
-      className={cn('whitespace-nowrap group/tooltip relative', className)}
+      className={cn('group/tooltip relative whitespace-nowrap', className)}
       style={
         {
           '--tooltip-delay': `${delayDuration}ms`,
@@ -31,7 +31,7 @@ function Tooltip({
   )
 }
 
-function TooltipTrigger({ ...props }: TooltipTriggerProps): JSX.Element {
+function TooltipTrigger({ ...props }: TooltipTriggerProps): React.JSX.Element {
   return <Button {...props} />
 }
 
@@ -54,7 +54,7 @@ function TooltipContent({
   showArrow = false,
   children,
   ...props
-}: TooltipContentProps): JSX.Element {
+}: TooltipContentProps): React.JSX.Element {
   return (
     <div
       role="tooltip"

@@ -49,10 +49,11 @@
 // import ShadcnSeparator from './duck/separator/separator'
 
 import Dialog from './example/dialog'
-import Popover from './example/popover'
-import Tooltip from './example/tooltip'
 import HoverCard from './example/hover-card'
+import Popover from './example/popover'
 import Select from './example/select'
+import Tooltip from './example/tooltip'
+
 // import Command from './example/command'
 
 // import Command from "./example/command/duck"
@@ -103,16 +104,15 @@ import Select from './example/select'
 function App() {
   return (
     <div className="mx-10 flex h-screen flex-col items-center justify-center gap-4">
-      <Select  />
-      {/* <Popover  />
-      <Popover  />
-      <Tooltip  />
-      <Tooltip  />
-      <HoverCard  />
-      <HoverCard  />
-      <Dialog />
-      <Popover  /> */}
+      <Select />
     </div>
+    // <Dialog />
+    //   <HoverCard />
+    // <Tooltip />
+    // <Popover />
+    // <Tooltip />
+    // <HoverCard />
+    //     <Popover />
   )
 }
 

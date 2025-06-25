@@ -6,6 +6,7 @@ import * as React from 'react'
 import { Button, buttonVariants } from '../button'
 // import { useHandleKeyDown } from '../command'
 import { useSelectInit, useSelectScroll } from './select.hooks'
+import { useHandleKeyDown } from '../command'
 
 export interface SelectContextType {
   open: boolean
@@ -40,19 +41,19 @@ function Select({
     open ?? false,
     onOpenChange,
   )
-  // useSelectScroll(itemsRef, selectedItemRef, contentRef)
+  useSelectScroll(itemsRef, selectedItemRef, contentRef)
 
   // TODO: FIX: keyboard command crash's the app
-  // useHandleKeyDown(
-  //   itemsRef,
-  //   (item) => {
-  //     selectedItemRef.current = item
-  //   },
-  //   itemsRef,
-  //   triggerRef as React.RefObject<HTMLButtonElement | null>,
-  //   contentRef,
-  //   onOpenChange,
-  // )
+  useHandleKeyDown(
+    itemsRef,
+    (item) => {
+      selectedItemRef.current = item
+    },
+    itemsRef,
+    triggerRef as React.RefObject<HTMLButtonElement | null>,
+    contentRef,
+    onOpenChange,
+  )
 
   return (
     <SelectContext.Provider
@@ -63,7 +64,7 @@ function Select({
         contentRef,
         groupsRef,
         open: false,
-        onOpenChange: () => { },
+        onOpenChange: () => {},
         triggerRef,
       }}>
       <div ref={wrapperRef} {...props} duck-select="">
@@ -137,7 +138,7 @@ function SelectContent({
       className={cn(
         'relative bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border shadow-md p-1 mt-1',
         position === 'popper' &&
-        'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
+          'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
         // 'h-fit',
 
         className,

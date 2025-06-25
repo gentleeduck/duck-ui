@@ -48,11 +48,11 @@
 // import DuckSeparatorExp from './duck/separator/experimental'
 // import ShadcnSeparator from './duck/separator/separator'
 
-import Dialog from './example/dialog'
-import HoverCard from './example/hover-card'
-import Popover from './example/popover'
-import Select from './example/select'
-import Tooltip from './example/tooltip'
+import Dialog from "./example/dialog";
+import HoverCard from "./example/hover-card";
+import Popover from "./example/popover";
+import Select from "./example/select";
+import Tooltip from "./example/tooltip";
 
 // import Command from './example/command'
 
@@ -102,18 +102,18 @@ import Tooltip from './example/tooltip'
 // }
 
 function App() {
-  return (
-    <div className="mx-10 flex h-screen flex-col items-center justify-center gap-4">
-      <Select />
-    </div>
-    // <Dialog />
-    //   <HoverCard />
-    // <Tooltip />
-    // <Popover />
-    // <Tooltip />
-    // <HoverCard />
-    //     <Popover />
-  )
+	return (
+		<div className="mx-10 flex h-screen flex-col items-center justify-center gap-4">
+			{/* <Select /> */}
+			<Dialog />
+			<HoverCard />
+			<Tooltip />
+			<Popover />
+			<Tooltip />
+			<HoverCard />
+			<Popover />
+		</div>
+	);
 }
 
-export default App
+export default App;

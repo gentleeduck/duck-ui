@@ -1,37 +1,15 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import { cn } from '@gentleduck/libs/cn'
-import { Root as Popover } from '@gentleduck/aria-feather/popover'
-import { AnimDialogVariants, AnimPopoverVariants, AnimTooltipVariants, AnimVariants } from '@gentleduck/motion/anim'
-import { PopoverTrigger } from '../popover/_popover'
-import { useDialogContext } from '@gentleduck/aria-feather/dialog'
+import { Root as Popover } from "@gentleduck/aria-feather/popover";
+import { PopoverContent, PopoverTrigger } from "../popover/_popover";
 
-const HoverCard = Popover
+const HoverCard = Popover;
 
-const HoverCardTrigger = PopoverTrigger
+const HoverCardTrigger = PopoverTrigger;
 
-function HoverCardContent({
-  className,
-  children,
-  overlay = "nothing",
-  ...props
-}: React.ComponentProps<'dialog'> & { overlay?: "default" | "nothing" } = { overlay: "nothing" }) {
+const HoverCardContent = PopoverContent;
 
-  const { id, ref } = useDialogContext()
-
-  return (
-    <dialog ref={ref} role='tooltip' style={{ '--position-anchor': `--${id}` } as React.CSSProperties}
-      closedby="any" id={id} popover="auto"
-      className={cn(AnimVariants({ motionBackdrop: overlay }), AnimDialogVariants(), AnimPopoverVariants(), className)}
-      {...props}>
-      {children}
-    </dialog>
-  )
-}
-
-export { HoverCard, HoverCardTrigger, HoverCardContent }
-
+export { HoverCard, HoverCardTrigger, HoverCardContent };
 
 // PopoverWrapper Component
 // export interface PopoverWrapperProps {

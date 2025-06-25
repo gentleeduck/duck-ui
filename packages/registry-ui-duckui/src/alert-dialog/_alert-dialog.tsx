@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 // import {
 //   AlertDialogDialogProps,
@@ -6,36 +6,34 @@
 //   AlertDialogSheetProps,
 //   AlertDialogWrapperType,
 // } from './alert-dialog.types'
-import { cn } from '@gentleduck/libs/cn'
-import React from 'react'
-import { AnimDialogModalVariants, AnimDialogVariants, AnimVariants } from '@gentleduck/motion/anim'
-import DialogPrimitive, { ShouldRender, useDialogContext } from '@gentleduck/aria-feather/dialog'
-import { DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../dialog'
+import React from "react";
+import DialogPrimitive from "@gentleduck/aria-feather/dialog";
+import {
+	DialogContent,
+	DialogContentProps,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "../dialog";
 
-const AlertDialog = DialogPrimitive.Root
+const AlertDialog = DialogPrimitive.Root;
 
-const AlertDialogTrigger = DialogTrigger
+const AlertDialogTrigger = DialogTrigger;
 
 function AlertDialogContent({
-  children,
-  className,
-  renderOnce,
-  ...props
-}: React.HTMLProps<HTMLDialogElement> & {
-  renderOnce?: boolean
-}): React.JSX.Element {
-  const { open, ref } = useDialogContext()
-
-  return (
-    <dialog closedby="closerequest" ref={ref} {...props} className={cn(AnimVariants(), AnimDialogVariants(), AnimDialogModalVariants(), className)}>
-      {/* <ShouldRender ref={ref} once={renderOnce} open={open}> */}
-        {children}
-      {/* </ShouldRender> */}
-    </dialog>
-  )
+	children,
+	...props
+}: DialogContentProps): React.JSX.Element {
+	return (
+		<DialogContent closedby="closerequest" {...props}>
+			{children}
+		</DialogContent>
+	);
 }
 
-const AlertDialogHeader = DialogHeader
+const AlertDialogHeader = DialogHeader;
 
 /**
  * A component that renders the footer of an alert dialog.
@@ -44,7 +42,7 @@ const AlertDialogHeader = DialogHeader
  * on small screens and in a row with space between items on larger screens.
  *
  */
-const AlertDialogFooter = DialogFooter
+const AlertDialogFooter = DialogFooter;
 
 /**
  * `AlertDialogTitle` is a React component that forwards its ref to the `AlertDialogTitle` component.
@@ -52,21 +50,21 @@ const AlertDialogFooter = DialogFooter
  * to customize its styling.
  *
  */
-const AlertDialogTitle = DialogTitle
+const AlertDialogTitle = DialogTitle;
 
 /**
  * `AlertDialogDescription` is a React component that forwards its ref to the `AlertDialogPrimitive.Description` component.
  * It accepts all props that `AlertDialogPrimitive.Description` accepts, along with an optional `className` prop for additional styling.
  *
  */
-const AlertDialogDescription = DialogDescription
+const AlertDialogDescription = DialogDescription;
 
 /**
  * `AlertDialogAction` is a React component that forwards its ref to the `AlertDialogPrimitive.Action` component.
  * It accepts all the props of `AlertDialogPrimitive.Action` and an additional `className` prop for custom styling.
  *
  */
-const AlertDialogAction = AlertDialogTrigger
+const AlertDialogAction = AlertDialogTrigger;
 
 /**
  * `AlertDialogCancel` is a React forward reference component that renders a cancel button
@@ -75,7 +73,7 @@ const AlertDialogAction = AlertDialogTrigger
  * for additional styling.
  *
  */
-const AlertDialogCancel = AlertDialogTrigger
+const AlertDialogCancel = AlertDialogTrigger;
 
 // /**
 //  * Renders an alert dialog and a sheet component, managing their open states
@@ -259,16 +257,16 @@ const AlertDialogCancel = AlertDialogTrigger
 // AlertDialogSheet.displayName = 'AlertDialogDialog'
 
 export {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogTrigger,
-  AlertDialogDescription,
-  // AlertDialogSheet,
-  // AlertDialogDrawer,
-  // AlertDialogDialog,
-}
+	AlertDialog,
+	AlertDialogContent,
+	AlertDialogHeader,
+	AlertDialogFooter,
+	AlertDialogTitle,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogTrigger,
+	AlertDialogDescription,
+	// AlertDialogSheet,
+	// AlertDialogDrawer,
+	// AlertDialogDialog,
+};

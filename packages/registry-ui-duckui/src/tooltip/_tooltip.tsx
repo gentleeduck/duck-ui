@@ -1,46 +1,37 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import { cn } from '@gentleduck/libs/cn'
-import { Root as Popover, Trigger as PopoverPrimitiveTrigger } from '@gentleduck/aria-feather/popover'
-import { AnimDialogVariants, AnimPopoverVariants, AnimTooltipVariants, AnimVariants } from '@gentleduck/motion/anim'
-import { PopoverTrigger } from '../popover/_popover'
-import { useDialogContext } from '@gentleduck/aria-feather/dialog'
+import * as React from "react";
+import { cn } from "@gentleduck/libs/cn";
+import { Root as Popover } from "@gentleduck/aria-feather/popover";
+import {
+	AnimPopoverVariants,
+	AnimTooltipVariants,
+} from "@gentleduck/motion/anim";
+import { PopoverContent, PopoverTrigger } from "../popover/_popover";
+import { DialogContentProps } from "../dialog";
+import { VariantProps } from "@gentleduck/variants";
 
-const Tooltip = Popover
+const Tooltip = Popover;
 
-const TooltipTrigger = PopoverTrigger
+const TooltipTrigger = PopoverTrigger;
 
-function TooltipContent(
-  {
-    className,
-    children,
-    overlay = 'nothing',
-    ...props
-  }: React.ComponentProps<'dialog'> & { overlay?: 'default' | 'nothing' } = { overlay: 'nothing' },
-) {
-  const { id, ref } = useDialogContext()
-  return (
-    <>
-      <dialog
-        ref={ref}
-        role="tooltip"
-        style={{ '--position-anchor': `--${id}` } as React.CSSProperties}
-        closedby="any"
-        id={id}
-        popover="auto"
-        className={cn(
-          AnimVariants({ motionBackdrop: overlay }),
-          AnimDialogVariants(),
-          AnimPopoverVariants(),
-          AnimTooltipVariants(),
-          className,
-        )}
-        {...props}>
-        {children}
-      </dialog>
-    </>
-  )
+function TooltipContent({
+	className,
+	children,
+	position,
+	...props
+}: DialogContentProps &
+	VariantProps<typeof AnimPopoverVariants>): React.JSX.Element {
+	return (
+		<PopoverContent
+			role="tooltip"
+			position={position}
+			className={cn(AnimTooltipVariants(), className)}
+			{...props}
+		>
+			{children}
+		</PopoverContent>
+	);
 }
 
 // function PopoverAnchor({
@@ -49,7 +40,7 @@ function TooltipContent(
 //   return <dialog {...props} />
 // }
 
-export { Tooltip, TooltipTrigger, TooltipContent }
+export { Tooltip, TooltipTrigger, TooltipContent };
 
 // PopoverWrapper Component
 // export interface PopoverWrapperProps {

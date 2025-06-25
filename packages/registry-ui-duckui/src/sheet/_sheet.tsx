@@ -1,46 +1,42 @@
-'use client'
+"use client";
 
 // import { sheetVariants } from './sheet.constants'
 // import { SheetContentProps, SheetWrapperProps } from './sheet.types'
-import { cn } from '@gentleduck/libs/cn'
-import React from 'react'
-import { AnimDialogVariants, AnimSheetVariants, AnimVariants } from '@gentleduck/motion/anim'
-import DialogPrimitive, { ShouldRender, useDialogContext } from '@gentleduck/aria-feather/dialog'
-import { DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../dialog'
+import { cn } from "@gentleduck/libs/cn";
+import React from "react";
+import { AnimSheetVariants } from "@gentleduck/motion/anim";
+import DialogPrimitive from "@gentleduck/aria-feather/dialog";
+import {
+	DialogContentPrimitive,
+	DialogContentProps,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "../dialog";
 
-const Sheet = DialogPrimitive.Root
+const Sheet = DialogPrimitive.Root;
 
-const SheetTrigger = DialogTrigger
+const SheetTrigger = DialogTrigger;
 
-const SheetClose = SheetTrigger
+const SheetClose = SheetTrigger;
 
 const SheetContent = ({
-  children,
-  className,
-  renderOnce,
-  side = 'right',
-  ...props
-}: React.HTMLProps<HTMLDialogElement> & {
-  renderOnce?: boolean
-  side?: 'left' | 'right' | 'top' | 'bottom'
-}): React.JSX.Element => {
-  const { open, ref } = useDialogContext()
-
-  return (
-    <>
-      <dialog
-        ref={ref}
-        className={cn(AnimVariants(), AnimDialogVariants({ animation: "nothing" }), AnimSheetVariants({ side: side }), className)}
-        closedby="any"
-        {...props}>
-        {/* <ShouldRender ref={ref} once={renderOnce} open={open}> */}
-        <DialogClose />
-        {children}
-        {/* </ShouldRender> */}
-      </dialog>
-    </>
-  )
-}
+	className,
+	children,
+	side = "right",
+	...props
+}: DialogContentProps): React.JSX.Element => {
+	return (
+		<DialogContentPrimitive
+			className={cn(AnimSheetVariants({ side: side }), className)}
+			{...props}
+		>
+			{children}
+		</DialogContentPrimitive>
+	);
+};
 
 /**
  * SheetHeader component renders a header section for a sheet.
@@ -55,7 +51,7 @@ const SheetContent = ({
  *
  * @returns {React.JSX.Element} The rendered SheetHeader component.
  */
-const SheetHeader = DialogHeader
+const SheetHeader = DialogHeader;
 /**
  * SheetFooter component renders a footer section for a sheet.
  * It supports additional class names and props to customize the
@@ -69,7 +65,7 @@ const SheetHeader = DialogHeader
  *
  * @returns {React.JSX.Element} The rendered SheetFooter component.
  */
-const SheetFooter = DialogFooter
+const SheetFooter = DialogFooter;
 
 /**
  * `SheetTitle` is a React component that forwards its ref to the `SheetTitle` component.
@@ -82,7 +78,7 @@ const SheetFooter = DialogFooter
  *
  * @returns {React.JSX.Element} The rendered `SheetTitle` component with forwarded ref and applied class names.
  */
-const SheetTitle = DialogTitle
+const SheetTitle = DialogTitle;
 
 /**
  * `SheetDescription` is a React forwardRef component that wraps around `SheetDescription`.
@@ -95,7 +91,7 @@ const SheetTitle = DialogTitle
  *
  * @returns {React.JSX.Element} A `SheetDescription` component with forwarded ref and additional props.
  */
-const SheetDescription = DialogDescription
+const SheetDescription = DialogDescription;
 
 // /**
 //  * `SheetWrapper` is a React component that wraps a `Sheet` component and renders children elements
@@ -177,13 +173,13 @@ const SheetDescription = DialogDescription
 // SheetWrapper.displayName = 'SheetWrapper'
 
 export {
-  Sheet,
-  SheetTrigger,
-  SheetClose,
-  SheetContent,
-  SheetHeader,
-  SheetFooter,
-  SheetTitle,
-  SheetDescription,
-  // SheetWrapper,
-}
+	Sheet,
+	SheetTrigger,
+	SheetClose,
+	SheetContent,
+	SheetHeader,
+	SheetFooter,
+	SheetTitle,
+	SheetDescription,
+	// SheetWrapper,
+};

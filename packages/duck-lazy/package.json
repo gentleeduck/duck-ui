@@ -47,7 +47,7 @@
     "husky": "^9.1.7",
     "tsdown": "catalog:",
     "@gentleduck/tsdown-config": "workspace:*",
-    "tsup": "^8.4.0"
+    "tsup": "^8.5.0"
   },
   "peerDependencies": {
     "@types/node": "catalog:",

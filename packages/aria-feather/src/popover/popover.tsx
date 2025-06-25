@@ -28,7 +28,7 @@ export function Trigger({
       aria-haspopup="dialog"
       aria-controls={id}
       popoverTarget={id}
-      style={{ '--position-anchor': `--${id}` } as React.CSSProperties}
+      style={{ '--position-anchor': `--${id}`, 'anchorName': 'var(--position-anchor)' } as React.CSSProperties}
       onClick={(e) => {
         onOpenChange(open ?? !_open)
         onClick?.(e)

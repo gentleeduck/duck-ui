@@ -1,8 +1,8 @@
 'use client'
 
 import { cn } from '@gentleduck/libs/cn'
-import { CheckIcon, ChevronDown, ChevronDownIcon, ChevronUp } from 'lucide-react'
 import * as React from 'react'
+import { CheckIcon, ChevronDown, ChevronDownIcon, ChevronUp } from 'lucide-react'
 import { Button, buttonVariants } from '../button'
 // import { useHandleKeyDown } from '../command'
 
@@ -14,7 +14,6 @@ import { useDialogContext } from '@gentleduck/aria-feather/dialog'
 function Select({ hoverable = false, mode = "popover", ...props }: React.ComponentPropsWithoutRef<typeof Root>) {
   return <Root {...props} hoverable={hoverable} mode={mode} />
 }
-
 
 const SelectTrigger = PopoverTrigger
 
@@ -33,7 +32,7 @@ function SelectContent({
       closedby="any" id={id} popover="auto"
       className={cn(AnimVariants({ motionBackdrop: overlay }), AnimDialogVariants(), AnimPopoverVariants({ side: position }), className)}
       {...props}>
-      يشصيشصيصشي
+      {children}
     </dialog>
   )
 }
@@ -89,7 +88,7 @@ function SelectLabel({ children, className, ref, ...props }: React.HTMLProps<HTM
   return (
     <label
       ref={ref}
-      className={cn('text-muted-foreground px-2 py-1.5 text-xs', className)}
+      className={cn('px-2 py-1.5 text-muted-foreground text-xs', className)}
       {...props}
     >
       {children}

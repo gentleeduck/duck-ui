@@ -25,7 +25,7 @@ function PopoverTrigger({
 
   return (
     <PopoverPrimitiveTrigger>
-      <Button className='[anchor-name:var(--position-anchor)]' {...props} asChild={asChild}>
+      <Button {...props} asChild={asChild}>
         {children}
       </Button>
     </PopoverPrimitiveTrigger>

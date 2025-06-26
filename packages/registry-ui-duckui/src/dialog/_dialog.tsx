@@ -5,7 +5,6 @@ import { cn } from "@gentleduck/libs/cn";
 import {
 	AnimDialogModalVariants,
 	AnimDialogVariants,
-	type AnimPopoverVariants,
 	AnimVariants,
 } from "@gentleduck/motion/anim";
 import type { VariantProps } from "@gentleduck/variants";
@@ -14,9 +13,10 @@ import type React from "react";
 import { Button } from "../button";
 
 function Dialog({
+	closeButton = true,
 	...props
 }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>) {
-	return <DialogPrimitive.Root {...props} />;
+	return <DialogPrimitive.Root closeButton={closeButton} {...props} />;
 }
 
 function DialogTrigger({
@@ -76,7 +76,7 @@ export function DialogContentPrimitive({
 	renderOnce,
 	overlay = "default",
 	closedby = "any",
-	animation= "default",
+	animation = "default",
 	...props
 }: DialogContentProps) {
 	const { ref, closeButton, modal, id } = useDialogContext();

@@ -16,7 +16,12 @@ import {
 	DialogTrigger,
 } from "../dialog";
 
-const Sheet = DialogPrimitive.Root;
+function Sheet({
+	closeButton = true,
+	...props
+}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>) {
+	return <DialogPrimitive.Root closeButton={closeButton} {...props} />;
+}
 
 const SheetTrigger = DialogTrigger;
 

@@ -38,28 +38,36 @@ function PopoverTrigger({
 	);
 }
 
-// TODO: Add the rest of the radix API props.
-// TODO: Add the align and the sides sepretaly.
-// TODO: Fix the variants and make it work like radix.
 // FIX: When i click on the sec trigger in a group of two triggers the click close the opened one
 // it should close the other and proceed with click action on the current button i am attempting to
 // click.
-// FIX: the hooks timing to match each component.
 // FIX: the tooltip in general i want it identical (e.g., animation, timing).
 // FIX: the hoverCard in general i want it identical (e.g., animation, timing).
 function PopoverContent({
 	children,
 	className,
-	position = "bottom",
+	side = "top",
+	sideOffset = 4,
+	align = "default",
 	...props
 }: DialogContentProps &
-	VariantProps<typeof AnimPopoverVariants>): React.JSX.Element {
+	VariantProps<typeof AnimPopoverVariants> & {
+		sideOffset: number | string;
+	}): React.JSX.Element {
 	const { id } = useDialogContext();
 	return (
 		<DialogContentPrimitive
-			style={{ "--position-anchor": `--${id}` } as React.CSSProperties}
+			style={
+				{
+					"--position-anchor": `--${id}`,
+					"--sideOffset": `${sideOffset}px`,
+				} as React.CSSProperties
+			}
 			overlay="nothing"
-			className={cn(AnimPopoverVariants({ position: position }), className)}
+			className={cn(
+				AnimPopoverVariants({ side: side, align: align }),
+				className,
+			)}
 			{...props}
 		>
 			{children}

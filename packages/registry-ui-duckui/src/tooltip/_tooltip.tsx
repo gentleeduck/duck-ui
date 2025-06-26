@@ -18,14 +18,12 @@ const TooltipTrigger = PopoverTrigger;
 function TooltipContent({
 	className,
 	children,
-	position,
 	...props
 }: DialogContentProps &
 	VariantProps<typeof AnimPopoverVariants>): React.JSX.Element {
 	return (
 		<PopoverContent
 			role="tooltip"
-			position={position}
 			className={cn(AnimTooltipVariants(), className)}
 			{...props}
 		>

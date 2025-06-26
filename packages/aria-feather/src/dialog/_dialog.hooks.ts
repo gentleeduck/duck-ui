@@ -17,6 +17,8 @@ export function useDialog({
 	lockScroll,
 	hoverable,
 	modal,
+	skipDelayDuration,
+	delayDuration,
 }: DialogProps) {
 	const dialogRef = React.useRef<HTMLDialogElement | null>(null);
 	const triggerRef = React.useRef<HTMLElement | HTMLButtonElement | null>(null);
@@ -63,12 +65,12 @@ export function useDialog({
 
 		function openAfterDelay() {
 			clearTimeout(closeTimer);
-			openTimer = setTimeout(() => handleOpenChange(true), 300);
+			openTimer = setTimeout(() => handleOpenChange(true), delayDuration);
 		}
 
 		function closeAfterDelay() {
 			clearTimeout(openTimer);
-			closeTimer = setTimeout(() => handleOpenChange(false), 1500);
+			closeTimer = setTimeout(() => handleOpenChange(false), skipDelayDuration);
 		}
 
 		// TODO: focus visible not working and if applied it leads to random UI rendering

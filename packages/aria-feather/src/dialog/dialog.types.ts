@@ -5,6 +5,8 @@ export interface DialogCommonType {
 	closeButton?: boolean;
 	open?: boolean;
 	id?: string;
+	skipDelayDuration?: number;
+	delayDuration?: number;
 	onOpenChange?: (open: boolean) => void;
 }
 

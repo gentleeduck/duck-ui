@@ -41,13 +41,23 @@ export function Root({
 	hoverable = false,
 	modal = true,
 	closeButton = false,
+	skipDelayDuration = 300,
+	delayDuration = 0,
 }: DialogProps): React.JSX.Element {
 	const {
 		open,
 		onOpenChange: _onOpenChange,
 		ref,
 		triggerRef,
-	} = useDialog({ openProp, onOpenChange, lockScroll, hoverable, modal });
+	} = useDialog({
+		openProp,
+		onOpenChange,
+		lockScroll,
+		hoverable,
+		modal,
+		skipDelayDuration,
+		delayDuration,
+	});
 	const id = useStableId();
 
 	return (

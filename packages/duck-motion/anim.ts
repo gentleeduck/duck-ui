@@ -48,71 +48,63 @@ export const AnimDialogVariants = cva(
 export const AnimPopoverVariants = cva(
 	`bg-popover text-popover-foreground inset-auto absolute max-h-none p-4 w-fit
   [position-anchor:var(--position-anchor)] 
-  [position-try:_most-height_flip-block,_most-width_flip-inline,_flip-block_flip-inline] [position-visibility:anchors-visible]`,
+  [position-try:flip-block,flip-inline,flip-start] [position-visibility:anchors-visible]`,
 	{
 		variants: {
-			position: {
+			side: {
 				top: `
-          [position-area:_block-start] origin-bottom my-3
+          [position-area:_block-start_var(--position-area-align)] origin-bottom my-(--sideOffset)
         `,
 				bottom: `
-          [position-area:_block-end] origin-top my-3
+          [position-area:_block-end_var(--position-area-align)] origin-top my-(--sideOffset)
         `,
 				left: `
-          [position-area:_inline-start_center] origin-right mx-3
+          [position-area:_inline-start_var(--position-area-align)] origin-right mx-(--sideOffset)
         `,
 				right: `
-          [position-area:_inline-end_center] origin-left mx-3
+          [position-area:_inline-end_var(--position-area-align)] origin-left mx-(--sideOffset)
         `,
-				"top-left": `
-          [position-area:_block-start_inline-start] origin-bottom-right my-3
-        `,
-				"top-right": `
-          [position-area:_block-start_inline-end] origin-bottom-left my-3
-        `,
-				"bottom-left": `
-          [position-area:_block-end_inline-start] origin-top-right my-3
-        `,
-				"bottom-right": `
-          [position-area:_block-end_inline-end] origin-top-left my-3
-        `,
-				"top-span-left": `
-          [position-area:_block-start_span-inline-start] origin-bottom-right my-3
-        `,
-				"top-span-right": `
-          [position-area:_block-start_span-inline-end] origin-bottom-left  my-3
-        `,
-				"bottom-span-left": `
-          [position-area:_block-end_span-inline-start] origin-top-right my-3
-        `,
-				"bottom-span-right": `
-          [position-area:_block-end_span-inline-end] origin-top-left my-3
-        `,
-				"right-span-top": `
-          [position-area:_inline-end_span-block-start] origin-bottom-left mx-3
-        `,
-				"right-span-bottom": `
-          [position-area:_inline-end_span-block-end] origin-bottom-left mx-3
-        `,
-				"left-span-top": `
-          [position-area:_inline-start_span-block-start] origin-top-right mx-3
-        `,
-				"left-span-bottom": `
-          [position-area:_inline-start_span-block-end] origin-top-right mx-3
-        `,
+			},
+			align: {
+				default: "[--position-area-align:span-all]",
+				left: `
+				[--position-area-align:inline-start] 
+			`,
+				right: `
+				[--position-area-align:inline-end] 
+			`,
+				"span-left": `
+				[--position-area-align:span-inline-start] 
+			`,
+				"span-right": `
+				[--position-area-align:span-inline-end] 
+			`,
+				top: `
+				[--position-area-align:block-start] 
+			`,
+				bottom: `
+				[--position-area-align:block-end] 
+			`,
+				"span-top": `
+				[--position-area-align:span-block-start] 
+			`,
+				"span-bottom": `
+				[--position-area-align:span-block-end] 
+			`,
 				center: `
-          [position-area:_center] origin-center
-        `,
+			[position-area:_center] origin-center
+		`,
 			},
 		},
 		defaultVariants: {
 			position: "bottom",
+			align: "default",
 		},
 	},
 );
 
 export const AnimTooltipVariants = cva(
-	`px-3 py-1.5 !text-primary-foreground bg-primary border-primary text-xs text-balance`,
+	`px-3 py-1.5 !text-primary-foreground bg-primary border-primary text-xs text-balance select-none`,
 );
 
 export const AnimDialogModalVariants = cva(

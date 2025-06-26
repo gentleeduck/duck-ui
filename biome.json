@@ -1,8 +1,7 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.0.5/schema.json",
   "linter": {
-    "enabled": true,
-    "include": [
+    "includes": [
       "**",
       "!**/@*",
       "!**/.*/**",
@@ -30,13 +29,15 @@
       "!**/table/**",
       "!**/combobox.tsx"
     ],
+    "enabled": true,
     "rules": {
       "recommended": false,
       "complexity": {
         "noForEach": "error",
         "noStaticOnlyClass": "error",
         "noUselessSwitchCase": "error",
-        "useFlatMap": "error"
+        "useFlatMap": "error",
+        "useWhile": "error"
       },
       "style": {
         "noNegationElse": "error",
@@ -50,16 +51,16 @@
         "noDoubleEquals": "error",
         "noThenProperty": "error",
         "useIsArray": "error",
-        "useGetterReturn": "error"
+        "useGetterReturn": "error",
+        "noVar": "error"
       },
       "nursery": {
-        "useSortedClasses": "warn"
+        "useSortedClasses": "info"
       }
     }
   },
   "formatter": {
-    "enabled": true,
-    "include": [
+    "includes": [
       "**",
       "!**/node_modules/**",
       "!**/dist/**",
@@ -74,6 +75,7 @@
       "!packages/benchmark/",
       "!packages/duck-orm-skitch/**"
     ],
+    "enabled": true,
     "formatWithErrors": false,
     "indentStyle": "space",
     "indentWidth": 2,
@@ -82,7 +84,7 @@
     "attributePosition": "multiline",
     "bracketSpacing": true
   },
-  "assists": {
+  "assist": {
     "enabled": true,
     "actions": {
       "source": {
@@ -91,9 +93,7 @@
     }
   },
   "javascript": {
-    "globals": [
-      "Global1"
-    ],
+    "globals": ["Global1"],
     "formatter": {
       "jsxQuoteStyle": "double",
       "quoteProperties": "asNeeded",
@@ -108,9 +108,7 @@
   },
   "overrides": [
     {
-      "include": [
-        "**/*.json"
-      ],
+      "includes": ["**/*.json"],
       "formatter": {
         "indentWidth": 2
       }

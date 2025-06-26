@@ -1,29 +1,22 @@
-"use client";
+'use client'
 
-import type { Root } from "@gentleduck/aria-feather/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "../popover/_popover";
+import type { Root } from '@gentleduck/aria-feather/dialog'
+import { Popover, PopoverContent, PopoverTrigger } from '../popover/_popover'
 
 function HoverCard({
-	hoverable = true,
-	popover = true,
-	delayDuration = 500,
-	...props
+  hoverable = true,
+  popover = true,
+  delayDuration = 500,
+  ...props
 }: React.ComponentPropsWithoutRef<typeof Root>) {
-	return (
-		<Popover
-			{...props}
-			hoverable={hoverable}
-			popover={popover}
-			delayDuration={delayDuration}
-		/>
-	);
+  return <Popover {...props} hoverable={hoverable} popover={popover} delayDuration={delayDuration} />
 }
 
-const HoverCardTrigger = PopoverTrigger;
+const HoverCardTrigger = PopoverTrigger
 
-const HoverCardContent = PopoverContent;
+const HoverCardContent = PopoverContent
 
-export { HoverCard, HoverCardTrigger, HoverCardContent };
+export { HoverCard, HoverCardTrigger, HoverCardContent }
 
 // PopoverWrapper Component
 // export interface PopoverWrapperProps {

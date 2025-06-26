@@ -1,60 +1,48 @@
-"use client";
+'use client'
 
-import { useDialogContext } from "@gentleduck/aria-feather/dialog";
-import { Root } from "@gentleduck/aria-feather/popover";
-import { cn } from "@gentleduck/libs/cn";
-import { AnimPopoverVariants } from "@gentleduck/motion/anim";
-import type { VariantProps } from "@gentleduck/variants";
-import type * as React from "react";
-import {
-	DialogContentPrimitive,
-	type DialogContentProps,
-	DialogTrigger,
-} from "../dialog";
+import { useDialogContext } from '@gentleduck/aria-feather/dialog'
+import { Root } from '@gentleduck/aria-feather/popover'
+import { cn } from '@gentleduck/libs/cn'
+import { AnimPopoverVariants } from '@gentleduck/motion/anim'
+import type { VariantProps } from '@gentleduck/variants'
+import type * as React from 'react'
+import { DialogContentPrimitive, type DialogContentProps, DialogTrigger } from '../dialog'
 
-function Popover({
-	hoverable = false,
-	popover = true,
-	...props
-}: React.ComponentPropsWithoutRef<typeof Root>) {
-	return <Root {...props} hoverable={hoverable} popover={popover} />;
+function Popover({ hoverable = false, popover = true, ...props }: React.ComponentPropsWithoutRef<typeof Root>) {
+  return <Root {...props} hoverable={hoverable} popover={popover} />
 }
 
-const PopoverTrigger = DialogTrigger;
+const PopoverTrigger = DialogTrigger
 
 function PopoverContent({
-	children,
-	className,
-	side = "bottom",
-	sideOffset = 4,
-	align = "default",
-	...props
+  children,
+  className,
+  side = 'bottom',
+  sideOffset = 4,
+  align = 'default',
+  ...props
 }: DialogContentProps &
-	VariantProps<typeof AnimPopoverVariants> & {
-		sideOffset: number | string;
-	}): React.JSX.Element {
-	const { id } = useDialogContext();
-	return (
-		<DialogContentPrimitive
-			style={
-				{
-					"--position-anchor": `--${id}`,
-					"--sideOffset": `${sideOffset}px`,
-				} as React.CSSProperties
-			}
-			overlay="nothing"
-			className={cn(
-				AnimPopoverVariants({ side: side, align: align }),
-				className,
-			)}
-			{...props}
-		>
-			{children}
-		</DialogContentPrimitive>
-	);
+  VariantProps<typeof AnimPopoverVariants> & {
+    sideOffset: number | string
+  }): React.JSX.Element {
+  const { id } = useDialogContext()
+  return (
+    <DialogContentPrimitive
+      style={
+        {
+          '--position-anchor': `--${id}`,
+          '--sideOffset': `${sideOffset}px`,
+        } as React.CSSProperties
+      }
+      overlay="nothing"
+      className={cn(AnimPopoverVariants({ side: side, align: align }), className)}
+      {...props}>
+      {children}
+    </DialogContentPrimitive>
+  )
 }
 
-export { Popover, PopoverTrigger, PopoverContent };
+export { Popover, PopoverTrigger, PopoverContent }
 
 // PopoverWrapper Component
 // export interface PopoverWrapperProps {

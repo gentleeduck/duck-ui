@@ -27,7 +27,10 @@ function AlertDialogContent({
   const { open, ref } = useDialogContext()
 
   return (
-    <dialog ref={ref} {...props} className={cn(AnimVariants(), AnimDialogVariants(), AnimDialogModalVariants(), className)}>
+    <dialog
+      ref={ref}
+      {...props}
+      className={cn(AnimVariants(), AnimDialogVariants(), AnimDialogModalVariants(), className)}>
       <ShouldRender ref={ref} once={renderOnce} open={open}>
         <div className="content-wrapper">
           <DialogClose />

@@ -1,9 +1,8 @@
+import { useComputedTimeoutTransition } from '@gentleduck/hooks'
 import React from 'react'
 import { Slot } from '../slot'
 import { useDialog, useDialogContext } from './dialog.hooks'
 import { DialogContextType, DialogProps } from './dialog.types'
-import { useComputedTimeoutTransition } from '@gentleduck/hooks'
-
 
 /**
  * Context for managing the open state of the dialog.

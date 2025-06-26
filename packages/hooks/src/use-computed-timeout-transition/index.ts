@@ -1,11 +1,10 @@
 export function useComputedTimeoutTransition(element: HTMLElement | null, callback: () => void, timeout: number = 300) {
   let duration = timeout
-  
+
   if (!element) {
     const timer = setTimeout(callback, timeout)
     return () => clearTimeout(timer)
   }
-
 
   try {
     if (element.isConnected && element.style.transitionDuration !== undefined) {
@@ -18,11 +17,11 @@ export function useComputedTimeoutTransition(element: HTMLElement | null, callba
       }
     }
   } catch (error) {
-    console.error("ComputedTimeout:", error)
+    console.error('ComputedTimeout:', error)
     duration = timeout
   }
 
   const timer = setTimeout(callback, duration)
-  
+
   return () => clearTimeout(timer)
 }

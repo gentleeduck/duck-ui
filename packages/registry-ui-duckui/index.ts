@@ -96,26 +96,29 @@ const components: Record<
   carousel: {},
   resizable: {},
 
-  dropdownMenu: {},
-  menuBar: {},
-  select: {},
   breadcrumb: {},
   inputOTP: {},
   progress: {},
   toggle: {},
   toggleGroup: {},
-  slider: {},
   collapsible: {},
+
+  select: {},
+  dropdownMenu: {},
+  menuBar: {},
+
+  slider: {},
   accordion: {},
 
-  upload: {},
-
   popover: {},
-  combobox: {},
   hoverCard: {},
   tooltip: {},
+
   navigationMenu: {},
   contextMenu: {},
+
+  combobox: {},
+  upload: {},
 
   drawer: {},
   sheet: {},

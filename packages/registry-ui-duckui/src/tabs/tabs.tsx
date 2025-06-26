@@ -1,7 +1,7 @@
 'use client'
 
-import * as React from 'react'
 import { cn } from '@gentleduck/libs/cn'
+import * as React from 'react'
 
 export function useTabs() {
   const context = React.useContext(TabsContext)
@@ -39,7 +39,7 @@ const TabsList = ({ className, ref, ...props }: TabsListProps) => (
     ref={ref}
     role="tablist"
     className={cn(
-      'inline-flex gap-2 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground',
+      'inline-flex items-center justify-center gap-2 rounded-md bg-muted p-1 text-muted-foreground',
       className,
     )}
     {...props}
@@ -66,7 +66,7 @@ const TabsTrigger = ({ className, children, defaultChecked, onClick, value, ref,
       aria-controls={`panel-${value}`}
       tabIndex={isActive ? 0 : -1}
       className={cn(
-        'relative inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 has-checked:bg-background has-checked:text-foreground has-checked:shadow',
+        'relative inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 font-medium text-sm ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 has-checked:bg-background has-checked:text-foreground has-checked:shadow',
         className,
       )}
       {...props}
@@ -76,7 +76,7 @@ const TabsTrigger = ({ className, children, defaultChecked, onClick, value, ref,
         type="radio"
         name="tab"
         value={value}
-        className="appearance-none absolute inset-0"
+        className="absolute inset-0 appearance-none"
         onChange={() => setActiveItem(value)}
         checked={isActive}
         defaultChecked={defaultChecked}
@@ -110,7 +110,7 @@ const TabsContent = ({ className, value, ref, ...props }: TabsContentProps) => {
       tabIndex={0}
       hidden={activeItem !== value}
       className={cn(
-        'list-none mt-2 ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'mt-2 list-none ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         activeItem === value ? 'block' : 'hidden',
         className,
       )}

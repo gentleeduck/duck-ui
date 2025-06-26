@@ -42,8 +42,8 @@
   aspect-ratio: 1;
   border-radius: 50%;
   box-shadow: 0 0 0 var(--_b, var(--l)) inset var(--_c);
-  border-image: linear-gradient(90deg, var(--_c) 50%, #ababab 0) 0 1 / calc(50% - var(--l) / 2) 100vw / 0
-    calc(100vw + var(--g));
+  border-image:
+    linear-gradient(90deg, var(--_c) 50%, #ababab 0) 0 1 / calc(50% - var(--l) / 2) 100vw / 0 calc(100vw + var(--g));
   -webkit-appearance: none;
   appearance: none;
   transition: 0.3s;
@@ -58,8 +58,8 @@
   background: none;
   border-radius: 50%;
   box-shadow: 0 0 0 var(--_b, var(--l)) inset var(--_c);
-  border-image: linear-gradient(90deg, var(--_c) 50%, #ababab 0) 0 1 / calc(50% - var(--l) / 2) 100vw / 0
-    calc(100vw + var(--g));
+  border-image:
+    linear-gradient(90deg, var(--_c) 50%, #ababab 0) 0 1 / calc(50% - var(--l) / 2) 100vw / 0 calc(100vw + var(--g));
   -moz-appearance: none;
   appearance: none;
   transition: 0.3s;

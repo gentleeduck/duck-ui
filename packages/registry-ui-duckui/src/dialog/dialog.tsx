@@ -1,8 +1,8 @@
+import DialogPrimitive, { ShouldRender, useDialogContext, useOverlayClose } from '@gentleduck/aria-feather/dialog'
 import { cn } from '@gentleduck/libs/cn'
 import { AnimDialogModalVariants, AnimDialogVariants, AnimVariants } from '@gentleduck/motion/anim'
 import { X } from 'lucide-react'
 import React from 'react'
-import DialogPrimitive, { ShouldRender, useDialogContext, useOverlayClose } from '@gentleduck/aria-feather/dialog'
 import { Button } from '../button'
 import './style.css'
 
@@ -42,10 +42,10 @@ function DialogClose({
       type="button"
       aria-label="close"
       className={cn(
-        'absolute ltr:right-3 rtl:left-3 top-3 text-accent-foreground size-4 cursor-pointer opacity-70 rounded hover:opacity-100 transition-all',
+        'absolute top-3 size-4 cursor-pointer rounded text-accent-foreground opacity-70 transition-all hover:opacity-100 ltr:right-3 rtl:left-3',
         className,
       )}
-      onClick={() => onOpenChange(false)}>
+      onClick={() => onOpenChange?.(false)}>
       {children ?? <X aria-hidden size={size} />}
     </button>
   )
@@ -63,7 +63,11 @@ function DialogContent({
   const closeOverlay = useOverlayClose()
 
   return (
-    <dialog ref={ref} className={cn(AnimVariants(), AnimDialogVariants(), AnimDialogModalVariants(), className)} onClick={closeOverlay} {...props}>
+    <dialog
+      ref={ref}
+      className={cn(AnimVariants(), AnimDialogVariants(), AnimDialogModalVariants(), className)}
+      onClick={closeOverlay}
+      {...props}>
       <ShouldRender ref={ref} once={renderOnce} open={open}>
         <div className="content-wrapper">
           <DialogClose />

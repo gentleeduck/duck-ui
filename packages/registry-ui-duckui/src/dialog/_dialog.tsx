@@ -1,121 +1,98 @@
-import DialogPrimitive, {
-	useDialogContext,
-} from "@gentleduck/aria-feather/dialog";
-import { cn } from "@gentleduck/libs/cn";
-import {
-	AnimDialogModalVariants,
-	AnimDialogVariants,
-	AnimVariants,
-} from "@gentleduck/motion/anim";
-import type { VariantProps } from "@gentleduck/variants";
-import { X } from "lucide-react";
-import type React from "react";
-import { Button } from "../button";
+import DialogPrimitive, { useDialogContext } from '@gentleduck/aria-feather/dialog'
+import { cn } from '@gentleduck/libs/cn'
+import { AnimDialogModalVariants, AnimDialogVariants, AnimVariants } from '@gentleduck/motion/anim'
+import type { VariantProps } from '@gentleduck/variants'
+import { X } from 'lucide-react'
+import type React from 'react'
+import { Button } from '../button'
 
-function Dialog({
-	closeButton = true,
-	...props
-}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>) {
-	return <DialogPrimitive.Root closeButton={closeButton} {...props} />;
+function Dialog({ closeButton = true, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>) {
+  return <DialogPrimitive.Root closeButton={closeButton} {...props} />
 }
 
 function DialogTrigger({
-	children,
-	asChild,
-	...props
-}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Trigger> &
-	React.ComponentPropsWithoutRef<typeof Button>) {
-	return (
-		<DialogPrimitive.Trigger>
-			<Button {...props} asChild={asChild}>
-				{children}
-			</Button>
-		</DialogPrimitive.Trigger>
-	);
+  children,
+  asChild,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Trigger> & React.ComponentPropsWithoutRef<typeof Button>) {
+  return (
+    <DialogPrimitive.Trigger>
+      <Button {...props} asChild={asChild}>
+        {children}
+      </Button>
+    </DialogPrimitive.Trigger>
+  )
 }
 
 function DialogClose({
-	ref,
-	size = 16,
-	children,
-	className,
-	...props
+  ref,
+  size = 16,
+  children,
+  className,
+  ...props
 }: React.HTMLProps<HTMLButtonElement> & {
-	size?: number;
+  size?: number
 }): React.JSX.Element {
-	const { onOpenChange } = useDialogContext();
+  const { onOpenChange } = useDialogContext()
 
-	return (
-		<button
-			{...props}
-			ref={ref}
-			type="button"
-			aria-label="close"
-			className={cn(
-				"absolute inset-x-3 top-3 text-accent-foreground size-4 cursor-pointer opacity-70 rounded hover:opacity-100 transition-all",
-				className,
-			)}
-			onClick={() => onOpenChange?.(false)}
-		>
-			{children ?? <X aria-hidden size={size} />}
-		</button>
-	);
+  return (
+    <button
+      {...props}
+      ref={ref}
+      type="button"
+      aria-label="close"
+      className={cn(
+        'absolute inset-x-3 top-3 size-4 cursor-pointer rounded text-accent-foreground opacity-70 transition-all hover:opacity-100',
+        className,
+      )}
+      onClick={() => onOpenChange?.(false)}>
+      {children ?? <X aria-hidden size={size} />}
+    </button>
+  )
 }
 
 export interface DialogContentProps
-	extends React.HTMLProps<HTMLDialogElement>,
-		VariantProps<typeof AnimVariants>,
-		VariantProps<typeof AnimDialogVariants> {
-	renderOnce?: boolean;
-	sideOffset: number;
-	closedby: "any" | "closerequest" | "none";
+  extends React.HTMLProps<HTMLDialogElement>,
+    VariantProps<typeof AnimVariants>,
+    VariantProps<typeof AnimDialogVariants> {
+  renderOnce?: boolean
+  sideOffset?: number
+  closedby?: 'any' | 'closerequest' | 'none'
 }
 
 export function DialogContentPrimitive({
-	children,
-	className,
-	renderOnce,
-	overlay = "default",
-	closedby = "any",
-	animation = "default",
-	...props
+  children,
+  className,
+  renderOnce,
+  overlay = 'default',
+  closedby = 'any',
+  animation = 'default',
+  ...props
 }: DialogContentProps) {
-	const { ref, closeButton, modal, id } = useDialogContext();
+  const { ref, closeButton, modal, id } = useDialogContext()
+  const prop = { props, closedby }
 
-	return (
-		<dialog
-			ref={ref}
-			id={id}
-			popover={modal ? undefined : "auto"}
-			closedby={closedby}
-			className={cn(
-				AnimVariants({ overlay: overlay }),
-				AnimDialogVariants({ animation: animation }),
-				className,
-			)}
-			{...props}
-		>
-			{/* <ShouldRender ref={ref} once={renderOnce} open={open}> */}
-			{closeButton && <DialogClose />}
-			{children}
-			{/* </ShouldRender> */}
-		</dialog>
-	);
+  return (
+    <dialog
+      ref={ref}
+      id={id}
+      popover={modal ? undefined : 'auto'}
+      className={cn(AnimVariants({ overlay: overlay }), AnimDialogVariants({ animation: animation }), className)}
+      {...prop}>
+      {/* <ShouldRender ref={ref} once={renderOnce} open={open}> */}
+      {closeButton && <DialogClose />}
+      {children}
+      {/* </ShouldRender> */}
+    </dialog>
+  )
 }
 
-function DialogContent({
-	children,
-	className,
-	...props
-}: DialogContentProps): React.JSX.Element {
-	return (
-		<DialogContentPrimitive
-			className={cn(AnimDialogModalVariants(), className)}
-			{...props}
-		>
-			{children}
-		</DialogContentPrimitive>
-	);
+function DialogContent({ children, className, ...props }: DialogContentProps): React.JSX.Element {
+  return (
+    <DialogContentPrimitive className={cn(AnimDialogModalVariants(), className)} {...props}>
+      {children}
+    </DialogContentPrimitive>
+  )
 }
 
 /**
@@ -132,18 +109,8 @@ function DialogContent({
  *
  * @returns {JSX.Element} The rendered DialogHeader component.
  */
-function DialogHeader({
-	className,
-	ref,
-	...props
-}: React.HTMLProps<HTMLDivElement>): React.JSX.Element {
-	return (
-		<div
-			ref={ref}
-			className={cn("flex flex-col space-y-1.5 text-end", className)}
-			{...props}
-		/>
-	);
+function DialogHeader({ className, ref, ...props }: React.HTMLProps<HTMLDivElement>): React.JSX.Element {
+  return <div ref={ref} className={cn('flex flex-col space-y-1.5 text-end', className)} {...props} />
 }
 
 /**
@@ -160,21 +127,14 @@ function DialogHeader({
  *
  * @returns {React.JSX.Element} The rendered DialogFooter component.
  */
-function DialogFooter({
-	className,
-	ref,
-	...props
-}: React.HTMLProps<HTMLDivElement>): React.JSX.Element {
-	return (
-		<div
-			ref={ref}
-			className={cn(
-				"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-				className,
-			)}
-			{...props}
-		/>
-	);
+function DialogFooter({ className, ref, ...props }: React.HTMLProps<HTMLDivElement>): React.JSX.Element {
+  return (
+    <div
+      ref={ref}
+      className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2', className)}
+      {...props}
+    />
+  )
 }
 
 /**
@@ -189,21 +149,8 @@ function DialogFooter({
  *
  * @returns {React.JSX.Element} The rendered `DialogTitle` component with forwarded ref and applied props.
  */
-function DialogTitle({
-	className,
-	ref,
-	...props
-}: React.HTMLProps<HTMLHeadingElement>): React.JSX.Element {
-	return (
-		<h2
-			ref={ref}
-			className={cn(
-				"text-lg font-semibold leading-none tracking-tight",
-				className,
-			)}
-			{...props}
-		/>
-	);
+function DialogTitle({ className, ref, ...props }: React.HTMLProps<HTMLHeadingElement>): React.JSX.Element {
+  return <h2 ref={ref} className={cn('font-semibold text-lg leading-none tracking-tight', className)} {...props} />
 }
 
 /**
@@ -217,25 +164,8 @@ function DialogTitle({
  *
  * @returns {React.JSX.Element} The rendered `DialogDescription` component with forwarded ref and applied class names.
  */
-const DialogDescription = ({
-	className,
-	ref,
-	...props
-}: React.HTMLProps<HTMLParagraphElement>): React.JSX.Element => (
-	<p
-		ref={ref}
-		className={cn("text-sm text-muted-foreground", className)}
-		{...props}
-	/>
-);
+const DialogDescription = ({ className, ref, ...props }: React.HTMLProps<HTMLParagraphElement>): React.JSX.Element => (
+  <p ref={ref} className={cn('text-muted-foreground text-sm', className)} {...props} />
+)
 
-export {
-	Dialog,
-	DialogTrigger,
-	DialogContent,
-	DialogHeader,
-	DialogFooter,
-	DialogTitle,
-	DialogDescription,
-	DialogClose,
-};
+export { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose }

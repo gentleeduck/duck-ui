@@ -1,1 +1,1 @@
-export * from './_select'
+export * from './select'

@@ -25,11 +25,12 @@ const SheetClose = SheetTrigger;
 const SheetContent = ({
 	className,
 	children,
+  animation,
 	side = "right",
 	...props
 }: DialogContentProps): React.JSX.Element => {
 	return (
-		<DialogContentPrimitive
+		<DialogContentPrimitive animation={"nothing"}
 			className={cn(AnimSheetVariants({ side: side }), className)}
 			{...props}
 		>

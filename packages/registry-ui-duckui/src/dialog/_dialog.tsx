@@ -64,7 +64,8 @@ function DialogClose({
 
 export interface DialogContentProps
 	extends React.HTMLProps<HTMLDialogElement>,
-		VariantProps<typeof AnimVariants> {
+		VariantProps<typeof AnimVariants>,
+		VariantProps<typeof AnimDialogVariants> {
 	renderOnce?: boolean;
 	closedby: "any" | "closerequest" | "none";
 }
@@ -75,6 +76,7 @@ export function DialogContentPrimitive({
 	renderOnce,
 	overlay = "default",
 	closedby = "any",
+	animation= "default",
 	...props
 }: DialogContentProps) {
 	const { ref, closeButton, modal, id } = useDialogContext();
@@ -87,7 +89,7 @@ export function DialogContentPrimitive({
 			closedby={closedby}
 			className={cn(
 				AnimVariants({ overlay: overlay }),
-				AnimDialogVariants(),
+				AnimDialogVariants({ animation: animation }),
 				className,
 			)}
 			{...props}

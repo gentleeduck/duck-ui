@@ -14,7 +14,7 @@ import { DialogContentPrimitive, type DialogContentProps } from "../dialog";
 
 function Popover({
 	hoverable = false,
-	modal = true,
+	modal = false,
 	...props
 }: React.ComponentPropsWithoutRef<typeof Root>) {
 	return <Root {...props} hoverable={hoverable} modal={modal} />;
@@ -38,8 +38,6 @@ function PopoverTrigger({
 	);
 }
 
-// FIX: When i click on the sec trigger in a group of two triggers the click close the opened one
-// it should close the other and proceed with click action on the current button i am attempting to
 // click.
 // FIX: the tooltip in general i want it identical (e.g., animation, timing).
 // FIX: the hoverCard in general i want it identical (e.g., animation, timing).

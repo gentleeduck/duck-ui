@@ -25,40 +25,48 @@ export function useDialog({
 	const [open, setOpen] = React.useState<boolean>(openProp ?? false);
 
 	function handleOpenChange(state: boolean) {
+		const dialog = dialogRef.current;
+		if (!dialog) return;
+
 		try {
-			const dialog = dialogRef.current;
-			if (!dialog) return;
-			if (state) {
-				modal ? dialog.showModal() : dialog.showPopover();
+			if (modal) {
+				state ? dialog.showModal() : dialog.close();
 			} else {
-				modal ? dialog.close() : dialog.hidePopover();
+				requestAnimationFrame(() => {
+					state ? dialog.showPopover() : dialog.hidePopover();
+				});
 			}
-			setOpen(state);
-			onOpenChange?.(state);
 		} catch (e) {
 			console.warn("Dialog failed to toggle", e);
 		}
+
+		setOpen(state);
+		onOpenChange?.(state);
 	}
 
 	React.useEffect(() => {
 		const dialog = dialogRef.current;
 		const trigger = triggerRef.current;
-		// if (!dialog) return;
-		// if (!trigger) return;
 
 		if (lockScroll) lockScrollbar(open);
 
-		if (openProp) {
-			handleOpenChange(true);
-		} else if (openProp === false) {
-			handleOpenChange(false);
-		}
-		function dialogClose() {
-			handleOpenChange(false);
+		if (openProp !== undefined && openProp !== open) {
+			handleOpenChange(openProp);
 		}
 
-		dialog?.addEventListener("close", dialogClose);
-		dialog?.addEventListener("beforetoggle", dialogClose);
+		function handleClose(event) {
+			if (modal) {
+				handleOpenChange(false);
+			} else {
+				const newState = event.newState === "open";
+				handleOpenChange(newState);
+			}
+		}
+
+		dialog?.addEventListener("close", handleClose);
+		if (!modal) {
+			dialog?.addEventListener("beforetoggle", handleClose);
+		}
 
 		let openTimer = null;
 		let closeTimer = null;
@@ -73,7 +81,6 @@ export function useDialog({
 			closeTimer = setTimeout(() => handleOpenChange(false), skipDelayDuration);
 		}
 
-		// TODO: focus visible not working and if applied it leads to random UI rendering
 		if (hoverable) {
 			[trigger, dialog].forEach((elm) => {
 				elm?.addEventListener("mouseover", openAfterDelay);
@@ -82,9 +89,10 @@ export function useDialog({
 		}
 
 		return () => {
-			dialog?.removeEventListener("close", dialogClose);
-			dialog?.removeEventListener("beforetoggle", dialogClose);
-
+			dialog?.removeEventListener("close", handleClose);
+			if (!modal) {
+				dialog?.removeEventListener("beforetoggle", handleClose);
+			}
 			if (hoverable) {
 				[trigger, dialog].forEach((elm) => {
 					elm?.removeEventListener("mouseover", openAfterDelay);
@@ -93,7 +101,16 @@ export function useDialog({
 			}
 			cleanLockScrollbar();
 		};
-	}, [handleOpenChange, open, openProp]);
+	}, [
+		open,
+		openProp,
+		lockScroll,
+		hoverable,
+		delayDuration,
+		skipDelayDuration,
+		onOpenChange,
+		modal,
+	]);
 
 	return {
 		triggerRef,

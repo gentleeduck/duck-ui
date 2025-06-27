@@ -10,10 +10,6 @@ import {
   SheetTrigger,
 } from '../sheet'
 
-export interface SheetContentProps extends React.HTMLProps<HTMLDialogElement> {
-  side?: 'left' | 'right'
-}
-
 /**
  * A wrapper component for the [Radix UI Sheet](https://www.radix-ui.com/docs/primitives/components/sheet)
  */

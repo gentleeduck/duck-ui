@@ -1,7 +1,7 @@
 export function lockScrollbar(isLocked: boolean) {
   const { documentElement, body } = document
 
-  documentElement.style.scrollbarGutter = 'stable'
+  // documentElement.style.scrollbarGutter = 'stable'
   body.style.overflow = isLocked ? 'hidden' : 'auto'
 }
 

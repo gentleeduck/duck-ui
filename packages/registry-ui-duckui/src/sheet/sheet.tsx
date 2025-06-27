@@ -1,47 +1,50 @@
 'use client'
 
-// import { sheetVariants } from './sheet.constants'
-// import { SheetContentProps, SheetWrapperProps } from './sheet.types'
+import DialogPrimitive from '@gentleduck/aria-feather/dialog'
 import { cn } from '@gentleduck/libs/cn'
+import { AnimDialogVariants, AnimSheetVariants, AnimVariants } from '@gentleduck/motion/anim'
+import { VariantProps } from '@gentleduck/variants'
 import React from 'react'
-import { AnimSheetVariants, AnimVariants } from '@gentleduck/motion/anim'
-import DialogPrimitive, { ShouldRender, useDialogContext, useOverlayClose } from '@gentleduck/aria-feather/dialog'
-import { DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../dialog'
+import {
+  DialogClose,
+  DialogContentProps,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../dialog'
 
-const Sheet = DialogPrimitive.Root
+function Sheet({ closeButton = true, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>) {
+  return <DialogPrimitive.Root closeButton={closeButton} {...props} />
+}
 
 const SheetTrigger = DialogTrigger
 
 const SheetClose = SheetTrigger
 
-const SheetContent = ({
+function SheetContent({
   children,
   className,
-  renderOnce,
+  renderOnce = false,
+  overlay = 'default',
+  closedby = 'any',
   side = 'right',
   ...props
-}: React.HTMLProps<HTMLDialogElement> & {
-  renderOnce?: boolean
-  side?: 'left' | 'right' | 'top' | 'bottom'
-}): React.JSX.Element => {
-  const { open, ref } = useDialogContext()
-  const closeOverlay = useOverlayClose()
-
+}: DialogContentProps & VariantProps<typeof AnimSheetVariants>): React.JSX.Element {
   return (
-    <>
-      <dialog
-        ref={ref}
-        className={cn(AnimVariants(), AnimSheetVariants({ side: side }), className)}
-        onClick={closeOverlay}
-        {...props}>
-        <ShouldRender ref={ref} once={renderOnce} open={open}>
-          <div className="content-wrapper">
-            <DialogClose />
-            {children}
-          </div>
-        </ShouldRender>
-      </dialog>
-    </>
+    <DialogPrimitive.Content
+      dialogClose={DialogClose}
+      className={cn(
+        AnimVariants({ overlay: overlay }),
+        AnimDialogVariants({ animation: 'nothing' }),
+        AnimSheetVariants({ side: side }),
+        className,
+        'overflow-hidden rounded-none',
+      )}
+      {...props}>
+      <div className="flex flex-col gap-4">{children}</div>
+    </DialogPrimitive.Content>
   )
 }
 

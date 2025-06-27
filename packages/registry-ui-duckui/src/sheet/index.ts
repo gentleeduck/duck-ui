@@ -1,2 +1,2 @@
-export * from './_sheet'
+export * from './sheet'
 export * from './sheet.types'

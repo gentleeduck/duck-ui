@@ -18,7 +18,6 @@
   "devDependencies": {
     "@ahmedayob/duck-shortcut": "^0.0.2",
     "@gentleduck/aria-feather": "workspace:*",
-    "@gentleduck/vim": "workspace:*",
     "@gentleduck/hooks": "workspace:*",
     "@gentleduck/vim": "workspace:*",
     "@gentleduck/lazy": "workspace:*",

@@ -1,3 +1,4 @@
+// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@gentleduck/registry-ui-duckui/tooltip'
 
 export default function TooltipDemo() {
@@ -9,4 +10,6 @@ export default function TooltipDemo() {
       </TooltipContent>
     </Tooltip>
   )
+  // <TooltipProvider delayDuration={0}>
+  // </TooltipProvider>
 }

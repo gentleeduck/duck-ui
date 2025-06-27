@@ -1,55 +1,32 @@
 'use client'
 
 import { cn } from '@gentleduck/libs/cn'
-import * as React from 'react'
-import { Button } from '../button'
-import { hoverCardVariants } from './hover-card.constants'
-import { HoverCardContentProps, HoverCardProps, HoverCardTriggerProps } from './hover-card.types'
+import { Popover, PopoverContent, PopoverTrigger } from '../popover'
 
 function HoverCard({
+  hoverable = true,
+  skipDelayDuration = 0,
   delayDuration = 500,
-  sideOffset = 4,
-  open = false,
-  className,
-  style,
-  size,
   ...props
-}: HoverCardProps) {
+}: React.ComponentPropsWithRef<typeof Popover>) {
   return (
-    <div
-      data-method={open ? 'forced' : 'hover'}
-      className={cn('whitespace-nowrap group/hover-card relative', className)}
-      style={
-        {
-          '--hover-card-delay': `${delayDuration}ms`,
-          '--side-offset': `${sideOffset}px`,
-          ...style,
-        } as React.CSSProperties
-      }
-      {...props}
-    />
+    <Popover hoverable={hoverable} skipDelayDuration={skipDelayDuration} delayDuration={delayDuration} {...props} />
   )
 }
 
-function HoverCardTrigger({ onClick, ...props }: HoverCardTriggerProps) {
-  return <Button {...props} />
-}
+const HoverCardTrigger = PopoverTrigger
 
-const HoverCardContent = ({
-  position = 'center',
-  variant,
+function HoverCardContent({
   className,
-  showArrow = false,
-  ref,
+  children,
+  side = 'top',
   ...props
-}: HoverCardContentProps) => (
-  <div
-    ref={ref}
-    role="hover-card"
-    className={cn(hoverCardVariants({ variant, position }), className)}
-    data-side={position}
-    {...props}
-  />
-)
+}: React.ComponentPropsWithRef<typeof PopoverContent>): React.JSX.Element {
+  return (
+    <PopoverContent side={side as never} role="tooltip" className={cn('max-w-[20rem]', className)} {...props}>
+      {children}
+    </PopoverContent>
+  )
+}
 
 export { HoverCard, HoverCardTrigger, HoverCardContent }

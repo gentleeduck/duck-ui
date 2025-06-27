@@ -79,7 +79,6 @@ const components: Record<
   separator: {},
   portal: {},
   radioGroup: {},
-  dialog: {},
   tabs: {},
   skeleton: {},
   card: {},
@@ -96,6 +95,13 @@ const components: Record<
   carousel: {},
   resizable: {},
 
+  dialog: {},
+  sheet: {},
+  alertDialog: {},
+  popover: {},
+  hoverCard: {},
+  tooltip: {},
+
   breadcrumb: {},
   inputOTP: {},
   progress: {},
@@ -110,10 +116,6 @@ const components: Record<
   slider: {},
   accordion: {},
 
-  popover: {},
-  hoverCard: {},
-  tooltip: {},
-
   navigationMenu: {},
   contextMenu: {},
 
@@ -121,6 +123,4 @@ const components: Record<
   upload: {},
 
   drawer: {},
-  sheet: {},
-  alertDialog: {},
 }

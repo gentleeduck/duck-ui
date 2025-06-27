@@ -1,3 +1,17 @@
+import { AnimDialogVariants, AnimVariants } from '@gentleduck/motion/anim'
+import { VariantProps } from '@gentleduck/variants'
+import {
+  Dialog,
+  DialogClose,
+  DialogCloseProps,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from '@radix-ui/react-dialog'
+import { UseDuckAlertReturnType } from '../alert-dialog/alert-dialog.types'
+import { DialogFooter, DialogHeader } from './dialog'
+
 export interface DialogContextType {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -10,17 +24,14 @@ export type DialogProps = {
   onOpenChange?: (open: boolean) => void
 }
 
-import {
-  Dialog,
-  DialogClose,
-  DialogCloseProps,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from '@radix-ui/react-dialog'
-import { UseDuckAlertReturnType } from '../alert-dialog/alert-dialog.types'
-import { DialogFooter, DialogHeader } from './dialog'
+export interface DialogContentProps
+  extends React.HTMLProps<HTMLDialogElement>,
+    VariantProps<typeof AnimVariants>,
+    VariantProps<typeof AnimDialogVariants> {
+  renderOnce?: boolean
+  sideOffset?: number
+  closedby?: 'any' | 'closerequest' | 'none'
+}
 
 /**
  * DialogResponsiveProps

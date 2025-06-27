@@ -1,12 +1,21 @@
-import { useComputedTimeoutTransition } from '@gentleduck/hooks'
+import { useComputedTimeoutTransition, useStableId } from '@gentleduck/hooks'
+import { apply as applyClosedBy, isSupported as isClosedBySupported } from 'dialog-closedby-polyfill'
+import { apply as applyInvokers, isSupported as isInvokersSupported } from 'invokers-polyfill/fn'
 import React from 'react'
 import { Slot } from '../slot'
 import { useDialog, useDialogContext } from './dialog.hooks'
-import { DialogContextType, DialogProps } from './dialog.types'
+import type { DialogContentProps, DialogContextType, DialogProps } from './dialog.types'
+
+if (!isClosedBySupported()) {
+  applyClosedBy()
+}
+
+if (!isInvokersSupported()) {
+  applyInvokers()
+}
 
 /**
  * Context for managing the open state of the dialog.
- *
  */
 export const DialogContext = React.createContext<DialogContextType | null>(null)
 
@@ -14,15 +23,38 @@ export const DialogContext = React.createContext<DialogContextType | null>(null)
  * Dialog component that provides a context for managing its open state and
  * behavior. It uses a ref to handle the underlying HTMLDialogElement.
  */
-export function Root({ children, open: openProp, onOpenChange }: DialogProps): React.JSX.Element {
-  const { open, onOpenChange: _onOpenChange, ref } = useDialog(openProp, onOpenChange)
+export function Root({
+  children,
+  open: openProp,
+  onOpenChange,
+  lockScroll = true,
+  modal = true,
+  closeButton = false,
+}: DialogProps): React.JSX.Element {
+  const {
+    open,
+    onOpenChange: _onOpenChange,
+    ref,
+    triggerRef,
+  } = useDialog({
+    open: openProp,
+    onOpenChange,
+    lockScroll,
+    modal,
+  })
+  const id = useStableId()
 
   return (
     <DialogContext.Provider
       value={{
-        open: open,
+        open,
         onOpenChange: _onOpenChange,
         ref,
+        triggerRef,
+        id,
+        modal,
+        closeButton,
+        lockScroll,
       }}>
       {children}
     </DialogContext.Provider>
@@ -35,18 +67,44 @@ export function Trigger({
   ...props
 }: React.ComponentPropsWithRef<typeof Slot> & {
   open?: boolean
-  asChild?: boolean
 }): React.JSX.Element {
-  const { onOpenChange, open: _open } = useDialogContext()
+  const { onOpenChange, open: _open, id, triggerRef } = useDialogContext()
 
   return (
     <Slot
+      ref={triggerRef as React.RefObject<HTMLDivElement>}
+      aria-haspopup="dialog"
+      aria-controls={id}
       onClick={(e) => {
         onOpenChange(open ?? !_open)
         onClick?.(e)
       }}
       {...props}
     />
+  )
+}
+
+export function Content({
+  children,
+  className,
+  renderOnce,
+  overlay = 'default',
+  closedby = 'any',
+  dialogClose,
+  animation = 'default',
+  ...props
+}: DialogContentProps) {
+  const { ref, closeButton, id } = useDialogContext()
+  const prop = { props, closedby }
+  const DialogClose = dialogClose
+
+  return (
+    <dialog className={className} {...prop} id={id} ref={ref}>
+      {/* <ShouldRender ref={ref} once={renderOnce} open={open}> */}
+      {closeButton && <DialogClose />}
+      {children}
+      {/* </ShouldRender> */}
+    </dialog>
   )
 }
 
@@ -89,4 +147,5 @@ export function ShouldRender({
 export default {
   Root,
   Trigger,
+  Content,
 }

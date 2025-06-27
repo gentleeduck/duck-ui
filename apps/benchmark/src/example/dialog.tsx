@@ -13,19 +13,12 @@ function Dialog() {
     <>
       <DuckDialog />
       <ShadcnDialog />
-      <DuckAlertDialog />
-      <ShadcnAlertDialog />
       {/* <DuckDrawer side='bottom' /> */}
       {/* <DuckDrawer side='left' /> */}
       {/* <DuckDrawer side='right' /> */}
       {/* <DuckDrawer side="top" /> */}
       {/* <ShadcnDrawer /> */}
-      <DuckSheet side="bottom" />
-      <DuckSheet side="left" />
-      <DuckSheet side="right" />
-      <DuckSheet side="top" />
       {/* <DrawerExample /> */}
-      <ShadcnSheet />
     </>
   )
 }

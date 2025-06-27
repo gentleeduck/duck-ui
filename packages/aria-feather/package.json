@@ -43,6 +43,8 @@
     "invokers-polyfill": "^0.5.5"
   },
   "devDependencies": {
+    "@gentleduck/motion": "workspace:*",
+    "@gentleduck/variants": "workspace:*",
     "@changesets/cli": "catalog:",
     "@gentleduck/tsdown-config": "workspace:*",
     "@gentleduck/typescript-config": "workspace:*",

@@ -48,6 +48,7 @@
 // import DuckSeparatorExp from './duck/separator/experimental'
 // import ShadcnSeparator from './duck/separator/separator'
 
+import { KeyProvider } from '../../../packages/duck-vim/src/react/command'
 import Dialog from './example/dialog'
 import Dropdown from './example/dropdown'
 import HoverCard from './example/hover-card'
@@ -104,11 +105,11 @@ import Tooltip from './example/tooltip'
 
 function App() {
   return (
-    <div className="mx-10 flex h-screen flex-col items-center justify-center gap-4 my-[100vh]">
-      <Popover />
-      <Tooltip />
-      <HoverCard />
-    </div>
+    <KeyProvider timeoutMs={100}>
+      <div className="mx-10 flex h-screen flex-col items-center justify-center gap-4 my-[0vh]">
+        <Select />
+      </div>
+    </KeyProvider>
   )
 }
 

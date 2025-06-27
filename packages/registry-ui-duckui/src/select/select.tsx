@@ -1,26 +1,14 @@
 'use client'
 
-import { useDialogContext } from '@gentleduck/aria-feather/dialog'
+import { usePopoverContext } from '@gentleduck/aria-feather/popover'
 import { cn } from '@gentleduck/libs/cn'
 import { CheckIcon, ChevronDown, ChevronDownIcon, ChevronUp } from 'lucide-react'
 import * as React from 'react'
-import { Button, buttonVariants } from '../button'
+import { Button } from '../button'
 import { useHandleKeyDown } from '../command'
-import { DropdownMenuContent, DropdownMenuTrigger } from '../dropdown-menu'
-import { Popover } from '../popover'
-// import { useHandleKeyDown } from '../command'
+import { Popover, PopoverContent, PopoverTrigger } from '../popover'
 import { useSelectInit, useSelectScroll } from './select.hooks'
-
-export interface SelectContextType {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  wrapperRef: React.RefObject<HTMLDivElement | null>
-  triggerRef: React.RefObject<HTMLDivElement | null>
-  contentRef: React.RefObject<HTMLDivElement | null>
-  groupsRef: React.RefObject<HTMLUListElement[] | null>
-  itemsRef: React.RefObject<HTMLLIElement[] | null>
-  selectedItem: HTMLLIElement | null
-}
+import { SelectContextType } from './select.types'
 
 export const SelectContext = React.createContext<SelectContextType | null>(null)
 export function useSelectContext() {
@@ -33,23 +21,21 @@ export function useSelectContext() {
 
 function SelectWrapper({
   children,
-  open,
   onOpenChange,
   ...props
 }: React.HTMLProps<HTMLDivElement> & {
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }) {
+  const { open = false } = usePopoverContext()
   const { itemsRef, selectedItemRef, contentRef, triggerRef, groupsRef, wrapperRef, selectedItem } = useSelectInit(
-    open ?? false,
+    open,
     onOpenChange,
   )
-  const { open: _open, onOpenChange: _onOpenChange } = useDialogContext()
 
-  useSelectScroll(itemsRef, selectedItemRef, contentRef)
-
-  // TODO: FIX: keyboard command crash's the app
+  useSelectScroll(open, itemsRef, selectedItemRef, contentRef)
   useHandleKeyDown(
+    open,
     itemsRef,
     (item) => {
       selectedItemRef.current = item
@@ -68,10 +54,9 @@ function SelectWrapper({
         itemsRef,
         contentRef,
         groupsRef,
-        open: open!, //?? _open!,
+        open: open,
         onOpenChange: () => {
-          // if (onOpenChange) onOpenChange(true)
-          // _onOpenChange?.(true)
+          onOpenChange?.(open)
         },
         triggerRef,
       }}>
@@ -82,17 +67,57 @@ function SelectWrapper({
   )
 }
 
-function Select({ children, ...props }: React.HTMLProps<HTMLDivElement>) {
+function Select({ children, ...props }: React.ComponentPropsWithRef<typeof Popover>) {
   return (
-    <Popover>
+    <Popover {...props}>
       <SelectWrapper {...props}>{children}</SelectWrapper>
     </Popover>
   )
 }
 
+function SelectTrigger({
+  children,
+  customIndicator,
+  variant = 'outline',
+  ref,
+  ...props
+}: React.ComponentPropsWithRef<typeof PopoverTrigger> & { customIndicator?: React.ReactNode }) {
+  const { triggerRef } = useSelectContext()
+  return (
+    <PopoverTrigger ref={triggerRef as never} variant={variant} {...props} duck-select-trigger="">
+      {children}
+      <span className="[&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:opacity-50">
+        {customIndicator ? customIndicator : <ChevronDownIcon />}
+      </span>
+    </PopoverTrigger>
+  )
+}
+
+function SelectContent({ children, className, ref, ...props }: React.ComponentPropsWithRef<typeof PopoverContent>) {
+  const { contentRef } = useSelectContext()
+  return (
+    <PopoverContent
+      side={'bottom'}
+      role="select"
+      // aria-activedescendant
+      className={cn('px-1.5 py-1', className)}
+      duck-select-content=""
+      {...props}
+      ref={contentRef as never}>
+      {
+        // <SelectScrollUpButton />
+        // <SelectScrollDownButton />
+      }
+      <div className="max-h-[400px] overflow-" duck-select-content-scrollable="">
+        {children}
+      </div>
+    </PopoverContent>
+  )
+}
+
 function SelectGroup({ children, ...props }: React.HTMLProps<HTMLUListElement>) {
   return (
-    <ul {...props} duck-select-group="">
+    <ul role="listbox" {...props}>
       {children}
     </ul>
   )
@@ -109,69 +134,6 @@ function SelectValue({ className, children, placeholder, ...props }: React.HTMLP
       duck-select-value="">
       {placeholder}
     </div>
-  )
-}
-
-function SelectTrigger({
-  children,
-  className,
-  customIndicator,
-  ref,
-  ...props
-}: React.HTMLProps<HTMLDivElement> & { customIndicator?: React.ReactNode }) {
-  const { triggerRef } = useSelectContext()
-  return (
-    <DropdownMenuTrigger ref={triggerRef} {...props} duck-dropdown-menu-trigger="">
-      {children}
-      <span className="[&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:opacity-50">
-        {customIndicator ? customIndicator : <ChevronDownIcon />}
-      </span>
-    </DropdownMenuTrigger>
-
-    // <div
-    //   className={cn(
-    //     buttonVariants({ variant: 'outline', size: 'sm' }),
-    //     'h-auto justify-between gap-1 font-normal data-[open=true]:bg-secondary data-[open=true]:text-accent-foreground ltr:pr-2 rtl:pl-2',
-    //     className,
-    //   )}>
-    // </div>
-  )
-}
-
-function SelectContent({
-  children,
-  className,
-  position = 'popper',
-  ref,
-  ...props
-}: React.HTMLProps<HTMLDivElement> & {
-  position?: 'popper'
-}) {
-  const { contentRef } = useSelectContext()
-  return (
-    <DropdownMenuContent>
-      <div
-        ref={contentRef}
-        className={cn(
-          'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative relative z-50 mt-1 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-y-auto overflow-x-hidden rounded-md bg-popover text-popover-foreground shadow-md data-[state=closed]:animate-out data-[state=open]:animate-in',
-          position === 'popper' &&
-            'data-[side=left]:-translate-x-1 data-[side=top]:-translate-y-1 data-[side=right]:translate-x-1 data-[side=bottom]:translate-y-1',
-          // 'h-fit',
-
-          className,
-        )}
-        {...props}
-        data-position={position}
-        duck-select-content="">
-        {
-          // <SelectScrollUpButton />
-          // <SelectScrollDownButton />
-        }
-        <div className="max-h-[400px] overflow-scroll" duck-select-content-scrollable="">
-          {children}
-        </div>
-      </div>
-    </DropdownMenuContent>
   )
 }
 

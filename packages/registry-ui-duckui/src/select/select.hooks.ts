@@ -1,33 +1,42 @@
 import React from 'react'
 import { initRefs } from './select.libs'
+import { dstyleItem, styleItem } from '../command'
 
 export function useSelectInit(open: boolean, onOpenChange?: (open: boolean) => void) {
   const wrapperRef = React.useRef<HTMLDivElement | null>(null)
   const triggerRef = React.useRef<HTMLDivElement | null>(null)
   const contentRef = React.useRef<HTMLDivElement | null>(null)
+
   const groupsRef = React.useRef<HTMLUListElement[]>([])
   const [selectedItem, setSelectedItem] = React.useState<HTMLLIElement | null>(null)
   const itemsRef = React.useRef<HTMLLIElement[]>([])
   const selectedItemRef = React.useRef<HTMLLIElement | null>(null)
 
   React.useEffect(() => {
+    setTimeout(() => {
+      initRefs(groupsRef, wrapperRef, triggerRef, contentRef, selectedItemRef, itemsRef, setSelectedItem)
+      console.log(selectedItemRef)
+    }, 0)
     triggerRef.current?.setAttribute('data-open', String(open))
     contentRef.current?.setAttribute('data-open', String(open))
   }, [open])
 
   React.useEffect(() => {
-    initRefs(groupsRef, wrapperRef, triggerRef, contentRef, selectedItemRef, itemsRef, setSelectedItem)
-    triggerRef.current?.addEventListener('click', () => {
-      const open = contentRef.current?.getAttribute('data-open') === 'true'
+    setTimeout(() => {
+      initRefs(groupsRef, wrapperRef, triggerRef, contentRef, selectedItemRef, itemsRef, setSelectedItem)
 
-      if (!groupsRef.current.length || !itemsRef.current.length) {
-        initRefs(groupsRef, wrapperRef, triggerRef, contentRef, selectedItemRef, itemsRef, setSelectedItem)
-      }
+      triggerRef.current?.addEventListener('click', () => {
+        const open = contentRef.current?.getAttribute('data-open') === 'true'
 
-      if (onOpenChange) onOpenChange(!open)
-      contentRef.current?.setAttribute('data-open', String(!open))
-      triggerRef.current?.setAttribute('data-open', String(!open))
-    })
+        if (!groupsRef.current.length || !itemsRef.current.length) {
+          initRefs(groupsRef, wrapperRef, triggerRef, contentRef, selectedItemRef, itemsRef, setSelectedItem)
+        }
+
+        if (onOpenChange) onOpenChange(!open)
+        contentRef.current?.setAttribute('data-open', String(!open))
+        triggerRef.current?.setAttribute('data-open', String(!open))
+      })
+    }, 0)
   }, [])
 
   return {
@@ -42,11 +51,13 @@ export function useSelectInit(open: boolean, onOpenChange?: (open: boolean) => v
 }
 
 export function useSelectScroll(
+  open: boolean,
   itemsRef: React.RefObject<HTMLLIElement[]>,
   selectedItemRef: React.RefObject<HTMLLIElement | null>,
   contentRef: React.RefObject<HTMLDivElement | null>,
 ) {
   React.useEffect(() => {
+    if (!open) return
     const keyDown = contentRef.current?.querySelector<HTMLDivElement>('[duck-select-scroll-down-button]')
     const keyUp = contentRef.current?.querySelector<HTMLDivElement>('[duck-select-scroll-up-button]')
     if (!keyDown || !keyUp) return
@@ -105,5 +116,5 @@ export function useSelectScroll(
 
       stopInterval()
     }
-  }, [])
+  }, [open])
 }

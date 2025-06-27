@@ -126,6 +126,7 @@ export function useCommandSearch(
 }
 
 export function useHandleKeyDown(
+  open: boolean,
   itemsRef: React.RefObject<HTMLLIElement[]>,
   setSelectedItem: (item: HTMLLIElement) => void,
   originalItemsRef: React.RefObject<HTMLLIElement[]>,
@@ -135,11 +136,20 @@ export function useHandleKeyDown(
   allowAxisArrowKeys = false,
 ) {
   React.useEffect(() => {
+    if (!open) return
     const html = document.documentElement
     let originalCurrentItem = 0
     let currentItem = 0
     let inSubMenu = false
+    let firstOpen = true
+    console.log(open)
 
+    if (firstOpen) {
+      firstOpen = false
+      setTimeout(() => {
+        handleItemsSelection(currentItem, itemsRef, setSelectedItem)
+      }, 0)
+    }
     function handleKeyDown(e: KeyboardEvent) {
       let isClicked = false
       if (e.key === 'ArrowDown') {
@@ -205,5 +215,5 @@ export function useHandleKeyDown(
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [open])
 }

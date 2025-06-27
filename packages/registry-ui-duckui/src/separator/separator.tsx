@@ -1,18 +1,20 @@
 'use client'
 
-import * as React from 'react'
 import { cn } from '@gentleduck/libs/cn'
+import * as React from 'react'
 
 const Separator = ({
   className,
   orientation = 'horizontal',
+  ref,
   ...props
-}: React.HTMLAttributes<HTMLHRElement> & {
+}: React.HTMLProps<HTMLHRElement> & {
   className?: string
   orientation?: 'horizontal' | 'vertical'
 }) => (
   <hr
     role="separator"
+    ref={ref}
     aria-orientation={orientation}
     className={cn(
       'border-border border',

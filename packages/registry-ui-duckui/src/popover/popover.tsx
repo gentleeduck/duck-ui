@@ -2,12 +2,7 @@
 // NOTE: @see: https://floating-ui.com/
 import PopoverPrimitive from '@gentleduck/aria-feather/popover'
 import { cn } from '@gentleduck/libs/cn'
-import {
-  AnimDialogVariants,
-  AnimPopoverArrowVariants,
-  AnimPopoverVariants,
-  AnimVariants,
-} from '@gentleduck/motion/anim'
+import { AnimDialogVariants, AnimPopoverVariants, AnimVariants } from '@gentleduck/motion/anim'
 import * as React from 'react'
 import { Button } from '../button'
 import { PopoverContentProps } from './popover.types'
@@ -18,7 +13,7 @@ function PopoverTrigger({
   children,
   asChild,
   ...props
-}: React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Trigger> & React.ComponentPropsWithoutRef<typeof Button>) {
+}: React.ComponentPropsWithRef<typeof PopoverPrimitive.Trigger> & React.ComponentPropsWithRef<typeof Button>) {
   return (
     <PopoverPrimitive.Trigger>
       <Button {...props} asChild={asChild}>
@@ -35,6 +30,7 @@ function PopoverContent({
   align = 'center',
   animation = 'default',
   overlay = 'nothing',
+  sideOffset = 4,
   ...props
 }: PopoverContentProps): React.JSX.Element {
   return (

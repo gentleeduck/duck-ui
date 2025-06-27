@@ -27,17 +27,20 @@ export const AnimVariants = cva('', {
   },
 })
 
-export const AnimDialogVariants = cva(`border border-border bg-background rounded-lg shadow-sm outline-hidden p-6`, {
-  variants: {
-    animation: {
-      default: 'opacity-0 scale-90 starting:open:opacity-0 starting:open:scale-90 open:opacity-100 open:scale-100',
-      nothing: '',
+export const AnimDialogVariants = cva(
+  `text-left border border-border bg-background rounded-lg shadow-sm outline-hidden p-6`,
+  {
+    variants: {
+      animation: {
+        default: 'opacity-0 scale-90 starting:open:opacity-0 starting:open:scale-90 open:opacity-100 open:scale-100',
+        nothing: '',
+      },
+    },
+    defaultVariants: {
+      animation: 'default',
     },
   },
-  defaultVariants: {
-    animation: 'default',
-  },
-})
+)
 
 export const AnimPopoverVariants = cva(
   `bg-popover text-popover-foreground inset-auto absolute max-h-none p-4 w-fit

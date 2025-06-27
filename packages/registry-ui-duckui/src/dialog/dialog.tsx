@@ -42,7 +42,7 @@ function DialogClose({
       type="button"
       aria-label="close"
       className={cn(
-        'absolute inset-x-3 top-3 size-4 cursor-pointer rounded text-accent-foreground opacity-70 transition-all hover:opacity-100',
+        'absolute end-3 top-3 size-4 cursor-pointer rounded text-accent-foreground opacity-70 transition-all hover:opacity-100',
         className,
       )}
       onClick={() => onOpenChange?.(false)}>
@@ -80,9 +80,10 @@ function DialogContent({
         AnimDialogVariants({ animation: animation }),
         AnimDialogModalVariants(),
         className,
+        'overflow-hidden',
       )}
       {...props}>
-      {children}
+      <div className="flex flex-col gap-4">{children}</div>
     </DialogPrimitive.Content>
   )
 }
@@ -100,7 +101,7 @@ function DialogContent({
  * @returns {React.JSX.Element} The rendered DialogHeader component.
  */
 function DialogHeader({ className, ref, ...props }: React.HTMLProps<HTMLDivElement>): React.JSX.Element {
-  return <div ref={ref} className={cn('flex flex-col space-y-1.5 text-end', className)} {...props} />
+  return <div ref={ref} className={cn('flex flex-col gap-1.5 text-left rtl:text-right', className)} {...props} />
 }
 
 /**
@@ -117,11 +118,7 @@ function DialogHeader({ className, ref, ...props }: React.HTMLProps<HTMLDivEleme
  */
 function DialogFooter({ className, ref, ...props }: React.HTMLProps<HTMLDivElement>): React.JSX.Element {
   return (
-    <div
-      ref={ref}
-      className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2', className)}
-      {...props}
-    />
+    <div ref={ref} className={cn(`flex flex-col-reverse gap-2 sm:flex-row sm:justify-end`, className)} {...props} />
   )
 }
 

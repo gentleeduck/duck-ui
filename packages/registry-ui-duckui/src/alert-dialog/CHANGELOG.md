@@ -73,3 +73,8 @@ const { alertTrigger, alertContent } = useDuckAlert({ state: true })
 - If you're currently using `AlertDialogCustom`, migrate to `useDuckAlert` for a more **scalable and flexible** API.
 - The new **hook-based approach** enables you to create **custom wrappers effortlessly** without worrying about managing state manually.
 - Better **autocompletion, type safety, and predictability** in state updates.
+
+
+### 2025-06-27 Fixes & Improvements 
+
+- 

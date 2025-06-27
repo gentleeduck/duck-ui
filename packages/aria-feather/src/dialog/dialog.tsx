@@ -101,8 +101,8 @@ export function Content({
   return (
     <dialog className={className} {...prop} id={id} ref={ref}>
       <ShouldRender ref={ref} once={renderOnce} open={open}>
-        {closeButton && <DialogClose />}
         {children}
+        {closeButton && <DialogClose />}
       </ShouldRender>
     </dialog>
   )

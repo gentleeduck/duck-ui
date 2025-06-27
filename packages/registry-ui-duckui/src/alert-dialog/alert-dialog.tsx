@@ -1,43 +1,33 @@
 'use client'
 
+import DialogPrimitive from '@gentleduck/aria-feather/dialog'
 // import {
 //   AlertDialogDialogProps,
 //   AlertDialogDrawerProps,
 //   AlertDialogSheetProps,
 //   AlertDialogWrapperType,
 // } from './alert-dialog.types'
-import { cn } from '@gentleduck/libs/cn'
 import React from 'react'
-import { AnimDialogModalVariants, AnimDialogVariants, AnimVariants } from '@gentleduck/motion/anim'
-import DialogPrimitive, { ShouldRender, useDialogContext } from '@gentleduck/aria-feather/dialog'
-import { DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../dialog'
+import {
+  DialogContent,
+  DialogContentProps,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../dialog'
+import { cn } from '@gentleduck/libs/cn'
 
 const AlertDialog = DialogPrimitive.Root
 
 const AlertDialogTrigger = DialogTrigger
 
-function AlertDialogContent({
-  children,
-  className,
-  renderOnce,
-  ...props
-}: React.HTMLProps<HTMLDialogElement> & {
-  renderOnce?: boolean
-}): React.JSX.Element {
-  const { open, ref } = useDialogContext()
-
+function AlertDialogContent({ className, children, ...props }: DialogContentProps): React.JSX.Element {
   return (
-    <dialog
-      ref={ref}
-      {...props}
-      className={cn(AnimVariants(), AnimDialogVariants(), AnimDialogModalVariants(), className)}>
-      <ShouldRender ref={ref} once={renderOnce} open={open}>
-        <div className="content-wrapper">
-          <DialogClose />
-          {children}
-        </div>
-      </ShouldRender>
-    </dialog>
+    <DialogContent closedby="closerequest" {...props}>
+      {children}
+    </DialogContent>
   )
 }
 
@@ -83,6 +73,8 @@ const AlertDialogAction = AlertDialogTrigger
  */
 const AlertDialogCancel = AlertDialogTrigger
 
+// TODO: Fix this
+//
 // /**
 //  * Renders an alert dialog and a sheet component, managing their open states
 //  * and handling user interactions through provided callbacks.

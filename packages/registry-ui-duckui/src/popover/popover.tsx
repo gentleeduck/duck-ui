@@ -2,13 +2,26 @@
 
 import PopoverPrimitive, { PopoverContentProps, usePopoverContext } from '@gentleduck/aria-feather/popover'
 import { cn } from '@gentleduck/libs/cn'
-import { AnimPopoverVariants } from '@gentleduck/motion/anim'
+import { AnimDialogVariants, AnimPopoverVariants, AnimVariants } from '@gentleduck/motion/anim'
 import type { VariantProps } from '@gentleduck/variants'
 import * as React from 'react'
+import { Button } from '../button'
 
 const Popover = PopoverPrimitive.Root
 
-const PopoverTrigger = PopoverPrimitive.Trigger
+function PopoverTrigger({
+  children,
+  asChild,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Trigger> & React.ComponentPropsWithoutRef<typeof Button>) {
+  return (
+    <PopoverPrimitive.Trigger>
+      <Button {...props} asChild={asChild}>
+        {children}
+      </Button>
+    </PopoverPrimitive.Trigger>
+  )
+}
 
 function PopoverContent({
   children,
@@ -16,14 +29,22 @@ function PopoverContent({
   side = 'bottom',
   sideOffset = 4,
   align = 'default',
+  animation = 'default',
+  overlay = 'nothing',
   ...props
 }: PopoverContentProps &
   VariantProps<typeof AnimPopoverVariants> & {
     sideOffset: number | string
   }): React.JSX.Element {
-  const { id } = usePopoverContext()
   return (
-    <PopoverPrimitive.Content className={cn(AnimPopoverVariants({ side: side, align: align }), className)} {...props}>
+    <PopoverPrimitive.Content
+      className={cn(
+        AnimVariants({ overlay: overlay }),
+        AnimDialogVariants({ animation: animation }),
+        AnimPopoverVariants({ side: side, align: align }),
+        className,
+      )}
+      {...props}>
       {children}
     </PopoverPrimitive.Content>
   )

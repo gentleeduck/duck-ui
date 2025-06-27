@@ -7,6 +7,8 @@ import { Slot } from '@gentleduck/aria-feather/slot'
 import { cn } from '@gentleduck/libs/cn'
 import { Loader } from 'lucide-react'
 
+// TODO: make button customizable to the max (icon, width, sizes, etc...)
+
 /**
  * Renders a customizable button component, supporting various styles and behaviors.
  *
@@ -57,10 +59,10 @@ function Button({
         }),
       )}
       disabled={loading ?? disabled}>
-      <div className="flex items-center gap-2">
-        {loading ? <Loader className="animate-spin" /> : icon}
+      <div className="flex items-center justify-between w-full gap-2">
         {!isCollapsed && children}
         {!isCollapsed && secondIcon && secondIcon}
+        {loading ? <Loader className="animate-spin" /> : icon}
       </div>
     </Component>
   )

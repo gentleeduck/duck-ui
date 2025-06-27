@@ -30,7 +30,7 @@ export const AnimVariants = cva("", {
 });
 
 export const AnimDialogVariants = cva(
-	`border border-border bg-background rounded-lg shadow-sm outline-hidden p-6 m-0 gap-[inherit]`,
+	`border border-border bg-background rounded-lg shadow-sm outline-hidden p-6`,
 	{
 		variants: {
 			animation: {
@@ -47,36 +47,36 @@ export const AnimDialogVariants = cva(
 
 export const AnimPopoverVariants = cva(
 	`bg-popover text-popover-foreground inset-auto absolute max-h-none p-4 w-fit
-  [position-anchor:var(--position-anchor)] 
+  [position-anchor:var(--position-anchor)] m-(--sideOffset)
   [position-try:flip-block,flip-inline,flip-start] [position-visibility:anchors-visible]`,
 	{
 		variants: {
 			side: {
 				top: `
-          [position-area:_block-start_var(--position-area-align)] origin-bottom my-(--sideOffset)
+          [position-area:_block-start_var(--position-area-align)] origin-bottom
         `,
 				bottom: `
-          [position-area:_block-end_var(--position-area-align)] origin-top my-(--sideOffset)
+          [position-area:_block-end_var(--position-area-align)] origin-top
         `,
 				left: `
-          [position-area:_inline-start_var(--position-area-align)] origin-right mx-(--sideOffset)
+          [position-area:_inline-start_var(--position-area-align)] origin-right
         `,
 				right: `
-          [position-area:_inline-end_var(--position-area-align)] origin-left mx-(--sideOffset)
+          [position-area:_inline-end_var(--position-area-align)] origin-left
         `,
 			},
 			align: {
 				default: "[--position-area-align:span-all]",
-				left: `
+				end: `
 				[--position-area-align:inline-start] 
 			`,
-				right: `
+				start: `
 				[--position-area-align:inline-end] 
 			`,
-				"span-left": `
+				"span-end": `
 				[--position-area-align:span-inline-start] 
 			`,
-				"span-right": `
+				"span-start": `
 				[--position-area-align:span-inline-end] 
 			`,
 				top: `
@@ -97,7 +97,7 @@ export const AnimPopoverVariants = cva(
 			},
 		},
 		defaultVariants: {
-			position: "bottom",
+			side: "bottom",
 			align: "default",
 		},
 	},
@@ -108,7 +108,7 @@ export const AnimTooltipVariants = cva(
 );
 
 export const AnimDialogModalVariants = cva(
-	`inset-1/2 -translate-1/2 sm:max-w-lg w-full`,
+	`inset-1/2 -translate-1/2 rtl:translate-x-1/2 sm:max-w-lg w-full`,
 );
 
 // export const AnimPopoverArrowVariants = cva(
@@ -157,16 +157,18 @@ export const AnimSheetVariants = cva(
         `,
 				left: `
           max-h-screen h-screen
-          border-l 
-          rounded-r-lg
+          border-e 
+          rtl:translate-x-full rtl:starting:open:translate-x-full rtl:open:translate-x-0
           -translate-x-full starting:open:-translate-x-full open:translate-x-0
+          rounded-e-lg
           end-auto
           `,
 				right: `
           max-h-screen h-screen
-          border-r 
-          rounded-l-lg
+          border-s 
+          rounded-s-lg
           translate-x-full starting:open:translate-x-full open:translate-x-0
+          rtl:-translate-x-full rtl:starting:open:-translate-x-full rtl:open:translate-x-0
           start-auto
         `,
 			},

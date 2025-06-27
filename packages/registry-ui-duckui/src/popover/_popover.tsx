@@ -14,13 +14,10 @@ import {
 
 function Popover({
 	hoverable = false,
-	modal = false,
 	popover = true,
 	...props
 }: React.ComponentPropsWithoutRef<typeof Root>) {
-	return (
-		<Root {...props} hoverable={hoverable} modal={modal} popover={popover} />
-	);
+	return <Root {...props} hoverable={hoverable} popover={popover} />;
 }
 
 const PopoverTrigger = DialogTrigger;
@@ -28,7 +25,7 @@ const PopoverTrigger = DialogTrigger;
 function PopoverContent({
 	children,
 	className,
-	side = "top",
+	side = "bottom",
 	sideOffset = 4,
 	align = "default",
 	...props

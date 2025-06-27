@@ -1,5 +1,5 @@
 import React from 'react'
-import { DropdownMenuContext } from './dropdown-menu'
+import { DropdownMenuContext } from './_dropdown-menu'
 import { initRefs } from './dropdown-menu.libs'
 
 export const useDropdownMenuContext = () => {

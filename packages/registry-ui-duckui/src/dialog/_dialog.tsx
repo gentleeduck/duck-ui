@@ -67,6 +67,7 @@ export interface DialogContentProps
 		VariantProps<typeof AnimVariants>,
 		VariantProps<typeof AnimDialogVariants> {
 	renderOnce?: boolean;
+	sideOffset: number;
 	closedby: "any" | "closerequest" | "none";
 }
 

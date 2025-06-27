@@ -24,7 +24,7 @@
       "!**/duck-state/**",
       "!packages/duck-ui/**",
       "!packages/sandbox-server/**",
-      "!packages/benchmark/**",
+      "!apps/benchmark/**",
       "!**/upload/**",
       "!**/table/**",
       "!**/combobox.tsx"
@@ -55,7 +55,7 @@
         "noVar": "error"
       },
       "nursery": {
-        "useSortedClasses": "info"
+        "useSortedClasses": "off"
       }
     }
   },

@@ -1,9 +1,13 @@
 'use client'
-
+// NOTE: @see: https://floating-ui.com/
 import PopoverPrimitive from '@gentleduck/aria-feather/popover'
 import { cn } from '@gentleduck/libs/cn'
-import { AnimDialogVariants, AnimPopoverVariants, AnimVariants } from '@gentleduck/motion/anim'
-import type { VariantProps } from '@gentleduck/variants'
+import {
+  AnimDialogVariants,
+  AnimPopoverArrowVariants,
+  AnimPopoverVariants,
+  AnimVariants,
+} from '@gentleduck/motion/anim'
 import * as React from 'react'
 import { Button } from '../button'
 import { PopoverContentProps } from './popover.types'
@@ -36,13 +40,18 @@ function PopoverContent({
   return (
     <PopoverPrimitive.Content
       className={cn(
-        AnimVariants({ overlay: overlay }),
-        AnimDialogVariants({ animation: animation }),
-        AnimPopoverVariants({ side: side, align: align }),
+        AnimVariants({ overlay }),
+        AnimDialogVariants({ animation }),
+        AnimPopoverVariants({ side, align }),
+        AnimPopoverArrowVariants({ side }),
         className,
       )}
       side={side}
-      {...props}>
+      align={align as never}
+      {...props}
+      onChange={() => {
+        console.log('hi')
+      }}>
       {children}
     </PopoverPrimitive.Content>
   )

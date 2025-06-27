@@ -91,6 +91,7 @@ export function Content({
   overlay = 'default',
   closedby = 'any',
   dialogClose,
+
   animation = 'default',
   ...props
 }: DialogContentProps) {

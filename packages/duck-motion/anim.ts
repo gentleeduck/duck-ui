@@ -44,21 +44,20 @@ export const AnimDialogVariants = cva(
 
 export const AnimPopoverVariants = cva(
   `bg-popover text-popover-foreground inset-auto absolute max-h-none p-4 w-fit
-  [position-anchor:var(--position-anchor)] m-(--sideOffset)
-  [position-try:flip-block,flip-inline,flip-start] [position-visibility:anchors-visible]`,
+  [position-anchor:var(--position-anchor)] m-(--sideOffset) [position-visibility:anchors-visible]`,
   {
     variants: {
       side: {
-        top: `[position-area:_block-start_var(--position-area-align)] origin-bottom`,
-        bottom: `[position-area:_block-end_var(--position-area-align)] origin-top`,
-        left: `[position-area:_inline-start_var(--position-area-align)] origin-right`,
-        right: `[position-area:_inline-end_var(--position-area-align)] origin-left`,
+        top: `[position-area:_block-start_var(--position-area-align)] origin-bottom [position-try:flip-block]`,
+        bottom: `[position-area:_block-end_var(--position-area-align)] origin-top [position-try:flip-block]`,
+        left: `[position-area:_inline-start_var(--position-area-align)] origin-right [position-try:flip-inline]`,
+        right: `[position-area:_inline-end_var(--position-area-align)] origin-left [position-try:flip-inline]`,
         inset: `[position-area:_center] origin-center`,
       },
       align: {
+        center: '[--position-area-align:span-all]',
         end: `[--position-area-align:span-inline-start]`,
         start: `[--position-area-align:span-inline-end]`,
-        center: '[--position-area-align:span-all]',
         'out-start': `[--position-area-align:inline-start]`,
         'out-end': `[--position-area-align:inline-end]`,
         top: `[--position-area-align:block-start]`,
@@ -75,37 +74,39 @@ export const AnimPopoverVariants = cva(
 )
 
 export const AnimTooltipVariants = cva(
-  `px- 3 py - 1.5!text - primary - foreground bg - primary border - primary text - xs text - balance select - none`,
+  `px-3 py-1.5 !text-primary-foreground bg-primary border-primary text-xs text-balance select-none`,
 )
 
-export const AnimDialogModalVariants = cva(
-  `inset - 1 / 2 - translate - 1 / 2 rtl: translate - x - 1 / 2 sm: max - w - lg w - full`,
-)
+export const AnimDialogModalVariants = cva(`inset-1/2 -translate-1/2 rtl:translate-x-1/2 sm:max-w-lg w-full`)
 
-// export const AnimPopoverArrowVariants = cva(
-//   `after: -translate - x - 7 overflow - visible after: border - [inherit] after: w - 0 after: h - 0 after: absolute after: border - [inherit] after: [position - anchor:var(--position - anchor)]after: [position - area: inherit]`,
-//   {
-//     variants: {
-//       side: {
-//         top: `
-//             after:border-x-8 after:border-x-transparent after:border-t-10
-//           `,
-//         bottom: `
-//             after:border-x-8 after:border-x-transparent after:border-b-10
-//         `,
-//         left: `
-//             after:border-y-8 after:border-y-transparent after:border-r-10
-//             `,
-//         right: `
-//             after:border-y-8 after:border-y-transparent after:border-l-10
-//         `,
-//       },
-//     },
-//     defaultVariants: {
-//       side: 'left',
-//     },
-//   },
-// )
+export const AnimPopoverArrowVariants = cva(
+  `overflow-visible after:border-background after:w-0 after:h-0 after:absolute after:[position-anchor:var(--position-anchor)] after:[po ition-area:inherit] 
+`,
+  {
+    variants: {
+      side: {
+        top: `
+            after:border-x-8 after:border-x-transparent after:border-t-10
+            after:-bottom-2.5 
+          `,
+        bottom: `
+            after:border-x-8 after:border-x-transparent after:border-b-10 
+            after:-top-2.5 after:left-[50%] after:-translate-x-[50%]
+        `,
+        left: `after:border-y-8 after:border-y-transparent after:border-l-10
+            after:-right-2.5 after:top-[50%] after:-translate-y-[50%]`,
+        right: `
+after:border-y-8 after:border-y-transparent after:border-r-10
+            after:-left-2.5 after:top-[50%] after:-translate-y-[50%]
+after:bg-red-600
+        `,
+      },
+    },
+    defaultVariants: {
+      side: 'left',
+    },
+  },
+)
 
 export const AnimSheetVariants = cva(`duration-400 pointer-events-auto border-0 rounded-none`, {
   variants: {

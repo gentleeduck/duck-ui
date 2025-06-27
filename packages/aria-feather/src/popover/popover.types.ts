@@ -8,6 +8,9 @@ export interface PopoverProps extends Omit<DialogCommonType, 'id' | 'closeButton
 
 export interface PopoverContentProps extends Partial<DialogContentProps> {
   side?: 'top' | 'bottom' | 'left' | 'right' | 'inset'
+  align?: 'start' | 'end' | 'center'
+  alignOffset?: number
+  sideOffset?: number
 }
 
 export interface PopoverContextType extends PopoverProps, DialogCommonType {

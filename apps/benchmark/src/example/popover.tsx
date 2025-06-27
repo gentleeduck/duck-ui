@@ -1,12 +1,13 @@
 import { Input } from '@gentleduck/registry-ui-duckui/input'
 import { Label } from '@gentleduck/registry-ui-duckui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui-duckui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+// import { Popover, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui-duckui/popover'
 
 export default function PopoverDemo() {
   return (
     <Popover>
       <PopoverTrigger>Open popover</PopoverTrigger>
-      <PopoverContent side="left" align={'center'} className="w-80">
+      <PopoverContent side="top" align={'center'} className="w-80 border-transparent">
         <div className="grid gap-4">
           <div className="space-y-2">
             <h4 className="font-medium leading-none">Dimensions</h4>

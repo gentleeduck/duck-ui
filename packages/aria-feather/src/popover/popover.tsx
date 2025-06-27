@@ -96,35 +96,48 @@ export function Content({
   dialogClose,
   animation = 'default',
   sideOffset = 4,
+  alignOffset = 0,
   side = 'top',
+  align = 'center',
   ...props
 }: PopoverContentProps) {
   const { ref, closeButton, open, id } = usePopoverContext()
-  const prop = { props, closedby }
   const DialogClose = dialogClose
 
+  // Main axis margin based on `side`
+  const sideMargins: Partial<CSSStyleDeclaration> =
+    {
+      top: { marginBottom: `${sideOffset}px` },
+      bottom: { marginTop: `${sideOffset}px` },
+      left: { marginRight: `${sideOffset}px` },
+      right: { marginLeft: `${sideOffset}px` },
+      inset: {},
+    }[side] ?? {}
+
+  // Cross-axis margin based on `align`
+  const alignMargins: Partial<CSSStyleDeclaration> =
+    side === 'top' || side === 'bottom'
+      ? ({
+          start: { marginLeft: `${alignOffset}px` },
+          end: { marginRight: `${alignOffset}px` },
+          center: {},
+        }[align as 'start' | 'end' | 'center'] ?? {})
+      : side === 'left' || side === 'right'
+        ? ({
+            start: { marginTop: `${alignOffset}px` },
+            end: { marginBottom: `${alignOffset}px` },
+            center: {},
+          }[align as 'start' | 'end' | 'center'] ?? {})
+        : {}
+
+  const style = {
+    '--position-anchor': `--${id}`,
+    ...sideMargins,
+    ...alignMargins,
+  } as React.CSSProperties
+
   return (
-    <dialog
-      popover="auto"
-      style={
-        {
-          '--position-anchor': `--${id}`,
-          '--sideOffset':
-            side === 'inset'
-              ? 0
-              : side === 'top'
-                ? `0 0 ${sideOffset}px 0`
-                : side === 'bottom'
-                  ? `${sideOffset}px 0 0 0`
-                  : side === 'left'
-                    ? `0 ${sideOffset}px 0 0`
-                    : `0 0 0 ${sideOffset}px`,
-        } as React.CSSProperties
-      }
-      className={className}
-      {...prop}
-      id={id}
-      ref={ref}>
+    <dialog popover="auto" style={style} className={className} {...{ ...props, closedby }} id={id} ref={ref}>
       <ShouldRender ref={ref} once={renderOnce} open={open}>
         {children}
         {closeButton && <DialogClose />}

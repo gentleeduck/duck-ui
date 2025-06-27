@@ -1,46 +1,30 @@
 "use client";
 
 import { useDialogContext } from "@gentleduck/aria-feather/dialog";
-import {
-	Trigger as PopoverPrimitiveTrigger,
-	Root,
-} from "@gentleduck/aria-feather/popover";
+import { Root } from "@gentleduck/aria-feather/popover";
 import { cn } from "@gentleduck/libs/cn";
 import { AnimPopoverVariants } from "@gentleduck/motion/anim";
-import { VariantProps } from "@gentleduck/variants";
+import type { VariantProps } from "@gentleduck/variants";
 import type * as React from "react";
-import { Button } from "../button";
-import { DialogContentPrimitive, type DialogContentProps } from "../dialog";
+import {
+	DialogContentPrimitive,
+	type DialogContentProps,
+	DialogTrigger,
+} from "../dialog";
 
 function Popover({
 	hoverable = false,
 	modal = false,
+	popover = true,
 	...props
 }: React.ComponentPropsWithoutRef<typeof Root>) {
-	return <Root {...props} hoverable={hoverable} modal={modal} />;
-}
-
-function PopoverTrigger({
-	onClick,
-	open,
-	children,
-	asChild,
-	...props
-}: React.ComponentPropsWithRef<typeof Button> & {
-	open?: boolean;
-}): React.JSX.Element {
 	return (
-		<PopoverPrimitiveTrigger>
-			<Button {...props} asChild={asChild}>
-				{children}
-			</Button>
-		</PopoverPrimitiveTrigger>
+		<Root {...props} hoverable={hoverable} modal={modal} popover={popover} />
 	);
 }
 
-// click.
-// FIX: the tooltip in general i want it identical (e.g., animation, timing).
-// FIX: the hoverCard in general i want it identical (e.g., animation, timing).
+const PopoverTrigger = DialogTrigger;
+
 function PopoverContent({
 	children,
 	className,

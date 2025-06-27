@@ -1,16 +1,16 @@
+import { useComputedTimeoutTransition, useStableId } from "@gentleduck/hooks";
+import {
+	apply as applyClosedBy,
+	isSupported as isClosedBySupported,
+} from "dialog-closedby-polyfill";
+import {
+	apply as applyInvokers,
+	isSupported as isInvokersSupported,
+} from "invokers-polyfill/fn";
 import React from "react";
 import { Slot } from "../slot";
 import { useDialog, useDialogContext } from "./_dialog.hooks";
-import { DialogContextType, DialogProps } from "./dialog.types";
-import { useComputedTimeoutTransition, useStableId } from "@gentleduck/hooks";
-import {
-	isSupported as isClosedBySupported,
-	apply as applyClosedBy,
-} from "dialog-closedby-polyfill";
-import {
-	isSupported as isInvokersSupported,
-	apply as applyInvokers,
-} from "invokers-polyfill/fn";
+import type { DialogContextType, DialogProps } from "./dialog.types";
 
 if (!isClosedBySupported()) {
 	applyClosedBy();
@@ -40,6 +40,7 @@ export function Root({
 	lockScroll = true,
 	hoverable = false,
 	modal = true,
+	popover = false,
 	closeButton = false,
 	skipDelayDuration = 300,
 	delayDuration = 0,
@@ -69,6 +70,7 @@ export function Root({
 				triggerRef,
 				id,
 				modal,
+				popover,
 				closeButton,
 				hoverable,
 				lockScroll,
@@ -87,10 +89,29 @@ export function Trigger({
 	open?: boolean;
 	asChild?: boolean;
 }): React.JSX.Element {
-	const { onOpenChange, open: _open } = useDialogContext();
+	const {
+		onOpenChange,
+		open: _open,
+		id,
+		triggerRef,
+		popover,
+	} = useDialogContext();
 
 	return (
 		<Slot
+			{...(popover
+				? {
+						popoverTarget: id,
+						style: {
+							"--position-anchor": `--${id}`,
+							anchorName: "var(--position-anchor)",
+							...(props.style || {}),
+						} as React.CSSProperties,
+					}
+				: {})}
+			ref={triggerRef}
+			aria-haspopup="dialog"
+			aria-controls={id}
 			onClick={(e) => {
 				onOpenChange(open ?? !_open);
 				onClick?.(e);

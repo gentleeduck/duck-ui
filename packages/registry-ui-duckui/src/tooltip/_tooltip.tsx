@@ -1,17 +1,23 @@
 "use client";
 
-import * as React from "react";
+import type { Root } from "@gentleduck/aria-feather/dialog";
 import { cn } from "@gentleduck/libs/cn";
-import { Root as Popover } from "@gentleduck/aria-feather/popover";
 import {
-	AnimPopoverVariants,
+	type AnimPopoverVariants,
 	AnimTooltipVariants,
 } from "@gentleduck/motion/anim";
-import { PopoverContent, PopoverTrigger } from "../popover/_popover";
-import { DialogContentProps } from "../dialog";
-import { VariantProps } from "@gentleduck/variants";
+import type { VariantProps } from "@gentleduck/variants";
+import type * as React from "react";
+import type { DialogContentProps } from "../dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "../popover/_popover";
 
-const Tooltip = Popover;
+function Tooltip({
+	hoverable = true,
+	popover = true,
+	...props
+}: React.ComponentPropsWithoutRef<typeof Root>) {
+	return <Popover {...props} hoverable={hoverable} popover={popover} />;
+}
 
 const TooltipTrigger = PopoverTrigger;
 

@@ -16,7 +16,7 @@
     "coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.0.4",
+    "@biomejs/biome": "2.0.5",
     "@changesets/cli": "^2.27.7",
     "@turbo/gen": "^2.3.3",
     "@vitest/coverage-v8": "^3.1.2",

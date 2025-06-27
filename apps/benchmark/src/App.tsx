@@ -106,6 +106,9 @@ function App() {
   return (
     <div className="mx-10 flex h-screen flex-col items-center justify-center gap-4">
       <Dialog />
+      <Popover />
+      {/* <Tooltip />
+      <HoverCard /> */}
     </div>
   )
 }

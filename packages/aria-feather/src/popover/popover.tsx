@@ -1,15 +1,122 @@
+import { useStableId } from '@gentleduck/hooks'
 import type React from 'react'
-import { type DialogProps, Root as DialogRoot } from '../dialog'
+import { ShouldRender } from '../dialog'
+import { Slot } from '../slot'
+import { PopoverContext, usePopover, usePopoverContext } from './popover.hooks'
+import { PopoverContentProps, PopoverRootProps } from './popover.types'
 
 /**
  * Popover component that provides a context for managing its open state and
  * behavior. It uses a ref to handle the underlying HTMLPopoverElement.
  */
 export function Root({
+  children,
+  open: openProp,
+  onOpenChange,
   lockScroll = false,
   hoverable = true,
   modal = false,
+  closeButton = false,
+  skipDelayDuration = 300,
+  delayDuration = 0,
+}: PopoverRootProps): React.JSX.Element {
+  const {
+    open,
+    onOpenChange: _onOpenChange,
+    ref,
+    triggerRef,
+  } = usePopover({
+    openProp,
+    onOpenChange,
+    lockScroll,
+    hoverable,
+    modal,
+    skipDelayDuration,
+    delayDuration,
+  })
+  const id = useStableId()
+
+  return (
+    <PopoverContext.Provider
+      value={{
+        open,
+        onOpenChange: _onOpenChange,
+        ref,
+        triggerRef,
+        id,
+        modal,
+        closeButton,
+        hoverable,
+        lockScroll,
+      }}>
+      {children}
+    </PopoverContext.Provider>
+  )
+}
+
+export function Trigger({
+  onClick,
+  open,
   ...props
-}: DialogProps): React.JSX.Element {
-  return <DialogRoot {...props} modal={modal} lockScroll={lockScroll} hoverable={hoverable} />
+}: React.ComponentPropsWithRef<typeof Slot> & {
+  open?: boolean
+  asChild?: boolean
+}): React.JSX.Element {
+  const { onOpenChange, open: _open, id, triggerRef } = usePopoverContext()
+
+  return (
+    <Slot
+      popoverTarget={id}
+      style={
+        {
+          '--position-anchor': `--${id}`,
+          anchorName: 'var(--position-anchor)',
+        } as React.CSSProperties
+      }
+      ref={triggerRef}
+      aria-haspopup="dialog"
+      aria-controls={id}
+      onClick={(e) => {
+        onOpenChange(open ?? !_open)
+        onClick?.(e)
+      }}
+      {...props}
+    />
+  )
+}
+
+export function Content({
+  children,
+  className,
+  renderOnce = true,
+  overlay = 'nothing',
+  closedby = 'any',
+  dialogClose,
+  animation = 'default',
+  sideOffset,
+  ...props
+}: PopoverContentProps) {
+  const { ref, closeButton, open, id } = usePopoverContext()
+  const prop = { props, closedby }
+  const DialogClose = dialogClose
+
+  return (
+    <dialog
+      popover="auto"
+      style={
+        {
+          '--position-anchor': `--${id}`,
+          '--sideOffset': `${sideOffset}px`,
+        } as React.CSSProperties
+      }
+      className={className}
+      {...prop}
+      id={id}
+      ref={ref}>
+      <ShouldRender ref={ref} once={renderOnce} open={open}>
+        {children}
+        {closeButton && <DialogClose />}
+      </ShouldRender>
+    </dialog>
+  )
 }

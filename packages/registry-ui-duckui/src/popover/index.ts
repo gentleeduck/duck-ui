@@ -1,1 +1,1 @@
-export * from './_popover'
+export * from './popover'

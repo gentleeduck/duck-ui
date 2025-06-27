@@ -10,14 +10,14 @@ import {
 import { Calendar, Clock, MicOff, Users, Video } from 'lucide-react'
 
 export default function SelectDemo() {
-  return (
-    <Select>
-      <SelectTrigger variant="outline" className="w-[230px]">
-        <SelectValue placeholder="Choose a meeting" />
-      </SelectTrigger>
-      <SelectContent side="bottom" className="w-[230px]">
-        <SelectGroup>
-          <SelectLabel>Upcoming Meetings</SelectLabel>
+	return (
+		<Select open>
+			<SelectTrigger variant="outline" className="w-[230px]">
+				<SelectValue placeholder="Choose a meeting" />
+			</SelectTrigger>
+			<SelectContent side="bottom" className="w-[230px]">
+				<SelectGroup>
+					<SelectLabel>Upcoming Meetings</SelectLabel>
 
           <SelectItem value="daily-standup">
             <div className="flex items-start gap-2">

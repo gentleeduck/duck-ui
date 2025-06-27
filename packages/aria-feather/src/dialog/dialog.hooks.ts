@@ -1,52 +1,49 @@
-import React from 'react'
-import { DialogContext } from './dialog'
-import { DialogContextType } from './dialog.types'
-import { useComputedTimeoutTransition } from '@gentleduck/hooks'
-// import { useComputedTimeoutTransition } from '@gentleduck/hooks'
+import React from "react";
+import { DialogContext } from "./_dialog";
+import { cleanLockScrollbar, lockScrollbar } from "./dialog.libs";
+import type { DialogContextType, DialogProps } from "./dialog.types";
 
-export function useDialogContext(name: string = 'Dialog'): DialogContextType {
-  const context = React.useContext(DialogContext)
-  if (!context) {
-    throw new Error(`useDialogContext must be used within a ${name}`)
-  }
-  return context
+export function useDialogContext(name: string = "Dialog"): DialogContextType {
+	const context = React.useContext(DialogContext);
+	if (!context) {
+		throw new Error(`useDialogContext must be used within a ${name}`);
+	}
+	return context;
 }
 
-export function useDialog(openProp?: boolean, onOpenChange?: (state: boolean) => void) {
-  const dialogRef = React.useRef<HTMLDialogElement | null>(null)
-  const [open, setOpen] = React.useState<boolean>(openProp ?? false)
+export function useDialog({
+	openProp,
+	onOpenChange,
+	lockScroll,
+	modal,
+}: DialogProps) {
+	const dialogRef = React.useRef<HTMLDialogElement | null>(null);
+	const triggerRef = React.useRef<HTMLElement | HTMLButtonElement | null>(null);
+	const [open, setOpen] = React.useState<boolean>(openProp ?? false);
 
-  const handleOpenChange = React.useCallback(
-    (state: boolean) => {
-      try {
-        const dialog = dialogRef.current
-        if (state) {
-          document.body.classList.add('scroll-locked')
-          setTimeout(() => {
-            dialog?.showModal()
-            setOpen(true)
-            onOpenChange?.(true)
-          }, 100)
-        } else {
-          useComputedTimeoutTransition(dialog, () => {
-            document.body.classList.remove('scroll-locked')
-          })
-          dialog?.close()
-          setOpen(false)
-          onOpenChange?.(false)
-        }
-      } catch (e) {
-        console.warn('Dialog failed to toggle', e)
-      }
-    },
-    [onOpenChange],
-  )
+	function handleOpenChange(state: boolean) {
+		const dialog = dialogRef.current;
+		if (!dialog) return;
 
-  React.useEffect(() => {
-    const dialog = dialogRef.current
-    useComputedTimeoutTransition(dialog, () => {
-      document.body.classList.toggle('scroll-locked', open)
-    })
+		try {
+			if (modal) {
+				state ? dialog.showModal() : dialog.close();
+			} else {
+					state ? dialog.show() : dialog.close();
+			}
+		} catch (e) {
+			console.warn("Dialog failed to toggle", e);
+		}
+
+		setOpen(state);
+		onOpenChange?.(state);
+	}
+
+	React.useEffect(() => {
+		const dialog = dialogRef.current;
+		const trigger = triggerRef.current;
+
+		if (lockScroll) lockScrollbar(open);
 
     if (openProp) {
       handleOpenChange(true)
@@ -54,18 +51,35 @@ export function useDialog(openProp?: boolean, onOpenChange?: (state: boolean) =>
       handleOpenChange(false)
     }
 
-    dialog?.addEventListener('close', () => handleOpenChange(false))
-    return () => dialog?.removeEventListener('close', () => handleOpenChange(false))
-  }, [handleOpenChange, open, openProp])
+		function handleClose(event) {
+			if (modal) {
+				handleOpenChange(false);
+			} else {
+				const newState = event.newState === "open";
+				handleOpenChange(newState);
+			}
+		}
 
-  return {
-    ref: dialogRef,
-    open,
-    onOpenChange: handleOpenChange,
-  } as const
-}
+		dialog?.addEventListener("close", handleClose);
 
-export function useOverlayClose() {
-  const { onOpenChange } = useDialogContext()
-  return (e: React.MouseEvent<HTMLDialogElement>) => e.currentTarget === e.target && onOpenChange(false)
+
+		return () => {
+			dialog?.removeEventListener("close", handleClose);
+
+			cleanLockScrollbar();
+		};
+	}, [
+		open,
+		openProp,
+		lockScroll,
+		onOpenChange,
+		modal,
+	]);
+
+	return {
+		triggerRef,
+		ref: dialogRef,
+		open,
+		onOpenChange: handleOpenChange,
+	};
 }

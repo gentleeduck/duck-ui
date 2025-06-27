@@ -50,8 +50,10 @@ export function useDialog({
 
     if (lockScroll) lockScrollbar(open)
 
-    if (openProp !== undefined && openProp !== open) {
-      handleOpenChange(openProp)
+    if (openProp) {
+      handleOpenChange(true)
+    } else if (openProp === false) {
+      handleOpenChange(false)
     }
 
     function handleClose(event) {

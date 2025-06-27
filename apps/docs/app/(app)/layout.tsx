@@ -2,6 +2,16 @@
 import { SiteHeader } from '~/components/layouts/site-header'
 import { SiteFooter } from '~/components/layouts/site-footer'
 import { CommandMenu } from '~/components/layouts'
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectLabel,
+	SelectTrigger,
+	SelectValue,
+} from "@gentleduck/registry-ui-duckui/select";
+import { Calendar, Clock, MicOff, Users, Video } from "lucide-react";
 
 interface AppLayoutProps {
   children: React.ReactNode

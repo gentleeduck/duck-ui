@@ -64,7 +64,7 @@ export default function DropdownMenuDemo() {
 				<DropdownMenuGroup>
 					<DropdownMenuSub>
 						<DropdownMenuSubTrigger>Submenu</DropdownMenuSubTrigger>
-						<DropdownMenuSubContent>
+						<DropdownMenuSubContent >
 							<DropdownMenuItem disabled={true}>Item 1</DropdownMenuItem>
 							<DropdownMenuItem>Item 2</DropdownMenuItem>
 						</DropdownMenuSubContent>

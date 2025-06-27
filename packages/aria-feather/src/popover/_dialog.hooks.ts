@@ -1,7 +1,7 @@
 import React from 'react'
 import { DialogContext } from './_dialog'
-import { cleanLockScrollbar, lockScrollbar } from './dialog.libs'
-import type { DialogContextType, DialogProps } from './dialog.types'
+import { cleanLockScrollbar, lockScrollbar } from '../dialog'
+import type { DialogContextType, DialogProps } from '../dialog'
 
 export function useDialogContext(name: string = 'Dialog'): DialogContextType {
   const context = React.useContext(DialogContext)

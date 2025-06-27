@@ -1,12 +1,12 @@
 'use client'
 
-import { useDialogContext } from '@gentleduck/aria-feather/dialog'
+import DialogPrimitive, { useDialogContext } from '@gentleduck/aria-feather/dialog'
 import { Root } from '@gentleduck/aria-feather/popover'
 import { cn } from '@gentleduck/libs/cn'
 import { AnimPopoverVariants } from '@gentleduck/motion/anim'
 import type { VariantProps } from '@gentleduck/variants'
 import type * as React from 'react'
-import { DialogContentPrimitive, type DialogContentProps, DialogTrigger } from '../dialog'
+import { DialogClose, type DialogContentProps, DialogTrigger } from '../dialog'
 
 function Popover({ hoverable = false, popover = true, ...props }: React.ComponentPropsWithoutRef<typeof Root>) {
   return <Root {...props} hoverable={hoverable} popover={popover} />
@@ -23,11 +23,12 @@ function PopoverContent({
   ...props
 }: DialogContentProps &
   VariantProps<typeof AnimPopoverVariants> & {
-    sideOffset: number | string
+    sideOffset?: number | string
   }): React.JSX.Element {
   const { id } = useDialogContext()
   return (
-    <DialogContentPrimitive
+    <DialogPrimitive.Content
+      dialogClose={DialogClose}
       style={
         {
           '--position-anchor': `--${id}`,
@@ -38,7 +39,7 @@ function PopoverContent({
       className={cn(AnimPopoverVariants({ side: side, align: align }), className)}
       {...props}>
       {children}
-    </DialogContentPrimitive>
+    </DialogPrimitive.Content>
   )
 }
 

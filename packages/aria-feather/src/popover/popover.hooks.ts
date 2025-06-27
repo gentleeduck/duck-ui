@@ -58,6 +58,7 @@ export function usePopover({
       handleOpenChange(false)
     }
 
+    // FIX:
     function handleClose(event) {
       if (modal) {
         handleOpenChange(false)

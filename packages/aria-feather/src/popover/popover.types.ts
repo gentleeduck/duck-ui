@@ -1,19 +1,20 @@
 import { DialogCommonType, DialogContentProps } from '../dialog/dialog.types'
 
-export interface PopoverProps extends DialogCommonType {
+export interface PopoverProps extends Omit<DialogCommonType, 'id' | 'closeButton'> {
   hoverable: boolean
   skipDelayDuration: number
   delayDuration: number
-  openProp?: boolean
 }
 
-export interface PopoverContentProps extends DialogContentProps {}
+export interface PopoverContentProps extends Partial<DialogContentProps> {
+  side?: 'top' | 'bottom' | 'left' | 'right' | 'inset'
+}
 
-export interface PopoverContextType extends PopoverProps {
+export interface PopoverContextType extends PopoverProps, DialogCommonType {
   ref: React.RefObject<HTMLDialogElement | null>
-  triggerRef: React.RefObject<HTMLElement | HTMLDivElement | HTMLButtonElement | null>
+  triggerRef: React.RefObject<HTMLDivElement | HTMLButtonElement | HTMLElement | null>
 }
 
-export interface PopoverRootProps extends Omit<PopoverProps, 'id'> {
+export interface PopoverRootProps extends Partial<Omit<PopoverProps, 'id'>>, DialogCommonType {
   children?: React.ReactNode
 }

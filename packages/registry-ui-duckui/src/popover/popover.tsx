@@ -1,11 +1,12 @@
 'use client'
 
-import PopoverPrimitive, { PopoverContentProps, usePopoverContext } from '@gentleduck/aria-feather/popover'
+import PopoverPrimitive from '@gentleduck/aria-feather/popover'
 import { cn } from '@gentleduck/libs/cn'
 import { AnimDialogVariants, AnimPopoverVariants, AnimVariants } from '@gentleduck/motion/anim'
 import type { VariantProps } from '@gentleduck/variants'
 import * as React from 'react'
 import { Button } from '../button'
+import { PopoverContentProps } from './popover.types'
 
 const Popover = PopoverPrimitive.Root
 
@@ -27,15 +28,11 @@ function PopoverContent({
   children,
   className,
   side = 'bottom',
-  sideOffset = 4,
-  align = 'default',
+  align = 'center',
   animation = 'default',
   overlay = 'nothing',
   ...props
-}: PopoverContentProps &
-  VariantProps<typeof AnimPopoverVariants> & {
-    sideOffset: number | string
-  }): React.JSX.Element {
+}: PopoverContentProps): React.JSX.Element {
   return (
     <PopoverPrimitive.Content
       className={cn(
@@ -44,6 +41,7 @@ function PopoverContent({
         AnimPopoverVariants({ side: side, align: align }),
         className,
       )}
+      side={side}
       {...props}>
       {children}
     </PopoverPrimitive.Content>

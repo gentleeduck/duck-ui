@@ -49,65 +49,41 @@ export const AnimPopoverVariants = cva(
   {
     variants: {
       side: {
-        top: `
-          [position-area:_block-start_var(--position-area-align)] origin-bottom
-        `,
-        bottom: `
-          [position-area:_block-end_var(--position-area-align)] origin-top
-        `,
-        left: `
-          [position-area:_inline-start_var(--position-area-align)] origin-right
-        `,
-        right: `
-          [position-area:_inline-end_var(--position-area-align)] origin-left
-        `,
+        top: `[position-area:_block-start_var(--position-area-align)] origin-bottom`,
+        bottom: `[position-area:_block-end_var(--position-area-align)] origin-top`,
+        left: `[position-area:_inline-start_var(--position-area-align)] origin-right`,
+        right: `[position-area:_inline-end_var(--position-area-align)] origin-left`,
+        inset: `[position-area:_center] origin-center`,
       },
       align: {
-        default: '[--position-area-align:span-all]',
-        end: `
-				[--position-area-align:inline-start] 
-			`,
-        start: `
-				[--position-area-align:inline-end] 
-			`,
-        'span-end': `
-				[--position-area-align:span-inline-start] 
-			`,
-        'span-start': `
-				[--position-area-align:span-inline-end] 
-			`,
-        top: `
-				[--position-area-align:block-start] 
-			`,
-        bottom: `
-				[--position-area-align:block-end] 
-			`,
-        'span-top': `
-				[--position-area-align:span-block-start] 
-			`,
-        'span-bottom': `
-				[--position-area-align:span-block-end] 
-			`,
-        center: `
-			[position-area:_center] origin-center
-		`,
+        end: `[--position-area-align:span-inline-start]`,
+        start: `[--position-area-align:span-inline-end]`,
+        center: '[--position-area-align:span-all]',
+        'out-start': `[--position-area-align:inline-start]`,
+        'out-end': `[--position-area-align:inline-end]`,
+        top: `[--position-area-align:block-start]`,
+        bottom: `[--position-area-align:block-end]`,
+        'out-top': `[--position-area-align:span-block-start]`,
+        'out-bottom': `[--position-area-align:span-block-end]`,
       },
     },
     defaultVariants: {
       side: 'bottom',
-      align: 'default',
+      align: 'center',
     },
   },
 )
 
 export const AnimTooltipVariants = cva(
-  `px-3 py-1.5 !text-primary-foreground bg-primary border-primary text-xs text-balance select-none`,
+  `px- 3 py - 1.5!text - primary - foreground bg - primary border - primary text - xs text - balance select - none`,
 )
 
-export const AnimDialogModalVariants = cva(`inset-1/2 -translate-1/2 rtl:translate-x-1/2 sm:max-w-lg w-full`)
+export const AnimDialogModalVariants = cva(
+  `inset - 1 / 2 - translate - 1 / 2 rtl: translate - x - 1 / 2 sm: max - w - lg w - full`,
+)
 
 // export const AnimPopoverArrowVariants = cva(
-//   `after:-translate-x-7 overflow-visible after:border-[inherit] after:w-0 after:h-0 after:absolute after:border-[inherit] after:[position-anchor:var(--position-anchor)] after:[position-area:inherit]`,
+//   `after: -translate - x - 7 overflow - visible after: border - [inherit] after: w - 0 after: h - 0 after: absolute after: border - [inherit] after: [position - anchor:var(--position - anchor)]after: [position - area: inherit]`,
 //   {
 //     variants: {
 //       side: {

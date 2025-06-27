@@ -14,7 +14,7 @@ export function Root({
   open: openProp,
   onOpenChange,
   lockScroll = false,
-  hoverable = true,
+  hoverable = false,
   modal = false,
   closeButton = false,
   skipDelayDuration = 300,
@@ -26,7 +26,7 @@ export function Root({
     ref,
     triggerRef,
   } = usePopover({
-    openProp,
+    open: openProp,
     onOpenChange,
     lockScroll,
     hoverable,
@@ -39,6 +39,8 @@ export function Root({
   return (
     <PopoverContext.Provider
       value={{
+        delayDuration,
+        skipDelayDuration,
         open,
         onOpenChange: _onOpenChange,
         ref,
@@ -73,7 +75,7 @@ export function Trigger({
           anchorName: 'var(--position-anchor)',
         } as React.CSSProperties
       }
-      ref={triggerRef}
+      ref={triggerRef as React.RefObject<HTMLDivElement>}
       aria-haspopup="dialog"
       aria-controls={id}
       onClick={(e) => {
@@ -93,7 +95,8 @@ export function Content({
   closedby = 'any',
   dialogClose,
   animation = 'default',
-  sideOffset,
+  sideOffset = 4,
+  side = 'top',
   ...props
 }: PopoverContentProps) {
   const { ref, closeButton, open, id } = usePopoverContext()
@@ -106,7 +109,16 @@ export function Content({
       style={
         {
           '--position-anchor': `--${id}`,
-          '--sideOffset': `${sideOffset}px`,
+          '--sideOffset':
+            side === 'inset'
+              ? 0
+              : side === 'top'
+                ? `0 0 ${sideOffset}px 0`
+                : side === 'bottom'
+                  ? `${sideOffset}px 0 0 0`
+                  : side === 'left'
+                    ? `0 ${sideOffset}px 0 0`
+                    : `0 0 0 ${sideOffset}px`,
         } as React.CSSProperties
       }
       className={className}
@@ -119,4 +131,10 @@ export function Content({
       </ShouldRender>
     </dialog>
   )
+}
+
+export default {
+  Root,
+  Trigger,
+  Content,
 }

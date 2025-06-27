@@ -6,7 +6,7 @@ export default function PopoverDemo() {
   return (
     <Popover>
       <PopoverTrigger>Open popover</PopoverTrigger>
-      <PopoverContent side="bottom" className="w-80">
+      <PopoverContent side="left" align={'center'} className="w-80">
         <div className="grid gap-4">
           <div className="space-y-2">
             <h4 className="font-medium leading-none">Dimensions</h4>

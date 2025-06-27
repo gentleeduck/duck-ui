@@ -143,9 +143,3 @@ export function ShouldRender({
 
   return children
 }
-
-export default {
-  Root,
-  Trigger,
-  Content,
-}

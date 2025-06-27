@@ -55,7 +55,7 @@ export function useDialog({ open: openProp, onOpenChange, lockScroll, modal }: D
       dialog?.removeEventListener('close', handleClose)
       cleanLockScrollbar()
     }
-  }, [open, openProp, lockScroll, onOpenChange, modal])
+  }, [open, openProp, onOpenChange])
 
   return {
     triggerRef,

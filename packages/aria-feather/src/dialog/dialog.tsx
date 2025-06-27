@@ -87,23 +87,23 @@ export function Trigger({
 export function Content({
   children,
   className,
-  renderOnce,
+  renderOnce = true,
   overlay = 'default',
   closedby = 'any',
   dialogClose,
   animation = 'default',
   ...props
 }: DialogContentProps) {
-  const { ref, closeButton, id } = useDialogContext()
+  const { ref, closeButton, open, id } = useDialogContext()
   const prop = { props, closedby }
   const DialogClose = dialogClose
 
   return (
     <dialog className={className} {...prop} id={id} ref={ref}>
-      {/* <ShouldRender ref={ref} once={renderOnce} open={open}> */}
-      {closeButton && <DialogClose />}
-      {children}
-      {/* </ShouldRender> */}
+      <ShouldRender ref={ref} once={renderOnce} open={open}>
+        {closeButton && <DialogClose />}
+        {children}
+      </ShouldRender>
     </dialog>
   )
 }

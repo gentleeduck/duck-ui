@@ -7,6 +7,10 @@ import { Slot } from '../slot'
 import { PopoverContext, usePopover, usePopoverContext } from './popover.hooks'
 import { PopoverContentProps, PopoverRootProps } from './popover.types'
 
+if (!("anchorName" in document.documentElement.style)) {
+  import("@oddbird/css-anchor-positioning");
+}
+
 /**
  * Popover component that provides a context for managing its open state and
  * behavior. It uses a ref to handle the underlying HTMLPopoverElement.

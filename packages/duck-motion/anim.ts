@@ -46,14 +46,14 @@ export const AnimDialogVariants = cva(`border border-border bg-background rounde
 
 export const AnimPopoverVariants = cva(
   `bg-popover text-popover-foreground inset-auto absolute max-h-none p-4 w-fit
-  [position-anchor:var(--position-anchor)] m-(--sideOffset) [position-visibility:anchors-visible]`,
+  [position-anchor:var(--position-anchor)] [position-try:flip-block_flip-inline,flip-block,flip-inline,flip-start] m-(--sideOffset) [position-visibility:anchors-visible]`,
   {
     variants: {
       side: {
-        top: `[position-area:_block-start_var(--position-area-align)] origin-bottom [position-try:flip-block]`,
-        bottom: `[position-area:_block-end_var(--position-area-align)] origin-top [position-try:flip-block]`,
-        left: `[position-area:_inline-start_var(--position-area-align)] origin-right [position-try:flip-inline]`,
-        right: `[position-area:_inline-end_var(--position-area-align)] origin-left [position-try:flip-inline]`,
+        top: `[position-area:_block-start_var(--position-area-align)] origin-bottom `,
+        bottom: `[position-area:_block-end_var(--position-area-align)] origin-top`,
+        left: `[position-area:_inline-start_var(--position-area-align)] origin-right`,
+        right: `[position-area:_inline-end_var(--position-area-align)] origin-left`,
         inset: `[position-area:_center] origin-center`,
       },
       align: {

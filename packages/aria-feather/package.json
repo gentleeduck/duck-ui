@@ -39,6 +39,7 @@
   "homepage": "https://github.com/gentleduck/ui/tree/master/packages/aria-feather#readme",
   "dependencies": {
     "@gentleduck/hooks": "workspace:*",
+    "@oddbird/css-anchor-positioning": "^0.6.1",
     "dialog-closedby-polyfill": "^1.1.0",
     "invokers-polyfill": "^0.5.5",
     "mini-svg-data-uri": "^1.4.4"

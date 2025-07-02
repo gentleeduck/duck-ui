@@ -19,7 +19,8 @@
     "format": "biome format --write ./",
     "ci": "pnpm run lint && pnpm run format && pnpm run build",
     "release": "changeset version",
-    "publish": "pnpm run ci && changeset publish"
+    "publish": "pnpm run ci && changeset publish",
+    "prepare": "pnpm build"
   },
   "keywords": [
     "class-variants",

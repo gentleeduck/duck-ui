@@ -7,9 +7,21 @@ import { Slot } from '../slot'
 import { PopoverContext, usePopover, usePopoverContext } from './popover.hooks'
 import { PopoverContentProps, PopoverRootProps } from './popover.types'
 
-if (!("anchorName" in document.documentElement.style)) {
-  import("@oddbird/css-anchor-positioning");
+async function loadAnchorPolyfill() {
+  // Check if the native CSS anchor positioning is supported
+  if (!('anchorName' in document.documentElement.style)) {
+    // Dynamically import the polyfill only when the feature is not supported
+    // This avoids loading unnecessary code in modern browsers
+    const { default: polyfill } = await import('@oddbird/css-anchor-positioning/fn')
+
+    // Initialize the polyfill to enable CSS anchor positioning
+    polyfill()
+    console.log('anchor')
+  }
 }
+
+// Invoke the function when anchor positioning support is required
+loadAnchorPolyfill()
 
 /**
  * Popover component that provides a context for managing its open state and

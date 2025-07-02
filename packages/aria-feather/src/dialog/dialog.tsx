@@ -10,9 +10,9 @@ if (!isClosedBySupported()) {
   applyClosedBy()
 }
 
-if (!isInvokersSupported()) {
-  applyInvokers()
-}
+// if (!isInvokersSupported()) {
+//   applyInvokers()
+// }
 
 /**
  * Context for managing the open state of the dialog.

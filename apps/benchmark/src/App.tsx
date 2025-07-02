@@ -54,7 +54,7 @@ import ShadcnSwitch from './duck/switch/switch'
 // import HoverCard from './example/hover-card'
 import Popover from './example/popover'
 // import Select from './example/select'
-// import Tooltip from './example/tooltip'
+import Tooltip from './example/tooltip'
 // import Accordion from './example/accordion'
 
 // import Command from './example/command'
@@ -107,14 +107,10 @@ import Popover from './example/popover'
 function App() {
   return (
     // <KeyProvider timeoutMs={100}>
-    <div className="flex h-screen flex-col items-center justify-center gap-4 w-[500vh]">
+    <div className="flex h-300 w-500 flex-col items-center justify-center gap-4">
+      <Tooltip  />
       <Popover  />
-      <DuckCheckbox />
-      <ShadcnCheckbox />
-      <DuckSwitch />
-      <ShadcnSwitch />
-      <DuckRadioGroup />
-      <ShadcnRadioGroup />
+      <Tooltip  />
     </div>
     // </KeyProvider>
   )

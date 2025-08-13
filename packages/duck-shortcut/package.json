@@ -67,7 +67,7 @@
     "@types/react-dom": "catalog:react19"
   },
   "dependencies": {
-    "esbuild": "^0.25.5",
+    "esbuild": "^0.25.6",
     "vite": "catalog:"
   },
   "engines": {

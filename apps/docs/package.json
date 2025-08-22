@@ -42,7 +42,7 @@
     "lucide-react": "catalog:",
     "mdast-util-toc": "^6.1.1",
     "motion": "^12.4.3",
-    "next": "15.3.4",
+    "next": "15.3.5",
     "next-contentlayer": "^0.3.4",
     "next-contentlayer2": "^0.4.6",
     "next-themes": "^0.2.1",

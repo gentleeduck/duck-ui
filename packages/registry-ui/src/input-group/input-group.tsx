@@ -17,7 +17,7 @@ const InputGroup = React.forwardRef<HTMLDivElement, React.ComponentPropsWithoutR
       // biome-ignore lint/a11y/useSemanticElements: group role is semantically correct for input grouping
       <div
         className={cn(
-          'group/input-group relative flex w-full items-center rounded-md border border-input shadow-xs outline-none transition-[color,box-shadow] dark:bg-input/30',
+          'group/input-group relative flex w-full items-center rounded-md border border-input shadow-xs outline-none transition-[color,box-shadow] has-disabled:cursor-not-allowed dark:bg-input/30',
           'h-9 has-[>textarea]:h-auto',
           'has-[>[data-align=inline-start]]:[&>input]:ps-2',
           'has-[>[data-align=inline-end]]:[&>input]:pe-2',
@@ -40,7 +40,7 @@ const InputGroup = React.forwardRef<HTMLDivElement, React.ComponentPropsWithoutR
 InputGroup.displayName = 'InputGroup'
 
 const inputGroupAddonVariants = cva(
-  "flex h-auto cursor-text select-none items-center justify-center gap-2 py-1.5 font-medium text-muted-foreground text-sm group-data-[disabled=true]/input-group:opacity-50 [&>kbd]:rounded-[calc(var(--radius)-5px)] [&>svg:not([class*='size-'])]:size-4",
+  "flex h-auto cursor-text select-none items-center justify-center gap-2 py-1.5 font-medium text-muted-foreground text-sm group-has-disabled/input-group:cursor-not-allowed group-data-[disabled=true]/input-group:cursor-not-allowed group-data-[disabled=true]/input-group:opacity-50 [&>kbd]:rounded-[calc(var(--radius)-5px)] [&>svg:not([class*='size-'])]:size-4",
   {
     defaultVariants: {
       align: 'inline-start',

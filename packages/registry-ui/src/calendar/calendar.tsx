@@ -124,7 +124,7 @@ const Calendar = React.forwardRef<HTMLDivElement, ICalendarProps>(
                 {...prevNavProps}
                 className={cn(
                   buttonVariants({ variant: buttonVariant as 'ghost' }),
-                  'absolute start-0 z-10 size-(--gentleduck-calendar-cell) select-none p-0 aria-disabled:opacity-50',
+                  'absolute start-0 z-10 size-(--gentleduck-calendar-cell) select-none p-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
                 )}>
                 <ChevronLeftIcon className={cn('size-4', direction === 'rtl' && 'rotate-180')} />
               </button>
@@ -138,7 +138,7 @@ const Calendar = React.forwardRef<HTMLDivElement, ICalendarProps>(
                 {...nextNavProps}
                 className={cn(
                   buttonVariants({ variant: buttonVariant as 'ghost' }),
-                  'absolute end-0 z-10 size-(--gentleduck-calendar-cell) select-none p-0 aria-disabled:opacity-50',
+                  'absolute end-0 z-10 size-(--gentleduck-calendar-cell) select-none p-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
                 )}>
                 <ChevronRightIcon className={cn('size-4', direction === 'rtl' && 'rotate-180')} />
               </button>

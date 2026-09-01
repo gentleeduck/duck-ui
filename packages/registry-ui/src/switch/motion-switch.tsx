@@ -61,7 +61,7 @@ const MotionSwitch = React.forwardRef<
         className={cn(
           'relative inline-flex h-[1.75em] w-[3em] shrink-0 cursor-pointer items-center rounded-full border p-[0.125em]',
           'ring-offset-background focus-within:outline-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
-          disabled && 'pointer-events-none cursor-not-allowed opacity-50',
+          disabled && 'cursor-not-allowed opacity-50',
           className,
         )}
         style={style}

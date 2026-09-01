@@ -107,7 +107,7 @@ export const MotionCalendarDayCell = React.memo(function MotionCalendarDayCell({
         isInRange && isLastInRow && !day.isRangeEnd && 'rounded-e-md',
         day.isOutside && !day.isHidden && 'text-muted-foreground',
         day.isOutside && !day.isHidden && day.isSelected && 'text-muted-foreground',
-        day.isDisabled && !day.isHidden && 'pointer-events-none text-muted-foreground opacity-50',
+        day.isDisabled && !day.isHidden && 'cursor-not-allowed text-muted-foreground opacity-50',
       )}>
       <m.button type="button" whileTap={tapScale} {...btnProps}>
         {content}

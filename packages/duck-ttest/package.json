@@ -21,16 +21,12 @@
     }
   },
   "files": [
-    "src",
+    "dist",
     "README.md",
     "LICENSE",
     "CHANGELOG.md",
     "SECURITY.md",
-    "article-about-this.md",
-    "tsconfig.json",
-    "!**/__tests__",
-    "!**/*.test.*",
-    "!**/*.spec.*"
+    "article-about-this.md"
   ],
   "homepage": "https://gentleduck.org/duck-ui",
   "keywords": [
@@ -58,5 +54,5 @@
     "check-types": "tsc -p tsconfig.json --noEmit --pretty false --skipLibCheck"
   },
   "type": "module",
-  "version": "1.0.0"
+  "version": "1.0.1"
 }

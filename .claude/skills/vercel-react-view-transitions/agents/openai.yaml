@@ -1,0 +1,3 @@
+interface:
+  display_name: "React View Transitions"
+  short_description: "Animate routes and UI state changes"

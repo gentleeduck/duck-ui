@@ -1,0 +1,3 @@
+interface:
+  display_name: "Imagegen Frontend Web"
+  short_description: "Generate per-section website design refs"

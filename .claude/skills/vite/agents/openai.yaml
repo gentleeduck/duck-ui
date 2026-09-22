@@ -1,0 +1,3 @@
+interface:
+  display_name: "Vite"
+  short_description: "Vite config, plugins and SSR"

@@ -1,0 +1,3 @@
+interface:
+  display_name: "TypeScript Advanced Types"
+  short_description: "Generics, conditional and mapped types"

@@ -1,0 +1,3 @@
+interface:
+  display_name: "Vitest"
+  short_description: "Write, mock and configure vitest tests"

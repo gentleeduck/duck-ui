@@ -13,7 +13,7 @@
     "@testing-library/react": "^16.3.2",
     "@types/three": "^0.186.0",
     "husky": "^9.1.7",
-    "motion": "^12.26.2",
+    "motion": "^13.4.0",
     "sherif": "1.11.0",
     "turbo": "^2.10.8",
     "typescript": "7.0.2"

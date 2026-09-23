@@ -195,7 +195,7 @@ export function MotionCalendarHeader({
           {...getNavProps('prev')}
           className={cn(
             buttonVariants({ variant: buttonVariant as 'ghost' }),
-            'size-(--gentleduck-calendar-cell) select-none p-0 aria-disabled:opacity-50',
+            'size-(--gentleduck-calendar-cell) select-none p-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
           )}>
           <ChevronLeftIcon className={cn('size-4', direction === 'rtl' && 'rotate-180')} />
         </NavButton>
@@ -264,7 +264,7 @@ export function MotionCalendarHeader({
           {...getNavProps('next')}
           className={cn(
             buttonVariants({ variant: buttonVariant as 'ghost' }),
-            'size-(--gentleduck-calendar-cell) select-none p-0 aria-disabled:opacity-50',
+            'size-(--gentleduck-calendar-cell) select-none p-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
           )}>
           <ChevronRightIcon className={cn('size-4', direction === 'rtl' && 'rotate-180')} />
         </NavButton>

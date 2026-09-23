@@ -1,229 +1,104 @@
+`@gentleduck/iam/client/react` builds a React access-control surface from a permission map. Everything except two factories and three re-exported key helpers comes out of `createIamAccessControl(React)` - the module never imports React itself, so there is no bundled copy and no peer-version conflict.
+
+This module contains no evaluator. `can()` reads a snapshot of decisions a server already made, serialised over the wire, sitting in a browser the user controls - every value in it can be edited from a devtools console. It decides what to render, nothing more. The request the button fires must be authorized again on the server, by the engine, against the live policy set.
+
 ## Install
 
-```typescript
-import { createIamClient, createPermissionChecker } from '@gentleduck/iam/client/react'
+React is an **optional** peer dependency at `^19.2.6`. It is optional because the rest of the package works without it; if you use this entry point, React must be installed in your app.
+
+```ts
+import {
+  createIamAccessControl,
+  createIamPermissionChecker,
+  iamAllowedActions,
+  iamBuildPermissionKey,
+  iamHasAnyOn,
+} from '@gentleduck/iam/client/react'
 ```
 
-React is an optional peer dep. The factory accepts your `React` import to avoid a hard version dependency.
-
-***
+Those five are the runtime exports of the module; the last three are re-exports of the shared helpers, so a React-only app never imports from `@gentleduck/iam/core` for them. `AccessProvider`, `useAccess`, `usePermissions`, `Can`, `Cannot`, and `AccessContext` are produced by calling the factory - they are not importable directly.
 
 ## Setup
 
-Create the access control system once at app initialization. Pass your React import to avoid a hard dependency.
+Call the factory once, at app init, and export the result. Every consumer must share one context object, so a second call creates a second, unrelated context whose provider will not satisfy the first one's hook.
 
-```typescript
+```tsx
 // lib/access.tsx
 import React from 'react'
-import { createIamClient } from '@gentleduck/iam/client/react'
+import { createIamAccessControl } from '@gentleduck/iam/client/react'
 
-export const { AccessProvider, useAccess, usePermissions, Can, Cannot } = createIamClient(React)
-```
-
-Type the system to your action/resource/scope unions:
-
-```typescript
-type Action = 'create' | 'read' | 'update' | 'delete'
-type Resource = 'post' | 'comment' | 'team'
+type Action = 'create' | 'read' | 'update' | 'delete' | 'manage'
+type Resource = 'post' | 'comment' | 'team' | 'analytics'
 type Scope = 'org-1' | 'admin'
 
-export const access = createIamClient<Action, Resource, Scope>(React)
+export const { AccessContext, AccessProvider, useAccess, usePermissions, Can, Cannot } =
+  createIamAccessControl<Action, Resource, Scope>(React)
 ```
 
-***
+The generics are, in order, `TAction`, `TResource`, `TScope`, all constrained to `string` and all defaulting to `string`. Fixing them makes `can('mange', 'post')` a type error instead of a silently hidden button.
+
+## Request path
+
+Steps 3 and 4 are the only asynchronous work. Step 6 is the whole cost of the provider: one `useMemo` over the map identity. Step 10 is a property read. The note is described under [outside the provider](#behaviour-outside-the-provider).
+
+## createIamAccessControl
+
+```ts
+function createIamAccessControl<
+  TAction extends string = string,
+  TResource extends string = string,
+  TScope extends string = string,
+>(React: ReactLike): {
+  AccessContext: ReactContext<IamReactClient.IContextValue<TAction, TResource, TScope>>
+  AccessProvider: (props: {
+    permissions: IamClient.PartialPermissionMap<TAction, TResource, TScope>
+    children: ReactNode
+  }) => ReactNode
+  useAccess: () => IamReactClient.IContextValue<TAction, TResource, TScope>
+  usePermissions: (
+    fetchFn: () => Promise<IamClient.PartialPermissionMap<TAction, TResource, TScope>>,
+    deps?: readonly unknown[],
+  ) => {
+    permissions: IamClient.PartialPermissionMap<TAction, TResource, TScope>
+    can: (action: TAction, resource: TResource, resourceId?: string, scope?: TScope) => boolean
+    cannot: (action: TAction, resource: TResource, resourceId?: string, scope?: TScope) => boolean
+    allowedActions: (resource: TResource) => string[]
+    hasAnyOn: (resource: TResource) => boolean
+    loading: boolean
+    error: Error | null
+    refetch: () => Promise<void>
+  }
+  Can: (props: CanProps) => ReactNode
+  Cannot: (props: CannotProps) => ReactNode
+}
+```
+
+The `React` parameter is structurally typed as `ReactLike`, so anything providing these seven members satisfies it - the real React module, a preact/compat shim, or a test double:
+
+| Member | Used for |
+| --- | --- |
+| `createContext` | The shared access context |
+| `useContext` | `useAccess` |
+| `useMemo` | Memoising `can`/`cannot` in `AccessProvider` |
+| `useCallback` | Memoising `can` in `usePermissions` |
+| `createElement` | Rendering the context provider element |
+| `useState` | `usePermissions` state |
+| `useEffect` | `usePermissions` fetch effect |
+
+Returns six members; there are no others.
 
 ## AccessProvider
 
-Wrap your app (or a subtree) with the provider. Pass the permission map generated on the server.
-
-```tsx
-// app/layout.tsx (Next.js example)
-import { AccessProvider } from '@/lib/access'
-import { getPermissions } from '@gentleduck/iam/server/next'
-
-export default async function RootLayout({ children }) {
-  const session = await auth()
-  const permissions = session?.user
-    ? await getPermissions(engine, session.user.id, [
-        { action: 'create', resource: 'post' },
-        { action: 'delete', resource: 'post' },
-        { action: 'manage', resource: 'team' },
-        { action: 'read', resource: 'analytics' },
-      ])
-    : {}
-
-  return <AccessProvider permissions={permissions}>{children}</AccessProvider>
-}
-```
-
-The provider memoizes the `can`/`cannot` callbacks on the permission map identity, so re-renders are cheap.
-
-***
-
-## useAccess hook
-
-Read permissions from context in any component.
-
-```tsx
-import { useAccess } from '@/lib/access'
-
-function PostActions({ postId }: { postId: string }) {
-  const { can, cannot } = useAccess()
-
-  return (
-    <div>
-      {can('update', 'post') && <button>Edit</button>}
-      {can('delete', 'post') && <button>Delete</button>}
-      {cannot('manage', 'team') && <span>Contact an admin to manage teams</span>}
-    </div>
-  )
-}
-```
-
-The hook returns:
-
-| Property | Type | Description |
-| --- | --- | --- |
-| `permissions` | `PermissionMap` | The raw permission map |
-| `can` | `(action, resource, resourceId?, scope?) -> boolean` | Check if a permission is granted |
-| `cannot` | `(action, resource, resourceId?, scope?) -> boolean` | Check if a permission is denied |
-
-***
-
-## Can and Cannot components
-
-Declarative permission gates for JSX.
-
-```tsx
-import { Can, Cannot } from '@/lib/access'
-
-function Dashboard() {
-  return (
-    <div>
-      <Can action="read" resource="analytics">
-        <AnalyticsPanel />
-      </Can>
-
-      <Can action="manage" resource="team" fallback={<UpgradePrompt />}>
-        <TeamSettings />
-      </Can>
-
-      <Cannot action="create" resource="post">
-        <p>You do not have permission to create posts.</p>
-      </Cannot>
-    </div>
-  )
-}
-```
-
-### `Can` props
-
-| Prop | Type | Required | Description |
+| Prop | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `action` | `string` | yes | The action to check |
-| `resource` | `string` | yes | The resource type to check |
-| `resourceId` | `string` | no | Specific resource instance |
-| `scope` | `string` | no | Scope for the check |
-| `children` | `ReactNode` | yes | Rendered when allowed |
-| `fallback` | `ReactNode` | no | Rendered when denied (defaults to `null`) |
+| `permissions` | `IamClient.PartialPermissionMap` renders nothing during load and after a failed load. Two UI hazards follow, neither of them a bug in the hook:
 
-### `Cannot` props
+1. **`` will not match a key the server built with a `scope`.
 
-Same as `Can` minus `fallback`. Renders `children` when the permission is denied.
+## See also
 
-***
-
-## usePermissions hook
-
-Fetch permissions from a server endpoint on the client side. Useful for SPAs without server-side rendering.
-
-```tsx
-import { usePermissions } from '@/lib/access'
-
-function App() {
-  const { can, loading, error } = usePermissions(
-    () => fetch('/api/me/permissions').then((r) => r.json()),
-    [], // dependency array, like useEffect
-  )
-
-  if (loading) return <Spinner />
-  if (error) return <ErrorMessage error={error} />
-
-  return <div>{can('create', 'post') && <NewPostButton />}</div>
-}
-```
-
-The hook returns:
-
-| Property | Type | Description |
-| --- | --- | --- |
-| `permissions` | `PermissionMap` | The fetched permission map |
-| `can` | `(action, resource, resourceId?, scope?) -> boolean` | Permission checker |
-| `loading` | `boolean` | True while the fetch is in progress |
-| `error` | `Error or null` | Error from the fetch, if any |
-
-The hook handles race conditions internally: if the component unmounts or the dependency array changes before the fetch completes, stale results are discarded.
-
-`usePermissions` does **not** abort in-flight requests - it only ignores late results. If you need true cancellation, use the standalone checker with your own `AbortController` flow.
-
-***
-
-## Standalone checker
-
-For code outside React components (utilities, event handlers, tests), use `createPermissionChecker`. It takes a `PermissionMap` and returns a checker object with `can`, `cannot`, and the raw `permissions`.
-
-```typescript
-import { createPermissionChecker } from '@gentleduck/iam/client/react'
-
-const checker = createPermissionChecker(permissionMap)
-checker.can('delete', 'post') // boolean
-checker.cannot('manage', 'team') // boolean
-checker.permissions // the original PermissionMap
-```
-
-Use this when you don't need React context - for example, in route loaders, form validators, or analytics event handlers.
-
-***
-
-## When to use what
-
-| Need | Use |
-| --- | --- |
-| Wrap whole tree with permissions from RSC | `AccessProvider` + `useAccess` |
-| Wrap whole tree with permissions from API | `AccessProvider` + `usePermissions` (or fetch in layout) |
-| One-off check inside JSX | `<Can>` / `<Cannot>` |
-| Check inside utility code | `createPermissionChecker` |
-
-***
-
-## React Server Components note
-
-`AccessProvider` is a client component (uses `useMemo`/context). Mark the wrapper file with `"use client"` if you import it from a Server Component:
-
-```tsx
-'use client'
-import { AccessProvider } from '@gentleduck/iam/client/react'
-// ...
-```
-
-For server-side checks inside RSC/Server Actions, use [`checkAccess`](/duck-iam/integrations/server/next) from `@gentleduck/iam/server/next` instead - that hits the engine directly without touching client context.
-
-***
-
-## Types
-
-All types live under the `ReactClient` namespace at `@gentleduck/iam/client/react`. Type-only - zero bundle cost.
-
-* `ReactClient.IContextValue` - shape returned by `useAccess()` and consumed by `Can`/`Cannot` internally (`permissions`, `can`, `cannot`).
-
-```typescript
-import type { ReactClient } from '@gentleduck/iam/client/react'
-
-function useAuditedAccess(): ReactClient.IContextValue {
-  const ctx = useAccess()
-  // ...
-  return ctx
-}
-```
-
-The deprecated bare alias `IContextValue` remains for back-compat and will be removed in 3.0.
+* [PermissionMap reference](/duck-iam/integrations/client/permission-map) - key formats and partial maps
+* [Client overview](/duck-iam/integrations/client) - server-to-client sync and refresh
+* [Next.js integration](/duck-iam/integrations/server/next) - `getIamPermissions` and server-side checks
+* [Vue client](/duck-iam/integrations/client/vue) - the same model, different reactivity
+* [Vanilla JS client](/duck-iam/integrations/client/vanilla) - for non-React subtrees

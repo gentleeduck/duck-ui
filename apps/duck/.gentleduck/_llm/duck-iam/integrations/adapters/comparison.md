@@ -1,135 +1,234 @@
-## Quick comparison
+All six built-in adapters pass the same compliance suite, so they agree on every decision your engine makes. What differs is durability, concurrency, which optional methods they implement, and how loudly they fail.
 
-| Adapter | Use case | Persistence | Peer dep | Idempotent assign | Native scoped roles |
-| --- | --- | --- | --- | --- | --- |
-| [Memory](/duck-iam/integrations/adapters/memory) | Dev, testing | None | None | yes (in-memory check) | yes |
-| [File](/duck-iam/integrations/adapters/file) | CLIs, dev fixtures, single-process | JSON on disk | `node:fs/promises` (pluggable) | yes (in-memory check) | yes |
-| [Prisma](/duck-iam/integrations/adapters/prisma) | Prisma apps | Any DB | `@prisma/client` | **no** (throws on dup) | yes |
-| [Drizzle](/duck-iam/integrations/adapters/drizzle) | Drizzle apps | PG/MySQL/SQLite | `drizzle-orm` | yes (`onConflictDoNothing`) | yes |
-| [Redis](/duck-iam/integrations/adapters/redis) | Distributed deploys | Redis | `ioredis` or `redis` | yes (set semantics) | yes |
-| [HTTP](/duck-iam/integrations/adapters/http) | Microservice split | Remote API | None | depends on backend | yes |
+## Feature matrix
 
-All adapters are interchangeable. Engine, builder, and middleware code stays the same - migration is data movement only.
+| | [Memory](/duck-iam/integrations/adapters/memory) | [File](/duck-iam/integrations/adapters/file) | [Prisma](/duck-iam/integrations/adapters/prisma) | [Drizzle](/duck-iam/integrations/adapters/drizzle) | [Redis](/duck-iam/integrations/adapters/redis) | [HTTP](/duck-iam/integrations/adapters/http) |
+|---|---|---|---|---|---|---|
+| Persistence | none | one JSON file | any Prisma database | PG / MySQL / SQLite | Redis, no TTL | remote service |
+| Peer dependency | none | none, you pass `fs` | `@prisma/client` | `drizzle-orm` | `ioredis` or `redis` | none, uses `fetch` |
+| Survives restart | no | yes | yes | yes | with AOF/RDB | yes |
+| Safe with many writers | n/a | **no** | yes | yes | yes | depends on the service |
+| Idempotent `assignRole` | yes, in-memory check | yes, in-memory check | yes, read-then-write, `P2002` is success | yes, `onConflictDoNothing` | yes, `SADD` set semantics | depends on the service |
+| `onPolicyError` hook | no | yes | no, `console.warn` | yes | yes | yes |
+| Row validation on read | yes | yes | yes | yes | yes | yes |
+| Temporal grants (`IAssignOptions`) | refused | refused | refused | **yes**, `starts_at` / `expires_at` | refused | refused |
+| Per-grant attributes on `IScopedRole` | no | no | no | **yes** | no | no |
+| Honours `opts.signal` | no | no | no | no | no | yes, via `fetch` |
+| Write cost per mutation | one `Map.set` | full-document rewrite | one row | one row | one command | one request |
 
-***
+### Optional methods
+
+This table is `src/adapters/__compliance__/optional-support.ts`, which is declared rather than probed and checked against the real prototypes by `optional-method-matrix.test.ts`.
+
+| Optional method | Memory | File | Prisma | Drizzle | Redis | HTTP |
+|---|---|---|---|---|---|---|
+| `getSubjectScopedRoles` | yes | yes | yes | yes | yes | yes |
+| `updateAssignmentScope` | yes | yes | yes | yes | no | no |
+| `getSubjectGrantBoundary` | no | no | no | yes | no | no |
+| `assignRoleMany` | no | no | no | yes | no | no |
+| `revokeRoleMany` | no | no | no | yes | no | no |
+| `withClient` | no | no | yes | yes | no | no |
+
+Three of the six exist on Drizzle alone, because only its schema carries `starts_at` / `expires_at` and only it can batch through a transaction.
+
+Notes on the sharp bits:
+
+* **A missing optional method costs correctness nowhere.** `updateAssignmentScope`, `assignRoleMany` and `revokeRoleMany` are optimisations the engine falls back for - revoke-then-assign, and a per-row loop - and `runEngineCapabilityCompliance` pins the behaviour behind them on all six adapters regardless of what the table says. The exception is `withClient`: without it `engine.withTransaction` throws rather than writing outside your transaction, so only Drizzle and Prisma can join one.
+* **`IAssignOptions` is refused, not dropped.** Only Drizzle stores `startsAt` / `expiresAt` / `attributes`. The other five throw and name the option rather than accepting the grant and discarding the expiry, which used to make a break-glass grant permanent while the batch API still reported `applied: 1`.
+* **Memory and Prisma have no `onPolicyError` hook.** Memory validates its seed through the same guards its write path uses; Prisma has no options object to wire a handler into, so its dropped-row reports go to `console.warn`.
 
 ## Decision tree
 
-```
-Are you in production?
-|
-+- No
-|  +- Need persistence between runs? -> IamFileAdapter
-|  +- Otherwise                      -> IamMemoryAdapter
-|
-+- Yes
-   |
-   +- CLI / single-process daemon? -> IamFileAdapter
-   +- Already use Prisma?           -> IamPrismaAdapter
-   +- Already use Drizzle?          -> IamDrizzleAdapter
-   +- Need distributed cache + multi-instance? -> IamRedisAdapter
-   +- Splitting auth across services? -> IamHttpAdapter (consume centrally)
-   +- Custom backend?               -> Implement IamAdapter.IAdapter (see "Custom" doc)
-```
+The first branch that matters is **writers, not readers**. Many read-only processes are fine against a file, because the engine's LRU absorbs almost all traffic; two processes that both call `engine.admin.*` against one file will clobber each other. The second is whether you already run an ORM: if you do, the matching adapter is almost always the right answer, because your migrations, backups, and observability already cover that database. Redis earns its place when several instances need the same authorization state with sub-millisecond reads; a custom adapter is the answer when your data already lives somewhere none of the six understand.
 
-***
+## Migrating between adapters
+
+Engine, builder, server middleware, and client code are unchanged - only the constructor line and the data move.
+
+**Export from the old adapter**
+
+Read everything through the adapter interface itself: `listPolicies()`, `listRoles()`, and, per subject,
+`getSubjectRoles()`, `getSubjectScopedRoles()`, and `getSubjectAttributes()`. There is no `listSubjects` on the
+interface, so you need your own list of subject ids - usually a query against your users table.
+
+**Import into the new adapter**
+
+Replay the same calls as writes: `savePolicy`, `saveRole`, one `assignRole(subjectId, roleId, scope?)` per grant,
+and `setSubjectAttributes`. Save the roles before the grants - every adapter refuses an assignment naming a role it
+does not hold. Saves are upserts and assigns are idempotent everywhere, so the import can be re-run safely.
+
+**Verify with the same decisions**
+
+Run your authorization tests against both adapters and assert identical results. Adapters that disagree are
+usually adapters where one broke the scoped/unscoped split.
+
+**Swap the constructor and warm the cache**
+
+Change the adapter passed to `IamEngine`, then call `await engine.preload()` on boot so the first request does
+not pay the cold read.
 
 ## FAQ
 
 What does an adapter actually do in duck-iam?
 
-An adapter is the persistence layer. It loads and stores policies, roles, role assignments, scoped assignments,
-and subject attributes. The engine owns evaluation, policy combination, explain traces, and decision logic.
+It is the persistence layer and nothing else. It loads and stores policies, roles, role assignments, scoped
+assignments, and subject attributes. The engine owns evaluation, policy combination, caching, explain traces,
+and decision logic.
+
+How many methods does an adapter have to implement?
+
+Nineteen exist; thirteen are required. The six optional ones are
+<code className="rounded bg-muted px-2 py-1">getSubjectScopedRoles</code>,
+<code className="rounded bg-muted px-2 py-1">updateAssignmentScope</code>,
+<code className="rounded bg-muted px-2 py-1">getSubjectGrantBoundary</code>,
+<code className="rounded bg-muted px-2 py-1">assignRoleMany</code>,
+<code className="rounded bg-muted px-2 py-1">revokeRoleMany</code> and
+<code className="rounded bg-muted px-2 py-1">withClient</code>.
 
 Does IamMemoryAdapter persist anything?
 
 No. It stores everything in process memory. Restarting the process resets policies, roles, assignments, and
-attributes, which is why it is best for tests, demos, and local development.
+attributes, which is why it is limited to tests, demos, and local development.
 
-Can I seed scoped assignments in IamMemoryAdapter constructor input?
+Can I seed scoped assignments in the IamMemoryAdapter constructor?
 
-Not directly. Constructor assignment seeding is unscoped. For scoped assignments, create the adapter first and then
-call <code className="rounded bg-muted px-2 py-1">assignRole(subjectId, roleId, scope)</code>.
+No. The <code className="rounded bg-muted px-2 py-1">assignments</code> seed is
+<code className="rounded bg-muted px-2 py-1">Record\<string, TRole\[]></code> and every entry it creates is
+unscoped. For scoped grants, construct the adapter and then call
+<code className="rounded bg-muted px-2 py-1">assignRole(subjectId, roleId, scope)</code>.
 
 Can I use my existing database instead of a dedicated auth database?
 
-Yes. duck-iam only needs four storage areas for policies, roles, assignments, and subject attributes. Those can live
+Yes. duck-iam needs four storage areas - policies, roles, assignments, and subject attributes - and they can live
 alongside the rest of your application schema.
 
 How do IamPrismaAdapter and IamDrizzleAdapter differ in practice?
 
-Prisma expects named models and lets Prisma handle JSON columns natively. Drizzle expects you to wire the tables and
-query operators explicitly, and the adapter serializes or parses JSON fields for you. Drizzle ships pre-built
-schema modules for Postgres, MySQL, and SQLite - Prisma ships a single reference <code>schema.prisma</code> snippet.
+Prisma expects named models and handles JSON columns natively. Drizzle expects you to pass the four tables and the
+<code className="rounded bg-muted px-2 py-1">eq</code> / <code className="rounded bg-muted px-2 py-1">and</code>
+operators explicitly, and its <code className="rounded bg-muted px-2 py-1">json</code> option chooses between
+native JSON columns and stringified text. Drizzle ships pre-built schema modules for Postgres, MySQL, and SQLite;
+Prisma ships a single reference <code>schema.prisma</code> snippet. Drizzle is also the only adapter that
+implements temporal grants and per-grant attributes.
 
 When should I pick IamRedisAdapter over Prisma or Drizzle?
 
-Redis is best when you need distributed cache semantics - multiple app instances reading the same authorization
-state with sub-millisecond latency. For tens of thousands of policies or complex audit/history requirements,
-relational adapters scale better. Many production deployments use both: Redis as the engine adapter for hot reads,
-Postgres as a separate audit/source-of-truth store synced via background jobs.
+When several app instances need the same authorization state with sub-millisecond latency. For tens of thousands
+of policies, or for audit and history requirements, relational adapters scale better. Many deployments use both:
+Redis as the engine adapter for hot reads, Postgres as the audited source of truth, synced by a background job.
 
 Do adapters merge subject attributes or replace them?
 
-The built-in adapters merge incoming attributes into the current subject attribute map. This lets you patch a few
-attributes without rewriting the entire stored object.
+They merge, shallowly, per key. Keys absent from the patch survive; keys present are overwritten. The compliance
+suite pins this, so it is true of every adapter including custom ones.
+
+Is setSubjectAttributes safe under concurrent writes?
+
+Not in the built-in adapters. Each one reads the current bag, spreads the patch over it, and writes the result,
+without a transaction, so two concurrent merges to the same subject can lose one of them. If that matters, use a
+backend-atomic merge in a custom adapter.
+
+What happens if I pass a non-object to setSubjectAttributes?
+
+Every adapter rejects it with the same message,
+<code className="rounded bg-muted px-2 py-1">attributes for "\<id>" must be a plain object (got string)</code>,
+before writing anything. Existing attributes are left untouched. Without this guard a string would spread into
+per-character attribute keys.
 
 How are duplicate role assignments handled?
 
-Memory and Redis are idempotent (in-memory check / set semantics). Drizzle uses <code>onConflictDoNothing</code>.
-Prisma currently uses <code>create</code> and will throw on a duplicate against the unique constraint - wrap in a
-try/catch or check existence first if you can't guarantee unique calls.
+A repeat grant is a no-op on all six. Memory and file check in memory, Redis relies on set semantics, Drizzle uses
+<code className="rounded bg-muted px-2 py-1">onConflictDoNothing</code>, and Prisma reads first and treats the
+<code className="rounded bg-muted px-2 py-1">P2002</code> a racing writer causes as success. Prisma needs its unique
+index replaced by hand for that to hold under concurrency - see the
+<a href="/duck-iam/integrations/adapters/prisma">Prisma adapter</a> page.
+
+What does revokeRole do when I omit the scope?
+
+It removes <strong>every</strong> assignment of that role for the subject, scoped and unscoped alike. That is the
+cross-adapter contract and the compliance suite asserts it. Pass the scope explicitly to remove only one grant.
+
+Which adapters support expiring role grants?
+
+Only Drizzle. Its pg, mysql, and sqlite schemas carry
+<code className="rounded bg-muted px-2 py-1">starts\_at</code>, <code className="rounded bg-muted px-2 py-1">expires\_at</code>,
+and <code className="rounded bg-muted px-2 py-1">attributes</code> columns, and reads filter out grants outside the
+<code>\[startsAt, expiresAt)</code> window. The other five throw and name the option they cannot store, rather than
+accepting the grant and dropping the expiry.
 
 Does IamHttpAdapter move policy evaluation to the server?
 
-No. IamHttpAdapter fetches authorization data over HTTP, but the consuming engine still evaluates permissions locally.
-Use it when you want shared storage behind a service boundary, not when you want to outsource evaluation entirely.
+No. It fetches authorization data over HTTP; the consuming engine still evaluates locally. Use it when you want
+shared storage behind a service boundary, not when you want to outsource evaluation.
 
 Can IamHttpAdapter attach auth headers dynamically?
 
 Yes. The <code className="rounded bg-muted px-2 py-1">headers</code> option can be a static object or an async
-function, which makes it suitable for short-lived bearer tokens and per-request auth state.
-
-Can I start with IamMemoryAdapter and move to Prisma, Drizzle, Redis, or HTTP later?
-
-Yes. That is one of the intended adoption paths. The engine and builder APIs stay the same; the main migration work
-is moving your persisted roles, policies, assignments, and subject attributes into the new adapter's storage shape.
-
-What should a scoped-role capable adapter guarantee?
-
-It should keep global role assignments and scoped assignments conceptually separate. Global assignments belong in
-<code className="rounded bg-muted px-2 py-1">getSubjectRoles()</code>. Scope-bound assignments belong in
-<code className="rounded bg-muted px-2 py-1">getSubjectScopedRoles()</code> so the engine can merge them only for
-matching request scopes.
-
-What exactly should getSubjectRoles() return when a subject has both global and scoped assignments?
-
-It should return the subject's global role IDs only. Scoped assignments should be surfaced through
-<code className="rounded bg-muted px-2 py-1">getSubjectScopedRoles()</code> so the engine can merge them only when
-the request scope matches.
-
-Can I implement only unscoped roles first and add multi-tenant support later?
-
-Yes. A custom adapter can omit <code className="rounded bg-muted px-2 py-1">getSubjectScopedRoles()</code> and still
-support the core engine. Add that method and scoped assignment storage once your application needs
-tenant-aware role resolution.
+function, which makes it usable with short-lived bearer tokens and per-request auth state.
 
 Does the Express admin router fully satisfy IamHttpAdapter?
 
 No. The admin router exposes <code>/policies</code>, <code>/roles</code>, and subject role-assignment endpoints, but
 IamHttpAdapter also expects subject-attribute reads (<code>/subjects/:id/attributes</code>) and scoped-role reads
 (<code>/subjects/:id/scoped-roles</code>). Treat the router as a starting point and add the remaining endpoints
-yourself. Same applies to the Hono <code>bindAdminRouter</code>, Next.js <code>createAdminHandlers</code>, and
-NestJS <code>createAdminOperations</code> factories.
+yourself. The same applies to Hono's <code>bindAdminRouter</code>, Next.js's <code>createAdminHandlers</code>, and
+NestJS's <code>createAdminOperations</code> factories.
 
 Does IamRedisAdapter set a TTL on stored keys?
 
-No. Stored values are persistent. Engine-level caching is handled by the in-process LRU with its <code>cacheTTL</code>
-option - Redis is the source of truth, not a TTL cache. Configure Redis persistence (AOF/RDB) if you don't want
-data loss on restart.
+No. Stored values are persistent. Engine-level caching is the in-process LRU with its
+<code className="rounded bg-muted px-2 py-1">cacheTTL</code> - Redis is the source of truth, not a TTL cache.
+Configure AOF or RDB persistence if you do not want data loss on restart.
 
 How do I isolate tenants in a shared Redis?
 
 Use <code className="rounded bg-muted px-2 py-1">keyPrefix</code> per tenant. Two adapters with different prefixes
 cannot read each other's keys. Combine with separate Redis logical databases (<code>SELECT n</code>) for stronger
-isolation.
+isolation, and give the <a href="/duck-iam/integrations/invalidators/redis">Redis invalidator</a> a
+<code className="rounded bg-muted px-2 py-1">tenantId</code> so invalidations are isolated too.
+
+What should a scoped-role capable adapter guarantee?
+
+It must keep global and scoped assignments separate. Global assignments belong in
+<code className="rounded bg-muted px-2 py-1">getSubjectRoles()</code>; scope-bound assignments belong in
+<code className="rounded bg-muted px-2 py-1">getSubjectScopedRoles()</code> so the engine merges them only for
+matching request scopes.
+
+What should getSubjectRoles() return when a subject has both global and scoped grants?
+
+Global role ids only, deduplicated. Collapsing scoped grants into that list leaks a role granted for one tenant
+into every tenant, and the same subject would then decide differently across backends.
+
+Can I implement only unscoped roles first and add multi-tenant support later?
+
+Yes. A custom adapter can omit <code className="rounded bg-muted px-2 py-1">getSubjectScopedRoles</code> and the
+engine still works - it sees no scoped grants, with no error and no warning. Declare it
+<code className="rounded bg-muted px-2 py-1">false</code> in the compliance suite's
+<code className="rounded bg-muted px-2 py-1">supports</code> literal while you do, or the first scoped read-back
+throws. Add the method and the scoped storage when you need tenant-aware resolution.
+
+Can I start with IamMemoryAdapter and move to a database later?
+
+Yes, that is an intended adoption path. Engine, builder, and middleware APIs are unchanged; the work is moving
+roles, policies, assignments, and subject attributes into the new adapter's storage shape - see
+<a href="#migrating-between-adapters">Migrating between adapters</a> above.
+
+Can one engine use two adapters?
+
+Not directly - <code className="rounded bg-muted px-2 py-1">IConfig.adapter</code> takes exactly one. Write a thin
+composite adapter that implements the interface and delegates each method to whichever backend owns that data.
+
+How do I know my custom adapter behaves like the built-ins?
+
+Run <code className="rounded bg-muted px-2 py-1">runAdapterCompliance(name, factory, \{ supports })</code> and
+<code className="rounded bg-muted px-2 py-1">runEngineCapabilityCompliance(name, factory)</code> against it. They are the
+same two suites every shipped adapter passes; the factory must return a fresh, empty store on each call, and
+<code className="rounded bg-muted px-2 py-1">supports</code> must name the optional methods you actually implement.
+See the
+<a href="/duck-iam/integrations/adapters/custom">Custom adapter</a> page.
+
+## See also
+
+* [Adapters overview](/duck-iam/integrations/adapters) - the interface these adapters implement
+* [Custom adapter](/duck-iam/integrations/adapters/custom) - the compliance suite and worked sketches
+* [Production checklist](/duck-iam/guides/production) - what else to harden before shipping

@@ -1,446 +1,291 @@
-## Goal
+DocDuck needs more than a viewer. An **editor** writes documents, an **admin** manages teams and users. Rather than repeating permissions, each role inherits the one below it - and then you validate the result before the app serves a request.
 
-BlogDuck needs more than viewers. Add an **editor** who can create and update posts,
-and an **admin** who can do everything. Use inheritance so each role builds on the
-one below it.
+## Learning goals
 
-read post, read comment"] --> E["editor+ create post, update post+ create comment, update comment"]
-  E --> A["admin+ delete post, delete comment+ manage user, manage dashboard"]`}
+* Build an inheritance chain with `.inherits()` and know how it resolves.
+* Use `grantCRUD`, `grantAll`, `grantRead`, and `grantScoped`.
+* Read the wildcard matching rules exactly, including what `'*'` does *not* match.
+* Know the 32-level inheritance cap and how cycles are handled.
+* Validate a role set with `validateRoles` and interpret every issue code.
+
+## The hierarchy
+
+delete document, archive document, manage team, manage user"]
+  E["editorcreate document, update document, share document"]
+  V["viewerread document, read team"]
+  A --> |"inherits"| E
+  E --> |"inherits"| V
+  CAROL["carol"] -.-> |"assigned"| A
+  BOB["bob"] -.-> |"assigned"| E
+  ALICE["alice"] -.-> |"assigned"| V`}
 />
 
-## Building the Hierarchy
+`editor` inherits `viewer`, `admin` inherits `editor`. Carol holds only `admin`, but the engine resolves her effective roles to `admin`, `editor`, `viewer` and collects the permissions of all three. Inheritance points *down* the diagram, from `admin` to `editor` to `viewer`; permissions travel back *up* the same edges.
 
-**Add the editor role**
+## Building it
 
-The editor inherits from viewer and adds create/update permissions:
+**Extend `src/roles.ts`**
 
-```typescript title="src/access.ts"
-export const editor = defineRole('editor')
-  .inherits('viewer')
-  .grant('create', 'post')
-  .grant('update', 'post')
-  .grant('create', 'comment')
-  .grant('update', 'comment')
-  .build()
-```
-
-Because editor inherits viewer, the editor gets `read:post` and `read:comment`
-without listing them again.
-
-**Add the admin role**
-
-The admin inherits from editor (which inherits from viewer):
-
-```typescript title="src/access.ts"
-export const admin = defineRole('admin')
-  .inherits('editor')
-  .grant('delete', 'post')
-  .grant('delete', 'comment')
-  .grant('manage', 'user')
-  .grant('manage', 'dashboard')
-  .build()
-```
-
-Admin gets viewer + editor + admin permissions across three inheritance
-levels.
-
-**Register all roles and assign users**
-
-```typescript title="src/access.ts"
-const adapter = new IamMemoryAdapter({
-  roles: [viewer, editor, admin],
-  assignments: {
-    'alice': ['viewer'],
-    'bob': ['editor'],
-    'charlie': ['admin'],
-  },
-})
-
-export const engine = new IamEngine({ adapter }) // mode defaults to 'development'
-```
-
-**Test the hierarchy**
-
-```typescript title="src/main.ts"
-import { engine } from './access'
-
-async function main() {
-  // Viewer: can read, cannot create
-  console.log('alice read post:', await engine.can('alice', 'read', { type: 'post', attributes: {} }))
-  // true
-  console.log('alice create post:', await engine.can('alice', 'create', { type: 'post', attributes: {} }))
-  // false
-
-  // Editor: can read (inherited) + create
-  console.log('bob read post:', await engine.can('bob', 'read', { type: 'post', attributes: {} }))
-  // true
-  console.log('bob create post:', await engine.can('bob', 'create', { type: 'post', attributes: {} }))
-  // true
-  console.log('bob delete post:', await engine.can('bob', 'delete', { type: 'post', attributes: {} }))
-  // false
-
-  // Admin: can do everything
-  console.log('charlie delete post:', await engine.can('charlie', 'delete', { type: 'post', attributes: {} }))
-  // true
-  console.log('charlie manage user:', await engine.can('charlie', 'manage', { type: 'user', attributes: {} }))
-  // true
-}
-
-main()
-```
-
-## How Inheritance Resolution Works
-
-viewer + editor + admin"]
-  end
-
-  subgraph Safety["Cycle Detection"]
-      direction TB
-      V["visited = Set()"]
-      V --> V1["Visit admin -> add to set"]
-      V1 --> V2["Visit editor -> add to set"]
-      V2 --> V3["Visit viewer -> add to set"]
-      V3 --> V4["If seen before -> skip"]
-  end
-
-  Resolve ~~~ Safety`}
-/>
-
-The engine calls `resolveEffectiveRoles()`, walking the inheritance chain recursively
-with a visited set to break circular inheritance (A inherits B, B inherits A). Cycles
-are skipped, not raised as errors.
-
-Charlie's resolved roles: `['admin', 'editor', 'viewer']`. All three roles'
-permissions land in the `__rbac__` policy.
-
-## Multiple Inheritance
-
-A role can inherit from several parents:
-
-```typescript
-const commenter = defineRole('commenter')
-  .grant('create', 'comment')
-  .grant('update', 'comment')
-  .build()
-
-const moderator = defineRole('moderator')
-  .inherits('viewer', 'commenter')
-  .grant('delete', 'comment')
-  .build()
-```
-
-The moderator gets `read:post` and `read:comment` from viewer, `create:comment` and
-`update:comment` from commenter, plus its own `delete:comment`. Duplicates are
-deduplicated automatically.
-
-## The Complete RoleBuilder API
-
-`defineRole()` returns a `RoleBuilder` with these methods:
-
-### Core Methods
-
-```typescript
-defineRole('editor')
-  .name('Content Editor')          // human-readable name (defaults to the role ID)
-  .desc('Can create and edit content')  // description
-  .inherits('viewer', 'commenter') // inherit from one or more parent roles
-  .scope('acme')                   // restrict this role to a scope (Chapter 5)
-  .meta({ department: 'content' }) // attach arbitrary metadata
-  .grant('create', 'post')        // grant a permission
-  .build()                        // produce the Role object
-```
-
-| Method | Description |
-| --- | --- |
-| `.name(n)` | Set a human-readable display name |
-| `.desc(d)` | Set a description |
-| `.inherits(...ids)` | Inherit permissions from parent roles |
-| `.scope(s)` | Restrict all permissions to a specific scope (Chapter 5) |
-| `.meta(m)` | Attach arbitrary metadata (e.g., `{ color: 'blue' }`) |
-| `.grant(action, resource)` | Grant a single permission |
-| `.build()` | Produce the immutable `Role` object |
-
-### Grant Shortcuts
-
-```typescript
-// Grant all CRUD actions on a resource
-defineRole('post-manager')
-  .grantCRUD('post')
-  // Equivalent to:
-  // .grant('create', 'post')
-  // .grant('read', 'post')
-  // .grant('update', 'post')
-  // .grant('delete', 'post')
-  .build()
-
-// Grant all actions on a resource (wildcard)
-defineRole('post-superuser')
-  .grantAll('post')
-  // Equivalent to: .grant('*', 'post')
-  .build()
-
-// Grant read access to multiple resources
-defineRole('reader')
-  .grantRead('post', 'comment', 'user')
-  // Equivalent to:
-  // .grant('read', 'post')
-  // .grant('read', 'comment')
-  // .grant('read', 'user')
-  .build()
-
-// Grant a permission scoped to a specific tenant
-defineRole('org-editor')
-  .grantScoped('acme', 'create', 'post')
-  .grantScoped('acme', 'update', 'post')
-  // These permissions only apply when scope is 'acme'
-  .build()
-
-// Grant with conditions (Chapter 3 preview)
-defineRole('self-editor')
-  .grantWhen('update', 'post', w => w.isOwner())
-  // This permission only applies when the user owns the resource
-  .build()
-```
-
-| Shortcut | Equivalent | Description |
-| --- | --- | --- |
-| `.grantCRUD(resource)` | `.grant('create/read/update/delete', resource)` | All CRUD operations |
-| `.grantAll(resource)` | `.grant('*', resource)` | All actions (wildcard) |
-| `.grantRead(...resources)` | `.grant('read', each)` | Read on multiple resources |
-| `.grantScoped(scope, action, resource)` | Permission with scope field | Scoped permission |
-| `.grantWhen(action, resource, conditions)` | Permission with conditions | Conditional grant |
-
-## The Permission Object
-
-Each `.grant()` call creates a `Permission` object inside the role:
-
-```typescript
-interface Permission {
-  action: string | '*'       // the action this permission grants
-  resource: string | '*'     // the resource type
-  scope?: string | '*'       // optional: restrict to a scope
-  conditions?: ConditionGroup // optional: conditions that must pass
-}
-```
-
-`.grant('read', 'post')` produces `{ action: 'read', resource: 'post' }`. Add `scope`
-with an optional third argument to `.grant()` (e.g. `.grant('read', 'post', 'org-1')`)
-or with `.grantScoped()`. Add `conditions` with `.grantWhen()`.
-
-## The Role Object
-
-After calling `.build()`, you get a plain `Role` object:
-
-```typescript
-interface Role {
-  id: string                // unique identifier
-  name: string              // human-readable name
-  description?: string      // optional description
-  permissions: Permission[] // array of granted permissions
-  inherits?: string[]       // parent role IDs
-  scope?: string            // optional role-level scope
-  metadata?: Attributes     // optional arbitrary metadata
-}
-```
-
-It's serializable - store it in a database, send it over HTTP, or log it.
-
-## Wildcards
-
-Use `'*'` to match any action or resource:
-
-```typescript
-// Full access to everything
-const superadmin = defineRole('superadmin')
-  .grant('*', '*')
-  .build()
-
-// All actions on posts only
-const postManager = defineRole('post-manager')
-  .grant('*', 'post')
-  .build()
-
-// Read access to everything
-const auditor = defineRole('auditor')
-  .grant('read', '*')
-  .build()
-```
-
-### Hierarchical Wildcards
-
-Actions and resources support colon-based hierarchy patterns:
-
-```typescript
-// Grant all post-related actions
-defineRole('post-admin')
-  .grant('posts:*', 'post')  // matches posts:create, posts:read, etc.
-  .build()
-
-// Grant access to org and all sub-resources
-defineRole('org-viewer')
-  .grant('read', 'org')  // also matches org:project, org:project:doc
-  .build()
-```
-
-The matching rules:
-
-* `'*'` matches any value
-* `'posts:*'` matches any action starting with `posts:` (e.g., `posts:create`, `posts:read`)
-* `'org'` as a resource also matches `'org:project'` and `'org:project:doc'` (hierarchical)
-
-Dot-based resource hierarchies (`dashboard.users`) are covered in Chapter 5.
-
-## Validating Roles
-
-Validate your role configuration at startup to catch mistakes early:
-
-```typescript
-import { validateRoles } from '@gentleduck/iam'
-
-const result = validateRoles([viewer, editor, admin])
-
-if (!result.valid) {
-  throw new Error('Role config error: ' + result.issues.map(i => i.message).join(', '))
-}
-```
-
-### ValidationResult and ValidationIssue
-
-```typescript
-interface ValidationResult {
-  valid: boolean               // true if no error-level issues
-  issues: ValidationIssue[]    // all issues found
-}
-
-interface ValidationIssue {
-  type: 'error' | 'warning'   // errors prevent startup, warnings are informational
-  code: string                 // machine-readable code
-  message: string              // human-readable description
-  roleId?: string              // which role caused the issue
-  path?: string                // field path (if applicable)
-}
-```
-
-### What It Catches
-
-| Issue | Code | Severity | Example |
-| --- | --- | --- | --- |
-| Duplicate role IDs | `DUPLICATE_ROLE_ID` | error | Two roles both called `'editor'` |
-| Dangling inherits | `DANGLING_INHERIT` | error | `editor` inherits `'reviewer'` which does not exist |
-| Circular inheritance | `CIRCULAR_INHERIT` | warning | `a` inherits `b`, `b` inherits `a` |
-| Empty roles | `EMPTY_ROLE` | warning | Role with no permissions and no inheritance |
-
-`valid` is `false` only when there are `error`-level issues. Warnings are informational;
-the engine still works (cycles are skipped, empty roles do nothing).
-
-Validate at startup. It is cheap and prevents silent failures at runtime.
-
-## Checkpoint
-
-Full `src/access.ts`
-
-```typescript
-import { defineRole, IamEngine, validateRoles } from '@gentleduck/iam'
-import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
+```ts title="src/roles.ts"
+import { defineRole } from '@gentleduck/iam'
 
 export const viewer = defineRole('viewer')
   .name('Viewer')
-  .grant('read', 'post')
-  .grant('read', 'comment')
+  .desc('Read-only access to documents and teams')
+  .grant('read', 'document')
+  .grant('read', 'team')
   .build()
 
 export const editor = defineRole('editor')
   .name('Editor')
+  .desc('Writes documents')
   .inherits('viewer')
-  .grant('create', 'post')
-  .grant('update', 'post')
-  .grant('create', 'comment')
-  .grant('update', 'comment')
+  .grant('create', 'document')
+  .grant('update', 'document')
+  .grant('share', 'document')
   .build()
 
 export const admin = defineRole('admin')
   .name('Administrator')
+  .desc('Manages teams and their members')
   .inherits('editor')
-  .grant('delete', 'post')
-  .grant('delete', 'comment')
+  .grant('delete', 'document')
+  .grant('archive', 'document')
+  .grant('manage', 'team')
   .grant('manage', 'user')
-  .grant('manage', 'dashboard')
+  .meta({ tier: 'staff' })
   .build()
 
-// Validate at startup
-const roleCheck = validateRoles([viewer, editor, admin])
-if (!roleCheck.valid) {
-  throw new Error(roleCheck.issues.map(i => `[${i.code}] ${i.message}`).join(', '))
-}
+export const roles = [viewer, editor, admin]
+```
 
-const adapter = new IamMemoryAdapter({
-  roles: [viewer, editor, admin],
+**Validate at startup**
+
+`validateRoles` is not re-exported from the package root - it lives behind
+`@gentleduck/iam/core/validate` so services that never validate do not pay for
+the validator chunk.
+
+```ts title="src/roles.ts"
+import { validateRoles } from '@gentleduck/iam/core/validate'
+
+const check = validateRoles(roles)
+if (!check.valid) {
+  throw new Error(check.issues.map((i) => `[${i.code}] ${i.message}`).join('; '))
+}
+for (const issue of check.issues) {
+  if (issue.type === 'warning') console.warn(`[iam] ${issue.code}: ${issue.message}`)
+}
+```
+
+**Assign the roles**
+
+```ts title="src/access.ts"
+import { IamEngine } from '@gentleduck/iam'
+import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
+import { roles } from './roles'
+
+export const adapter = new IamMemoryAdapter({
+  roles,
   assignments: {
-    'alice': ['viewer'],
-    'bob': ['editor'],
-    'charlie': ['admin'],
+    alice: ['viewer'],
+    bob: ['editor'],
+    carol: ['admin'],
   },
 })
 
-export const engine = new IamEngine({ adapter }) // mode defaults to 'development'
+export const engine = new IamEngine({ adapter, mode: 'development' })
 ```
 
-***
+**Check the inherited permissions**
 
-## Chapter 2 FAQ
+```ts title="src/main.ts"
+import { engine } from './access'
 
-Is there a limit on inheritance depth?
+const doc = { type: 'document', id: 'doc-1', attributes: {} }
 
-No hard limit. The engine uses a visited-set to prevent cycles, so deep chains are safe.
-In practice, 3-5 levels is common. Deeper chains become hard to reason about, which is
-the bigger problem.
+async function main() {
+  console.log(await engine.can('carol', 'read', doc))    // true  (from viewer)
+  console.log(await engine.can('carol', 'update', doc))  // true  (from editor)
+  console.log(await engine.can('carol', 'delete', doc))  // true  (own)
+  console.log(await engine.can('bob', 'delete', doc))    // false (editor stops short)
 
-Can a child role remove a permission from its parent?
+  console.log(await engine.getEffectiveRoles('carol'))
+  // [ 'admin', 'editor', 'viewer' ]
+}
 
-No. RBAC inheritance is additive: a child always has at least the parent's permissions
-plus its own. To restrict specific actions, use ABAC policies with deny rules (Chapter 3).
-An editor who cannot delete uses the editor role for grants and a policy for the deny.
+void main()
+```
 
-Can a user have multiple roles directly?
+`engine.getEffectiveRoles(subjectId, scope?)` returns exactly the role list the
+engine resolved internally, through the same subject cache. It is the fastest way
+to confirm an inheritance chain is wired the way you think it is.
 
-Yes. The assignments map takes an array of role IDs:
-`'alice': ['viewer', 'commenter']`. The engine resolves permissions from all assigned roles
-and their ancestors, deduplicates them, and combines them with `allow-overrides`. If any
-role grants a permission, the RBAC layer allows it.
+## How inheritance resolves
 
-Is the wildcard dangerous?
+Two separate walks happen, and they answer different questions.
 
-`grant('*', '*')` gives full RBAC access. ABAC policies can still deny specific actions
-(Chapter 3), so it is not a blanket bypass. Reserve it for superadmin roles. A policy with
-`deny-overrides` can override even wildcard RBAC grants.
+gated on subject.roles contains admin"]
+  end
+  EFF --> PERM`}
+/>
 
-When should I call validateRoles()?
+`resolveEffectiveRoles` fills `subject.roles`. `collectPermissions` runs inside `rolesToPolicy` and emits the rules. Both use a `visited` set, so a cycle - `a` inherits `b`, `b` inherits `a` - is skipped rather than recursed into.
 
-At application startup, before handling any requests. It is synchronous and instant.
-Add it to your initialization code alongside engine creation. Do not skip it in
-production -- it catches typos that would otherwise silently fail at runtime.
+`MAX_INHERITANCE_DEPTH` is 32. Anything past that depth is silently dropped at runtime, which is why `validateRoles` reports `INHERITANCE_TOO_DEEP` as an **error**: a chain that deep would lose permissions without any signal. In practice three to five levels is the readable limit.
 
-When should I use grantCRUD vs individual grants?
+### Multiple inheritance
 
-Use `grantCRUD(resource)` when a role needs all four CRUD operations on a resource.
-Use individual `.grant()` calls when a role only needs some operations, or when your
-actions are not standard CRUD (e.g., `manage`, `publish`, `approve`). Both produce
-identical `Permission` objects.
+A role can name several parents:
 
-What is role metadata used for?
+```ts
+export const reviewer = defineRole('reviewer')
+  .name('Reviewer')
+  .inherits('viewer', 'commenter')
+  .grant('archive', 'document')
+  .build()
+```
 
-`.meta()` attaches arbitrary key-value data to a role. The engine ignores it for
-authorization. Use it for application concerns: display names, colors, icons, sort order,
-feature flags, or anything else you want to associate with a role. It is stored alongside
-the role in the adapter.
+The reviewer gets everything from both parents plus its own grant. Diamonds are fine: if two parents both inherit `viewer`, the depth memo makes `viewer` contribute once.
 
-What does .scope() on a role do?
+A child cannot remove a permission its parent grants. To carve an exception out of an inherited grant, write an ABAC deny policy (chapter 3) - that is the layer designed to subtract.
 
-`.scope('acme')` restricts all permissions in the role to the `acme` scope.
-The permissions only match when the request has `scope: 'acme'`. This differs from
-`.grantScoped()`, which scopes individual permissions. Role-level scoping is a shorthand
-for scoping every permission in the role. Covered in detail in Chapter 5.
+## The RoleBuilder API
 
-***
+```ts
+defineRole('editor')
+  .name('Editor')                     // display name; defaults to the role ID
+  .desc('Writes documents')           // description, documentation only
+  .inherits('viewer')                 // one or more parent role IDs
+  .scope('team-acme')                 // role-level scope (chapter 5)
+  .meta({ tier: 'staff' })            // arbitrary metadata, never evaluated
+  .grant('create', 'document')        // one permission
+  .grantScoped('team-acme', 'update', 'document')
+  .grantWhen('update', 'document', (w) => w.isOwner())
+  .grantAll('comment')                // '*' action
+  .grantRead('document', 'team')      // 'read' on several resources
+  .grantCRUD('document')              // create + read + update + delete
+  .build()
+```
 
-Next: [Chapter 3: Policies, Rules, and Conditions](/duck-iam/course/chapter-3)
+| Method | Signature | What it does |
+| --- | --- | --- |
+| `.name(n)` | `(n: string) => this` | Display name. Defaults to the role ID. |
+| `.desc(d)` | `(d: string) => this` | Description. Never consulted at evaluation time. |
+| `.inherits(...ids)` | `(...ids: string[]) => this` | Replaces the parent list. Calling it twice does not append. |
+| `.scope(s)` | `(s: TScope) => this` | Adds `scope eq s` to every permission of the role. |
+| `.meta(m)` | `(m: Attributes) => this` | Arbitrary metadata carried on the role record. |
+| `.grant(a, r, scope?)` | `(action, resource, scope?) => this` | One permission. `'*'` is allowed for action and resource. |
+| `.grantScoped(s, a, r)` | `(scope, action, resource) => this` | Same, with the scope first. Mixes scoped and global grants in one role. |
+| `.grantWhen(a, r, fn)` | `(action, resource, fn) => this` | Permission guarded by a `When` condition group (chapter 3). |
+| `.grantAll(r)` | `(resource) => this` | Shorthand for `.grant('*', resource)`. |
+| `.grantRead(...rs)` | `(...resources) => this` | `.grant('read', r)` for each. |
+| `.grantCRUD(r)` | `(resource) => this` | `create`, `read`, `update`, `delete` on one resource. |
+| `.build()` | `() => AccessControl.IRole` | Validates, then returns the plain record. Throws on error-level issues. |
+
+### What a permission and a role look like
+
+```ts
+interface IPermission {
+  readonly action: string | '*'
+  readonly resource: string | '*'
+  readonly scope?: string | '*'
+  readonly conditions?: AccessControl.IConditionGroup
+}
+
+interface IRole {
+  readonly id: string
+  readonly name: string
+  readonly description?: string
+  readonly permissions: readonly IPermission[]
+  readonly inherits?: readonly string[]
+  readonly scope?: string
+  readonly metadata?: Readonly<IamPrimitives.Attributes>
+}
+```
+
+Both are plain data. `.build()` sets `inherits` to `undefined` rather than `[]` when no parents were declared, so a round trip through JSON stays stable.
+
+## Wildcards and matching
+
+```ts
+const superadmin = defineRole('superadmin').grant('*', '*').build()
+const docAdmin = defineRole('doc-admin').grant('*', 'document').build()
+const auditor = defineRole('auditor').grant('read', '*').build()
+```
+
+The matcher is deliberately small. There is no glob engine behind it.
+
+| Pattern | Matches | Does not match |
+| --- | --- | --- |
+| `'*'` (action or resource) | anything | - |
+| `'read'` | exactly `read` | `read:draft` |
+| `'documents:*'` (action) | `documents:create`, `documents:read` | `documents`, `document:create` |
+| `'document:*'` (resource) | `document:draft`, `document:draft:v2` | `document` |
+| `'document.*'` (resource) | `document.draft`, `document.draft.v2` | `document` |
+| `'document'` (resource) | exactly `document` | `document.draft`, `document:draft` |
+
+`grant('read', 'document')` does **not** grant `read` on `document.draft`. Prefix matching only happens when the *pattern* ends in `:*` or `.*`, and the separator in the pattern must match the separator in the request. Actions recognise `:*` only; resources recognise both. Chapter 5 uses this for hierarchical resources.
+
+## Validating the role set
+
+```ts
+import { validateRoles } from '@gentleduck/iam/core/validate'
+
+const result = validateRoles(roles)
+```
+
+```ts
+interface IResult {
+  readonly valid: boolean            // false only when an error-level issue exists
+  readonly issues: readonly IIssue[]
+}
+
+interface IIssue {
+  readonly type: 'error' | 'warning'
+  readonly code: IamValidate.ValidationCode
+  readonly message: string
+  readonly roleId?: string
+  readonly path?: string
+}
+```
+
+| Code | Severity | Fires when |
+| --- | --- | --- |
+| `DUPLICATE_ROLE_ID` | error | Two roles share an `id`. |
+| `DANGLING_INHERIT` | error | A role inherits an ID that is not in the set. |
+| `INHERITANCE_TOO_DEEP` | error | A chain is deeper than 32; the runtime would silently drop the tail. |
+| `CIRCULAR_INHERIT` | warning | A cycle exists. The runtime skips it, so it is survivable but almost always a bug. |
+| `EMPTY_ROLE` | warning | A role has no permissions and no parents. |
+
+`valid` is `false` only for error-level issues. Treat warnings as build failures in CI anyway - both of them describe configuration that does nothing useful.
+
+`RoleBuilder.build()` calls `validateRole` on the single role and throws with a message prefixed `[@gentleduck/iam:builder] RoleBuilder.build(): role rejected by validator`. What `build()` cannot see is the *set*: duplicates, dangling parents, and cycles are cross-role facts, which is what `validateRoles` is for.
+
+## What just happened
+
+Carol's check for `delete` on `document` now walks a longer path than in chapter 1:
+
+1. `resolveEffectiveRoles(['admin'], allRoles)` returns `['admin', 'editor', 'viewer']` and that array becomes `subject.roles`.
+2. `rolesToPolicy` iterates the roles the adapter stores. For `admin` it collects the inherited permissions first (viewer's, then editor's) and then admin's own, emitting one allow rule for each - every one gated on `subject.roles contains 'admin'`.
+3. The `delete` on `document` rule matches, the `allow-overrides` algorithm inside `__rbac__` returns allow, and there is no other policy to disagree with.
+
+Bob's `delete` check fails at step 3: `editor` never emits a `delete` rule, so nothing in `__rbac__` matches and the decision falls through to `defaultEffect: 'deny'`. Roles only ever emit allow rules; a role cannot deny.
+
+## Try it
+
+1. Add `commenter` (`create` and `update` on `comment`) and make `editor` inherit both `viewer` and `commenter`. Confirm `getEffectiveRoles('bob')` lists four roles.
+2. Introduce a cycle on purpose - `viewer` inherits `admin` - and run `validateRoles`. You get `CIRCULAR_INHERIT` as a warning and `valid` stays `true`. Then confirm `engine.can` still answers rather than hanging.
+3. Make `auditor` with `.grant('read', '*')` and assign it to a new subject. Confirm reads on `document`, `team`, and `user` all pass, but `update` on `document` does not.
+4. Try `grant('read', 'document')` and then check `read` on `document.draft`. It is denied. Change the grant to `'document.*'` and check again.
+
+## Where we are
+
+`src/roles.ts` holds three roles and the startup validation. `src/access.ts` seeds three subjects. Nothing yet can express "may Bob update *this* document" - that needs conditions, which is chapter 3.
+
+## See also
+
+* [Role inheritance](/duck-iam/core/roles/inheritance) - cycle and diamond handling in detail
+* [rolesToPolicy](/duck-iam/core/roles/roles-to-policy) - the generated policy, dumped
+* [Rule matching](/duck-iam/core/rule-matching) - the action and resource matchers
+* [Validation](/duck-iam/advanced/validation) - every code the validator can emit
+* [Chapter 3: policies, rules, and conditions](/duck-iam/course/chapter-3)

@@ -1,125 +1,274 @@
-## Three scoping mechanisms
+A scope is a tenant, organization, or workspace identifier carried on the request. duck-iam offers three ways to bind a role to one: a scope on the role, a scope on a single permission, and a scope on the assignment that grants the role to a subject. The first two become a condition inside the generated policy; the third changes which roles a subject holds for that request. This page covers all three and the request-time matching path.
 
-Scopes restrict roles to specific tenants, organizations, or workspaces.
+## Choosing a mechanism
 
-| Mechanism | Use when |
-| --- | --- |
-| Role-level scope | The whole role is inherently tenant-bound |
-| Permission-level scope | Only some grants on the role are restricted |
-| Scoped assignment | Same role definition, different tenants per user |
+| Mechanism | Where it lives | Use when |
+| --- | --- | --- |
+| Role-level scope - `.scope('org-1')` | The role definition | The whole role is inherently tenant-bound |
+| Permission-level scope - `.grant(a, r, 'org-1')` / `.grantScoped('org-1', a, r)` | One permission | Only some grants on an otherwise global role are restricted |
+| Scoped assignment - `engine.admin.assignRole(sub, role, 'org-1')` | The subject-to-role link | One reusable role definition, different tenants per subject |
 
-***
+Prefer scoped assignments whenever the permission shape is identical across tenants. Tenant-specific role IDs (`org-acme-admin`, `org-globex-admin`) work, but every permission change then has to be replicated across every tenant's copy.
+
+There are really two mechanisms, and the first two rows above are both spellings of one of them. A **declared** scope is catalog data answering "where does this permission apply?"; an **assignment** scope is subject data answering "where does this subject hold this role?". They compose by intersection, so a role declaring `org-a` and assigned at `org-b` grants in neither: at `org-b` the role is held but its permission is declared for `org-a`, and at `org-a` the permission applies but the role is not held there.
+
+| | declared scope | assignment scope |
+| --- | --- | --- |
+| Lives in | the role catalog | the assignments table |
+| `'*'` means | global - no scope condition emitted | **refused on write**; a stored one is the literal tenant `"*"` |
+| `''` means | an ordinary scope; `validateRole` rejects it | refused on write |
+| `undefined` means | global | global |
+| Matched by | the `scope` condition in `__rbac__` | `enrichSubjectWithScopedRoles`, literal comparison |
+| Under `scopeMode: 'hierarchical'` | the emitted condition widens to cover `scope.*` | the match widens to every ancestor of the request scope |
 
 ## 1. Role-level scope
 
-A scope on a role limits all its permissions to that scope:
-
-```typescript
+```ts
 const orgEditor = defineRole('org-editor')
   .name('Org Editor')
   .scope('org-1')
-  .grant('create', 'post')
-  .grant('update', 'post')
+  .grant('publish', 'post')
   .build()
 ```
 
-When converted to policy rules, each rule gets an extra `scope eq "org-1"` condition. The permission only fires when the request scope matches.
+Every permission in the role inherits the scope. `rolesToPolicy()` appends one extra condition to each generated rule:
 
-***
+```json
+{
+  "id": "__rbac__#6",
+  "effect": "allow",
+  "description": "Org Editor: publish on post",
+  "priority": 10,
+  "actions": ["publish"],
+  "resources": ["post"],
+  "conditions": {
+    "all": [
+      { "field": "subject.roles", "operator": "contains", "value": "org-editor" },
+      { "field": "scope", "operator": "eq", "value": "org-1" }
+    ]
+  }
+}
+```
+
+The rule now needs both facts: the subject holds `org-editor`, **and** the request carries `scope: 'org-1'`. A request with no scope resolves `scope` to `null`, the `eq` fails, and the rule does not match.
 
 ## 2. Permission-level scope
 
-Scope individual permissions by passing an optional third argument to `grant()`:
-
-```typescript
-const hybridRole = defineRole('hybrid')
-  .name('Hybrid Role')
-  .grant('read', 'post')               // global - no scope restriction
-  .grant('update', 'post', 'org-1')    // only in org-1
-  .grant('create', 'comment', 'org-2') // only in org-2
+```ts
+const hybrid = defineRole('hybrid')
+  .name('Hybrid')
+  .grant('read', 'post')                     // global
+  .grant('update', 'post', 'org-1')          // org-1 only
+  .grantScoped('org-2', 'create', 'comment') // org-2 only
   .build()
 ```
 
-`read` works everywhere; `update` only in `org-1`; `create` only in `org-2`.
+The two spellings produce the identical permission object; `grantScoped` just reads scope-first.
 
-`grantScoped(scope, action, resource)` does the same thing with scope first - pure stylistic preference.
+The scope actually written into the rule is `perm.scope ?? owner.scope`, where `owner` is the role that **declared** the permission - the permission wins, and its declaring role's scope is the fallback. If the resulting scope is `'*'`, **no scope condition is emitted at all**, which is why a wildcard scope matches every request including unscoped ones:
 
-***
+```ts
+defineRole('global-editor').grant('update', 'post', '*').build()
+// generated rule conditions: only the subject.roles check
+```
 
-## 3. Scoped role assignments
+The test is `effectiveScope !== undefined && effectiveScope !== '*'`, not truthiness. Every other string is an ordinary scope value, `''` included; testing truthiness here once let `scope: ''` grant everywhere. `validateRole` rejects `''` at both the role and the permission level, and the shipped Postgres schema has `ch_iam_roles_scope_not_blank` / `ch_iam_assignments_scope_not_blank` CHECK constraints - but a permission-level `scope: ""` inside a `jsonb` column has no constraint, so that shape can still arrive from the store. It is pinned to grant nothing rather than to read as global. A permission-level `scope: null` behaves the same way. A permission-level `scope: '*'` **is** global, and only for the role that declares it.
 
-The most flexible: a user can have `editor` globally and `admin` only in `org-1`:
+## 3. Scoped assignments
 
-```typescript
-// In the adapter / admin API:
-await engine.admin.assignRole('user-1', 'editor') // global
-await engine.admin.assignRole('user-1', 'admin', 'org-1') // scoped
+The same role definition, granted per tenant:
 
-// When checking access:
+```ts
+await engine.admin.assignRole('alice', 'viewer')            // global
+await engine.admin.assignRole('alice', 'admin', 'org-acme') // org-acme only
+
 const allowed = await engine.can(
-  'user-1',
+  'alice',
   'delete',
   { type: 'post', attributes: {} },
-  undefined, // environment
-  'org-1', // scope
+  undefined,   // environment
+  'org-acme',  // scope
 )
-// user-1 has admin in org-1, so delete is allowed
 ```
 
-When a request carries a scope, the engine merges matching scoped role assignments into the subject. The `admin` role only joins `subject.roles` for requests with `scope: "org-1"`.
-
-***
-
-## Combining global + scoped
-
-Users routinely have both:
-
-```typescript
-await engine.admin.assignRole('alice', 'viewer')           // global viewer
-await engine.admin.assignRole('alice', 'admin', 'org-acme') // admin only in org-acme
+```ts
+assignRole(subjectId: string, roleId: TRole, scope?: TScope, opts?: IAssignOptions): Promise<void>
+revokeRole(subjectId: string, roleId: TRole, scope?: TScope, opts?: IRevokeOptions): Promise<void>
+updateAssignmentScope(
+  subjectId: string,
+  roleId: TRole,
+  fromScope: TScope | undefined,
+  toScope: TScope | undefined,
+  actor?: string,
+): Promise<void>
 ```
 
-Request behavior:
+All three invalidate the subject's cache entry. `updateAssignmentScope` moves an assignment in one write on adapters that implement it and falls back to revoke-plus-assign otherwise; the emulation checks the grant exists first, because falling through on a `false` return created the grant for a subject who held nothing.
+
+`IAssignOptions` carries `startsAt`, `expiresAt`, `attributes` and `actor`. The per-grant `attributes` surface as `subject.scopedRoles[].attributes`, distinct from the subject's own global bag.
+
+`iamAssertNoAssignOptions` **throws** when `startsAt`, `expiresAt` or `attributes` is passed to an adapter with no columns for them. The other five used to take the argument and drop it, so a break-glass grant issued with `expiresAt` was permanent and `admin.assignRoles` still reported `ok: true, applied: 1`. `actor` is deliberately exempt: dropping it changes nothing about a future decision, because the engine emits it on the `role.assigned` / `role.revoked` mutation event whether or not a column exists.
+
+Omitting `scope` revokes the role across **all** scopes, not just the unscoped assignment. This is the contract every shipped adapter follows. Pass the scope explicitly when you mean to remove one tenant's grant.
+
+### `'*'` is not an assignment scope
+
+`'*'` means "every scope" on the *declared* axis, so writing it on an assignment beside a role declared `scope: '*'` is the obvious move. On an assignment it means nothing of the kind, and the write path refuses it:
+
+```ts
+await engine.admin.assignRole('u1', 'admin', '*')
+// Error: [@gentleduck/iam:engine] scope must not be "*"; a scoped assignment is
+// matched literally, so this grant would be stored and answer only a request
+// whose own scope is the string "*". Omit the scope for a global assignment.
+```
+
+**Omitting the scope is how the contract spells global.** Write `assignRole('u1', 'admin')`.
+
+The refusal exists because the alternative was a silent success. `enrichSubjectWithScopedRoles` compares the stored scope literally, so before the guard the row landed, `assignRole` resolved, `admin.assignRoles` reported `ok: true, applied: 1`, and `getEffectiveRoles` returned `[]` for every real scope *and* for the unscoped request. The one request it answered was one whose own scope was the string `"*"`.
+
+The guard (`iamAssertAssignableScope`) also refuses `''`, which five of the six adapters accepted with five different outcomes. Lookups are exempt, because a revoke addresses a row that already exists and an operator holding pre-guard `'*'` rows has to be able to delete them:
+
+```ts
+await engine.admin.revokeRole('u2', 'admin', '*')   // still works
+```
+
+| Call | Intent |
+| --- | --- |
+| `assignRole`, `assignRoles` rows | `grant` - `'*'` and `''` refused |
+| `revokeRole`, `revokeRoles` rows | `lookup` - `'*'` allowed, `''` refused |
+| `updateAssignmentScope` / `moveRoleScopes` `fromScope` | `lookup` |
+| `updateAssignmentScope` / `moveRoleScopes` `toScope` | `grant` |
+
+A move reads one scope and writes the other, so `'*'` may be moved *off*, never *to*. On the batch methods the check is a pre-pass over the whole list before any row is written, so a batch carrying one `'*'` row does not half-apply.
+
+## How a scope is matched at request time
+
+Two independent things happen with a request's scope: it decides which scoped assignments merge into `subject.roles`, and it is the value the `scope eq "..."` conditions compare against.
+
+* `getSubjectRoles()` returns **unscoped assignments only** on every shipped adapter. Scoped grants come back separately from the optional `getSubjectScopedRoles()`. An adapter that collapses them would leak a tenant's role into global requests.
+* Both sets are closed over `inherits` (since 5.4.0). A scoped assignment of `admin` also brings in whatever `admin` inherits, so a condition reading `subject.roles` sees the same closure a global assignment would.
+* The merge is per request and never written back to the cached subject. The cached subject holds the global roles plus the untouched `scopedRoles` list; enrichment happens after the cache read, on every `authorize()`, `can()`, `explain()`, and each entry of `permissions()`.
+* Inside the policy, `scope` is a resolver shorthand: `resolve(request, 'scope')` returns `request.scope ?? null`. That is what the emitted `scope eq "org-1"` conditions read.
+
+`engine.explain()` reports the merge as `scopedRolesApplied` - the roles that were added by the request's scope - next to the subject's original roles, which makes "why did this role not apply" answerable in one call. See [explain](/duck-iam/advanced/explain).
+
+## Flat and hierarchical matching
+
+`enrichSubjectWithScopedRoles()` supports two matching modes, configured on the engine.
+
+```ts
+const engine = access.createEngine({
+  adapter,
+  scopeMode: 'hierarchical', // default 'flat'
+  scopeCombine: 'union',     // default 'union', ignored under 'flat'
+})
+```
+
+| Option | Values | Default | Meaning |
+| --- | --- | --- | --- |
+| `scopeMode` | `'flat'` / `'hierarchical'` | `'flat'` | `'flat'` requires an exact match. `'hierarchical'` treats a dot-delimited scope as a path, so a grant at `org-1` applies to `org-1.team-2.repo-3`. |
+| `scopeCombine` | `'union'` / `'override'` | `'union'` | Only consulted under `'hierarchical'`. `'union'` ORs in every matching level; `'override'` keeps only the most specific level that has a grant, so a narrower grant shadows a broader one. |
+
+Hierarchical mode is safe to enable for apps that do not use dotted scopes: a scope with no dot has exactly one ancestor - itself - so it degrades to exact match. Hierarchical union is purely additive; there is no per-level revoke.
+
+The prefix is a **path segment, not a string prefix**. `org-10` is not under `org-1`, and `org-a` is not under `org`. `enrichSubjectWithScopedRoles` gets that by matching against `scopeAncestors(scope)`, which cuts at each `.`; `scopeCovers` and the hierarchical `rolesToPolicy` condition get it by requiring `scope + '.'`.
+
+`override` never grants anything `union` would not, but it can deny what `union` allows, and the shape that surprises people is inheritance-driven.
+
+`override` takes its input from the **retagged** scoped roles, not from the assignment rows. `mgr` is assigned at `org-a` and inherits `team-tools`, which declares `org-a.team-1`. The retag files a scoped role at `org-a.team-1` that nobody assigned there, so `org-a.team-1` is now "a level that has a grant" - and under `override` it wins, discarding `mgr` itself. At `org-a.team-1` the subject holds `['team-tools']` and `can(write)` is `false`; at `org-a` it is `true`.
+
+If your catalog has roles that declare scopes below the level you assign at, stay on the default `scopeCombine: 'union'`, or keep declared scopes off the inherited roles and let the assignment scope carry the confinement.
+
+The engine's own scope walk is exported, so callers doing scope-aware rank or reach calculations use the same relation rather than reimplementing it:
+
+```ts
+import { iamScopeAncestors, iamScopeCovers } from '@gentleduck/iam'
+
+iamScopeAncestors('org-1.team-2')                        // ['org-1.team-2', 'org-1']
+iamScopeCovers('org-1', 'org-1.team-2', 'hierarchical')  // true
+iamScopeCovers('org-1', 'org-1.team-2', 'flat')          // false
+```
+
+## Combining global and scoped grants
+
+```ts
+await engine.admin.assignRole('alice', 'viewer')            // global
+await engine.admin.assignRole('alice', 'admin', 'org-acme') // org-acme only
+```
 
 | Request scope | Effective roles |
 | --- | --- |
 | `'org-acme'` | `['viewer', 'admin']` |
-| `'org-other'` | `['viewer']` (admin scope doesn't match) |
-| `undefined` | `['viewer']` (global only) |
+| `'org-other'` | `['viewer']` - the scoped grant does not match |
+| `undefined` | `['viewer']` - enrichment is skipped entirely when the request has no scope |
 
-This is the recommended pattern for multi-tenant SaaS - one global "platform user" role + tenant-specific admin roles per org.
+This is the recommended shape for multi-tenant SaaS: one global "platform user" role, plus tenant-specific roles granted per organization.
 
-***
+## Scope and inheritance
 
-## Scoped roles + inheritance
+The scope written into a rule is `perm.scope ?? owner.scope`, where `owner` is the role that **declared** the permission - not the role the rule is emitted under. Flattening therefore does not narrow: `IRole.scope` is a default applied to that role's *own* permissions, never a ceiling on everything the role reaches. `collectPermissions` returns `{ owner, perm }` pairs precisely so the declaring role travels with the permission, which is also what makes the interpreter and the compiled table agree.
 
-Inherited permissions keep honoring scope constraints. If `org-editor` (scoped to `org-1`) inherits from `org-viewer` (scoped to `org-1`), the inherited viewer permissions also only fire in `org-1`.
+```ts
+const globalViewer = defineRole('global-viewer').name('Global Viewer').grant('read', 'post').build()
 
-Scope doesn't propagate up - a scoped role inheriting from a global role keeps the global role's permissions global. Inheritance flattens permissions, but scope constraints attached to those permissions travel with them.
-
-***
-
-## Wildcard scope
-
-`scope: '*'` matches every scope, including requests without one:
-
-```typescript
-const globalEditor = defineRole('global-editor')
-  .grant('update', 'post', '*') // matches any scope, including unscoped
+const orgEditor = defineRole('org-editor')
+  .name('Org Editor')
+  .scope('org-1')
+  .inherits('global-viewer')
+  .grant('update', 'post')
   .build()
 ```
 
-Useful when you have a mostly-scoped role with a few permissions that should apply universally.
+Real output of `rolesToPolicy([globalViewer, orgEditor])`:
 
-***
+```txt
+__rbac__#0  Global Viewer: read on post                    roles contains "global-viewer"
+__rbac__#1  Org Editor: read on post (via Global Viewer)   roles contains "org-editor"
+__rbac__#2  Org Editor: update on post                     roles contains "org-editor"  AND  scope eq "org-1"
+```
 
-## Choosing between mechanisms
+`org-editor` declares `scope: 'org-1'`, so its **own** `update` grant is confined to `org-1`. The `read` it inherits is not: `global-viewer` declares no scope, so rule `#1` carries no scope condition and a subject holding only `org-editor` can read posts in every tenant and on an unscoped request. The `(via Global Viewer)` suffix in the description names the declaring role.
 
-Quick decision guide:
+To confine an inherited permission, declare the scope on the role that declares the permission, put it on the permission itself, or scope the assignment instead of the role. Assigning `org-editor` *at* `org-1` confines both grants, because there the assignment scope does the confining.
 
-* **One reusable role + assigned per tenant?** Scoped assignment (`engine.admin.assignRole(user, role, scope)`).
-* **Role definition itself differs by tenant?** Tenant-specific role IDs (`org-acme-admin`, `org-globex-admin`).
-* **Whole role is inherently tenant-bound?** Role-level scope (`defineRole(...).scope('org-1')`).
-* **Mostly-global role with a few scoped grants?** Permission-level scope (`grant(action, resource, 'org-1')`).
+A permission that carries its own scope keeps it, because `perm.scope` wins over `owner.scope`. A permission granted with `.grantScoped('org-2', ...)` stays bound to `org-2` however it is inherited.
 
-Prefer scoped assignments when permission shape is the same across tenants. Tenant-specific role IDs become hard to maintain - every permission change has to be replicated across all tenant role definitions.
+For scoped **assignments**, inheritance is resolved before enrichment: a scoped grant of `admin` expands to `admin` plus everything `admin` inherits. The directly assigned role keeps the scope it was actually assigned at; every inherited role is **re-tagged** with its own `IRole.scope`, falling back to the assignment row's scope when it declares none. That retag matches how `rolesToPolicy` gates each role's rules, and it is where the surprising answers come from:
+
+* **Cross-tenant reach.** `lead` (no declared scope) inherits `b-admin` (declares `org-b`), assigned to `u1` at `org-a`. Then `getEffectiveRoles('u1', 'org-a')` is `['lead']` and `getEffectiveRoles('u1', 'org-b')` is `['b-admin']`. A grant made only in org-a produces an allow in org-b.
+* **Upward escalation.** A grant made only at `org-a.team-1`, of a role that inherits one declaring `org-a`, answers at `org-a`. This happens in **flat** mode too - it is the retag, not a hierarchy walk.
+* **Subtree widening.** An inherited role declaring a root scope (`org`) widens one grant at `org-a` to `org` and everything under `org.*` in hierarchical mode. `org-a` itself stays denied: it is not under `org`, because the separator is `.`, not `-`.
+* **Diamonds carry per-path scope.** An unscoped inner role reached through an `org-a` parent and an `org-b` parent grants in `org-a`, `org-b` *and* the assignment scope.
+
+## Exported helper
+
+`matchesScope(pattern, scope)` owns the scope-matching contract. `scopeCovers` routes its exact-match arm through it rather than re-implementing `===`, because the contract was once documented in `resolve.ts` and separately enforced by three unrelated expressions elsewhere, which is how the truth tables came to disagree.
+
+```ts
+import { matchesScope } from '@gentleduck/iam'
+
+matchesScope(undefined, 'org-1') // true  - no pattern means global
+matchesScope('*', undefined)     // true  - wildcard matches an unscoped request
+matchesScope('org-1', 'org-1')   // true
+matchesScope('org-1', 'org-2')   // false
+matchesScope('org-1', undefined) // false - a scoped pattern needs a scoped request
+matchesScope('', '')             // true  - '' is an ordinary scope value
+matchesScope('', 'org-1')        // false
+```
+
+There is no recursion here: `matchesScope` never treats `org-1` as covering `org-1.team-2`. That relation is `iamScopeCovers`.
+
+## Gotchas
+
+* **A scoped role assigned globally still does nothing outside its scope - for the permissions it declares itself.** `IRole.scope` puts a condition on the rules generated from that role's own permissions, independent of how it was assigned. Anything it *inherits* from an unscoped role stays unscoped.
+* **`'*'` type-checks on a permission and not on a role.** `IPermission.scope` is `TScope | '*'`; `IRole.scope` is `TScope`. Both are read as global at runtime, so under a narrowed `TScope` union the difference is only the type checker's. Declare the global marker on the permission, or leave `IRole.scope` off entirely - omitting it is the same thing at runtime.
+* **Scope is not authentication.** Nothing verifies that the caller may act in the scope they passed. Derive the scope from the authenticated session or a verified path parameter, never from an unvalidated request body. See [production hardening](/duck-iam/guides/production).
+* **`getSubjectScopedRoles` is optional on the adapter interface.** An adapter that omits it never produces scoped roles, and enrichment is a no-op. Check [adapter comparison](/duck-iam/integrations/adapters/comparison) before relying on scoped assignments.
+* **Enrichment is skipped when the request has no scope**, even under hierarchical mode. There is no "root" scope that matches everything.
+
+## See also
+
+* [The rolesToPolicy conversion](/duck-iam/core/roles/roles-to-policy) - where the `scope eq` condition is emitted
+* [Rules](/duck-iam/core/policies/rules) - `forScope()`, the rule-level equivalent
+* [Engine admin API](/duck-iam/advanced/engine/admin) - assignment management
+* [Adapters](/duck-iam/integrations/adapters/comparison) - which adapters store scoped assignments

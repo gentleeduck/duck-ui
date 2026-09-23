@@ -1,94 +1,86 @@
+duck-iam exports the same builders twice: as bare factories (`defineRole`, `definePolicy`, `defineRule`, `when`) and as methods on the object `createIam()` returns. The runtime is identical - the same classes, the same output shapes, the same evaluation. The only difference is how much of your permission vocabulary TypeScript knows about.
+
 ## At a glance
 
-| Concern | Untyped | Typed (`defineIam`) |
-| --- | --- | --- |
-| Action typo (`'raed'` vs `'read'`) | Silent runtime fail | Compile error |
-| Unknown resource type | Silent runtime fail | Compile error |
-| Misspelled role ID | Silent runtime fail (`unknown role`) | Compile error |
-| Wrong scope value | Silent runtime fail | Compile error |
-| Wrong field path in conditions | Silent runtime fail (resolves to null) | With typed context: compile error |
-| Wrong value type (e.g. string for number field) | Silent - operator returns false | With typed context: compile error |
-| `engine.can()` arg validation | None | Constrained to declared schema |
-| `engine.permissions()` batch validation | None | Constrained via `access.checks()` |
-| Setup verbosity | Minimal | Slightly more |
-| Bundle size impact | None | None (types are erased) |
+| Concern | Untyped builders | `createIam()` |
+|---|---|---|
+| Action typo (`'raed'` for `'read'`) | Silent runtime deny | Compile error |
+| Unknown resource type | Silent runtime deny | Compile error |
+| Misspelled role ID in `defineRole` / `inherits` | `DANGLING_INHERIT` at validation time, if you validate | Compile error |
+| Wrong scope string | Silent runtime miss | Compile error when `scopes` is declared |
+| Wrong field path in a condition | Resolves to `null`; comparison quietly wrong | Compile error, but only with a closed `context` |
+| Wrong value type for a field | Operator returns `false` | Compile error, but only with a closed `context` |
+| `engine.can()` argument checking | None | Constrained to the declared unions |
+| `engine.permissions()` batch checking | None | Constrained through `access.checks()` |
+| Wrong `$`-reference path | Resolves to `null` | Autocompleted, but not cross-validated against the field type |
+| Setup cost | One import | One config object plus `as const` on each array |
+| Runtime cost | None | None - all of it is erased |
+| Bundle cost | None | `createIam` retains the validator chunk (see below) |
 
-The typed version catches mistakes during the edit/build cycle. The untyped version is fine for one-offs, scripts, or quick experiments.
+## Where each error surfaces
 
-***
+The right-hand path is the reason the typed config exists. A misspelled action does not throw and does not log; the rule never matches, the request is denied by `defaultEffect`, and the bug looks like a permissions-modelling problem until someone diffs the strings.
 
 ## What each catches
 
-### Both approaches catch
+### Both
 
-* Adapter contract violations (wrong shape passed to `saveRole`, `savePolicy`)
-* Runtime errors from broken adapters or hooks
-* Cycle detection in role inheritance (`validateRoles()`)
-* Schema drift in policies loaded from external sources (`validatePolicy()`)
+* Corrupt stored rows. On the *read* path, an adapter that cannot parse a row runs `validatePolicy` / `validateRole` on it to name what is wrong: file, redis, http, drizzle and prisma all do this. A policy row that will not parse throws; a role row is skipped after a warning. Nothing validates on the way in - `savePolicy` and `saveRole` write what you give them.
+* Role-graph problems via `validateRoles()`: duplicate IDs, dangling `inherits`, over-deep chains.
+* Structural problems in externally sourced policies via `validatePolicy()`: bad algorithm, malformed condition group, unknown operator, unresolvable field root, catastrophic regex.
+* Every runtime guard rail in the engine - `MAX_CONDITION_DEPTH`, `MAX_INHERITANCE_DEPTH`, the regex caps, the adapter timeout.
 
-### Only typed catches
+### Only the typed config
 
-* Action / resource / role / scope typos at the call site
-* Wrong attribute keys in `attr()`, `resourceAttr()`, `env()` (with `context`)
-* Wrong value types compared to field types
-* Wrong inheritance references (`inherits('typo-role-id')`)
-* Wrong `$`-reference paths
+* Action, resource, role, and scope typos, at the call site, as you type them.
+* Attribute keys in `attr()`, `resourceAttr()`, and `env()` - once a `context` is declared.
+* Value types compared against a field - `env('hour', 'lt', 'noon')` is an error when `hour` is `number`.
+* Per-resource attribute keys under `.of()` and `grantWhen()`.
+* Refactors: rename a role in the config and TypeScript flags every reference.
 
-### Neither catches
+### Neither
 
-* Logic bugs ("this rule should be `deny` not `allow`")
-* Stale cached decisions
-* Concurrent attribute write races
-* Permissions modeled at the wrong granularity
+* Logic bugs. Nothing tells you a rule should have been `deny` rather than `allow`, or that a priority is inverted.
+* Cross-validation of a ``-path, so mismatched pairs compile.
+* Circular role inheritance as a *failure*. `validateRoles()` reports `CIRCULAR_INHERIT` as a warning and leaves `valid` at `true`.
+* Stale cached decisions, concurrent attribute writes, or permissions modelled at the wrong granularity.
 
-For logic bugs, write tests. For caching, see [engine caching](/duck-iam/advanced/engine/caching).
+For the first item, write tests. For caching, see [engine caching](/duck-iam/advanced/engine/caching).
 
-***
+## The two styles side by side
 
-## Untyped (direct imports)
+### Untyped
 
-```typescript
-import { defineRole, IamEngine, IamMemoryAdapter, definePolicy } from '@gentleduck/iam'
+```ts
+import { defineRole, definePolicy, IamEngine } from '@gentleduck/iam'
 
 const viewer = defineRole('viewer')
-  .grant('raed', 'post') // typo: "raed" instead of "read" - NO error
+  .grant('raed', 'post') // typo - no error
   .build()
 
 const restrictPolicy = definePolicy('restrict')
   .rule('block', (r) =>
     r
       .deny()
-      .on('approval') // typo? Or a real custom action? Untyped can't tell
+      .on('approval') // a typo, or a real custom action? nothing can tell
       .of('budget')
-      .when((w) => w.attr('departmnt', 'eq', 'eng')), // typo in 'department' - NO error
+      .when((w) => w.attr('departmnt', 'eq', 'eng')), // typo - no error
   )
   .build()
 
 const engine = new IamEngine({ adapter })
 await engine.can('user-1', 'raed', { type: 'post', attributes: {} })
-// Silently returns false because no role grants "raed"
+// false, because no role grants 'raed'
 ```
 
-Pros:
+Good for: prototypes, migration scripts, and library code that must stay generic over an unknown vocabulary. Bad for: anything a team maintains, because the strings become the contract and nothing enforces it.
 
-* Less ceremony
-* Works without extra imports
-* Easy to copy/paste from examples
+### Typed
 
-Cons:
+```ts
+import { createIam } from '@gentleduck/iam'
 
-* Typos compile and pass tests, fail in production
-* No autocomplete for actions / resources / roles / fields
-* Code reviews carry the burden of catching string mismatches
-
-***
-
-## Typed (defineIam)
-
-```typescript
-import { defineIam } from '@gentleduck/iam'
-
-const access = defineIam({
+const access = createIam({
   actions: ['create', 'read', 'update', 'delete'] as const,
   resources: ['post', 'comment'] as const,
   roles: ['viewer', 'editor'] as const,
@@ -96,35 +88,24 @@ const access = defineIam({
 
 const viewer = access
   .defineRole('viewer')
-  .grant('raed', 'post') // ERROR: '"raed"' is not assignable to '"create" | "read" | ...'
+  .grant('raed', 'post') // error: '"raed"' is not assignable to '"create" | "read" | "update" | "delete"'
   .build()
 ```
 
-Pros:
+Good for: production applications. Costs: one config object, `as const` on each array, and TypeScript errors that get long when the generics nest - though they name the offending literal first.
 
-* Typos are immediate compile errors
-* Autocomplete shows valid options at every call site
-* Refactoring is safe - rename a role and TypeScript flags every reference
-* Single source of truth: the config defines the schema once
+## Choosing
 
-Cons:
+The context is separable from the rest. Declaring `actions`, `resources`, `roles`, and `scopes` is cheap and pays immediately; declaring a closed `context` is a bigger commitment because every attribute your policies touch has to be in it. Starting with the first and adding the second later is a normal path, and nothing about the stored policies changes when you do.
 
-* More ceremony at setup
-* `as const` is required (and easy to forget)
-* TypeScript errors can be cryptic when types nest deeply
+## Migrating
 
-For most production apps, the trade-off is clearly worth it. For weekend hacks, untyped is faster.
-
-***
-
-## Migrating from untyped to typed
-
-Drop-in: replace your imports with a single config and re-derive the types.
+The role and policy data shape is identical, so adapters, stored rows, serialisation, and evaluation all keep working. Only the builder entry points move.
 
 **Before:**
 
-```typescript
-import { defineRole, definePolicy, IamEngine, IamMemoryAdapter } from '@gentleduck/iam'
+```ts
+import { defineRole, IamEngine } from '@gentleduck/iam'
 
 const viewer = defineRole('viewer').grant('read', 'post').build()
 const engine = new IamEngine({ adapter })
@@ -132,47 +113,67 @@ const engine = new IamEngine({ adapter })
 
 **After:**
 
-```typescript
-import { defineIam } from '@gentleduck/iam'
+```ts
+import { createIam } from '@gentleduck/iam'
 import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
 
-const access = defineIam({
+const access = createIam({
   actions: ['read'] as const,
   resources: ['post'] as const,
   roles: ['viewer'] as const,
 })
 
 const viewer = access.defineRole('viewer').grant('read', 'post').build()
+
+const adapter = new IamMemoryAdapter<'read', 'post', 'viewer', string>({
+  roles: [viewer],
+  assignments: { 'user-1': ['viewer'] },
+})
+
 const engine = access.createEngine({ adapter })
 ```
 
-The role/policy data shape is unchanged - adapters, evaluation, and serialization all work the same. You change the builder entry points.
+Expect the first compile after the switch to surface real typos. Widen the vocabulary arrays only after checking each one - an error that says an action is not in the union is usually right.
 
-***
+## Mixing the two
 
-## Mixing both
+Static policies typed, dynamic policies untyped and validated, both handed to the same engine:
 
-You can mix typed and untyped builders in one app:
+```ts
+import { createIam } from '@gentleduck/iam'
 
-```typescript
-import { definePolicy } from '@gentleduck/iam'
-
-const access = defineIam({
-  actions: ['read'] as const,
+const access = createIam({
+  actions: ['read', 'update'] as const,
   resources: ['post'] as const,
 })
 
-// Typed for app-defined policies
-const myPolicy = access.definePolicy('my-app').rule(/* ... */).build()
+const engine = access.createEngine({ adapter })
 
-// Untyped for dynamic policies loaded from DB
-const dynamicPolicy = definePolicy('dynamic').rule(/* ... */).build()
+const myPolicy = access
+  .definePolicy('app-owned')
+  .name('App Owned')
+  .algorithm('deny-overrides')
+  .rule('owner-update', (r) => r.allow().on('update').of('post').when((w) => w.isOwner()))
+  .build()
 
-await access.validatePolicy(dynamicPolicy) // runtime check
+const raw: unknown = await loadPolicyFromAdminUi()
+const check = access.validatePolicy(raw)
+if (!check.valid) throw new Error(check.issues.map((i) => i.message).join('; '))
 
-// Both can be passed to the same engine
 await engine.admin.savePolicy(myPolicy)
-await engine.admin.savePolicy(dynamicPolicy)
 ```
 
-Use untyped for the dynamic parts (admin UI input, JSON files), typed for the static parts. Validate with `validatePolicy()` at the runtime boundary.
+The typed and untyped builders produce the same `AccessControl.IPolicy` object, so the engine cannot tell them apart. `validatePolicy()` is the boundary that has to hold for the untyped half. Reaching it without `createIam` means importing from `@gentleduck/iam/core/validate`; the root entry point does not re-export the validators.
+
+## Gotchas
+
+* **`createIam` is not free in bundle terms.** The root entry point withholds the validator functions so the roughly 12 KB chunk stays opt-in, but `createIam` closes over `validatePolicy` and `validateRoles` to expose them as methods. A browser bundle that calls `createIam` carries the validator whether or not it validates anything.
+* **`as const` is easy to forget and silent when missed.** An array that widened to `string[]` produces a config where everything compiles - the same code you had before the migration, minus the checks. Grep for `createIam(` and confirm each array.
+* **Typed does not mean validated.** Nothing about `createIam` runs at runtime. Data crossing a trust boundary still needs `validatePolicy()`.
+
+## See also
+
+* [Type-safe config overview](/duck-iam/advanced/config) - the reading order for the rest of this section.
+* [createIam()](/duck-iam/advanced/config/access-config) - options and inference in detail.
+* [Validation](/duck-iam/advanced/validation) - what the runtime checks actually cover.
+* [Type-safe roles](/duck-iam/core/roles/type-safe) - the same argument applied to the role builder.

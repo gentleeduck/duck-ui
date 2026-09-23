@@ -84,7 +84,7 @@ const TabsTrigger = React.forwardRef<HTMLButtonElement, ITabsTriggerProps>(
         className={cn(
           'relative inline-flex h-[29.04px] select-none items-center justify-center gap-2 whitespace-nowrap rounded-sm px-3 font-medium text-sm ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
           isActive && 'bg-background text-foreground shadow-sm',
-          disabled && 'pointer-events-none opacity-50',
+          disabled && 'cursor-not-allowed opacity-50',
           className,
         )}
         data-value={value}

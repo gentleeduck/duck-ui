@@ -1,120 +1,161 @@
 ---
-title: methods
-description: engine.can, check, authorize, permissions, explain, preload, healthCheck, stats, dispose - when to use each.
+title: Engine methods
+description: Every public method on IamEngine - signatures, arguments, return shapes, thrown errors, and which one to reach for
 section: Advanced
 ---
-## engine.can()
+`IamEngine` exposes eleven methods and three facets. This page gives each one its verified signature, what it validates, what it returns in each mode, and what it throws. Behaviour that differs between modes is summarised here and explained on [development vs production mode](/duck-iam/advanced/engine/modes).
 
-The simplest check. Returns `true` or `false`.
+## Choosing a method
 
-```typescript
-const allowed = await engine.can(
-  'user-1', // subject ID
-  'update', // action
-  { type: 'post', attributes: {} }, // resource
-)
+<MermaidDiagram chart={`flowchart TD
+    Q["What do you need?"] --> A{"One check, or many?"}
+    A -- "many for one subject" --> P["permissions()"]
+    A -- "one" --> B{"Do you already hold a resolved subject?"}
+    B -- "yes" --> AU["authorize()"]
+    B -- "no" --> C{"Need the reason, not just the verdict?"}
+    C -- "no" --> CAN["can()"]
+    C -- "yes, for logging" --> CHK["check()"]
+    C -- "yes, to debug a policy" --> EXP["explain()"]
+    Q --> D{"Not a check at all?"}
+    D -- "which roles apply here" --> GER["getEffectiveRoles()"]
+    D -- "warm caches at boot" --> PRE["preload()"]
+    D -- "liveness probe" --> HC["healthCheck()"]
+    D -- "shutdown" --> DIS["dispose()"]`} />
 
-if (!allowed) {
-  throw new Error('Forbidden')
-}
+`can` and `check` differ only in return shape. `authorize` is what both call once the subject exists, so it is the right entry point when a middleware has already resolved the subject. `explain` is a separate, read-only pipeline. `permissions` amortises one subject resolution and one policy load across a whole batch.
+
+## API reference
+
+### authorize
+
+```ts
+authorize(
+  request: IamRequest.IAccessRequest<TAction, TResource, TScope>,
+): Promise<AccessControl.ModeResult<TMode>>
 ```
 
-**Signature:**
+The full-request entry point. Every other check method funnels into it.
 
-```typescript
-engine.can(
+`AccessControl.ModeResult<TMode>` resolves to `AccessControl.IDecision` in development mode and `boolean` in production mode.
+
+What it does, in order:
+
+1. If `request.subject.roles` is not an array, replaces it with `[]`. A string would substring-match a `contains subject.roles` condition, which is how a subject named `"admin-tools"` could pass a check for the `admin` role.
+2. If `request.scope` is set and the subject has any `scopedRoles`, merges the matching grants into `subject.roles` per `scopeMode` / `scopeCombine`.
+3. Awaits `beforeEvaluate` if configured, and adopts whatever request it returns.
+4. Defaults `environment.now` to `Date.now()` **only if the caller (or the hook) did not set one**, so a pinned clock survives.
+5. Refuses outright if `action` or `resource.type` is the reserved refusal token `'unknown'`, with `failure: 'input'`. The framework adapters hand the engine that token for a request they could not map, and it has to lose to a wildcard grant rather than match one.
+6. Gets the verdict from the [compiled table](/duck-iam/advanced/engine/compiled) — in **both** modes. Development additionally runs the interpreter for provenance and throws if the two disagree.
+7. Fires the trailing hooks outside the evaluation `try`, so a throwing hook cannot rewrite the verdict.
+
+```ts
+const decision = await engine.authorize({
+  subject: { id: 'user-1', roles: ['editor'], attributes: { department: 'eng' } },
+  action: 'update',
+  resource: { type: 'post', id: 'post-123', attributes: { ownerId: 'user-1' } },
+  environment: { ip: '192.0.2.10' },
+  scope: 'org-1',
+})
+```
+
+<Callout tone="warning" title="authorize never rejects">
+  Any throw inside the evaluation - a broken adapter, a throwing
+  `beforeEvaluate`, an over-cap policy load - is caught, routed to `onError`,
+  and turned into a fail-closed result: `false` in production, a
+  `reason: 'Evaluation error'` deny decision in development. `onError` is itself
+  wrapped, so a buggy `onError` cannot escape and cannot flip the deny.
+</Callout>
+
+There is no public `engine.resolveSubject`. Subject resolution is internal; build the `subject` yourself from your session, or call [`getEffectiveRoles`](#geteffectiveroles) to get the same role list the engine would compute.
+
+### can
+
+```ts
+can(
   subjectId: string,
   action: TAction,
   resource: IamRequest.IResource<TResource>,
-  environment?: IamRequest.IAccessRequest['environment'],
+  environment?: IamRequest.IEnvironment,
   scope?: TScope,
 ): Promise<boolean>
 ```
 
-`can()` always returns boolean regardless of engine mode. It's the simple-API method - use it when you don't need the full decision metadata.
+Resolves the subject through the adapter, then calls `authorize`. **Always returns `boolean`, in both modes** - it unwraps the decision when there is one.
 
----
+```ts
+if (!(await engine.can('user-1', 'update', { type: 'post', attributes: {} }))) {
+  throw new Error('Forbidden')
+}
+```
 
-## engine.check()
+Returns `false` without touching the adapter when `subjectId` is not a string, is empty, or exceeds 1024 characters — and fires **no hook at all** on that path, not even `onError`, so a dashboard built on `onError` will not see it. Subject-resolution failures *are* caught, routed to `onError` with a synthetic request carrying `roles: []`, and returned as `false`.
 
-Same as `can()` but returns the full `AccessControl.IDecision` object instead of a boolean (in development mode):
+### check
 
-```typescript
+```ts
+check(
+  subjectId: string,
+  action: TAction,
+  resource: IamRequest.IResource<TResource>,
+  environment?: IamRequest.IEnvironment,
+  scope?: TScope,
+): Promise<AccessControl.ModeResult<TMode>>
+```
+
+Identical to `can` except that it returns the mode-dependent result rather than unwrapping it. Use it when you want to log the deciding rule and policy alongside the verdict.
+
+```ts
 const decision = await engine.check('user-1', 'delete', {
   type: 'post',
   id: 'post-123',
   attributes: { ownerId: 'user-2' },
 })
 
-if (!decision.allowed) {
-  console.log('Denied:', decision.reason)
-  // "Denied: No matching rules -> deny"
-}
+if (!decision.allowed) log.warn('denied', { reason: decision.reason, policy: decision.policy })
 ```
 
-In production mode, `check()` returns a plain `boolean` - same as `can()`. The `IDecision` object is a development-mode feature.
+Failure modes are fail-closed and mode-shaped:
 
-Use `check()` when you want to log/audit the deciding policy and rule, not just the outcome.
+| Situation | Development mode | Production mode |
+| --- | --- | --- |
+| Invalid `subjectId` | deny decision, `failure: 'input'`, `reason: 'invalid subjectId'` | `false` |
+| Subject resolution threw | deny decision, `failure: 'resolution'` | `false` |
+| Evaluation threw | deny decision, `failure: 'evaluation'`, `reason: 'Evaluation error'` | `false` |
 
----
+Read `failure` rather than string-matching `reason`: it is what separates a 403 from a 503.
 
-## engine.authorize()
+### getEffectiveRoles
 
-Takes a complete `IamRequest.IAccessRequest` object. The low-level method that `can()` and `check()` call internally. Use it when you already have a resolved subject:
-
-```typescript
-const subject = await engine.resolveSubject('user-1') // internal helper
-
-const decision = await engine.authorize({
-  subject,
-  action: 'update',
-  resource: { type: 'post', id: 'post-123', attributes: { ownerId: 'user-1' } },
-  environment: { ip: '192.168.1.1' },
-  scope: 'org-1',
-})
+```ts
+getEffectiveRoles(subjectId: string, scope?: TScope): Promise<readonly TRole[]>
 ```
 
-If the request includes a `scope`, the engine enriches the subject with matching scoped roles before evaluation. For example, if the subject has `scopedRoles: [{ role: 'admin', scope: 'org-1' }]` and the request scope is `'org-1'`, `'admin'` is added to the effective roles for this check.
+Returns the roles a subject effectively holds: directly assigned roles closed over `inherits`, plus any scoped grants that match `scope` under the engine's `scopeMode` / `scopeCombine`. This is exactly the list `can` and `check` evaluate against, so it is the honest answer to "why did that check pass?" without running an evaluation.
 
-If any error occurs during evaluation (adapter failure, hook exception, etc.), the engine catches it, calls the `onError` hook if defined, and returns a deny decision with the error message as the reason.
-
-**Caveat:** if your `onError` hook itself throws, the surrounding `authorize()` / `can()` / `check()` call can reject.
-
----
-
-## engine.permissions()
-
-Batch check multiple permissions at once. Loads data once, evaluates many. Returns a typed `PermissionMap` keyed by one of four forms:
-
-- `"action:resource"`
-- `"action:resource:resourceId"`
-- `"scope:action:resource"`
-- `"scope:action:resource:resourceId"`
-
-```typescript
-const perms = await engine.permissions('user-1', [
-  { action: 'read', resource: 'post' },
-  { action: 'create', resource: 'post' },
-  { action: 'delete', resource: 'post' },
-  { action: 'manage', resource: 'user' },
-])
-
-// perms = {
-//   'read:post': true,
-//   'create:post': true,
-//   'delete:post': false,
-//   'manage:user': false,
-// }
+```ts
+await engine.getEffectiveRoles('user-1')            // ['editor', 'viewer']
+await engine.getEffectiveRoles('user-1', 'org-1')   // ['editor', 'viewer', 'org-admin']
 ```
 
-Each check in the array is a `PermissionCheck`:
+Returns `[]` for an invalid `subjectId`. It goes through the same subject cache, so repeated calls cost a cache read rather than an adapter round trip. Unlike `can`/`check` it does **not** swallow adapter errors - a resolution failure rejects. Wrap it if you are wiring it into a UI.
 
-```typescript
-interface PermissionCheck<
-  TAction extends string = string,
-  TResource extends string = string,
-  TScope extends string = string,
-> {
+It also calls `enrichSubjectWithScopedRoles` unconditionally, where `can`/`check` call it only when the request carries a scope; the function returns the subject unchanged when `scope` is absent or nothing matches, so the result is the same either way.
+
+### permissions
+
+```ts
+permissions(
+  subjectId: string,
+  checks: readonly IamClient.IPermissionCheck<TAction, TResource, TScope>[],
+  environment?: IamRequest.IEnvironment,
+  opts?: { telemetry?: boolean },
+): Promise<AccessControl.ModePermissionMap<TMode, TAction, TResource, TScope>>
+```
+
+Batch check for one subject. Resolves the subject once and loads policies once, then evaluates each entry with its own scope, its own `beforeEvaluate` pass, and its own trailing hooks.
+
+```ts
+interface IPermissionCheck<TAction, TResource, TScope> {
   readonly action: TAction
   readonly resource: TResource
   readonly resourceId?: string
@@ -122,157 +163,260 @@ interface PermissionCheck<
 }
 ```
 
-This is the method to use when rendering a UI that needs many permissions at once (which buttons to show/hide). It's also what server middleware uses to generate `PermissionMap` objects for client hydration.
-
-The returned map uses the same key format as the client libraries and the root-level `iamBuildPermissionKey()` helper. If you're writing custom hydration code, tests, or a framework integration outside the shipped clients, prefer that helper instead of hand-building key strings.
-
-### With scopes and resource IDs
-
-```typescript
+```ts
 const perms = await engine.permissions('user-1', [
+  { action: 'read', resource: 'post' },
+  { action: 'create', resource: 'post' },
   { action: 'update', resource: 'post', resourceId: 'post-123', scope: 'org-1' },
-  { action: 'delete', resource: 'post', resourceId: 'post-123', scope: 'org-1' },
 ])
 
-// perms = {
-//   'org-1:update:post:post-123': true,
-//   'org-1:delete:post:post-123': false,
+// {
+//   'read:post': true,
+//   'create:post': true,
+//   '@org-1:update:post:post-123': false,
 // }
 ```
 
-### Performance note
+Keys come from `iamBuildPermissionKey(action, resource, resourceId, scope)`, which takes one of four shapes:
 
-`permissions()` resolves the subject and policies **once**, then evaluates each requested permission with its own scope and hooks. It's much faster than calling `can()` in a loop - single DB hit, single subject resolution, batch evaluation.
+| Inputs | Key |
+| --- | --- |
+| action + resource | `action:resource` |
+| + `resourceId` | `action:resource:resourceId` |
+| + `scope` | `@scope:action:resource` |
+| + both | `@scope:action:resource:resourceId` |
 
-For large arrays (50+ checks), `permissions()` outperforms a loop by 10x+.
+The `@` on the scope is what makes a three-segment key unambiguous. Without it `('read', 'doc', '42')` and `('doc', '42', undefined, 'read')` both produced `read:doc:42`, so two different checks in one batch shared a map entry and one answered for the other.
 
-The return type is `AccessControl.ModePermissionMap<TMode>` - a `boolean` value per key in production mode, an `AccessControl.IDecision` per key in development mode.
+Inside a segment, `:` and `\` are backslash-escaped, and a leading `@` is escaped too so a segment cannot pose as the scope marker. An **empty-string** `scope` or `resourceId` is still a real segment - the builder tests `!== undefined`, not truthiness - so `{ scope: '' }` produces `@:action:resource`, distinct from the unscoped key.
 
----
+`iamSplitPermissionKey(key)` tokenises a key into its unescaped segments but leaves the leading `@` alone. `iamParsePermissionKey(key)` is the actual inverse: it returns `{ scope, action, resource, resourceId }`, or `null` for anything not in the builder's image — it re-encodes what it parsed and compares, so a hand-built key is rejected rather than guessed at.
 
-## engine.explain()
+<Callout tone="info" title="Values are booleans in both modes">
+  `IamClient.PermissionMap` is `Record<PermissionKey, boolean>`. Development mode
+  gives you a *typed* key union, not richer values - there is no
+  `AccessControl.IDecision` per key. Production mode returns the same values
+  under a plain `Record<string, boolean>`.
+</Callout>
 
-Returns a full evaluation trace. **Development mode only** - calling in production mode throws.
+`opts.telemetry` defaults to `true`. Passing `{ telemetry: false }` skips the per-check `onMetrics` emission and its `performance.now()` calls, which roughly doubles throughput on hot UI gates where an outer `authorize()` already records the signal. Available since 2.2.0.
 
-```typescript
-const result = await engine.explain('user-1', 'delete', {
+Throws - unlike `can` and `check`, an invalid batch is a caller bug, not a fail-closed deny:
+
+| Condition | Message |
+| --- | --- |
+| `subjectId` not a string, empty, or over 1024 chars | `permissions(): subjectId must be a non-empty string <=1024 chars` |
+| `checks.length > 1024` | `permissions() refuses batches >1024 checks` |
+
+If subject resolution or the policy load fails, it does **not** throw: it returns an all-`false` map covering every requested key and fires `onError` once. If a single check throws mid-loop, only that key becomes `false` and the loop continues.
+
+### explain
+
+```ts
+explain(
+  this: IamEngine<TAction, TResource, TRole, TScope, 'development'>,
+  subjectId: string,
+  action: TAction,
+  resource: IamRequest.IResource<TResource>,
+  environment?: IamRequest.IEnvironment,
+  scope?: TScope,
+): Promise<Explain.IResult>
+```
+
+Returns a full evaluation trace: which policies were applicable, which rules matched, which conditions passed or failed with actual versus expected values, and a readable summary.
+
+```ts
+const trace = await engine.explain('user-1', 'delete', {
   type: 'post',
   id: 'post-1',
   attributes: { ownerId: 'user-2' },
 })
 
-console.log(result.summary)
-console.log(result.policies) // per-policy breakdowns
-console.log(result.rules) // per-rule match details with actual vs expected values
+console.log(trace.summary)
 ```
 
-`explain()` runs the same pipeline as `check()` but builds a richer trace object instead of an `IDecision`. Side-effect hooks (`afterEvaluate`, `onDeny`, `onError`) **do not fire** - it's read-only.
+The `this` parameter pins the method to a development-mode engine, so calling it on an engine declared `IamEngine<..., 'production'>` is a compile error. At runtime it throws regardless of the static type.
 
-`beforeEvaluate` does run, since it can affect the evaluation (e.g. adding timestamp to the environment).
+| Condition | Message |
+| --- | --- |
+| engine is in production mode | `explain() is not available in production mode` |
+| `subjectId` invalid | `explain(): subjectId must be a non-empty string <=1024 chars` |
 
-See [explain and debug](/duck-iam/advanced/explain) for the full trace API.
+Hook behaviour is deliberately narrow: `beforeEvaluate` **runs** because it changes the evaluation, and nothing else fires - not `afterEvaluate`, `onDeny`, `onError`, or `onMetrics`. Explain is read-only diagnostics.
 
----
+`explain` runs the **interpreter only**, never the compiled table — the table erases policy identity at compile time and so cannot name the rule that decided. It also has no fail-closed catch: an adapter read failure rejects rather than returning a denial trace.
 
-## engine.preload()
+The trace also reports scope work: it captures the subject's roles before enrichment and reports which roles enrichment added. The `../explain` module is loaded with a dynamic `import()` on first call, so production bundles that never reach this line drop the explain chunk entirely (since 3.1.0). See [explain and debug](/duck-iam/advanced/explain) for the `Explain.IResult` fields.
 
-Warms `mergedPolicyCache` so the first request after boot doesn't pay the full `listPolicies` + `listRoles` + `rolesToPolicy` + index-build cost. Call once at app startup.
+### preload
 
-```typescript
-// app startup
+```ts
+preload(opts?: { validator?: boolean }): Promise<void>
+```
+
+Warms the merged-policy cache so the first request after boot does not pay the `listPolicies` + `listRoles` + `rolesToPolicy` + index-build cost. Call once at startup.
+
+```ts
 await engine.preload()
 server.listen(PORT)
 ```
 
-Bench shows ~15x speedup on the first call vs cold.
+`{ validator: true }` additionally imports the lazy validator chunk (about 12 KB gzipped), which is otherwise loaded on the first `admin.savePolicy` / `admin.saveRole` / `admin.import`. Read-only services can leave it off. Available since 2.2.0.
 
----
+`preload` also builds the compiled table, concurrently with the policy load, in **both** modes — both evaluate through it. That is not only warm-up: a role set the table cannot represent surfaces here, at boot, where an orchestrator sees a failed start, rather than inside the first authorization request. An over-limit role count is the one compile failure `preload()` does *not* rethrow, because the interpreter can still serve; every other compile failure propagates.
 
-## engine.healthCheck()
+### healthCheck
 
-Liveness + readiness probe. One timed-out `listPolicies` round-trip plus a cache-hit-rate snapshot. Wire to `/healthz`. Returns an `IamEngineTypes.IHealth`:
+```ts
+healthCheck(): Promise<IamEngineTypes.IHealth>
+```
 
-```typescript
+One timed-out `listPolicies` round trip plus a compiled-table build, then a cache-hit-rate snapshot. Cheap enough for a 5-10 second probe interval; the table build reuses the cached table when there is one. The probe never throws — a health endpoint that throws tells a load balancer nothing it can act on.
+
+```ts
 interface IHealth {
-  ok: boolean              // false means the orchestrator should pull this instance
-  adapter: 'ok' | 'fail'   // adapter probe outcome
-  cacheHitRate: number     // aggregate hit rate across caches; 0 when no traffic yet
-  adapterLatencyMs: number // round-trip latency of the probe
-  lastError?: string       // present when `adapter === 'fail'`
+  readonly ok: boolean
+  readonly adapter: 'ok' | 'fail'
+  readonly cacheHitRate: number
+  readonly adapterLatencyMs: number
+  readonly lastError?: string
+  readonly compiledTable?: {
+    readonly available: false
+    readonly reason: 'role-limit-exceeded'
+    readonly roleCount: number
+    readonly limit: number
+  }
 }
 ```
 
-```typescript
-app.get('/healthz', async (_, res) => {
+| Field | Meaning |
+| --- | --- |
+| `ok` | `false` means the orchestrator should pull this instance. The probe covers the table build too, so an engine whose table cannot be built goes red rather than answering green while denying every request. |
+| `adapter` | Outcome of the probe. |
+| `cacheHitRate` | Hits divided by hits plus misses, summed across all five caches. `0` when there has been no traffic. |
+| `adapterLatencyMs` | Probe round trip, rounded to a whole millisecond. |
+| `lastError` | The probe's error message. Present only when `adapter === 'fail'`. |
+| `compiledTable` | Present only when the role count outran the table's 32-bit grant mask and the engine dropped to the interpreter. `ok` stays `true`: the interpreter answers every question correctly, and what was lost is throughput. Reported here rather than only warned once at startup, where a long-lived process would have scrolled the warning away. |
+
+```ts
+app.get('/healthz', async (_req, res) => {
   const h = await engine.healthCheck()
   res.status(h.ok ? 200 : 503).json(h)
 })
 ```
 
-Cheap enough for 5-10 s probe intervals.
+The probe goes through the same `adapterTimeoutMs` budget as every other read, so a hung adapter reports `fail` after that window rather than hanging the probe.
 
----
+### setInvalidator
 
-## engine.cache
-
-Cache-invalidation facet. Four targeted flushes for use after policy/role/subject mutations. Pass `{ broadcast: false }` when applying an event received from another instance.
-
-```typescript
-engine.cache.invalidate(opts?)                  // drop every cache + in-flight resolver
-engine.cache.invalidateSubject(subjectId, opts?) // drop one subject's resolved roles + attrs
-engine.cache.invalidatePolicies(opts?)           // drop cached policies (after policy CRUD)
-engine.cache.invalidateRoles(roleId?, opts?)     // drop cached roles + RBAC policy; selectively drops affected subjects
+```ts
+setInvalidator(invalidator: IamEngineTypes.IInvalidator<TRole> | null): void
 ```
 
-With an `invalidator` wired, each call publishes an event so peer instances flush their local caches. Pass `{ broadcast: false }` to suppress the publish when *applying* an inbound event (otherwise instances ping-pong).
+`IConfig.invalidator` is constructor-only, but engines are commonly built at module import time — before any replica-specific Redis client exists. This closes that gap.
 
-Module-level `iamFlushSharedCaches()` (separate import) wipes the **process-wide** regex + path caches shared across every Engine. Schedule periodically in multi-tenant deployments.
-
-```typescript
-import { iamFlushSharedCaches } from '@gentleduck/iam'
-setInterval(iamFlushSharedCaches, 5 * 60 * 1000)
+```ts
+const engine = new IamEngine({ adapter, mode: 'production' })   // at import time
+// ...later, once the client exists
+engine.setInvalidator(createIamRedisInvalidator(redis, 'iam'))
 ```
 
----
+It throws `TypeError` if the argument is neither `null` nor an object with callable `publish` and `subscribe` — a malformed invalidator would otherwise fail at the first mutation, as a lost broadcast rather than a bad argument. The previous subscription is torn down first and unconditionally, so at most one is ever attached. `null` detaches and returns the engine to local-only invalidation. The constructor routes `config.invalidator` through this same setter, so both paths validate identically.
 
-## engine.stats.get() / engine.stats.reset()
+### withTransaction
 
-Cache hit / miss counters per cache. Use for alerting on cache-effectiveness regressions in production.
-
-```typescript
-const s = engine.stats.get()
-// -> { policies, roles, rbacPolicy, mergedPolicies, subjects }
-//     each { hits, misses, size }
-
-engine.stats.reset() // zero the counters
+```ts
+withTransaction(client: unknown): Bound.IamEngine<TAction, TResource, TRole, TScope, TMode>
 ```
 
-Counters accumulate from construction; reset on a sampling interval if you want windowed metrics.
+Returns a facade whose reads and writes run against a transaction-bound adapter. Throws when the adapter has no `withClient`, rather than silently leaving the writes outside your transaction.
 
----
+```ts
+let pending
+await db.transaction(async (tx) => {
+  const perms = iam.withTransaction(tx)
+  await perms.admin.assignRole(userId, 'admin', orgId)
+  await tx.insert(members).values({ userId, orgId })
+  pending = perms.pending
+})
+await pending.flush()   // invalidate + broadcast only after the commit
+```
 
-## engine.dispose()
+The bound engine is built from the same config with the adapter swapped and **fresh caches**. That is the whole trick: an empty cache always misses, so every bound read reaches the transaction and sees its own uncommitted writes, and uncommitted data never enters the shared caches. The invalidator is dropped from the bound config — a bound engine must never broadcast mid-transaction, and must not subscribe either, or a facade built per transaction leaks a subscription each time. Invalidations and `onMutation` events buffer until `pending.flush()`. A rollback needs no cleanup; call `pending.discard()` to say so explicitly.
 
-Releases the cross-instance invalidator subscription. Call on shutdown.
+### dispose
 
-```typescript
+```ts
+dispose(): void
+```
+
+Calls the teardown function returned by `invalidator.subscribe(...)` and drops the reference. A no-op when no `invalidator` was configured, safe to call repeatedly, and it swallows a throwing teardown - the process is already shutting down.
+
+```ts
 process.on('SIGTERM', () => engine.dispose())
 ```
 
-No-op if no `invalidator` was wired. Safe to call multiple times.
+`dispose` does not clear caches or close the adapter. Close the adapter's own connection yourself.
 
----
+### engine.cache
 
-## When to use which
+Four targeted flushes, grouped as a facet since 3.0.0 (they were flat `engine.invalidate*` methods in 2.x).
 
-| Need | Use |
-| --- | --- |
-| Simple yes/no check | `can()` |
-| Decision metadata (rule/policy/reason) | `check()` |
-| Pre-built `IamRequest.IAccessRequest` | `authorize()` |
-| Batch checks for UI hydration | `permissions()` |
-| Debugging why a decision happened | `explain()` |
-| Warm cache at boot | `preload()` |
-| `/healthz` probe | `healthCheck()` |
-| Cache effectiveness telemetry | `stats()` / `resetStats()` |
-| Shutdown cleanup | `dispose()` |
+```ts
+engine.cache.invalidate(opts?: { broadcast?: boolean }): void
+engine.cache.invalidateSubject(subjectId: string, opts?: { broadcast?: boolean }): void
+engine.cache.invalidatePolicies(opts?: { broadcast?: boolean }): void
+engine.cache.invalidateRoles(roleId?: TRole, opts?: { broadcast?: boolean }): void
+```
+
+All four are synchronous and idempotent. Pass `{ broadcast: false }` when applying an event received from a peer, or two instances will ping-pong events forever. Full semantics, including exactly which caches each one clears, are on [caching and invalidation](/duck-iam/advanced/engine/caching).
+
+### engine.stats
+
+```ts
+engine.stats.get(): {
+  policies: { hits: number; misses: number; size: number }
+  roles: { hits: number; misses: number; size: number }
+  rbacPolicy: { hits: number; misses: number; size: number }
+  mergedPolicies: { hits: number; misses: number; size: number }
+  subjects: { hits: number; misses: number; size: number }
+}
+engine.stats.reset(): void
+```
+
+Counters accumulate from construction. `reset()` zeroes hits and misses on all five caches **without evicting their entries**, so call it on a sampling interval if you want windowed metrics.
+
+```ts
+setInterval(() => {
+  const s = engine.stats.get()
+  metrics.gauge('iam.subject_cache.size', s.subjects.size)
+  metrics.gauge('iam.subject_cache.hit_rate', s.subjects.hits / (s.subjects.hits + s.subjects.misses || 1))
+  engine.stats.reset()
+}, 60_000)
+```
+
+Note that `stats.get()` names the merged-policy cache `mergedPolicies` and the RBAC cache `rbacPolicy`, singular - the names do not match the internal field names exactly.
+
+### engine.admin
+
+```ts
+get admin(): IamEngineTypes.IAdmin<TAction, TResource, TRole, TScope>
+```
+
+A lazily-constructed CRUD facet over the adapter that invalidates the right caches after each write. Built on first access and memoised. See [admin API](/duck-iam/advanced/engine/admin).
+
+## Gotchas
+
+- **`can()` returns `boolean` in both modes; `check()` does not.** `check()` follows the engine's mode.
+- **`permissions()` throws where `can()` denies.** An invalid `subjectId` is a fail-closed `false` from `can`, and an exception from `permissions`.
+- **`explain()` fires no telemetry.** If you count checks via `onMetrics`, explain traces are invisible to that counter.
+- **A role-limit fallback is reported, not thrown.** `healthCheck().compiledTable` is the only standing signal that an engine lost its fast path; `ok` stays `true`.
+- **There is no public subject resolver.** `getEffectiveRoles` is the supported way to see a subject's resolved roles.
+
+## See also
+
+- [Engine overview](/duck-iam/advanced/engine)
+- [Hooks](/duck-iam/advanced/engine/hooks)
+- [Caching and invalidation](/duck-iam/advanced/engine/caching)
+- [Permission maps on the client](/duck-iam/integrations/client/permission-map)
+- [Explain and debug](/duck-iam/advanced/explain)

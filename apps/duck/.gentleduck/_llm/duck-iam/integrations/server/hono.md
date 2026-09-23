@@ -1,174 +1,338 @@
+`@gentleduck/iam/server/hono` exposes the same two request gates as the Express wrapper plus a function that binds admin routes onto a router you already own. It imports no Node built-ins and no Hono types, so it runs wherever Hono runs: Node, Bun, Deno, Cloudflare Workers, and Vercel Edge. The shared extraction and audit behaviour lives in [generic helpers](/duck-iam/integrations/server/generic); this page documents only what Hono adds.
+
 ## Install
 
-```typescript
-import { accessMiddleware, guard } from '@gentleduck/iam/server/hono'
+```ts
+import { iamAccessMiddleware, iamGuard, iamBindAdminRouter } from '@gentleduck/iam/server/hono'
+import type { IamHono } from '@gentleduck/iam/server/hono'
 ```
 
-Edge-friendly. Works on Bun, Cloudflare Workers, Deno Deploy, Vercel Edge - anywhere Hono runs.
+All three runtime exports carry the `iam` prefix since 5.0.0. `accessMiddleware`, `guard`, and `bindAdminRouter` no longer resolve.
 
-***
+## Setup
 
-## Global middleware
-
-Apply access control to all routes under a path pattern. If no user ID is found, the middleware returns 401 immediately.
+Build the engine once per isolate
 
 ```ts
-import { accessMiddleware } from '@gentleduck/iam/server/hono'
+// lib/engine.ts
+import { IamEngine } from '@gentleduck/iam/core'
+import { IamRedisAdapter } from '@gentleduck/iam/adapters/redis'
 
+export const engine = new IamEngine({ adapter: new IamRedisAdapter({ client }) })
+```
+
+Set the subject id on the context
+
+The default `getUserId` reads `c.get('userId')` and nothing else. Populate it from a verified source in an upstream middleware.
+
+```ts
+app.use('*', async (c, next) => {
+  const session = await verifySession(c.req.header('cookie'))
+  if (session) c.set('userId', session.userId)
+  await next()
+})
+```
+
+Mount a gate
+
+```ts
+app.use('/api/*', iamAccessMiddleware(engine))
+// or
+app.delete('/posts/:id', iamGuard(engine, 'delete', 'post'), deletePostHandler)
+```
+
+## One guarded request
+
+This sequence diagram traces `DELETE /posts/42` through a Hono app with the auth middleware, `iamGuard`, and a downstream handler.
+
+**`await next()` sits outside the wrapper's `try`, deliberately.** Hono was once the only one of the five integrations that awaited the downstream handler inside its own try, so a business-logic error thrown by the route came back out of `await next()`, was caught here, and was reported through this middleware's `onError` — pre-empting the app's own `app.onError` and turning every route failure into an authorization-shaped 500. Both `iamAccessMiddleware` and `iamGuard` now let a route error past. An evaluation error still reaches `onError`.
+
+Everything before that — `getUserId` included — runs inside the `try`, so a throwing or rejecting extractor reaches this middleware's `onError` rather than the framework boundary.
+
+## `iamAccessMiddleware`
+
+Blanket middleware. Derives action and resource from the context.
+
+```ts
+export function iamAccessMiddleware<
+  TAction extends string = string,
+  TResource extends string = string,
+  TRole extends string = string,
+  TScope extends string = string,
+>(
+  engine: IamEngine<TAction, TResource, TRole, TScope>,
+  opts?: IamHono.IOptions<TScope>,
+): (c: HonoContext, next: HonoNext) => Promise<Response | undefined>
+```
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `getUserId` | `(c) => string \| null` | `c.get('userId') ?? null` | Subject id. Never reads a header. |
+| `getResource` | `(c) => IamRequest.IResource` | first two segments of `c.req.path` | `{ type: parts[0] ?? 'root', id: parts[1], attributes: {} }`. |
+| `getAction` | `(c) => string` | `iamActionForMethod(c.req.method)` | Method map from the generic helpers; an unmapped method yields the reserved refusal token, **not** `'read'`. |
+| `trustCloudflareHeaders` | `boolean` | `false` | Opt in to reading `cf-connecting-ip` into `environment.ip`. Off, `ip` stays `undefined`. |
+| `getEnvironment` | `(c) => IamRequest.IEnvironment` | the Hono `defaultEnv` below | `{ ip, userAgent, timestamp }`. |
+| `getScope` | `(c) => TScope \| undefined` | none — `scope` stays `undefined` | Multi-tenant scope. |
+| `onDenied` | `(c) => Response` | `c.json({ error: 'Forbidden' }, 403)` | Runs when `engine.can()` returns `false`. |
+| `onError` | `(err, c) => Response` | `c.json({ error: 'Internal server error' }, 500)` | Runs when an extractor or `engine.can()` throws. **Not** for a downstream route error — that goes to your `app.onError`. |
+
+The 401 response is fixed at `c.json({ error: 'Unauthorized' }, 401)` and has no option. `resource.attributes` is always `{}`.
+
+```ts
 app.use(
   '/api/*',
-  accessMiddleware(engine, {
-    // SEC-101: the default reads `c.get('userId')` only - populate it from
-    // upstream auth (JWT, cookie session). The x-user-id header is no longer
-    // a fallback because any unauth client can spoof it.
-    getUserId: (c) => c.get('userId') as string | null,
+  iamAccessMiddleware(engine, {
+    getUserId: (c) => (c.get('userId') as string | undefined) ?? null,
     getScope: (c) => c.req.header('x-org-id'),
-    onDenied: (c) => c.json({ error: 'Forbidden' }, 403),
-    onError: (err, c) => c.json({ error: 'Internal server error' }, 500),
+    onDenied: (c) => c.json({ error: 'Forbidden', path: c.req.path }, 403),
   }),
 )
 ```
 
-`accessMiddleware` and `guard` no longer fall back to the `x-user-id` request
-header. Default identity is `c.get('userId')` only - wire it from upstream
-auth (JWT middleware, cookie session). If you intentionally proxy a verified
-identity header from a trusted ingress, pass `getUserId` explicitly.
+Resource types come from the URL verbatim, so `/posts/42` checks `posts`, not `post`, and `/posts/search` passes `id: 'search'`. Supply `getResource` on such routes.
 
-***
+## `iamGuard`
 
-## Per-route guard
+Per-route middleware with a fixed action and resource type. The resource id is `c.req.param('id')`.
 
-Guard individual Hono routes with fixed action and resource types.
-
-```typescript
-import { guard } from '@gentleduck/iam/server/hono'
-
-app.delete('/posts/:id', guard(engine, 'delete', 'post'), async (c) => {
-  // Only reached if the user can delete posts
-  return c.json({ deleted: true })
-})
-
-app.post('/admin/users', guard(engine, 'manage', 'user', { scope: 'admin' }), async (c) => {
-  return c.json({ created: true })
-})
+```ts
+export function iamGuard<
+  TAction extends string = string,
+  TResource extends string = string,
+  TRole extends string = string,
+  TScope extends string = string,
+>(
+  engine: IamEngine<TAction, TResource, TRole, TScope>,
+  action: TAction,
+  resourceType: TResource,
+  opts?: Pick<IamHono.IOptions<TScope>, 'getUserId' | 'getEnvironment' | 'onDenied' | 'onError'> & { scope?: TScope },
+): (c: HonoContext, next: HonoNext) => Promise<Response | undefined>
 ```
 
-The guard automatically reads `c.req.param('id')` as the resource ID when available.
+Unlike the Express guard, the Hono guard **does** accept `onError`; it takes `getUserId`, `getEnvironment`, `onDenied`, `onError`, and a fixed `scope`. It has no `getAction`, `getResource`, or `getScope`.
 
-Like the Express guard, the Hono `guard()` helper assumes the route param is named `id`.
-For nested resources or different param names, prefer `accessMiddleware()` with a custom
-`getResource` function or a manual `engine.can()` call in the handler.
+```ts
+// Fixed action and resource; id from c.req.param('id').
+app.delete('/posts/:id', iamGuard(engine, 'delete', 'post'), (c) => c.json({ deleted: c.req.param('id') }))
 
-***
+// Fixed scope for an admin surface.
+app.post('/admin/users', iamGuard(engine, 'manage', 'user', { scope: 'admin' }), createUser)
 
-## Environment extraction
-
-Hono's default environment extractor reads:
-
-* `cf-connecting-ip` (Cloudflare) or `x-forwarded-for` for the IP address
-* `user-agent` for the user agent string
-* `Date.now()` for the timestamp
-
-Override with `getEnvironment` to add custom fields:
-
-```typescript
-accessMiddleware(engine, {
-  getEnvironment: (c) => ({
-    ip: c.req.header('cf-connecting-ip') ?? c.req.header('x-real-ip'),
-    userAgent: c.req.header('user-agent'),
-    region: c.req.header('cf-ipcountry'),
-    timestamp: Date.now(),
+// Hide existence instead of admitting a denial.
+app.get(
+  '/drafts/:id',
+  iamGuard(engine, 'read', 'draft', {
+    // The package never answers 404; this is your own handler choosing to.
+    onDenied: (c) => c.json({ error: 'Not found' }, 404),
   }),
+  readDraft,
+)
+```
+
+Neither gate falls back to the `x-user-id` header; that fallback was removed in 2.1.0 because any unauthenticated client can send `curl -H 'X-User-Id: admin'`. The default is `c.get('userId')` only, set by upstream auth. The test `does NOT default to spoofable x-user-id header` pins this: a request carrying the header and no context value gets 401. If a trusted ingress injects a verified identity header, pass `getUserId` explicitly and validate it there.
+
+## Subject, scope, and environment
+
+| Field | Where it comes from | Override |
+| --- | --- | --- |
+| subject id | `c.get('userId')` | `getUserId` (both gates) |
+| resource type | first segment of `c.req.path` (middleware) or the `resourceType` argument (guard) | `getResource` / the argument |
+| resource id | second path segment (middleware) or `c.req.param('id')` (guard) | `getResource` / check in the handler |
+| action | `iamActionForMethod(c.req.method)` (middleware) or the `action` argument (guard) | `getAction` / the argument |
+| scope | `getScope(c)` (middleware) or `opts.scope` (guard) | either |
+| environment | the Hono `defaultEnv` | `getEnvironment` |
+
+### Forwarded-IP normalisation
+
+Hono is the only adapter with a built-in IP opt-in, `trustCloudflareHeaders`, and it is **off** by default.
+
+```ts
+function defaultEnv(c: HonoContext, trustCloudflareHeaders = false): IamRequest.IEnvironment {
+  return iamExtractEnvironment(
+    {
+      ip: trustCloudflareHeaders ? c.req.header('cf-connecting-ip') : undefined,
+      headers: {
+        'x-forwarded-for': c.req.header('x-forwarded-for'),
+        'x-real-ip': c.req.header('x-real-ip'),
+        'user-agent': c.req.header('user-agent'),
+      },
+      method: c.req.method,
+      url: c.req.url,
+    },
+    { trustProxy: trustCloudflareHeaders },
+  )
+}
+```
+
+**Off, `environment.ip` is `undefined`.** The forwarded headers are still handed to `iamExtractEnvironment`, but it declines to read them: with nothing in front of the app they are headers the client sets itself, and reading them unconditionally let a plain `X-Forwarded-For: 10.0.0.1` satisfy an IP-conditioned admin grant here.
+
+On, the chain is `cf-connecting-ip`, then `x-forwarded-for`, then `x-real-ip`, and every one of the three goes through the same normaliser: reject the whole header above 4096 characters, take the text before the first comma, trim, reject if blank or above 256. `cf-connecting-ip` gets no special exemption.
+
+Cloudflare overwrites it on every request, which is what makes it usable — but a Hono app reachable directly lets any client set it. An app behind its own proxy should compute the address in `getEnvironment` instead of enabling this flag.
+
+A condition on `environment.ip` with the flag off reads as a **non-match**, not an error: a deny rule keyed on it never fires, and the request is allowed, silently.
+
+```ts
+// Two trusted proxies: take the second entry from the right, and keep the
+// rest of the extractor's output rather than rebuilding IEnvironment by hand.
+iamAccessMiddleware(engine, {
+  getEnvironment: (c) => {
+    const hops = (c.req.header('x-forwarded-for') ?? '').split(',').map((h) => h.trim())
+    return { ...defaultEnvFor(c), ip: hops[hops.length - 2] }
+  },
 })
 ```
 
-***
+### Malformed JSON bodies
 
-## Edge runtime notes
+Hono and Next are the two adapters that parse the admin request body themselves, *inside* the audited handler, so `iamReadJsonBody` answers a `400 { error: 'Invalid request', issues: ['MALFORMED_JSON'] }` for a truncated upload or a form post carrying `Content-Type: application/json`. Before that, the `SyntaxError` escaped into the generic catch and became a 500 — telling a client to retry a request that can never succeed. Express and Nest never reach this path, because their hosts parse the body first.
 
-The Hono integration imports zero Node-specific APIs. It works in:
+The parser's own message is deliberately not repeated: it quotes the offending bytes, which is caller-controlled content on its way into an operator's log.
 
-* **Cloudflare Workers** - pair with `IamRedisAdapter` against Upstash Redis or a KV adapter
-* **Deno Deploy** - works with deno-friendly adapters
-* **Bun** - full Node compatibility plus Hono's edge optimizations
-* **Vercel Edge Functions** - bundle the adapter as part of the Edge build
+## Error mapping
 
-For database-backed adapters at the edge, ensure your driver supports the runtime (Neon serverless for Postgres, planetscale for MySQL, etc.).
+| Situation | Where it is caught | Response |
+| --- | --- | --- |
+| `getUserId` returns a non-string, `''`, or a blank string | `iamIsSubjectId`, inside the `try` | `401 { error: 'Unauthorized' }`, not overridable |
+| `engine.can()` returns `false` | after the call | `onDenied`, default `403 { error: 'Forbidden' }` |
+| any extractor throws, `getUserId` included | `try` around the check | `onError`, default `500 { error: 'Internal server error' }` |
+| `engine.can()` rejects | same `try` | `onError` |
+| the downstream chain (`await next()`) throws | **not caught here** | your `app.onError` |
 
-***
+A blank subject id is refused here, not by the engine: `engine.can` guards `length === 0`, not `trim()`, so `'   '` is a perfectly good cache key to it and any assignment stored under that key would grant its permissions. `iamIsSubjectId` closes that and answers 401.
 
-## Options reference
-
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `getUserId` | `(c) -> string or null` | `c.get('userId')` only (SEC-101) | Extract the subject ID |
-| `getAction` | `(c) -> string` | HTTP method map | Map the request to an action |
-| `getResource` | `(c) -> Resource` | Infer from URL path | Map the request to a resource |
-| `getEnvironment` | `(c) -> Environment` | CF/forwarded IP + user agent + timestamp | Extract environment context |
-| `getScope` | `(c) -> string or undefined` | `undefined` | Extract scope from the request |
-| `onDenied` | `(c) -> Response` | 403 JSON | Custom denial response |
-| `onError` | `(err, c) -> Response` | 500 JSON | Custom error handler |
-
-***
+`engine.can()` does not throw on an authorisation failure: it catches adapter and policy errors, routes them to the engine's `onError` hook, and returns `false`. See [engine methods](/duck-iam/advanced/engine/methods).
 
 ## Admin router
 
-Bind admin CRUD endpoints onto a Hono router. The `authorize` callback is **required** - the factory throws if it's missing.
+`iamBindAdminRouter` wires the six admin endpoints onto a router you construct, and returns the same router for chaining.
+
+```ts
+export function iamBindAdminRouter<
+  TAction extends string = string,
+  TResource extends string = string,
+  TRole extends string = string,
+  TScope extends string = string,
+>(
+  router: IamHono.IRouterLike,
+  engine: IamEngine<TAction, TResource, TRole, TScope>,
+  opts: IamHono.IAdminOptions,
+): IamHono.IRouterLike
+```
+
+`IamHono.IRouterLike` is the minimal `.get` / `.put` / `.post` / `.delete` surface, so any Hono-shaped router is accepted.
 
 ```ts
 import { Hono } from 'hono'
-import { bindAdminRouter } from '@gentleduck/iam/server/hono'
 
 const admin = new Hono()
-bindAdminRouter(admin, engine, {
-  authorize: (c) => c.req.header('x-admin-token') === process.env.ADMIN_TOKEN,
+
+iamBindAdminRouter(admin, engine, {
+  authorize: (c) => c.req.header('x-admin-token') === ADMIN_TOKEN,
+  csrfCheck: false, // bearer-token API, no browser involved
+  onAdminMutation: (event) => auditLog.write(event),
 })
 
+app.use('/api/access-admin/*', rateLimiter({ windowMs: 60_000, limit: 30 }))
 app.route('/api/access-admin', admin)
 ```
 
-Exposes the same six endpoints as the Express router (GET / PUT `/policies` + `/roles`, POST/DELETE `/subjects/:id/roles[/:roleId]`). Options conform to `IamHono.IAdminOptions` with `authorize` (required) of shape `IamHono.IAdminAuthorize`, plus `onUnauthorized` and `onError`. `bindAdminRouter` is generic over `IamHono.IRouterLike` so it accepts any router implementing the minimal `.get/.put/.post/.delete` surface.
+| Endpoint | Engine call | Audit `action` / `target` | `targetId` |
+| --- | --- | --- | --- |
+| `GET /policies` | `admin.listPolicies()` | none (reads never audit) | — |
+| `GET /roles` | `admin.listRoles()` | none | — |
+| `PUT /policies` | `admin.savePolicy(await c.req.json())` | `replace` / `policy` | `undefined` |
+| `PUT /roles` | `admin.saveRole(await c.req.json())` | `replace` / `role` | `undefined` |
+| `POST /subjects/:id/roles` | `admin.assignRole(id, roleId, scope)` | `create` / `role-assignment` | `c.req.param('id')` |
+| `DELETE /subjects/:id/roles/:roleId` | `admin.revokeRole(id, roleId)` | `delete` / `role-assignment` | `c.req.param('id')` |
 
-### CSRF protection (default-on)
+Mutations write `c.req.method` and `c.req.path` into the audit event, and `targetId` is the document's `id` for policy and role writes — the same on all four adapters.
 
-Mutation handlers (PUT/POST/DELETE) run a `Sec-Fetch-Site` check by default
-(SEC-103 / CAVEAT-2). Browsers populate the header automatically; cross-site
-form posts are rejected with 403, same-site / same-origin requests pass.
-Non-browser callers (no header) pass - they must be gated by bearer / mTLS.
+### Body validation on role assignment
 
-```ts
-// Default - cookie-auth admin UIs get CSRF protection with no opt-in.
-bindAdminRouter(admin, engine, { authorize })
+`POST /subjects/:id/roles` is the only admin endpoint in any wrapper that validates its body before touching the engine:
 
-// Server-to-server bearer/mTLS API - disable the check entirely.
-bindAdminRouter(admin, engine, { authorize, csrfCheck: false })
+| Condition | Response |
+| --- | --- |
+| body is not a non-null, non-array object | `400 { error: 'invalid body' }` |
+| `roleId` is not a string, is empty, or exceeds 128 characters | `400 { error: 'invalid roleId' }` |
+| `scope` is present and is not a string of 1–128 characters | `400 { error: 'invalid scope' }` |
 
-// Stricter - Origin allowlist.
-const ADMIN_ORIGINS = new Set(['https://admin.example.com'])
-bindAdminRouter(admin, engine, {
-  authorize,
-  csrfCheck: (c) => ADMIN_ORIGINS.has(c.req.header('origin') ?? ''),
-})
-```
+These are returned responses, not throws, so `iamWithAdminAudit` records them with `success: true`. A hook counting failed assignments must inspect the response, not `event.success`.
 
-***
+### Options
 
-## Types
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `authorize` | `(c) => unknown \| Promise<unknown>` | **required** | Runs on every endpoint, read and write. A falsy return (`false`, `0`, `''`, `null`, `undefined`, `NaN`) is 401; a throw is 500. Return the actor itself, not `true` — `true` authorizes and records `actor: undefined` with a one-time `console.warn`. |
+| `csrfCheck` | `((c) => boolean) \| false` | `iamDefaultCsrfCheck` | Runs on **every** admin request, reads included. `false` disables the phase. |
+| `onUnauthorized` | `(c) => Response` | `c.json({ error: 'Unauthorized' }, 401)` | Replaces the falsy-`authorize` response. |
+| `onError` | `(err, c) => Response` | `c.json({ error: 'Internal server error' }, 500)` | Wraps a throwing `authorize` or handler. |
+| `onAdminMutation` | `IamAdminAudit.Hook` | none | Fire-and-forget, fires on success and failure, never on GET. |
+| `redactPath` | `(path: string) => string` | identity | Rewrites `event.path` before the hook. |
+| `onAuditHookError` | `(err, event) => void` | `console.error` | Sink for a throwing hook. |
+| `includeErrorMessage` | `boolean` | `false` | `event.error` becomes `err.message` instead of the class name. |
 
-All types live under the `Hono` namespace at `@gentleduck/iam/server/hono`. Type-only - zero bundle cost.
+The last four are the shared `IamAdminAudit.IOptions`; their exact semantics, the event shape, and the CSRF predicate are documented once on the [generic helpers page](/duck-iam/integrations/server/generic).
 
-* `IamHono.IOptions` - options for `accessMiddleware` and `guard`.
-* `IamHono.IAdminAuthorize` - signature of the required admin `authorize` callback.
-* `IamHono.IAdminOptions` - options for `bindAdminRouter` (`authorize`, `onUnauthorized`, `onError`).
-* `IamHono.IRouterLike` - minimal router shape `bindAdminRouter` accepts.
+`iamBindAdminRouter` throws at construction when `opts.authorize` is not a function: `[@gentleduck/iam] iamBindAdminRouter requires an authorize callback.` The router writes policies, roles, and assignments straight to the adapter, so there is no useful unauthenticated mode.
+
+All six routes — the two GETs included — run `iamDefaultCsrfCheck` **before** `authorize`, rejecting requests whose `Sec-Fetch-Site` is `cross-site` or `cross-origin` with `c.json({ error: 'Forbidden (CSRF check failed)' }, 403)` and firing no audit event. That response is fixed and not covered by `onUnauthorized` or `onError`. A predicate that throws is also a 403. Requests with no such header (curl, Workers-to-Workers) pass and must be gated by bearer or mTLS auth inside `authorize`. A one-time `console.info` names the change when you did not pass `csrfCheck` explicitly.
+
+`POST /subjects/:id/roles` accepts `scope` in the body; the revoke route does not. It calls `admin.revokeRole(subjectId, roleId)` with no third argument, and the adapter contract for an omitted scope is **remove every assignment for that role, across every scope**. One `DELETE` against a subject holding that role in five tenants removes all five. To drop a single scoped assignment, add your own route calling `engine.admin.revokeRole(subjectId, roleId, scope)`. See [scoped roles](/duck-iam/core/roles/scoped).
+
+## Edge runtimes
+
+The module touches no Node built-in — no `process`, no `Buffer`, no `crypto` import — so it runs unchanged on Workers, Deno Deploy, Bun, and Vercel Edge. What decides edge compatibility is the adapter, not the wrapper:
+
+| Runtime | Works with |
+| --- | --- |
+| Cloudflare Workers | memory, HTTP, or the Redis adapter over an HTTP-based Redis client |
+| Deno Deploy | memory, HTTP, Redis over a Deno-compatible client |
+| Bun | anything, including the Node drivers behind the drizzle and prisma adapters |
+| Vercel Edge | memory, HTTP, or a serverless driver bundled for the edge build |
+
+An isolate is short-lived and may be recycled between requests, so the engine's in-process caches warm per isolate. Pair a shared backend with the [Redis invalidator](/duck-iam/integrations/invalidators/redis) so a policy change reaches every isolate.
+
+## API reference
+
+| Export | Kind | Purpose |
+| --- | --- | --- |
+| `iamAccessMiddleware(engine, opts?)` | function | Blanket middleware with inferred action and resource |
+| `iamGuard(engine, action, resourceType, opts?)` | function | Per-route middleware with a fixed action and resource |
+| `iamBindAdminRouter(router, engine, opts)` | function | Wires the six admin endpoints onto a router and returns it |
+| `IamHono.IOptions<TScope>` | interface | Options for both gates |
+| `IamHono.IAdminAuthorize` | type | `(c) => boolean \| Promise<boolean>` |
+| `IamHono.IAdminOptions` | interface | `authorize` plus `onUnauthorized`, `onError`, and `IamAdminAudit.IOptions` |
+| `IamHono.IRouterLike` | interface | Minimal `.get` / `.put` / `.post` / `.delete` router surface |
 
 ```ts
 import type { IamHono } from '@gentleduck/iam/server/hono'
 
 const opts: IamHono.IOptions = {
-  // SEC-101: read from `c.set('userId', ...)` populated by upstream auth.
-  getUserId: (c) => c.get('userId') as string | null,
+  getUserId: (c) => (c.get('userId') as string | undefined) ?? null,
 }
+
+const adminAuth: IamHono.IAdminAuthorize = (c) => c.req.header('x-admin-token') === ADMIN_TOKEN
 ```
 
-Deprecated bare aliases (`IHonoOptions`, `IAdminAuthorize`, `IAdminOptions`, `IRouterLike`) remain for back-compat and will be removed in 3.0.
+The namespace is type-only and costs nothing at runtime.
+
+## Gotchas
+
+* `await next()` sits **outside** the wrapper's `try`. A route-handler exception reaches your `app.onError`, not this middleware's.
+* Nothing in this module ever answers 404. Every refusal it produces is 400, 401, 403 or 500.
+* `c.get('userId')` is typed `unknown`; the default extractor narrows it to `string | undefined`. A non-string value in that slot is treated as absent, giving a 401.
+* `trustCloudflareHeaders` is off by default, so `environment.ip` is `undefined` until you turn it on. Only turn it on when Cloudflare is genuinely the sole ingress.
+* The guard reads `c.req.param('id')` only. For `:postId`, use the middleware with a custom `getResource` or check inside the handler.
+* Both gates pass `attributes: {}`. Ownership and status conditions belong in the handler with the loaded record.
+* `iamBindAdminRouter` mutates the router you pass; the return value is the same object, offered only for chaining.
+
+## See also
+
+* [Server integrations overview](/duck-iam/integrations/server) for the shared pipeline and the cross-framework comparison
+* [Generic helpers](/duck-iam/integrations/server/generic) for `iamExtractEnvironment`, the CSRF predicate, and the audit pipeline
+* [Express](/duck-iam/integrations/server/express) for the Node-only equivalent of these gates
+* [Redis adapter](/duck-iam/integrations/adapters/redis) and [Redis invalidator](/duck-iam/integrations/invalidators/redis) for edge-friendly storage and cache fan-out
+* [Admin API](/duck-iam/advanced/engine/admin) for what the six endpoints call
+* [Engine methods](/duck-iam/advanced/engine/methods) for `can`, `check`, and `permissions`

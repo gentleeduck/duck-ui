@@ -24,7 +24,7 @@ const Slider = React.forwardRef<
       min={min}
       max={max}
       className={cn(
-        "relative flex w-full touch-none select-none items-center data-[orientation='vertical']:h-full data-[orientation='vertical']:min-h-40 data-[orientation='vertical']:w-auto data-[orientation='vertical']:flex-col data-disabled:opacity-50",
+        "relative flex w-full touch-none select-none items-center data-[orientation='vertical']:h-full data-[orientation='vertical']:min-h-40 data-[orientation='vertical']:w-auto data-disabled:cursor-not-allowed data-[orientation='vertical']:flex-col data-disabled:opacity-50",
         className,
       )}
       {...props}>
@@ -44,7 +44,7 @@ const Slider = React.forwardRef<
           data-slot="slider-thumb"
           // biome-ignore lint/suspicious/noArrayIndexKey: thumbs are positional, index is the stable key
           key={index}
-          className="relative block size-4 shrink-0 select-none rounded-full border border-ring bg-white ring-ring/50 transition-[color,box-shadow,scale] after:absolute after:-inset-2 hover:ring-3 focus-visible:outline-hidden focus-visible:ring-3 active:scale-97 active:ring-3 disabled:pointer-events-none disabled:opacity-50"
+          className="relative block size-4 shrink-0 select-none rounded-full border border-ring bg-white ring-ring/50 transition-[color,box-shadow,scale] after:absolute after:-inset-2 hover:ring-3 focus-visible:outline-hidden focus-visible:ring-3 active:scale-97 active:ring-3 data-disabled:cursor-not-allowed data-disabled:opacity-50"
         />
       ))}
     </SliderPrimitive.Root>

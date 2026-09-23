@@ -1,87 +1,75 @@
-## What You Will Build
+This course builds **DocDuck**, a small documents app, one chapter at a time. Every chapter adds to the same source tree, so the code in chapter N+1 compiles against the state chapter N left behind. You need TypeScript and a terminal; everything else is explained as it appears.
 
-**BlogDuck**, a multi-tenant blog platform with full authorization. Start with a single
-permission check and finish with typed configs, scoped roles, ABAC policies, database
-storage, server middleware, and client-side permission rendering.
+## What you build
 
-Permission Check"]
-  end
+DocDuck has three entities and one authorization question repeated across all of them: *may this subject perform this action on this document?*
 
-  subgraph CH2["Chapter 2"]
-      direction TB
-      C2["Role Hierarchies& Inheritance"]
-  end
+A `USER` is a **subject** in duck-iam terms. A `TEAM` becomes a **scope** in chapter 5. A `DOCUMENT` is a **resource** whose attributes (`ownerId`, `teamId`, `status`) feed the **conditions** you write in chapter 3. `MEMBERSHIP` is the role assignment - a user holds a role, optionally inside one team.
 
-  subgraph CH3["Chapter 3"]
-      direction TB
-      C3["Policies, Rules& Conditions"]
-  end
+## The roadmap
 
-  subgraph CH4["Chapter 4"]
-      direction TB
-      C4["The IamEngineIn Depth"]
-  end
+Chapters 1 to 4 build the authorization core in a single script. Chapters 5 to 8 take that core multi-tenant, put it behind HTTP, push it to the browser, and harden it.
 
-  subgraph CH5["Chapter 5"]
-      direction TB
-      C5["Multi-TenantScoping"]
-  end
+Part 1 is where the model is decided: roles are RBAC, policies are ABAC, and the **engine** runs both through one evaluation pipeline. Part 2 never revisits that pipeline - it wires it into a request, a browser, and a database.
 
-  subgraph CH6["Chapter 6"]
-      direction TB
-      C6["ServerIntegration"]
-  end
+## Course map
 
-  subgraph CH7["Chapter 7"]
-      direction TB
-      C7["ClientLibraries"]
-  end
+| Chapter | Topic | What you learn |
+| --- | --- | --- |
+| [1](/duck-iam/course/chapter-1) | Your first permission check | `defineRole`, `IamMemoryAdapter`, `IamEngine`, `can` vs `check` |
+| [2](/duck-iam/course/chapter-2) | Role hierarchies | `inherits`, grant shortcuts, wildcard matching, `validateRoles` |
+| [3](/duck-iam/course/chapter-3) | Policies, rules, and conditions | ABAC rules, all nineteen operators, `$`-variables, combining algorithms |
+| [4](/duck-iam/course/chapter-4) | The engine in depth | Modes, hooks, the five caches, batch checks, `explain`, admin API |
+| [5](/duck-iam/course/chapter-5) | Multi-tenant scoping | Scoped roles, scope matching, tenant isolation |
+| [6](/duck-iam/course/chapter-6) | Server integration | Express, Hono, NestJS, Next.js guards and permission endpoints |
+| [7](/duck-iam/course/chapter-7) | Client libraries | Permission maps in React, Vue, and vanilla JS |
+| [8](/duck-iam/course/chapter-8) | Production readiness | `createIam` typing, database adapters, validation, monitoring |
 
-  subgraph CH8["Chapter 8"]
-      direction TB
-      C8["ProductionReadiness"]
-  end
+## Who this is for
 
-  CH1 --> CH2 --> CH3 --> CH4 --> CH5 --> CH6 --> CH7 --> CH8`}
-/>
-
-## Who Is This For
-
-* New to duck-iam and want a structured path
-* Evaluating duck-iam for your team
-* Learn best by building something real
+* You are new to duck-iam and want a path that ends with something runnable.
+* You are evaluating duck-iam and want to see the whole surface in order.
+* You already use duck-iam and want the parts you skipped.
 
 ## Prerequisites
 
-* TypeScript basics (types, interfaces, async/await)
-* Node.js v18+ or Bun
-* A code editor
+* TypeScript basics: interfaces, unions, `async`/`await`.
+* Node.js 18 or newer, or Bun.
+* No database. Chapters 1 to 7 run entirely in memory; chapter 8 introduces real adapters.
 
 ## Setup
 
-Each chapter builds on the previous one and ends with a checkpoint (complete code so far) and FAQ.
+Create the project.
 
-Create a new project directory and initialize it:
-
-```sh
-mkdir blogduck && cd blogduck
+```bash
+mkdir docduck && cd docduck
 npm init -y
-npm install @gentleduck/iam typescript tsx
 npx tsc --init
 mkdir src
 ```
 
-Start with [Chapter 1: Your First Permission Check](/duck-iam/course/chapter-1).
+Install duck-iam.
 
-## Course Map
+The package has one runtime dependency. Adapters, server helpers, and client
+helpers all live behind subpath imports, so nothing you do not import is bundled.
 
-| Chapter | Topic | What You Learn |
-| --- | --- | --- |
-| [1](/duck-iam/course/chapter-1) | Your First Permission Check | Roles, Engine, IamMemoryAdapter, `engine.can()` |
-| [2](/duck-iam/course/chapter-2) | Role Hierarchies | Inheritance, multiple roles, wildcards, validation |
-| [3](/duck-iam/course/chapter-3) | Policies, Rules, and Conditions | ABAC, combining algorithms, condition operators, `$` variables |
-| [4](/duck-iam/course/chapter-4) | The Engine In Depth | Hooks, caching, batch permissions, explain, Admin API |
-| [5](/duck-iam/course/chapter-5) | Multi-Tenant Scoping | Scoped roles, tenant isolation, hierarchical resources |
-| [6](/duck-iam/course/chapter-6) | Server Integration | Express, NestJS, Next.js, Hono middleware, permissions endpoint |
-| [7](/duck-iam/course/chapter-7) | Client Libraries | React, Vue, vanilla JS, permission-based UI rendering |
-| [8](/duck-iam/course/chapter-8) | Production Readiness | Type-safe config, validation, database adapters, testing, monitoring |
+Add a runner. Every chapter runs its script the same way.
+
+```bash
+npm i -D tsx
+npx tsx src/main.ts
+```
+
+Start with [Chapter 1: your first permission check](/duck-iam/course/chapter-1).
+
+## How the chapters are written
+
+Every chapter has the same five parts: **learning goals**, a **diagram** of the mechanism it introduces, the **code**, a **what just happened** walkthrough of what the engine did, and a **try it** exercise. Each new concept links to its reference page, so you can leave the course at any point and keep reading.
+
+All code is verified against `@gentleduck/iam` 5.9.0. Import paths come from the package `exports` map: `@gentleduck/iam`, `@gentleduck/iam/core/validate`, `@gentleduck/iam/adapters/memory`, and so on.
+
+## See also
+
+* [Introduction](/duck-iam/introduction) - the same material as reference rather than tutorial
+* [Installation](/duck-iam/installation) - every export path and peer dependency
+* [Core concepts](/duck-iam/core) - primitives, evaluation, rule matching

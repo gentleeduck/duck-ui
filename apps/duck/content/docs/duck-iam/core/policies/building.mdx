@@ -1,13 +1,59 @@
 ---
-title: building policies
-description: The definePolicy() builder, defineRule(), wildcards, and hierarchical resource matching.
+title: Building policies
+description: definePolicy(), defineRule(), and when() end to end - every chainable method, what build() validates, and what it throws
 section: Core
 ---
+This page documents the builder API that produces `AccessControl.IPolicy` and `AccessControl.IRule` objects: `definePolicy()`, `defineRule()`, `when()`, and the typed variants returned by `createIam()`.
+
+## The three builders
+
+Three classes compose: a `PolicyBuilder` owns `RuleBuilder`s, and each rule owns a `When` condition builder. The diagram shows the ownership and where each `build()` lands.
+
+<MermaidDiagram chart={`classDiagram
+    class PolicyBuilder {
+        name(n)
+        desc(d)
+        version(v)
+        algorithm(a)
+        target(t)
+        rule(id, fn)
+        addRule(rule)
+        build() IPolicy
+    }
+    class RuleBuilder {
+        allow()
+        deny()
+        desc(d)
+        priority(p)
+        on(actions)
+        of(resources)
+        forScope(scopes)
+        when(fn)
+        whenAny(fn)
+        meta(m)
+        build() IRule
+    }
+    class When {
+        check(field, op, value)
+        eq(field, value)
+        attr(key, op, value)
+        resourceAttr(key, op, value)
+        env(key, op, value)
+        isOwner(field)
+        role(id)
+        and(fn)
+        or(fn)
+        not(fn)
+        buildAll() IConditionGroup
+    }
+    PolicyBuilder "1" --> "*" RuleBuilder : rule
+    RuleBuilder "1" --> "0..1" When : when`} />
+
+`PolicyBuilder.rule()` creates a `RuleBuilder`, runs your callback, and calls its `build()` for you. `RuleBuilder.when()` does the same with a `When`. You only call `build()` yourself on the outermost builder, or on `defineRule()` / `when()` when composing standalone pieces.
+
 ## definePolicy()
 
-Build policies with `definePolicy()`:
-
-```typescript
+```ts
 import { definePolicy } from '@gentleduck/iam'
 
 const weekendDeny = definePolicy('deny-weekends')
@@ -25,27 +71,12 @@ const weekendDeny = definePolicy('deny-weekends')
   .build()
 ```
 
-### Builder methods
+`definePolicy(id)` returns a `PolicyBuilder`. The `id` doubles as the default `name`.
 
-| Method | Description |
-| --- | --- |
-| `name(n)` | Human-readable name for the policy |
-| `desc(d)` | Optional description |
-| `version(v)` | Version number for tracking changes |
-| `algorithm(a)` | Combining algorithm - see [combining algorithms](/duck-iam/core/policies/combining-algorithms) |
-| `target(t)` | Scope the policy to specific actions, resources, or roles - see [policy targets](/duck-iam/core/policies/targets) |
-| `rule(id, fn)` | Add a rule using an inline builder |
-| `addRule(rule)` | Add a pre-built `AccessControl.IRule` object |
-| `build()` | Produce the final `AccessControl.IPolicy` object |
+### Inline rules
 
----
-
-## Inline rules
-
-Define rules inline within a policy:
-
-```typescript
-const myPolicy = definePolicy('content-policy')
+```ts
+const contentPolicy = definePolicy('content-policy')
   .name('Content Policy')
   .algorithm('deny-overrides')
   .rule('allow-read', (r) => r.allow().on('read').of('post', 'comment'))
@@ -66,14 +97,14 @@ const myPolicy = definePolicy('content-policy')
   .build()
 ```
 
----
+Rules keep insertion order (pinned by the builder test "rule() preserves insertion order"). Order is the tie-breaker for `first-match`; see [combining algorithms](/duck-iam/core/policies/combining-algorithms).
 
-## Standalone rules with defineRule
+## defineRule() - standalone rules
 
-Use `defineRule()` to author rules independently and attach them to multiple policies:
+Use `defineRule()` to author rules once and attach them to several policies with `addRule()`:
 
-```typescript
-import { defineRule } from '@gentleduck/iam'
+```ts
+import { definePolicy, defineRule } from '@gentleduck/iam'
 
 const ownerOnly = defineRule('owner-only')
   .allow()
@@ -99,37 +130,187 @@ const myPolicy = definePolicy('my-policy')
   .build()
 ```
 
-See [rules](/duck-iam/core/policies/rules) for the full rule builder API.
+`RuleBuilder.build()` validates the rule shape itself and throws, so a rule handed straight to an adapter fails where the bug was introduced. It also refuses a rule that configured nothing at all - the defaults are `allow * on *` unconditional, the broadest possible grant, so returning one silently is not an option. Cross-rule and policy-level checks still only run in `PolicyBuilder.build()`. See [rules](/duck-iam/core/policies/rules) for every rule method.
 
----
+## when() - standalone condition groups
 
-## Wildcards
+`when()` returns a bare `When` builder. Use it to build an `AccessControl.IConditionGroup` outside a rule, for example to reuse one group across rules via `check()`-free composition:
 
-Both actions and resources support wildcards:
+```ts
+import { when } from '@gentleduck/iam'
 
-```typescript
-// All actions on all resources
-r.on('*').of('*')
-
-// All actions on posts
-r.on('*').of('post')
-
-// Read all resources
-r.on('read').of('*')
+const ownerOrAdmin = when()
+  .or((o) => o.isOwner().role('admin'))
+  .buildAll()
+// { all: [ { any: [ ...ownerId eq $subject.id, subject.roles contains admin ] } ] }
 ```
 
----
+The three terminal methods are `buildAll()` (`{ all }`), `buildAny()` (`{ any }`), and `buildNone()` (`{ none }`). Nothing chained yields an empty group: `{ all: [] }` and `{ none: [] }` match every request, `{ any: [] }` matches none. See [conditions](/duck-iam/core/policies/conditions) and [nesting](/duck-iam/core/policies/nesting#empty-condition-groups).
 
-## Hierarchical resource matching
+## Typed builders from createIam()
 
-Resources also support hierarchical matching. A rule targeting `"dashboard"` matches requests for `"dashboard.users"` and `"dashboard.users.settings"`:
+`createIam()` returns the same builders with `TAction`, `TResource`, `TRole`, `TScope`, and `TContext` fixed, so invalid actions, resources, and role IDs are compile errors:
 
-```typescript
-.rule('dashboard-read', r => r
-  .allow()
-  .on('read')
-  .of('dashboard')  // matches "dashboard", "dashboard.users", "dashboard.users.settings"
-)
+```ts
+import { createIam } from '@gentleduck/iam'
+
+const access = createIam({
+  actions: ['read', 'update'] as const,
+  resources: ['post'] as const,
+  roles: ['viewer', 'editor'] as const,
+})
+
+const p = access
+  .definePolicy('typed')
+  .rule('r', (r) => r.allow().on('read').of('post').when((w) => w.role('editor')))
+  .build()
+// access.defineRule('x').on('raed')  -> compile error
 ```
 
-Hierarchical matching applies to **rule resources only**. Policy targets use direct matching - see [policy targets](/duck-iam/core/policies/targets).
+`access.definePolicy`, `access.defineRule`, `access.when`, and `access.defineRole` are the typed entry points. `access.validatePolicy(input)` runs the same validator `build()` uses. Full option table on [access config](/duck-iam/advanced/config/access-config).
+
+## Wildcards and patterns
+
+Actions and resources accept `'*'` and suffix patterns. `on()` and `of()` are variadic.
+
+```ts
+r.on('*').of('*')            // all actions on all resources
+r.on('*').of('post')         // all actions on posts
+r.on('read').of('*')         // read on every resource
+r.on('posts:*').of('org:*')  // colon-prefix patterns
+r.on('read').of('dashboard.*') // dot-hierarchy pattern
+```
+
+Matching rules, from `matchesAction` / `matchesResource` in `src/core/resolve/resolve.ts`:
+
+| Pattern | Matches | Does not match |
+| --- | --- | --- |
+| `'*'` | everything | - |
+| `'post'` (bare) | exactly `post` | `post.draft`, `post:draft`, `posts` |
+| `'org:*'` | `org:project`, `org:project:doc` | `org`, `user` |
+| `'dashboard.*'` | `dashboard.users`, `dashboard.users.list` | `dashboard`, `dashboard-x` |
+| `'a.b.*'` | `a.b.c` | `a:b:c` (separator must match) |
+
+A bare literal never matches sub-resources - to cover a subtree you must write the `.*` or `:*` suffix. The full algorithm, including why a dotted request or pattern routes through the hierarchical matcher, is on [rule matching](/duck-iam/core/rule-matching).
+
+## What build() validates
+
+`PolicyBuilder.build()` runs `validatePolicy()` on the finished object and throws when any error-level issue is present (since 2.2.0). Warnings never throw. The flow:
+
+<MermaidDiagram chart={`flowchart TD
+    B["PolicyBuilder.build()"] --> V["validatePolicy(policy)"]
+    V --> E{"any issue with type = error?"}
+    E -- "no" --> OK["return AccessControl.IPolicy (warnings ignored)"]
+    E -- "yes" --> MSG["collect CODE at path: message for each error"]
+    MSG --> THROW["throw Error: PolicyBuilder.build(id) rejected by validator - ..."]`} />
+
+The thrown message names the policy id and every failing code, path, and message:
+
+```text
+[@gentleduck/iam:builder] PolicyBuilder.build("p") rejected by validator - UNREACHABLE_TARGET at "targets": Target admits "delete" but no allow rule covers it, so every request matching it is denied by this policy. Add a rule that allows it, or narrow the target.
+
+[@gentleduck/iam:builder] PolicyBuilder.build("p") rejected by validator - ERR_REGEX_CATASTROPHIC at "rules[0].conditions.all[0].value": Condition "matches" pattern rejected: nested quantifier (e.g. `(a+)+`) - catastrophic backtracking risk
+```
+
+Errors a builder-built policy can hit:
+
+| Code | Trigger from the builder |
+| --- | --- |
+| `MISSING_FIELD` | Empty `id`; `on()` or `of()` called with zero arguments (actions/resources must be non-empty). Rule-level cases are caught by `RuleBuilder.build()` first |
+| `INVALID_TYPE` | `priority(NaN)` / `priority(Infinity)`; non-number `version` |
+| `UNREACHABLE_TARGET` | Since 5.4.0 an error: `target()` names an action/resource pair no allow rule covers, while the policy has at least one allow rule (5.3.0 made it a warning) |
+| `LIMIT_EXCEEDED` | More than 1000 rules, 100 actions or 100 resources per rule, an action x resource cartesian over 1000, a `field` over 256 chars, a string `value` over 1024 chars, or condition nesting deeper than 10 |
+| `ERR_REGEX_CATASTROPHIC` | A `matches` pattern longer than 128 chars, with nested quantifiers, alternation inside a quantified group, a backreference followed by a quantifier, a quantified group inside a lookaround, a `{n,m}` bound over 1000, more than 4 unbounded quantifiers, or unbounded quantifiers competing over overlapping atoms (`^a+a+$`, `.*.*`) |
+| `INVALID_ALGORITHM`, `INVALID_EFFECT`, `INVALID_OPERATOR`, `INVALID_CONDITION`, `INVALID_RULE` | Only reachable when bypassing the typed API (for example `check('x', 'like' as never, 1)`) |
+
+Warnings (returned by `validatePolicy()`, never thrown): `DUPLICATE_RULE_ID`, `UNRESOLVABLE_FIELD` (field root is not `subject`, `resource`, `environment`, `action`, or `scope`), `UNRESOLVABLE_VALUE` (`$`-value with an unresolvable root), `BROAD_ALLOW` (unconditional `allow` on `*`/`*`). Full code reference: [validation](/duck-iam/advanced/validation).
+
+## API reference
+
+### `definePolicy`
+
+```ts
+export const definePolicy: <
+  TAction extends string = string,
+  TResource extends string = string,
+  TRole extends string = string,
+  TScope extends string = string,
+  TContext extends object = DotPath.IDefaultContext,
+>(id: string) => PolicyBuilder<TAction, TResource, TRole, TScope, TContext>
+```
+
+### `PolicyBuilder`
+
+| Method | Signature | Effect on the built policy |
+| --- | --- | --- |
+| `name` | `name(n: string): this` | `name`. Defaults to `id` |
+| `desc` | `desc(d: string): this` | `description` (optional) |
+| `version` | `version(v: number): this` | `version` (optional, must be a number) |
+| `algorithm` | `algorithm(a: AccessControl.CombiningAlgorithm): this` | `algorithm`. Defaults to `'deny-overrides'` |
+| `target` | `target(t: NonNullable<AccessControl.IPolicy['targets']>): this` | `targets` (`actions?`, `resources?`, `roles?`). Replaces any previous call |
+| `rule` | `rule(id: string, fn: (r: RuleBuilder) => RuleBuilder): this` | Appends `fn(new RuleBuilder(id)).build()` to `rules` |
+| `addRule` | `addRule(rule: AccessControl.IRule): this` | Appends a pre-built rule |
+| `build` | `build(): AccessControl.IPolicy` | Validates and returns the object, or throws (see above) |
+
+Built shape:
+
+```ts
+interface AccessControl.IPolicy<TAction, TResource, TRole> {
+  readonly id: string
+  readonly name: string
+  readonly description?: string
+  readonly version?: number
+  readonly algorithm: AccessControl.CombiningAlgorithm
+  readonly rules: readonly AccessControl.IRule<TAction, TResource>[]
+  readonly targets?: {
+    readonly actions?: readonly (TAction | '*')[]
+    readonly resources?: readonly (TResource | '*')[]
+    readonly roles?: readonly TRole[]
+  }
+}
+```
+
+### `defineRule`
+
+```ts
+export const defineRule: <
+  TAction extends string = string,
+  TResource extends string = string,
+  TScope extends string = string,
+  TRole extends string = string,
+  TContext extends object = DotPath.IDefaultContext,
+>(id: string) => RuleBuilder<TAction, TResource, TScope, TRole, TContext>
+```
+
+Note the generic order differs from `definePolicy` (`TScope` before `TRole`). Methods are documented on [rules](/duck-iam/core/policies/rules).
+
+### `when`
+
+```ts
+export const when: <
+  TAction extends string = string,
+  TResource extends string = string,
+  TScope extends string = string,
+  TRole extends string = string,
+  TContext extends object = DotPath.IDefaultContext,
+  TActiveResource extends string = string,
+>() => When<TAction, TResource, TRole, TScope, TContext, TActiveResource>
+```
+
+Methods are documented on [conditions](/duck-iam/core/policies/conditions).
+
+All three factories and the classes `PolicyBuilder`, `RuleBuilder`, `When` are exported from `@gentleduck/iam`, `@gentleduck/iam/core`, and `@gentleduck/iam/core/builder`.
+
+## Gotchas
+
+- `build()` throws, so a policy barrel that fails validation fails at import time. That is intentional: the message carries the policy id and the fix.
+- All three builders validate at `build()`. `RoleBuilder`'s message omits the validator text (`CODE at "path"` only). See [defining roles](/duck-iam/core/roles/definition).
+- `target()` replaces the whole targets object; there is no merge across calls.
+- A `when()` that added no conditions does not count as configuring a rule, so `defineRule('x').when((w) => w).build()` is refused. `defineRule('x').allow().when((w) => w).build()` is accepted and is the same object as `defineRule('x').allow().build()` - a redundant spelling, not a hazard.
+
+## See also
+
+- [Rules](/duck-iam/core/policies/rules) - every `RuleBuilder` method and default
+- [Conditions](/duck-iam/core/policies/conditions) - every `When` method and operator
+- [Rule matching](/duck-iam/core/rule-matching) - the matcher the patterns above go through
+- [Validation](/duck-iam/advanced/validation) - every validator code

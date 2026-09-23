@@ -1,100 +1,218 @@
 ---
-title: client overview
-description: Client-side permission checks for React, Vue, and vanilla JavaScript. Server-driven hydration with sub-millisecond lookups.
+title: Client overview
+description: Server-driven permission maps for React, Vue, and vanilla JavaScript, with synchronous fail-closed lookups in the browser
 section: Integrations
 ---
+
+duck-iam ships three browser clients that all consume the same artefact: a flat permission map produced on the server by `engine.permissions()`. This page covers the shared model - how the map is produced, sent, read, and refreshed - and points at the per-framework pages for the exact exports.
+
+<Callout tone="warning" title="A client check is advisory, never authorisation">
+None of these clients contains an evaluator. They read a snapshot of decisions a server already made, serialised over the wire, held in a browser the user controls - every value in it can be edited from a devtools console. `can()` decides what to render. The request the button fires must be authorized again on the server, by the engine, against the live policy set. See [server integrations](/duck-iam/integrations/server).
+</Callout>
+
 ## How it works
 
-duck-iam ships client libraries for browser permission checks. The recommended pattern is **server-driven**: generate a `PermissionMap` on the server, send it to the client, and use it for UI decisions.
+The engine never runs in the browser in the recommended setup. The server resolves the subject, evaluates policies, and flattens the result into a `IamClient.PartialPermissionMap` - a plain `Record` of `string` keys to `boolean` values. That object is serialised as JSON, handed to the client, and every client-side check becomes a single object lookup.
 
-<MermaidDiagram chart={`flowchart LR
-    subgraph Server["Server Side"]
-        direction TB
-        AUTH["Authenticate user"]
-        AUTH --> PERMS["engine.permissions(userId, checks)"]
-        PERMS --> MAP["PermissionMap:\n'create:post': true\n'delete:post': false\n'manage:team': false"]
-    end
+<MermaidDiagram chart={`sequenceDiagram
+    autonumber
+    participant B as Browser
+    participant S as Server route or RSC
+    participant E as IamEngine
+    participant A as Adapter
+    participant C as Client surface
 
-    MAP --> SEND["Send to client\n(props / API / SSR)"]
+    B->>S: Request page
+    S->>S: Authenticate, derive subjectId
+    S->>E: permissions(subjectId, checks, environment?)
+    E->>A: resolveSubject + loadPolicies
+    A-->>E: Subject, roles, policies
+    E->>E: Evaluate each check, key it with iamBuildPermissionKey
+    E-->>S: PartialPermissionMap
+    S-->>B: HTML plus serialised map
+    B->>C: Hydrate provider, plugin, or IamAccessClient
+    C->>C: can(action, resource) reads the map key, missing gives false
+    Note over C: No network, no evaluation, no async
+    B->>S: Later - refetch map after a role change
+    S-->>B: Fresh map
+    B->>C: update(map) or new provider value`} />
 
-    subgraph Client["Client Side"]
-        direction TB
-        HYDRATE["Hydrate Provider / Plugin / Client"]
-        HYDRATE --> CAN["can('create', 'post') -- true"]
-        HYDRATE --> CANNOT["cannot('manage', 'team') -- true"]
-        HYDRATE --> COMP["Can / Cannot components"]
-    end
+Steps 3 to 6 are the only place policy logic runs. Step 9 is a property read against the object produced in step 6, so a check costs one hash lookup. Step 12 is the only way a client learns that a decision changed - see [staleness and refresh](#staleness-and-refresh).
 
-    SEND --> HYDRATE`} />
+Every client exposes the same two primitives:
 
-Every client library supports the same core operations:
+- `can(action, resource, resourceId?, scope?)` returns `true` only when the map holds that exact key with the value `true`.
+- `cannot(action, resource, resourceId?, scope?)` is the strict negation of `can`.
 
-- `can(action, resource, resourceId?, scope?)` - returns `true` when the permission is granted
-- `cannot(action, resource, resourceId?, scope?)` - returns `true` when the permission is denied
+## Fail-closed lookups
 
-Client checks are **synchronous lookups** against the pre-computed map. No network requests during checks.
+All three clients resolve a key through `iamPermissionGranted`, which requires the map's own `key` to be the literal boolean `true`. Nothing validates the map - it is `JSON.parse` output typed as `PartialPermissionMap`, and the type is erased at runtime - so a truthiness test would read `{"read:post": "false"}` as a grant. A key that is absent, a map that is empty, a map that never arrived, a key present but `false`, and a key present but non-boolean all deny. There is no throw, no `undefined`, and no "unknown" state on the check itself.
 
----
+`can()`, `allowedActions()` and `hasAnyOn()` agree on that rule. A stale or truncated map therefore hides UI rather than exposing it - and a typo in an action name silently hides a button, so keep the action, resource, and scope unions typed. See [type-safe checks](#type-safe-checks).
 
 ## Pick a client
 
-| Framework | Doc | Subpath |
-| --- | --- | --- |
-| React | [client/react](/duck-iam/integrations/client/react) | `@gentleduck/iam/client/react` |
-| Vue | [client/vue](/duck-iam/integrations/client/vue) | `@gentleduck/iam/client/vue` |
-| Vanilla JS | [client/vanilla](/duck-iam/integrations/client/vanilla) | `@gentleduck/iam/client/vanilla` |
+| Framework | Page | Subpath | Entry export |
+| --- | --- | --- | --- |
+| React | [React client](/duck-iam/integrations/client/react) | `@gentleduck/iam/client/react` | `createIamAccessControl(React)` |
+| Vue 3 | [Vue client](/duck-iam/integrations/client/vue) | `@gentleduck/iam/client/vue` | `createIamVueAccess(vue)` |
+| Anything else | [Vanilla JS client](/duck-iam/integrations/client/vanilla) | `@gentleduck/iam/client/vanilla` | `IamAccessClient` |
 
-Use the [PermissionMap reference](/duck-iam/integrations/client/permission-map) for the wire format, key encoding, and `iamBuildPermissionKey()` helper.
+All three are factories or classes over the same map, not three implementations of a check.
 
----
+<MermaidDiagram chart={`flowchart LR
+    MAP["PartialPermissionMap (JSON)"] --> V["IamAccessClient (vanilla)"]
+    MAP --> R["createIamAccessControl(React)"]
+    MAP --> U["createIamVueAccess(vue)"]
+    V --> VK["can / cannot / allowedActions / hasAnyOn"]
+    R --> RK["useAccess / usePermissions / Can / Cannot"]
+    U --> UK["useAccess / createAccessPlugin / Can / Cannot"]
+    VK --> L["iamBuildPermissionKey, then map lookup defaulting to false"]
+    RK --> L
+    UK --> L`} />
 
-## Server-driven pattern
+The `L` node is shared code: every surface calls `iamBuildPermissionKey` from `@gentleduck/iam` and reads the map through `iamPermissionGranted`. All three also expose `allowedActions` and `hasAnyOn`, which walk the map through `iamParsePermissionKey` rather than splitting keys on `:`.
 
-<MermaidDiagram chart={`sequenceDiagram
-    participant S as Server
-    participant C as Client
+<Callout tone="info" title="Framework packages are not bundled">
+`createIamAccessControl` takes your `React` module and `createIamVueAccess` takes your Vue reactivity helpers. duck-iam never imports React or Vue itself, so there is no second copy of either in your bundle and no peer-version conflict. The vanilla client needs nothing beyond `fetch` for its `fromServer` helper.
+</Callout>
 
-    S->>S: 1. Authenticate user
-    S->>S: 2. engine.permissions(userId, checks)
-    S->>C: 3. Return PermissionMap
-    C->>C: 4. Hydrate AccessProvider / plugin / AccessClient
-    C->>C: 5. can("delete", "post") -- instant boolean lookup
-    C->>C: 6. <Can action="manage" resource="team"> -- render gate`} />
+## Producing the map on the server
 
-- **Security** - Permission logic runs on the server where policies and roles are stored. The client only sees the final boolean results.
-- **Performance** - Client-side checks are instant object lookups. No async, no network, no engine evaluation.
-- **Consistency** - The server is the single source of truth.
-- **Simplicity** - The client libraries are thin wrappers around a flat object.
+Three call sites produce the same object:
 
----
+```ts
+// 1. Directly on the engine.
+const permissions = await engine.permissions('user-1', [
+  { action: 'create', resource: 'post' },
+  { action: 'delete', resource: 'post', resourceId: 'post-42' },
+  { action: 'manage', resource: 'billing', scope: 'org-1' },
+])
+```
 
-## Refreshing permissions
+```ts
+// 2. Framework-agnostic helper, adds a shared environment.
+import { generateIamPermissionMap, iamExtractEnvironment } from '@gentleduck/iam/server/generic'
 
-When a user's role changes (promoted, joined an org, feature flag flips), fetch a new permission map from the server and update the client.
+const permissions = await generateIamPermissionMap(engine, userId, checks, iamExtractEnvironment(req))
+```
 
-**React:**
+```ts
+// 3. Next.js helper, for a layout or Server Component.
+import { getIamPermissions } from '@gentleduck/iam/server/next'
+
+const permissions = await getIamPermissions(engine, userId, checks)
+```
+
+`engine.permissions()` validates its input and throws - it does not fail closed - when `subjectId` is not a non-empty string of at most 1024 characters, or when `checks` holds more than 1024 entries. An invalid batch is a caller bug. A failure to *load* the subject or policies is different: the engine synthesises an all-`false` map covering exactly the requested keys and fires the `onError` hook, so a database outage produces a locked-down UI rather than an exception in your layout.
+
+See [engine methods](/duck-iam/advanced/engine/methods) for the full signature, the `telemetry` option, and how batch checks interact with hooks.
+
+## Serialisation across the wire
+
+The map is JSON-safe by construction: string keys, boolean values, no nesting.
+
+```json
+{
+  "create:post": true,
+  "delete:post:post-42": false,
+  "@org-1:manage:billing": true
+}
+```
+
+Two consequences worth knowing:
+
+- **Key order and identity are irrelevant.** The client never iterates for a `can` check, so re-serialising through a framework payload changes nothing.
+- **Escapes survive JSON.** A segment containing `:` is stored escaped (`read:doc\:42`), which appears in a JSON document as `"read:doc\\:42"`. Both `JSON.stringify` and `JSON.parse` round-trip it, and `can('read', 'doc:42')` rebuilds the same escaped key. The full rules are on the [PermissionMap reference](/duck-iam/integrations/client/permission-map).
+
+Do not hand-write map keys in application code. Build them with `iamBuildPermissionKey` or, better, let `can()` build them.
+
+## Staleness and refresh
+
+The map is a snapshot taken at one instant, for one subject, for one list of checks. The client cannot detect that it went stale. Refresh it after anything that changes a decision:
+
+- a role granted or revoked
+- a scope change - the subject joined or left an org
+- a policy or role edit that the engine invalidated
+- an attribute change that a condition reads, such as a plan tier or a verified flag
+
+Each client has its own refresh path:
+
+```ts
+// Vanilla - replaces the map and notifies every subscriber.
+const next = await fetch('/api/me/permissions').then((r) => r.json())
+access.update(next)
+```
+
+```ts
+// Vue - update() writes through the reactive ref, so templates re-render.
+const { update } = useAccess()
+update(await fetch('/api/me/permissions').then((r) => r.json()))
+```
 
 ```tsx
-// Re-render the server component (Next.js router.refresh())
-// or use usePermissions with a refetch trigger
+// React - re-render the provider with a new map object.
+// In the App Router, router.refresh() re-runs the layout that called getIamPermissions.
+// In an SPA, usePermissions(fetchFn, [version]) refetches when `version` changes.
+router.refresh()
 ```
 
-**Vue:**
+<Callout tone="warning" title="Refresh does not undo an action already taken">
+A user acting on a stale `true` still reaches the server. The server denies it. Refreshing the map fixes the UI, not the authorisation - which is why the server check is not optional.
+</Callout>
 
-```typescript
-const { update } = useAccess()
-const newPerms = await fetch('/api/me/permissions').then((r) => r.json())
-update(newPerms)
+## Type-safe checks
+
+Every client is generic over three string unions, in this order: `TAction`, `TResource`, `TScope`. Fix them once and a mistyped action becomes a compile error instead of a silently hidden button.
+
+```ts
+type Action = 'create' | 'read' | 'update' | 'delete' | 'manage'
+type Resource = 'post' | 'comment' | 'team' | 'billing'
+type Scope = 'org-1' | 'admin'
 ```
 
-**Vanilla:**
+All three clients accept a **partial** map (`IamClient.PartialPermissionMap`), which is what `engine.permissions()` returns: only the keys you batched. No cast is needed to hand a three-key map to a client typed over a large union. See [partial maps](/duck-iam/integrations/client/permission-map#partial-maps-are-the-normal-case).
 
-```typescript
-const newPerms = await fetch('/api/me/permissions').then((r) => r.json())
-access.update(newPerms) // subscribers are notified automatically
-```
+The unions constrain the call sites, not the data. `allowedActions()` returns `string[]` on every client rather than `TAction[]`, because the keys it parses come from unvalidated server JSON and re-asserting the union there would hide a malformed map.
 
----
+## SSR and hydration
+
+The rules are the same for all three clients; the mechanics differ per framework.
+
+1. **Build the map per request, never at module scope.** A module-level client, plugin, or provider value built once in a Node process is shared by every request in that process, which leaks one user's permissions to the next.
+2. **Serialise, do not re-evaluate.** Pass the map through props, a serialised payload, or a fetch. Never ship the engine, adapter credentials, or policy documents to the browser.
+3. **Hydrate with the same object the server rendered from.** A mismatch between the server render and the first client render produces a hydration warning and a flash of the wrong UI.
+4. **Treat the empty map as the pre-hydration state.** Before hydration, everything denies. If that flashes, render a skeleton while `loading` is true rather than rendering the denied branch.
+
+Framework specifics: [React SSR and hydration](/duck-iam/integrations/client/react#ssr-and-hydration), [Vue SSR](/duck-iam/integrations/client/vue#ssr-and-hydration), [vanilla in non-browser runtimes](/duck-iam/integrations/client/vanilla#ssr-and-non-browser-runtimes).
+
+## When to use
+
+- Hiding, disabling, or reordering UI a user cannot act on.
+- Rendering navigation, toolbars, and menus from a coarse capability summary.
+- Any check that has to be synchronous inside a render pass.
+
+## When not to use
+
+- Authorising a mutation. That belongs to a [server integration](/duck-iam/integrations/server).
+- Decisions that depend on live resource attributes the server did not see when it built the map. A flattened boolean cannot answer "can I edit *this* draft" unless you batched that `resourceId`.
+- Decisions over an unbounded key space. Do not pre-generate every `(action, resource, id)` triple; batch only what the current view renders.
+
+## Gotchas
+
+- **The check shape must match the key shape.** `can('manage', 'billing')` does not find `@org-1:manage:billing`. Pass the same `resourceId` and `scope` the server batched.
+- **An empty-string scope is a real segment.** `iamBuildPermissionKey` tests `!== undefined`, not truthiness, so `scope: ''` produces `@:manage:billing`, which is a different key from `manage:billing`.
+- **`cannot` is not "explicitly denied".** It is `!can`, so it is also `true` for a key that was never in the batch.
+- **Mixed-scope maps hide ambiguity.** If a global and a scoped answer differ, keep them in separate maps or always pass the scope on the check.
+
+## See also
+
+- [PermissionMap reference](/duck-iam/integrations/client/permission-map) - key formats, escaping, partial maps
+- [React client](/duck-iam/integrations/client/react)
+- [Vue client](/duck-iam/integrations/client/vue)
+- [Vanilla JS client](/duck-iam/integrations/client/vanilla)
+- [Server integrations](/duck-iam/integrations/server) - where the map is produced
+- [Engine methods](/duck-iam/advanced/engine/methods) - `engine.permissions()` in full
 
 ## FAQ
 
@@ -102,33 +220,35 @@ access.update(newPerms) // subscribers are notified automatically
   <AccordionItem value="clients-not-engine">
     <AccordionTrigger>Do the React, Vue, and vanilla clients evaluate roles and policies themselves?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      Not by default. The client integrations are built around a <code className="rounded bg-muted px-2 py-1">PermissionMap</code>
-      and fast boolean lookups. The engine still belongs on the server unless you intentionally embed it in a trusted client runtime.
+      No. All three are wrappers over a `PartialPermissionMap` and a boolean lookup. None of them imports the engine, an adapter, or the policy builder. The engine belongs on the server unless you deliberately embed it in a trusted client runtime such as an Electron main process.
     </AccordionContent>
   </AccordionItem>
 
   <AccordionItem value="why-server-permission-map">
-    <AccordionTrigger>Why should I generate a permission map on the server instead of checking in every component?</AccordionTrigger>
+    <AccordionTrigger>Why generate a map on the server instead of checking in every component?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      Server-generated permission maps keep policies and role data on the server, avoid repeated evaluation in the UI,
-      produce deterministic hydration, and reduce the client-side integration to cheap object lookups.
+      Policies and role assignments stay on the server, one batch replaces N round trips, hydration is deterministic because the server and the client read the identical object, and the client integration collapses to a property read.
     </AccordionContent>
   </AccordionItem>
 
   <AccordionItem value="attribute-sensitive-client-limit">
-    <AccordionTrigger>Can a client-side PermissionMap answer live attribute-sensitive questions?</AccordionTrigger>
+    <AccordionTrigger>Can a client map answer live attribute-sensitive questions?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      Not in the general case. A permission map is a flattened result for a known set of checks. If the answer depends on
-      fresh resource attributes or server-side context, the evaluation still belongs on the server or in a trusted engine runtime.
+      Only for the exact checks that were batched. A map is a flattened result, not a rule set. If the answer depends on fresh resource attributes or request environment, evaluate it on the server - or batch a `resourceId`-scoped key per visible record.
     </AccordionContent>
   </AccordionItem>
 
   <AccordionItem value="missing-key-deny">
-    <AccordionTrigger>What happens when the permission map is stale or missing a key?</AccordionTrigger>
+    <AccordionTrigger>What happens when the map is stale or missing a key?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      The clients fail closed and return <code className="rounded bg-muted px-2 py-1">false</code>. That is the right
-      default for rendering gates, but it also means you should refresh the permission map after role, scope, or feature
-      changes that affect the visible UI.
+      Every client returns `false`. That is the right default for a render gate, and it is why a role change must be followed by a refresh - otherwise a newly granted capability stays invisible until the next full load.
+    </AccordionContent>
+  </AccordionItem>
+
+  <AccordionItem value="build-key-by-hand">
+    <AccordionTrigger>Can I build a key by hand?</AccordionTrigger>
+    <AccordionContent className="text-muted-foreground">
+      Use `iamBuildPermissionKey` from `@gentleduck/iam` - it is also re-exported from `@gentleduck/iam/client/react` so a React-only app needs no second import. String concatenation skips the escaping and breaks on any segment containing `:` or a backslash.
     </AccordionContent>
   </AccordionItem>
 </Accordion>

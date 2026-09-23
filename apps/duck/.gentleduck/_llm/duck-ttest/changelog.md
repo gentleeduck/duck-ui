@@ -1,3 +1,9 @@
+## 1.0.1
+
+### Patch Changes
+
+* Fix `files` in `package.json` listing `src` instead of `dist`. The published tarball was shipping raw TypeScript source while `exports` pointed at `./dist/*/index.{js,d.ts}`, so every subpath import would have 404'd for real npm/bun consumers. `files` now ships `dist` (matching every sibling package) and drops the now-unneeded test-exclusion globs.
+
 ## 1.0.0
 
 ### Major Changes

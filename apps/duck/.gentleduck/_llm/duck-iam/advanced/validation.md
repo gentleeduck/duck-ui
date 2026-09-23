@@ -1,168 +1,572 @@
-duck-iam ships standalone validators in `@gentleduck/iam/core/validate`
-for when you load policies and roles from sources you don't fully
-trust - admin dashboards, JSON files written by hand, columns in a
-shared database, a staging endpoint that previews proposed changes,
-or a migration tool that copies rows between adapters.
+`@gentleduck/iam/core/validate` deep-checks policies and roles that came from somewhere you
+do not fully control: an admin dashboard, a hand-written JSON file, a column in a shared
+database, a migration tool, a staging preview endpoint. Every validator returns the same
+`IamValidate.IResult` shape with machine-readable issue codes, so callers can branch on the
+code instead of parsing prose.
 
-All validators return a `IamValidate.IResult` with `valid: boolean` and
-an array of `IamValidate.IIssue` records. Issues have closed-set `code`
-strings so callers can branch on them programmatically.
+## Import path: not re-exported from core
 
-## `validatePolicy`
+`src/core/index.ts` deliberately does **not** re-export the validate runtime. Only the
+type is forwarded:
 
-Deep-validates an untrusted candidate policy object. Returns issues
-for missing required fields, invalid combining algorithm, malformed
-rules, invalid condition shapes (operator + value + group structure),
-and any field that exceeds the per-field limit.
+```ts
+// core/index.ts
+// validate is intentionally NOT re-exported. Import it via
+// `@gentleduck/iam/core/validate` to opt in to the 12 KB validator chunk.
+export type { IamValidate } from './validate'
+```
 
-```typescript
+So `import { validatePolicy } from '@gentleduck/iam'` does not compile. The functions live
+behind the `./core/validate` subpath entry so an app that never validates untrusted rows
+never ships the validator. `IamValidate` is a type-only namespace, which costs nothing, and
+is therefore available from both places.
+
+```ts
+// runtime: the subpath entry, always
+import { validatePolicy, validateRoles, parsePolicyRow } from '@gentleduck/iam/core/validate'
+
+// types: either spelling works
+import type { IamValidate } from '@gentleduck/iam'
+```
+
+The package publishes five core subpaths: `core`, `core/validate`, `core/builder`,
+`core/explain` and `core/schema`.
+
+You still get validation without importing anything: `PolicyBuilder.build()` and
+`RoleBuilder.build()` call the validators internally and throw on any error, and
+`engine.admin.savePolicy` / `saveRole` / `import` load the chunk with a dynamic `import()`
+on the write path. The explicit import is for *your* boundaries.
+
+## Where validation sits
+
+The validator runs at three moments: when a builder builds, when an admin writes, and when
+one of the file, HTTP, Redis, Drizzle or Prisma adapters reads a row back. `parsePolicyRow`
+is the read-path form — it returns the typed row or `null` instead of a result object.
+
+The two asymmetries there matter more than the shared shape.
+
+A `null` from `parsePolicyRow` is **refused, not skipped**: the adapter reports the row and
+then throws `iamUnreadablePolicy`, so one bad policy row denies every request until it is
+repaired. A `null` from `parseRoleRow` drops that role and continues. The reason is which
+direction each row can fail in — `rolesToPolicy` emits `allow` and nothing else, so a lost
+role can only cost a subject a grant, while a lost policy may have been the rule saying no.
+
+Validation is a **write-path gate**. `engine.loadPolicies()` and `loadRoles()` apply a
+`maxPolicies` / `maxRoles` count cap to the array the adapter returned and cache the rows
+exactly as they arrived — nothing inspects a row's shape. `engine.can()`, `authorize()`,
+`permissions()` and `explain()` validate nothing either, and `IamMemoryAdapter` neither
+validates on read nor on constructor seed (seeded policies go through `iamNormalizePolicy`,
+which defaults `version` to `1` and drops unknown keys; seeded roles are stored verbatim).
+
+So a row written by direct SQL, a migration, a second service, or a memory-adapter fixture
+is evaluated as authored, including shapes `savePolicy` refuses. What closes that gap is
+the evaluator refusing to answer — `evalCondition` re-applies the operand-type table and
+throws `IamOperandTypeError`, a bad `matches` pattern throws `IamPatternRefusedError`, and
+an over-deep group refuses rather than returning `false`. All three become Indeterminate
+and the engine fails closed. The validator makes that path rare; it is not the only line.
+
+## API reference
+
+### `validatePolicy`
+
+```ts
+export function validatePolicy(input: unknown): IamValidate.IResult
+```
+
+Deep-validates an untrusted candidate policy. Accepts `unknown` — the first check is that
+the input is a non-null, non-array object. Never throws; every problem comes back as an
+issue.
+
+What it checks, in order:
+
+| Check | Severity | Code |
+|---|---|---|
+| Input is a plain object | error | `INVALID_TYPE` (returns immediately) |
+| `id` is a non-empty string | error | `MISSING_FIELD` |
+| `name` is a non-empty string | error | `MISSING_FIELD` |
+| `algorithm` is one of the four valid names | error | `INVALID_ALGORITHM` |
+| `version`, if present, is a number | error | `INVALID_TYPE` |
+| `rules` is an array | error | `MISSING_FIELD` |
+| `rules.length` within `POLICY_LIMITS.rulesPerPolicy` | error | `LIMIT_EXCEEDED` |
+| Each rule's shape (see below) | error/warning | various |
+| Duplicate rule ids | warning | `DUPLICATE_RULE_ID` |
+| `targets`, if present, is a non-array object | error | `INVALID_TYPE` |
+| `targets.actions` / `.resources` / `.roles` are arrays | error | `INVALID_TYPE` |
+| Every targeted (action, resource) pair is covered by an allow rule | error | `UNREACHABLE_TARGET` |
+
+Per rule, `validateRuleShape` adds:
+
+| Check | Severity | Code |
+|---|---|---|
+| Rule is an object | error | `INVALID_RULE` |
+| `id` non-empty string | error | `MISSING_FIELD` |
+| `effect` is `allow` or `deny` | error | `INVALID_EFFECT` |
+| `priority` is a finite number | error | `INVALID_TYPE` |
+| `actions` is a non-empty array of strings, within `actionsPerRule` | error | `MISSING_FIELD` / `LIMIT_EXCEEDED` / `INVALID_TYPE` |
+| `resources` is a non-empty array of strings, within `resourcesPerRule` | error | `MISSING_FIELD` / `LIMIT_EXCEEDED` / `INVALID_TYPE` |
+| `conditions` key is present | error | `MISSING_FIELD` |
+| `actions.length * resources.length` within `cartesianPerRule` | error | `LIMIT_EXCEEDED` |
+| Unconditional `allow *` on `*` | warning | `BROAD_ALLOW` |
+| Condition tree (see below) | error/warning | various |
+
+Per condition leaf:
+
+| Check | Severity | Code |
+|---|---|---|
+| `field` is a non-empty string | error | `MISSING_FIELD` |
+| `field.length` within `MAX_FIELD_LENGTH` | error | `LIMIT_EXCEEDED` |
+| `field` root resolves (`subject`, `resource`, `environment`, or the `action` / `scope` shorthands) | warning | `UNRESOLVABLE_FIELD` |
+| `operator` is in `VALID_OPERATORS` | error | `INVALID_OPERATOR` |
+| Any operator but `exists` / `not_exists` carries a `value` | error | `MISSING_VALUE` |
+| The operand's type matches what the operator compares | error | `OPERAND_TYPE_MISMATCH` |
+| No key outside the leaf shape | error | `UNKNOWN_FIELD` |
+| String `value` within `MAX_CONDITION_VALUE_LENGTH` | error | `LIMIT_EXCEEDED` |
+| Array `value` — first oversized string element only | error | `LIMIT_EXCEEDED` |
+| `$`-prefixed `value` resolves | warning | `UNRESOLVABLE_VALUE` |
+| `matches` with a literal string pattern passes `detectCatastrophicRegex` | error | `ERR_REGEX_CATASTROPHIC` |
+| `matches` pattern compiles | error | `ERR_REGEX_INVALID` |
+| `matches` pattern is not `$`-sourced from the request | error | `ERR_REGEX_USER_SOURCED` |
+
+`MISSING_VALUE` covers both `value` absent and `value: undefined`; `JSON.stringify` drops
+the latter, so the two arrive at a store identically. Both then read as `null` at
+evaluation, which compares equal to a missing attribute — the guard passes for exactly the
+subjects it was written to exclude.
+
+The operand-type check is skipped when the value is a `$`-prefixed string, because its type
+is unknowable until the request arrives. For array operands the **elements** are checked
+too, not just the container: `nin: 'gold'` is a mismatch, and `in: [{ id: 1 }]` matched
+nothing by reference and quietly retired the rule holding it. The table it checks against is
+`OPERAND_TYPES` in `core/conditions`, the same one `evalCondition` applies at read time —
+one table, so write-time and read-time verdicts cannot drift.
+
+`UNKNOWN_FIELD` fires on the five places `POLICY_JSON_SCHEMA` sets
+`additionalProperties: false`: the policy, its `targets`, each rule, each leaf condition and
+each condition group. A key explicitly set to `undefined` is not reported, since
+`JSON.stringify` drops it before it reaches a store or an external validator.
+
+Per condition group:
+
+| Check | Severity | Code |
+|---|---|---|
+| Nesting within `MAX_CONDITION_DEPTH` (10) | error | `LIMIT_EXCEEDED` |
+| Group is an object | error | `INVALID_CONDITION` |
+| Group has exactly one of `all` / `any` / `none` | error | `INVALID_CONDITION` |
+| The group key's value is an array | error | `INVALID_CONDITION` |
+
+Depth is counted from `0` at the outermost group, and both the validator and `evalConditionGroup` reject at `depth >= MAX_CONDITION_DEPTH`. Ten levels of nesting are usable; the eleventh is refused. The two used to disagree by one: the validator errored only past the cap, so a group sitting exactly on the boundary validated cleanly and then never matched at runtime. On an allow rule that failed closed, but a deny rule passed validation and silently stopped denying. If you rely on deep nesting, validate at boot ([boot validation](/duck-iam/guides/cookbook)) rather than trusting the shape to round-trip.
+
+```ts
 import { validatePolicy } from '@gentleduck/iam/core/validate'
+import type { AccessControl } from '@gentleduck/iam'
 
-const result = validatePolicy(jsonFromDatabase)
+const row: unknown = await db.policy.findUnique({ where: { id } })
+const result = validatePolicy(row)
+
+if (!result.valid) {
+  for (const issue of result.issues) {
+    console.error(`[${issue.type}] ${issue.code} at ${issue.path ?? '<root>'}: ${issue.message}`)
+  }
+  throw new Error(`policy ${id} rejected`)
+}
+
+await engine.admin.savePolicy(row as AccessControl.IPolicy)
+```
+
+The array-value check reports **one** `LIMIT_EXCEEDED` per condition, not one per oversized
+element, and never interpolates the offending value into the message — a 10 MiB string
+value produces a short diagnostic, not a 10 MiB one. Both behaviours are pinned by
+`validate-value-length.test.ts`.
+
+### `validateRole`
+
+```ts
+export function validateRole(input: unknown): IamValidate.IResult
+```
+
+Shape guard for a single role. Cheaper than `validateRoles` and cross-role blind: it never
+looks at other roles, so it cannot detect duplicates, dangling inherits, or cycles.
+
+| Check | Severity | Code |
+|---|---|---|
+| Input is a plain object | error | `INVALID_TYPE` (returns immediately) |
+| `id` is a non-empty string | error | `MISSING_FIELD` |
+| `id` carries no control characters | error | `INVALID_TYPE` |
+| `scope`, if present, is a non-empty string | error | `INVALID_TYPE` |
+| `permissions` is an array | error | `MISSING_FIELD` |
+| Each `permissions[i]` is a non-null object | error | `INVALID_TYPE` |
+| `permissions[i].action` / `.resource` are non-empty strings | error | `MISSING_FIELD` |
+| …and carry no control characters | error | `INVALID_TYPE` |
+| `permissions[i].scope`, if present, is a non-empty string | error | `INVALID_TYPE` |
+| `permissions[i].conditions`, if present, is a valid condition group | error/warning | various |
+| `inherits`, if present and not `null`, is an array | error | `INVALID_TYPE` |
+| Each `inherits[i]` is a string | error | `INVALID_TYPE` |
+
+`inherits: null` is treated as absent, not as an error. An empty `inherits: []` is accepted.
+
+`scope: ''` is refused rather than normalised, on a role and on a permission alike. The
+empty string is a scope *value*, not a missing one — the Redis encoding spells "no scope"
+as `''` and `matchesScope` used to read an empty pattern as global. Omit the field for a
+global permission or an unscoped role.
+
+Control characters are refused for the same reason on both: a NUL is the Redis assignment
+member separator, so `saveRole` used to store a role that `assignRole` then threw on, and a
+control char is invisible in any UI that would display the id.
+
+A permission's `conditions` group is validated starting at depth
+`IAM_RBAC_CONDITION_DEPTH` (1), not 0, because `rolesToPolicy` nests the author's group one
+level inside the generated rule's own `all`. Validating from 0 would accept a group one
+level past what `evalConditionGroup` will match.
+
+`IRole` requires `name`, but the runtime does not enforce it. `validateRole` checks `id`,
+`scope`, `permissions` and `inherits` and never looks at `name`, so
+`{ id: 'role1', permissions: [] }` returns `valid: true` and stores through `saveRole`.
+TypeScript is the only thing requiring it, which means a role assembled from untyped JSON
+reaches a store without one.
+
+Unknown keys are not checked on a role or a permission either. `checkKnownKeys` runs on the
+policy, its `targets`, each rule and each condition — never on these. `{ id, name,
+permissions: [], scop: 'org' }` validates clean, and the engine ignores the misspelled key,
+so the grant stored is not the grant written. Screen both yourself in an admin form.
+
+### `validateRoles`
+
+```ts
+export function validateRoles(
+  roles: readonly AccessControl.IRole[],
+  declared?: IamValidate.IDeclaredSurface,
+): IamValidate.IResult
+```
+
+Cross-role checks over the whole bundle. Run this once at boot over whatever role set you
+load from your adapter or config file.
+
+Malformed rows come back as issues, not exceptions. Each row is shape-checked before
+anything reads into it: a row that is not a plain object, has no non-empty string `id`, has
+no `permissions` array, or has an `inherits` that is not an array of strings is reported as
+`INVALID_TYPE` with the message `Role at index N <why>`. Those rows are skipped and the
+cross-role checks run over the rest, so one bad entry does not cost you the answer about
+the others.
+
+The optional second argument is the declared vocabulary. `createIam(...).validateRoles`
+supplies it from your config and the bare export does not, so only the config-bound form
+reports `UNREACHABLE_TARGET` for a grant naming an undeclared action, resource or scope.
+See [access config](/duck-iam/advanced/config/methods).
+
+| Check | Severity | Code |
+|---|---|---|
+| A row is not a well-formed role | error | `INVALID_TYPE` |
+| Two roles share an `id` | error | `DUPLICATE_ROLE_ID` |
+| `inherits` names a role not in the set | error | `DANGLING_INHERIT` |
+| Inheritance forms a cycle | warning | `CIRCULAR_INHERIT` |
+| Role has no permissions and no `inherits` | warning | `EMPTY_ROLE` |
+| Longest inheritance chain exceeds `MAX_INHERITANCE_DEPTH` (32) | error | `INHERITANCE_TOO_DEEP` |
+
+Cycles are warnings because the runtime cuts them during the inheritance walk with a
+shallowest-depth memo rather than a visited set — the configuration is wrong but not
+dangerous. Depth is an **error** because chains
+deeper than the cap truncate silently at runtime, dropping permissions with no signal: the
+symptom is a mysterious denial far from the role definition. `validate.test.ts` pins both
+the rejection past the cap and the acceptance exactly at it.
+
+```ts
+import { validateRoles } from '@gentleduck/iam/core/validate'
+import { defineRole } from '@gentleduck/iam/core/builder'
+
+const viewer = defineRole('viewer').grant('read', 'post').build()
+const editor = defineRole('editor').inherits('viewer').grant('update', 'post').build()
+
+const result = validateRoles([viewer, editor])
 if (!result.valid) {
   throw new Error(result.issues.map((i) => `${i.code}: ${i.message}`).join('\n'))
 }
-// Safe to feed the validated row to the engine
-engine.admin.savePolicy(jsonFromDatabase as AccessControl.IPolicy)
 ```
 
-Use this before:
+A dangling inherit, spelled out:
 
-* inserting an admin-dashboard JSON into the database,
-* calling `engine.admin.savePolicy()` with externally-sourced data,
-* importing a policy bundle from a config file or git repo.
+```ts
+const orphan = defineRole('editor').inherits('viewer').grant('update', 'post').build()
+const result = validateRoles([orphan])
 
-## `validateRoles`
-
-Validates an array of role definitions for cross-role concerns:
-duplicate ids, dangling `inherits` references, circular inheritance
-chains, and roles that have no permissions and no inheritance.
-
-```typescript
-import { validateRoles } from '@gentleduck/iam/core/validate'
-
-const result = validateRoles(rolesFromConfig)
-if (!result.valid) console.error(result.issues)
+result.valid   // false
+result.issues
+// [{
+//   type: 'error',
+//   code: 'DANGLING_INHERIT',
+//   message: 'Role "editor" inherits from "viewer" which does not exist',
+//   roleId: 'editor',
+// }]
 ```
 
-Run this at boot time over the role bundle you load from your adapter
-or config file. Circular chains are reported as warnings since the
-runtime cuts them with a `seen` set; bad ids are errors.
+A cycle, which stays valid:
 
-## `validateRole`
+```ts
+const a = { id: 'a', name: 'A', permissions: [], inherits: ['b'] }
+const b = { id: 'b', name: 'B', permissions: [], inherits: ['a'] }
 
-Shape guard for a single Role row. Mirrors `validatePolicy` for the
-RBAC side. Confirms `id` is a non-empty string, `permissions` is an
-array, and (when present) `inherits` is an array of strings. Adapters
-call this after `JSON.parse` to drop tampered rows before they reach
-the evaluator.
-
-```typescript
-import { validateRole } from '@gentleduck/iam/core/validate'
-
-const result = validateRole(row)
-if (!result.valid) continue   // drop the row, move on
+const result = validateRoles([a, b])
+result.valid   // true - CIRCULAR_INHERIT is a warning
 ```
 
-## `parsePolicyRow`
+### `parsePolicyRow`
 
-Adapter-author helper. Wraps `validatePolicy` and returns the typed
-row on success or `null` on any validation failure - so the boundary
-between `unknown` (from JSON / SQL / Redis) and the typed domain
-crosses through a single function instead of a scatter of `as
-AccessControl.IPolicy<...>` casts.
+```ts
+export function parsePolicyRow<
+  TAction extends string = string,
+  TResource extends string = string,
+  TRole extends string = string,
+>(raw: unknown): AccessControl.IPolicy<TAction, TResource, TRole> | null
+```
 
-```typescript
-import { parsePolicyRow } from '@gentleduck/iam/core/validate'
+Runs `validatePolicy` and returns the typed row when `valid` is `true`, `null` otherwise.
+Warnings do not cause a `null`; it gates on `valid`, so a `BROAD_ALLOW` policy still parses.
+It returns the *identical object* on success — a validated narrowing, not a copy or a
+normaliser — and replaces the `validatePolicy(row)`-then-cast pattern that was a
+type-safety hole at every adapter boundary.
 
-class MyAdapter implements IamAdapter.IAdapter {
-  async listPolicies() {
-    const rows = await this.myStore.fetchPolicies()
-    const out: AccessControl.IPolicy[] = []
-    for (const row of rows) {
-      const policy = parsePolicyRow(row)
-      if (policy !== null) out.push(policy)
-      // else: drop the malformed row (log it if you want)
-    }
-    return out
+The three generics are TypeScript-only constraints. Runtime validation cannot verify that a
+string belongs to a closed union; the adapter trusts them because the same library wrote
+the row through `savePolicy`.
+
+### `parseRoleRow`
+
+```ts
+export function parseRoleRow<
+  TAction extends string = string,
+  TResource extends string = string,
+  TRole extends string = string,
+  TScope extends string = string,
+>(raw: unknown): AccessControl.IRole<TAction, TResource, TRole, TScope> | null
+```
+
+Mirror of `parsePolicyRow`, backed by `validateRole`. See
+[utility helpers](/duck-iam/advanced/utilities#row-parsers-for-adapter-authors) for the
+adapter pattern in full.
+
+### `detectCatastrophicRegex`
+
+```ts
+export function detectCatastrophicRegex(pattern: string): { safe: boolean; reason?: string }
+```
+
+Heuristic ReDoS screen. `validatePolicy` calls it on every `matches` condition whose value
+is a literal string (a `$`-prefixed value is skipped, because the `matches` operator refuses
+`$`-resolved right-hand sides at evaluation time anyway).
+
+The checks run in this order, so the most specific `reason` wins:
+
+| Shape | `reason` |
+|---|---|
+| Not a string | `pattern must be a string` |
+| Longer than `MAX_REGEX_LENGTH` (128) | `pattern length <n> exceeds MAX_REGEX_LENGTH (128)` |
+| Backreference followed by a quantifier, e.g. `(\w+)\1+` or `\k<n>+` | `backref-quantifier` |
+| Lookaround whose body holds a quantified group, e.g. `(?=(a+)+)` | `lookaround-with-quantified-group` |
+| `{n,m}` or `{n,}` bound over `MAX_BOUNDED_QUANTIFIER` (1000) | `bounded-large-quantifier` |
+| Quantified group whose body holds a quantifier, e.g. `(a+)+` | ``nested quantifier (e.g. `(a+)+`) - catastrophic backtracking risk`` |
+| Quantified group whose body contains an alternation | `alternation inside a quantified group - catastrophic backtracking risk` |
+| More than `MAX_UNBOUNDED_QUANTIFIERS` (4) unbounded quantifiers | `<n> unbounded quantifiers exceed limit of 4` |
+| Adjacent unbounded quantifiers over overlapping characters, e.g. `\w+\d+` | `adjacent unbounded quantifiers over overlapping characters (<pair>) - polynomial backtracking risk` |
+| A chain of unbounded quantifiers competing for the same characters | `<n>+ unbounded quantifiers competing for the same characters (<chain>) - polynomial backtracking risk` |
+| Otherwise | `{ safe: true }` |
+
+`a{5}` (an exact count) is not a range and is never flagged. Escapes and character-class
+bodies are stripped before the quantifier scan, so the literal `*` in a glob-shaped
+`^([a-z0-9*-])+$` does not read as a quantifier, and `(\+)+` is accepted.
+
+An unsafe pattern surfaces as an error issue whose message is
+`Condition "matches" pattern rejected: <reason>`, so it never reaches the policy store. The
+guarantee is load-bearing: a `matches` condition that failed at evaluation time would make
+its leaf `false`, which inside a `deny` rule flips the rule to "does not apply" — a ReDoS
+pattern would become an availability *and* an authorization problem.
+
+## Exported constants
+
+Everything the module exports at runtime:
+
+| Export | Type | Value | Caps |
+|---|---|---|---|
+| `POLICY_LIMITS.rulesPerPolicy` | `number` | `1_000` | rules in one policy |
+| `POLICY_LIMITS.actionsPerRule` | `number` | `100` | actions on one rule |
+| `POLICY_LIMITS.resourcesPerRule` | `number` | `100` | resources on one rule |
+| `POLICY_LIMITS.cartesianPerRule` | `number` | `1_000` | `actions x resources` per rule, and the target-reachability budget |
+| `MAX_FIELD_LENGTH` | `number` | `256` | condition `field` dot-path length |
+| `MAX_CONDITION_VALUE_LENGTH` | `number` | `1024` | string condition `value` length |
+| `MAX_UNBOUNDED_QUANTIFIERS` | `number` | `4` | unbounded quantifiers in one `matches` pattern |
+| `MAX_BOUNDED_QUANTIFIER` | `number` | `1_000` | upper bound of a `{n,m}` quantifier |
+| `VALID_ALGORITHMS` | `Set<string>` | `deny-overrides`, `allow-overrides`, `first-match`, `highest-priority` | combining algorithms |
+| `VALID_EFFECTS` | `Set<string>` | `allow`, `deny` | rule effects |
+| `VALID_OPERATORS` | `Set<string>` | the 19 condition operators | condition operators |
+| `detectCatastrophicRegex` | `function` | — | ReDoS screen |
+
+```ts
+import { POLICY_LIMITS, MAX_FIELD_LENGTH, VALID_OPERATORS } from '@gentleduck/iam/core/validate'
+```
+
+Two more caps this module enforces are defined elsewhere and are **not** re-exported from
+`./core/validate`. Import them from the root barrel, where the house `IAM_` prefix is
+applied on the way out:
+
+| Import from `@gentleduck/iam` | Defined in | Value |
+|---|---|---|
+| `IAM_MAX_CONDITION_DEPTH` | `core/conditions` | `10` |
+| `IAM_MAX_REGEX_LENGTH` | `core/conditions` | `128` |
+| `MAX_INHERITANCE_DEPTH` | `core/rbac` | `32` |
+
+The root barrel also re-exports `IAM_MAX_BOUNDED_QUANTIFIER` and
+`IAM_MAX_UNBOUNDED_QUANTIFIERS`, so a form that pre-flights a pattern against the same
+thresholds the evaluator uses can collect the whole set from one entry point instead of
+importing half of it unprefixed from `./core/validate`.
+
+## Result and issue types
+
+```ts
+namespace IamValidate {
+  interface IResult {
+    readonly valid: boolean
+    readonly issues: readonly IIssue[]
+  }
+
+  interface IIssue {
+    readonly type: 'error' | 'warning'
+    readonly code: ValidationCode
+    readonly message: string
+    readonly roleId?: string
+    readonly path?: string
   }
 }
 ```
 
-The `TAction` / `TResource` / `TRole` generics are TS-only constraints
-that runtime validation cannot verify; the adapter trusts the strings
-because the same library wrote them via `savePolicy`.
+| Field | Meaning |
+|---|---|
+| `valid` | `true` when no issue has `type: 'error'`. Warnings never flip it. |
+| `type` | `'error'` blocks usage; `'warning'` is informational. |
+| `code` | Closed set, see below. The compiler enforces exhaustiveness when you switch on it. |
+| `message` | Human-readable, safe to log. Never contains the offending oversized value. |
+| `roleId` | Set by role validation only. |
+| `path` | Dot-path into the offending field, set by policy validation only. Examples: `id`, `rules[2].effect`, `rules[0].conditions.all[1].value`, `targets.actions`. |
 
-## `parseRoleRow`
+## Every issue code
 
-Mirror of `parsePolicyRow` for role rows. Same contract: returns the
-typed row on success, `null` on failure.
+`IamValidate.ValidationCode` is a closed 24-member union. This table gives every code, the
+validator that emits it, its severity, and the message template.
 
-## Limits enforced by `validatePolicy`
+| Code | Emitted by | Severity | Message |
+|---|---|---|---|
+| `BROAD_ALLOW` | `validatePolicy` | warning | `Rule allows every action on every resource with no conditions. This is the broadest possible grant - confirm it is intentional.` |
+| `CIRCULAR_INHERIT` | `validateRoles` | warning | `Circular inheritance detected involving role "<id>" (cycle includes "<id>")` |
+| `DANGLING_INHERIT` | `validateRoles` | error | `Role "<id>" inherits from "<parent>" which does not exist` |
+| `DUPLICATE_ROLE_ID` | `validateRoles` | error | `Duplicate role ID "<id>"` |
+| `DUPLICATE_RULE_ID` | `validatePolicy` | warning | `Duplicate rule ID "<id>"` |
+| `EMPTY_ROLE` | `validateRoles` | warning | `Role "<id>" has no permissions and no inheritance` |
+| `ERR_REGEX_CATASTROPHIC` | `validatePolicy` | error | `Condition "matches" pattern rejected: <reason>` |
+| `ERR_REGEX_INVALID` | `validatePolicy` | error | `Condition "matches" pattern is not a valid regular expression` |
+| `ERR_REGEX_USER_SOURCED` | `validatePolicy` | error | `Condition "matches" pattern is read from request data. This is refused at evaluation time (a caller-supplied pattern is a ReDoS vector), so the condition would always be false and the rule would never fire. Use a literal pattern.` |
+| `INHERITANCE_TOO_DEEP` | `validateRoles` | error | `Role "<id>" has an inheritance chain <n> deep; the runtime caps at 32 and silently drops anything past it` |
+| `INVALID_ALGORITHM` | `validatePolicy` | error | `Invalid algorithm "<value>". Must be one of: deny-overrides, allow-overrides, first-match, highest-priority` |
+| `INVALID_CONDITION` | `validatePolicy` | error | `Condition must be an object` / `Condition group must be an object` / `Condition group must have "all", "any", or "none" key` / `"<key>" must be an array` |
+| `INVALID_EFFECT` | `validatePolicy` | error | `Invalid effect "<value>". Must be "allow" or "deny"` |
+| `INVALID_OPERATOR` | `validatePolicy` | error | `Invalid operator "<value>"` |
+| `INVALID_RULE` | `validatePolicy` | error | `Rule must be an object` |
+| `INVALID_TYPE` | `validatePolicy`, `validateRole` | error | `Policy must be a non-null object` / `Role must be a non-null object` / `"version" must be a number if provided` / `"targets" must be an object if provided` / `targets.<key> must be an array` / `Action must be a string` / `Resource must be a string` / `Rule "priority" must be a finite number (NaN/Infinity break highest-priority ranking)` / `"inherits" must be an array of strings if provided` / `"inherits[<i>]" must be a string` / `Role "id" must not contain control characters` / `"scope" must be a non-empty string if provided (omit it for an unscoped role)` / `"permissions[<i>]" must be a non-null object` / `"permissions[<i>].<action\|resource>" must not contain control characters` / `"permissions[<i>].scope" must be a non-empty string if provided (omit it for a global permission)` |
+| `LIMIT_EXCEEDED` | `validatePolicy` | error | `Policy has <n> rules; limit is 1000` / `Rule has <n> actions; limit is 100` / `Rule has <n> resources; limit is 100` / `Rule actionxresource cartesian is <n>; limit is 1000` / `Condition field is <n> chars; limit is 256` / `Condition value is <n> chars; limit is 1024` / `Condition value[<i>] is <n> chars; limit is 1024` / `Condition nesting exceeds MAX_CONDITION_DEPTH (10)` |
+| `MISSING_FIELD` | `validatePolicy`, `validateRole` | error | `Policy must have a non-empty string "id"` / `Policy must have a non-empty string "name"` / `Policy must have a "rules" array` / `Rule must have a non-empty string "id"` / `Rule must have a non-empty "actions" array` / `Rule must have a non-empty "resources" array` / `Rule must have a "conditions" object (use { all: [] } for an unconditional rule)` / `Condition must have a non-empty string "field"` / `Role must have a non-empty string "id"` / `Role must have a "permissions" array` / `"permissions[<i>].<action\|resource>" must be a non-empty string` |
+| `MISSING_VALUE` | `validatePolicy` | error | `Operator "<op>" requires a "value"` |
+| `OPERAND_TYPE_MISMATCH` | `validatePolicy` | error | `Operator "<op>" expects a <scalar\|array\|number\|string> value` (`a number or ISO-8601 string` for `before` / `after`) |
+| `UNKNOWN_FIELD` | `validatePolicy` | error | `Unknown field "<key>"; the policy schema forbids additional properties here` |
+| `UNREACHABLE_TARGET` | `validatePolicy`, `validateRoles` | error (warning in one case) | see below |
+| `UNRESOLVABLE_FIELD` | `validatePolicy` | warning | `Condition field "<path>" does not resolve at evaluation time (expected a subject/resource/environment root or the shorthand action/scope, and no __proto__/constructor/prototype segment)` |
+| `UNRESOLVABLE_VALUE` | `validatePolicy` | warning | `Condition value "<value>" references an unresolvable path` |
 
-The validators reject inputs that would otherwise blow runtime
-budgets at evaluation time. The closed-set limits live alongside the
-validators so callers can introspect them if they want to surface the
-same caps in their UI.
+## `UNREACHABLE_TARGET` in detail
 
-| Constant | Value | What it caps |
+The one code with two severities, and the one worth understanding before it bites.
+
+`evaluatePolicy` folds `defaultEffect` — which is `deny` — when a policy's target matches
+and none of its rules do. A target therefore widens what a policy *refuses*, not only what
+it inspects. Adding a resource to `.target({ resources: [...] })` without an allow rule
+covering it denies every caller for that resource, and the denial surfaces far from the
+policy that caused it.
+
+| Situation | Severity | Message |
 |---|---|---|
-| `IAM_POLICY_LIMITS.rulesPerPolicy` | 1\_000 | rules per policy |
-| `IAM_POLICY_LIMITS.actionsPerRule` | 100 | actions per rule |
-| `IAM_POLICY_LIMITS.resourcesPerRule` | 100 | resources per rule |
-| `IAM_POLICY_LIMITS.cartesianPerRule` | 1\_000 | actions x resources expansion |
-| `IAM_MAX_FIELD_LENGTH` | 256 | field-path strings |
-| `IAM_MAX_CONDITION_VALUE_LENGTH` | 1024 | string condition values |
-| `MAX_INHERITANCE_DEPTH` | 8 | role inherits chain depth |
+| A targeted (action, resource) pair no allow rule covers | error | `Target admits "<action>" on "<resource>" but no allow rule covers it, so every request matching it is denied by this policy. Add a rule that allows it, or narrow the target.` |
+| The target's pair count exceeds `cartesianPerRule` (1000) | warning | `Target has <n> (action, resource) pairs, over the 1000 checked for unreachable coverage - skipping the check. Narrow the target to validate it.` |
 
-```typescript
-import { IAM_POLICY_LIMITS, IAM_MAX_FIELD_LENGTH } from '@gentleduck/iam/core/validate'
+The same code carries a second, unrelated meaning on the role side.
+`createIam(...).validateRoles` — the config-bound form, which has your declared vocabulary
+— emits `UNREACHABLE_TARGET` for a grant naming an action, resource or scope the config
+never declared. Such a grant reads as access granted and behaves as access denied, because
+`engine.check` is constrained to the declared unions and nothing will ever ask the question
+it answers. Three things are never reported: an axis the config left empty (it constrains
+nothing), a `'*'` grant (the wildcard, not a member), and an absent `scope` (an unscoped
+permission is global, not scoped to nowhere).
+
+Behaviour details on the policy side:
+
+* The check runs only when the policy has at least one `allow` rule. A purely restrictive
+  policy — where denying everything the target names *is* the point — is untouched.
+* A dimension the target omits is one it does not constrain, so the rules decide it. A
+  target naming only `actions: ['impersonate']` is not reported unreachable just because
+  its allow rule is scoped `.of('users')`.
+* A rule list that is empty, or contains `'*'`, or contains the literal value, counts as
+  covering that dimension.
+* One issue per uncovered pair, not one per policy.
+
+It is an error rather than a warning so `PolicyBuilder.build()` throws where the policy is
+written. As a warning the only visible symptom was a denial, which reads as the permission
+system working. A CHANGELOG note that still says "Warning rather than error" describes the
+superseded 5.3.0 behaviour.
+
+## Builder integration
+
+Because the builders validate on `build()`, most authoring mistakes never reach a store:
+
+```ts
+definePolicy('p1')
+  .name('P1')
+  .target({ actions: ['publish'], resources: ['post'] })
+  .rule('r1', (r) => r.allow().on('read').of('post'))
+  .build()
+// throws:
+// [@gentleduck/iam:builder] PolicyBuilder.build("p1") rejected by validator -
+//   UNREACHABLE_TARGET at "targets": Target admits "publish" on "post" but no allow rule
+//   covers it, so every request matching it is denied by this policy. ...
 ```
 
-## ReDoS defense
+`RoleBuilder.build()` throws the analogous
+`[@gentleduck/iam:builder] RoleBuilder.build(): role rejected by validator - <codes>`.
+Note that the role builder's message lists codes and paths only, not the full messages.
 
-The `matches` operator runs the candidate string through a heuristic
-catastrophic-backtracking detector before compiling the pattern.
-`detectCatastrophicRegex(pattern)` returns `{ safe: boolean; reason?:
-string }` and `validatePolicy` calls it on every `matches` condition.
+## Gotchas
 
-The detector refuses common ReDoS shapes:
-
-* Nested quantifiers (`(a+)+`, `(a*)*`).
-* Alternation inside a quantifier (`(a|a)+`).
-* More than `IAM_MAX_UNBOUNDED_QUANTIFIERS` unbounded quantifiers (default 4) in one pattern.
-* Backreference followed by a quantifier (`(\w+)\1+`).
-* Bounded quantifier with large upper bound (`a{1,1000000}`); cap is `IAM_MAX_BOUNDED_QUANTIFIER` (default 1\_000).
-* Lookaround group containing a quantifier (`(?=(a+)+)`).
-
-Patterns deemed unsafe never compile, so the runtime never sees them.
-A `false` result from a `matches` operator inside a `deny` rule would
-flip the rule to "condition not met -> allow", so the validator's
-guarantee is load-bearing.
-
-## Closed-set codes
-
-Every issue carries a stable, closed-set `code` string. Branch on
-them in your error handling so a code change is a deliberate event:
-
-| Code | Meaning |
-|---|---|
-| `DUPLICATE_ROLE_ID` | Two roles share the same `id` |
-| `MISSING_INHERITED_ROLE` | `inherits` references an unknown role id |
-| `CIRCULAR_INHERITANCE` | Role chain forms a cycle |
-| `EMPTY_ROLE` | Role has neither permissions nor inheritance |
-| `INVALID_TYPE` | Top-level shape is not an object |
-| `MISSING_FIELD` | A required field is missing or empty |
-| `INVALID_EFFECT` | Effect is not `'allow'` or `'deny'` |
-| `INVALID_OPERATOR` | Condition operator is not in the closed set |
-| `INVALID_CONDITION` | Condition group structure is malformed |
-| `LIMIT_EXCEEDED` | A `IAM_POLICY_LIMITS` cap was breached |
-| `UNSAFE_REGEX` | `detectCatastrophicRegex` rejected a pattern |
-
-The full `IamValidate.IIssue` type is exported from
-`@gentleduck/iam/core/validate`.
+* **Warnings are silent by default.** `valid` ignores them, and neither builder nor
+  `engine.admin` fails on them. `BROAD_ALLOW`, `UNRESOLVABLE_FIELD`, `UNRESOLVABLE_VALUE`,
+  `DUPLICATE_RULE_ID`, `EMPTY_ROLE`, and `CIRCULAR_INHERIT` are worth logging in CI.
+* **`validateRole` cannot see the bundle.** Duplicates, dangling inherits, cycles, and
+  depth only come from `validateRoles`. Run both.
+* **The reserved names validate clean.** A rule with `actions: ['unknown']`, a permission
+  `{ action: 'unknown', resource: 'unknown' }`, and a policy with the id `'__rbac__'` all
+  return `valid: true` and store. The engine refuses any request naming `'unknown'` before
+  consulting a policy, so that grant is written, visible, and unanswerable; `'__rbac__'` is
+  the id of the synthetic policy `rolesToPolicy` generates, and an authored policy under it
+  makes traces unreadable. Keep both out of your vocabulary.
+* **Control characters are checked on some fields and not others.** A rule's `actions` and
+  `resources`, a role `id`, and a permission's `action` / `resource` are screened; a policy
+  `id` or `name` and a rule `id` are not. Screen those in your admin form — a control
+  character is invisible in a UI, so the id reads as a different id than it is.
+* **`parsePolicyRow` returns the row when only warnings fired.** It gates on `valid`, not
+  on `issues.length`.
+* **The generics are not enforced.** `parsePolicyRow<TAction>` narrows the TypeScript
+  type; the runtime never checks the strings.
+* **`conditions` is required on a rule.** Use `{ all: [] }` for an unconditional rule; the
+  builders emit that by default. A missing key is a `MISSING_FIELD` error, and the message
+  names the unconditional spelling.
+* **`priority` must be finite.** `NaN` and `Infinity` break `highest-priority` ranking, so
+  they are `INVALID_TYPE` errors rather than being coerced.
 
 ## See also
 
-* [JSON schema](/duck-iam/advanced/json-schema) - emit a JSON Schema document for editor tooling and out-of-band validators.
-* [Adapter row parsers](/duck-iam/advanced/utilities#row-parsers---adapter-authors) - the `parsePolicyRow` / `parseRoleRow` pattern in context.
+* [JSON schema](/duck-iam/advanced/json-schema) — the out-of-band, non-TypeScript half of the same job.
+* [Utility helpers](/duck-iam/advanced/utilities) — `parsePolicyRow` in an adapter, and the resolvers that decide what `UNRESOLVABLE_FIELD` means.
+* [Explain traces](/duck-iam/advanced/explain) — what a config mistake looks like at request time.
+* [Custom adapters](/duck-iam/integrations/adapters/custom) — where the row parsers belong.
+* [Role inheritance](/duck-iam/core/roles/inheritance) — the 32-deep cap behind `INHERITANCE_TOO_DEEP`.

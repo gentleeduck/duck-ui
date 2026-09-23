@@ -1,0 +1,3 @@
+interface:
+  display_name: "Web Design Guidelines"
+  short_description: "Audit UI against interface guidelines"

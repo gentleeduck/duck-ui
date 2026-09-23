@@ -1,301 +1,352 @@
 ---
-title: installation
-description: Install duck-iam, configure a storage adapter, and run your first permission check in under five minutes.
+title: Installation
+description: Install @gentleduck/iam, pick the export paths you need with their peer dependencies, and run your first permission check
 section: Getting Started
 ---
-## Prerequisites
+`@gentleduck/iam` is one package with 27 export paths. The core engine, builders, and types come from the root; every adapter, server integration, client, invalidator, the metrics aggregator, and the devtools panels live behind their own subpath so you only bundle what you import.
 
-- Node.js 18+
-- TypeScript 5.0+. duck-iam uses const type parameters and the `satisfies` operator.
-- npm, bun, or pnpm.
+## Requirements
 
-## Install duck-iam
+| Requirement | Version | Why |
+| --- | --- | --- |
+| Node.js | 18 or newer | Declared in `engines`. The engine uses `AbortController` for adapter timeouts. |
+| TypeScript | 5.0 or newer | `createIam()` relies on const type parameters, which landed in TypeScript 5.0. |
+| Module resolution | `bundler` or `nodenext` | Subpath exports are declared through the `exports` map only. |
 
-The core engine, memory adapter, type builders, and all integration entry points are in a single package.
+The core engine has no runtime dependencies. The package's single `dependencies` entry is `uuid`, imported solely by the Drizzle schema helpers in `adapters/drizzle/{pg,mysql,sqlite}`; if you do not use Drizzle it never loads.
+
+## Install
+
+<PackageManagerTabs bun="bun add @gentleduck/iam" npm="npm i @gentleduck/iam" pnpm="pnpm add @gentleduck/iam" yarn="yarn add @gentleduck/iam" />
+
+That is the whole install for the core engine, the memory adapter, the file adapter, the HTTP adapter, the Redis adapter, the Prisma adapter, and every server integration. Only Drizzle and the devtools panels need anything extra; see [optional peer dependencies](#optional-peer-dependencies).
+
+## Your first check
 
 <Steps>
 
-<Step>Install the package</Step>
+<Step>Declare your permission schema</Step>
 
-```bash
-# npm
-npm install @gentleduck/iam
+`createIam()` takes your actions, resources, and optionally scopes and role IDs as `as const` arrays, and returns builders constrained to them.
 
-# bun
-bun add @gentleduck/iam
+```ts title="src/lib/access.ts"
+import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
+import { createIam } from '@gentleduck/iam/core'
 
-# pnpm
-pnpm add @gentleduck/iam
+const access = createIam({
+  actions: ['create', 'read', 'update', 'delete', 'manage'] as const,
+  resources: ['post', 'comment', 'user', 'team'] as const,
+  roles: ['viewer', 'editor', 'admin'] as const,
+  scopes: ['org'] as const,
+})
 ```
 
-<Step>Basic setup</Step>
+<Step>Define roles</Step>
 
-```typescript title="src/lib/access.ts"
-import { defineIam, IamMemoryAdapter } from "@gentleduck/iam";
+Role builders are chainable and end in `build()`. `grantRead()` grants `read` on each resource; `grantCRUD()` grants create, read, update, and delete; `grantAll()` grants `*`.
 
-// 1. Define your application's actions, resources, and scopes
-const access = defineIam({
-  actions: ["create", "read", "update", "delete", "manage"],
-  resources: ["post", "comment", "user", "team"],
-  scopes: ["org"],
-} as const);
-
-// 2. Define roles using typed builders
-const viewer = access
-  .defineRole("viewer")
-  .grantRead("post", "comment")
-  .build();
+```ts title="src/lib/access.ts"
+const viewer = access.defineRole('viewer').grantRead('post', 'comment').build()
 
 const editor = access
-  .defineRole("editor")
-  .inherits("viewer")
-  .grant("create", "post")
-  .grant("update", "post")
-  .grant("create", "comment")
-  .build();
+  .defineRole('editor')
+  .inherits('viewer')
+  .grant('create', 'post')
+  .grant('update', 'post')
+  .grant('create', 'comment')
+  .build()
 
 const admin = access
-  .defineRole("admin")
-  .inherits("editor")
-  .grant("delete", "post")
-  .grant("delete", "comment")
-  .grantCRUD("user")
-  .grant("manage", "team")
-  .build();
+  .defineRole('admin')
+  .inherits('editor')
+  .grant('delete', 'post')
+  .grant('delete', 'comment')
+  .grantCRUD('user')
+  .grant('manage', 'team')
+  .build()
+```
 
-// 3. Create an adapter
+<Step>Create an adapter and the engine</Step>
+
+`IamMemoryAdapter` seeds roles, policies, assignments, and subject attributes from a plain object. Pass `mode: 'production'` outside development; it defaults to `'development'`.
+
+```ts title="src/lib/access.ts"
 const adapter = new IamMemoryAdapter({
   roles: [viewer, editor, admin],
   assignments: {
-    "user-1": ["admin"],
-    "user-2": ["editor"],
-    "user-3": ["viewer"],
+    'user-1': ['admin'],
+    'user-2': ['editor'],
+    'user-3': ['viewer'],
   },
-});
+})
 
-// 4. Create the engine
-export const engine = access.createEngine({ adapter });
+export const engine = access.createEngine({
+  adapter,
+  mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+})
 ```
 
-<Step>Check permissions</Step>
+<Step>Ask the engine questions</Step>
 
-```typescript
-// Simple boolean check
-const canCreate = await engine.can(
-  "user-2",
-  "create",
-  { type: "post", attributes: {} }
-);
-// -> true (editor can create posts)
+```ts
+// Plain boolean, in both modes.
+await engine.can('user-2', 'create', { type: 'post', attributes: {} }) // true
+await engine.can('user-2', 'delete', { type: 'post', attributes: {} }) // false
 
-const canDelete = await engine.can(
-  "user-2",
-  "delete",
-  { type: "post", attributes: {} }
-);
-// -> false (editor cannot delete posts)
+// Full decision in development mode, plain boolean in production mode.
+const decision = await engine.check('user-2', 'delete', { type: 'post', attributes: {} })
 
-// Full decision with metadata
-const decision = await engine.check(
-  "user-2",
-  "delete",
-  { type: "post", attributes: {} }
-);
-// -> { allowed: false, effect: "deny", reason: "...", duration: 0.12, ... }
-
-// Debug why a permission was granted or denied
-const trace = await engine.explain(
-  "user-2",
-  "delete",
-  { type: "post", attributes: {} }
-);
-// -> detailed trace of every policy, rule, and condition evaluated
+// Development mode only; throws in production mode.
+const trace = await engine.explain('user-2', 'delete', { type: 'post', attributes: {} })
 ```
 
-<Step>Batch permission checks</Step>
+<Step>Batch checks for a UI gate</Step>
 
-Batch-load permissions for a user, useful for hydrating client-side UI:
+`permissions()` resolves the subject and loads the catalog once for the whole batch. Keys are built by `iamBuildPermissionKey`, so they read `[scope:]action:resource[:resourceId]`.
 
-```typescript
-const permissions = await engine.permissions("user-2", [
-  { action: "create", resource: "post" },
-  { action: "update", resource: "post" },
-  { action: "delete", resource: "post" },
-  { action: "manage", resource: "team" },
-]);
-// -> { "create:post": true, "update:post": true, "delete:post": false, "manage:team": false }
+```ts
+const map = await engine.permissions('user-2', [
+  { action: 'create', resource: 'post' },
+  { action: 'update', resource: 'post' },
+  { action: 'delete', resource: 'post' },
+  { action: 'manage', resource: 'team' },
+])
+// { 'create:post': true, 'update:post': true, 'delete:post': false, 'manage:team': false }
 ```
+
+A batch of more than 1024 checks throws rather than failing closed: an oversized batch is a caller bug, not a denied request.
 
 </Steps>
 
-## Optional Peer Dependencies
+## The export map
 
-| Integration | Peer dependency | Install |
-| --- | --- | --- |
-| React client | `react >= 18.0.0` | `bun add react` |
-| Vue client | `vue >= 3.3.0` | `bun add vue` |
-| Prisma adapter | `@prisma/client >= 5.0.0` | `bun add @prisma/client` |
-| Drizzle adapter | `drizzle-orm >= 0.30.0` | `bun add drizzle-orm` |
-| Redis adapter | `ioredis >= 5.0.0` or `redis >= 4.0.0` | `bun add ioredis` |
-
-The core engine, memory adapter, HTTP adapter, and all server integrations (Express, Hono, NestJS, Next.js) have zero peer dependencies. The Drizzle schemas (`/adapters/drizzle/schema/{pg,mysql,sqlite}`) require `drizzle-orm` since they re-export Drizzle table builders.
-
-## Import Paths
-
-duck-iam uses subpath exports:
+Subpaths group into six families. Nothing in one family pulls in another.
 
 <MermaidDiagram chart={`flowchart LR
-    subgraph Core["@gentleduck/iam (core)"]
-        direction TB
-        C1["Engine, defineRole, policy"]
-        C2["when, IamMemoryAdapter, types"]
-    end
+    ROOT["@gentleduck/iam"] --> CORE["core: engine, builders, evaluators, types"]
+    CORE --> COPT["core/validate, core/builder, core/explain, core/schema"]
+    ROOT --- AD["adapters/*: memory, file, prisma, drizzle, redis, http"]
+    ROOT --- SRV["server/*: express, nest, hono, next, generic"]
+    ROOT --- CLI["client/*: react, vue, vanilla"]
+    ROOT --- OPS["invalidators/redis, observability/metrics"]
+    ROOT --- DT["dt and dt/v2: devtools panels"]
+    AD --- DRZ["adapters/drizzle/{pg,mysql,sqlite}: schemas"]`} />
 
-    subgraph Server["@gentleduck/iam/server/*"]
-        direction TB
-        S1["server/express"]
-        S2["server/hono"]
-        S3["server/nest"]
-        S4["server/next"]
-        S5["server/generic"]
-    end
+`ROOT` re-exports `CORE` plus the cache and permission-key helpers. `COPT` holds the four optional core chunks that the barrel deliberately keeps out of the hot path. `AD`, `SRV`, `CLI`, `OPS`, and `DT` are reachable only by their own specifier.
 
-    subgraph Client["@gentleduck/iam/client/*"]
-        direction TB
-        CL1["client/react"]
-        CL2["client/vue"]
-        CL3["client/vanilla"]
-    end
+### Every export path
 
-    subgraph Adapters["@gentleduck/iam/adapters/*"]
-        direction TB
-        A1["adapters/memory"]
-        A2["adapters/prisma"]
-        A3["adapters/drizzle"]
-        A4["adapters/drizzle/schema/{pg,mysql,sqlite}"]
-        A5["adapters/redis"]
-        A6["adapters/http"]
-    end`} />
+| Export path | Main exports | Peer dependency | Runtime notes |
+| --- | --- | --- | --- |
+| `@gentleduck/iam` | Everything from `core`, plus `IamLRUCache`, `iamLRUCache`, `iamBuildPermissionKey`, `iamParsePermissionKey`, `iamSplitPermissionKey` | none | Pulls the whole core barrel; prefer `core` plus subpaths. |
+| `@gentleduck/iam/core` | `createIam`, `IamEngine`, `iamEngine`, `iamFlushSharedCaches`, `defineRole`, `definePolicy`, `defineRule`, `when`, `evaluate`, `evaluateFast`, `evaluatePolicy`, `evaluatePolicyFast`, `indexPolicy`, `rolesToPolicy`, `resolveEffectiveRoles`, `MAX_INHERITANCE_DEPTH`, `resolve`, `matchesAction`, `matchesResource`, `explainEvaluation`, `POLICY_JSON_SCHEMA`, all type namespaces | none | Runs anywhere with ES2022. `core/validate` is intentionally not re-exported here. |
+| `@gentleduck/iam/core/validate` | `validatePolicy`, `validateRole`, `validateRoles`, `parsePolicyRow`, `parseRoleRow`, `detectCatastrophicRegex`, `POLICY_LIMITS`, `VALID_ALGORITHMS`, `VALID_EFFECTS`, `VALID_OPERATORS`, `IamValidate` | none | Roughly 12 KB. Lazily loaded by `engine.admin` write paths; import directly only for standalone validation tooling. |
+| `@gentleduck/iam/core/builder` | `PolicyBuilder`, `RoleBuilder`, `RuleBuilder`, `When`, `definePolicy`, `defineRole`, `defineRule`, `when` | none | Roughly 9 KB, config-time only. Apps that store policies as JSON never need it. |
+| `@gentleduck/iam/core/explain` | `explainEvaluation`, `escapeHtml`, `Explain` | none | Development-mode tracer, a separate chunk. `escapeHtml` exists because trace strings carry request-supplied values. |
+| `@gentleduck/iam/core/schema` | `POLICY_JSON_SCHEMA` | none | JSON Schema Draft 2020-12 document for `AccessControl.IPolicy`. |
+| `@gentleduck/iam/adapters/memory` | `IamMemoryAdapter`, `iamMemoryAdapter`, `IamMemory` | none | In-process. Tests, demos, small single-node apps. |
+| `@gentleduck/iam/adapters/file` | `IamFileAdapter`, `iamFileAdapter`, `IamFile` | none | You inject the filesystem driver, for example `await import('node:fs/promises')`. Statically imports `node:path`, so non-Node runtimes need that alias. |
+| `@gentleduck/iam/adapters/prisma` | `IamPrismaAdapter`, `iamPrismaAdapter`, `IamPrisma` | none declared | Takes your Prisma client as a structural type (`IamPrisma.ILike`); `@prisma/client` is never imported by the package. Expects `accessPolicy`, `accessRole`, `accessAssignment`, and `accessSubjectAttr` models. |
+| `@gentleduck/iam/adapters/drizzle` | `IamDrizzleAdapter`, `iamDrizzleAdapter`, `createIamDrizzleAdapter`, `IamDrizzle` | `drizzle-orm` | Type-only import of `drizzle-orm`, so the runtime cost is zero, but the types will not resolve without it installed. |
+| `@gentleduck/iam/adapters/drizzle/pg` | `iamPolicies`, `iamRoles`, `iamAssignments`, `iamSubjectAttrs`, `combineAlgorithm`, `Pg` | `drizzle-orm` | Runtime import of `drizzle-orm/pg-core` and `uuid`. Postgres table definitions for `drizzle-kit`. |
+| `@gentleduck/iam/adapters/drizzle/mysql` | `iamPolicies`, `iamRoles`, `iamAssignments`, `iamSubjectAttrs`, `Mysql` | `drizzle-orm` | Runtime import of `drizzle-orm/mysql-core` and `uuid`. |
+| `@gentleduck/iam/adapters/drizzle/sqlite` | `iamPolicies`, `iamRoles`, `iamAssignments`, `iamSubjectAttrs`, `IAM_COMBINE_ALGORITHMS`, `Sqlite` | `drizzle-orm` | Runtime import of `drizzle-orm/sqlite-core` and `uuid`. Pass `json: 'string'` on the adapter for SQLite text columns. |
+| `@gentleduck/iam/adapters/redis` | `IamRedisAdapter`, `iamRedisAdapter`, `IamRedis` | none declared | Takes your Redis client as a structural type (`IamRedis.ILike`); ioredis and node-redis v4 both satisfy it. |
+| `@gentleduck/iam/adapters/http` | `IamHttpAdapter`, `iamHttpAdapter`, `IamHttp` | none | Uses `globalThis.fetch`, overridable through `config.fetch`. Ships retry, per-request timeout, and a circuit breaker. |
+| `@gentleduck/iam/invalidators/redis` | `createIamRedisInvalidator`, `IamRedisInvalidator` | none declared | Takes a Redis pub/sub client. Statically imports `node:crypto` for the HMAC on broadcast messages, so it is Node-only. |
+| `@gentleduck/iam/observability/metrics` | `iamCreateMetricsAggregator`, `IamMetrics` | none | Aggregates p50, p95, and p99 over `onMetrics` events. |
+| `@gentleduck/iam/server/express` | `iamAccessMiddleware`, `iamGuard`, `iamAdminRouter`, `IamExpress` | none declared | Works against a minimal request shape; `express` is never imported. You pass the router factory in. |
+| `@gentleduck/iam/server/nest` | `IamAuthorize`, `iamNestAccessGuard`, `createIamEngineProvider`, `createIamAdminOperations`, `IAM_ACCESS_METADATA_KEY`, `IAM_ACCESS_ENGINE_TOKEN`, `NestRequest`, `IamNest` | none declared | Decorator and guard are plain functions; `@nestjs/common` is never imported. |
+| `@gentleduck/iam/server/hono` | `iamAccessMiddleware`, `iamGuard`, `iamBindAdminRouter`, `IamHono` | none declared | Works against a minimal context shape; `hono` is never imported. |
+| `@gentleduck/iam/server/next` | `withIamAccess`, `createIamNextMiddleware`, `createIamAdminHandlers`, `IamNext` | none declared | App Router handlers and middleware; `next` is never imported. |
+| `@gentleduck/iam/server/generic` | `createIamSubjectCan`, `iamExtractEnvironment`, `iamFireAdminMutation`, `iamDefaultCsrfCheck`, `iamNoticeCsrfDefaultIfNeeded`, `iamErrorToAuditString`, `IAM_METHOD_ACTION_MAP`, `IamAdminAudit` | none | The primitives the four framework wrappers are built on. Use it for a framework that has no wrapper. |
+| `@gentleduck/iam/client/react` | `createIamAccessControl`, `createIamPermissionChecker`, `iamBuildPermissionKey`, `IamReactClient` | `react` (yours) | Only a type-only import of `ReactNode`; you pass the React namespace into `createIamAccessControl(React)`, so the package never pins a React copy. |
+| `@gentleduck/iam/client/vue` | `createIamVueAccess`, `IAM_ACCESS_INJECTION_KEY` | `vue` (yours) | You pass the Vue API into `createIamVueAccess(vue)`; `vue` is never imported. |
+| `@gentleduck/iam/client/vanilla` | `IamAccessClient`, `iamAccessClient` | none | Framework-free permission-map consumer, including `IamAccessClient.fromServer(url)`. |
+| `@gentleduck/iam/dt` | `IamDevtools`, `IamDevtoolsInner`, `iamCreateFlowRecorder`, `iamEnsureDevtoolsStyles`, `IamDecisionInspector`, `IamFlowPanel`, `IamMetricsPanel`, `IamPoliciesPanel`, `IamRolesPanel`, `IamSubjectsPanel`, `IamTraceTree` | `react` | Devtools v1. Imports React for real, but nothing else: it injects the one stylesheet it owns. Development builds only. |
+| `@gentleduck/iam/dt/v2` | `IamDevtoolsV2`, `IamDevtoolsInnerV2`, `iamCreateFlowRecorder`, `IamDecisionInspectorV2`, `IamFlowPanelV2`, `IamMetricsPanelV2`, `IamPoliciesPanelV2`, `IamRolesPanelV2`, `IamSubjectsPanelV2`, `IamTraceTreeV2` | `react`, `@gentleduck/libs`, `@gentleduck/registry-ui`, `lucide-react` | The same six panels rebuilt on duck-ui, so they inherit the host app's theme. Needs Tailwind v4 configured to scan this package: `@source "../node_modules/@gentleduck/iam/dist/dt/v2";` |
 
-```typescript
-// Core engine, builders, memory adapter, types
-import { IamEngine, defineRole, definePolicy, when, IamMemoryAdapter } from "@gentleduck/iam";
+Every path also has a CommonJS build; `require('@gentleduck/iam/core')` resolves to `dist/core/index.cjs` with its own `.d.cts` types.
 
-// Server integrations
-import { accessMiddleware, guard } from "@gentleduck/iam/server/express";
-import { accessMiddleware, guard } from "@gentleduck/iam/server/hono";
-import { Authorize, nestAccessGuard } from "@gentleduck/iam/server/nest";
-import { withAccess, checkAccess, getPermissions } from "@gentleduck/iam/server/next";
+### Optional peer dependencies
 
-// Client libraries
-import { createIamClient } from "@gentleduck/iam/client/react";
-import { createVueAccess } from "@gentleduck/iam/client/vue";
-import { AccessClient } from "@gentleduck/iam/client/vanilla";
+Every peer is marked optional in `peerDependenciesMeta`, so a plain install never warns about the ones you do not use.
 
-// Storage adapters
-import { IamMemoryAdapter } from "@gentleduck/iam/adapters/memory";
-import { IamPrismaAdapter } from "@gentleduck/iam/adapters/prisma";
-import { IamDrizzleAdapter } from "@gentleduck/iam/adapters/drizzle";
-import { IamRedisAdapter } from "@gentleduck/iam/adapters/redis";
-import { IamHttpAdapter } from "@gentleduck/iam/adapters/http";
+| Peer | Declared range | Needed by |
+| --- | --- | --- |
+| `drizzle-orm` | `>=0.30.0` | `adapters/drizzle` (types) and the three dialect schema entries (runtime). |
+| `react` | `^19.2.6` | `dt` and `dt/v2`. The React client only imports a type. |
+| `@gentleduck/libs` | `>=0.2.0` | `dt/v2`, for `cn()`. |
+| `@gentleduck/registry-ui` | `>=0.5.0` | `dt/v2`, for the panel's UI components. |
+| `lucide-react` | `>=0.400.0` | `dt/v2`, for the panel's icons. |
 
-// Drizzle pre-built schemas (pick one dialect)
-import * as schema from "@gentleduck/iam/adapters/drizzle/schema/pg";
-// or:    @gentleduck/iam/adapters/drizzle/schema/mysql
-// or:    @gentleduck/iam/adapters/drizzle/schema/sqlite
+Install them only alongside the entry points that need them.
+
+<PackageManagerTabs bun="bun add drizzle-orm" npm="npm i drizzle-orm" pnpm="pnpm add drizzle-orm" yarn="yarn add drizzle-orm" />
+
+The v1 devtools panel needs only React:
+
+<PackageManagerTabs bun="bun add -d react" npm="npm i -D react" pnpm="pnpm add -D react" yarn="yarn add -D react" />
+
+The v2 panel needs the duck-ui trio as well:
+
+<PackageManagerTabs bun="bun add -d react @gentleduck/libs @gentleduck/registry-ui lucide-react" npm="npm i -D react @gentleduck/libs @gentleduck/registry-ui lucide-react" pnpm="pnpm add -D react @gentleduck/libs @gentleduck/registry-ui lucide-react" yarn="yarn add -D react @gentleduck/libs @gentleduck/registry-ui lucide-react" />
+
+Prisma and Redis are not peer dependencies at all. Both adapters accept your client through a structural interface, so you install `@prisma/client` or `ioredis` for your own reasons and hand the instance over:
+
+```ts
+import { IamPrismaAdapter } from '@gentleduck/iam/adapters/prisma'
+import { IamRedisAdapter } from '@gentleduck/iam/adapters/redis'
+
+const prismaAdapter = new IamPrismaAdapter({ prisma })
+const redisAdapter = new IamRedisAdapter({ client: redis, keyPrefix: 'iam:' })
 ```
 
-## TypeScript Configuration
+## Import examples
+
+```ts
+// Core: engine, config, builders, evaluators, types.
+import { createIam, IamEngine, defineRole, definePolicy, when } from '@gentleduck/iam/core'
+
+// Optional core chunks.
+import { validatePolicy } from '@gentleduck/iam/core/validate'
+import { POLICY_JSON_SCHEMA } from '@gentleduck/iam/core/schema'
+
+// Storage adapters.
+import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
+import { IamFileAdapter } from '@gentleduck/iam/adapters/file'
+import { IamPrismaAdapter } from '@gentleduck/iam/adapters/prisma'
+import { IamDrizzleAdapter } from '@gentleduck/iam/adapters/drizzle'
+import { IamRedisAdapter } from '@gentleduck/iam/adapters/redis'
+import { IamHttpAdapter } from '@gentleduck/iam/adapters/http'
+
+// Drizzle schemas, one dialect per entry.
+import * as schema from '@gentleduck/iam/adapters/drizzle/pg'
+
+// Server integrations.
+import { iamGuard, iamAdminRouter } from '@gentleduck/iam/server/express'
+import { iamGuard as honoGuard, iamBindAdminRouter } from '@gentleduck/iam/server/hono'
+import { IamAuthorize, iamNestAccessGuard } from '@gentleduck/iam/server/nest'
+import { withIamAccess, createIamAdminHandlers } from '@gentleduck/iam/server/next'
+import { createIamSubjectCan } from '@gentleduck/iam/server/generic'
+
+// Clients.
+import { createIamAccessControl } from '@gentleduck/iam/client/react'
+import { createIamVueAccess } from '@gentleduck/iam/client/vue'
+import { IamAccessClient } from '@gentleduck/iam/client/vanilla'
+
+// Operability.
+import { createIamRedisInvalidator } from '@gentleduck/iam/invalidators/redis'
+import { iamCreateMetricsAggregator } from '@gentleduck/iam/observability/metrics'
+```
+
+## Runtime notes
+
+- **Node.** Everything works. `invalidators/redis` and `adapters/file` are the two Node-coupled entries, through `node:crypto` and `node:path`.
+- **Edge and workers.** `core`, `adapters/memory`, `adapters/http`, `adapters/redis`, and every server integration run without Node built-ins. The HTTP adapter uses the platform `fetch`.
+- **Browser.** Ship only `client/react`, `client/vue`, or `client/vanilla`. They consume a `PermissionMap` the server produced; the engine, the adapters, and your policy catalog never enter the browser bundle.
+
+## TypeScript setup
 
 ```json title="tsconfig.json"
 {
   "compilerOptions": {
     "strict": true,
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "target": "ES2022"
   }
 }
 ```
 
-`strict` enables const type parameter inference for type-safe role and policy builders. `bundler` module resolution is required for subpath exports; `"moduleResolution": "nodenext"` also works.
+`strict` keeps const type parameter inference working for the role and policy builders. `bundler` resolution reads the `exports` map; `nodenext` works too. With `node10`-style resolution the subpaths will not resolve at all.
 
-## Next Steps
+## Verify the install
 
-- [Quick Start](/duck-iam/guides): end-to-end walkthrough with roles, policies, server middleware, and client hooks.
-- [Core Concepts](/duck-iam/core): the RBAC + ABAC evaluation model.
-- [Integrations](/duck-iam/integrations/adapters): set up Express, Hono, NestJS, or Next.js middleware.
+```ts title="scripts/verify-iam.ts"
+import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
+import { createIam } from '@gentleduck/iam/core'
 
----
+const access = createIam({ actions: ['read'] as const, resources: ['post'] as const, roles: ['viewer'] as const })
+const viewer = access.defineRole('viewer').grant('read', 'post').build()
+const engine = access.createEngine({
+  adapter: new IamMemoryAdapter({ roles: [viewer], assignments: { u1: ['viewer'] } }),
+  mode: 'production',
+})
+
+console.log(await engine.can('u1', 'read', { type: 'post', attributes: {} })) // true
+console.log(await engine.healthCheck())
+```
+
+`healthCheck()` returns adapter latency and cache hit rate, which makes it a usable `/healthz` probe as well as an install check.
+
+## Gotchas
+
+<Callout tone="warning" title="The root barrel does not export adapters">
+`@gentleduck/iam` re-exports `core` plus `IamLRUCache`, `iamLRUCache`, `iamBuildPermissionKey`, `iamParsePermissionKey`, and `iamSplitPermissionKey`. Importing `IamMemoryAdapter`, middleware, or a client from the root fails. Use the subpath.
+</Callout>
+
+- Barrel imports cost roughly 41 KB gzipped. Subpath imports plus tree-shaking land real deployments at 15 to 25 KB; see [benchmarks](/duck-iam/benchmarks).
+- `mode` defaults to `'development'`, which allocates a decision object per policy per request. Set it from your environment as shown above.
+- SQLite Drizzle deployments must pass `json: 'string'` to the adapter, because the SQLite schema stores JSON columns as text.
+- The devtools entries pull React for real, and `dt/v2` pulls duck-ui and `lucide-react` on top. Keep either behind a development-only import so it cannot reach a production bundle.
+
+## See also
+
+- [Introduction](/duck-iam/introduction) — the model and the docs routing map.
+- [Quick start](/duck-iam/guides) — the end-to-end walkthrough after this page.
+- [Adapters](/duck-iam/integrations/adapters) — choosing and configuring storage.
+- [createIam()](/duck-iam/advanced/config/access-config) — every option on the config factory.
 
 ## Installation FAQ
 
 <Accordion type="multiple" collapsible className="w-full">
   <AccordionItem value="peer-dependencies-required">
-    <AccordionTrigger>Do I need every peer dependency to use duck-iam?</AccordionTrigger>
+    <AccordionTrigger>Do I need every peer dependency?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      No. <code className="rounded bg-muted px-2 py-1">react</code>, <code className="rounded bg-muted px-2 py-1">vue</code>,
-      and <code className="rounded bg-muted px-2 py-1">@prisma/client</code> are optional peers. Install only the
-      peers needed by the subpaths you import.
+      No. All five declared peers are optional, and only `drizzle-orm` and the devtools dependencies are ever required.
+      Prisma and Redis are not peers at all: those adapters accept your client through a structural interface.
     </AccordionContent>
   </AccordionItem>
 
   <AccordionItem value="runtime-vs-monorepo-requirements">
-    <AccordionTrigger>Why do the package runtime requirements differ from the monorepo tooling requirements?</AccordionTrigger>
+    <AccordionTrigger>Why do the package requirements differ from the repository's tooling requirements?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      The published package targets Node.js 18+ runtimes. The monorepo also includes docs, examples,
-      and workspace tooling that may require newer Node or Bun versions.
+      The published package targets Node 18 and newer. The monorepo also builds docs, examples, and workspace
+      tooling that may need newer Node or Bun versions.
     </AccordionContent>
   </AccordionItem>
 
   <AccordionItem value="subpath-imports-only">
     <AccordionTrigger>Can I import only the pieces I need?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      Yes. The package uses subpath exports such as <code className="rounded bg-muted px-2 py-1">@gentleduck/iam/server/express</code>,
-      <code className="rounded bg-muted px-2 py-1">@gentleduck/iam/client/react</code>, and
-      <code className="rounded bg-muted px-2 py-1">@gentleduck/iam/adapters/drizzle</code> so framework-specific code stays opt-in.
+      Yes, and you should. Every adapter, server integration, and client is its own entry, so framework-specific
+      code stays opt-in and tree-shakes cleanly.
     </AccordionContent>
   </AccordionItem>
 
-  <AccordionItem value="need-create-access-config">
-    <AccordionTrigger>Do I have to use defineIam() on day one?</AccordionTrigger>
+  <AccordionItem value="need-create-iam">
+    <AccordionTrigger>Do I have to use createIam() on day one?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      No. You can start with the untyped builders and add <code className="rounded bg-muted px-2 py-1">defineIam()</code>
-      when you want compile-time validation for actions, resources, scopes, and roles.
+      No. The standalone builders `defineRole`, `definePolicy`, `defineRule`, and `when` work without it, and you
+      can construct `IamEngine` directly. Adopt `createIam()` when you want compile-time validation of actions,
+      resources, scopes, and role IDs.
     </AccordionContent>
   </AccordionItem>
 
   <AccordionItem value="what-to-seed-first">
     <AccordionTrigger>What should I seed first in a new project?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      Start with your stable role definitions, a small set of core policies, and the initial role assignments
-      needed to boot the app. Subject attributes can be added later as your domain data becomes available.
-    </AccordionContent>
-  </AccordionItem>
-
-  <AccordionItem value="mix-root-and-subpaths">
-    <AccordionTrigger>Can I mix root imports with adapter, server, and client subpaths?</AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      Yes. Import builders, types, and the engine from
-      <code className="rounded bg-muted px-2 py-1">@gentleduck/iam</code>, then pull framework-specific pieces from
-      their subpaths such as <code className="rounded bg-muted px-2 py-1">@gentleduck/iam/server/next</code> or
-      <code className="rounded bg-muted px-2 py-1">@gentleduck/iam/client/react</code>.
-    </AccordionContent>
-  </AccordionItem>
-
-  <AccordionItem value="memory-root-vs-subpath">
-    <AccordionTrigger>Why is IamMemoryAdapter available from both the root package and its own subpath?</AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      It is exported from the root as a convenience for tests, demos, and quick prototypes. The dedicated subpath
-      exists for consistency with the other adapters.
+      Stable role definitions, a small set of core policies, and the assignments needed to boot the app. Subject
+      attributes can arrive later, as your domain data does.
     </AccordionContent>
   </AccordionItem>
 
   <AccordionItem value="autocomplete-not-there-yet">
-    <AccordionTrigger>Why do I not get strong autocomplete immediately after installing?</AccordionTrigger>
+    <AccordionTrigger>Why is autocomplete weak right after installing?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      Strong autocomplete depends on type information, not just the package install. Use
-      <code className="rounded bg-muted px-2 py-1">defineIam()</code> with
-      <code className="rounded bg-muted px-2 py-1">as const</code> arrays for actions/resources/scopes, and add a typed
-      <code className="rounded bg-muted px-2 py-1">context</code> if you want rich dot-path and `$` value suggestions.
+      Autocomplete comes from type information, not from the install. Pass `as const` arrays to `createIam()` for
+      actions, resources, scopes, and roles, and add the `context` phantom field if you want typed dot-paths and
+      `$`-reference suggestions.
     </AccordionContent>
   </AccordionItem>
 </Accordion>

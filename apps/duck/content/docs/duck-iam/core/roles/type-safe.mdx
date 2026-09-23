@@ -1,16 +1,16 @@
 ---
-title: type-safe roles
-description: defineIam() constraints on actions, resources, scopes, and roles. validateRoles() pre-flight checks.
+title: Type-safe roles
+description: createIam() constrains role IDs, actions, resources, and scopes at compile time - how the type parameters reach RoleBuilder and where the guarantee stops
 section: Core
 ---
-## defineIam basics
+`defineRole()` imported from the package root accepts any string for every argument. `createIam()` fixes the action, resource, role, scope, and context types once, and hands back builders that reject anything outside them. This page shows what `createIam()` constrains, how the generics reach `RoleBuilder`, and the four places the compile-time guarantee does not hold.
 
-`defineIam()` returns typed builders. With `roles` declared, the role ID parameter on `defineRole()` and the `.role()` / `.roles()` methods on conditions are constrained to those values.
+## createIam()
 
-```typescript
-import { defineIam } from '@gentleduck/iam'
+```ts
+import { createIam } from '@gentleduck/iam'
 
-const access = defineIam({
+const access = createIam({
   actions: ['create', 'read', 'update', 'delete', 'publish'] as const,
   resources: ['post', 'comment', 'user'] as const,
   scopes: ['org-1', 'org-2'] as const,
@@ -18,97 +18,114 @@ const access = defineIam({
 })
 ```
 
-`as const` is required - without it, TypeScript widens the arrays to `string[]` and you lose the constraint.
+```ts
+function createIam<
+  const TActions extends readonly string[],
+  const TResources extends readonly string[],
+  const TRoles extends readonly string[] = readonly string[],
+  const TScopes extends readonly string[] = readonly string[],
+  TContext extends object = DotPath.IDefaultContext,
+>(
+  input: IamConfig.IAccessConfigInput<TActions, TResources, TRoles, TScopes, TContext>,
+): IamConfig.IAccessConfig<TActions[number], TResources[number], TRoles[number], TScopes[number], TContext>
+```
 
----
+| Input option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `actions` | `readonly string[]` | required | Every action your app supports. Becomes `TAction`. |
+| `resources` | `readonly string[]` | required | Every resource type. Becomes `TResource`. |
+| `scopes` | `readonly string[]` | `[]` | Tenant / workspace identifiers. Becomes `TScope`. |
+| `roles` | `readonly string[]` | `[]` | Role IDs. Becomes `TRole`. |
+| `context` | `object` | `DotPath.IDefaultContext` | Phantom field for dot-path inference. The runtime value is never read - pass `{} as unknown as AppContext`. |
 
-## What gets constrained
+`as const` is what makes this work. Without it TypeScript widens the array to `string[]`, `TActions[number]` collapses to `string`, and every constraint silently disappears. There is no runtime error - the builders just stop rejecting typos.
 
-```typescript
-// These builders are fully typed -- invalid actions/resources/roles are compile errors
+The returned `IamConfig.IAccessConfig` carries the declared arrays back (`access.actions`, `access.resources`, `access.scopes`, `access.roles` - the last two are `[]` when not declared) plus eight factories: `defineRole`, `definePolicy`, `defineRule`, `when`, `createEngine`, `checks`, `validateRoles`, and `validatePolicy`.
 
+## How the generics reach RoleBuilder
+
+<MermaidDiagram chart={`flowchart LR
+    IN["createIam({ actions, resources, scopes, roles, context })"] --> IDX["indexed access: TActions[number], TResources[number], TRoles[number], TScopes[number]"]
+    IDX --> CFG["IAccessConfig<TAction, TResource, TRole, TScope, TContext>"]
+    CFG --> DR["access.defineRole(id: TRole)"]
+    DR --> RB["new RoleBuilder<TAction, TResource, TRole, TScope, TContext>(id)"]
+    RB --> G["grant(action: TAction | '*', resource: TResource | '*', scope?: TScope)"]
+    RB --> GW["grantWhen<R extends TResource | '*'>(action, resource: R, fn)"]
+    GW --> WN["When<TAction, TResource, TRole, TScope, TContext, R>"]
+    WN --> RA["resourceAttr narrowed by R through TContext.resourceAttributes"]
+    WN --> RL["role(roleId: TRole), scope(id: TScope)"]`} />
+
+- `IDX` is the whole trick: a tuple declared `as const` indexed by `number` becomes the union of its members.
+- `RB` is where the order changes. `createIam` builds `RoleBuilder<TAction, TResource, TRole, TScope, TContext>`, but the standalone factory declares its own parameters as `defineRole<TRole, TAction, TResource, TScope, TContext>` so that `TRole` can be inferred from the argument. If you ever write the type arguments by hand, check which of the two you are calling.
+- `GW` threads the resource literal `R` into the `When` builder as `TActiveResource`, which is what powers per-resource attribute narrowing below.
+- `RL` is why `w.role('admin')` is checked: `When.role()` takes `TRole`, not `string`.
+
+## What is constrained
+
+```ts
 const viewer = access
-  .defineRole('viewer') // ok -- 'viewer' is in roles
+  .defineRole('viewer')      // ok: 'viewer' is in roles
   .name('Viewer')
-  .grant('read', 'post')
-  .grant('read', 'comment')
-  // .grant('fly', 'post')         // TS error: 'fly' is not in actions
-  // access.defineRole('intern')   // TS error: 'intern' is not in roles
+  .grant('read', 'post')     // ok
+  .grant('read', 'comment')  // ok
   .build()
 
-// Role checks in conditions are also typed
+// access.defineRole('intern')            // error: not assignable to 'viewer' | 'editor' | 'admin'
+// access.defineRole('viewer').grant('fly', 'post')     // error: 'fly' is not an action
+// access.defineRole('viewer').grant('read', 'invoice') // error: 'invoice' is not a resource
+// access.defineRole('viewer').grant('read', 'post', 'org-9') // error: 'org-9' is not a scope
+```
+
+The same unions reach every other builder from the same `access` object, so a role ID used in a policy target or a condition is checked too:
+
+```ts
 const ownerPolicy = access
   .definePolicy('owner-only')
+  .algorithm('deny-overrides')
   .rule('admin-override', (r) =>
     r
       .allow()
       .on('*')
       .of('*')
-      .when((w) => w.role('admin')) // ok -- 'admin' is in roles
-      // .when(w => w.role('manager')) // TS error: 'manager' is not in roles
+      .when((w) => w.role('admin')), // ok: 'admin' is in roles
+      // .when((w) => w.role('manager')) // error: not a declared role
   )
   .build()
 ```
 
-`access.defineRole()`, `access.definePolicy()`, `access.defineRule()`, and `access.when()` return builders constrained to the declared actions, resources, scopes, and roles. Types flow through the chain - from `grantWhen()` callbacks to `whenAny()` conditions.
+## Where the guarantee stops
 
----
+<Callout tone="warning" title="Four holes worth knowing">
+1. **`inherits()` accepts any string.** Its parameter is `(TRole | (string & {}))[]`, deliberately, so a role can inherit an ID that only exists in the database. Typos in `inherits()` are found by `validateRoles()` as `DANGLING_INHERIT`, not by the compiler.
+2. **`IRole.scope` is typed `TScope` while `IPermission.scope` is `TScope | '*'`.** Both read `'*'` as global at runtime, so under a narrowed scope union `grant('read', 'post', '*')` type-checks and `.scope('*')` does not. Leave `.scope()` off for a global role; omitting it is the same thing at runtime.
+3. **Data loaded from an adapter is unchecked.** Types describe what you wrote, not what a database returned. Use `parseRoleRow()` from `@gentleduck/iam/core/validate` on untrusted rows.
+4. **An open attribute bag re-opens the path types.** With the default context, `check()`, `attr()`, `resourceAttr()`, and `env()` accept any string, because `DotPath.FlexibleDotPaths` falls back to `string` whenever the context contains an index signature.
+</Callout>
 
-## Validating roles
+`grantRead()` and `grantCRUD()` used to be a fifth hole - they cast straight past `TAction`, so a config declaring `actions: ['view', 'edit']` still compiled a `read` grant that no request could match. Their parameter types are now conditional on the action union and collapse to `never`, so the mismatch is a compile error at the call site. Export `IAM_CRUD_ACTIONS` and spell the list as `[...IAM_CRUD_ACTIONS, 'publish']` to keep `grantCRUD` callable.
 
-Before saving roles to your adapter, validate them for common mistakes:
+## Typed dot-paths
 
-```typescript
-import { defineIam } from '@gentleduck/iam'
+Path types come from `src/core/types/dot-path.ts`. `DotPath.DotPaths<T>` walks an object type and produces the union of every reachable path; `DotPath.FlexibleDotPaths<T>` is that union, widened with `string` when `T` contains an open index signature.
 
-const access = defineIam({
-  actions: ['read', 'write'] as const,
-  resources: ['post'] as const,
-})
+<MermaidDiagram chart={`flowchart TD
+    C["TContext"] --> H{"contains an open attribute bag, an index signature?"}
+    H -- "yes, the default IDefaultContext" --> OPEN["FlexibleDotPaths = DotPaths<T> or any string: autocomplete only, no rejection"]
+    H -- "no, a fully declared context" --> CLOSED["FlexibleDotPaths = DotPaths<T>: an unknown path is a compile error"]
+    CLOSED --> VAL["FieldValue<T, P> types the operand, so eq on a 'draft' or 'published' field rejects 'archived'"]
+    OPEN --> ANY["operand type falls back to AttributeValue"]`} />
 
-const roles = [viewer, editor, admin]
-const result = access.validateRoles(roles)
-
-if (!result.valid) {
-  console.error('Role validation errors:')
-  for (const issue of result.issues) {
-    console.error(`  [${issue.type}] ${issue.message}`)
-  }
-}
-```
-
-The validator checks for:
-
-- Duplicate role IDs
-- Dangling `inherits` references (inheriting from a role that doesn't exist)
-- Inheritance cycles (A inherits B, B inherits A)
-- Empty permission lists
-
-Issues come in two severity levels:
-
-- `error` - blocking (the model is broken)
-- `warning` - suspicious but survivable (e.g. cycles, empty roles)
-
----
-
-## Edge cases
-
-- **Empty permissions** - a role with no permissions and no inheritance is valid but grants nothing. Flagged as a warning.
-- **Deep inheritance chains** - resolved by walking the tree recursively, with a visited set to break cycles. Performance is linear in role count - 10-level chains resolve in microseconds.
-- **Removing inherited permissions** - not supported. Use a deny rule instead. See [inheritance](/duck-iam/core/roles/inheritance).
-- **Wildcard scope** - `scope: '*'` matches every scope, including unscoped requests. Use for global permissions.
-
----
+`DotPath.IDefaultContext` declares `subject.attributes`, `resource.attributes`, and `environment` as `IAnyAttributes`, which is an index signature - so the default is the `OPEN` branch. Declaring those bags concretely moves you to `CLOSED`, where a mistyped path fails to compile and the operand value is checked against the type at that path. `$`-references are typed the same way through `DotPath.DollarPaths<TContext>`; see [`$`-variable references](/duck-iam/core/policies/dollar-variables) and [typed context](/duck-iam/advanced/config/context).
 
 ## Per-resource attribute narrowing
 
-Pass a `context` phantom field to enable resource-aware autocomplete in `grantWhen()`:
+Declare a `resourceAttributes` map on the context and `grantWhen()`'s third argument narrows `w.resourceAttr()` to the attributes of the resource you named:
 
-```typescript
-const access = defineIam({
+```ts
+const access = createIam({
   actions: ['read', 'update'] as const,
   resources: ['post', 'invoice'] as const,
-  context: {} as {
+  context: {} as unknown as {
     subject: { id: string; attributes: { tier: 'free' | 'pro' } }
     resourceAttributes: {
       post: { ownerId: string; status: 'draft' | 'published' }
@@ -119,25 +136,46 @@ const access = defineIam({
 
 const editor = access
   .defineRole('editor')
-  .grantWhen('update', 'post', (w) =>
-    w.resourceAttr('status', 'eq', 'draft'), // editor autocomplete: 'ownerId' | 'status'
-  )
-  .grantWhen('update', 'invoice', (w) =>
-    w.resourceAttr('amount', 'lt', 1000), // editor autocomplete: 'customerId' | 'amount'
-  )
+  .grantWhen('update', 'post', (w) => w.resourceAttr('status', 'eq', 'draft'))
+  //                                     suggestions: 'ownerId' | 'status'
+  .grantWhen('update', 'invoice', (w) => w.resourceAttr('amount', 'lt', 1000))
+  //                                        suggestions: 'customerId' | 'amount'
   .build()
 ```
 
-The same builder calls produce different autocomplete suggestions based on which resource you're targeting. See the [type-safe config](/duck-iam/advanced/config) docs for the full schema.
+The mechanism is `DotPath.ResolvedResourceAttrPaths<TContext, TActiveResource>`: `grantWhen<R>` captures the resource literal as `R` and passes it to `When` as `TActiveResource`, which looks `R` up in the context's `resourceAttributes` map. `'*'` and any resource with no entry in the map fall back to the generic `resource.attributes` shape. The rule builder does the same through `.of()`; see [rules](/duck-iam/core/policies/rules).
 
----
+## Validating a role set
+
+The compiler cannot see relationships between roles. Run the validator over the whole set before persisting:
+
+```ts
+const roles = [viewer, author, editor, admin]
+const result = access.validateRoles(roles)
+
+if (!result.valid) {
+  for (const issue of result.issues) {
+    if (issue.type === 'error') console.error(`${issue.code} on ${issue.roleId}: ${issue.message}`)
+  }
+  throw new Error('role set rejected')
+}
+```
+
+`access.validateRoles()` is `validateRoles()` with the argument typed to your unions. Outside a `createIam()` setup, import it directly - it is **not** re-exported from the package root, because the validator is a separate chunk:
+
+```ts
+import { validateRoles } from '@gentleduck/iam/core/validate'
+```
+
+The five codes it can emit are tabulated on [role inheritance](/duck-iam/core/roles/inheritance#what-the-validator-catches). `RoleBuilder.build()` already runs the single-role `validateRole()` for you; `validateRoles()` adds everything that needs the whole set.
 
 ## Complete example
 
-```typescript
-import { defineIam } from '@gentleduck/iam'
+```ts
+import { createIam } from '@gentleduck/iam'
+import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
 
-const access = defineIam({
+const access = createIam({
   actions: ['create', 'read', 'update', 'delete', 'publish', 'archive'] as const,
   resources: ['post', 'comment', 'user', 'settings'] as const,
   scopes: ['org-alpha', 'org-beta'] as const,
@@ -164,25 +202,24 @@ const editor = access
   .grant('delete', 'post')
   .grant('publish', 'post')
   .grant('archive', 'post')
-  .grantCRUD('comment')
   .build()
 
-const orgAdmin = access
-  .defineRole('org-admin')
-  .name('Organization Admin')
-  .inherits('editor')
-  .grantCRUD('user')
-  .grantCRUD('settings')
-  .build()
+const orgAdmin = access.defineRole('org-admin').name('Organization Admin').inherits('editor').build()
 
 const superAdmin = access.defineRole('super-admin').name('Super Admin').grantAll('*').build()
 
-// Validate before saving
-const validation = access.validateRoles([viewer, author, editor, orgAdmin, superAdmin])
-console.log(validation.valid) // true
+const roles = [viewer, author, editor, orgAdmin, superAdmin]
+if (!access.validateRoles(roles).valid) throw new Error('role set rejected')
 
-// Save to adapter
-for (const role of [viewer, author, editor, orgAdmin, superAdmin]) {
-  await engine.admin.saveRole(role)
-}
+const engine = access.createEngine({ adapter: new IamMemoryAdapter(), mode: 'development' })
+for (const role of roles) await engine.admin.saveRole(role)
 ```
+
+`access.createEngine()` returns an `IamEngine` whose `can()`, `authorize()`, and `permissions()` arguments are constrained to the same unions, so a check for an action you never declared is a compile error too. See [engine methods](/duck-iam/advanced/engine/methods).
+
+## See also
+
+- [Defining roles](/duck-iam/core/roles/definition) - the untyped builder these constraints wrap
+- [Typed context](/duck-iam/advanced/config/context) - declaring the context shape in full
+- [Access config](/duck-iam/advanced/config/access-config) - every member of the object `createIam()` returns
+- [Types and namespaces](/duck-iam/types) - `AccessControl`, `DotPath`, `IamConfig`, `IamValidate`

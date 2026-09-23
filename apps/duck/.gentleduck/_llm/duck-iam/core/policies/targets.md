@@ -1,104 +1,81 @@
-## What targets do
+Targets scope a whole policy to specific actions, resources, or roles. A request that misses the targets never sees the policy's rules, and the policy contributes nothing to the final decision.
 
-Targets scope a whole policy to specific actions, resources, or roles. A request that doesn't match the targets **skips the policy's rules entirely**.
+## What a target miss means
 
-***
+A policy whose targets do not match the request is **NotApplicable**: the engine skips it in the cross-policy combine instead of counting it as a `defaultEffect` vote (since 2.0.0). Three worked cases:
 
-## Setting targets
+`SKIP1` and `SKIP2` are skipped by every `policyCombine` mode; only `EVAL` runs the combining algorithm. The `IDecision` for a skipped policy carries `applicable: false` and the reason `Policy "
 
-```typescript
-const adminPolicy = definePolicy('admin-only')
-  .name('Admin-Only Policy')
-  .target({
-    roles: ['admin', 'super-admin'],
-  })
-  .algorithm('deny-overrides')
-  .rule('allow-admin-all', (r) => r.allow().on('*').of('*'))
-  .build()
+* `ACT`, `RES`, `ROLE` are the target dimensions (`policyApplies` in `src/core/evaluate/evaluate.libs.ts`).
+* `SHAPE` is the rule-shape check: a policy about `update` has nothing to say about `read` even when its targets are silent, so it abstains instead of voting `defaultEffect` (`evaluatePolicy` in `src/core/evaluate/evaluate.ts`). The reason string is `Policy "<id>" has no rule for this action/resource. Not applicable.`
+* `subject.roles` at `ROLE` are the effective roles after inheritance and scoped-role enrichment - see [scoped roles](/duck-iam/core/roles/scoped) and [evaluation pipeline](/duck-iam/core/evaluation).
 
-// This policy is only evaluated for subjects with admin or super-admin role.
-// For everyone else, its rules are not evaluated.
+## Target patterns and hierarchy
+
+`targets.resources` goes through the same `matchesResource` function as rule resources, so suffix wildcards work and bare literals stay literal. Pinned by the evaluate tests:
+
+| Target | Request resource | Applicable? |
+| --- | --- | --- |
+| `'dashboard.*'` | `dashboard.users` | yes |
+| `'dashboard.*'` | `dashboard` | no |
+| `'dashboard'` | `dashboard.users` | no |
+| `'org:*'` | `org:project` | yes |
+
+The only difference from rule resources is that a dotted request resource does not switch targets to the dot-only hierarchical matcher; both `:*` and `.*` are always honoured on targets. Details on [rule matching](/duck-iam/core/rule-matching).
+
+## Target matched, no rule matched
+
+When targets match (or are absent), at least one rule has a matching action/resource shape, but no rule's conditions hold, the combining algorithm returns `defaultEffect` and the policy **does** vote. With the default `defaultEffect: 'deny'` and `policyCombine: 'and'`, that vote is a deny.
+
+This is why a target can widen what a policy refuses: adding a resource to `target({ resources })` without an allow rule that covers it denies every caller for that resource. Since 5.4.0, `PolicyBuilder.build()` rejects that shape with `UNREACHABLE_TARGET` (an error; it was a warning in 5.3.0):
+
+```text
+[@gentleduck/iam:builder] PolicyBuilder.build("p") rejected by validator - UNREACHABLE_TARGET at "targets": Target admits "delete" but no allow rule covers it, so every request matching it is denied by this policy. Add a rule that allows it, or narrow the target.
 ```
 
-***
+The check fires only when the policy has at least one allow rule; a purely restrictive (deny-only) policy is exempt because denying everything it targets is the point. Only dimensions the target names are checked - an omitted dimension is unconstrained, so a target naming only `impersonate` is satisfied by an allow rule on `.of('users')`. Targets with more than 1000 action x resource pairs skip the check with a warning.
 
-## Target fields
+To keep a restriction policy from denying by default:
 
-| Field | Description |
-| --- | --- |
-| `actions` | Only evaluate if the request action matches one of these |
-| `resources` | Only evaluate if the request resource matches one of these |
-| `roles` | Only evaluate if the subject has one of these roles |
+* Add a catch-all allow rule (as `allow-otherwise` above) under `deny-overrides`, or a trailing allow under `first-match`.
+* Or set the engine `defaultEffect: 'allow'` and treat policies purely as exceptions (requires `allowFailOpen` in `production` mode; see [engine modes](/duck-iam/advanced/engine/modes)).
 
-Every field is optional - unset fields match everything. Set fields combine with **AND**.
-
-***
-
-## Direct vs hierarchical matching
-
-`targets.resources` uses **direct** matching, not the hierarchical matcher used by rule resources. A target of `"dashboard"` doesn't match `"dashboard.users"` unless you also list `"dashboard.users"` or use a wildcard at the rule layer.
-
-For hierarchical matching, see [building policies](/duck-iam/core/policies/building#hierarchical-resource-matching).
-
-***
-
-## Combining targets
-
-```typescript
-const writePolicy = definePolicy('write-restrictions')
-  .name('Write Restrictions')
-  .target({
-    actions: ['create', 'update', 'delete'],
-    resources: ['post', 'comment'],
-  })
-  .algorithm('deny-overrides')
-  .rule('business-hours', (r) =>
-    r
-      .deny()
-      .on('*')
-      .of('*')
-      .when((w) =>
-        w.or((w) => w.env('hour', 'lt', 9).env('hour', 'gte', 17)),
-      ),
-  )
-  .build()
-
-// Only applies to write operations on posts and comments.
-// Read operations and other resource types are not affected.
-```
-
-***
-
-## Target mismatch behavior
-
-When a policy is skipped on target mismatch, the engine uses `defaultEffect` for **that policy's contribution**. To make a policy conditional without penalty:
-
-* Scope its targets so it only applies when relevant
-* Ensure another policy allows the request when this one is skipped
-
-```typescript
-// Conditional restriction - when targets don't match, falls through to defaultEffect.
-// If defaultEffect is 'deny', a target mismatch denies. To avoid:
-//   - Set engine defaultEffect: 'allow', OR
-//   - Add a separate baseline-allow policy
-
-const restriction = definePolicy('weekend-block')
-  .target({ actions: ['create', 'update', 'delete'] })  // skipped for reads
-  .rule('deny-weekends', (r) =>
-    r.deny().on('*').of('*').when((w) => w.env('dayOfWeek', 'in', [0, 6])),
-  )
-  .build()
-```
-
-***
-
-## When to use targets vs. rule conditions
+## When to use targets versus rule conditions
 
 | Situation | Use |
 | --- | --- |
-| Policy applies to specific roles only | Target `roles` |
-| Policy only matters for write operations | Target `actions` |
-| Policy is resource-type-specific | Target `resources` |
-| Filtering depends on attributes / context | Rule conditions |
+| Policy applies to specific roles only | `target({ roles })` |
+| Policy only matters for write operations | `target({ actions })` |
+| Policy is resource-type specific | `target({ resources })` |
+| Filtering depends on attributes or environment | Rule conditions |
+| Policy must abstain (not vote) for unrelated requests | Targets, or rules whose actions/resources do not cover the request |
 
-Targets are a **fast pre-filter** - the engine skips the entire policy before inspecting individual rules. This makes large policy sets cheaper to evaluate and easier to reason about. Use targets for broad preconditions; use conditions for fine-grained logic.
+Targets are a fast pre-filter: the engine skips the whole policy before touching rules. In `production` mode the compiled table uses `targets.actions` / `targets.resources` at compile time to decide which cells a policy's rules belong in; see [compiled table](/duck-iam/advanced/engine/compiled).
+
+## API reference
+
+```ts
+target(t: NonNullable<AccessControl.IPolicy<TAction, TResource, TRole>['targets']>): this
+
+// AccessControl.IPolicy['targets']
+readonly targets?: {
+  readonly actions?: readonly (TAction | '*')[]
+  readonly resources?: readonly (TResource | '*')[]
+  readonly roles?: readonly TRole[]
+}
+```
+
+`IDecision.applicable` is `false` for a NotApplicable policy decision and omitted otherwise.
+
+## Gotchas
+
+* `roles` is exact membership against `subject.roles`; `'*'` is not special there.
+* A policy with targets but zero rules is NotApplicable for everything: `SHAPE` has nothing to match. A policy with a `'*'`/`'*'` deny rule and matching targets denies everything the target admits.
+* In `production` mode `policyCombine: 'first-applicable'` is refused by the engine constructor; the other modes honour NotApplicable identically.
+
+## See also
+
+* [Rule matching](/duck-iam/core/rule-matching) - action and resource pattern semantics
+* [Cross-policy combining](/duck-iam/core/cross-policy) - how NotApplicable is skipped in each mode
+* [Combining algorithms](/duck-iam/core/policies/combining-algorithms) - what happens after the targets match
+* [Validation](/duck-iam/advanced/validation) - `UNREACHABLE_TARGET` and other codes

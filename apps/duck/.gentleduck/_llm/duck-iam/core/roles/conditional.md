@@ -1,8 +1,23 @@
-## grantWhen
+`grantWhen()` grants a permission only when a condition holds. It is the right tool when the condition is part of what the role *means* - "an author may edit their own posts" - rather than a cross-cutting rule. The conditions it builds are ordinary `AccessControl.IConditionGroup` trees, nested into the rule that [`rolesToPolicy()`](/duck-iam/core/roles/roles-to-policy) emits for that permission.
 
-`grantWhen()` attaches conditions to a permission:
+## grantWhen()
 
-```typescript
+```ts
+grantWhen<R extends TResource | '*'>(
+  action: TAction | '*',
+  resource: R,
+  fn: (w: When<TAction, TResource, TRole, TScope, TContext, R>)
+    => When<TAction, TResource, TRole, TScope, TContext, R>,
+): this
+```
+
+| Parameter | Type | Meaning |
+| --- | --- | --- |
+| `action` | `TAction \| '*'` | The action to permit conditionally. |
+| `resource` | `R extends TResource \| '*'` | The resource. Captured as a literal so `w.resourceAttr()` can narrow to that resource's attributes. |
+| `fn` | callback | Receives a fresh [`When`](/duck-iam/core/policies/conditions) builder; everything added to it is combined with AND. |
+
+```ts
 const author = defineRole('author')
   .name('Author')
   .grant('create', 'post')
@@ -12,98 +27,132 @@ const author = defineRole('author')
   .build()
 ```
 
-Authors can create and read any post, but only update or delete posts they own. `isOwner()` produces `resource.attributes.ownerId eq $subject.id`. `$subject.id` is a [variable reference](/duck-iam/core/policies/dollar-variables) resolved at evaluation time.
+Authors create and read any post, but update and delete only posts they own. `isOwner()` emits `{ field: 'resource.attributes.ownerId', operator: 'eq', value: '$subject.id' }`; the `$subject.id` operand is a [`$`-variable reference](/duck-iam/core/policies/dollar-variables) resolved against the same request at evaluation time. Pass a different path to override the owner field: `w.isOwner('resource.attributes.createdBy')`.
 
-  **Per-resource narrowing:** When using `defineIam()` with a typed `context`
-  and `resourceAttributes`, calling `.grantWhen('update', 'post', w => ...)` narrows
-  `w.resourceAttr()` to only attributes defined for posts. See the
-  [type-safe roles](/duck-iam/core/roles/type-safe) docs.
+The callback is not limited to owner checks - the whole `When` surface is available, including nesting:
 
----
-
-## Complex conditional permissions
-
-The `grantWhen()` callback gets a full [`When` builder](/duck-iam/core/policies/conditions):
-
-```typescript
+```ts
 const teamLead = defineRole('team-lead')
   .name('Team Lead')
   .grant('read', 'report')
   .grantWhen('approve', 'expense', (w) =>
-    w
-      .attr('department', 'eq', 'engineering')
-      .resourceAttr('amount', 'lte', 10000),
+    w.attr('department', 'eq', 'engineering').resourceAttr('amount', 'lte', 10000),
+  )
+  .build()
+// conditions: { all: [
+//   { field: 'subject.attributes.department', operator: 'eq', value: 'engineering' },
+//   { field: 'resource.attributes.amount', operator: 'lte', value: 10000 },
+// ] }
+```
+
+`w.attr()` prefixes `subject.attributes.`, `w.resourceAttr()` prefixes `resource.attributes.`, and `w.env()` prefixes `environment.`. The full operator table with missing-value and `NaN` semantics is on [conditions](/duck-iam/core/policies/conditions); `and()` / `or()` / `not()` and the depth limit are on [nesting](/duck-iam/core/policies/nesting).
+
+With a typed context that declares `resourceAttributes`, `grantWhen('update', 'post', ...)` narrows `w.resourceAttr()` to the attributes declared for `post`. See [type-safe roles](/duck-iam/core/roles/type-safe#per-resource-attribute-narrowing).
+
+## How the conditions reach the rule
+
+`grantWhen()` stores `w.buildAll()` on the permission, so `permission.conditions` is always an `all` group. During conversion the base conditions are built first, then merged with yours.
+
+The author's group is **never enumerated or spliced**. It is passed through whole and left to `evalConditionGroup`, the one parser that knows which group keys exist - reading `any` / `none` by hand and falling through to `[]` for anything else dropped an unrecognised group (a typo'd key, a hand-edited row) and turned a conditional grant silently unconditional. Passed through whole, an unknown group reads as `false` and the grant fails closed.
+
+The base conditions get their own `all` wrapper for the same reason. Splicing an `all` body in-line was depth-neutral while `any` / `none` had to be nested, so the identical condition tree crossed `MAX_CONDITION_DEPTH` in one shape and not the other, and the deeper shape then failed closed with no validation error - a silent denial, since role permissions are allow-only.
+
+Nested groups inside your callback are preserved. This role:
+
+```ts
+defineRole('editor')
+  .name('Editor')
+  .scope('org-1')
+  .grantWhen('update', 'post', (w) =>
+    w.or((o) => o.isOwner().role('admin')).env('hour', 'gte', 9),
   )
   .build()
 ```
 
-This grants `approve` on expenses only when the subject is in engineering AND the amount is at most 10,000.
+emits exactly this rule condition tree:
 
----
+```json
+{
+  "all": [
+    {
+      "all": [
+        { "field": "subject.roles", "operator": "contains", "value": "editor" },
+        { "field": "scope", "operator": "eq", "value": "org-1" }
+      ]
+    },
+    {
+      "all": [
+        {
+          "any": [
+            { "field": "resource.attributes.ownerId", "operator": "eq", "value": "$subject.id" },
+            { "field": "subject.roles", "operator": "contains", "value": "admin" }
+          ]
+        },
+        { "field": "environment.hour", "operator": "gte", "value": 9 }
+      ]
+    }
+  ]
+}
+```
 
-## Combining grantWhen with scope
+Read it as: holds `editor`, AND the request is in `org-1`, AND (owns the post OR holds `admin`), AND it is 9am or later. The two `all` groups are the base half and your half; both must hold, so the nesting changes the shape and not the meaning.
 
-Both stack - the resulting condition is `(scope match) AND (your when conditions)`:
+`IAM_RBAC_CONDITION_DEPTH` is `1`: because of that wrapper a permission's own group is already nested when the evaluator reaches it, so a `grantWhen()` callback has one fewer usable nesting level than a hand-written rule against the same `MAX_CONDITION_DEPTH` of 10. Anything that evaluates or depth-checks a permission's conditions outside the generated policy has to start counting at `1`, not `0`; the compiled table starting at `0` handed authors ten usable levels in production and nine in development, so at exactly `MAX_CONDITION_DEPTH` the table allowed and the interpreter denied.
 
-```typescript
+## Conditions and scope stack
+
+`grantWhen()` takes no scope argument. Scope comes from the role's `.scope()`, and the resulting rule requires **both**: the scope condition sits in the base group and your conditions in the group beside it, and the outer `all` means neither can be satisfied alone.
+
+```ts
 const orgApprover = defineRole('org-approver')
   .scope('org-1')
   .grantWhen('approve', 'expense', (w) => w.resourceAttr('amount', 'lte', 10000))
   .build()
+// fires only when scope is 'org-1' AND amount is at most 10000
 ```
 
-Effective rule: only fires when scope is `org-1` AND amount <= 10,000.
+There is no way to give a single conditional permission its own scope; if you need that, either split the role or add `w.scope('org-2')` inside the callback. Note that `w.scope()` emits a bare `scope eq` and a role-declared scope does not: under `scopeMode: 'hierarchical'` the generated condition widens to `{ any: [scope eq S, scope starts_with "S."] }`, so the hand-written version stops covering descendant scopes.
 
----
+## Interaction with inheritance
 
-## When to use grantWhen vs. a standalone policy
+Conditional permissions flatten like any other. If `editor` inherits `author`, the editor's generated rules include `author`'s conditional update, gated on `subject.roles contains "editor"`. To lift the condition for editors, re-grant unconditionally:
 
-Quick decision:
-
-| Situation | Use |
-| --- | --- |
-| Condition belongs to one role's natural meaning | `grantWhen()` on the role |
-| Condition spans many roles | Standalone policy |
-| Global deny layer | Standalone policy |
-| Different combining algorithm or operational lifecycle | Standalone policy |
-
-Examples:
-
-- "Authors can edit their own posts" - `grantWhen('update', 'post', w => w.isOwner())` on the `author` role
-- "Block all writes during maintenance mode" - standalone policy with `target({ actions: [...] })`
-- "Require GDPR consent for any user-profile read" - standalone policy targeting `user-profile` resource
-
----
-
-## How grantWhen interacts with role inheritance
-
-Conditional permissions are inherited like any other. If `author` has `grantWhen('update', 'post', isOwner)` and `editor` inherits `author`, the editor also has the conditional update permission.
-
-You can override by re-granting unconditionally:
-
-```typescript
+```ts
 const editor = defineRole('editor')
   .inherits('author')
-  .grant('update', 'post') // unconditional - wins under allow-overrides
+  .grant('update', 'post') // unconditional
   .build()
 ```
 
-Both rules end up in the synthetic RBAC policy. Under `allow-overrides`, the unconditional rule grants access regardless of ownership. Under `deny-overrides` cross-policy, an explicit deny elsewhere can still block.
+Both rules land in `__rbac__`. The policy combines with `allow-overrides`, so the unconditional rule allows the update regardless of ownership - the conditional one does not match and cannot veto. A deny in another policy still wins under the default `policyCombine: 'and'`. See [combining algorithms](/duck-iam/core/policies/combining-algorithms).
 
----
+## grantWhen or a standalone policy
 
-## Built-in shortcuts vs. condition builders
+| Situation | Use |
+| --- | --- |
+| The condition belongs to one role's natural meaning | `grantWhen()` |
+| The condition spans many roles | Standalone policy |
+| It removes access rather than granting it | Standalone policy with a deny rule |
+| It needs its own combining algorithm, version, or deployment cadence | Standalone policy |
 
-`grantWhen()` accepts a callback for full control. For very common patterns, use a shortcut directly:
+Worked examples:
 
-```typescript
-// Shortcut form:
-.grantWhen('update', 'post', (w) => w.isOwner())
+* "Authors edit their own posts" - `grantWhen('update', 'post', (w) => w.isOwner())` on `author`.
+* "Block all writes during maintenance" - a policy targeting the write actions with a deny rule.
+* "Every profile read requires consent" - a policy targeting the `user-profile` resource.
 
-// Equivalent explicit form:
-.grantWhen('update', 'post', (w) =>
-  w.check('resource.attributes.ownerId', 'eq', '$subject.id'),
-)
-```
+The two produce the same rule shape and run in the same pipeline; the difference is ownership and lifecycle, not capability. See [policies overview](/duck-iam/core/policies).
 
-See [conditions](/duck-iam/core/policies/conditions) for the full operator reference and [`$`-variables](/duck-iam/core/policies/dollar-variables) for cross-field comparisons.
+## Gotchas
+
+* **A conditional grant cannot veto.** `__rbac__` only contains allow rules. A failing condition means "this rule does not match", never "deny". If you need a hard block, write a deny rule.
+* **An empty callback is a no-op.** `grantWhen('update', 'post', (w) => w)` stores `{ all: [] }`, which merges nothing and behaves exactly like `grant('update', 'post')`.
+* **Field paths must resolve.** Only `subject`, `resource`, and `environment` roots, plus the `action` and `scope` shorthands, resolve at evaluation time; anything else returns `null` and the condition fails. `validatePolicy()` reports unresolvable paths as the warning `UNRESOLVABLE_FIELD`. See [rule matching](/duck-iam/core/rule-matching).
+* **The resource attributes have to be there.** `isOwner()` compares `resource.attributes.ownerId`; if the caller passes `{ type: 'post', attributes: {} }` the path resolves to `null` and the grant never fires. Load the row before checking, or use a [hook](/duck-iam/advanced/engine/hooks) to enrich `resource.attributes`.
+
+## See also
+
+* [Conditions](/duck-iam/core/policies/conditions) - every `When` method and operator
+* [`$`-variable references](/duck-iam/core/policies/dollar-variables) - how `$subject.id` resolves
+* [The rolesToPolicy conversion](/duck-iam/core/roles/roles-to-policy) - the merge shown here, in full
+* [Defining roles](/duck-iam/core/roles/definition) - the rest of the builder

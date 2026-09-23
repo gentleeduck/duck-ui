@@ -1,131 +1,125 @@
-## Two layers of combination
+A decision is produced in two stages. Inside a policy, the [combining algorithm](/duck-iam/core/policies/combining-algorithms) folds matching rules into one effect. Across policies, the engine merges those per-policy verdicts using `policyCombine`. This page documents the second stage: what counts as a verdict, what counts as silence, and what each of the three modes does with them.
 
-Decisions are produced in two stages:
+## A policy produces one of three outcomes
 
-1. **Inside a policy** - the policy's [combining algorithm](/duck-iam/core/policies/combining-algorithms) (`AccessControl.CombiningAlgorithm`: `deny-overrides`, `allow-overrides`, `first-match`, `highest-priority`) folds matching rules into one effect.
-2. **Across policies** - the engine merges per-policy decisions using its `policyCombine` setting (`AccessControl.PolicyCombine`). Defaults to `'and'`; configurable via `IamEngineTypes.IConfig.policyCombine`.
+`evaluatePolicy()` never returns "nothing". It returns allow, deny, or a decision explicitly marked NotApplicable. Only the first two are votes.
 
-```typescript
-import { IamEngine } from '@gentleduck/iam'
+The distinction the diagram turns on is between a policy that has nothing to say and one that considered the request and answered. Three things make a policy NotApplicable:
 
-new IamEngine({
-  adapter,
-  policyCombine: 'and',              // default: every applicable policy must allow
-  // policyCombine: 'allow-overrides', // any applicable allow wins
-  // policyCombine: 'first-applicable', // first decisive policy wins; development mode only
-})
+1. **Targets miss.** A declared `targets.actions`, `targets.resources`, or `targets.roles` dimension does not match. Reason: `Policy "
+
+| Mode | Rule | When to use |
+| --- | --- | --- |
+| `'and'` (default) | Every applicable policy must allow. The first non-allow wins and stops the walk. | Defense in depth. Each new policy can only restrict access, and each is auditable on its own. |
+| `'allow-overrides'` | Any applicable allow wins. Only if all applicable policies deny is the result a deny. | Layered grants where one permissive policy must beat stricter ones - break-glass roles, support escalation. |
+| `'first-applicable'` | The first policy that produces a decision **with a deciding rule** wins. A policy that was applicable but fell back to `defaultEffect` does not decide. | Ordered-by-specificity policy sets, XACML style, where policy order is deliberately part of the security model. |
+
+The engine constructor throws when `mode: 'production'` is combined with `policyCombine: 'first-applicable'`, because the fast path cannot represent it faithfully. The message names both: `policyCombine 'first-applicable' requires mode 'development'`. In development the pair is accepted, but `_getCompiledTable()` returns `null` for it and every request runs on the interpreter.
+
+Each mode has its own fall-through reason string when nothing applied, which is the fastest way to identify the mode from a log line:
+
+| Mode | Fall-through reason |
+| --- | --- |
+| `'and'` | `No policy applicable. Defaulted to 
+
+The `admin-only` policy targets `actions: ['admin:*']`, so it never applies to this request and never votes. That is what makes layering safe: adding a policy scoped to a different concern cannot accidentally deny everything else.
+
+```ts
+import { definePolicy } from '@gentleduck/iam'
+
+const businessHours = definePolicy('business-hours')
+  .name('Business hours')
+  .target({ actions: ['create', 'update', 'delete'] })
+  .algorithm('first-match')
+  .rule('deny-off-hours', (r) =>
+    r.deny().on('create', 'update', 'delete').of('*').when((w) => w.env('hour', 'lt', 9)),
+  )
+  .rule('allow-in-hours', (r) => r.allow().on('*').of('*'))
+  .build()
+
+const contentSafety = definePolicy('content-safety')
+  .name('Content safety')
+  .algorithm('deny-overrides')
+  .rule('block-banned', (r) =>
+    r.deny().on('*').of('*').when((w) => w.attr('banned', 'eq', true)),
+  )
+  .rule('owner-delete-only', (r) =>
+    r.allow().on('delete').of('post').when((w) => w.isOwner()),
+  )
+  .build()
 ```
 
-### NotApplicable semantics
-
-A policy whose `targets` don't match the request is **NotApplicable** and contributes nothing to the cross-policy combine - it is *skipped*, not folded as the default effect. This matches XACML and is the safe default: an admin policy that targets `actions: ['admin:*']` should not deny every regular request, it should be invisible to them.
-
-The same rule applies to the auto-generated RBAC policy: if no roles are defined, it's skipped entirely so it can't short-circuit an AND chain.
-
-***
-
-## Strict AND across policies (default)
-
-`policyCombine: 'and'`. Every **applicable** policy must allow for the final result to be `allow`. The first non-allow short-circuits.
-
-```typescript
-// Policy A: RBAC-generated, allows editors to update posts
-// Policy B: Custom, denies updates on weekends
-
-// On a weekday: Policy A allows, Policy B allows -> ALLOWED
-// On a weekend: Policy A allows, Policy B denies  -> DENIED
-```
-
-Short-circuiting: as soon as any policy denies, evaluation stops. Remaining policies aren't evaluated.
-
-***
+Both policies join the merged array alongside `__rbac__`. Order does not matter under `'and'` - the operator is commutative - but it does matter under `'first-applicable'`.
 
 ## Defense in depth
 
-Layer policies for tiered restrictions:
+The AND default is what lets you split authorization into one policy per concern.
 
-* The RBAC policy handles "who can do what"
-* A time-based policy handles "when they can do it"
-* A geo-fencing policy handles "where they can do it from"
-* A content policy handles "what they can do it to"
-
-Each policy evaluates independently. A deny from any one is final.
-
-This shape composes well - adding a new restriction never weakens existing ones. It also makes auditing easier: each policy file represents one concern.
-
-***
+Each policy file represents one concern and can be reviewed on its own. Adding a layer can only remove access, never grant it, so a new restriction cannot silently weaken an existing one. If you need OR semantics for one specific case, prefer encoding it inside a single policy with `algorithm: 'allow-overrides'` rather than switching the engine-wide `policyCombine`: same effect, much smaller blast radius.
 
 ## The default effect
 
-When no rules match inside a policy, the engine falls back to `defaultEffect` - `'deny'` by default (fail closed):
+`defaultEffect` is `'deny'` and applies in three places:
 
-```typescript
+* Inside a policy, when rules cover the request but none of them match.
+* After the cross-policy walk, when every policy was NotApplicable.
+* When the policy list is empty.
+
+A policy whose targets do not match is *not* folded in as the default; it is skipped. That is the difference this page's first section is about.
+
+```ts
 const engine = new IamEngine({
-  adapter: myAdapter,
+  adapter,
   defaultEffect: 'deny', // this is the default
 })
 ```
 
-Fail-closed means an unmatched request denies instead of accidentally allowing. The default applies:
+The constructor throws unless you also pass `allowFailOpen: true`, and even then it logs a startup warning so an operator grepping for fail-open configurations always finds it. Choose it only when your policies are written as deny exceptions on top of a deliberately open baseline.
 
-* Inside a policy when no rule matches and the algorithm has nothing to combine
-* After **every** policy was NotApplicable (no applicable policy contributed)
-* After all applicable policies finish without producing a definitive allow
+The evaluator also exposes a `failOpen` signal for exactly this case. When an allow is produced by the `defaultEffect` fallback with no applicable policy, the optional `signals` out-parameter has `failOpen` set to `true`, and the engine forwards it on the `onMetrics` event. Chart it: a rising fail-open rate is how a broken adapter or a mass policy deletion becomes visible, since the boolean verdict alone hides it.
 
-A policy with non-matching targets is **not** folded as the default - it's skipped from the combine entirely. See "NotApplicable semantics" above.
+## What changes on the compiled path
 
-Choose `defaultEffect: 'allow'` only if your policies are explicitly written as deny exceptions on top of an open baseline. The community convention is to keep `'deny'` and add explicit allow rules.
+The combine semantics are identical; the mechanics differ in two visible ways. The split is between the two evaluators, not between the two modes - the compiled table produces the verdict in **both** modes, and the interpreter runs alongside it in development, or in either mode when the table could not be built.
 
-***
+| | interpreter (`evaluate`) | compiled table |
+| --- | --- | --- |
+| Deny short-circuit under `'and'` | yes - remaining policies are not evaluated | no - every vote is collected, then folded with `every` |
+| Abstention | `applicable: false` on the decision | `null` from `evaluatePolicyFast`, or an omitted vote in the lookup |
+| `'first-applicable'` | supported | cannot be represented; the table is skipped, and the constructor refuses the pair in production |
+| `'allow-overrides'` | first allow wins, stops | all votes collected, folded with `some` |
 
-## When to switch off the AND default
+The compiled lookup collects three kinds of vote - the flat ABAC vote, one RBAC vote, and one per residual policy that could not be flattened - drops the abstentions, and returns `every` for `'and'` or `some` for `'allow-overrides'`. When no vote survives, it falls back to `defaultEffect` and raises the same `failOpen` signal.
 
-duck-iam now ships three cross-policy combine modes via `IamEngineTypes.IConfig.policyCombine`:
+`compiled.differential.test.ts` and `compiled.combine-invariance.test.ts` run the compiled path against the reference evaluator across generated policy sets and assert identical verdicts, including for NotApplicable cases. A disagreement is a bug in the compiler, not a documented mode difference.
 
-| Mode | When to use |
-|---|---|
-| `'and'` (default) | Defense in depth. Each new policy can only restrict access. Auditable per policy. |
-| `'allow-overrides'` | Layered grants where one permissive policy must beat stricter ones (e.g. break-glass roles). Any applicable allow wins. |
-| `'first-applicable'` | Ordered-by-specificity policy set, XACML-style. First policy that produces a non-default decision wins. **Development mode only** - `evaluatePolicyFast` can't represent it faithfully so the engine ctor refuses `mode: 'production'` + `'first-applicable'`. |
+## A rotten policy never fails the request
 
-For most apps, stick with `'and'`. Switch to `'allow-overrides'` only when you have a deliberate "this permissive policy must win" pattern; switch to `'first-applicable'` only when policy order is part of your security model.
+Both `evaluate()` and the compiled lookup wrap each policy evaluation. If one throws - a malformed condition loaded from an adapter row, a regex input over the 2048-character cap - the error goes to `onPolicyError` and that policy is treated as NotApplicable. The remaining policies still decide.
 
-If you want OR semantics for one specific scenario, prefer encoding it *inside* one policy with `allow-overrides` over splitting across multiple - same effect, smaller blast radius.
+This is deliberate and it cuts both ways: a broken deny policy stops denying. Wire `onPolicyError` to an alert, not to a log line nobody reads.
 
-***
+## When to use / When not to use
 
-## Practical pattern
+Stay on `'and'` for almost every application. It is the only mode where adding a policy is guaranteed to be safe.
 
-A typical setup has 3-5 policies:
+Move to `'allow-overrides'` only when you have a deliberate "this permissive policy must win" pattern and you have written down which policy that is. Under this mode a single misconfigured policy can grant access that every other policy denies.
 
-```typescript
-// 1. Auto-generated RBAC policy (from roles you defined)
-//    algorithm: 'allow-overrides'
+Move to `'first-applicable'` only when the ordering of your policy list is itself part of the security model, and accept that you are then pinned to `development` mode. If you want ordering *within* one concern, use `first-match` or `highest-priority` as the policy's own combining algorithm instead - that keeps the ordering local and leaves the engine on the safe default.
 
-// 2. Business hours restriction
-const businessHours = definePolicy('business-hours')
-  .target({ actions: ['create', 'update', 'delete'] })
-  .algorithm('first-match')
-  .rule('deny-off-hours', /* ... */)
-  .rule('allow-in-hours', (r) => r.allow().on('*').of('*'))
-  .build()
+## Gotchas
 
-// 3. Content safety (banned users, owner-only deletes)
-const contentSafety = definePolicy('content-safety')
-  .algorithm('deny-overrides')
-  .rule('block-banned', /* ... */)
-  .rule('owner-delete-only', /* ... */)
-  .build()
+* **A policy that considered the request and found nothing still votes.** Only a targets miss, a shape miss, or a throw abstains. Under `'and'` with `defaultEffect: 'deny'`, that vote is a deny.
+* **`targets.roles` is exact membership**, not a pattern match, and it is tested against the *enriched* `subject.roles`, so scoped roles count.
+* **Policy targets use the flat resource matcher.** `matchesResource`, not the hierarchical one - a bare target `dashboard` does not apply to `dashboard.users`. Write `dashboard.*`.
+* **`'first-applicable'` needs a deciding rule.** A policy that applied but fell back to `defaultEffect` is skipped by this mode and the walk continues.
+* **`evaluateFast()` has no `'first-applicable'` branch.** It falls through to the `'and'` behaviour; the engine constructor is what prevents you from reaching that state.
+* **Short-circuiting belongs to the interpreter, not to a mode.** The compiled table produces the verdict in both modes and collects every vote, so the reasoning that "my expensive policy runs last so it rarely runs" does not hold anywhere.
 
-// 4. Geo-fencing (optional)
-const geoFence = definePolicy('geo-fence')
-  .target({ actions: ['*'] })
-  .algorithm('first-match')
-  .rule('block-restricted-regions', /* ... */)
-  .rule('allow-default', (r) => r.allow().on('*').of('*'))
-  .build()
-```
+## See also
 
-A request must satisfy all four. Each policy handles one concern. Order doesn't matter - AND is commutative.
-
-See the [layered example](/duck-iam/core/policies/example-layered) for a complete walkthrough.
+* [Evaluation pipeline](/duck-iam/core/evaluation) - where the per-policy verdicts come from.
+* [Combining algorithms](/duck-iam/core/policies/combining-algorithms) - the first stage, inside one policy.
+* [Targets](/duck-iam/core/policies/targets) - authoring the gate that decides applicability.
+* [Layered example](/duck-iam/core/policies/example-layered) - a complete multi-policy walkthrough.
+* [Primitives](/duck-iam/core/primitives) - the `IDecision.applicable` field and `AccessControl.PolicyCombine`.

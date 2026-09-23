@@ -17,11 +17,11 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'>>(
           'file:inline-flex file:h-6 file:border-0 file:bg-transparent file:font-medium file:text-foreground file:text-sm',
           'placeholder:text-muted-foreground',
           'focus-visible:ring-1 focus-visible:ring-ring',
-          'disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50',
+          'disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50',
           'md:text-sm',
           'dark:bg-input/30 dark:disabled:bg-input/80',
           'aria-invalid:border-destructive aria-invalid:text-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40',
-          'aria-disabled:pointer-events-none aria-disabled:opacity-50',
+          'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
           'aria-warning:border-warning aria-warning:text-warning aria-warning:ring-warning/20 dark:aria-warning:border-warning/50 dark:aria-warning:ring-warning/40',
           className,
         )}

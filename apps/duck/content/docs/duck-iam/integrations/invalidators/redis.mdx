@@ -1,27 +1,44 @@
 ---
-title: redis invalidator
-description: Cross-instance cache invalidation broadcaster backed by Redis pub/sub.
+title: Redis invalidator
+description: Cross-process cache invalidation over Redis pub/sub - channels, signed message format, delivery ordering, reconnection, and failure modes
 section: Integrations
 ---
-## What it does
 
-`createIamRedisInvalidator` wires a duck-iam engine to a Redis pub/sub channel so every node in a fleet drops its local caches when *any* node mutates a policy, role, or subject. Without it, `engine.admin.savePolicy()` on pod A leaves pods B - J serving stale grants for up to `cacheTTL` seconds. With it, mutations propagate within one round-trip.
+`createIamRedisInvalidator` connects a duck-iam engine to a Redis pub/sub channel so that every process in a fleet drops the right local caches when *any* process mutates a policy, role, or subject. This page documents the channel naming, the exact bytes on the wire, what happens when a message is dropped or the connection breaks, and every failure mode the implementation defends against.
 
----
+## Why cross-process invalidation is needed
 
-## Install
+The engine caches aggressively. Five LRU caches (policies, roles, the RBAC-derived policy, merged policies, and resolved subjects) sit in front of the adapter, each entry living for `cacheTTL` seconds - default `60`. That is what makes a `can()` check a memory lookup instead of a database round-trip.
 
-The invalidator has zero runtime dependencies. Pair it with your existing Redis client (ioredis or node-redis v4+).
+Those caches are per-process. `engine.admin.savePolicy()` on pod A writes through the adapter and clears pod A's caches, but pods B through J know nothing about it. Until their own entries expire they keep answering from the pre-mutation snapshot.
 
-```typescript
-import { createIamRedisInvalidator } from '@gentleduck/iam/invalidators/redis'
-```
+<Callout tone="warning" title="What stale caches mean for authorization">
+A revoke is the dangerous direction. `engine.admin.revokeRole('u-1', 'admin')` on pod A takes effect on pod A immediately; on every other pod the subject keeps the role for up to `cacheTTL` seconds. With the default `cacheTTL: 60` that is a full minute of a revoked administrator still passing `can()` on nine out of ten pods.
+</Callout>
 
----
+An invalidator closes that window. Every local invalidation is also broadcast; every process subscribed to the same channel applies the matching local invalidation. Propagation is one Redis round-trip instead of one TTL.
 
-## Usage
+The contract itself is transport-agnostic - `IamEngineTypes.IInvalidator` is two methods, `publish` and `subscribe`. The Redis implementation is the one shipped in the box; see [Custom transports](#custom-transports) for NATS, Kafka, or an in-process bus.
 
-Pass it into `IConfig.invalidator`:
+## Setup
+
+The invalidator has no runtime dependencies of its own. It talks to whatever client you already use, through a three-method structural interface - one of them optional - that both ioredis and node-redis v4+ satisfy.
+
+<PackageManagerTabs bun="bun add @gentleduck/iam" npm="npm i @gentleduck/iam" pnpm="pnpm add @gentleduck/iam" yarn="yarn add @gentleduck/iam" />
+
+<Steps>
+<Step>Open two Redis connections</Step>
+
+Redis puts a connection into subscriber mode when it subscribes, and a subscribed connection cannot issue `PUBLISH`. You need one connection for each direction.
+
+<Step>Adapt the client to `IamRedisInvalidator.IPubSubLike`</Step>
+
+The invalidator calls `publish(channel, message)`, `subscribe(channel, handler)`, and optionally `unsubscribe(channel)`. Nothing else.
+
+<Step>Pass the invalidator into the engine config</Step>
+
+The engine subscribes once at construction and releases the subscription in `dispose()`.
+</Steps>
 
 ```ts
 import { IamEngine } from '@gentleduck/iam'
@@ -34,16 +51,16 @@ const sub = new Redis() // subscriber must be a separate connection
 const invalidator = createIamRedisInvalidator({
   client: {
     publish: (ch, msg) => pub.publish(ch, msg),
-    subscribe: (ch, handler) => {
-      sub.subscribe(ch)
+    subscribe: async (ch, handler) => {
       sub.on('message', (chan, message) => {
         if (chan === ch) handler(message)
       })
+      await sub.subscribe(ch)
     },
     unsubscribe: (ch) => sub.unsubscribe(ch),
   },
-  channel: 'iam:invalidate', // optional; defaults to 'duck-iam:invalidate'
-  secret: process.env.IAM_INVALIDATE_SECRET, // SEC-046 - required in prod
+  secret: process.env.IAM_INVALIDATE_SECRET, // required in production
+  onSubscribeError: (err, channel) => alerts.page('iam-invalidation-deaf', { channel, err }),
 })
 
 const engine = new IamEngine({ adapter, invalidator })
@@ -51,40 +68,51 @@ const engine = new IamEngine({ adapter, invalidator })
 process.on('SIGTERM', () => engine.dispose())
 ```
 
-<Callout type="warning" title="Set `secret` in production (SEC-046)">
-Without `secret`, envelopes are unsigned and accepted from any party with
-PUBLISH rights on the channel - they can wipe caches across the fleet.
-With `secret`, every envelope is HMAC-SHA256 signed; incoming envelopes
-without a verifying signature are dropped. A one-shot console warn fires
-at construction when no secret is set.
-</Callout>
+`await sub.subscribe(ch)` is load-bearing. The invalidator awaits whatever `subscribe` returns and only latches `subscribed` once it resolves, so awaiting is what makes a NOAUTH or a bad ACL reach `onSubscribeError` instead of vanishing into an unobserved promise.
 
----
+For node-redis v4+ the adapter is thinner, because its `subscribe` already takes a per-channel listener:
 
-## How it works
+```ts
+import { createClient } from 'redis'
 
-Every local `engine.admin.*` mutation publishes a discriminated-union event:
+const pub = createClient()
+const sub = pub.duplicate()
+await Promise.all([pub.connect(), sub.connect()])
 
-```typescript
-type IInvalidateEvent =
-  | { kind: 'all' }
-  | { kind: 'policies' }
-  | { kind: 'roles'; roleId?: string }
-  | { kind: 'subject'; subjectId: string }
+const invalidator = createIamRedisInvalidator({
+  client: {
+    publish: (ch, msg) => pub.publish(ch, msg),
+    subscribe: (ch, handler) => sub.subscribe(ch, handler),
+    unsubscribe: (ch) => sub.unsubscribe(ch),
+  },
+  secret: process.env.IAM_INVALIDATE_SECRET,
+})
 ```
 
-Every engine subscribed to the same channel receives the event and applies the matching local invalidate (`invalidate*({ broadcast: false })`) so it doesn't re-publish - no echo storm.
+`IConfig.invalidator` is constructor-only, and engines are commonly built at module import time - before any replica-specific Redis client exists. `engine.setInvalidator(invalidator)` attaches one later, and `setInvalidator(null)` detaches; both validate the argument and throw a `TypeError` on anything that is not `null` or an object with `publish` and `subscribe` functions. Replacing unsubscribes the previous one first, so an engine holds at most one subscription however many times it is called. The constructor field routes through the same method.
 
-Each engine instance embeds a per-process UUID in every published event. The subscriber filters out messages with its own UUID, so a node never re-applies its own mutation.
+<Callout tone="warning" title="Set a secret in production">
+Without `secret`, envelopes are unsigned and accepted from anyone holding PUBLISH rights on the channel - a shared Redis instance becomes a fleet-wide cache-wipe primitive. With `secret`, every envelope is HMAC-SHA256 signed and unverifiable envelopes are dropped. A `console.warn` fires at construction when no secret is set, latched per full channel name so one process running one invalidator per tenant reports each unsigned channel rather than only the first.
+</Callout>
 
----
+Roll the secret out to every replica at once. A fleet where half the nodes sign and half do not refuses envelopes in both directions for the whole rollout, and the failure is stale *allow* - see [failure modes](#failure-modes).
 
-## Multi-tenant channels
+## Channels
 
-In multi-tenant deployments where different tenants must not cross-invalidate,
-pass `tenantId` and the invalidator auto-prefixes the channel as
-`duck-iam:invalidate:tenant:${tenantId}` (or `${channel}:tenant:${tenantId}`
-when `channel` is also given). CAVEAT-1.
+One channel is one invalidation broadcast group. Every engine subscribed to it shares invalidations; engines on different channels are fully isolated.
+
+| Config | Effective channel |
+| --- | --- |
+| neither `channel` nor `tenantId` | `duck-iam:invalidate` |
+| `channel: 'iam:invalidate'` | `iam:invalidate` |
+| `tenantId: 'acme'` | `duck-iam:invalidate:tenant:acme` |
+| `channel: 'iam:invalidate'` + `tenantId: 'acme'` | `iam:invalidate:tenant:acme` |
+
+The channel name is resolved once at construction and used for `publish`, `subscribe`, `unsubscribe`, and the `channel` argument handed to `onPublishError`, `onSubscribeError`, and `onMessageDropped`. It never changes for the lifetime of the invalidator.
+
+### Per-tenant channels
+
+On a shared Redis instance, tenants must not cross-invalidate: tenant A's mass revoke should not wipe tenant B's caches, and tenant A should not be able to observe tenant B's mutation rate. Pass `tenantId` and the invalidator builds the namespaced channel for you.
 
 ```ts
 createIamRedisInvalidator({
@@ -94,53 +122,401 @@ createIamRedisInvalidator({
 })
 ```
 
-`tenantId` is validated against `/^[A-Za-z0-9_-]{1,64}$/` so an
-attacker-controlled tenant slug cannot inject pub/sub wildcards (`*`) or
-whitespace that would confuse downstream subscribers. Invalid slugs throw at
-construction.
+`tenantId` is shape-validated against `/^[A-Za-z0-9_-]{1,64}$/`. A slug containing a space, a `*`, or an empty string throws at construction:
 
-Building the channel name yourself with `channel: '...'` still works for
-existing deployments, but `tenantId` is the recommended path for new code.
+```
+[@gentleduck/iam:invalidator:redis] tenantId must match /^[A-Za-z0-9_-]{1,64}$/ (got "wild*card")
+```
 
----
+The validation exists because tenant slugs are frequently attacker-influenced. An unvalidated slug could inject pub/sub glob characters or whitespace and cause a subscriber to match channels it was never meant to see. `redis-invalidator.test.ts` pins both halves: `tenantId: 'acme'` produces `duck-iam:invalidate:tenant:acme` on both the subscribe and publish paths, and `'with space'`, `'wild*card'`, and `''` all throw.
+
+Building the channel name yourself with `channel` still works for existing deployments, but `tenantId` is the path for new code - it is the option that makes the isolation a checked invariant rather than a convention.
+
+Everywhere this module *logs* a channel it replaces the tenant segment with the first eight hex digits of its SHA-256, so stderr does not become a directory of which tenants exist and which are being probed - the drop warning in particular is written on a path any outsider with PUBLISH rights can drive. The base channel stays readable, and the digest is unsalted so the same tenant reads identically across replicas. The three hooks receive the **raw** channel, tenant id included; they are your code, so you decide what reaches a shared sink.
+
+## Message format
+
+Three wire formats exist. Which one the invalidator writes is decided by `secret`; which ones it accepts is decided by the same value plus `acceptLegacyUnboundEnvelopes`.
+
+### Signed envelope, v2 (`secret` set)
+
+```json
+{
+  "payload": {
+    "channel": "duck-iam:invalidate:tenant:acme",
+    "event": { "kind": "subject", "subjectId": "u-1" },
+    "instanceId": "0d3f1b9c-7a42-4a1e-9d6b-2e5c0f8a1234",
+    "ts": 1764700000000
+  },
+  "sig": "5f3c9a1e8b7d4c2a0f6e9d8c7b6a5948372615049382716f5e4d3c2b1a0f9e8d",
+  "v": 2
+}
+```
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `v` | `2` | Wire-format version. Bumped only on an incompatible envelope change. |
+| `sig` | `string` (hex) | `HMAC-SHA256(secret, canonicalJSON(payload))`, lower-case hex. |
+| `payload.channel` | `string` | The effective channel this envelope was signed for. Compared with the channel it arrived on. |
+| `payload.event` | `IamEngineTypes.IInvalidateEvent` | The invalidation to apply. |
+| `payload.instanceId` | `string` | UUID generated once per invalidator instance. Drives self-echo filtering. |
+| `payload.ts` | `number` | `Date.now()` at publish time. Drives the replay window. |
+
+**Why the channel is inside the signature.** v1's pre-image was `{event, instanceId, ts}`. A signature over that says only "someone holding the secret wrote this" - and on a shared fleet secret, that is every tenant. An envelope validly signed for tenant A therefore verified on tenant B's channel byte for byte, and was honoured. Channel routing decides who Redis *delivers* to; it says nothing about what a node accepts from someone publishing to its channel directly. v2 signs the channel and the verifier compares it with the channel the message arrived on.
+
+The HMAC pre-image is **not** the bytes on the wire - it is `canonicalJSON(payload)`, a serialisation with object keys sorted lexicographically at every level and array order preserved. Publisher and verifier therefore agree byte-for-byte regardless of how either host's JSON engine orders keys. For the envelope above the pre-image is:
+
+```json
+{"channel":"duck-iam:invalidate:tenant:acme","event":{"kind":"subject","subjectId":"u-1"},"instanceId":"0d3f1b9c-7a42-4a1e-9d6b-2e5c0f8a1234","ts":1764700000000}
+```
+
+The payload is signed *after* a JSON round-trip, not as the in-memory object. `canonicalJSON` walking the live value emitted the literal token `undefined` for a property `JSON.stringify` drops outright, so the two sides hashed different byte strings and the signature could never match. `cache.invalidateRoles()` with no argument publishes exactly that shape - `{kind:'roles', roleId: undefined}` - so a blanket role revoke stopped propagating the moment signing was enabled. Round-tripping first also covers `Date`, `toJSON`, functions, symbols and array holes without enumerating them.
+
+Signature comparison goes through `timingSafeEqual` from `node:crypto`, with a length pre-check so a mismatched-length signature cannot short-circuit the compare and leak a length oracle. A test reads the source and asserts the `timingSafeEqual` import is still there, specifically to stop a future refactor from reintroducing `===`.
+
+### Signed envelope, v1 (legacy, channel-unbound)
+
+The same shape without `payload.channel`. Refused by default. `acceptLegacyUnboundEnvelopes: true` accepts it, and re-opens exactly the cross-tenant hole described above - knowingly, for the middle of a rolling upgrade, where a v1 node's invalidations would otherwise be dropped and a dropped invalidation is a cache honouring a revoked grant until its TTL. It warns once per channel at construction while it is on, and the warning is gated on a `secret` being set: with no secret there is no signature to unbind and the flag changes nothing. Turn it off once every node publishes v2.
+
+### Legacy unsigned envelope (`secret` omitted or `null`)
+
+```json
+{ "event": { "kind": "all" }, "instanceId": "0d3f1b9c-7a42-4a1e-9d6b-2e5c0f8a1234" }
+```
+
+No signature, no timestamp, no version field. Accepted only when the receiver has no secret configured.
+
+### The event union
+
+```ts
+type IInvalidateEvent<TRole extends string = string> =
+  | { readonly kind: 'all' }
+  | { readonly kind: 'policies' }
+  | { readonly kind: 'roles'; readonly roleId?: TRole }
+  | { readonly kind: 'subject'; readonly subjectId: string }
+```
+
+Each admin mutation maps to exactly one event kind:
+
+| Admin call | Local invalidation | Broadcast event |
+| --- | --- | --- |
+| `savePolicy`, `deletePolicy` | `cache.invalidatePolicies()` | `{ kind: 'policies' }` |
+| `saveRole(role)` | `cache.invalidateRoles(role.id)` | `{ kind: 'roles', roleId }` |
+| `deleteRole(id)` | `cache.invalidateRoles(id)` | `{ kind: 'roles', roleId }` |
+| `assignRole`, `revokeRole`, `updateAssignmentScope`, `setAttributes` | `cache.invalidateSubject(subjectId)` | `{ kind: 'subject', subjectId }` |
+| `import(snapshot)` | `invalidatePolicies()` then `invalidateRoles()` | two events: `policies`, then `roles` with no `roleId` |
+| `engine.cache.invalidate()` | everything | `{ kind: 'all' }` |
+
+Note that `roleId` is optional on the `roles` event and its absence is meaningful, not a defect: a `roles` event without a `roleId` clears the whole subject cache, while one carrying a `roleId` only evicts subjects that actually hold that role (globally or as a scoped role). `redis-invalidator-event-shape.test.ts` pins that `{ kind: 'roles' }` is accepted as-is.
+
+Every other shape is rejected before it reaches a handler. `{ kind: 'subject' }` with a missing, non-string, or empty `subjectId`, `{ kind: 'roles', roleId: 42 }`, `{ kind: 'unknown' }`, and `{}` are all dropped. This is deliberate: an invalidate event with an `undefined` `subjectId` would be a no-op that looks like success, and a tampered payload must never be able to steer which cache entry gets cleared.
+
+## Propagating a role change
+
+This is the full path of a revoke on node A becoming a cache eviction on node B.
+
+<MermaidDiagram chart={`sequenceDiagram
+    participant Op as Operator
+    participant A as Node A engine
+    participant R as Redis channel
+    participant B as Node B engine
+    Op->>A: admin.revokeRole u-1, admin
+    A->>A: adapter.revokeRole write
+    A->>A: cache.invalidateSubject u-1
+    A->>R: PUBLISH signed envelope
+    R-->>A: echo back to the publisher
+    A->>A: instanceId matches self, ignored
+    R-->>B: deliver envelope
+    B->>B: verify HMAC and replay window
+    B->>B: applyInvalidateEvent, broadcast false
+    B->>B: evict u-1 from subjectCache and inFlight
+    Op->>B: can u-1, delete, post
+    B->>B: cache miss, reload subject from adapter
+    B-->>Op: deny`} />
+
+Three details in that sequence are load-bearing.
+
+**The local invalidation happens first.** `cache.invalidateSubject` clears node A's own caches and *then* calls `invalidator.publish`. Node A is already correct before the broadcast leaves the process, which is why a publish failure is survivable.
+
+**Node A ignores its own message.** Redis delivers a published message to every subscriber on the channel, including the publisher's own subscriber connection. Without the `instanceId` filter, every local mutation would echo back and clear caches the process had already rebuilt - under write load that becomes an invalidation storm. The subscriber compares `payload.instanceId` against its own per-process UUID and returns early on a match. `redis-invalidator.test.ts` loops a published message straight back to its own bus and asserts no handler fires.
+
+**Node B applies with `broadcast: false`.** `applyInvalidateEvent` dispatches to the same `invalidate*` functions the local path uses, but with broadcasting suppressed. Without that, B would re-publish what it just received, C would re-publish B's copy, and the channel would never quiesce.
+
+## Delivery ordering and dropped messages
+
+Redis pub/sub is fire-and-forget. There is no acknowledgement, no persistence, and no redelivery. The invalidator does not add any: `publish` does not await the client, and the return value of `client.publish` is discarded.
+
+**Ordering.** Redis preserves order per publisher connection, so two events published by the same node arrive at every subscriber in the order they were sent. Across nodes there is no global ordering, and none is needed. Every event is a *clear*, never a write - it removes cache entries and lets the next request repopulate from the adapter. Reordering two clears produces the same end state as either order, and a clear arriving later than expected costs an extra adapter read, never a stale answer. The only cost of redundant or out-of-order delivery is throughput.
+
+**Idempotence.** All four invalidate operations are idempotent, so at-least-once delivery is sufficient. Applying `{ kind: 'all' }` twice clears already-empty caches.
+
+**A dropped message is silent and self-healing.** If the subscriber connection is down, if the message exceeds a guard limit, or if the signature does not verify, the event is simply gone. That node's caches stay stale until the affected entries expire on their own - at most `cacheTTL` seconds, default `60`, and the TTL covers all of it: the subject cache, the role cache, the policy cache and the compiled table. The next request after expiry re-reads from the adapter and is correct again. The failure mode is bounded staleness, not permanent divergence, which is exactly the pre-invalidator behaviour.
+
+Staleness runs in **both** directions, because a grant publishes `{kind:'subject'}` exactly as a revoke does. A deaf replica serves a stale **allow** for a revoked role and a stale **deny** for a freshly granted one, each until its TTL retires the entry. The stale allow is the one to alert on. A time-boxed grant can expire earlier than the TTL, because the cache caps an entry at the grant's own `notAfter` - but nothing shortens the window for an ordinary revoke.
+
+<Callout tone="info" title="cacheTTL is the backstop">
+Because a dropped message degrades to TTL expiry, `cacheTTL` is your worst-case staleness budget even with an invalidator wired. Treat the invalidator as the fast path and the TTL as the correctness floor; do not raise `cacheTTL` to hours on the assumption that pub/sub will always land.
+</Callout>
+
+## Reconnection behaviour
+
+The invalidator does not implement reconnection, and does not try to detect a broken connection. Reconnection belongs to the Redis client you passed in.
+
+<MermaidDiagram chart={`stateDiagram-v2
+    [*] --> Idle
+    Idle --> Subscribed: first subscribe call, client.subscribe issued
+    Subscribed --> Subscribed: additional handler registered
+    Subscribed --> Idle: last handler detached, client.unsubscribe issued
+    Idle --> [*]: engine.dispose`} />
+
+`client.subscribe(channel, handler)` is issued exactly once, on the first `subscribe()` call, guarded by an internal latch. Registering more handlers reuses the same subscription. The teardown function returned by `subscribe()` removes one handler; only when the last handler detaches does the invalidator clear the latch and call `client.unsubscribe?.(channel)`. `engine.dispose()` invokes that teardown, which is why disposing an engine actually releases the Redis subscription instead of leaking it.
+
+What this means operationally:
+
+- **The invalidator never re-issues SUBSCRIBE.** Once `subscribe()` resolves the latch stays set. A `CLIENT KILL`, a failover, or a Redis restart leaves the node permanently deaf unless the client library resubscribes on reconnect.
+- **ioredis** re-subscribes automatically after a reconnect, so the handler keeps receiving messages with no involvement from the invalidator.
+- **node-redis v4+** likewise restores subscriptions on reconnect. A hand-rolled client may not.
+- **A *rejected* first subscribe is different from a killed connection.** It is reported through `onSubscribeError` and retried on the next `subscribe()` call, because the latch is only set after the promise resolves.
+- **Messages published during the disconnect window are lost.** Redis buffers nothing for a disconnected subscriber. Those nodes are stale until TTL expiry, per the previous section.
+
+<Callout tone="warning" title="`healthCheck()` does not know about the subscription">
+`engine.healthCheck()` probes the adapter and the compiled table. It never
+consults the invalidator, so a replica whose subscribe failed - or whose
+connection was killed and never restored - reports `ok: true` while serving
+pre-revocation decisions for up to one `cacheTTL`. The health endpoint is not
+invalidation liveness. Monitor `PUBSUB NUMSUB <channel>` and alert when it
+sits below the replica count for longer than one `cacheTTL`; that is the only
+external signal of a node gone deaf. Page on `onSubscribeError` as well - a
+failed publish drops one event, a failed subscribe drops every future one.
+</Callout>
+
+If a minute of staleness after a Redis blip is too much for your risk profile, close the gap explicitly by clearing the local caches when the client reports it is back:
+
+```ts
+sub.on('ready', () => {
+  // We may have missed broadcasts while disconnected. Drop everything
+  // locally; `broadcast: false` keeps this node from re-publishing an
+  // `all` event that would make every other node do the same.
+  engine.cache.invalidate({ broadcast: false })
+})
+```
+
+`broadcast: false` matters here. A bare `engine.cache.invalidate()` would publish `{ kind: 'all' }`, so a fleet-wide reconnect after a Redis restart would have every node telling every other node to drop its caches - a thundering herd against the adapter at the worst possible moment.
+
+## Failure modes
+
+Every rejection path drops the message and reports it through `onMessageDropped`, or through a rate-limited `console.warn` when no hook is wired. Nothing throws into the subscriber.
+
+| Failure | Behaviour | Drop reason string |
+| --- | --- | --- |
+| `client.publish` throws **or rejects** | Local invalidation already applied; `onPublishError(err, channel)` is called; nothing is thrown to the caller | `publish failed (<message>)` (reaches `onMessageDropped` when only that hook is wired) |
+| `onPublishError` itself throws | Swallowed - the fail-soft contract wins | none |
+| `client.subscribe` throws or rejects | Node receives nothing until a later `subscribe()` succeeds; `onSubscribeError(err, channel)` is called | none |
+| Redis unreachable for the subscriber | Messages lost; caches stale until `cacheTTL` | none - the client owns connection errors |
+| Peer signs, receiver has no `secret` | Envelope dropped, never unwrapped | `v:1 envelope received without secret configured` / `v:2 envelope received without secret configured` |
+| Peer does not sign, receiver has `secret` | Legacy envelope dropped | `unsigned message with secret configured` |
+| Peer sends v:1 and this node did not opt in | Dropped: the signature does not cover the channel | `v:1 envelope is not channel-bound` |
+| Envelope signed for a different channel | Dropped: cross-tenant relay refused | `envelope was signed for a different channel` |
+| Secrets differ between peers | Dropped on both sides; invalidation is silently dead | `signature mismatch` |
+| Payload tampered in flight | Dropped | `signature mismatch` |
+| Clock skew above 30 s in either direction | Every message dropped | `replay window exceeded` |
+| Wire message above 16 KB of UTF-8 | Dropped before `JSON.parse` | `oversize wire message` |
+| Unparseable JSON | Dropped | `invalid JSON` (reported only when `secret` is set) |
+| Payload nesting above depth 8, or above 64 total keys | Dropped before canonicalisation | `payload exceeds depth/key limits` |
+| Malformed envelope (`sig` not a string, `payload` not an object) | Dropped | `malformed envelope` |
+| v:2 envelope with no string `channel` | Dropped | `malformed inner payload (channel)` |
+| `ts` missing, non-numeric, or non-finite | Dropped | `missing or invalid ts` |
+| `instanceId` not a string | Dropped | `malformed inner payload (instanceId)` / `malformed legacy payload (instanceId)` |
+| Event shape invalid for its `kind` | Dropped | `malformed inner payload (event)` / `malformed legacy payload (event)` |
+| Message published by this same instance | Ignored after verification | none - this is the normal self-echo path |
+| A handler throws while applying | Logged as `invalidation handler threw - continuing`; the remaining handlers still run | none |
+| `tenantId` fails the slug pattern | **Throws** at construction | n/a |
+
+<Callout tone="warning" title="A split fleet fails silently, in the stale-allow direction">
+If you roll `IAM_INVALIDATE_SECRET` to half the fleet, both halves keep running
+and both keep publishing, and every cross-half envelope is refused - the
+signing nodes report `unsigned message with secret configured`, the others
+report `v:2 envelope received without secret configured`. Caches never converge
+for the length of the rollout, and the consequence is a revoked role that keeps
+working on every node until its own TTL retires it. Nothing throws and no
+request errors. Finish the rollout rather than pausing it, and wire
+`onMessageDropped` so the window is visible while it is open.
+</Callout>
+
+### `onMessageDropped`
+
+```ts
+onMessageDropped?: (reason: string, channel: string, suppressed: number) => void
+```
+
+Three properties of the hook are deliberate:
+
+- **`reason` is one of the module's own fixed strings, never anything from the message.** A drop reason reaches a log or an alert and must not be attacker-composed. The one exception is `publish failed (<message>)`, which interpolates the client's own error text - so if you label a counter with `reason`, normalise that row to a constant first or the label is unbounded.
+- **It fires on the same coalescing schedule as the warning it replaces** - at most once per 60 s per channel per kind. Inbound traffic is attacker-driven, and a hook invoked per message would be an amplifier pointed at your own alerting. `suppressed` carries the count coalesced since the last report, so wire it as `counter.inc(1 + suppressed)` to see the true rate.
+- **A throwing hook is swallowed.** A pub/sub callback that throws takes the client's listener down with it.
+
+The hook replaces the console warning rather than doubling it. Read the reason, not the count:
+
+| Reason class | Action |
+| --- | --- |
+| Either `without secret configured`, or `unsigned message with secret configured` | The fleet is split mid-rollout. Finish it now - every node is serving up to one `cacheTTL` of stale allow. |
+| `v:1 envelope is not channel-bound` | Old nodes remain. Finish the upgrade, or set `acceptLegacyUnboundEnvelopes: true` on the new nodes for the duration and remove it after. |
+| `replay window exceeded` | Check clock skew across replicas before suspecting the network. |
+| `signature mismatch` in volume | A half-applied secret rotation, or somebody is publishing to your channel. |
+| `oversize` / `depth/key` / `malformed` / `invalid JSON` | Someone else has PUBLISH rights on the channel. Tighten the Redis ACL. |
+| `envelope was signed for a different channel` | A relay between tenants. Investigate who can PUBLISH across them. |
+
+### The receive path
+
+Every incoming message runs the same gauntlet, in this order. The size, depth, and key-count checks are deliberately **before** the HMAC verify: they are pre-auth, so they must be cheap and must not be a DoS lever themselves.
+
+<MermaidDiagram chart={`flowchart TD
+    W["Raw message on channel"] --> S{"16 KB of UTF-8 or less"}
+    S -- "no" --> D["Drop and rate-limited warn"]
+    S -- "yes" --> P{"Parses to a JSON object"}
+    P -- "no" --> D
+    P -- "yes" --> G{"Depth 8 or less, 64 keys or fewer"}
+    G -- "no" --> D
+    G -- "yes" --> V{"Field v is 2 or 1"}
+    V -- "yes" --> H{"Secret configured"}
+    H -- "no" --> D
+    H -- "yes" --> O{"v is 1 and not opted in"}
+    O -- "yes" --> D
+    O -- "no" --> M{"HMAC verifies"}
+    M -- "no" --> D
+    M -- "yes" --> B{"Signed channel is this channel"}
+    B -- "no" --> D
+    B -- "yes" --> T{"Timestamp within 30 s"}
+    T -- "no" --> D
+    T -- "yes" --> E{"Event shape valid"}
+    V -- "no" --> L{"Secret configured"}
+    L -- "yes" --> D
+    L -- "no" --> E
+    E -- "no" --> D
+    E -- "yes" --> I{"instanceId is our own"}
+    I -- "yes" --> Z["Ignore self-echo"]
+    I -- "no" --> A["Apply local invalidate"]`} />
+
+The guards in the diagram carry specific reasoning:
+
+- **16 KB byte cap.** Measured with `Buffer.byteLength(s, 'utf8')`, not `s.length`. A payload of four-byte emoji would sail past a UTF-16 code-unit cap while carrying four times the bytes; a test builds exactly that blob and asserts it is dropped.
+- **Depth 8 and 64 keys.** The canonical-JSON serialiser used to compute the HMAC pre-image is recursive, so an adversary who could hand it an arbitrarily deep object could stack-overflow the verifier before authentication. The measuring walker is itself iterative - a 100k-deep payload must not `RangeError`, and a test asserts it does not. `canonicalJSON` additionally carries its own depth-16 cap as defence in depth for the publish path.
+- **Refusing a signed envelope in unsigned mode.** Unwrapping it without verifying would let an attacker choose `instanceId`. Set it to a value that collides with the receiver's own UUID and the self-echo filter silences *legitimate* invalidations from every other node - a stale-cache attack that leaves no trace. The envelope is dropped instead.
+- **The 30-second replay window.** Checked in both directions (`age > 30_000` or `age < -30_000`), so a message from a node whose clock runs fast is rejected too. Keep the fleet on NTP: this is the failure that looks like a network problem and is not one. A replay *within* the window, onto the channel the envelope was signed for, is accepted - and that is a cache wipe, not a grant.
+- **The event vocabulary is drop-only.** `all`, `policies`, `roles`, `subject`; there is no verb that grants anything. The worst a forger with the secret achieves is a cache wipe, never an allow the store does not have.
+- **Handler dispatch is per handler, in its own `try/catch`.** Two engines sharing one invalidator is a documented pattern, and an unguarded loop meant engine A's broken handler left engine B on a stale allow.
+
+### Warn coalescing
+
+Drop warns are rate-limited per channel to one every 60 seconds. The first drop on a channel warns immediately and opens the window; further drops inside it are counted silently; the next drop after the window closes warns again and reports how many were suppressed:
+
+```
+[@gentleduck/iam:invalidator:redis] dropping unverifiable message on channel "duck-iam:invalidate" (signature mismatch). 412 prior drops coalesced.
+```
+
+The window replaced a one-shot latch that an attacker could burn on a benign first drop and then flood behind. The rate-limit state lives at module scope and is keyed by **kind plus channel**, so two invalidators on the same channel in one process share one window - but inbound drops and publish failures do not. Keying on the channel alone meant one junk message a minute claimed the window and coalesced away the publish-failure warning for a broker outage happening at the same time: the report an operator needs most, suppressed by traffic anyone with PUBLISH rights can generate.
 
 ## Publish failures
 
-`engine.admin.*` mutations call `publish()` synchronously; a thrown error is
-non-fatal for the local engine (it already applied the invalidation) but
-remote nodes will not receive the broadcast. Wire `onPublishError` to your
-alerting pipeline so a long-lived Redis outage does not silently desync
-caches across nodes. SEC-062.
+`engine.admin.*` calls `publish()` synchronously and never awaits it. A failing `client.publish` is non-fatal for the local engine, which has already applied the invalidation - but the broadcast is lost, and remote nodes will only converge on TTL expiry. Wire `onPublishError` so a long-lived Redis outage does not silently desync the fleet.
 
 ```ts
 createIamRedisInvalidator({
   client,
   secret: process.env.IAM_INVALIDATE_SECRET,
+  tenantId: tenant.slug,
   onPublishError: (err, channel) => {
     metrics.increment('iam.invalidator.publish_failed', { channel })
     sentry.captureException(err, { extra: { channel } })
   },
+  onSubscribeError: (err, channel) => pager.fire('iam-invalidation-deaf', { channel, err }),
 })
 ```
 
-Without the hook, the invalidator falls back to a rate-limited
-`console.warn` so the failure is not totally silent.
+The hook catches a synchronous throw **and a rejected promise**. Only the first used to be caught, and a real client does not fail that way: ioredis publishes asynchronously and rejects against a dead broker, so the one failure the hook exists for was the one it never reported - and the rejection went unhandled, which under Node's default `--unhandled-rejections=throw` takes the process down over a lost cache message.
 
----
+`onSubscribeError` matters more than `onPublishError`: a failed publish drops one event, a failed subscribe drops every future one. Page on it.
 
-## Delivery semantics
+Behaviour pinned by `redis-invalidator-publish-failure.test.ts`:
 
-At-least-once. `engine.cache.invalidate*()` methods are idempotent - applying the same event twice is safe. If the Redis client drops a message, that node's cache stays stale for at most `cacheTTL` seconds; the next request after expiry will re-fetch from the adapter.
+- The hook receives the **effective** channel, including the tenant suffix - `onPublishError` on a `tenantId: 'acme'` invalidator reports `...:tenant:acme`, so an alert names the tenant that lost its broadcast.
+- A non-`Error` throw (a string, an object) is wrapped in a real `Error` before the hook sees it, so `err.message` is always safe to read.
+- `publish()` never throws to its caller. A lost broadcast must not fail the local mutation that already succeeded.
+- If the hook throws, the throw is swallowed.
+- With no hook configured, the failure falls back to the rate-limited `console.warn`, so it is never fully silent. With a hook configured the warn is suppressed - no double reporting.
 
-If `publish` throws synchronously, the local invalidate already applied - the failure is non-fatal. Remote nodes will pick up the change on TTL.
+## API reference
 
----
+### `createIamRedisInvalidator`
+
+```ts
+function createIamRedisInvalidator<TRole extends string = string>(
+  config: IamRedisInvalidator.IConfig,
+): IamEngineTypes.IInvalidator<TRole>
+```
+
+Returns an invalidator bound to the resolved channel. Throws a plain `Error` when `tenantId` is present and fails `/^[A-Za-z0-9_-]{1,64}$/`. Emits one `console.warn` per channel when `secret` is not set.
+
+#### Options
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `client` | `IamRedisInvalidator.IPubSubLike` | required | Pub/sub adapter: `publish`, `subscribe`, optional `unsubscribe` |
+| `channel` | `string` | `'duck-iam:invalidate'` | Base channel name; one channel is one broadcast group |
+| `tenantId` | `string` | none | Appends `:tenant:<id>` to the channel. Validated against `/^[A-Za-z0-9_-]{1,64}$/`; throws on a bad slug |
+| `secret` | `string \| null` | `null` | Shared HMAC-SHA256 secret. When set, publishes `v:2` channel-bound signed envelopes and drops anything that does not verify. Required in production |
+| `onPublishError` | `(err: Error, channel: string) => void` | rate-limited `console.warn` | Called when `client.publish` throws **or rejects**. Receives the effective channel |
+| `onSubscribeError` | `(err: Error, channel: string) => void` | rate-limited `console.warn` | Called when `client.subscribe` throws or rejects. Page on this |
+| `onMessageDropped` | `(reason: string, channel: string, suppressed: number) => void` | rate-limited `console.warn` | An inbound message was refused. Coalesced to one call per 60 s per channel per kind |
+| `acceptLegacyUnboundEnvelopes` | `boolean` | `false` | Accept pre-v2, channel-unbound envelopes during a rolling upgrade. Turn it off after |
+
+### `IamRedisInvalidator.IPubSubLike`
+
+```ts
+interface IPubSubLike {
+  publish(channel: string, message: string): unknown
+  subscribe(channel: string, handler: (message: string) => void): void | Promise<void>
+  unsubscribe?(channel: string): void | Promise<void>
+}
+```
+
+Intentionally narrow so neither ioredis nor node-redis becomes a hard dependency. The return value of `publish` is ignored, though a rejection from it still reaches `onPublishError`. `subscribe` may return a promise, and the invalidator awaits it: the `subscribed` latch is only set once it resolves, which is what makes a rejected first subscribe reportable and retryable instead of a node deaf for its whole lifetime. `unsubscribe` is optional: a no-op stub is fine if your client manages connection lifecycle out of band.
+
+### Returned invalidator
+
+```ts
+interface IInvalidator<TRole extends string = string> {
+  publish(event: IInvalidateEvent<TRole>): void | Promise<void>
+  subscribe(handler: (event: IInvalidateEvent<TRole>) => void): () => void
+}
+```
+
+`subscribe` returns a teardown function. It removes the one handler; when the handler set empties it also clears the subscribe latch and calls `client.unsubscribe?.(channel)`.
+
+### Types
+
+Both live in the type-only `IamRedisInvalidator` namespace, exported from `@gentleduck/iam/invalidators/redis`. Type-only means zero bundle cost.
+
+```ts
+import type { IamRedisInvalidator } from '@gentleduck/iam/invalidators/redis'
+
+const config: IamRedisInvalidator.IConfig = {
+  client: pubSubClient,
+  channel: 'iam:invalidate',
+  secret: process.env.IAM_INVALIDATE_SECRET,
+}
+```
+
+- `IamRedisInvalidator.IPubSubLike` - the minimal pub/sub client surface.
+- `IamRedisInvalidator.IConfig` - the config object above.
+
+Two renames to be aware of if you are upgrading. The bare aliases `IRedisPubSubLike` and `IRedisInvalidatorConfig` were deprecated when the namespace landed in 2.0.0 and are gone from 3.0.0 onward. The namespace and the factory both gained the `Iam` prefix in 5.0.0 - `RedisInvalidator` became `IamRedisInvalidator`, and `createRedisInvalidator` became `createIamRedisInvalidator`.
 
 ## Custom transports
 
-If Redis isn't your transport, implement `IamEngineTypes.IInvalidator` directly:
+Nothing in the engine is Redis-specific. `IamEngineTypes.IInvalidator` is the whole contract, and any bus that can carry a JSON string satisfies it:
 
-```typescript
+```ts
 import type { IamEngineTypes } from '@gentleduck/iam/core'
 
 const invalidator: IamEngineTypes.IInvalidator = {
@@ -148,46 +524,31 @@ const invalidator: IamEngineTypes.IInvalidator = {
     nats.publish('iam.invalidate', JSON.stringify(event))
   },
   subscribe(handler) {
-    const sub = nats.subscribe('iam.invalidate', (msg) =>
-      handler(JSON.parse(msg.data)),
-    )
+    const sub = nats.subscribe('iam.invalidate', (msg) => handler(JSON.parse(msg.data)))
     return () => sub.unsubscribe()
   },
 }
 ```
 
-Works with NATS, Kafka, RabbitMQ, MQTT, or any in-process bus. The contract is the same: `publish` is synchronous (or returns a Promise; engine doesn't await), `subscribe` returns a teardown function.
+Works with NATS, Kafka, RabbitMQ, MQTT, or an in-process `EventEmitter`. Two things the Redis implementation does that a hand-rolled one must decide about deliberately:
 
----
+1. **Self-echo filtering.** If your bus delivers a publisher's own messages back to it, embed a per-process id and filter on it, or every mutation will clear caches twice.
+2. **Payload validation.** The snippet above trusts `msg.data` completely. On a bus reachable by anything other than your own fleet, validate the parsed event's `kind` and required fields before handing it to the engine.
 
-## Constructor config
+## Gotchas
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `client` | `IamRedisInvalidator.IPubSubLike` | -- | Pub/sub adapter with `publish` + `subscribe` (+ optional `unsubscribe`) |
-| `channel` | `string` | `'duck-iam:invalidate'` | Pub/sub channel name |
-| `tenantId` | `string` | -- | Auto-prefixes the channel as `${channel}:tenant:${tenantId}`. Validated against `/^[A-Za-z0-9_-]{1,64}$/`. CAVEAT-1. |
-| `secret` | `string \| null` | `null` | HMAC-SHA256 shared secret. Required in production - without it any party with PUBLISH rights on the channel can wipe caches. |
-| `onPublishError` | `(err, channel) -> void` | console.warn (rate-limited) | Wire to alerting; non-fatal but cross-instance invalidations are lost. SEC-062. |
+- **A subscribed Redis connection cannot publish.** Passing the same client for both directions works until the first `subscribe`, then every `publish` errors - and with `onPublishError` unwired, that surfaces only as a coalesced warn.
+- **`engine.dispose()` is what releases the subscription.** In a serverless or test setup that constructs engines per invocation, skipping `dispose` leaks a handler per engine on a shared client.
+- **Do not raise `cacheTTL` because you have an invalidator.** The TTL is the floor that bounds a dropped message; the invalidator is only the fast path.
+- **`{ kind: 'roles' }` with no `roleId` is a much bigger hammer than one with a `roleId`.** It clears the whole subject cache on every node. `admin.import()` emits exactly this, so a bulk import is a fleet-wide subject-cache flush - schedule accordingly.
+- **The unsigned-mode warn fires once per channel**, latched at module scope on the full channel name. It is a configuration statement, not an event stream: grep for it at startup, do not alert on its rate, and do not read its absence after the first line as evidence that anything was fixed.
+- **Publishing is fire-and-forget even in the happy path.** A `publish` that Redis accepts but never delivers - because the subscriber was mid-reconnect - is indistinguishable from success on the publishing node.
+- **`healthCheck()` is not invalidation liveness.** It reports `ok: true` on a node that never subscribed. `PUBSUB NUMSUB <channel>` is the check.
 
-The `IamRedisInvalidator.IPubSubLike` shape is intentionally minimal - both ioredis and node-redis v4+ satisfy it directly. The full options object conforms to `IamRedisInvalidator.IConfig`.
+## See also
 
----
-
-## Types
-
-All types live under the `RedisInvalidator` namespace at `@gentleduck/iam/invalidators/redis`. Type-only - zero bundle cost.
-
-- `IamRedisInvalidator.IPubSubLike` - minimal pub/sub client surface (`publish`, `subscribe`, optional `unsubscribe`).
-- `IamRedisInvalidator.IConfig` - constructor config for `createIamRedisInvalidator` (`client`, optional `channel`).
-
-```typescript
-import type { IamRedisInvalidator } from '@gentleduck/iam/invalidators/redis'
-
-const config: IamRedisInvalidator.IConfig = {
-  client: pubSubClient,
-  channel: 'iam:invalidate',
-}
-```
-
-Deprecated bare aliases (`IRedisPubSubLike`, `IRedisInvalidatorConfig`) remain for back-compat and will be removed in 3.0.
+- [Caching](/duck-iam/advanced/engine/caching) - the five caches, their keys, and what each invalidation event clears
+- [Admin API](/duck-iam/advanced/engine/admin) - the mutations that trigger a broadcast
+- [Redis adapter](/duck-iam/integrations/adapters/redis) - storing policies and roles in Redis, distinct from this invalidator
+- [Metrics aggregator](/duck-iam/integrations/observability/metrics) - the other half of a production observability setup
+- [Production guide](/duck-iam/guides/production) - the full hardening checklist

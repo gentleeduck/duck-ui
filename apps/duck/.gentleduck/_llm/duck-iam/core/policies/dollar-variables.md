@@ -1,136 +1,209 @@
-## What are `$`-references?
+A condition normally compares a resolved field against a literal. A `$`-prefixed string value makes the right-hand side a path too, so one condition can compare two parts of the same request - the resource's owner against the subject's id, the resource's department against the subject's department, an expiry against the clock.
 
-Dollar-prefixed values resolve at evaluation time instead of being literals. Use them to compare two fields on the same request.
+## The rule in one line
 
-```typescript
-// This checks: resource.attributes.ownerId === request.subject.id
+A condition value is resolved as a path **only** when it is a string whose first character is `$`. Everything else - numbers, booleans, `null`, arrays, objects, and strings that do not start with `$` - is used literally.
+
+```ts
+// resource.attributes.ownerId === request.subject.id
 .when((w) => w.check('resource.attributes.ownerId', 'eq', '$subject.id'))
+
+// literal: resource.attributes.ownerId === the seven-character string 'subject'
+.when((w) => w.check('resource.attributes.ownerId', 'eq', 'subject'))
 ```
 
-`$subject.id` isn't compared literally. At eval time the engine strips `$`, resolves `subject.id` from the request, then compares.
+At evaluation time the engine strips the `$`, resolves the remainder against the request with the same `resolve()` used for the `field` side, and hands both values to the operator. The `field` side is always a path and never takes a `$`.
 
-***
+`isOwner()` is a shorthand for exactly this pattern:
 
-## isOwner shortcut
+```ts
+w.isOwner()
+// { field: 'resource.attributes.ownerId', operator: 'eq', value: '$subject.id' }
 
-The most common pattern - owner check - has a built-in helper:
-
-```typescript
-// These are equivalent:
-.when((w) => w.isOwner())
-.when((w) => w.check('resource.attributes.ownerId', 'eq', '$subject.id'))
+w.isOwner('resource.attributes.createdBy')
+// { field: 'resource.attributes.createdBy', operator: 'eq', value: '$subject.id' }
 ```
 
-Custom owner field name:
+## When resolution happens
 
-```typescript
-.when((w) => w.isOwner('resource.attributes.createdBy'))
-// resource.attributes.createdBy === $subject.id
+`$` values are resolved per condition, per request, against the request object as it exists at that moment - after subject resolution, after scoped-role enrichment, after your `beforeEvaluate` hook, and after the engine has defaulted `environment.now`.
+
+Three things follow from the ordering in the diagram:
+
+* **`$subject.roles` is the effective role set**, not the raw assignment: inheritance is already closed over and matching scoped roles are already merged in. See [role inheritance](/duck-iam/core/roles/inheritance) and [scoped roles](/duck-iam/core/roles/scoped).
+* **`beforeEvaluate` can change what a `environment.tenantId` resolvable for every policy in that request.
+* **`$environment.now` always resolves.** The engine sets `environment.now` to `Date.now()` in epoch milliseconds when the caller did not supply one, and never overwrites a supplied value - so a test or a replay hook can pin the clock. This is what pairs with the `before` and `after` operators.
+
+Nothing is resolved at build time. `definePolicy(...).build()` stores the literal string `'$subject.id'`; the same policy JSON works for every request.
+
+## Which paths resolve
+
+The `$` side accepts the same roots as the `field` side.
+
+| `$`-path | Resolves to | Notes |
+| --- | --- | --- |
+| `$action` | `request.action` | Whole-path shorthand, not a root |
+| `$scope` | `request.scope`, or `null` when the request has no scope | Whole-path shorthand |
+| `$subject.id` | The subject id | |
+| `$subject.roles` | The effective roles array | An array value - see "Arrays" below |
+| `$subject.attributes.subject.scopedRoles` is `null` - an array of objects is outside `AttributeValue` |
+| `resource.id` | Resource type and instance id | |
+| `$resource.attributes.resource` are `null`, not the object.
+* Path splitting is memoised in a FIFO cache of `PATH_CACHE_MAX` (`10_000`) entries, per engine instance when the engine supplies one.
+
+```ts
+// against a request with subject u1 (roles editor, admin; department eng),
+// resource post p1 (ownerId u1), action 'update', no scope:
+'$subject.id'                     // 'u1'
+'$subject.roles'                  // ['editor', 'admin']
+'$subject.attributes.department'  // 'eng'
+'$resource.attributes.missing'    // null
+'$action'                         // 'update'
+'$scope'                          // null  (request has no scope)
+'$nope.x'                         // null  (unknown root)
+'$__proto__.x'                    // null  (blocked segment)
+'$subject'                        // null  (an object with a roles array is not an AttributeValue)
+'subject.id'                      // 'subject.id'  (no $, so a literal)
 ```
 
-***
+## Where `$` values are accepted
 
-## Where `$`-references work
+Anywhere the builder takes a value: `check()`, `eq()`, `neq()`, `in()`, `gt`/`gte`/`lt`/`lte`, `contains()`, and the attribute shorthands `attr()`, `resourceAttr()`, `env()`. The builder does not treat them specially - it stores the string, and the evaluator resolves it.
 
-`$`-references work anywhere a value is accepted - `.check()`, `.attr()`, `.resourceAttr()`, `.env()`, and the shorthand operator methods (`.eq`, `.neq`, etc.):
-
-```typescript
-// Compare resource owner to current user
+```ts
+// Resource owner must not be the subject (four-eyes review)
 .when((w) => w.resourceAttr('ownerId', 'neq', '$subject.id'))
 
-// Compare subject attribute to resource attribute
-.when((w) => w.attr('status', 'eq', '$resource.attributes.status'))
+// Subject and resource must share a department
+.when((w) => w.check('resource.attributes.department', 'eq', '$subject.attributes.department'))
 
-// Prevent self-actions (e.g. user can't delete own account)
-.when((w) => w.check('resource.id', 'eq', '$subject.id'))
+// Subject's clearance must reach the document's level
+.when((w) => w.check('subject.attributes.clearance', 'gte', '$resource.attributes.classificationLevel'))
 
-// Compare env value to resource attribute
-.when((w) => w.env('ip', 'eq', '$resource.attributes.allowedIp'))
+// The request scope must be the resource's tenant
+.when((w) => w.check('resource.attributes.orgId', 'eq', '$scope'))
 
-// Resource department must match subject department
-.when((w) => w.check(
-  'resource.attributes.department',
-  'eq',
-  '$subject.attributes.department',
-))
-
-// Resource scope must match request scope
-.when((w) => w.check('resource.attributes.scope', 'eq', '$scope'))
+// Grant is still in the future
+.when((w) => w.check('subject.attributes.suspendedUntil', 'after', '$environment.now'))
 ```
 
-***
+Two operators refuse or ignore the `$` form:
 
-## What can `$`-paths point at?
+* **`matches` refuses it.** A `matches` condition whose value starts with `$` throws `IamUserSourcedPatternError` before the reference is resolved, so no attacker-controlled attribute can ever supply the regex. It throws rather than answering `false` because `false` reads as "condition not met": measured through `engine.can` on a seeded policy, `deny when email matches $resource.attributes.bannedPattern` never fired and the banned subject was allowed, with nothing reported to `onPolicyError`. Details on [conditions](/duck-iam/core/policies/conditions#regex-safety-matches).
+* **Array literals are not resolved element by element.** `w.in('resource.attributes.ownerId', ['$subject.id'])` compares against the literal seven-character string `'$subject.id'`, not the subject id, and is therefore always false. Only a whole value that is a `$`-string is resolved.
 
-The same roots that field paths can use:
+A `$` path that resolves **to** an array does work with the set operators, because the resolved value is a real array:
 
-* `$subject.*` - `$subject.id`, `$subject.attributes.foo`, `$subject.roles`
-* `$resource.*` - `$resource.id`, `$resource.type`, `$resource.attributes.foo`
-* `$environment.*` - `$environment.ip`, `$environment.timestamp`, `$environment.foo`
-* `$action` - shorthand for the action string
-* `$scope` - shorthand for the scope string
+```ts
+// true when subject.attributes.tier is one of the subject's own roles
+.when((w) => w.check('subject.attributes.tier', 'in', '$subject.roles'))
 
-***
+// true when any of the subject's roles is in the resource's allow-list
+.when((w) => w.check('subject.roles', 'in', '$resource.attributes.allowedRoles'))
+```
 
-## Type-safe autocomplete
+The second form is the useful one: with an array on both sides, `in` is an overlap test.
 
-When you use `defineIam()` with a typed context, `$`-references get full autocomplete in your editor. Type `'$'` in any value position and your editor suggests all valid paths.
+## A `$` path that resolves to nothing is refused
 
-```typescript
-const access = defineIam({
+`resolve()` never throws: an unknown root, a blocked segment, a typo, or an attribute the request did not carry all produce `null`. What happens next depends on which side of the condition the `null` is on, and the two sides are treated differently on purpose.
+
+**On the field (left-hand) side, `null` is a match failure.** No guard runs; each operator's own `typeof` test decides, and most answer `false`. The four negated operators (`neq`, `nin`, `not_contains`, `not_exists`) answer `true`. That table is on [conditions](/duck-iam/core/policies/conditions#all-condition-operators).
+
+**On the operand (right-hand) side, a `$`-reference that resolves to `null` is a refusal.** `evalCondition` throws `IamOperandTypeError` naming the field, the operator, and the reference that resolved to nothing. The engine reports it through `hooks.onPolicyError` and the policy becomes Indeterminate: it still votes, and a policy carrying any deny rule votes `deny`. Under the default `policyCombine: 'and'` that deny is final.
+
+This is what fixed the canonical multi-tenant guard. `subject.attributes.tenant eq $resource.attributes.tenant` used to compare `null === null` and **allow** a request that carried neither attribute - through the fully validated authoring path, since the validator cannot type a `$`-reference and so had nothing to say about it. The refusal is scoped to `$`-references on purpose: a literal `value: null` is an author explicitly testing for null and still works.
+
+Two consequences worth planning for:
+
+* **A `$`-comparison against optional data now takes the whole policy Indeterminate, rather than granting silently.** If `$subject.attributes.tenantId` is genuinely optional, guard the comparison with `exists` on both sides so the rule declines to match instead of refusing:
+
+  ```ts
+  .when((w) => w
+    .exists('resource.attributes.tenantId')
+    .exists('subject.attributes.tenantId')
+    .check('resource.attributes.tenantId', 'eq', '$subject.attributes.tenantId'),
+  )
+  ```
+
+  The `all` group short-circuits at the first false `exists`, so the refusing leaf is never reached.
+
+* **`$environment.now` needs the engine.** The engine injects `environment.now = Date.now()` after `beforeEvaluate`, so a hook-pinned clock survives. A request built by hand and passed straight to `iamEvaluate` gets no such injection, and a temporal rule against `$environment.now` on it throws.
+
+The validator catches typos but not absent data. A `$` value whose root is not resolvable produces the warning `UNRESOLVABLE_VALUE` - `Condition value "$foo.bar" references an unresolvable path`. Warnings do not make `build()` throw, so read them: see [validation](/duck-iam/advanced/validation).
+
+## Typed `$`-paths
+
+With a typed context, `$` values autocomplete and are checked at compile time. The paths come from `DotPath.DollarPaths<TContext>`, which prefixes a `$` onto every member of `DotPath.DotPaths<TContext>` - that is, every reachable path through the context object.
+
+```ts
+import { createIam } from '@gentleduck/iam'
+
+const access = createIam({
   actions: ['read', 'update'] as const,
   resources: ['post'] as const,
   context: {} as {
-    subject: { id: string; attributes: { tier: 'free' | 'pro' } }
-    resource: { type: 'post'; attributes: { ownerId: string; tier: 'free' | 'pro' } }
+    action: string
+    scope: string
+    subject: { id: string; roles: string[]; attributes: { tier: 'free' | 'pro'; department: string } }
+    resource: { type: 'post'; id: string; attributes: { ownerId: string; tier: 'free' | 'pro'; department: string } }
+    environment: { hour: number; now: number }
   },
 })
 
-access.definePolicy('post-tier').rule('match-tier', (r) =>
-  r
-    .allow()
-    .on('read')
-    .of('post')
-    // Editor autocompletes "$subject.attributes.tier" here
-    .when((w) => w.check('resource.attributes.tier', 'eq', '$subject.attributes.tier')),
-)
+const p = access
+  .definePolicy('post-tier')
+  .rule('match-tier', (r) =>
+    r
+      .allow()
+      .on('read')
+      .of('post')
+      // the editor offers '$subject.attributes.tier' here
+      .when((w) => w.check('resource.attributes.tier', 'eq', '$subject.attributes.tier')),
+  )
+  .build()
 ```
 
-Internally, the `& {}` intersection trick is used so that even when the literal type is `string`, autocomplete still shows `$`-prefixed suggestions. See the [type-safe config](/duck-iam/advanced/config) docs.
+Builder methods take `DotPath.FlexibleDollarPaths<TContext>`, which is `DollarPaths<TContext> | (string & {})`. The `& {}` intersection keeps the literal suggestions visible in the editor while still accepting any string, so a path your context does not model is a runtime `null` rather than a compile error. Two consequences:
 
-***
+* **Open attribute bags stop at the bag.** With the default `DotPath.IDefaultContext` the attribute bags are index-signature types, so `DotPaths` stops at `subject.attributes` and no per-key suggestions appear. Declare concrete attribute shapes, as above, to get them.
+* **Arrays are leaves.** `$subject.roles` is offered; `$subject.roles.0` is not derived, though it resolves fine at runtime.
+
+Full type machinery on [typed dollar-paths](/duck-iam/advanced/config/dollar-paths) and [typed context](/duck-iam/advanced/config/context).
 
 ## Common patterns
 
 ### Owner-only edits
 
-```typescript
+```ts
 .rule('owner-edit', (r) =>
   r
     .allow()
     .on('update', 'delete')
     .of('post')
-    .when((w) => w.isOwner()), // resource.attributes.ownerId === $subject.id
+    .when((w) => w.isOwner()),
 )
 ```
 
-### Same-tenant access
+### Same-tenant access, presence-checked
 
-```typescript
+```ts
 .rule('tenant-isolation', (r) =>
   r
     .allow()
     .on('*')
     .of('document')
     .when((w) =>
-      w.check('resource.attributes.tenantId', 'eq', '$subject.attributes.tenantId'),
+      w
+        .exists('resource.attributes.tenantId')
+        .check('resource.attributes.tenantId', 'eq', '$subject.attributes.tenantId'),
     ),
 )
 ```
 
-### Prevent self-deletion
+### Prevent self-actions
 
-```typescript
+```ts
 .rule('no-self-delete', (r) =>
   r
     .deny()
@@ -140,10 +213,12 @@ Internally, the `& {}` intersection trick is used so that even when the literal 
 )
 ```
 
-### Deny when attributes diverge
+A `deny` rule is the right shape here: `resource.id` is on the field side, so a missing id is a match failure, the deny does not fire, and the request falls back to whatever else the policy set decides. `$subject.id` on the operand side always resolves, because the engine cannot assemble a request without a subject.
 
-```typescript
-.rule('classification-match-required', (r) =>
+### Clearance must reach classification
+
+```ts
+.rule('insufficient-clearance', (r) =>
   r
     .deny()
     .on('read')
@@ -153,3 +228,64 @@ Internally, the `& {}` intersection trick is used so that even when the literal 
     ),
 )
 ```
+
+The two sides fail differently. A missing or non-numeric `subject.attributes.clearance` is a field-side match failure, so the deny does not fire. A missing `resource.attributes.classificationLevel` is an operand-side refusal: `lt` requires a number, the condition throws, and this policy - which carries a deny rule - votes `deny` as Indeterminate. Put `exists` guards ahead of the comparison if you want the rule to decline rather than refuse.
+
+### Grant window still open
+
+```ts
+.rule('suspension-expired', (r) =>
+  r
+    .deny()
+    .on('*')
+    .of('*')
+    .when((w) => w.check('subject.attributes.suspendedUntil', 'after', '$environment.now')),
+)
+```
+
+## API reference
+
+Runtime helpers, exported from `@gentleduck/iam` and `@gentleduck/iam/core`:
+
+| Export | Signature | What it does |
+| --- | --- | --- |
+| `iamResolveConditionValue` | `(req: IamRequest.IAccessRequest, value: IamPrimitives.AttributeValue) => IamPrimitives.AttributeValue` | Resolves a `$`-value, passes anything else through |
+| `iamResolveValue` | `(req, value, caches?) => IamPrimitives.AttributeValue` | The same, with an optional per-engine path cache |
+| `resolve` | `(req, path: string, caches?) => IamPrimitives.AttributeValue` | Resolve a bare path (no `$`); `null` on any miss |
+| `iamIsUserSourcedValue` | `(value: IamPrimitives.AttributeValue) => boolean` | `true` only for a `$`-prefixed string; the guard `matches` uses |
+| `PATH_CACHE_MAX` | `10_000` | Path-segment cache cap |
+| `clearPathCache` | `() => void` | Flush the process-wide path cache |
+
+`ALLOWED_ROOTS` and the `pathCache` map are deliberately not exported. `ALLOWED_ROOTS` is typed `ReadonlySet` but erases to a live `Set`, so `.delete('subject')` would make every `subject.*` path unresolvable and flip the deny rules that read one - and `pathCache` memoises that, so it would stick.
+
+```ts
+import { iamResolveConditionValue } from '@gentleduck/iam'
+
+iamResolveConditionValue(request, '$subject.id')  // 'u1'
+iamResolveConditionValue(request, 'user-1')       // 'user-1'
+iamResolveConditionValue(request, 42)             // 42
+iamResolveConditionValue(request, '$nope.nope')   // null
+```
+
+Types:
+
+```ts
+type DotPath.DollarPaths<TContext> = `$${DotPath.DotPaths<TContext>}`
+type DotPath.FlexibleDollarPaths<TContext> = DotPath.DollarPaths<TContext> | (string & {})
+```
+
+## Gotchas
+
+* A `$` is only special in the **first** character of a **string** condition value. `'price-$100'` is a literal; `['$subject.id']` is a literal array.
+* `$` on the `field` side is not a thing - fields are already paths. `check('$subject.id', ...)` looks for a root named `$subject`, which is unresolvable, and the validator warns `UNRESOLVABLE_FIELD`.
+* `eq` takes a scalar operand, so a `$` path that resolves to an array or object is refused as `IamOperandTypeError`. Use `subset_of` plus `superset_of` for set equality.
+* `$scope` is `null` for an unscoped request, so `check('resource.attributes.orgId', 'eq', '$scope')` refuses on every unscoped request and takes its policy out of the decision. Guard the rule with `exists('scope')`, or use `forScope()` so the rule only applies to scoped requests.
+* Nothing resolves at build time, so a policy exported to JSON and re-imported behaves identically. See [admin export and import](/duck-iam/advanced/engine/admin).
+
+## See also
+
+* [Conditions](/duck-iam/core/policies/conditions) - every operator and its `null` semantics in full
+* [Nesting and/or/not](/duck-iam/core/policies/nesting) - grouping presence guards with the comparison
+* [Typed dollar-paths](/duck-iam/advanced/config/dollar-paths) - how the path union is derived
+* [Evaluation pipeline](/duck-iam/core/evaluation) - where request assembly and hooks sit
+* [Layered policy example](/duck-iam/core/policies/example-layered) - `$`-variables in a working policy set

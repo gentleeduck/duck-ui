@@ -493,7 +493,7 @@ const SidebarMenuItem = React.forwardRef<HTMLLIElement, React.ComponentPropsWith
         data-slot="sidebar-menu-item"
         dir={direction}
         data-sidebar="menu-item"
-        className={cn('group/menu-item relative focus-within:z-10', className)}
+        className={cn('group/menu-item relative focus-within:z-10 has-aria-disabled:cursor-not-allowed', className)}
         {...props}
       />
     )
@@ -665,7 +665,7 @@ const SidebarMenuSubItem = React.forwardRef<HTMLLIElement, React.ComponentPropsW
         data-slot="sidebar-menu-sub-item"
         data-sidebar="menu-sub-item"
         dir={direction}
-        className={cn('group/menu-sub-item relative focus-within:z-10', className)}
+        className={cn('group/menu-sub-item relative focus-within:z-10 has-aria-disabled:cursor-not-allowed', className)}
         {...props}
       />
     )
@@ -693,7 +693,7 @@ const SidebarMenuSubButton = React.forwardRef<
       data-active={isActive || undefined}
       dir={direction}
       className={cn(
-        'flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-hidden ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-active:bg-sidebar-accent data-[size=md]:text-sm data-[size=sm]:text-xs data-active:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden ltr:-translate-x-px rtl:translate-x-px [&>span:last-child]:truncate [&>svg:not([class*=size-])]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground',
+        'flex h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-hidden ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-active:bg-sidebar-accent data-[size=md]:text-sm data-[size=sm]:text-xs data-active:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden ltr:-translate-x-px rtl:translate-x-px [&>span:last-child]:truncate [&>svg:not([class*=size-])]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground',
         className,
       )}
       {...props}

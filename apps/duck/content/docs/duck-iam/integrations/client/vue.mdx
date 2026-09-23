@@ -1,116 +1,294 @@
 ---
-title: vue
-description: Vue 3 plugin, composable, and Can/Cannot components for duck-iam. Reactive permissions via provide/inject.
+title: Vue client
+description: createIamVueAccess - reactive access state, a plugin, provide/inject, the useAccess composable, and Can/Cannot slot components
 section: Integrations
 ---
+
+`@gentleduck/iam/client/vue` builds a Vue 3 access-control surface from a permission map. You inject Vue's own reactivity helpers into the factory, so duck-iam never imports Vue - it is not even a peer dependency.
+
+<Callout tone="warning" title="A client check is advisory, never authorisation">
+This module contains no evaluator. `can()` reads a snapshot of decisions a server already made, serialised over the wire, sitting in a browser the user controls - every value in it can be edited from a devtools console. It decides what to render, nothing more. The request the button fires must be authorized again on the server, by the engine, against the live policy set.
+</Callout>
+
 ## Install
 
-```typescript
-import { createVueAccess, IAM_ACCESS_INJECTION_KEY } from '@gentleduck/iam/client/vue'
+<PackageManagerTabs bun="bun add @gentleduck/iam" npm="npm i @gentleduck/iam" pnpm="pnpm add @gentleduck/iam" yarn="yarn add @gentleduck/iam" />
+
+```ts
+import {
+  createIamVueAccess,
+  IAM_ACCESS_INJECTION_KEY,
+  iamAllowedActions,
+  iamBuildPermissionKey,
+  iamHasAnyOn,
+} from '@gentleduck/iam/client/vue'
 ```
 
-Vue 3 is an optional peer dep. The factory accepts your reactive utilities (`ref`, `inject`, `provide`, `defineComponent`) to avoid a hard version dependency.
-
----
+Those are the module's exports; the last three are re-exports of the shared key helpers. `useAccess`, `usePermissions`, `createAccessPlugin`, `provideAccess`, `createAccessState`, `Can`, and `Cannot` all come out of the factory - none of them is importable directly.
 
 ## Setup
 
-Create the Vue access control system by passing Vue's reactive utilities. This avoids a hard Vue version dependency.
+Call the factory once and export the result, so the whole app shares one set of bindings.
 
-```typescript
+```ts
 // lib/access.ts
-import { ref, computed, inject, provide, defineComponent, h } from 'vue'
-import { createVueAccess } from '@gentleduck/iam/client/vue'
+import { computed, defineComponent, h, inject, provide, ref } from 'vue'
+import { createIamVueAccess } from '@gentleduck/iam/client/vue'
 
-export const { useAccess, provideAccess, createAccessPlugin, Can, Cannot } = createVueAccess({
-  ref,
-  computed,
-  inject,
-  provide,
-  defineComponent,
-  h,
-})
-```
-
-Type the system to your unions:
-
-```typescript
-type Action = 'create' | 'read' | 'update' | 'delete'
-type Resource = 'post' | 'team'
+type Action = 'create' | 'read' | 'update' | 'delete' | 'manage'
+type Resource = 'post' | 'team' | 'analytics'
 type Scope = 'org-1'
 
-export const access = createVueAccess<Action, Resource, Scope>({ ref, computed, inject, provide, defineComponent, h })
+export const {
+  createAccessState, provideAccess, useAccess, usePermissions,
+  createAccessPlugin, Can, Cannot, IAM_ACCESS_INJECTION_KEY,
+} = createIamVueAccess<Action, Resource, Scope>({ ref, computed, inject, provide, defineComponent, h })
 ```
 
----
+The generics are, in order, `TAction`, `TResource`, `TScope`, all constrained to `string` and defaulting to `string`.
 
-## Plugin installation
+## How a check resolves
 
-Install the plugin in your Vue app to make permissions available to all components.
+<MermaidDiagram chart={`flowchart TD
+    M["PartialPermissionMap from the server"] --> S["createAccessState(map)"]
+    S --> ST["State: permissions ref, can, cannot, update"]
+    ST --> PL["createAccessPlugin then app.use"]
+    ST --> PA["provideAccess in a parent setup"]
+    ST --> RAW["Keep the state, provide it yourself"]
+    PL --> INJ["Provided under IAM_ACCESS_INJECTION_KEY"]
+    PA --> INJ
+    RAW --> INJ
+    PL --> GP["Template globals for can and cannot"]
+    INJ --> UA["useAccess() injects the state"]
+    UA -- "nothing provided" --> ERR["Throws: useAccess called without provideAccess"]
+    UA -- "found" --> CHK["can reads permissions.value at call time"]
+    GP --> CHK
+    CHK --> OUT["Missing key gives false"]`} />
 
-```typescript
+Every path funnels into one state object. `createAccessPlugin` and `provideAccess` differ only in *when* and *where* the state is registered - the plugin registers it on the app instance at `app.use()` time, `provideAccess` registers it from a component's `setup()`. The `ERR` edge has no environment gate: Vue throws for a missing provider in every build. React was aligned to it, but only under `NODE_ENV=development`.
+
+## createIamVueAccess
+
+```ts
+function createIamVueAccess<
+  TAction extends string = string,
+  TResource extends string = string,
+  TScope extends string = string,
+>(vue: VueLike): {
+  createAccessState: (initialPermissions: IamClient.PartialPermissionMap<TAction, TResource, TScope>) => AccessState
+  provideAccess: (permissions: IamClient.PartialPermissionMap<TAction, TResource, TScope>) => AccessState
+  useAccess: () => AccessState
+  usePermissions: (
+    fetchFn: () => Promise<IamClient.PartialPermissionMap<TAction, TResource, TScope>>,
+  ) => AsyncAccessState
+  createAccessPlugin: (permissions: IamClient.PartialPermissionMap<TAction, TResource, TScope>) => {
+    install(app: VueApp): void
+  }
+  Can: unknown
+  Cannot: unknown
+  IAM_ACCESS_INJECTION_KEY: symbol
+}
+```
+
+The `vue` parameter is structurally typed as `VueLike` and must supply six members:
+
+| Member | Required by the type | Used at runtime |
+| --- | --- | --- |
+| `ref` | yes | yes - holds the permission map |
+| `computed` | yes | no |
+| `inject` | yes | yes - `useAccess` |
+| `provide` | yes | yes - `provideAccess` |
+| `defineComponent` | yes | yes - `Can` and `Cannot` |
+| `h` | yes | no |
+
+`computed` and `h` are part of the injected surface but the current implementation does not call them. Pass them anyway: the type demands all six, and omitting one is a compile error rather than a runtime saving.
+
+## createAccessState
+
+```ts
+function createAccessState(
+  initialPermissions: IamClient.PartialPermissionMap<TAction, TResource, TScope>,
+): {
+  permissions: Ref<IamClient.PartialPermissionMap<TAction, TResource, TScope>>
+  can: (action: TAction, resource: TResource, resourceId?: string, scope?: TScope) => boolean
+  cannot: (action: TAction, resource: TResource, resourceId?: string, scope?: TScope) => boolean
+  update: (newPerms: IamClient.PartialPermissionMap<TAction, TResource, TScope>) => void
+  allowedActions: (resource: TResource) => string[]
+  hasAnyOn: (resource: TResource) => boolean
+}
+```
+
+The lowest-level entry point. It wraps the map in a `ref` and returns six members; it registers nothing.
+
+| Member | Type | Description |
+| --- | --- | --- |
+| `permissions` | `Ref<PartialPermissionMap>` | The reactive map. Read `permissions.value` |
+| `can` | `(action, resource, resourceId?, scope?) => boolean` | Reads `permissions.value` on every call, so it tracks the ref. `true` only for a key whose value is the boolean `true` |
+| `cannot` | `(action, resource, resourceId?, scope?) => boolean` | Strict `!can(...)` |
+| `update` | `(newPerms) => void` | Assigns `permissions.value`, triggering every dependent effect |
+| `allowedActions` | `(resource) => string[]` | Every action the map grants on that resource type |
+| `hasAnyOn` | `(resource) => boolean` | Whether the map grants any action on that resource type |
+
+The `ref` holds the caller's object; Vue does not copy the map. Mutating an object you already handed to `createAccessState` changes what `can()` answers and notifies nothing - `ref()` sees writes made through `permissions.value`, not writes to the object you still hold. Treat the map as frozen from the moment you pass it.
+
+Because `can` dereferences the ref at call time rather than closing over the map, calling it inside a template, a `computed`, or a render function registers a reactive dependency. Calling it once in `setup()` and storing the boolean does not - that value is a snapshot.
+
+```ts
+const state = createAccessState(permissionsFromServer)
+
+state.can('delete', 'post') // boolean, right now
+state.permissions.value // the reactive map
+state.update(nextMap) // replaces it; templates re-render
+```
+
+`update` replaces the whole map. There is no `merge` on the Vue client - build the merged object yourself and pass it in:
+
+```ts
+state.update({ ...state.permissions.value, 'manage:team': true })
+```
+
+## createAccessPlugin
+
+```ts
+function createAccessPlugin(
+  permissions: IamClient.PartialPermissionMap<TAction, TResource, TScope>,
+): { install(app: VueApp): void }
+```
+
+The whole-app path. `install` builds a fresh state from the captured map, provides it on the app under `IAM_ACCESS_INJECTION_KEY`, and registers two global properties.
+
+```ts
 // main.ts
 import { createApp } from 'vue'
 import { createAccessPlugin } from '@/lib/access'
 import App from './App.vue'
 
 const app = createApp(App)
-
-// permissions is a PermissionMap from your server
-app.use(createAccessPlugin(permissions))
-
+app.use(createAccessPlugin(permissionsFromServer))
 app.mount('#app')
 ```
 
-The plugin also registers `$can` and `$cannot` as global properties for direct template use:
+| Registered | Value |
+| --- | --- |
+| `app.provide(IAM_ACCESS_INJECTION_KEY, state)` | The state object `useAccess` injects |
+| `app.config.globalProperties.$can` | `state.can`, callable directly in any template |
+| `app.config.globalProperties.$cannot` | `state.cannot` |
 
 ```html
 <button v-if="$can('delete', 'post')">Delete</button>
+<p v-if="$cannot('read', 'analytics')">Upgrade to see analytics.</p>
 ```
 
----
+`$can` and `$cannot` are bound to the state created at `install` time, so `update()` from `useAccess` inside a component reaches them too - they share one ref.
 
-## Composable
+## provideAccess
 
-Use `useAccess` in any component within the provider tree.
+```ts
+function provideAccess(
+  permissions: IamClient.PartialPermissionMap<TAction, TResource, TScope>,
+): AccessState
+```
+
+The component-tree path. It creates the state, calls Vue's `provide` with `IAM_ACCESS_INJECTION_KEY`, and returns the state so the providing component can use it too.
+
+```vue
+<script setup lang="ts">
+import { provideAccess } from '@/lib/access'
+
+const props = defineProps<{ permissions: Record<string, boolean> }>()
+const { can, update } = provideAccess(props.permissions)
+</script>
+```
+
+It calls `provide` internally, so it must run synchronously inside a component's `setup()`. Calling it from a module body, an event handler, or after an `await` in `setup` has no provider to attach to.
+
+Use it instead of the plugin when the map is per-route or per-subtree, or when one app renders more than one subject's view.
+
+## useAccess
+
+```ts
+function useAccess(): AccessState
+```
+
+Injects the state provided by the plugin, by `provideAccess`, or by your own `provide` call under the same key. Returns exactly what `createAccessState` returns: `permissions`, `can`, `cannot`, `update`, `allowedActions`, and `hasAnyOn`.
 
 ```vue
 <script setup lang="ts">
 import { useAccess } from '@/lib/access'
 
 const { can, cannot, permissions, update } = useAccess()
+
+async function refresh() {
+  update(await fetch('/api/me/permissions').then((r) => r.json()))
+}
 </script>
 
 <template>
-  <div>
-    <button v-if="can('update', 'post')">Edit</button>
-    <button v-if="can('delete', 'post')">Delete</button>
-    <p v-if="cannot('manage', 'team')">Contact an admin to manage teams.</p>
-  </div>
+  <button v-if="can('update', 'post')">Edit</button>
+  <button v-if="can('delete', 'post', 'post-42')">Delete this post</button>
+  <button v-if="can('manage', 'team', undefined, 'org-1')">Team settings</button>
+  <p v-if="cannot('manage', 'team')">Contact an admin to manage teams.</p>
 </template>
 ```
 
-The composable returns:
+<Callout tone="warning" title="useAccess throws when nothing is provided">
+With no plugin and no `provideAccess` above it, `useAccess` throws with the message `[@gentleduck/iam:vue] useAccess() called without provideAccess(). Use provideAccess() in a parent component or install the plugin.` That is deliberate: a missing provider is a wiring bug, and a loud failure beats a silently locked-down screen. There is no environment gate here - Vue throws in production builds too. React throws only under `NODE_ENV=development` and denies otherwise; see [behaviour outside the provider](/duck-iam/integrations/client/react#behaviour-outside-the-provider).
+</Callout>
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `permissions` | `Ref<PermissionMap>` | Reactive permission map |
-| `can` | `(action, resource, resourceId?, scope?) -> boolean` | Check if allowed |
-| `cannot` | `(action, resource, resourceId?, scope?) -> boolean` | Check if denied |
-| `update` | `(newPerms) -> void` | Replace the permission map (triggers reactivity) |
+## usePermissions
 
-`useAccess` **throws** when no provider/plugin is found. This is intentional - it surfaces missing setup immediately instead of silently rendering a locked-down UI.
+```ts
+function usePermissions(
+  fetchFn: () => Promise<IamClient.PartialPermissionMap<TAction, TResource, TScope>>,
+): {
+  permissions: Ref<IamClient.PartialPermissionMap<TAction, TResource, TScope>>
+  can: (action: TAction, resource: TResource, resourceId?: string, scope?: TScope) => boolean
+  cannot: (action: TAction, resource: TResource, resourceId?: string, scope?: TScope) => boolean
+  allowedActions: (resource: TResource) => string[]
+  hasAnyOn: (resource: TResource) => boolean
+  loading: Ref<boolean>
+  error: Ref<Error | null>
+  refetch: () => Promise<void>
+}
+```
 
----
+The async path, for a client-rendered app that fetches its own map. It is not wired to the injection system: `Can`, `Cannot` and `useAccess` read the provided state, which has `update` and no `loading`. Feed one into the other yourself.
 
-## Can and Cannot components
+```vue
+<script setup lang="ts">
+import { usePermissions } from '@/lib/access'
 
-Declarative permission gates using slots.
+const { can, loading, error, refetch } = usePermissions(() =>
+  fetch('/api/me/permissions').then((r) => r.json()),
+)
+</script>
+
+<template>
+  <Spinner v-if="loading" />
+  <ErrorMessage v-else-if="error" :error="error" @retry="refetch" />
+  <NewPostButton v-else-if="can('create', 'post')" />
+</template>
+```
+
+`permissions`, `loading` and `error` are `Ref`s - read `.value` in script, unwrapped in a template.
+
+Behaviour worth knowing:
+
+- **The first load fires synchronously in the composable body**, not from a lifecycle hook. Creating the composable starts the request, with nothing to defer or cancel it. React's equivalent runs its first load inside `useEffect`.
+- **Every load starts by resetting.** `permissions.value` goes back to the empty map and `error.value` is cleared before the fetch is awaited, so during any reload everything is denied, and after a failed reload everything is denied with `error` populated. Gate the UI on `loading`, never on a map left over from the previous subject - the sign-out and account-switch cases are exactly where the stale map is another user's grants.
+- **Supersession is a monotonic run id.** Two loads can be in flight and the earlier one can resolve last; a boolean cannot express that.
+- **There is no unmount guard.** A late response still writes to the ref of a disposed component. The ref is garbage by then, so the effect is a wasted write rather than a leak, but it is a real difference from React, which carries an `unmounted` flag set by its effect cleanup.
+- **There is no dependency list.** React's `usePermissions` takes one; Vue's does not. Re-run by calling `refetch`.
+- **`error` is normalised** to `err instanceof Error ? err : new Error(String(err))`.
+
+## Can and Cannot
+
+Both are `defineComponent` results with `name: 'Can'` and `name: 'Cannot'`, and both call `useAccess` inside `setup` - so they inherit the throw above when no provider exists.
 
 ```vue
 <template>
   <Can action="delete" resource="post">
-    <button>Delete Post</button>
+    <button>Delete post</button>
   </Can>
 
   <Can action="read" resource="analytics">
@@ -118,8 +296,12 @@ Declarative permission gates using slots.
       <AnalyticsPanel />
     </template>
     <template #fallback>
-      <p>Upgrade to Pro to access analytics.</p>
+      <p>Upgrade to Pro to see analytics.</p>
     </template>
+  </Can>
+
+  <Can action="update" resource="post" resource-id="post-42" scope="org-1">
+    <EditButton />
   </Can>
 
   <Cannot action="create" resource="post">
@@ -128,50 +310,43 @@ Declarative permission gates using slots.
 </template>
 ```
 
-`Can` renders the default slot when allowed, or the `fallback` slot when denied. `Cannot` renders its default slot when denied.
+### Props (identical on both)
 
----
+| Prop | Type | Required | Default | Meaning |
+| --- | --- | --- | --- | --- |
+| `action` | `String` | yes | - | The action to check |
+| `resource` | `String` | yes | - | The resource type to check |
+| `resourceId` | `String` | no | `undefined` | Pins the check to one instance |
+| `scope` | `String` | no | `undefined` | Scope segment for the key |
 
-## Manual provide/inject
+In templates, write the optional props kebab-cased: `resource-id="post-42"`.
 
-If you prefer not to use the plugin, call `provideAccess` in a parent component. Useful in SSR setups where you hydrate permissions per-request instead of at app startup.
+### Slots
 
-```vue
-<script setup lang="ts">
-import { provideAccess } from '@/lib/access'
+| Component | Condition | Renders |
+| --- | --- | --- |
+| `Can` | allowed | the `default` slot |
+| `Can` | denied | the `fallback` slot, or nothing when no `fallback` slot is passed |
+| `Cannot` | denied | the `default` slot |
+| `Cannot` | allowed | `null` |
 
-// permissions is a PermissionMap from your server
-const state = provideAccess(permissions)
-// state has the same shape as useAccess(): { permissions, can, cannot, update }
-</script>
-```
+`Can` has no `fallback` prop - `fallback` is a named slot. `Cannot` has no fallback of any kind.
 
-Child components can then call `useAccess()` as usual.
-
----
-
-## createAccessState (low-level)
-
-For full control without provide/inject, use `createAccessState` directly. It returns a reactive state object without registering it in the injection system.
-
-```typescript
-import { createAccessState } from '@/lib/access'
-
-const state = createAccessState(permissionsFromServer)
-state.can('delete', 'post') // boolean
-state.permissions.value // reactive Ref<PermissionMap>
-state.update(newPermissions) // replaces and triggers reactivity
-```
-
-This is returned from `createVueAccess()` alongside the other exports. Combine it with your own provide call (e.g. for SSR-specific keys) when the default plugin or `provideAccess` doesn't fit.
-
----
+<Callout tone="info" title="Props are declared as plain strings">
+Both components declare `action` and `resource` as Vue `String` props, so Vue's runtime validation is not union-aware. The generic narrowing happens where you build the factory, and the props are widened back to `string` at the component boundary. A typo in a template is caught by `vue-tsc` against your unions, not by the runtime prop check.
+</Callout>
 
 ## IAM_ACCESS_INJECTION_KEY
 
-Exported `Symbol` used by `provideAccess`/`useAccess` internally. You can re-use it if you need to bypass the helpers and call `provide(IAM_ACCESS_INJECTION_KEY, state)` yourself - for example, when wiring duck-iam into a custom plugin pipeline.
+```ts
+const IAM_ACCESS_INJECTION_KEY = Symbol.for('@gentleduck/iam:access')
+```
 
-```typescript
+Registry-global, exported directly from `@gentleduck/iam/client/vue` and also returned by the factory. `provideAccess`, `createAccessPlugin`, and `useAccess` all use it, so anything provided under this key satisfies `useAccess`.
+
+Reach for it when you want the state but not the helpers - for example, to provide the same state under an extra key of your own, or to wire duck-iam into a larger plugin:
+
+```ts
 import { provide } from 'vue'
 import { IAM_ACCESS_INJECTION_KEY } from '@gentleduck/iam/client/vue'
 import { createAccessState } from '@/lib/access'
@@ -180,14 +355,62 @@ const state = createAccessState(permissions)
 provide(IAM_ACCESS_INJECTION_KEY, state)
 ```
 
----
+`Symbol.for` rather than `Symbol()` is the whole point. The package ships both ESM and CJS builds, and a plain symbol is per-module-instance: a mixed load would have `provide` and `inject` holding different keys and report "useAccess() called without provideAccess()" for a correctly wired app. The registry key survives that. The cost is that two Vue surfaces in one process collide on it, and the last `provide` wins.
+
+## SSR and hydration
+
+<Callout tone="warning" title="One app instance and one state per request">
+`createApp` must run per request in a Vue SSR server, and so must `createAccessPlugin(map)`. A plugin object built once at module scope captures one user's map, and `install` then hands that same map to every app it is used on. Build the plugin inside your request handler, or skip it and use `provideAccess` in the root component with the per-request map.
+</Callout>
+
+The safe pattern:
+
+<Steps>
+<Step>Build the map per request on the server</Step>
+
+Call `generateIamPermissionMap(engine, subjectId, checks, environment)` from `@gentleduck/iam/server/generic` in the request handler.
+
+<Step>Serialise it into the page payload</Step>
+
+The map is a flat `Record` of strings to booleans, so it needs no custom serialiser. Put it in your app's state payload alongside everything else you hydrate.
+
+<Step>Provide it inside setup, not at module scope</Step>
+
+Either `app.use(createAccessPlugin(mapForThisRequest))` on the freshly created app, or `provideAccess(mapForThisRequest)` in the root component's `setup()`. Both must see the same map on the server and on the client.
+
+<Step>Refresh with update</Step>
+
+After a role or scope change, refetch and call `update(next)` from `useAccess`. Because `can` reads `permissions.value` at call time, every template that called it re-renders. No remount is needed. `usePermissions` is the other path, but it fires its first fetch synchronously on creation, which is the wrong shape for an SSR render.
+</Steps>
+
+Before hydration the state does not exist, so `useAccess` throws rather than denying. Do not call it above the provider - render the provider as high as the map is available, and gate on a `loading` flag of your own if the map arrives asynchronously.
 
 ## When to use what
 
 | Need | Use |
 | --- | --- |
-| Whole-app setup | `createAccessPlugin` + `app.use(plugin)` |
-| Component-tree setup (SSR) | `provideAccess` in a parent |
-| Compose reactive state outside the tree | `createAccessState` |
-| Permission check in template | `useAccess` + `v-if` or `<Can>`/`<Cannot>` |
-| Permission check in script | `useAccess` |
+| Whole-app setup, one subject per app instance | `createAccessPlugin` plus `app.use` |
+| Per-route or per-subtree map, SSR | `provideAccess` in a parent `setup()` |
+| Reactive state outside the injection system | `createAccessState` |
+| Map fetched in the browser, with `loading` and `error` | `usePermissions` |
+| Check in a template | `$can` / `$cannot`, or `useAccess` with `v-if` |
+| Declarative gate with a fallback | `Can` with a `fallback` slot |
+| Provide under your own wiring | `IAM_ACCESS_INJECTION_KEY` plus your own `provide` |
+
+## Gotchas
+
+- **Call the factory once.** Two calls still share `IAM_ACCESS_INJECTION_KEY`, so injection works across them, but you end up with two `Can` components and two composables for no benefit.
+- **`useAccess` throws.** Wrap the risky call site or, better, fix the provider. Do not swallow it - a caught throw becomes an invisible always-denied UI.
+- **There is no `merge`.** Spread into the current map and call `update`.
+- **A boolean captured in `setup()` is a snapshot.** Call `can` in the template, in a `computed`, or in a render function to keep it reactive.
+- **`computed` and `h` are unused today but still required.** Pass all six members of the Vue surface.
+- **`usePermissions` fires its first fetch synchronously.** Creating the composable starts the request; there is no lifecycle hook to defer or cancel it, which matters under SSR.
+- **`Can` renders nothing when denied without a `fallback` slot.** That is the intended "hide it" behaviour, not a bug.
+
+## See also
+
+- [PermissionMap reference](/duck-iam/integrations/client/permission-map) - key formats and partial maps
+- [Client overview](/duck-iam/integrations/client) - server-to-client sync and refresh
+- [React client](/duck-iam/integrations/client/react) - the same model, throwing only in development
+- [Vanilla JS client](/duck-iam/integrations/client/vanilla) - outside a Vue app
+- [Server integrations](/duck-iam/integrations/server) - producing the map

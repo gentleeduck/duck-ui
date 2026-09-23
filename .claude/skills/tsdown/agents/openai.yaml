@@ -1,0 +1,3 @@
+interface:
+  display_name: "tsdown"
+  short_description: "Bundle libraries and emit declarations"

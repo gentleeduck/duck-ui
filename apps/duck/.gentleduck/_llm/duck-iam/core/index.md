@@ -1,82 +1,63 @@
-## What is duck-iam?
+duck-iam is one access-control engine with two authoring models. Roles (RBAC) are concise for "who can do what"; policies (ABAC) express "under which conditions". They are written differently but evaluated identically: role permissions are compiled into a synthetic policy, that policy joins your hand-written ones, and every check walks the same evaluator. This page fixes the vocabulary and routes you to the page that documents each part.
 
-A hybrid access control engine. Roles (RBAC) and policies (ABAC) feed the **same evaluation pipeline** - no separate paths.
+## One evaluator, two authoring models
 
-Roles convert to ABAC policies internally. Every check runs through one evaluator.
+The two models converge before anything is evaluated, so a role grant and a policy rule are the same kind of object by the time a decision is made.
 
-***
-
-## Reading order
+`rolesToPolicy()` turns every permission of every role into one allow rule guarded by a `subject.roles contains 
 
 | Page | Covers |
 | --- | --- |
-| [evaluation pipeline](/duck-iam/core/evaluation) | Step-by-step request -> decision flow, dev vs prod modes |
-| [primitives](/duck-iam/core/primitives) | Subject, Resource, Action, Scope, Environment, AccessRequest, Decision |
-| [rule matching](/duck-iam/core/rule-matching) | When a rule fires - action match, resource match, conditions |
-| [cross-policy combination](/duck-iam/core/cross-policy) | AND across policies, default effect, defense in depth |
-| [roles](/duck-iam/core/roles) | RBAC - defining, inheritance, scoped, conditional |
-| [policies](/duck-iam/core/policies) | ABAC - building, conditions, targets, combining algorithms |
+| [primitives](/duck-iam/core/primitives) | Every exported type in the request, policy, and decision vocabulary, field by field. |
+| [evaluation pipeline](/duck-iam/core/evaluation) | Subject resolution, scoped-role enrichment, policy-set assembly, per-policy evaluation, the decision. |
+| [rule matching](/duck-iam/core/rule-matching) | Action and resource patterns, condition groups, field resolution, every operator's edge semantics. |
+| [cross-policy combination](/duck-iam/core/cross-policy) | NotApplicable semantics, the three `policyCombine` modes, `defaultEffect`, defense in depth. |
+| [roles](/duck-iam/core/roles) | Defining roles, inheritance, scoped roles, conditional permissions, the `rolesToPolicy` output. |
+| [policies](/duck-iam/core/policies) | The policy builder, rules, targets, conditions, nesting, combining algorithms. |
 
-***
+## Why hybrid
 
-## Quick mental model
+RBAC alone expresses "editors update posts" but not "editors update posts they own, during business hours, from an allowed region". ABAC alone makes every ordinary grant a hand-written rule, which is verbose for the eighty percent case.
 
-```
-Subject + Action + Resource + Scope + Environment
-        |
-        v
-[ RBAC roles -> __rbac__ policy ]   [ Custom ABAC policies ]
-        |                                    |
-        +--------- evaluate each ------------+
-                       |
-                       v
-              AND-combine across policies
-                       |
-                       v
-              Decision (allow / deny)
-```
+duck-iam lets you keep both:
 
-A deny from any policy is final. The cross-policy combiner is fixed engine behavior - no per-policy tuning to override it.
+* Common grants stay roles. Concise, easy to audit, easy to hand to an admin UI through `engine.admin`.
+* Contextual restrictions stay policies. Time windows, ownership, geo-fencing, feature flags, break-glass.
+* Both contribute to one decision through the configured cross-policy combine, which defaults to strict AND.
 
-***
+## When to use / When not to use
 
-## Why hybrid?
+Use the core engine directly when you need a decision inside your own code path: a resolver, a job runner, a service-to-service call. Use it through a [server integration](/duck-iam/integrations/server) when the decision guards an HTTP route, so subject and scope extraction is done for you.
 
-RBAC alone can express "editors update posts" but not "editors update posts they own during business hours." ABAC alone forces every grant to be a hand-written rule, which is verbose for the simple cases.
+Do not reach for a policy when a role would do. A policy exists to say something a role cannot: a condition on request context, a deny, or a restriction that must apply regardless of who is asking. A policy set of three to five well-named concerns is far easier to audit than twenty overlapping ones.
 
-duck-iam lets you:
+Do not use `engine.explain()` on a hot path. It is `development`-mode only, allocates a full trace, and throws when the engine is in `production` mode.
 
-* Express common grants as roles (concise, easy to reason about)
-* Express contextual rules as ABAC policies (deny on weekends, owner-only edits, geo-fencing)
-* Have both contribute to the same decision via AND-combination
+## Gotchas
 
-The result: roles cover 80% of grants in 20% of the code, ABAC handles the long tail.
+### Are roles just shorthand for policies?
 
-***
+At evaluation time, yes: `rolesToPolicy()` materialises them into the `__rbac__` policy so roles and ABAC rules run through the same evaluator. You still model them separately, because roles are the better authoring surface for ordinary grants and policies are the better surface for contextual logic.
 
-## FAQ
+### The `__rbac__` policy is omitted when it has no rules
 
-Are roles just shorthand for policies?
+The engine merges `[__rbac__, ...adapterPolicies]` only when the generated policy has at least one rule. Roles that exist but grant nothing produce an empty rule list, and the policy is dropped rather than joining the combine as a silent participant.
 
-Conceptually, yes. duck-iam converts resolved role permissions into a synthetic RBAC policy so that
-roles and ABAC rules go through the same evaluator. You still model them differently because roles are
-easier for common grants and policies are better for contextual logic.
+### What happens when nothing matches?
 
-Why do I see a **rbac** policy in explain() output even though I never created one?
+`defaultEffect` decides, and it is `'deny'` unless you change it. A policy whose targets do not match is skipped entirely rather than folded in as a default vote - see [NotApplicable semantics](/duck-iam/core/cross-policy). Setting `defaultEffect: 'allow'` additionally requires `allowFailOpen: true`; the engine constructor throws without it and logs a startup warning even with it.
 
-Because duck-iam materializes your resolved role permissions into a synthetic RBAC policy before evaluation.
-That policy is how roles enter the same rule engine as your hand-written ABAC policies, so seeing
-<code className="rounded bg-muted px-2 py-1">**rbac**</code> in traces is expected.
+### The cross-policy combine is configurable
 
-What happens when no rules or targets match?
+Since 2.0.0 the engine takes `policyCombine` (`'and'` by default, plus `'allow-overrides'` and `'first-applicable'`). Older documentation described the AND as fixed engine behaviour; it is not. See [cross-policy combination](/duck-iam/core/cross-policy).
 
-The evaluator falls back to the configured default effect, which is usually
-<code className="rounded bg-muted px-2 py-1">deny</code>. duck-iam treats "policy does not apply" and
-"no rule matched" as fail-closed outcomes unless you explicitly choose a different default.
+### scope, environment, or resource attribute?
 
-When should tenant or org info live in scope instead of environment or resource attributes?
+Put a tenant identifier in `scope` when it should activate scoped role assignments and scope-restricted permissions - that is the only one of the three the subject resolver reads. Put it in `environment` or `resource.attributes` when it is only extra context for conditions and must not change which roles a subject holds.
 
-Put it in <code className="rounded bg-muted px-2 py-1">scope</code> when it should activate scoped role assignments
-and scope-aware permissions. Keep it in <code className="rounded bg-muted px-2 py-1">environment</code> or
-<code className="rounded bg-muted px-2 py-1">resource.attributes</code> when it is only extra context for conditions
-and should not change how subject roles are resolved.
+## See also
+
+* [Primitives](/duck-iam/core/primitives) - the exact shape of every type named above.
+* [Evaluation pipeline](/duck-iam/core/evaluation) - what happens between `engine.can()` and a decision.
+* [Cross-policy combination](/duck-iam/core/cross-policy) - how per-policy verdicts merge.
+* [Engine modes](/duck-iam/advanced/engine/modes) - what changes between `development` and `production`.

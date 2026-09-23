@@ -11,7 +11,7 @@ const InputOTP = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <InputOTPPrimitive.Root
     ref={ref}
-    className={cn('flex items-center gap-2 disabled:cursor-not-allowed has-disabled:opacity-50', className)}
+    className={cn('flex items-center gap-2 has-disabled:cursor-not-allowed has-disabled:opacity-50', className)}
     data-slot="input-otp"
     {...props}
   />

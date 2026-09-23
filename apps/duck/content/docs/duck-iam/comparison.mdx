@@ -1,82 +1,137 @@
 ---
 title: How duck-iam compares
-description: Honest tradeoffs versus Casbin, CASL, Oso, OPA, AccessControl.js, and roll-your-own.
+description: Where duck-iam sits against Casbin, CASL, Oso, OPA, Cedar and AccessControl.js, which claims are measured, and when to pick something else
 section: Getting Started
 ---
+Every comparison table lies a little, usually by omitting what it did not test. This page separates two kinds of claim: things measured in-tree against a library that is actually installed, and things read from another project's documentation. No number here is a benchmark result; those live on the [benchmarks](/duck-iam/benchmarks) page.
+
+## What this page compares against
+
+**Measured.** Five libraries are installed as devDependencies of `@gentleduck/iam` and benchmarked head to head in `test/benchmark.bench.ts`. Every performance claim about them comes from running that file:
+
+| Library | Version benchmarked |
+| --- | --- |
+| `@casl/ability` | `^7.0.0` |
+| `casbin` | `^5.50.0` |
+| `accesscontrol` | `^3.1.0` |
+| `@rbac/rbac` | `^2.1.3` |
+| `easy-rbac` | `^4.0.0` |
+
+**Not measured.** Oso, OPA, Cedar, Permit.io, and Cerbos are not installed and not benchmarked. They appear below only on feature axes taken from their own documentation, and no ops-per-second figure is claimed for any of them. Where a comparison is documentation-derived, the table says so.
 
 ## The space
 
-TypeScript / Node authorization libraries cluster around four
-archetypes:
+TypeScript and Node authorization tools cluster into four archetypes, and the archetype matters more than any individual feature.
 
-1. **DSL-based engines** - OPA (Rego), Cedar (AWS).
-2. **JSON / object policy engines** - Casbin, AccessControl.js.
-3. **Code-first builders** - CASL, Oso, duck-iam.
-4. **Hosted policy services** - Permit.io, Cerbos Cloud.
+<MermaidDiagram chart={`flowchart TD
+    ROOT["Authorization tooling"] --> DSL["1. DSL engines"]
+    ROOT --> JSON["2. JSON or object policy engines"]
+    ROOT --> CODE["3. Code-first builders"]
+    ROOT --> SVC["4. Hosted policy services"]
 
-duck-iam is in archetype 3 with a single twist: it runs RBAC and ABAC
-through one evaluation pipeline. You don't pick one; you write both
-side by side and the engine combines them.
+    DSL --> DSL1["OPA with Rego, AWS Cedar"]
+    JSON --> JSON1["Casbin, AccessControl.js"]
+    CODE --> CODE1["CASL, Oso, duck-iam"]
+    SVC --> SVC1["Permit.io, Cerbos Cloud"]`} />
 
-## Quick table
+duck-iam is archetype 3, with one twist: RBAC and ABAC are not separate subsystems. Roles compile into a synthetic policy and meet your hand-written policies inside the same evaluator, under the same [combining algorithms](/duck-iam/core/cross-policy). You do not choose one model; you write both side by side.
 
-| | duck-iam | Casbin | CASL | Oso | OPA / Cedar | AccessControl.js |
+## Where the decision happens
+
+The archetypes differ most in where the check runs and what a policy change costs.
+
+<MermaidDiagram chart={`flowchart LR
+    subgraph inproc["In-process, compiled at build"]
+        CASL["CASL: rules frozen at build(), hash lookup"]
+    end
+
+    subgraph inproc2["In-process, loaded at runtime"]
+        DUCK["duck-iam: adapter loads catalog, LRU caches, invalidator"]
+        CASBIN["Casbin: model file plus adapter or watcher"]
+    end
+
+    subgraph remote["Out of process"]
+        OPA["OPA or Cedar sidecar: network hop per decision"]
+        HOST["Hosted service: network hop plus vendor"]
+    end
+
+    REQ["Request needs a decision"] --> CASL
+    REQ --> DUCK
+    REQ --> CASBIN
+    REQ --> OPA
+    REQ --> HOST`} />
+
+`CASL` is the fastest of these because it does the least at request time: rules are frozen at `build()` and every check is one hash lookup. `DUCK` and `CASBIN` accept a runtime cost in exchange for policies that change without a redeploy. `OPA` and `HOST` trade microseconds for a network round trip, and get language independence in return.
+
+That framing explains most of the benchmark gap: duck-iam is measurably slower than CASL per check and measurably faster than Casbin, and both results follow from where each one does its work.
+
+## Feature comparison
+
+Rows marked "docs" are read from the other project's documentation rather than tested here.
+
+| | duck-iam | Casbin | CASL | Oso (docs) | OPA / Cedar (docs) | AccessControl.js |
 | --- | --- | --- | --- | --- | --- | --- |
-| **Language** | TypeScript native | TS / Go / Python / many | TS native | TS + Rust | DSL (Rego / Cedar) | TS native |
-| **RBAC** | First-class | Yes (RBAC model) | Yes | Yes | Yes | Yes |
-| **ABAC (conditions)** | First-class | Yes (with caveats) | Yes (limited) | Yes | Yes | No |
-| **One unified pipeline** | Yes | Two model file types | Pipeline per ability | One pipeline | One DSL | RBAC only |
-| **Combining algorithms** | 4 in-policy + 3 cross-policy | Custom matcher | Subject-side `every` | Single policy | Custom in Rego | Not applicable |
-| **Multi-tenant** | First-class scoped roles | Manual via subjects | Manual | Manual | Manual | No |
-| **`explain()` traces** | Yes (dev mode) | Limited | Limited | `inspect()` | OPA explain | No |
-| **Hot-reload policies** | Yes (adapter-driven) | Yes (watcher) | Reload at app level | Yes (load_files) | Yes | Reload at app level |
-| **TypeScript inference** | Const-typed actions/resources/roles | Stringly-typed | Strong | Strong | None (DSL) | Stringly-typed |
-| **Dev/prod modes** | Yes (boolean fast path) | No | No | No | No | No |
-| **Server adapters shipped** | Express, Hono, NestJS, Next.js | Bring-your-own | Bring-your-own | Bring-your-own | Bring-your-own | Bring-your-own |
-| **Client components shipped** | React, Vue, vanilla | No | `<Can />` for React | No | No | No |
-| **Performance (decisions/sec)** | <1us prod mode | ~10us | ~20us | ~10us | ~50us (remote) | ~5us |
-| **License** | MIT | Apache 2 | MIT | Apache 2 | Apache 2 | MIT |
+| Language | TypeScript | TS, Go, Python, and more | TypeScript | TS with a Rust core | Rego or Cedar DSL | TypeScript |
+| RBAC | First-class | Yes, RBAC model | Yes | Yes | Yes | Yes |
+| ABAC conditions | 19 operators | Yes, via matchers | Yes, MongoDB-style | Yes | Yes | No |
+| One pipeline for both | Yes, roles compile to a policy | Two model files | One ability set | One pipeline | One DSL | RBAC only |
+| Combining algorithms | 4 in-policy, 3 cross-policy | Custom matcher | Subject-side evaluation | Single policy | Written in the DSL | Not applicable |
+| Multi-tenant scoping | First-class scoped roles | Manual, via subjects | Manual | Manual | Manual | No |
+| Decision traces | `engine.explain()`, development mode | Limited | Limited | `inspect()` | OPA explain | No |
+| Runtime policy reload | Yes, adapter-driven with an invalidator | Yes, watcher | Rebuild the ability | Yes | Yes | Rebuild the grants |
+| Type inference | Const-typed actions, resources, roles, scopes | Stringly typed | Strong | Strong | None, it is a DSL | Stringly typed |
+| Development and production modes | Yes | No | No | No | No | No |
+| Server middleware shipped | Express, Hono, NestJS, Next.js, generic | Bring your own | Bring your own | Bring your own | Bring your own | Bring your own |
+| Client packages shipped | React, Vue, vanilla | No | React `Can` component | No | No | No |
+| Storage adapters shipped | Memory, file, Prisma, Drizzle, Redis, HTTP | 20+ across languages | No | No | No | No |
+| Built-in caching | LRU with TTL, single-flighted, cross-instance invalidator | No | Not needed, rules are in memory | No | Bundle cache | No |
+| Batch permission checks | `engine.permissions()` | No | No | No | Partial evaluation | No |
+| Rule indexing | Per-policy `Map`, held in a `WeakMap` | No | Yes | Yes | Yes | No |
+| Runtime dependencies | 1, `uuid`, only for the Drizzle schemas | 5 | 0 | native binding | separate binary | 1 |
+| Measured here | Yes | Yes | Yes | No | No | Yes |
+| License | MIT | Apache 2.0 | MIT | Apache 2.0 | Apache 2.0 | MIT |
 
-See [Benchmarks ->](/duck-iam/benchmarks) for the duck-iam numbers
-against seven libraries.
+The duck-iam column is read from the 5.9.0 source and `package.json`. Competitor dependency counts and licenses come from each project's own published metadata, checked 2026-03-30, and go stale when they release. For the numbers behind the "measured here" row, see [benchmarks](/duck-iam/benchmarks).
+
+Two smaller libraries appear in the benchmark suite without a column here, because their surface is too narrow for the axes above. `easy-rbac` is roughly 2 KB and needs no configuration beyond a hierarchical role object — a good fit when hierarchical RBAC is the entire requirement, and it benchmarks faster than duck-iam's own `iamEvaluateFast()`. `@rbac/rbac` is around 4 KB, allows role updates at runtime, and ships Express, NestJS, and Fastify middleware. Neither supports attribute conditions, so neither appears in the ABAC scenarios. Both size figures are bundlephobia numbers checked 2026-03-30.
 
 ## When to pick duck-iam
 
-- You're building a TypeScript app and want strict types on every
-  action / resource / role name.
-- You need both RBAC and ABAC, and don't want to maintain two
-  separate policy systems.
-- You need multi-tenant scoped roles (different roles per org).
-- You want `explain()` traces that say exactly which rule
-  matched and why.
-- You want a dev/prod toggle that drops decision overhead to <1us.
+- You want compile-time errors on misspelled action, resource, role, and scope names.
+- You need RBAC and ABAC together and do not want to maintain two policy systems that combine by hand.
+- You need multi-tenant [scoped roles](/duck-iam/core/roles/scoped): the same subject holding different roles per organization.
+- You need to answer "why was this denied?" in production support, and [`explain()`](/duck-iam/advanced/explain) gives you the rule, the condition, and the actual versus expected values.
+- Your policies change at runtime, written by an admin UI or promoted between environments through [`engine.admin.export()`](/duck-iam/advanced/engine/admin).
+- You want the operability surface — health probes, cache statistics, cross-instance invalidation, adapter timeouts — without building it.
 
 ## When to pick something else
 
-- **OPA / Cedar**: when you need a *language-agnostic* policy service
-  (one set of policies enforced from Go, Python, TypeScript, etc.).
-  duck-iam is TS-only.
-- **Casbin**: when you need a battle-tested engine with broad
-  ecosystem support and don't mind less type safety.
-- **Hosted policy service (Permit, Cerbos Cloud)**: when you'd rather
-  not run your own policy runtime and want a polished policy editor
-  UI.
-- **CASL**: when your concerns are mostly about scoping ORM queries
-  (CASL has tight integrations with TypeORM / Sequelize / Mongoose).
+- **OPA or Cedar** when policies must be enforced from more than one language. duck-iam is TypeScript only, and a shared policy set across a Go and a Python service is exactly what a DSL sidecar is for.
+- **CASL** when your rules are static, your bundle budget is tight, or your main need is scoping ORM queries. CASL has mature TypeORM, Sequelize, and Mongoose integrations, ships around 6 KB, and is faster per check because it compiles at `build()` time.
+- **Casbin** when you want a long-established engine with adapters for practically every database and language, and stringly-typed models are acceptable.
+- **A hosted policy service** such as Permit.io or Cerbos Cloud when you would rather not run a policy runtime at all and want a managed editing UI.
+- **Nothing at all** when your app has three roles and no conditions. A `switch` statement is a legitimate answer, and adding a policy engine to it is a cost with no return.
 
-## What duck-iam is *not*
+## What duck-iam is not
 
-- **Not a permission marketplace.** Define your own actions and
-  resources; we don't ship a generic "manage:user" taxonomy.
-- **Not an audit/SIEM.** Hooks are first-class, but you bring the
-  log sink.
-- **Not authentication.** Pair with [duck-auth](/duck-auth) for the
-  identity side.
+- **Not authentication.** It answers what a subject may do, never who they are. Pair it with [duck-auth](/duck-iam/guides/auth-bridge).
+- **Not an audit log or SIEM.** The hooks are first-class and every decision can be observed, but you bring the sink.
+- **Not a permission taxonomy.** There is no built-in `manage:user` vocabulary; you declare your own actions and resources.
+- **Not a policy editor.** The admin API and JSON schema are there so you can build one; the UI is yours.
+- **Not language-agnostic.** The policy format is JSON and portable, but the evaluator is TypeScript.
+
+## Gotchas
+
+<Callout tone="info" title="Read comparison tables for what they omit">
+Feature rows are not weighted. Casbin's twenty-plus adapters matter more than duck-iam's six if you are on a database duck-iam has no adapter for, and the "one pipeline" row matters not at all if you only ever needed RBAC. Match the row to your problem before counting them.
+</Callout>
+
+- The compiled table addresses roles with a 32-bit mask, so a catalog over 32 roles cannot be compiled. The engine warns once and falls back to the interpreter in both modes: verdicts unchanged, the O(1) lookup gone. A real limit that no feature table would show.
+- Competitor versions above are the ones the benchmark suite pins. A newer release of any of them can move the numbers, so re-run `bun run bench` rather than trusting the table's age.
 
 ## See also
 
-- [Benchmarks ->](/duck-iam/benchmarks) - duck-iam vs Casbin / CASL /
-  Oso / accesscontrol / @casl/ability / RBAC / express-jwt-permissions.
-- [Pairing with duck-auth ->](/duck-iam/guides/auth-bridge) - the
-  identity bridge.
-- [Cookbook ->](/duck-iam/guides/cookbook) - patterns.
+- [Benchmarks](/duck-iam/benchmarks) — the measured numbers, the hardware, and the methodology.
+- [Introduction](/duck-iam/introduction) — the model and the docs routing map.
+- [Cookbook](/duck-iam/guides/cookbook) — the patterns this comparison keeps alluding to.
+- [Pairing with duck-auth](/duck-iam/guides/auth-bridge) — the identity half duck-iam deliberately does not do.

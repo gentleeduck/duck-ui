@@ -1,153 +1,266 @@
 ---
-title: rolesToPolicy (under the hood)
-description: How role definitions become a synthetic ABAC policy at engine load time.
+title: The rolesToPolicy conversion
+description: How role definitions become the synthetic __rbac__ policy - the algorithm step by step, a real dumped output, rule id stability, and cache invalidation
 section: Core
 ---
-## What rolesToPolicy does
+`rolesToPolicy()` is the bridge between RBAC and ABAC in duck-iam. It takes the full list of role definitions and returns one `AccessControl.IPolicy` in which every permission of every role has become an allow rule gated on holding that role. The engine calls it for you; understanding its output is what makes an [explain trace](/duck-iam/advanced/explain) readable.
 
-`rolesToPolicy()` turns role definitions into one ABAC policy. The engine calls this internally - you almost never invoke it directly, but understanding the conversion helps debug evaluation behavior.
+## API reference
 
-<MermaidDiagram chart={`flowchart LR
-    subgraph Input["Role Definitions"]
-        direction TB
-        VIEWER["viewer\nread:post, read:comment"]
-        EDITOR["editor (inherits viewer)\ncreate:post, update:post"]
-    end
+```ts
+import { rolesToPolicy, resolveEffectiveRoles, MAX_INHERITANCE_DEPTH, IAM_RBAC_POLICY_ID } from '@gentleduck/iam'
 
-    Input --> FLATTEN["1. Flatten\ninheritance"]
-    FLATTEN --> RULES["2. Each permission\nbecomes a Rule"]
+function rolesToPolicy(
+  roles: AccessControl.IRole[],
+  scopeMode: 'flat' | 'hierarchical' = 'flat',
+): AccessControl.IPolicy
+function resolveEffectiveRoles(assignedRoles: string[], allRoles: AccessControl.IRole[]): string[]
+const MAX_INHERITANCE_DEPTH = 32
+const IAM_RBAC_POLICY_ID = '__rbac__'
+```
 
-    subgraph Generated["Generated Rules (allow-overrides)"]
-        direction TB
-        R1["__rbac__#0\ncondition: roles contains 'viewer'"]
-        R2["__rbac__#1\ncondition: roles contains 'viewer'"]
-        R3["__rbac__#2\ncondition: roles contains 'editor'"]
-        R4["__rbac__#3\ncondition: roles contains 'editor'"]
-        R5["__rbac__#4 (inherited)\ncondition: roles contains 'editor'"]
-    end
+| Export | Takes | Returns |
+| --- | --- | --- |
+| `rolesToPolicy` | Every role definition, independent of who holds them, plus the engine's `scopeMode` | One policy: `id: '__rbac__'`, `name: 'RBAC Policies'`, `description: 'Auto-generated from role definitions'`, `algorithm: 'allow-overrides'`, one rule per flattened permission |
+| `resolveEffectiveRoles` | A subject's assigned role IDs plus every role definition | The closed set of role IDs: assigned plus inherited, de-duplicated. A *directly assigned* id the catalog does not define is kept; an *inherited* one is dropped |
+| `MAX_INHERITANCE_DEPTH` | - | The traversal bound both functions share, `32` |
+| `IAM_RBAC_POLICY_ID` | - | `'__rbac__'`. Exported because it is not a label: the evaluator has to tell this policy apart from an operator-authored one |
 
-    RULES --> Generated
-    Generated --> POLICY["3. Wrapped in __rbac__ policy"]`} />
+Both are pure. They take data, return data, and hold no engine reference - which is why they are usable in tests and build steps without an adapter.
 
-For each role, the function:
+## The algorithm
 
-1. **Flattens** the inheritance chain into all permissions (own and inherited)
-2. **Creates a Rule per permission** with:
-   - `effect: 'allow'`
-   - `id: '__rbac__#N'` - opaque sequential counter, not derived from role / action / resource
-   - `actions` and `resources` from the permission
-   - `subject.roles contains "<roleId>"` as a condition
-   - `scope eq "<scope>"` when the permission or role is scoped
-   - Any conditions from `grantWhen()`
-   - `priority: 10` (default)
-3. **Wraps** the rules in a policy with `id: '__rbac__'` and `algorithm: 'allow-overrides'`
+<MermaidDiagram chart={`flowchart TD
+    IN["roles: AccessControl.IRole[]"] --> MAP["build a Map from role id to role"]
+    MAP --> LOOP["for each role, in input order"]
+    LOOP --> FLAT["collectPermissions: walk inherits, memo on shallowest depth, stop past depth 32"]
+    FLAT --> ORDER["parent permissions first, then the role's own, each paired with the role that declared it"]
+    ORDER --> PERM["for each owner-permission pair"]
+    PERM --> COND["base conditions: subject.roles contains the role id, plus scope eq when perm.scope or owner.scope is set and neither undefined nor '*'"]
+    COND --> NEST["no permission conditions: use the base group as-is. Otherwise wrap: all of the base group and the author's group"]
+    NEST --> RULE["emit a rule: effect allow, priority 10, id __rbac__ hash N, description name colon action on resource"]
+    RULE --> PERM
+    LOOP --> WRAP["wrap every rule in one policy: id __rbac__, algorithm allow-overrides"]`} />
 
----
+Step by step, from `src/core/rbac/rbac.ts`:
 
-## Example conversion
+1. **Index.** Every role goes into a `Map` keyed by `id`, so `inherits` lookups are constant time.
+2. **Flatten** (`FLAT`, `ORDER`). `collectPermissions(roleId)` walks the `inherits` graph and returns `[...inherited, ...own]` as `{ owner, perm }` pairs - the role that declared each permission travels with it, which is what makes a declared scope belong to the declarer. The memo records the shallowest depth each role was reached at, so cycles terminate and a diamond contributes once. Past depth 32 the walk returns an empty list. See [role inheritance](/duck-iam/core/roles/inheritance).
+3. **Build the base conditions** (`COND`). Always `subject.roles contains "<roleId>"`. Then `scope eq "<effectiveScope>"` where `effectiveScope` is `perm.scope ?? owner.scope`, unless it is `undefined` or `'*'`. Under `scopeMode: 'hierarchical'` that one condition becomes `{ any: [scope eq S, scope starts_with "S."] }` so a declared scope covers its descendants - without that arm, an *assignment* at `org-1` reached `org-1.team-a` while an identical role-declared `scope: 'org-1'` did not, and one engine flag meant two different things.
+4. **Nest the permission's own conditions** (`NEST`). A permission with no `conditions` gets `{ all: [...base] }`. One that has them gets `{ all: [{ all: [...base] }, perm.conditions] }` - the author's group is passed through **whole**, never enumerated, and the base conditions get their own `all` wrapper so the author's group always sits one level down whatever its key is. Both details fixed silent bugs; see below.
+5. **Emit the rule** (`RULE`). `effect: 'allow'`, `priority: 10`, `actions: [perm.action]`, `resources: [perm.resource]`, and an `id` from a monotonic counter. The description is `"<role.name>: <action> on <resource>"`, with `" (via <owner.name>)"` appended when the permission was inherited. The `"<role.name>: "` prefix identifies the holder and is filtered on, so the inherited-from note goes after it.
+6. **Wrap** (`WRAP`). One policy, `algorithm: 'allow-overrides'`, no `targets`, no `version`.
 
-The viewer role:
+Two things about step 4 that each closed a silent bug. Enumerating `any`/`none` by hand and falling through to `[]` for anything else dropped an unrecognised group - a typo'd key, a hand-edited row - and a conditional grant silently became unconditional; passing the group through whole lets the shared `evalConditionGroup` read an unknown group as `false`, so it fails closed instead. And splicing an `all` body in-line was depth-neutral while `any`/`none` had to be nested, so the identical condition tree crossed `MAX_CONDITION_DEPTH` in one shape and not the other - and the deeper shape then failed closed with no validation error, which for allow-only role permissions is a silent denial. The constant `IAM_RBAC_CONDITION_DEPTH = 1` is the depth at which a permission's own group starts because of that wrapper; anything evaluating a permission's conditions outside the generated policy must start there, not at `0`.
 
-```typescript
+The counter is per call and resets on each invocation, so the same input always produces the same id sequence - pinned by the test "produces identical id sequence for identical input on repeated calls".
+
+## A real dump
+
+Three roles, one plain, one inheriting with a conditional grant, one scoped:
+
+```ts
+import { defineRole, rolesToPolicy } from '@gentleduck/iam'
+
 const viewer = defineRole('viewer')
   .name('Viewer')
+  .desc('Read-only access to published content')
   .grant('read', 'post')
   .grant('read', 'comment')
   .build()
+
+const author = defineRole('author')
+  .name('Author')
+  .inherits('viewer')
+  .grant('create', 'post')
+  .grantWhen('update', 'post', (w) => w.isOwner())
+  .build()
+
+const orgEditor = defineRole('org-editor').name('Org Editor').scope('org-1').grant('publish', 'post').build()
+
+console.log(JSON.stringify(rolesToPolicy([viewer, author, orgEditor]), null, 2))
 ```
 
-Becomes:
+Actual output:
 
-```typescript
-const policy: AccessControl.IPolicy = {
-  id: '__rbac__',
-  name: 'RBAC Policies',
-  algorithm: 'allow-overrides',
-  rules: [
+```json
+{
+  "id": "__rbac__",
+  "name": "RBAC Policies",
+  "description": "Auto-generated from role definitions",
+  "algorithm": "allow-overrides",
+  "rules": [
     {
-      id: '__rbac__#0',
-      effect: 'allow',
-      actions: ['read'],
-      resources: ['post'],
-      conditions: {
-        all: [{ field: 'subject.roles', operator: 'contains', value: 'viewer' }]
+      "id": "__rbac__#0",
+      "effect": "allow",
+      "description": "Viewer: read on post",
+      "priority": 10,
+      "actions": ["read"],
+      "resources": ["post"],
+      "conditions": {
+        "all": [{ "field": "subject.roles", "operator": "contains", "value": "viewer" }]
       }
     },
     {
-      id: '__rbac__#1',
-      effect: 'allow',
-      actions: ['read'],
-      resources: ['comment'],
-      conditions: {
-        all: [{ field: 'subject.roles', operator: 'contains', value: 'viewer' }]
+      "id": "__rbac__#1",
+      "effect": "allow",
+      "description": "Viewer: read on comment",
+      "priority": 10,
+      "actions": ["read"],
+      "resources": ["comment"],
+      "conditions": {
+        "all": [{ "field": "subject.roles", "operator": "contains", "value": "viewer" }]
+      }
+    },
+    {
+      "id": "__rbac__#2",
+      "effect": "allow",
+      "description": "Author: read on post (via Viewer)",
+      "priority": 10,
+      "actions": ["read"],
+      "resources": ["post"],
+      "conditions": {
+        "all": [{ "field": "subject.roles", "operator": "contains", "value": "author" }]
+      }
+    },
+    {
+      "id": "__rbac__#3",
+      "effect": "allow",
+      "description": "Author: read on comment (via Viewer)",
+      "priority": 10,
+      "actions": ["read"],
+      "resources": ["comment"],
+      "conditions": {
+        "all": [{ "field": "subject.roles", "operator": "contains", "value": "author" }]
+      }
+    },
+    {
+      "id": "__rbac__#4",
+      "effect": "allow",
+      "description": "Author: create on post",
+      "priority": 10,
+      "actions": ["create"],
+      "resources": ["post"],
+      "conditions": {
+        "all": [{ "field": "subject.roles", "operator": "contains", "value": "author" }]
+      }
+    },
+    {
+      "id": "__rbac__#5",
+      "effect": "allow",
+      "description": "Author: update on post",
+      "priority": 10,
+      "actions": ["update"],
+      "resources": ["post"],
+      "conditions": {
+        "all": [
+          { "all": [{ "field": "subject.roles", "operator": "contains", "value": "author" }] },
+          { "all": [{ "field": "resource.attributes.ownerId", "operator": "eq", "value": "$subject.id" }] }
+        ]
+      }
+    },
+    {
+      "id": "__rbac__#6",
+      "effect": "allow",
+      "description": "Org Editor: publish on post",
+      "priority": 10,
+      "actions": ["publish"],
+      "resources": ["post"],
+      "conditions": {
+        "all": [
+          { "field": "subject.roles", "operator": "contains", "value": "org-editor" },
+          { "field": "scope", "operator": "eq", "value": "org-1" }
+        ]
       }
     }
   ]
 }
 ```
 
-Rule IDs are opaque counters (`__rbac__#N`) - never derived from role / action / resource. Don't pattern-match against them or build admin tooling that assumes the old dotted shape.
+Four things to read out of it:
 
----
+- **`#2` and `#3` are `viewer`'s permissions re-emitted under `author`.** Flattening copies, it does not chain: each role's effective permission set is independently checkable in one pass, with no inheritance walk at evaluation time. `(via Viewer)` names the declaring role.
+- **`#5` nests the `grantWhen()` group beside the base group** rather than splicing it flat, so the author's group sits at a fixed depth whatever its key is.
+- **`#6` carries the role's scope** as `scope eq "org-1"`. Nothing distinguishes a role-level from a permission-level scope in the output; `perm.scope ?? owner.scope` collapses both. Because `owner` is the *declaring* role, `#2` and `#3` would stay unscoped even if `author` declared a scope.
+- **Keys that are `undefined` on the source role are absent from the JSON.** `metadata` never reaches the policy at all - it is not copied onto rules.
 
-## Why allow-overrides?
+## Rule ids are opaque
 
-`allow-overrides` means **any role granting the permission is enough**. A user with multiple roles gets the union of their permissions.
+Since 2.0.0 the rule id is `__rbac__#<N>` where `N` is a monotonic counter over the whole conversion. The previous format interpolated role, action, and resource names, which produced ambiguous ids whenever any segment contained a `.`.
 
-```typescript
-// User has both roles:
-await engine.admin.assignRole('user-1', 'viewer')
-await engine.admin.assignRole('user-1', 'commenter')
+<Callout tone="warning" title="Do not parse a rule id">
+Adapter ETags and external caches key on `rule.id`, so the shape is locked by a test, but the number carries no meaning: it is not stable across a change to the role set, and nothing about the role, action, or resource can be recovered from it. Use `rule.description` (`"<role name>: <action> on <resource>"`) when you need to attribute a rule to a role in tooling or an audit log. A role with a dotted id such as `org.admin` still gets unique rule ids - pinned by the test "emits unique ids even when role / action / resource names contain dots".
+</Callout>
 
-// Either role granting an action is enough - union, not intersection
+## Why allow-overrides
+
+`allow-overrides` means any matching allow rule decides the policy. That is the RBAC contract: holding more roles can only widen access, never narrow it, and a subject with two roles gets the union of their permissions rather than the intersection.
+
+```ts
+await engine.admin.assignRole('u-1', 'viewer')
+await engine.admin.assignRole('u-1', 'commenter')
+// either role granting the action is enough
 ```
 
-This is the natural RBAC contract - adding a role only grants more access, never restricts it.
+Restriction lives outside `__rbac__`. Under the default `policyCombine: 'and'`, a deny from any applicable policy is final, so a deny rule in one of your own policies overrides every allow the RBAC policy produced. See [combining algorithms](/duck-iam/core/policies/combining-algorithms) and [cross-policy combining](/duck-iam/core/cross-policy).
 
-To restrict access, use a separate policy with `deny-overrides` semantics. The engine cross-policy AND-combines, so a deny in any policy wins regardless of how many allow rules fire in `__rbac__`.
+## Where the engine calls it
 
----
+The converted policy is cached, deep-frozen, and merged with your own policies:
 
-## Cached and rebuilt on role changes
+- `loadRbacPolicy()` builds it once per cache generation, single-flighted so a cold start under concurrency runs one conversion rather than N.
+- `loadAllPolicies()` returns `[rbacPolicy, ...yourPolicies]` - the RBAC policy first. When it has **no rules** it is omitted entirely, so an installation with no roles pays nothing for it.
+- The compiled lookup table is built from the roles directly rather than from a pre-merged `__rbac__` policy, and it produces the verdict in **both** modes. Development additionally runs the interpreter over the merged policy set, because the table cannot explain itself. See [engine modes](/duck-iam/advanced/engine/modes).
 
-The engine caches the result of `rolesToPolicy()` to avoid recomputing on every check. The cache is invalidated automatically when:
+<MermaidDiagram chart={`flowchart TD
+    LR["loadRoles(): adapter.listRoles(), cached"] --> LRB["loadRbacPolicy(): rolesToPolicy, deep-frozen, single-flighted, cached"]
+    LRB --> Q{"does __rbac__ have any rules?"}
+    Q -- "no" --> ONLY["merged set: your policies only"]
+    Q -- "yes" --> FIRST["merged set: __rbac__ first, then your policies"]
+    ONLY --> EV["evaluate, then cross-policy combine"]
+    FIRST --> EV
+    INV["admin.saveRole / deleteRole, or cache.invalidateRoles(roleId?)"] --> CLR["clear role cache, rbac policy cache, merged policy cache"]
+    CLR --> SUBJ["evict every subject, or only those holding roleId in roles or scopedRoles"]
+    CLR --> LR`} />
 
-- `engine.admin.saveRole()` is called
-- `engine.admin.deleteRole()` is called
-- `engine.cache.invalidateRoles()` is called manually
-- The role-load TTL expires (configurable via `cacheTTL`)
+`Q` is the empty-role-set shortcut, `FIRST` is why `__rbac__` appears at the head of an [explain trace](/duck-iam/advanced/explain), and `INV` is the only path that rebuilds the conversion.
 
-In production, this means role evaluations hit a hot in-process cache, not the adapter. See [engine caching](/duck-iam/advanced/engine).
+Invalidation is driven by `engine.cache.invalidateRoles(roleId?)`, which `engine.admin.saveRole()` and `deleteRole()` call for you. It clears the role cache, the converted RBAC policy cache, and the merged-policy cache; then it evicts either every cached subject (when no `roleId` is given) or just the subjects holding that role, in `roles` or in `scopedRoles`. When an [invalidator](/duck-iam/integrations/invalidators/redis) is configured the event is broadcast so every other engine instance does the same. Entries also expire on the configured `cacheTTL`. See [engine caching](/duck-iam/advanced/engine/caching).
 
----
+## Calling it yourself
 
-## Calling it manually
+You rarely need to, but it is exported and pure:
 
-You normally don't, but the function is exported if you need it:
-
-```typescript
+```ts
 import { rolesToPolicy } from '@gentleduck/iam'
 
-const rbacPolicy = rolesToPolicy([viewer, editor, admin])
-console.log(rbacPolicy.rules.length) // total rules generated
+const rbac = rolesToPolicy([viewer, author, orgEditor])
+console.log(rbac.rules.length) // 7
+console.log(rbac.rules.filter((r) => r.description?.startsWith('Author:')).length) // 4
 ```
 
-Useful for:
+Useful for inspecting what a role set actually grants during debugging, asserting on generated rules in tests without an engine, and pre-computing the policy in a build step for a very large role table.
 
-- Inspecting generated rules during debugging
-- Testing without spinning up an engine
-- Pre-computing policies in build steps for very large role sets
+## Why the rule count inflates
 
-The output is just data - pure JSON, no engine reference.
+Rules are emitted per role **and** per inherited permission, so a chain of N roles each granting M permissions approaches N x M rules in the worst case. That is deliberate:
 
----
+- Every rule is gated on `subject.roles contains "<roleId>"`, so the precomputed action/resource index lets the evaluator skip irrelevant rules without walking conditions.
+- Flattening at conversion time means no inheritance walk per request - each role's effective set is directly checkable.
+- The cost is paid on policy load, which is cached, not per evaluation.
 
-## Why the inflated rule count?
+For very large role tables watch policy-load time, and know where the compiled table stops helping: `IAM_MAX_COMPILED_ROLES` is 32, because a role's bit position in the grant mask is `1 << index` and JS bitwise operators wrap the shift amount mod 32, so role 32 would alias role 0's bit. Past 32 roles `compileTable` throws `IamRoleLimitExceededError`, the engine catches that error specifically, warns once, and both modes fall back to the interpreter for every subsequent request. Verdicts are unchanged; throughput is not. `healthCheck()` reports it:
 
-A role hierarchy with N roles each granting M permissions produces up to N x M rules in `__rbac__` (worst case, with deep inheritance). This is intentional:
+```ts
+const health = await engine.healthCheck()
+health.compiledTable // { available: false, reason: 'role-limit-exceeded', roleCount: 41, limit: 32 }
+```
 
-- Each rule is gated by `subject.roles contains "<roleId>"` so the engine can skip irrelevant rules in O(1) via the precomputed index
-- Inherited permissions are flattened (not chained at eval time) so each role's effective permissions are independently checkable
-- The cost is policy-load time only, not per-evaluation - caching makes this cheap
+The flag is latched for the life of the engine instance: deleting roles back under 32 and invalidating every cache does not restore the compiled table. Construct a new engine. See [benchmarks](/duck-iam/benchmarks).
 
-For very large role sets (1000+ roles, 10+ permissions each), monitor the policy-load time. The fast-path evaluator (`evaluatePolicyFast`) handles 10k+ rules with sub-microsecond lookups in the precomputed map.
+## See also
+
+- [Role inheritance](/duck-iam/core/roles/inheritance) - the flattening walk and its bounds
+- [Scoped roles](/duck-iam/core/roles/scoped) - where the `scope eq` condition comes from
+- [Evaluation pipeline](/duck-iam/core/evaluation) - what happens to the policy once it is built
+- [Engine caching](/duck-iam/advanced/engine/caching) - the caches this conversion sits behind

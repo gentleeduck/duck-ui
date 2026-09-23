@@ -105,6 +105,7 @@ export const duckIamSidebar = defineSidebar([
           { title: 'Caching', href: '/duck-iam/advanced/engine/caching' },
           { title: 'Hooks', href: '/duck-iam/advanced/engine/hooks' },
           { title: 'Development vs production mode', href: '/duck-iam/advanced/engine/modes' },
+          { title: 'Compiled table', href: '/duck-iam/advanced/engine/compiled' },
           { title: 'Admin API', href: '/duck-iam/advanced/engine/admin' },
         ],
       },
@@ -112,6 +113,7 @@ export const duckIamSidebar = defineSidebar([
   },
   {
     title: 'Integrations',
+    href: '/duck-iam/integrations',
     items: [
       {
         title: 'Adapters',

@@ -1,11 +1,11 @@
-## What context adds
+Without a `context`, the condition builders accept any string as a field path and `IamPrimitives.AttributeValue` as a value. Declaring one flips both sides to your application's real shapes: `attr()`, `resourceAttr()`, `env()`, `check()`, `eq()`, `neq()`, and `in()` all autocomplete their keys and narrow their values. The runtime is unchanged - this is entirely a compile-time gain.
 
-By default, the `When` condition builder accepts any string for `.attr()`, `.resourceAttr()`, `.env()`, and `.check()` field paths. To get autocompletion and type-checked values, pass a `context` phantom field with your application's context type.
+## Declaring a context
 
-```typescript
-import { defineIam, type DefaultContext } from '@gentleduck/iam'
+```ts
+import { createIam, type DotPath } from '@gentleduck/iam'
 
-interface AppContext extends DefaultContext {
+interface AppContext extends DotPath.IDefaultContext {
   subject: {
     id: string
     roles: string[]
@@ -30,7 +30,7 @@ interface AppContext extends DefaultContext {
   scope: string
 }
 
-const access = defineIam({
+const access = createIam({
   actions: ['create', 'read', 'update', 'delete'] as const,
   resources: ['post', 'comment', 'user'] as const,
   roles: ['viewer', 'editor', 'admin'] as const,
@@ -38,180 +38,98 @@ const access = defineIam({
 })
 ```
 
-Every `When` builder created through `access` gets full intellisense:
+`context` is a phantom field. `createIam` never reads it - it exists only so TypeScript can infer `TContext` from an argument position. `{} as unknown as AppContext` is the idiom the package's own JSDoc uses. If your codebase bans assertions, annotate the input object instead and pass it in:
 
-```typescript
+```ts
+import { createIam, type IamConfig } from '@gentleduck/iam'
+
+const input: IamConfig.IAccessConfigInput<
+  readonly ['create', 'read', 'update', 'delete'],
+  readonly ['post', 'comment', 'user'],
+  readonly ['viewer', 'editor', 'admin'],
+  readonly string[],
+  AppContext
+> = {
+  actions: ['create', 'read', 'update', 'delete'],
+  resources: ['post', 'comment', 'user'],
+  roles: ['viewer', 'editor', 'admin'],
+}
+
+const access = createIam(input)
+```
+
+Now every builder reached through `access` is typed:
+
+```ts
 access
   .definePolicy('banned-users')
   .rule('block-banned', (r) =>
-    r
-      .deny()
-      .on('*')
-      .of('*')
-      .when((w) => w.attr('status', 'eq', 'banned')),
-    // 'status' autocompletes from subject.attributes
-    // 'banned' constrained to 'active' | 'banned' | 'suspended'
+    // 'status' autocompletes from subject.attributes;
+    // the value is constrained to 'active' | 'banned' | 'suspended'
+    r.deny().on('*').of('*').when((w) => w.attr('status', 'eq', 'banned')),
   )
   .build()
 
 access
   .definePolicy('maintenance')
   .rule('deny-writes', (r) =>
-    r
-      .deny()
-      .on('create', 'update', 'delete')
-      .of('*')
-      .when((w) => w.env('maintenanceMode', 'eq', true)),
-    // 'maintenanceMode' autocompletes from environment
-    // value constrained to boolean
+    // 'maintenanceMode' autocompletes from environment; the value must be boolean
+    r.deny().on('create', 'update', 'delete').of('*').when((w) => w.env('maintenanceMode', 'eq', true)),
   )
   .build()
 ```
 
-The `context` field is a **phantom type** - its runtime value is never used. The `{} as unknown as AppContext` cast is safe because the value is discarded; only the type information flows through to the builders.
+## How dot-path.ts derives the paths
 
-***
+`DotPath.DotPaths
 
-## Per-resource attribute narrowing
+The compile-time assertions in `src/core/types/__tests__/types.test.ts` pin every branch:
 
-When you declare a `resourceAttributes` map in your context, `.resourceAttr()` narrows its available keys based on the resource specified in `.of()`:
+| Input | `DotPaths` result | Rule |
+|---|---|---|
+| `{ a: { b: string }; c: number }` | `'a' \| 'a.b' \| 'c'` | Objects emit themselves and recurse |
+| `{ roles: string[] }` | `'roles'` | Arrays are leaves, never indexed |
+| `{ fn: () => void; a: string }` | `'a'` | Functions are skipped entirely |
+| `Record
 
-```typescript
-interface AppContext extends DefaultContext {
-  // ... subject, resource, environment, scope ...
-  resourceAttributes: {
-    post: { ownerId: string; status: 'draft' | 'published' | 'archived'; title: string }
-    comment: { ownerId: string; body: string }
-    user: { email: string; status: 'active' | 'banned' }
-    dashboard: { name: string }
-  }
-}
+`.of()` is the pivot. Its signature is `of<R extends TResource | '*'>(...resources: R[]): RuleBuilder<TAction, TResource, TScope, TRole, TContext, R>` - it returns a *new* builder type whose sixth parameter is the resource you named, and the `when` callback hands you a `When` carrying that same parameter. `DotPath.ResolvedResourceAttrs` then picks the matching entry out of `resourceAttributes`; for `'*'` (and for any resource not in the map) it falls back to `MergedResourceAttrs`, which collects every key declared on any resource and unions each key's value types.
 
-const access = defineIam({
-  actions: ['create', 'read', 'update', 'delete'] as const,
-  resources: ['post', 'comment', 'user', 'dashboard'] as const,
-  context: {} as unknown as AppContext,
-})
-```
+A `When` created directly by `access.when()` has no active resource, so it sees the merged shape. That is the trade-off for reusable condition groups.
 
-`.resourceAttr()` shows only the keys for the resource specified in `.of()`:
-
-```typescript
-// .of('post') -> resourceAttr shows: 'ownerId' | 'status' | 'title'
-access
-  .definePolicy('post-title')
-  .rule('deny-empty', (r) =>
-    r
-      .deny()
-      .on('create', 'update')
-      .of('post')
-      .when((w) => w.not((n) => n.resourceAttr('title', 'exists'))),
-    //                                     ^ only post keys here
-  )
-  .build()
-
-// .of('comment') -> resourceAttr shows: 'ownerId' | 'body'
-access
-  .definePolicy('comment-body')
-  .rule('deny-empty', (r) =>
-    r
-      .deny()
-      .on('create')
-      .of('comment')
-      .when((w) => w.not((n) => n.resourceAttr('body', 'exists'))),
-    //                                    ^ only comment keys here
-  )
-  .build()
-
-// .of('*') -> resourceAttr shows union of ALL keys:
-// 'ownerId' | 'status' | 'title' | 'body' | 'email' | 'name'
-access
-  .definePolicy('global-owner')
-  .rule('deny-non-owner', (r) =>
-    r
-      .deny()
-      .on('delete')
-      .of('*')
-      .when((w) => w.not((n) => n.resourceAttr('ownerId', 'eq', '$subject.id'))),
-  )
-  .build()
-```
-
-The same narrowing works in `grantWhen` on roles:
-
-```typescript
-access
-  .defineRole('member')
-  .grantWhen('update', 'post', (w) =>
-    w.isOwner().resourceAttr('status', 'eq', 'draft'),
-    // 'status' narrows to 'draft' | 'published' | 'archived' (post attrs)
-  )
-  .build()
-```
-
-Without `resourceAttributes`, `.resourceAttr()` falls back to `resource.attributes` which uses the general attribute type from your context.
-
-***
-
-## How the type system works
-
-The typed context system uses several TypeScript utility types that work together:
+## The type helpers, one line each
 
 | Type | Purpose |
-| --- | --- |
-| `DotPaths<T>` | Generates all valid dot-separated paths through `T` (e.g. `'subject.attributes.status'`). Arrays are treated as leaf paths and functions are skipped. Bails to `never` for string-indexed types to avoid polluting the union with `string`. |
-| `FlexibleDotPaths<T>` | Wrapper: returns `DotPaths<T> \| (string & {})` when `T` has open-ended attribute bags (like `DefaultContext`), giving autocomplete for known structural paths while accepting arbitrary strings. For fully typed contexts, returns strict `DotPaths<T>` only. |
-| `PathValue<T, P>` | Resolves the value type at path `P` within `T` |
-| `FieldValue<T, P>` | Like `PathValue` but wraps the result in `ConditionValue` to add `$`-reference support |
-| `ConditionValue<T, V>` | Adapts a value type for condition builders. Non-string values pass through unchanged; string values add `DollarPaths<T>` for `$`-reference autocomplete. Prevents type widening so `env('hour', 'lt', '')` correctly errors when `hour` is `number`. |
-| `FlexibleDollarPaths<T>` | `DollarPaths<T> \| (string & {})`, added directly to method value signatures so the IDE shows `$`-prefixed autocomplete suggestions (e.g. `$subject.id`) alongside a flexible string input. |
-| `SubjectAttrs<T>` | Extracts `T['subject']['attributes']` |
-| `ResourceAttrs<T>` | Extracts `T['resource']['attributes']` |
-| `EnvAttrs<T>` | Extracts `T['environment']` |
-| `ResourceAttrMap<T>` | Extracts `T['resourceAttributes']` (per-resource attribute map) |
-| `ResolvedResourceAttrs<T, R>` | Resolves resource attrs for resource `R`: specific type for known resources, merged union for `'*'` |
-| `AttrValue<A, K>` | Resolves the value type for key `K` in attribute bag `A`. Strips `undefined` from optional properties so that `yearsExperience?: number` correctly resolves to `number`, not `AttributeValue`. |
-| `DollarPaths<T>` | Generates `$`-prefixed versions of all dot-paths. Used for autocomplete on dynamic cross-references like `'$subject.id'`. |
+|---|---|
+| `DotPath.DotPaths<T>` | Every literal path through `T`; arrays are leaves, functions skipped, index signatures give `never` |
+| `DotPath.FlexibleDotPaths<T>` | `DotPaths<T>` for closed contexts; adds `(string & {})` when any branch has an open bag |
+| `DotPath.PathValue<T, P>` | The value type at path `P`, or `never` |
+| `DotPath.FieldValue<T, P>` | `PathValue` wrapped in `ConditionValue`, falling back to `AttributeValue` on a miss |
+| `DotPath.ConditionValue<T, V>` | Passes non-string values through unchanged; adds `$`-paths to the string-capable half |
+| `DotPath.FlexibleDollarPaths<T>` | `DollarPaths<T> \| (string & {})`, spliced into each method signature so the IDE lists the literals |
+| `DotPath.SubjectAttrShape<T>` | `T['subject']['attributes']` |
+| `DotPath.ResourceAttrShape<T>` | `T['resource']['attributes']` |
+| `DotPath.EnvAttrShape<T>` | `T['environment']` |
+| `DotPath.SubjectAttrs<T>` | Keys for `attr()` |
+| `DotPath.ResourceAttrs<T>` | Keys for `resourceAttr()` when no per-resource map exists |
+| `DotPath.EnvAttrs<T>` | Keys for `env()` |
+| `DotPath.ResourceAttrMap<T>` | `T['resourceAttributes']`, or `never` |
+| `DotPath.ResolvedResourceAttrs<T, R>` | The attribute shape for resource `R`; merged union for `'*'` |
+| `DotPath.ResolvedResourceAttrPaths<T, R>` | Keys for `resourceAttr()` under an active resource |
+| `DotPath.AttrValueAt<T, P>` | Raw value at `P` inside a bag; `never` on a miss |
+| `DotPath.AttrValue<T, P>` | `AttrValueAt` with `undefined` stripped |
+| `DotPath.IAnyAttributes` | The open attribute bag marker |
+| `DotPath.IDefaultContext` | The default context, open bags and all |
 
-The `context` phantom field on `defineIam` captures your context type (`TContext`). This type parameter flows through `AccessConfig` into every builder:
+## Gotchas
 
-```
-defineIam({ context: {} as AppContext })
-  -> AccessConfig<..., TContext=AppContext>
-    -> PolicyBuilder<..., TContext>
-      -> RuleBuilder<..., TContext>
-        -> .of('post') returns RuleBuilder<..., TActiveResource='post'>
-          -> When<..., TContext, TActiveResource='post'>
-            -> .resourceAttr() uses ResolvedResourceAttrs<AppContext, 'post'>
-              -> returns AppContext['resourceAttributes']['post']
-              -> { ownerId: string; status: 'draft' | 'published' | 'archived'; title: string }
-```
+* **Value autocomplete is only as narrow as your types.** A field typed `string` can only offer broad string input plus `$`-references. Narrow the attributes you care about to literal unions and the value side narrows with them.
+* **An open bag anywhere loosens every path.** `HasOpenIndex` recurses through the whole context; one `Record<string, unknown>` deep inside re-enables arbitrary strings for `check()` across the board.
+* **Extending `IDefaultContext` inherits its open bags for anything you do not override.** Override `subject`, `resource`, and `environment` wholesale rather than partially if you want a fully closed context.
+* **`resourceAttr()` on `access.when()` sees the merged shape.** A key that exists on only one resource still compiles there; the narrowing only happens under `.of()` or `grantWhen`.
 
-When `.of('*')` is used, `ResolvedResourceAttrs` merges all resource attribute types using `MergedResourceAttrs`, which collects every key from every resource and unions their value types.
+## See also
 
-***
-
-## Why value autocomplete can still be broad
-
-Field-path autocomplete and value autocomplete are distinct.
-
-* If a field resolves to a narrow literal union such as `'draft' | 'published'`, the value side stays narrow and still offers `$subject.*` / `$resource.*` / `$environment.*` references.
-* If a field resolves to broad `string`, `number`, `boolean`, or a generic `AttributeValue`, TypeScript can only offer broad scalar input plus the `$` references.
-* Open-ended attribute bags such as `Record<string, unknown>` or the default `AnyAttributes` are the usual reason value suggestions feel looser than expected.
-
-For the tightest autocomplete, make the parts of your context that matter most explicit:
-
-```typescript
-interface AppContext extends DefaultContext {
-  subject: {
-    id: string
-    roles: string[]
-    attributes: {
-      status: 'active' | 'banned'
-      tier: 'free' | 'pro'
-    }
-  }
-}
-```
-
-This gives better value narrowing in `.check()`, `.eq()`, `.neq()`, `.attr()`, `.resourceAttr()`, and `.env()` without changing runtime behavior.
+* [Typed $-references](/duck-iam/advanced/config/dollar-paths) - the value side of the same machinery.
+* [Conditions](/duck-iam/core/policies/conditions) - every operator and its edge semantics.
+* [createIam()](/duck-iam/advanced/config/access-config) - where `context` is declared.
+* [Types and namespaces](/duck-iam/types) - the full `DotPath` member list.

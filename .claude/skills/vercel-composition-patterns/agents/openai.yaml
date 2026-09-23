@@ -1,0 +1,3 @@
+interface:
+  display_name: "Composition Patterns"
+  short_description: "React component APIs that scale"

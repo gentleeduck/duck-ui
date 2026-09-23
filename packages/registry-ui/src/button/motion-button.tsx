@@ -50,7 +50,7 @@ const MotionButton = React.forwardRef<
             animate={animateState}
             whileTap={isDisabled ? undefined : tapScale}
             transition={content.transition}
-            className={cn('inline-flex', isDisabled && 'pointer-events-none')}>
+            className={cn('inline-flex', isDisabled && 'cursor-not-allowed [&>*]:pointer-events-none')}>
             <Slot
               {...(props as React.HTMLAttributes<HTMLElement>)}
               aria-disabled={isDisabled || undefined}
@@ -77,7 +77,7 @@ const MotionButton = React.forwardRef<
           className={cn(
             buttonVariants({ border, className, size: isCollapsed ? 'icon' : size, variant }),
             'overflow-hidden',
-            isDisabled && 'pointer-events-none',
+            isDisabled && 'cursor-not-allowed',
           )}
           disabled={isDisabled}
           ref={ref}

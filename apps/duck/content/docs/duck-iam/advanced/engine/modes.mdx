@@ -1,149 +1,159 @@
 ---
-title: development vs production mode
-description: The mode option - full AccessControl.IDecision objects with timing in dev, plain booleans with zero allocations in prod. 2x performance trade-off.
+title: Development vs production mode
+description: What the mode option actually changes - two different evaluators, two return shapes, two sets of live hooks, and the options each mode refuses
 section: Advanced
 ---
-## Two modes
+`mode` does not pick the evaluator. Both modes get their verdict from the [compiled table](/duck-iam/advanced/engine/compiled). What `mode` picks is how much provenance comes back with that verdict, and what it costs to produce it. `'production'` (the default) returns a bare `boolean`. `'development'` returns an `AccessControl.IDecision` and runs the interpreter a second time to fill it in.
 
-The `mode` config option chooses the evaluation path:
+## One verdict, two amounts of provenance
 
-```typescript
-const engine = new IamEngine({
-  adapter,
-  mode: 'production', // or 'development' (default)
-})
-```
+<MermaidDiagram chart={`flowchart TD
+    REQ["_evaluateOnce(request)"] --> T["_getCompiledTable()"]
+    T --> NULL{"table is null?"}
+    NULL -- "role limit tripped, or policyCombine first-applicable" --> INT["interpreter only"]
+    NULL -- "no" --> LK["lookup: maskFromRoles, ABAC cell vote, RBAC vote, residual policies"]
+    LK --> M{"mode"}
+    M -- "production" --> P["{ allowed } - done"]
+    M -- "development" --> D1["run the interpreter too, with its own signals bag"]
+    D1 --> D2{"verdicts agree?"}
+    D2 -- "no" --> ERR["console.error + throw, caught as a fail-closed deny"]
+    D2 -- "yes" --> D3["{ allowed, decision } - policy, rule, real reason"]`} />
 
-| Mode | Path | Output | Use for |
-| --- | --- | --- | --- |
-| `'development'` (default) | `evaluate()` | Full `AccessControl.IDecision` with timing, rule/policy refs, reason | Local dev, `explain()`, debugging |
-| `'production'` | `evaluateFast()` | Plain `boolean` - no allocations | Deployed services |
+Production used to evaluate through the table and development through the interpreter, so any disagreement between the two was invisible until it reached production — and it reached production as an *allow* against a dev run that denied. The table is now authoritative in both modes. Development additionally runs the interpreter, because the table cannot explain itself: a `CONST_ALLOW` / `CONST_DENY` cell is a single `kind` byte and `allow` is a raw bitmask, so policy identity is erased at compile time. That erasure is the optimisation.
 
----
+Three details of the development run are easy to get wrong. It is passed `onPolicyError: undefined`, because the authoritative run already reported — otherwise a handler wired to an alerting pipeline pages twice for one bad policy, in development only. It gets its own `signals` bag, so a `failOpen` seen only by the explanatory run cannot rewrite what the authoritative path reported; once the verdicts agree the signals take the union. And a disagreement **throws**: it means duck-iam has a bug, `authorize()` catches it and answers a generic fail-closed `'Evaluation error'` deny, and the real message also goes to `console.error` because that deny is the right verdict and a useless diagnostic.
 
-## What changes
+Production does not run the interpreter and therefore cannot detect a disagreement. That asymmetry is deliberate: the second evaluator is the cost the fast path exists to avoid, and development is where the divergence is meant to be caught.
 
-### development mode
+## What differs
 
-- `engine.authorize()` returns `AccessControl.IDecision` (object with `allowed`, `effect`, `rule`, `policy`, `reason`, `duration`, `timestamp`)
-- `engine.check()` returns `AccessControl.IDecision`
-- `engine.explain()` works (full evaluation trace available)
-- `afterEvaluate` and `onDeny` hooks receive the `IDecision` object
-- Timing is recorded - `duration` is the actual evaluation milliseconds
-- All allocations happen - matching rule arrays, intermediate effect tags, etc.
+| | `'development'` | `'production'` (default) |
+| --- | --- | --- |
+| Verdict from | compiled table | compiled table |
+| Interpreter also runs | yes, for provenance | no |
+| `authorize()` returns | `AccessControl.IDecision` | `boolean` |
+| `check()` returns | `AccessControl.IDecision` | `boolean` |
+| `can()` returns | `boolean` | `boolean` |
+| `permissions()` returns | typed `IamClient.PermissionMap` | `Record<string, boolean>` |
+| `decision.reason` | the interpreter's real reason | `'Allowed/Denied (production mode; compiled table does not retain policy identity)'` |
+| `decision.policy` / `decision.rule` | present | `undefined` |
+| `decision.failure` | `'input'` / `'resolution'` / `'evaluation'` | no object to carry it — use `onError` |
+| `explain()` | works | throws `explain() is not available in production mode` |
+| `beforeEvaluate` | fires | fires |
+| `afterEvaluate` / `onDeny` | fire, with the full decision | fire, with a synthesised verdict-only decision |
+| `onError` / `onPolicyError` / `onMetrics` / `onMutation` | fire | fire |
+| `policyCombine: 'first-applicable'` | allowed, but costs the table | refused at construction |
+| Table/interpreter cross-check | on | off |
+| `explain` chunk in the bundle | loaded on first call | never loaded |
 
-### production mode
+`can()` is the constant in both columns: it unwraps whatever the mode produced and always answers `boolean`, which makes it the right choice in shared code that must compile against either mode.
 
-- `engine.authorize()` returns plain `boolean`
-- `engine.check()` returns plain `boolean` (same as `can()`)
-- `engine.explain()` **throws** (`Error: explain() is not available in production mode`)
-- `afterEvaluate` and `onDeny` hooks never fire (the engine takes the fast path that skips `IDecision` construction)
-- `onMetrics`, `onError`, and `onPolicyError` still fire - see [hooks](/duck-iam/advanced/engine/hooks)
-- No `duration` timing recorded on the path itself; use `onMetrics` for telemetry
-- Zero-allocation hot path - combined action+resource index, pre-computed unconditional rules
+The verdict-only decision is built by the engine **only when `afterEvaluate` or `onDeny` is wired**, so a production install that leaves them unset pays no allocation. Those two used to be development-only, which put a denial log — a production concern if there is one — out of reach exactly where operators need it.
 
-`engine.can()` always returns boolean regardless of mode - it's the simple-API method that works the same way in both modes.
-
-<Callout type="warning" title="Production mode rejects unsafe combinations">
-  The `IamEngine` constructor refuses two combinations when `mode: 'production'` is set:
-
-  - `policyCombine: 'first-applicable'` - the production fast path returns a plain boolean and cannot distinguish "rule fired" from "default applied", so first-applicable is rejected outright.
-  - `defaultEffect: 'allow'` without `allowFailOpen: true` - production never falls back to allow-by-default unless you opt in explicitly.
-
-  Both cases throw at construction time so misconfigurations fail loudly before serving traffic.
+<Callout tone="warning" title="Both modes refuse fail-open without an opt-in">
+  `defaultEffect: 'allow'` throws at construction unless `allowFailOpen: true` is
+  also set - in development mode too. The constructor applies the guard
+  unconditionally, and even with the opt-in it logs a `console.warn` naming the
+  engine as fail-open, so an operator grepping startup logs always finds it.
 </Callout>
 
----
+### Options production refuses
 
-## Performance difference
+`policyCombine: 'first-applicable'` throws at construction when combined with `mode: 'production'`:
 
-Benchmark numbers from `bun run benchmark`:
-
-| Operation | development | production | Ratio |
-| --- | --- | --- | --- |
-| `engine.can()` simple RBAC | ~5 us | ~2 us | 2.5x faster |
-| `engine.authorize()` full | ~6 us | ~1.5 us | 4x faster |
-| `engine.permissions()` 20 checks | ~21 us | ~12 us | 1.7x faster |
-| `evaluatePolicyFast()` (one policy) | ~1 us | ~0.5 us | 2x faster |
-
-Production mode is ~2x faster than development on simple checks. The gap widens for batch operations because the per-check `IDecision` allocation cost compounds.
-
-For raw single-policy lookups, duck-iam in production mode is ~2x slower than CASL (8.2M ops/sec vs CASL's 16.8M). CASL pre-compiles rules at build time; duck-iam supports runtime-updatable policies, which costs an extra Map lookup per check.
-
----
-
-## When to switch modes
-
-Default to development mode in:
-
-- Local dev
-- Test suites (you want `explain()` for failing tests)
-- Staging environments
-- CI
-
-Switch to production mode in:
-
-- Production deployments serving live traffic
-- High-throughput batch jobs
-- Edge runtimes where every microsecond matters
-
-You can mix - different engines for different routes if you really care:
-
-```typescript
-const debugEngine = new IamEngine({ adapter, mode: 'development' })
-const prodEngine = new IamEngine({ adapter, mode: 'production' })
-
-app.use('/api/debug', accessMiddleware(debugEngine))
-app.use('/api', accessMiddleware(prodEngine))
+```
+[@gentleduck/iam:engine] policyCombine 'first-applicable' requires mode 'development';
+the production fast path cannot represent it correctly.
 ```
 
-But this is rare. Default to one mode per process.
+`lookup()` folds its votes with `some` for `'allow-overrides'` and `every` for everything else, so first-applicable would arrive there as plain `'and'`. It never learns which policy voted first, or whether a vote was a real decision rather than a default.
 
----
+The constructor refuses the combination outright in production. In **development** it is legal, and the engine handles it by giving up the compiled table entirely: `_getCompiledTable()` returns `null` for `policyCombine: 'first-applicable'` and the whole combine is handed to the interpreter, which implements real XACML first-applicable. Without that, the one mode where the config is legal would be the one where its semantics is not implemented, and every request the two paths disagreed on would come back `'Evaluation error'`.
 
-## Detecting mode at runtime
+### The 32-role cap
 
-The engine exposes its mode via the type system:
+The table's RBAC grant mask is a `Uint32Array`, one bit per role. Past 32 roles the bit index would wrap - `1 << 32` is `1 << 0` in JavaScript - and role 33 would silently inherit role 0's grants. `compileTable` throws `IamRoleLimitExceededError` instead.
 
-```typescript
-const engine = new IamEngine<MyAction, MyResource, MyRole, MyScope, 'production'>({
+Because both modes evaluate through the table, the cap applies to both. It is **not** an error and not a deny: the engine catches that error specifically, warns once, and drops to the interpreter, which answers every question correctly and more slowly. `healthCheck()` then reports it on `compiledTable` with `ok` still `true`, since what was lost is throughput. Full rationale on [the compiled table page](/duck-iam/advanced/engine/compiled).
+
+## Types follow the mode
+
+`mode` is also the fifth type parameter of `IamEngine`, so the return shapes are statically correct when you declare it:
+
+```ts
+const prod = new IamEngine<Action, Resource, Role, Scope, 'production'>({
   adapter,
   mode: 'production',
 })
 
-// `engine.authorize()` returns boolean (typed)
-// `engine.explain()` is unavailable at the type level (and throws at runtime)
+const allowed = await prod.authorize(request) // boolean
+await prod.explain('user-1', 'read', post)    // compile error
 ```
 
-The mode is a **type parameter** of `IamEngine` - calling `explain()` on a `'production'`-mode engine is a compile-time error if you've declared the mode in the generic. At runtime, it throws if called regardless of the static type.
+The conditional types are `AccessControl.ModeResult<M>` (`boolean` for `'production'`, `AccessControl.IDecision` otherwise) and `AccessControl.ModePermissionMap<M, ...>` (`Record<string, boolean>` versus the typed `IamClient.PermissionMap`). `explain()` declares a `this` parameter pinned to a development-mode engine, which is how calling it on a production engine fails to compile. It also throws at runtime, so a value typed loosely as `IamEngine` still fails safely.
 
----
+The mismatch runs the other way too, and it is the dangerous direction: `TMode` defaults to `'production'`, and `IConfig.mode` is optional, so naming `'development'` in the type arguments does **not** set it. `new IamEngine<A, R, Ro, S, 'development'>({ adapter })` runs in production, returns a boolean, and types it as `IDecision` — reading `.allowed` off the boolean yields `undefined`, which is falsy, so the mismatch shows up as assertions that quietly pass rather than as a crash. Four E2E suites in this repo were written that way. Always pass `mode` explicitly, and declare the type parameter to match.
 
-## Caveat: development hooks vs production fast path
+## Choosing a mode
 
-`afterEvaluate` and `onDeny` receive the `IDecision` object - only constructed in development mode. In production mode these two hooks **don't fire** because the fast path skips `IDecision` construction entirely.
+<MermaidDiagram chart={`flowchart TD
+    A["Which mode?"] --> C{"Need policyCombine first-applicable?"}
+    C -- "yes" --> DEV["development"]
+    C -- "no" --> D{"Need explain, or the deciding rule and policy in a decision?"}
+    D -- "yes" --> DEV
+    D -- "no" --> PROD["production - the default"]`} />
 
-`onMetrics` is the production-safe telemetry hook: it gets primitive-only events (`subjectId`, `action`, `resource`, `allowed`, `durationMs`, `mode`) on every terminal path in both modes. Wire it for latency, hit-rate, and outcome metrics. `onError` and `onPolicyError` also fire in both modes.
+The role catalog is not on this tree. Over 32 roles drops both modes to the interpreter, so it changes throughput, not the mode you should pick.
 
-If you need full-decision auditing in production:
+Development in local development, test suites (where `explain()` turns a failing assertion into a readable trace), CI and staging — it is also the only place a table/interpreter divergence can be caught, which is the reason to keep it on in CI. Production everywhere else, and in edge runtimes where bundle size matters, since production never loads the explain chunk.
 
-- Either run development mode (and pay the ~2x cost)
-- Or wire `onMetrics` for the boolean outcome plus timing and emit your own audit record from there
+Different engines per route is possible but rarely worth it:
 
-For batched audit logging, build it into your route handlers or middleware around `engine.can()` instead of relying on engine hooks.
-
----
-
-## Recommended setup
-
-For most apps, development mode is the right default. The 2x performance gap doesn't matter unless you're doing 100k+ checks per second.
-
-```typescript
-// Most apps:
-const engine = new IamEngine({ adapter })
-
-// Only if you're chasing microseconds:
-const engine = new IamEngine({ adapter, mode: 'production' })
+```ts
+const debugEngine = new IamEngine({ adapter, mode: 'development' })
+const prodEngine = new IamEngine<Action, Resource, Role, Scope, 'production'>({ adapter, mode: 'production' })
 ```
 
-When in doubt, benchmark your actual workload. Adapter latency (DB round-trips, Redis network hops) usually dominates engine evaluation time - and that doesn't change between modes.
+Two engines means two independent cache sets and two compiled tables, and an admin write through one does not invalidate the other unless they share an `invalidator`. Prefer one mode per process.
+
+## Performance, honestly
+
+Measured 2026-08-29 through the full stack - subject resolution, hooks, scope enrichment, caches and evaluation - with `engine.can()` on the same machine, two runs for stability:
+
+| Request shape | `'production'` | `'development'` | Ratio |
+| --- | --- | --- | --- |
+| RBAC grant covered by the role mask | 2.62-2.92M ops/s | 0.89-0.91M ops/s | ~2.9-3.2x |
+| Condition-gated ABAC cell | 1.83-1.93M ops/s | 0.90-0.93M ops/s | ~2.0-2.1x |
+
+Development's number is the table lookup **plus** the interpreter run, since both execute on every development check. That is where the gap comes from — it is the price of provenance and of the cross-check, not two different qualities of evaluator.
+
+The more useful framing: a fully warm production check costs roughly 950 nanoseconds, and the evaluator is about 7% of that. Half the time goes to the subject cache's LRU bookkeeping and roughly a third to the promise chain of four nested async functions. Switching modes optimises the 7%. If authorization is genuinely your bottleneck, the subject cache and the number of adapter round trips are where the time is.
+
+Throughput does not degrade with catalog size in either mode's hot path - the compiled lookup is array indexing regardless of how many roles and policies exist. What constrains production is catalog *shape*: the 32-role cap, very wide action-by-resource grids, and policies that cannot compile because they use wildcards. See [benchmarks](/duck-iam/benchmarks) for methodology and cross-library comparisons.
+
+## Auditing in production mode
+
+`afterEvaluate` and `onDeny` fire in production, so a denial log keeps working when `mode` flips. What it loses is provenance: `decision.policy` and `decision.rule` are `undefined` and `reason` is a fixed string, so a log built on those fields starts recording nothing without failing. `onMutation` is unaffected — it is the write-side audit seam and reports the same events in both modes.
+
+If the deciding rule genuinely has to be in the record:
+
+1. Stay in development mode and pay for the second evaluator. For most services it is invisible next to database latency.
+2. Audit at the call site, in your middleware or route handler, around `engine.can()`. That is also where you have the request context the engine never sees.
+
+Chart `failOpen` either way. It is the only signal that distinguishes "allowed because a rule said so" from "allowed because nothing had anything to say and `defaultEffect` is `'allow'`".
+
+## Gotchas
+
+- **Naming `TMode` does not set `mode`.** The type argument and the config field are independent; pass both.
+- **The compiled table is built lazily.** The first `authorize()` or `permissions()` after boot, or after any policy/role invalidation, pays one table build — in both modes. `preload()` warms it.
+- **A 33rd role is not an error.** It is a silent-until-you-look throughput cliff: one `console.warn` at the first trip, then `healthCheck().compiledTable` for as long as the condition holds.
+- **`explain()` throws even when the static type allowed the call.** The runtime check does not trust the generic.
+- **Switching modes does not change verdicts.** The same table answers both. Development additionally cross-checks it against the interpreter and throws on a disagreement, which is a bug in duck-iam, not a mode trade-off.
+
+## See also
+
+- [Compiled table](/duck-iam/advanced/engine/compiled)
+- [Hooks](/duck-iam/advanced/engine/hooks)
+- [Engine methods](/duck-iam/advanced/engine/methods)
+- [Cross-policy combining](/duck-iam/core/cross-policy)
+- [Benchmarks](/duck-iam/benchmarks)

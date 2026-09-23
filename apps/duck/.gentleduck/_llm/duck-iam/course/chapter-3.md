@@ -1,648 +1,314 @@
-## Goal
+Roles answer "is Bob an editor". They cannot answer "may Bob update *this* document". That needs attributes: who owns the document, what state it is in, when the request arrived. This chapter adds two ABAC policies to DocDuck and shows how they combine with the roles from chapter 2.
 
-Roles tell you "this user is an editor." They cannot answer "can this editor update
-**this specific post**?" For that, you need policies with conditions. By the end of this
-chapter, BlogDuck will enforce owner-only editing - editors can only update posts they wrote.
+## Learning goals
 
-when ownerId != subject.id"]
-  end
+* Write a policy with `definePolicy`, rules with `.rule()`, and conditions with the `When` builder.
+* Read a condition as three parts: field, operator, value.
+* Know all nineteen operators and how each behaves on missing or wrong-typed data.
+* Use `$`-variables to compare one part of the request against another.
+* Pick a combining algorithm for a policy, and know how policies combine with each other.
+* Avoid the deny-only policy trap that silently denies everything it targets.
 
-  subgraph Result["Combined"]
-      direction TB
-      RES["RBAC allows+ ABAC allows= ALLOWED"]
-      RES2["RBAC allows+ ABAC denies= DENIED"]
-  end
+## Where policies sit
 
-  RBAC --> Result
-  ABAC --> Result`}
+allow-overridesfrom roles"]
+  REQ --> P1["document-ownershipdeny-overrides"]
+  REQ --> P2["document-lifecycledeny-overrides"]
+  RBAC --> C{"policyCombine: and"}
+  P1 --> C
+  P2 --> C
+  C --> |"every applicable policy allows"| A["ALLOW"]
+  C --> |"any applicable policy denies"| D["DENY"]`}
 />
 
-## Policies vs Roles
+Each policy decides on its own, using its own combining algorithm over its own rules. The engine then merges those verdicts with `policyCombine`, which defaults to `'and'`: every applicable policy must allow. A policy that has nothing to say is marked not applicable and skipped rather than counted as a deny.
 
-| Roles (RBAC) | Policies (ABAC) |
-| --- | --- |
-| "Who is the user?" | "What are the circumstances?" |
-| Static permission grants | Dynamic condition checks |
-| `editor can update posts` | `deny update if not the owner` |
-| Simple, fast | Flexible, expressive |
+## Writing the policies
 
-Use both together. Roles handle broad access grants; policies handle fine-grained conditions.
+**Ownership: only the author, or an admin, may write**
 
-## Your First Policy
+Create `src/policies.ts`:
 
-**Create an owner-only policy**
-
-```typescript title="src/policies.ts"
+```ts title="src/policies.ts"
 import { definePolicy } from '@gentleduck/iam'
 
-export const ownerPolicy = definePolicy('owner-restrictions')
-  .name('Owner Restrictions')
+export const ownershipPolicy = definePolicy('document-ownership')
+  .name('Document ownership')
+  .desc('Writes to a document are limited to its author, unless the subject is an admin')
+  .version(1)
   .algorithm('deny-overrides')
-  .rule('deny-non-owner-update', r => r
-    .deny()
-    .on('update', 'delete')
-    .of('post')
-    .priority(100)
-    .when(w => w
-      .check('resource.attributes.ownerId', 'neq', '$subject.id')
-    )
+  .target({ actions: ['update', 'delete', 'share'], resources: ['document'] })
+  .rule('deny-non-owner-write', (r) =>
+    r
+      .deny()
+      .desc('Only the author may write, admins excepted')
+      .priority(100)
+      .on('update', 'delete', 'share')
+      .of('document')
+      .when((w) =>
+        w.resourceAttr('ownerId', 'neq', '$subject.id').not((n) => n.role('admin')),
+      ),
+  )
+  .rule('allow-owner-write', (r) =>
+    r
+      .allow()
+      .desc('Nothing above objected, so this policy consents')
+      .priority(1)
+      .on('update', 'delete', 'share')
+      .of('document'),
   )
   .build()
 ```
 
-* `definePolicy('owner-restrictions')` creates a policy with ID `owner-restrictions`
-* `.algorithm('deny-overrides')`: if any rule denies, the policy denies
-* `.rule('deny-non-owner-update', ...)` defines a rule inside the policy
-* `.deny()` sets this rule's effect to deny
-* `.on('update', 'delete')` applies to update and delete actions
-* `.of('post')` applies to the `post` resource type
-* `.priority(100)`: higher number = higher priority (relevant for `highest-priority` algorithm)
-* `.when(...)` is the condition that must be true for this rule to fire
-* `'resource.attributes.ownerId'` reads the ownerId from the resource
-* `'neq'` is the "not equal" operator
-* `'$subject.id'` is resolved at runtime to the requesting user's ID
+The deny rule fires when the document's `ownerId` differs from the subject's ID **and**
+the subject is not an admin. The second rule is the policy's consent vote - keep reading,
+it is not optional.
 
-**Add the policy to the adapter**
+**Lifecycle: drafts are private, archives are frozen**
 
-```typescript title="src/access.ts"
-import { ownerPolicy } from './policies'
+```ts title="src/policies.ts"
+export const lifecyclePolicy = definePolicy('document-lifecycle')
+  .name('Document lifecycle')
+  .desc('Drafts are visible only to their author; archived documents are read-only')
+  .version(1)
+  .algorithm('deny-overrides')
+  .target({ resources: ['document'] })
+  .rule('deny-foreign-drafts', (r) =>
+    r
+      .deny()
+      .desc('A draft is visible only to its author')
+      .priority(60)
+      .on('read')
+      .of('document')
+      .when((w) =>
+        w
+          .resourceAttr('status', 'eq', 'draft')
+          .resourceAttr('ownerId', 'neq', '$subject.id'),
+      ),
+  )
+  .rule('deny-archived-writes', (r) =>
+    r
+      .deny()
+      .desc('Archived documents cannot be modified')
+      .priority(60)
+      .on('update', 'delete', 'share')
+      .of('document')
+      .when((w) => w.resourceAttr('status', 'eq', 'archived')),
+  )
+  .rule('allow-otherwise', (r) =>
+    r.allow().desc('No lifecycle objection').priority(1).on('*').of('document'),
+  )
+  .build()
 
-const adapter = new IamMemoryAdapter({
-  roles: [viewer, editor, admin],
+export const policies = [ownershipPolicy, lifecyclePolicy]
+```
+
+**Wire them into the adapter**
+
+```ts title="src/access.ts"
+import { IamEngine } from '@gentleduck/iam'
+import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
+import { policies } from './policies'
+import { roles } from './roles'
+
+export const adapter = new IamMemoryAdapter({
+  roles,
+  policies,
   assignments: {
-    'alice': ['viewer'],
-    'bob': ['editor'],
-    'charlie': ['admin'],
+    alice: ['viewer'],
+    bob: ['editor'],
+    carol: ['admin'],
   },
-  policies: [ownerPolicy],
 })
+
+export const engine = new IamEngine({ adapter, mode: 'development' })
 ```
 
-**Test with resource attributes**
+`mode: 'development'` is what makes `engine.explain()` below available; it throws in
+production mode.
 
-```typescript title="src/main.ts"
-// Bob (editor) updating his own post - should be allowed
-const ownPost = await engine.can('bob', 'update', {
-  type: 'post',
-  id: 'post-1',
-  attributes: { ownerId: 'bob' },
-})
-console.log('Bob update own post:', ownPost)  // true
+**Run the matrix**
 
-// Bob updating someone else's post - should be denied
-const otherPost = await engine.can('bob', 'update', {
-  type: 'post',
-  id: 'post-2',
-  attributes: { ownerId: 'alice' },
-})
-console.log('Bob update alice post:', otherPost)  // false
+```ts title="src/main.ts"
+import { engine } from './access'
+
+const bobDoc = { type: 'document', id: 'doc-1', attributes: { ownerId: 'bob', status: 'published' } }
+const aliceDoc = { type: 'document', id: 'doc-2', attributes: { ownerId: 'alice', status: 'published' } }
+const aliceDraft = { type: 'document', id: 'doc-3', attributes: { ownerId: 'alice', status: 'draft' } }
+const archived = { type: 'document', id: 'doc-4', attributes: { ownerId: 'bob', status: 'archived' } }
+
+async function main() {
+  console.log(await engine.can('bob', 'update', bobDoc))      // true
+  console.log(await engine.can('bob', 'update', aliceDoc))    // false - not the owner
+  console.log(await engine.can('carol', 'update', aliceDoc))  // true  - admin exception
+  console.log(await engine.can('bob', 'read', aliceDoc))      // true  - published
+  console.log(await engine.can('bob', 'read', aliceDraft))    // false - someone else's draft
+  console.log(await engine.can('alice', 'read', aliceDraft))  // true  - her own draft
+  console.log(await engine.can('bob', 'update', archived))    // false - frozen
+  console.log(await engine.can('alice', 'update', aliceDoc))  // false - viewer has no update grant
+}
+
+void main()
 ```
 
-The `ownerId` in the resource attributes is compared to `$subject.id` (which resolves
-to `'bob'`). When they differ, the deny rule fires.
+## What just happened
 
-## How Conditions Work
+Take the denial - Bob updating Alice's document - and ask the engine to narrate it:
 
-resource.attributes.ownerId= 'alice'"]
-      V["Resolve value:'$subject.id'= 'bob'"]
-      O["Apply operator:'alice' neq 'bob'= true"]
-      R["Condition met = trueRule fires = DENY"]
-  end
+```ts
+const trace = await engine.explain('bob', 'update', aliceDoc)
+console.log(trace.summary)
+```
 
-  F --> O
-  V --> O
-  O --> R`}
+```text
+DENIED: "bob" attempting update on document
+  Roles: [editor, viewer]
+  __rbac__ [allow-overrides]: Allowed by rule "__rbac__#5" (1/16 rules matched)
+  document-ownership [deny-overrides]: Denied by rule "deny-non-owner-write" (2/2 rules matched)
+  document-lifecycle [deny-overrides]: Allowed by rule "allow-otherwise" (1/3 rules matched)
+  Result: Denied by rule "deny-non-owner-write"
+```
+
+1. `__rbac__` allows: Bob's `editor` role grants `update` on `document`.
+2. `document-ownership` is applicable - its targets cover `update` on `document`. Both its rules match by shape; the deny rule's conditions hold (`ownerId` is `alice`, not `bob`; Bob is not an admin), so `deny-overrides` returns the deny.
+3. `document-lifecycle` is applicable too, and its `allow-otherwise` rule matches, so it consents.
+4. `policyCombine: 'and'` returns the first deny it meets. Overall: denied.
+
+Remove `allow-owner-write` and Bob can no longer update *his own* document either. With only the deny rule left, the policy is still applicable for `update` on `document` - the rule's action and resource shape matches - but no rule *matched*, so `deny-overrides` falls through to `defaultEffect: 'deny'`. Under `policyCombine: 'and'` that is a deny vote, and the decision reads `No matching rules. Defaulted to deny` with `policy: 'document-ownership'` and no `rule`.
+
+A policy that can deny must also be able to consent. Give every restriction policy a low-priority catch-all allow, or narrow its `target` so tightly that it is never applicable when its deny rules cannot fire.
+
+A policy is skipped entirely - `applicable: false` - in exactly two cases: its `targets` do not match the request, or none of its rules covers this action and resource at all. Anything else counts as a vote.
+
+## How a condition works
+
+resource.attributes.ownerId"] --> RES["resolve(request, path)"]
+  V["value$subject.id"] --> RESV["resolveValueleading dollar means resolve too"]
+  RES --> |"'alice'"| OP["operator neq"]
+  RESV --> |"'bob'"| OP
+  OP --> R["true - the deny rule'scondition group holds"]`}
 />
 
-Each condition has three parts:
+```ts
+interface ICondition {
+  readonly field: string
+  readonly operator: AccessControl.Operator
+  readonly value?: IamPrimitives.AttributeValue
+}
+```
 
-1. **Field** - a dot-notation path into the request context (`resource.attributes.ownerId`)
-2. **Operator** - how to compare (`eq`, `neq`, `gt`, `in`, `contains`, etc.)
-3. **Value** - what to compare against (a literal or a `$`-variable)
+### Field resolution
 
-### Field Resolution
-
-The `resolve()` function reads a dot-notation path from the request:
-
-| Path | Resolves To |
+| Path | Resolves to |
 | --- | --- |
-| `subject.id` | The requesting user's ID |
-| `subject.roles` | The user's role array |
-| `subject.attributes.department` | A user attribute |
-| `resource.type` | The resource type string |
-| `resource.id` | The resource instance ID |
-| `resource.attributes.ownerId` | A resource attribute |
-| `environment.ip` | Client IP address |
-| `environment.userAgent` | Client user agent |
-| `environment.timestamp` | Current timestamp |
-| `action` | Shorthand for the action string |
-| `scope` | Shorthand for the scope string |
+| `subject.id` | The subject ID |
+| `subject.roles` | The effective role array |
+| `subject.attributes.
 
-Only `subject`, `resource`, and `environment` roots are allowed. Paths like
-`__proto__`, `constructor`, and `prototype` are blocked to prevent prototype pollution.
+```ts
+// AND (the default for .when)
+.when((w) => w.isOwner().resourceAttr('status', 'neq', 'archived'))
 
-If a field does not exist, it resolves to `null`. A `neq` check against a missing field
-evaluates to `true`, so the deny rule fires. Missing data results in a deny.
+// OR
+.whenAny((w) => w.role('admin').isOwner())
 
-### All Available Operators
+// NOT, nested inside an AND
+.when((w) => w.isOwner().not((n) => n.role('suspended')))
 
-| Operator | Meaning | Example | Type Safety |
-| --- | --- | --- | --- |
-| `eq` | equals | `status eq 'published'` | any |
-| `neq` | not equals | `ownerId neq $subject.id` | any |
-| `gt` | greater than | `age gt 18` | numbers only |
-| `gte` | greater than or equal | `level gte 5` | numbers only |
-| `lt` | less than | `price lt 100` | numbers only |
-| `lte` | less than or equal | `priority lte 3` | numbers only |
-| `in` | value in array | `status in ['draft','review']` | any |
-| `nin` | value not in array | `role nin ['banned']` | any |
-| `contains` | array/string contains | `tags contains 'featured'` | array or string |
-| `not_contains` | does not contain | `tags not_contains 'spam'` | array or string |
-| `starts_with` | string prefix | `email starts_with 'admin'` | strings only |
-| `ends_with` | string suffix | `email ends_with '@company.com'` | strings only |
-| `matches` | regex match | `name matches '^[A-Z]'` | strings only |
-| `exists` | field is not null | `deletedAt exists` | any (no value needed) |
-| `not_exists` | field is null | `deletedAt not_exists` | any (no value needed) |
-| `subset_of` | array subset | `roles subset_of ['a','b','c']` | arrays only |
-| `superset_of` | array superset | `perms superset_of ['read']` | arrays only |
-
-Numeric operators (`gt`, `gte`, `lt`, `lte`) return `false` if either operand is not a
-number. String operators (`starts_with`, `ends_with`, `matches`) return `false` if either
-operand is not a string. This prevents type coercion bugs.
-
-The `matches` operator limits patterns to 512 characters and caches compiled regexes
-(max 256) to prevent ReDoS attacks.
-
-### Dynamic $-Variables
-
-Values starting with `$` are resolved from the request context at runtime:
-
-| Variable | Resolves To |
-| --- | --- |
-| `$subject.id` | The requesting user's ID |
-| `$subject.roles` | The user's role array |
-| `$subject.attributes.X` | A user attribute |
-| `$resource.id` | The resource ID |
-| `$resource.type` | The resource type |
-| `$resource.attributes.X` | A resource attribute |
-| `$environment.X` | An environment value |
-
-Without `$`, values are treated as static literals. `'published'` is a literal string;
-`'$subject.id'` is resolved at runtime.
-
-## The When Builder: Complete API
-
-The `when()` callback receives a `When` builder. Here is every method available:
-
-### Raw Condition
-
-```typescript
-// The general-purpose method - all other methods are shortcuts for this
-.when(w => w.check('resource.attributes.ownerId', 'neq', '$subject.id'))
+// admin OR (editor AND owner)
+.when((w) => w.or((o) => o.role('admin').and((a) => a.role('editor').isOwner())))
 ```
 
-### Shorthand Operators
+Groups nest up to `MAX_CONDITION_DEPTH`, which is 10; the comparison is `>=`, so a tree exactly ten groups deep evaluates and eleven throws `IamConditionGroupError`. It throws rather than answering `false` for the reason above - a `false` inside a `none` group is a grant. `validateRoles` and `validatePolicy` enforce the same bound at authoring time, so a policy that builds cannot hit it at runtime.
 
-Instead of `.check(field, operator, value)`, use operator-named methods:
+## The RuleBuilder API
 
-```typescript
-.when(w => w
-  .eq('resource.attributes.status', 'published')        // equals
-  .neq('resource.attributes.ownerId', '$subject.id')     // not equals
-  .gt('resource.attributes.priority', 5)                 // greater than
-  .gte('subject.attributes.level', 3)                    // greater than or equal
-  .lt('resource.attributes.price', 100)                  // less than
-  .lte('resource.attributes.attempts', 3)                // less than or equal
-  .in('resource.attributes.status', ['draft', 'review']) // value in array
-  .contains('subject.roles', 'editor')                   // array contains value
-  .exists('resource.attributes.publishedAt')             // field is not null
-  .matches('subject.attributes.email', '^admin@')        // regex match
+```ts
+definePolicy('example').rule('my-rule', (r) =>
+  r
+    .deny()                       // or .allow(); allow is the default
+    .desc('why this rule exists')
+    .priority(100)                // default 10
+    .on('update', 'delete')       // default ['*']
+    .of('document')               // default ['*']
+    .forScope('team-acme')        // chapter 5
+    .when((w) => w.isOwner())     // all-of group
+    .meta({ owner: 'platform' }),
 )
 ```
 
-### Semantic Shortcuts
-
-These handle the field paths automatically:
-
-```typescript
-.when(w => w
-  // Check if the user owns the resource
-  .isOwner()
-  // Equivalent to: .check('resource.attributes.ownerId', 'eq', '$subject.id')
-
-  // Check if user has a specific role
-  .role('admin')
-  // Equivalent to: .contains('subject.roles', 'admin')
-
-  // Check if user has any of these roles
-  .roles('admin', 'moderator')
-  // Equivalent to: .check('subject.roles', 'in', ['admin', 'moderator'])
-
-  // Check if request is for a specific scope
-  .scope('acme')
-  // Equivalent to: .check('scope', 'eq', 'acme')
-
-  // Check if request scope is one of these
-  .scopes('acme', 'globex')
-  // Equivalent to: .check('scope', 'in', ['acme', 'globex'])
-
-  // Check the resource type
-  .resourceType('post', 'comment')
-  // Equivalent to: .check('resource.type', 'in', ['post', 'comment'])
-
-  // Check a subject attribute
-  .attr('department', 'eq', 'engineering')
-  // Equivalent to: .check('subject.attributes.department', 'eq', 'engineering')
-
-  // Check a resource attribute
-  .resourceAttr('status', 'eq', 'published')
-  // Equivalent to: .check('resource.attributes.status', 'eq', 'published')
-
-  // Check an environment value
-  .env('ip', 'starts_with', '192.168.')
-  // Equivalent to: .check('environment.ip', 'starts_with', '192.168.')
-)
-```
-
-| Shortcut | Field Path | Description |
+| Method | Default | Notes |
 | --- | --- | --- |
-| `.isOwner(field?)` | `resource.attributes.ownerId` | Check resource ownership (custom field optional) |
-| `.role(id)` | `subject.roles` | User has this role |
-| `.roles(...ids)` | `subject.roles` | User has any of these roles |
-| `.scope(id)` | `scope` | Request scope matches |
-| `.scopes(...ids)` | `scope` | Request scope is one of these |
-| `.resourceType(...types)` | `resource.type` | Resource type matches |
-| `.attr(path, op, value)` | `subject.attributes.{path}` | Check user attribute |
-| `.resourceAttr(path, op, value)` | `resource.attributes.{path}` | Check resource attribute |
-| `.env(path, op, value)` | `environment.{path}` | Check environment value |
+| `.allow()` / `.deny()` | `allow` | The rule's effect. |
+| `.desc(d)` | - | Surfaced in explain traces. |
+| `.priority(n)` | `10` | Ranks matches under `first-match` and `highest-priority`. A non-finite priority ranks as `0`. |
+| `.on(...actions)` | `['*']` | Replaces the list, does not append. |
+| `.of(...resources)` | `['*']` | Also narrows the type of `.resourceAttr()` when the config is typed. |
+| `.forScope(...scopes)` | none | Prepends `scope eq s` or `scope in [...]`. Passing only `'*'` is a no-op. |
+| `.when(fn)` / `.whenAny(fn)` | empty `all` group | `all` versus `any` semantics. The later call wins. |
+| `.meta(m)` | - | Never evaluated. |
+| `.build()` | - | Merges any `forScope` condition into the group, so call order does not matter. |
 
-### Custom Owner Field
+`defineRule(id)` builds a rule outside a policy; `.addRule(rule)` puts a prebuilt rule into one. Rules are plain data and can be shared across policies.
 
-`isOwner()` defaults to `resource.attributes.ownerId`. Pass a custom field path to override:
+## The PolicyBuilder API
 
-```typescript
-.when(w => w.isOwner('resource.attributes.authorId'))
-```
-
-## Condition Groups: AND, OR, NOT
-
-By default, all conditions in a `.when()` are AND-combined. Use nesting for OR and NOT logic:
-
-```typescript
-// ALL must pass (AND) - the default
-.when(w => w
-  .isOwner()
-  .resourceAttr('status', 'neq', 'locked')
-)
-
-// ANY can pass (OR) - use .or()
-.when(w => w
-  .or(o => o
-    .role('admin')
-    .isOwner()
-  )
-)
-
-// NONE can pass (NOT) - use .not()
-.when(w => w
-  .not(n => n.role('banned'))
-  .isOwner()
-)
-
-// Explicit AND nesting - use .and()
-.when(w => w
-  .or(o => o
-    .role('admin')
-    .and(a => a
-      .role('editor')
-      .isOwner()
-    )
-  )
-)
-// Either admin, OR (editor AND owner)
-```
-
-Groups can be nested up to **10 levels deep**. Deeper nesting returns `false` (fail closed)
-to prevent stack overflow.
-
-### Building Standalone Condition Groups
-
-Build condition groups outside of a rule using the `when()` factory:
-
-```typescript
-import { when } from '@gentleduck/iam'
-
-// Build an ANY group (OR)
-const isAdminOrOwner = when()
-  .role('admin')
-  .isOwner()
-  .buildAny()
-
-// Build an ALL group (AND)
-const isActiveEditor = when()
-  .role('editor')
-  .attr('status', 'eq', 'active')
-  .buildAll()
-
-// Build a NONE group (NOT)
-const notBanned = when()
-  .role('banned')
-  .buildNone()
-```
-
-These return `ConditionGroup` objects that can be used in rules.
-
-## The Complete RuleBuilder API
-
-Each rule inside a policy is built with a `RuleBuilder`:
-
-```typescript
-definePolicy('my-policy')
-  .rule('my-rule', r => r
-    .allow()                      // or .deny() - the rule's effect
-    .desc('Allow editors to update their own posts')  // description
-    .on('update', 'delete')       // which actions this rule applies to
-    .of('post', 'comment')        // which resource types
-    .priority(100)                // numeric priority (for highest-priority algorithm)
-    .forScope('acme', 'globex')   // restrict to specific scopes
-    .when(w => w.isOwner())       // conditions (AND-combined)
-    .whenAny(w => w               // conditions (OR-combined)
-      .role('admin')
-      .isOwner()
-    )
-    .meta({ deprecated: false })  // arbitrary metadata
-  )
-  .build()
-```
-
-| Method | Default | Description |
+| Method | Default | Notes |
 | --- | --- | --- |
-| `.allow()` | yes | Rule effect is allow |
-| `.deny()` | | Rule effect is deny |
-| `.desc(d)` | | Human-readable description |
-| `.on(...actions)` | `['*']` | Which actions trigger this rule |
-| `.of(...resources)` | `['*']` | Which resource types |
-| `.priority(n)` | `10` | Numeric priority (higher wins in `highest-priority`) |
-| `.forScope(...scopes)` | all scopes | Restrict rule to specific scopes |
-| `.when(fn)` | no conditions | AND-combined conditions |
-| `.whenAny(fn)` | no conditions | OR-combined conditions |
-| `.meta(m)` | | Arbitrary metadata |
+| `.name(n)` | the policy ID | Display name. |
+| `.desc(d)` | - | Documentation only. |
+| `.version(v)` | - | Your own change tracking; the engine ignores it. |
+| `.algorithm(a)` | `'deny-overrides'` | How this policy's own rules combine. |
+| `.target(t)` | matches everything | `actions`, `resources`, `roles` - each optional, each an OR within itself, all ANDed together. |
+| `.rule(id, fn)` | - | Inline rule. |
+| `.addRule(rule)` | - | Prebuilt rule. |
+| `.build()` | - | Validates the whole policy and throws on error-level issues. |
 
-### .forScope()
+`PolicyBuilder.build()` runs the full policy validator and throws a message naming the policy ID and every failing code, for example `INVALID_OPERATOR` or `UNRESOLVABLE_FIELD`. Warnings do not throw: `BROAD_ALLOW` fires when a rule allows `'*'` on `'*'` with no conditions, and limits are 1000 rules per policy, 100 actions and 100 resources per rule.
 
-`forScope()` adds a scope condition merged with your `.when()` conditions:
+`targets.resources` uses the plain matcher, not the dot-aware hierarchical one that rule resources use. A target of `['document']` will not cover `document.draft`.
 
-```typescript
-.rule('acme-only', r => r
-  .allow()
-  .on('manage')
-  .of('dashboard')
-  .forScope('acme')
-  .when(w => w.role('admin'))
-)
-// Rule fires only when: scope is 'acme' AND user has admin role
-```
+## Combining algorithms
 
-Multiple scopes use `in`:
-
-```typescript
-.forScope('acme', 'globex')
-// Equivalent to: scope IN ['acme', 'globex']
-```
-
-### .when() vs .whenAny()
-
-* `.when(fn)` wraps conditions in an `all` group (AND)
-* `.whenAny(fn)` wraps conditions in an `any` group (OR)
-
-```typescript
-// AND: must be owner AND not locked
-.when(w => w
-  .isOwner()
-  .resourceAttr('status', 'neq', 'locked')
-)
-
-// OR: admin OR owner
-.whenAny(w => w
-  .role('admin')
-  .isOwner()
-)
-```
-
-### Standalone Rules with defineRule()
-
-Create rules outside of a policy and add them later:
-
-```typescript
-import { defineRule } from '@gentleduck/iam'
-
-const ownerCheck = defineRule('owner-check')
-  .deny()
-  .on('update', 'delete')
-  .of('post')
-  .priority(100)
-  .when(w => w
-    .check('resource.attributes.ownerId', 'neq', '$subject.id')
-    .not(n => n.role('admin'))
-  )
-  .build()
-
-// Add to a policy
-const myPolicy = definePolicy('my-policy')
-  .algorithm('deny-overrides')
-  .addRule(ownerCheck)    // add pre-built rule
-  .rule('other-rule', r => r.deny().on('*').of('secret'))  // inline rule
-  .build()
-```
-
-## The Complete PolicyBuilder API
-
-```typescript
-definePolicy('my-policy')
-  .name('My Policy')                     // human-readable name (defaults to ID)
-  .desc('Restricts access to posts')     // description
-  .version(2)                            // version number
-  .algorithm('deny-overrides')           // combining algorithm
-  .target({                              // scope which requests this policy applies to
-    actions: ['update', 'delete'],
-    resources: ['post'],
-    roles: ['editor'],
-  })
-  .rule('rule-1', r => r.deny().on('update').of('post'))  // inline rule
-  .addRule(preBuiltRule)                  // add pre-built Rule object
-  .build()
-```
-
-| Method | Default | Description |
-| --- | --- | --- |
-| `.name(n)` | policy ID | Human-readable display name |
-| `.desc(d)` | | Description |
-| `.version(v)` | | Version number (for tracking changes) |
-| `.algorithm(a)` | `'deny-overrides'` | How rules are combined |
-| `.target(t)` | all requests | Scope which requests trigger this policy |
-| `.rule(id, fn)` | | Add an inline rule via builder callback |
-| `.addRule(rule)` | | Add a pre-built `Rule` object |
-
-### Policy Targets
-
-Targets skip an entire policy when the request does not match:
-
-```typescript
-definePolicy('post-restrictions')
-  .algorithm('deny-overrides')
-  .target({
-    actions: ['update', 'delete'],   // only evaluate for these actions
-    resources: ['post'],              // only evaluate for these resource types
-    roles: ['editor'],                // only evaluate for users with these roles
-  })
-  .rule('deny-non-owner', r => r.deny().on('update').of('post').when(w =>
-    w.check('resource.attributes.ownerId', 'neq', '$subject.id')
-  ))
-  .build()
-```
-
-If a request does not match the target (e.g., action is `read`), the policy is skipped
-and returns the default effect. Target fields are optional; omitting a field means
-"match all":
-
-| Target Field | Effect |
-| --- | --- |
-| `actions` | Only evaluate for these actions |
-| `resources` | Only evaluate for these resource types |
-| `roles` | Only evaluate for users with at least one of these roles |
-
-## Combining Algorithms
-
-Each policy has an algorithm that determines how its rules combine:
-
-rule wins"]
-  end
-
-  subgraph HP["highest-priority"]
-      direction LR
-      HP1["Matching rule withhighest number wins"]
-  end`}
+else defaultEffect"]
+  A --> |"allow-overrides"| D2["first allow, else first deny,else defaultEffect"]
+  A --> |"first-match"| D3["highest priority match,ties by source order"]
+  A --> |"highest-priority"| D4["highest priority match"]`}
 />
 
-| Algorithm | Behavior | Use When |
-| --- | --- | --- |
-| `deny-overrides` | Any deny wins over any allow | Security-critical policies (default) |
-| `allow-overrides` | Any allow wins over any deny | Permissive policies, RBAC |
-| `first-match` | First matching rule decides | Order-dependent evaluation |
-| `highest-priority` | Matching rule with highest `priority` number wins | Priority-based resolution |
+| Algorithm | Use it for |
+| --- | --- |
+| `deny-overrides` | Restriction policies. The default, and what both DocDuck policies use. |
+| `allow-overrides` | Permissive layers. The synthetic `__rbac__` policy uses this - any role that grants the permission is enough. |
+| `first-match` | Ordered, firewall-style lists. Despite the name it ranks by priority first and only falls back to source order on ties. |
+| `highest-priority` | Emergency overrides layered over a stable rule set. |
 
-When no rules match, the default effect applies (usually `deny`).
+When no rule matched, every algorithm returns `defaultEffect` with the reason `No matching rules. Defaulted to deny`.
 
-Use `deny-overrides` for security-critical policies. The internal `__rbac__` policy uses
-`allow-overrides`.
+## Combining policies
 
-## Cross-Policy AND
+`policyCombine` is engine-level and defaults to `'and'`.
 
-When multiple policies are present (RBAC + custom), the engine combines them with AND:
-all policies must allow. Any deny from any policy = overall deny.
+| Value | Behaviour |
+| --- | --- |
+| `'and'` | Every applicable policy must allow. The first deny wins and short-circuits. |
+| `'allow-overrides'` | The first applicable allow wins; a deny only stands if nothing allowed. |
+| `'first-applicable'` | The first policy that actually matched a rule decides. Development mode only - the production compiled table cannot represent it, and the constructor throws if you pair them. |
 
-(allow-overrides)"] --> P2["owner-restrictions(deny-overrides)"]
-      P2 --> P3["time-restrictions(deny-overrides)"]
-  end
+Not-applicable policies are skipped under all three. When nothing was applicable at all, the reason reads `No policy applicable. Defaulted to deny`.
 
-  subgraph Result["AND combination"]
-      direction TB
-      R1["All allow -> ALLOW"]
-      R2["Any deny -> DENY"]
-  end
+## Try it
 
-  Eval --> Result`}
-/>
+1. Delete `allow-owner-write` and rerun the matrix. Every write, including Bob's own, becomes `false`. Put it back.
+2. Add a suspension rule to `document-ownership`: deny every write when `subject.attributes.status` is `'suspended'`. Seed the adapter with `attributes: { bob: { status: 'suspended' } }` and confirm Bob loses write access to his own document.
+3. Add an expiry rule: deny `read` when `resource.attributes.expiresAt` is `before` `'$environment.now'`. Pass an explicit `environment` of `{ now: Date.parse('2030-01-01') }` and watch the same document flip.
+4. Switch `document-lifecycle` to `algorithm('highest-priority')` and give `allow-otherwise` a priority of `100`. The deny rules stop mattering - that is the algorithm doing exactly what it says.
 
-The RBAC layer allows because Bob is an editor. The owner policy denies because Bob is
-not the owner. Overall result: deny.
+## See also
 
-The engine evaluates policies in order and short-circuits on the first deny.
-
-## Checkpoint
-
-Full `src/policies.ts`
-
-```typescript
-import { definePolicy } from '@gentleduck/iam'
-
-export const ownerPolicy = definePolicy('owner-restrictions')
-  .name('Owner Restrictions')
-  .algorithm('deny-overrides')
-  .rule('deny-non-owner-update', r => r
-    .deny()
-    .on('update', 'delete')
-    .of('post')
-    .priority(100)
-    .when(w => w
-      .check('resource.attributes.ownerId', 'neq', '$subject.id')
-      .not(n => n.role('admin'))
-    )
-  )
-  .build()
-```
-
-***
-
-## Chapter 3 FAQ
-
-Which is evaluated first, roles or policies?
-
-Roles are converted to a synthetic `__rbac__` policy and evaluated first, followed by
-your custom policies. They are AND-combined: all must allow for the final result to be
-allow. The RBAC policy goes first, but order matters only because the engine
-short-circuits on the first deny.
-
-What if I forget to pass ownerId in the resource attributes?
-
-`resource.attributes.ownerId` resolves to `null`. The `neq` operator evaluates
-`null neq 'bob'` as `true`, so the deny rule fires. Omitting attributes results in
-a deny - you cannot accidentally grant access by missing data.
-
-How do I make admins exempt from the owner restriction?
-
-Add `.not(n => n.role('admin'))` to the condition. The deny rule becomes: "deny if
-not the owner AND not an admin." Admins bypass the deny rule and can edit any post.
-This is what the checkpoint code shows.
-
-Can I have multiple policies?
-
-Yes. Pass an array to the adapter: `policies: [ownerPolicy, timePolicy, ipPolicy]`.
-Each policy is evaluated independently. All must allow for the overall result to be allow.
-
-Can I reuse a rule across multiple policies?
-
-Yes. Use `defineRule()` to create a standalone rule, then add it to any policy with
-`.addRule(rule)`. The rule is a plain data object and can be shared freely.
-
-When should I use .when() vs .whenAny()?
-
-Use `.when()` when all conditions must be true (AND). Use `.whenAny()` when any
-condition is sufficient (OR). For complex logic, nest `.and()`, `.or()`, and `.not()`
-inside `.when()`. The most common pattern is `.when()` with an inner `.not()` for
-exemptions.
-
-What are policy targets used for?
-
-Targets let the engine skip an entire policy when the request does not match (wrong
-action, wrong resource type, or user lacks the required role). Without targets, every
-rule in the policy is evaluated on every request. Note: `targets.resources` uses direct
-resource matching, not the hierarchical dot-aware matcher that normal rule resources use.
-
-What does .forScope() do on a rule?
-
-`.forScope('acme')` adds a scope condition so the rule only fires when the request scope
-is `acme`. Multiple scopes are supported: `.forScope('acme', 'globex')`. The scope
-condition is merged with `.when()` conditions using AND.
-
-Can I restrict access based on IP address or time?
-
-Yes. Pass an environment object when checking permissions:
-`engine.can(userId, action, resource, { ip: '192.168.1.1', timestamp: Date.now() })`.
-Then use `.env('ip', 'starts_with', '192.168.')` or
-`.env('timestamp', 'lt', cutoffTime)` in your conditions. The `extractEnvironment()`
-helper in server integrations (Chapter 6) populates this automatically.
-
-***
-
-Next: [Chapter 4: The Engine In Depth](/duck-iam/course/chapter-4)
+* [Building policies](/duck-iam/core/policies/building) - the builder reference
+* [Rules](/duck-iam/core/policies/rules) and [targets](/duck-iam/core/policies/targets)
+* [Conditions](/duck-iam/core/policies/conditions) - the full operator semantics table
+* [Dollar variables](/duck-iam/core/policies/dollar-variables) and [nesting](/duck-iam/core/policies/nesting)
+* [Combining algorithms](/duck-iam/core/policies/combining-algorithms) and [cross-policy combination](/duck-iam/core/cross-policy)
+* [Chapter 4: the engine in depth](/duck-iam/course/chapter-4)

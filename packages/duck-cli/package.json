@@ -15,7 +15,7 @@
     "autoprefixer": "^10.4.21",
     "commander": "^14.0.1",
     "diff": "^9.0.0",
-    "execa": "^9.6.0",
+    "execa": "^10.0.1",
     "fast-glob": "^3.3.3",
     "figlet": "^1.9.3",
     "fs-extra": "^11.3.2",

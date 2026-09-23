@@ -16,7 +16,7 @@
     "motion": "^12.26.2",
     "sherif": "1.11.0",
     "turbo": "^2.10.8",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   },
   "name": "gentleduck",
   "description": "gentleduck/ui monorepo for UI components, tools, and related packages.",

@@ -16,7 +16,7 @@
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
     "jsdom": "catalog:",
-    "motion": "^12.26.2",
+    "motion": "^13.4.0",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "tsdown": "catalog:"

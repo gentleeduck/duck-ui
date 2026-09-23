@@ -1,199 +1,232 @@
 ---
-title: server middleware overview
-description: Server-side integrations for Express, NestJS, Hono, and Next.js - extract identity, infer action and resource, call engine.can().
+title: Server integrations
+description: How the Express, Hono, Next.js, and NestJS wrappers turn a request into an engine decision, what they share, and how to pick one
 section: Integrations
 ---
-## How it works
+duck-iam ships one wrapper per HTTP framework plus a framework-agnostic helper module. Every wrapper does the same job: extract a subject, a resource, an action, a scope, and an environment from the incoming request, ask `engine.can()`, and translate the boolean decision into the framework's idea of "continue", "401", "403", or "500". This page explains that shared pipeline; the framework pages document the exact signatures.
 
-duck-iam ships server integrations for Express, NestJS, Hono, and Next.js. Every one follows the same pattern: extract the user identity, map the HTTP method to an action, infer the resource from the route, and call `engine.can()`.
+## Install
 
-<MermaidDiagram chart={`flowchart LR
-    REQ["HTTP Request\nDELETE /posts/42"] --> MW["Middleware / Guard"]
-    MW --> EXTRACT["Extract from request"]
+The wrappers are subpath exports of the main package. None of them declares a runtime dependency on the framework it targets; they only rely on the request shape.
 
-    subgraph Extract["Extraction"]
-        direction TB
-        E1["getUserId(req) -> 'user-1'"]
-        E2["getAction(req) -> 'delete' (from DELETE)"]
-        E3["getResource(req) -> {type:'post', id:'42'}"]
-        E4["getScope(req) -> 'org-1' (from header)"]
-        E5["getEnvironment(req) -> {ip, userAgent, timestamp}"]
-    end
+<PackageManagerTabs bun="bun add @gentleduck/iam" npm="npm i @gentleduck/iam" pnpm="pnpm add @gentleduck/iam" yarn="yarn add @gentleduck/iam" />
 
-    EXTRACT --> Extract
-    Extract --> ENGINE["engine.can('user-1', 'delete', {type:'post',...})"]
-    ENGINE --> CHECK{"Allowed?"}
-    CHECK -- "Yes" --> NEXT["next() -- proceed to handler"]
-    CHECK -- "No" --> DENY["403 Forbidden"]`} />
+```ts
+import { iamAccessMiddleware } from '@gentleduck/iam/server/express'
+import { iamGuard } from '@gentleduck/iam/server/hono'
+import { withIamAccess } from '@gentleduck/iam/server/next'
+import { iamNestAccessGuard } from '@gentleduck/iam/server/nest'
+import { iamExtractEnvironment } from '@gentleduck/iam/server/generic'
+```
 
-Every integration is a thin adapter over `engine.can()`. No runtime framework dependency - duck-iam defines its own minimal type interfaces, so no extra packages sneak in.
-
----
+All server exports carry the `iam` / `Iam` / `IAM_` prefix since 5.0.0. Older snippets that import `accessMiddleware` or `withAccess` will not resolve.
 
 ## Pick a framework
 
-| Framework | Doc | Subpath | Admin factory |
+| Framework | Entry point | Style | Page |
 | --- | --- | --- | --- |
-| Express | [server/express](/duck-iam/integrations/server/express) | `@gentleduck/iam/server/express` | `adminRouter(engine, { authorize })` |
-| Hono | [server/hono](/duck-iam/integrations/server/hono) | `@gentleduck/iam/server/hono` | `bindAdminRouter(router, engine, { authorize })` |
-| NestJS | [server/nest](/duck-iam/integrations/server/nest) | `@gentleduck/iam/server/nest` | `createAdminOperations(engine, { authorize })` |
-| Next.js App Router | [server/next](/duck-iam/integrations/server/next) | `@gentleduck/iam/server/next` | `createAdminHandlers(engine, { authorize })` |
-| Generic helpers | [server/generic](/duck-iam/integrations/server/generic) | `@gentleduck/iam/server/generic` | - |
+| Express 4 and 5 | `@gentleduck/iam/server/express` | middleware `(req, res, next)` | [Express](/duck-iam/integrations/server/express) |
+| Hono (Node, Bun, Deno, Workers, Vercel Edge) | `@gentleduck/iam/server/hono` | middleware `(c, next)` returning `Response` | [Hono](/duck-iam/integrations/server/hono) |
+| Next.js app router | `@gentleduck/iam/server/next` | route handler wrapper, `middleware.ts`, server components | [Next.js app router](/duck-iam/integrations/server/next) |
+| NestJS | `@gentleduck/iam/server/nest` | `CanActivate` guard plus method decorator | [NestJS](/duck-iam/integrations/server/nest) |
+| Anything else | `@gentleduck/iam/server/generic` | plain functions | [Generic helpers](/duck-iam/integrations/server/generic) |
 
-All five share the same building blocks: identity extraction, action mapping, resource inference, scope resolution, and decision callbacks. Every admin factory requires an `authorize` callback at construction time - mounting admin endpoints unauthenticated is impossible. The framework-specific docs cover each one's idioms.
+Each framework wrapper is a thin layer over the generic helpers: it borrows `IAM_METHOD_ACTION_MAP`, `iamExtractEnvironment`, and the admin CSRF/audit pipeline, and adds only the request/response plumbing.
 
----
+## The shared pipeline
 
-## HTTP method mapping
+Every wrapper runs the same five extraction steps before calling the engine. This flowchart shows the pipeline and the three exits.
 
-The default method-to-action map shared by every integration:
+<MermaidDiagram chart={`flowchart TD
+    A["Incoming request"] --> B["getUserId(req)"]
+    B -- "null" --> U["401 Unauthorized"]
+    B -- "subjectId" --> C["getResource(req)"]
+    C --> D["getAction(req)"]
+    D --> E["getEnvironment(req)"]
+    E --> F["getScope(req)"]
+    F --> G["engine.can(subjectId, action, resource, environment, scope)"]
+    G -- "true" --> N["continue to handler"]
+    G -- "false" --> X["403 onDenied"]
+    G -- "throws" --> Y["500 onError"]`} />
 
-```typescript
-const IAM_METHOD_ACTION_MAP = {
-  GET: 'read',
-  HEAD: 'read',
-  OPTIONS: 'read',
-  POST: 'create',
-  PUT: 'update',
-  PATCH: 'update',
-  DELETE: 'delete',
-}
+A request with no subject fails closed before the engine is consulted. `getUserId` is typed `string | null`, but it is your code reading a session or a JWT claim, so every entry point runs `iamIsSubjectId` on whatever it returned: a non-string, an empty string, or a whitespace-only string is refused here. This is the only layer that refuses a blank id - `engine.can` guards `length === 0`, not `trim()`, so `'   '` is a perfectly good cache key to it and any assignment stored under that key grants its permissions.
+
+The 403 and 500 exits are customisable per framework (`onDenied`, `onError`); Next's middleware also exposes `onUnauthorized`, and Nest reports every outcome as a boolean instead of a response.
+
+### Subject extraction
+
+| Wrapper | Default `getUserId` | Async allowed |
+| --- | --- | --- |
+| Express | `req.user?.id ?? null` | no |
+| Hono | `c.get('userId') ?? null` | no |
+| Next.js | none; `getUserId` is required and the factory throws without it | yes |
+| NestJS | `req.user?.id ?? req.user?.sub ?? null` | no |
+
+<Callout tone="warning" title="Identity never comes from request headers">
+No wrapper reads `x-user-id` or any other client-controlled header. Hono used to fall back to `x-user-id` before 2.1.0 and Next.js used to accept a missing `getUserId`; both were removed. Derive the subject from your auth layer (session cookie, verified JWT, `req.user`) and pass it via `getUserId`.
+</Callout>
+
+### Resource, action, environment, scope
+
+| Field | Express / Hono default | Next.js | NestJS |
+| --- | --- | --- | --- |
+| resource type | first path segment (`/posts/42` gives `posts`), `'root'` when the path is `/` | `resourceType` argument or rule `resource` | `@IamAuthorize({ resource })` or inferred from the route path |
+| resource id | second path segment (middleware) or `params.id` (guard) | `params.id` (handler) or none (middleware) | `getResourceId`, default `params.id` |
+| action | `iamActionForMethod(method)` | argument or rule `action` or method map | `@IamAuthorize({ action })` or method map |
+| environment | `iamExtractEnvironment(req)` | `iamExtractEnvironment({ headers, method, url })` | `iamExtractEnvironment(req)` |
+| scope | `getScope(req)` | `opts.scope` / rule `scope` | `@IamAuthorize({ scope })` or `getScope` |
+
+Resource types are used verbatim from the path, so `/posts` produces `posts`, not `post`. Either name your resources after your URL segments or supply `getResource` / an explicit `resource`.
+
+The method map is the same everywhere: `GET`, `HEAD`, `OPTIONS` read; `POST` creates; `PUT` and `PATCH` update; `DELETE` deletes. The method is uppercased before the lookup, which is both case-insensitivity and the thing that stops `__proto__`, `constructor` and `toString` reaching an inherited value through the object literal.
+
+### Refusal sentinels
+
+An unmapped method does **not** fall back to `read`. It yields `IAM_UNKNOWN_ACTION`, and an ambiguous path yields `IAM_UNKNOWN_RESOURCE` - both the literal string `'unknown'`, which the engine treats as a **reserved token**: `authorize` and `permissions` refuse it before consulting any policy, in either engine mode, and `onDeny` fires with a reason containing `reserved refusal token`.
+
+That indirection matters. `'*'` matches every string, so a wildcard admin rule - `.on('*').of('*')`, the ordinary shape of an admin role - turned both sentinels back into allows on exactly the code path built to refuse them. The cost is that a resource type or action genuinely named `'unknown'` can no longer be granted.
+
+A path is ambiguous, and therefore refused, when a segment is a dot-segment, contains a literal backslash, decodes into a dot-segment or another separator, carries a malformed percent-escape, or still holds a `%` after one decode. A traversal has no safe resolution at this layer because the routers disagree: measured against real servers, Express served `/admin` for `/admin/../public` while a resolving helper had authorized `public`, and Nest read `admin` from a raw path that Hono and Next served as `/public`. Authorized as one resource, served as another. Refusing is the only answer that does not depend on guessing which framework's normalizer runs downstream.
+
+### Forwarded IP
+
+**`environment.ip` is `undefined` unless you ask for it.** `iamExtractEnvironment` returns exactly three keys - `timestamp`, `userAgent`, and `ip` - and it leaves `ip` unset unless `opts.trustProxy === true`.
+
+There is no guess that is right on every deployment and the wrong one is exploitable: `X-Forwarded-For` and `X-Real-IP` are request headers like any other, so with nothing in front of the app a client sets them itself. Measured against real servers, Hono, Next and the generic helper each echoed a plain `X-Forwarded-For: 10.0.0.1` into `environment.ip` - and a header alone satisfied an IP-conditioned admin grant - while Express and Nest reported the socket peer for the same request. One policy, three answers, three of five spoofable. `req.ip` is ignored by default for the same reason: an integration may fill it from a platform header rather than a socket.
+
+```ts
+// Behind exactly one trusted proxy that appends the peer address:
+getEnvironment: (req) => ({ ...iamExtractEnvironment(req), ip: trustedClientIp(req) })
+
+// Or, if the framework already knows about your proxies:
+getEnvironment: (req) => iamExtractEnvironment(req, { trustProxy: true })
 ```
 
-Override per-route or globally with the `getAction` option.
+Under `trustProxy` the chain is `req.ip`, then the leftmost `x-forwarded-for` hop, then `x-real-ip`, each normalised: reject the whole header above 4096 characters, take the text before the first comma, trim, reject if blank or above 256. Hono is the only adapter with its own opt-in, `trustCloudflareHeaders`, which puts `cf-connecting-ip` at the head of that chain.
 
----
-
-## Common patterns
-
-### Combine global + per-route protection
-
-Use global middleware for broad protection, then layer per-route guards for endpoints with different rules.
-
-```typescript
-// Express example
-app.use('/api', accessMiddleware(engine, { getUserId: (req) => req.user?.id }))
-
-// Override for a specific route that needs a different scope
-app.delete('/api/admin/users/:id',
-  guard(engine, 'manage', 'user', { scope: 'admin' }),
-  deleteUserHandler
-)
-```
-
-### Custom action mapping
-
-Override the default HTTP method mapping for non-standard action patterns.
-
-```typescript
-const middleware = accessMiddleware(engine, {
-  getUserId: (req) => req.user?.id,
-  getAction: (req) => {
-    // POST /api/posts/:id/publish -> "publish" action
-    if (req.method === 'POST' && req.path.endsWith('/publish')) {
-      return 'publish'
-    }
-    return IAM_METHOD_ACTION_MAP[req.method] ?? 'read'
-  },
-})
-```
-
-### Server-driven client permissions
-
-1. Generate a `PermissionMap` on the server using `engine.permissions()` or `getPermissions()` (Next.js helper)
-2. Pass the map to the client via props, response body, or server-rendered HTML
-3. Hydrate `AccessProvider` (React), plugin (Vue), or `AccessClient` (vanilla) on the client
-4. Client-side checks become instant lookups with no extra network requests
-
-```typescript
-const permissions = await engine.permissions(userId, [
-  { action: 'create', resource: 'post' },
-  { action: 'delete', resource: 'post' },
-  { action: 'manage', resource: 'team' },
-])
-```
-
-See [client integrations](/duck-iam/integrations/client) for hydration on the consumer side.
-
----
+<Callout tone="warning" title="A condition on a field you never populated reads as a non-match">
+It is not an error. Write a deny rule keyed on `environment.ip` on a default wiring and it never fires - the request is allowed, silently, forever. The same applies to any custom key (`environment.hour`, `environment.region`, a feature flag): the extractor sets three fields and nothing else, so `getEnvironment` is the only place those values can enter.
+</Callout>
 
 ## Default failure responses
 
-| Condition | Status | Override |
-| --- | --- | --- |
-| Missing user identity | 401 | None - fail closed |
-| Engine returns deny | 403 | `onDenied` |
-| Engine throws | 500 | `onError` |
+| Situation | Express | Hono | Next.js | NestJS |
+| --- | --- | --- | --- | --- |
+| no subject | 401 `{ error: 'Unauthorized' }` | 401 `{ error: 'Unauthorized' }` | 401 `{ error: 'Unauthorized' }` | guard returns `false` |
+| denied | 403 `{ error: 'Forbidden' }` via `onDenied` | 403 via `onDenied` | 403 `{ error: 'Forbidden' }` | guard returns `false` |
+| engine or callback throws | 500 `{ error: 'Internal server error' }` via `onError` | 500 via `onError` | 500 `{ error: 'Internal server error' }` via `onError` | `onError(err, req)` boolean, default `false` |
 
-The engine itself never throws from `authorize()`. It catches internal errors, calls the `onError` engine hook, and returns a deny decision. The server integration try/catch is an extra safety net for adapter connection failures during subject resolution.
+The 500 bodies are fixed strings on all three response-writing adapters, so an engine or driver error's message never rides out to the caller. Express's `onError` is deliberately **not** handed `next`: the obvious handler to write with it - `(err, req, res, next) => next()` - resumes the request with no decision made, which is a fail-open on exactly the path where the decision could not be computed. `iamGuard` used to default to `next(err)`, which with no app error handler and `NODE_ENV !== 'production'` made finalhandler write `err.stack` into the response body.
 
----
+`getUserId` is called **inside** the try in all five entry points, so a throwing or rejecting one reaches the adapter's own `onError` rather than the framework boundary. It is the extractor most likely to do I/O - JWT verification, a session lookup, an IdP call - and an Express 4 middleware that returns a rejected promise writes nothing to the socket, so the client hung until it timed out.
 
-## FAQ
+## Guarding a request end to end
 
-<Accordion type="multiple" collapsible className="w-full">
-  <AccordionItem value="override-inference">
-    <AccordionTrigger>Why should I override the default resource and action inference?</AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      The defaults are optimized for CRUD-style demos: action comes from the HTTP method map, resource type usually comes
-      from the path, and resource attributes are empty. Real applications often need custom logic for nested routes,
-      record attributes, body-driven actions, query parameters, or tenant metadata.
-    </AccordionContent>
-  </AccordionItem>
+This sequence diagram traces one request through a wrapper, the engine, and the adapter. It is the same story for all four frameworks; only the vocabulary of "continue" differs.
 
-  <AccordionItem value="default-failure-responses">
-    <AccordionTrigger>What are the default auth failure responses in the server integrations?</AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      Missing user identity fails closed with <code className="rounded bg-muted px-2 py-1">401</code>. A denied access
-      check returns <code className="rounded bg-muted px-2 py-1">403</code>. Unexpected integration or adapter errors
-      default to <code className="rounded bg-muted px-2 py-1">500</code>. Each integration exposes overrides for those handlers.
-    </AccordionContent>
-  </AccordionItem>
+<MermaidDiagram chart={`sequenceDiagram
+    participant C as Client
+    participant W as Framework wrapper
+    participant E as IamEngine
+    participant A as Adapter
+    participant H as Route handler
+    C->>W: DELETE /posts/42 (session cookie)
+    W->>W: getUserId, getResource, getAction, getEnvironment, getScope
+    alt no subject
+        W-->>C: 401 Unauthorized
+    else subject found
+        W->>E: can(subjectId, delete, posts 42, env, scope)
+        E->>A: getSubject and getPolicies
+        A-->>E: subject, policies
+        E->>E: evaluate policies, apply hooks
+        E-->>W: true or false
+        alt allowed
+            W->>H: continue
+            H-->>C: 200
+        else denied
+            W-->>C: 403 onDenied
+        end
+    end`} />
 
-  <AccordionItem value="middleware-plus-handler-checks">
-    <AccordionTrigger>Can I protect routes in middleware and still do deeper checks later?</AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      Yes. Middleware and route wrappers gate by route shape; handler-level checks enforce owner checks, attribute-based
-      restrictions, and other resource-instance rules.
-    </AccordionContent>
-  </AccordionItem>
+The engine consults the adapter on every request unless caching is configured; see [engine methods](/duck-iam/advanced/engine/methods) and the [adapter overview](/duck-iam/integrations/adapters) for cache and batching behaviour.
 
-  <AccordionItem value="generic-helpers-vs-wrappers">
-    <AccordionTrigger>When should I use the generic server helpers instead of the framework wrappers?</AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      Use the framework wrappers when their defaults match your routing model. Use
-      <code className="rounded bg-muted px-2 py-1">server/generic</code> when you want to bind a subject once,
-      reuse the same environment extraction logic across frameworks, or build your own integration layer without
-      adopting the wrapper assumptions.
-    </AccordionContent>
-  </AccordionItem>
+## Admin surfaces
 
-  <AccordionItem value="custom-id-params">
-    <AccordionTrigger>How should I handle routes that use postId, userId, or nested params instead of id?</AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      Treat the built-in guards as coarse route gates only. The simple wrappers assume an
-      <code className="rounded bg-muted px-2 py-1">id</code> param for automatic resource IDs, so custom param
-      names are better handled with a custom resource extractor or an explicit
-      <code className="rounded bg-muted px-2 py-1">engine.can()</code> /
-      <code className="rounded bg-muted px-2 py-1">engine.check()</code> inside the handler.
-    </AccordionContent>
-  </AccordionItem>
+Each wrapper also exposes the engine's admin API over HTTP with the same six endpoints, the same `authorize` requirement, and the same CSRF and audit pipeline from `@gentleduck/iam/server/generic`.
 
-  <AccordionItem value="middleware-owner-checks">
-    <AccordionTrigger>Why can middleware know the route and user, but still not be enough for owner checks?</AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      Ownership depends on resource attributes not present in the raw route shape. Middleware can tell you "this is a delete
-      on post 42," but it cannot know `ownerId`, status, or tenant metadata until your handler loads the actual record.
-      Record-level checks belong near the data fetch.
-    </AccordionContent>
-  </AccordionItem>
+| Method | Path | Engine call | Response |
+| --- | --- | --- | --- |
+| `GET` | `/policies` | `admin.listPolicies()` | array |
+| `GET` | `/roles` | `admin.listRoles()` | array |
+| `PUT` | `/policies` | `admin.savePolicy(body)` | `{ ok: true }` |
+| `PUT` | `/roles` | `admin.saveRole(body)` | `{ ok: true }` |
+| `POST` | `/subjects/:id/roles` | `admin.assignRole(id, body.roleId, body.scope)` | `{ ok: true }` |
+| `DELETE` | `/subjects/:id/roles/:roleId` | `admin.revokeRole(id, roleId)` | `{ ok: true }` |
 
-  <AccordionItem value="edge-runtime-friendliness">
-    <AccordionTrigger>Which server integrations are edge-friendly?</AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      The generic helpers and Next request helpers are the most edge-oriented surfaces. Whether the whole stack can run at
-      the edge still depends on your adapter choice. Memory and HTTP are the easiest fits; database adapters depend on the
-      runtime support of their ORM and driver stack.
-    </AccordionContent>
-  </AccordionItem>
-</Accordion>
+Shared rules:
+
+- `authorize(req)` is mandatory. Every factory throws at construction when it is missing, because mounting admin endpoints unauthenticated is never safe.
+- Every request runs the CSRF check, then `authorize`. Mutations then run the engine call wrapped in an audit event; GET routes fire no audit event at all. Reads run the same CSRF phase as mutations - Nest was once the only adapter checking reads, and the four were aligned to it rather than to the looser behaviour.
+- `onAdminMutation`, `redactPath`, `onAuditHookError`, and `includeErrorMessage` are identical across frameworks and documented once on the [generic helpers page](/duck-iam/integrations/server/generic).
+- Rate limiting is out of scope; put `express-rate-limit`, Hono's `rateLimiter`, Vercel's edge limits, or `@nestjs/throttler` in front.
+
+<Callout tone="warning" title="CSRF check is on by default">
+Admin routes - reads included - reject requests carrying `Sec-Fetch-Site: cross-site` or `cross-origin` with 403 before `authorize` runs, and fire no audit event. The header is set by the user agent and cannot be forged by page script, which is what makes it worth reading; its absence means a non-browser caller (curl, server-to-server, an old browser), and bearer tokens or mTLS decide that case. A predicate that **throws** is treated as a refusal, not a 500 - a predicate that cannot answer has not said yes. A one-time `console.info` is printed per process when you did not set `csrfCheck` explicitly. Pass `csrfCheck: false` to opt out, or a function to replace the check.
+</Callout>
+
+<Callout tone="warning" title="DELETE /subjects/:id/roles/:roleId is unscoped">
+`POST /subjects/:id/roles` accepts `scope` in the body, but the revoke route does not. All four adapters call `engine.admin.revokeRole(subjectId, roleId)` with no third argument, and the adapter contract for an omitted scope is **remove every assignment for that role, across every scope** - the same in memory, redis, drizzle and prisma. One `DELETE` against a subject holding that role in five tenants removes all five. There is no way to revoke one scoped grant through the admin router; call `engine.admin.revokeRole(subjectId, roleId, scope)` from your own route. See [scoped roles](/duck-iam/core/roles/scoped).
+</Callout>
+
+`engine.admin` has more than these six operations - `getPolicy`, `deletePolicy`, `getRole`, `deleteRole`, `updateAssignmentScope`, `setAttributes`, and the batch methods `assignRoles`, `revokeRoles`, `moveRoleScopes`. None of them is exposed over HTTP. A deployment that needs them wires its own handler against the engine.
+
+## Common questions
+
+### How do I override inference for one route
+
+Use the guard form (`iamGuard(engine, 'publish', 'post')` in Express and Hono, `withIamAccess(engine, 'publish', 'post', handler, opts)` in Next.js, `@IamAuthorize({ action: 'publish', resource: 'post' })` in Nest). Inference only applies when you did not name an action or resource.
+
+### Can I check permissions both in middleware and in the handler
+
+Yes. Middleware gives a coarse, role-shaped gate with an empty attribute bag. In the handler, load the record and call `engine.can()` or `engine.check()` with real `resource.attributes` for owner or status conditions. Both calls are cheap when the adapter cache is on.
+
+### Generic helpers or a wrapper
+
+Use a wrapper when its defaults for subject, resource, and error responses fit. Use the generic helpers when you are on a framework without a wrapper, when several runtimes share one authorisation layer, or when you need `can()` outside a request (jobs, queues, tests).
+
+### My route parameter is not called `id`
+
+The guards read only `params.id` (Express, Hono) or `params.id` via `getResourceId` (Nest). For `:postId` either rename the parameter or use the middleware form with a custom `getResource` (Express, Hono), pass `getResourceId` (Nest), or check in the handler (Next.js awaits `params.id` too).
+
+### Owner checks
+
+The wrappers never load the record, so `resource.attributes` is empty. Write the ownership condition as a policy rule against `resource.ownerId` and evaluate it in the handler after loading the record. Chapter 6 of the course walks through this pattern.
+
+### Is any wrapper edge-friendly
+
+Hono and the Next.js middleware run on the Edge runtime as long as the adapter you chose does (memory, HTTP, or an edge-capable driver). Express and Nest are Node-only by nature.
+
+## API reference
+
+| Module | Runtime exports |
+| --- | --- |
+| `@gentleduck/iam/server/generic` | request derivation (`iamActionForMethod`, `iamDefaultResource`, `iamNormalizePathname`, `iamPathIsAmbiguous`, `iamIsSubjectId`, `IAM_METHOD_ACTION_MAP`), environment (`iamExtractEnvironment`), the admin gate (`iamRunAdminAuthz`, `iamDefaultCsrfCheck`, `iamWithAdminAudit`, `iamFireAdminMutation`), the edge validators (`iamRequireStringField`, `iamOptionalStringField`, `iamRequirePathParam`, `iamReadJsonBody`), and two subject helpers (`generateIamPermissionMap`, `createIamSubjectCan`) |
+| `@gentleduck/iam/server/express` | `iamAccessMiddleware`, `iamGuard`, `iamAdminRouter`, namespace `IamExpress` |
+| `@gentleduck/iam/server/hono` | `iamAccessMiddleware`, `iamGuard`, `iamBindAdminRouter`, namespace `IamHono` |
+| `@gentleduck/iam/server/next` | `withIamAccess`, `checkIamAccess`, `getIamPermissions`, `createIamNextMiddleware`, `createIamAdminHandlers`, namespace `IamNext` |
+| `@gentleduck/iam/server/nest` | `IamAuthorize`, `iamNestAccessGuard`, `createIamEngineProvider`, `createIamAdminOperations`, `IAM_ACCESS_METADATA_KEY`, `IAM_ACCESS_ENGINE_TOKEN`, namespace `IamNest`, interface `NestRequest` |
+
+## Gotchas
+
+- Path-derived resource types are plural when your URLs are plural. Align resource names with URL segments or supply `getResource`.
+- The middleware form passes the second path segment as `resource.id` even when it is not an identifier (`/posts/search` yields `id: 'search'`). Use the guard form or `getResource` on such routes.
+- A `getUserId` returning `''`, `'   '`, or a non-string is refused by `iamIsSubjectId` at the integration boundary and answers 401. It never reaches the engine, which would have accepted `'   '` as a cache key.
+- There is no 404 anywhere in the server layer. A 404 on an admin path comes from your host's routing table. `GET /policies` on an empty store is `200 []`, and revoking an assignment that does not exist is `200 {ok:true}` - the adapters treat revoke as idempotent.
+
+## See also
+
+- [Generic helpers](/duck-iam/integrations/server/generic)
+- [Client integrations](/duck-iam/integrations/client) to hydrate a permission map from these servers
+- [Admin API](/duck-iam/advanced/engine/admin)
+- [Auth bridge guide](/duck-iam/guides/auth-bridge) for wiring `getUserId` from duck-auth
+- [Course chapter 6](/duck-iam/course/chapter-6) for the middleware plus handler pattern

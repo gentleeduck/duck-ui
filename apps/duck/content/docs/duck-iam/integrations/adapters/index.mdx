@@ -1,99 +1,194 @@
 ---
-title: adapters overview
-description: Storage layer for duck-iam - pick a built-in adapter (Memory, File, Prisma, Drizzle, Redis, HTTP) or implement IamAdapter.IAdapter for custom backends.
+title: Adapters overview
+description: The storage layer for duck-iam - the IamAdapter.IAdapter contract method by method, the six built-in adapters, and how the engine caches on top of them
 section: Integrations
 ---
-## What is an adapter?
 
-Adapters are duck-iam's storage layer. They implement `IamAdapter.IAdapter`, which combines three stores:
+An adapter is the only thing `IamEngine` requires. It is a plain object implementing `IamAdapter.IAdapter`: nineteen async methods, thirteen required and six optional, that read and write policies, roles, role assignments, and subject attributes. Evaluation, caching, role inheritance, scope resolution, explain traces, and timeouts all live in the engine, so an adapter never decides anything - it only stores and returns rows.
 
-<MermaidDiagram chart={`flowchart TD
-    subgraph Adapter_Interface["Adapter Interface"]
-        direction TB
-        ADAPTER["Adapter"] --> PS["PolicyStore"]
-        ADAPTER --> RS["RoleStore"]
-        ADAPTER --> SS["SubjectStore"]
+## The three stores
 
-        PS --> PS1["listPolicies()"]
-        PS --> PS2["getPolicy(id)"]
-        PS --> PS3["savePolicy(policy)"]
-        PS --> PS4["deletePolicy(id)"]
+`IamAdapter.IAdapter` is the intersection of three narrower interfaces, all generic over the same `TAction`, `TResource`, `TRole`, and `TScope` parameters your engine is typed with. You can accept the narrower interface in your own code when you only need one part.
 
-        RS --> RS1["listRoles()"]
-        RS --> RS2["getRole(id)"]
-        RS --> RS3["saveRole(role)"]
-        RS --> RS4["deleteRole(id)"]
+<MermaidDiagram chart={`classDiagram
+    class IPolicyStore {
+        +listPolicies(opts) IPolicy[]
+        +getPolicy(id, opts) IPolicy or null
+        +savePolicy(policy) void
+        +deletePolicy(id) void
+    }
+    class IRoleStore {
+        +listRoles(opts) IRole[]
+        +getRole(id, opts) IRole or null
+        +saveRole(role) void
+        +deleteRole(id) void
+    }
+    class ISubjectStore {
+        +getSubjectRoles(id, opts) TRole[]
+        +getSubjectScopedRoles(id, opts) optional
+        +assignRole(id, roleId, scope, opts) void
+        +revokeRole(id, roleId, scope, opts) void
+        +updateAssignmentScope(id, roleId, from, to, actor) optional
+        +assignRoleMany(rows) optional
+        +revokeRoleMany(rows) optional
+        +getSubjectGrantBoundary(id, opts) optional
+        +getSubjectAttributes(id, opts) Attributes
+        +setSubjectAttributes(id, attrs, opts) void
+    }
+    class IAdapter {
+        +withClient(client) optional
+    }
+    IPolicyStore <|-- IAdapter
+    IRoleStore <|-- IAdapter
+    ISubjectStore <|-- IAdapter`} />
 
-        SS --> SS1["getSubjectRoles(id)"]
-        SS --> SS2["getSubjectScopedRoles(id) -- optional"]
-        SS --> SS3["assignRole(id, role, scope?)"]
-        SS --> SS4["revokeRole(id, role, scope?)"]
-        SS --> SS5["getSubjectAttributes(id)"]
-        SS --> SS6["setSubjectAttributes(id, attrs)"]
-    end
+`IPolicyStore` and `IRoleStore` are symmetrical CRUD surfaces keyed on `id`. `ISubjectStore` is the asymmetric one: `getSubjectRoles` returns **global** assignments only, while `getSubjectScopedRoles` returns the scoped ones, and the two must never overlap.
 
-    subgraph Implementations["Built-in Implementations"]
-        direction LR
-        MEM["IamMemoryAdapter\nIn-process Maps\nDev / Testing"]
-        FIL["IamFileAdapter\nJSON on disk\nCLIs / single-process"]
-        PRI["IamPrismaAdapter\nPrisma Client\nProduction DB"]
-        DRI["IamDrizzleAdapter\nDrizzle ORM\nProduction DB"]
-        RED["IamRedisAdapter\nioredis / node-redis\nDistributed cache"]
-        HTT["IamHttpAdapter\nfetch() calls\nRemote service"]
-    end
+Six members carry a `?`. Five live on `ISubjectStore`; `withClient` is declared on `IAdapter` itself, because re-binding to a driver handle is a property of the whole adapter rather than of one store.
 
-    Adapter_Interface --> Implementations`} />
+```ts
+import type { AccessControl, IamAdapter, IamPrimitives, IamRequest } from '@gentleduck/iam'
 
-- **PolicyStore** - CRUD for access policies (rules, conditions, combining algorithms)
-- **RoleStore** - CRUD for roles (permissions, inheritance, scopes)
-- **SubjectStore** - role assignments, scoped roles, and subject attributes
-
-Every adapter is fully typed against your app's action, resource, role, and scope unions.
-
-```typescript
-import { IamEngine } from '@gentleduck/iam'
-
-const engine = new IamEngine({
-  adapter: yourAdapter,
-  defaultEffect: 'deny',
-  cacheTTL: 60,
-})
+export interface IAdapter<
+  TAction extends string = string,
+  TResource extends string = string,
+  TRole extends string = string,
+  TScope extends string = string,
+> extends IPolicyStore<TAction, TResource, TRole>,
+    IRoleStore<TAction, TResource, TRole, TScope>,
+    ISubjectStore<TRole, TScope> {
+  withClient?(client: unknown): IAdapter<TAction, TResource, TRole, TScope>
+}
 ```
 
----
+## Method reference
+
+Every read method takes an optional `IamAdapter.IReadOptions` - currently just `{ signal?: AbortSignal }`. Every method returns a promise.
+
+| Method | Required | Returns | Contract |
+|---|---|---|---|
+| `listPolicies(opts?)` | yes | `IPolicy[]` | Every stored policy, any order. Also the liveness probe behind `engine.healthCheck()`. |
+| `getPolicy(id, opts?)` | yes | `IPolicy` or `null` | `null` on a miss - never `undefined`, never a throw. |
+| `savePolicy(policy)` | yes | `void` | Upsert on `policy.id`. The engine invalidates its policy cache afterwards. |
+| `deletePolicy(id)` | yes | `void` | Idempotent; an unknown id resolves. |
+| `listRoles(opts?)` | yes | `IRole[]` | Every stored role. |
+| `getRole(id, opts?)` | yes | `IRole` or `null` | `null` on a miss. |
+| `saveRole(role)` | yes | `void` | Upsert on `role.id`. Invalidates the role cache. |
+| `deleteRole(id)` | yes | `void` | Idempotent, and it **cascades**: the role and every grant naming it go together. Leaving the grants is not the harmless option - they still read as grants, and a role later recreated under the reused id hands them back to everyone who once held it. |
+| `getSubjectRoles(subjectId, opts?)` | yes | `TRole[]` | **Unscoped assignments only**, deduplicated. `[]` for an unknown subject. |
+| `getSubjectScopedRoles?(subjectId, opts?)` | optional | `IamRequest.IScopedRole[]` | **Scoped assignments only**, one entry per `(role, scope)` pair. Omit it and every subject looks like it has no scoped roles. |
+| `assignRole(subjectId, roleId, scope?, opts?)` | yes | `void` | Idempotent on `(role, scope)`. Refuses a role that is not stored, refuses `scope: ''` and `scope: '*'`, and refuses any `IAssignOptions` field it cannot store. |
+| `revokeRole(subjectId, roleId, scope?)` | yes | `void` | With a scope: that scoped grant only. Without: **every** grant of that role, scoped and unscoped. |
+| `updateAssignmentScope?(subjectId, roleId, fromScope, toScope, actor?)` | optional | `boolean` | Move one grant in a single write; `false` when nothing matched `fromScope` - and `false` must mean nothing was written. |
+| `assignRoleMany?(rows)` | optional | `number[]` or `null` | Set-based assign. Returns indices into `rows` of the grants actually written, or `null` when the driver cannot say which were new. |
+| `revokeRoleMany?(rows)` | optional | `number[]` or `null` | Set-based revoke, same reporting rule. |
+| `getSubjectGrantBoundary?(subjectId, opts?)` | optional | `number` or `null` | Earliest future `startsAt` / `expiresAt` across the subject's grants, epoch ms, so the engine can cap its cache entry there. `null` when nothing is time-boxed. |
+| `withClient?(client)` | optional | `IAdapter` | Re-bind to a driver handle, typically a transaction. Returns a **new** adapter; the original keeps writing to its own client. |
+| `getSubjectAttributes(subjectId, opts?)` | yes | `IamPrimitives.Attributes` | `{}` for an unknown subject. Throw on a corrupt stored blob rather than returning `{}`. |
+| `setSubjectAttributes(subjectId, attrs)` | yes | `void` | **Merge**, never replace. Keys absent from `attrs` survive. |
+
+### Optional methods and their fallbacks
+
+Omitting an optional method costs correctness nowhere - each one is either an optimisation the engine falls back for, or a capability the engine refuses outright rather than approximating:
+
+- **`getSubjectScopedRoles` absent** - the engine has no scoped grants to merge. There is no error and no warning, so scope-aware evaluation degrades silently. All six shipped adapters implement it.
+- **`updateAssignmentScope` absent, or present and returning `false`** - `engine.admin.updateAssignmentScope(...)` falls back to `revokeRole` + `assignRole`. Same end state, but you lose row identity (`id`, `createdAt`) and atomicity, and there is a window where the subject holds neither.
+- **`assignRoleMany` / `revokeRoleMany` absent** - the engine loops per row instead of issuing one statement.
+- **`getSubjectGrantBoundary` absent** - the engine caches the subject for the full `cacheTTL` instead of capping the entry at the next grant transition.
+- **`withClient` absent** - `engine.withTransaction(tx)` **throws**, rather than silently writing outside the caller's transaction.
+
+Which adapter implements what is declared once, in `src/adapters/__compliance__/optional-support.ts`, and checked against the real prototypes by `optional-method-matrix.test.ts` - so a method that disappears turns a row red instead of turning asserting tests into skipped ones. [Choosing an adapter](/duck-iam/integrations/adapters/comparison) reproduces the table.
+
+### Thrown errors
+
+The engine treats any rejection from an adapter as a hard failure and routes it through its fail-closed path (`onError`, then the configured `defaultEffect`). These throws are expected, and the last two come from the engine rather than from the adapter:
+
+| Situation | Who throws | Message shape |
+|---|---|---|
+| Backend unreachable, permission denied, disk error | the adapter | whatever your driver throws, ideally wrapped with `[@gentleduck/iam:<adapter>]` |
+| `attrs` is not a plain object in `setSubjectAttributes` | the adapter, before writing | `[@gentleduck/iam:<adapter>] attributes for "<id>" must be a plain object (got <type>)` |
+| A stored attributes blob is corrupt | the adapter, on read | `[@gentleduck/iam:file] corrupted attributes for "<id>" (not a JSON object)` and equivalents on every other backend |
+| A stored **policy** row will not parse | the adapter, on read, after reporting it | `policy "<id>" cannot be read and will not be skipped - a dropped policy may be the one that denies` |
+| `assignRole` names a role the store does not hold | the adapter, before writing | `[@gentleduck/iam:<adapter>] cannot assign a role that is not stored; save the role before granting it` |
+| `assignRole` is given an option the adapter cannot store | the adapter, before writing | `assignRole options (expiresAt) are not supported by this adapter, and were previously discarded silently` |
+| `engine.withTransaction(tx)` on an adapter with no `withClient` | the **engine** | refuses rather than silently writing outside your transaction |
+| The read exceeded `adapterTimeoutMs` | the **engine**, not the adapter | `[@gentleduck/iam:engine] <label> timed out after <N>ms` |
+| More than `maxPolicies` / `maxRoles` rows came back | the **engine**, when filling the cache | a cap error; raise the cap rather than paginating inside the adapter |
+
+The shape guard on `setSubjectAttributes` is shared: every built-in adapter calls the same `iamAssertAttributesParam` helper, so a string like `'admin=true'` cannot spread into per-character attribute keys. A rejected call leaves existing attributes untouched.
+
+<Callout tone="warning" title="Corruption is not emptiness">
+  An adapter that returns `{}` for a corrupt attributes row silently strips ABAC from every decision about that subject, which usually widens access. Every built-in adapter throws instead. Do the same in a custom adapter.
+</Callout>
+
+### Concurrency expectations
+
+The engine calls adapters concurrently and expects them to cope; it does **not** serialise writes for you.
+
+- **Reads are collapsed, not serialised.** The engine keeps an in-flight map, so 500 simultaneous cold requests for one subject produce one `getSubjectRoles`, not 500. `maxConcurrentSubjectLoads` (default `512`; `0` restores unbounded) caps how many *distinct* subjects may be loading at once; past the cap a new load rejects with a message containing `subject load shed`.
+- **Writes are not transactional across methods by default.** `engine.admin` calls one adapter method per operation. An adapter implementing `withClient` can join a caller's transaction through `engine.withTransaction(tx)`; drizzle and prisma do, and the other four throw there rather than writing outside it.
+- **`setSubjectAttributes` is a read-modify-write in every built-in adapter**, and it is not wrapped in a transaction. Two concurrent merges to the same subject can lose one of them. Use an atomic merge in your backend if that matters (`jsonb ||`, a Mongo `$set`, a DynamoDB `UpdateExpression`).
+- **Cancellation is best-effort.** Adapters that can honour `opts.signal` should; adapters that cannot (memory, file) may ignore it. The engine releases the request either way when `adapterTimeoutMs` (default `5000`, `0` disables) elapses - the orphaned work just runs to completion in the background.
 
 ## Built-in adapters
 
-| Adapter | Use case | Persistence | Peer dep |
-| --- | --- | --- | --- |
-| [**Memory**](/duck-iam/integrations/adapters/memory) | Dev, testing, prototyping | None (in-process) | None |
-| [**File**](/duck-iam/integrations/adapters/file) | CLIs, dev fixtures, single-process apps | JSON on disk | `node:fs/promises` (pluggable) |
-| [**Prisma**](/duck-iam/integrations/adapters/prisma) | Production w/ Prisma | Any Prisma-supported DB | `@prisma/client` |
-| [**Drizzle**](/duck-iam/integrations/adapters/drizzle) | Production w/ Drizzle | PG, MySQL, SQLite | `drizzle-orm` |
-| [**Redis**](/duck-iam/integrations/adapters/redis) | Distributed deploys | Redis-compatible KV | `ioredis` or `redis` |
-| [**HTTP**](/duck-iam/integrations/adapters/http) | Microservices split | Remote API | None (uses `fetch`) |
-| [**Custom**](/duck-iam/integrations/adapters/custom) | Any other backend | Your choice | Your choice |
+| Adapter | Subpath | Use case | Persistence | Peer dependency |
+|---|---|---|---|---|
+| [Memory](/duck-iam/integrations/adapters/memory) | `@gentleduck/iam/adapters/memory` | tests, prototypes | none, in-process | none |
+| [File](/duck-iam/integrations/adapters/file) | `@gentleduck/iam/adapters/file` | CLIs, dev fixtures, single-process apps | one JSON file | none, you pass the `fs` driver |
+| [Prisma](/duck-iam/integrations/adapters/prisma) | `@gentleduck/iam/adapters/prisma` | production on Prisma | any Prisma-supported database | `@prisma/client` |
+| [Drizzle](/duck-iam/integrations/adapters/drizzle) | `@gentleduck/iam/adapters/drizzle` | production on Drizzle | Postgres, MySQL, SQLite | `drizzle-orm` |
+| [Redis](/duck-iam/integrations/adapters/redis) | `@gentleduck/iam/adapters/redis` | distributed deployments | Redis hashes and sets | `ioredis` or `redis` |
+| [HTTP](/duck-iam/integrations/adapters/http) | `@gentleduck/iam/adapters/http` | a central authorization service | remote, whatever it fronts | none, uses `fetch` |
+| [Custom](/duck-iam/integrations/adapters/custom) | your package | anything else | your choice | your choice |
 
-All adapters are interchangeable. Start with `IamMemoryAdapter` during development and switch to a database adapter in production without changing engine, builder, or middleware code.
+Every one of them also exports a lowercase factory (`iamMemoryAdapter`, `iamFileAdapter`, `iamPrismaAdapter`, `iamDrizzleAdapter`, `iamRedisAdapter`, `iamHttpAdapter`) for callers who prefer functions to `new`. The factories take the same arguments as the constructors.
 
----
+## Where an adapter sits
 
-## How adapters fit in
+Adapters are behind two cache layers, which is why a warm process barely touches storage.
 
-```typescript
+<MermaidDiagram chart={`flowchart TD
+    CAN["engine.can(subject, action, resource)"] --> SC{"subject in LRU?"}
+    SC -- "yes" --> PC{"policies and roles cached?"}
+    SC -- "no" --> IF{"load already in flight?"}
+    IF -- "yes" --> JOIN["join the in-flight promise"]
+    IF -- "no" --> READ["getSubjectRoles + getSubjectScopedRoles + getSubjectAttributes"]
+    READ --> ADP["Adapter"]
+    JOIN --> PC
+    READ --> PC
+    PC -- "yes" --> EVAL["Evaluate"]
+    PC -- "no" --> LIST["listPolicies + listRoles"]
+    LIST --> ADP
+    LIST --> EVAL
+    EVAL --> DEC["Decision"]`} />
+
+Both the subject LRU (`maxCacheSize`, default `1000` entries) and the policy/role caches expire after `cacheTTL` seconds (default `60`; `0` disables caching entirely and makes every call hit the adapter). Writes through `engine.admin` invalidate the matching cache immediately, so an adapter never has to publish anything itself - unless you run more than one process, in which case wire the [Redis invalidator](/duck-iam/integrations/invalidators/redis).
+
+## Swapping adapters
+
+Adapters are interchangeable by construction: engine, builder, server middleware, and client code do not know which one is underneath. Migration is data movement only.
+
+```ts
 import { IamEngine } from '@gentleduck/iam'
 import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
 
-// 1. Pick a storage backend
-const adapter = new IamMemoryAdapter({ /* seed */ })
-
-// 2. Wrap it in an engine
+// development
+const adapter = new IamMemoryAdapter({ roles, policies, assignments: { 'user-1': ['admin'] } })
 const engine = new IamEngine({ adapter, defaultEffect: 'deny' })
 
-// 3. Use the engine - same API regardless of adapter
 const allowed = await engine.can('user-1', 'read', { type: 'post', attributes: {} })
 ```
 
-The engine reads from the adapter on cache miss, then caches policies, roles, and resolved subjects in an LRU with the configured `cacheTTL`. Adapter writes via `engine.admin.*` automatically invalidate the relevant caches.
+Swapping `IamMemoryAdapter` for `IamDrizzleAdapter` changes those two lines and nothing else. [Choosing an adapter](/duck-iam/integrations/adapters/comparison) walks the trade-offs.
 
-See [Comparison & FAQ](/duck-iam/integrations/adapters/comparison) for selection guidance and answers to common adapter questions.
+## Verifying an adapter
+
+Every shipped adapter runs the same vitest matrix, `runAdapterCompliance(name, factory, { supports })`, which pins the cross-backend contract: empty stores return `[]` and `null`, saves upsert, deletes are idempotent, `deleteRole` cascades, `getSubjectRoles` returns only unscoped roles, `getSubjectScopedRoles` returns only scoped ones, revoke with a scope removes just that grant while revoke without one removes them all, and `setSubjectAttributes` merges rather than replaces. `supports` declares which optional methods you implement; clauses for the rest are never registered, so an unimplemented method cannot show up as a pass. A second suite, `runEngineCapabilityCompliance`, runs the same behaviour one rung up through `engine.admin`, where the fallbacks live. See [Custom adapter](/duck-iam/integrations/adapters/custom).
+
+## See also
+
+- [Choosing an adapter](/duck-iam/integrations/adapters/comparison) - feature matrix, decision tree, FAQ
+- [Custom adapter](/duck-iam/integrations/adapters/custom) - implement the interface for any backend
+- [Caching](/duck-iam/advanced/engine/caching) - what the engine keeps in front of your adapter
+- [Admin API](/duck-iam/advanced/engine/admin) - the write path that calls these methods

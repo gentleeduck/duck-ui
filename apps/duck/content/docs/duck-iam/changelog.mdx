@@ -5,25 +5,492 @@ section: Changelog
 order: 999
 ---
 
+This page mirrors the package changelog shipped inside `@gentleduck/iam` at
+`packages/duck-iam/CHANGELOG.md`. That file is the source of truth; this page is
+kept in sync with it by hand. Entries run newest first, from 5.7.0 down to the
+first published release. Names in each entry are the names that were current in
+that release: the `Iam*` / `IAM_*` export prefixes only exist from 5.0.0 onward,
+so a 2.x entry naming `FileAdapter` refers to what is called `IamFileAdapter` today.
+
+## Unreleased
+
+### Patch Changes
+
+Two fixes where a rule that was correct in development silently stopped applying in
+production.
+
+- **`first-match` and `highest-priority` now break priority ties by source order in both
+  modes.** Both algorithms resolve equal priorities by the order rules are declared. The
+  development interpreter walks `policy.rules` directly and honoured that, but the
+  production path walks the rule index, which buckets literal-resource rules separately
+  from wildcard-resource ones and scanned the literal bucket first. A `deny read '*'`
+  declared before an `allow read 'post'` at the same priority therefore denied in
+  development and allowed in production. `Evaluate.IIndexedRule` now carries each rule's
+  index in `policy.rules`, and the fast path compares it whenever priorities are equal.
+  `deny-overrides` and `allow-overrides` were never affected - they are order independent.
+  See [combining algorithms](/duck-iam/core/policies/combining-algorithms).
+- **The condition-nesting bound is now the same comparison in the validator and the
+  evaluator.** `evalConditionGroup` refuses a group at `depth >= MAX_CONDITION_DEPTH` and
+  fails closed, while `validateConditionGroup` only errored past the cap. A group sitting
+  exactly on the boundary validated cleanly and then never matched. On an allow rule that
+  failed closed; on a deny rule the deny silently stopped firing. Both now reject at
+  `>=`, so anything the evaluator refuses is reported as `LIMIT_EXCEEDED` up front.
+  See [validation](/duck-iam/advanced/validation).
+
+The `evaluate` versus `evaluateFast` property oracle covered the tie shape in principle
+but drew priorities from twenty values, making collisions too rare to catch it. It now
+draws from four.
+
+## 5.7.0
+
+### Minor Changes
+
+- 62e3d0b: Add an optional `IConfig.maxConcurrentSubjectLoads` cap (default `0` = unbounded,
+  matching `adapterTimeoutMs`'s 0-disables convention) to bound the cold-flat herd
+  described in `SCALING.md` section 8. `resolveSubject` rejects a _new_ subject load once
+  `inFlight.subjects.size` hits the cap, before touching the adapter - fail-closed
+  load-shed, not a bounded queue, consistent with the engine's existing fail-closed
+  posture. The rejection is a plain `Error` whose message contains `"subject load shed"`,
+  so it surfaces through `can` / `check` / `authorize`'s existing fail-closed
+  `catch -> onError` path with no new wiring.
+
+  A call that hits the subject cache or joins an already-in-flight load for the same
+  subject never counts against the cap.
+
+## 5.6.0
+
+### Minor Changes
+
+- `iam_assignments` gains `starts_at`, `expires_at`, and `attributes` columns across
+  the pg, mysql, and sqlite drizzle schemas. `getSubjectRoles` / `getSubjectScopedRoles`
+  now filter out assignments outside their `[startsAt, expiresAt)` window; a row with
+  both NULL behaves exactly as before these columns existed.
+
+  `IScopedRole` gains an optional `attributes` field, populated from the new column so
+  a policy condition can read per-grant data (department, region, whatever the caller
+  stores) as `subject.scopedRoles[].attributes`, distinct from the subject's own global
+  attributes. A corrupted `attributes` value drops just that field and reports through
+  `onPolicyError`; it does not fail the whole role.
+
+  `ISubjectStore.assignRole` gains an optional fourth `opts: IamAdapter.IAssignOptions`
+  parameter (`startsAt` / `expiresAt` / `attributes`), implemented by the drizzle adapter.
+  Purely additive - every other adapter (memory, file, redis, prisma, http) still
+  satisfies the interface unchanged.
+
+## 5.5.1
+
+### Patch Changes
+
+- 86b6775: Drop `deletedAt` from `iamPolicies`, `iamRoles`, `iamAssignments`, and
+  `iamSubjectAttrs`, added in 5.5.0, along with `IamDrizzleAdapter`'s opt-in
+  `deletedAt IS NULL` read filtering. `deletePolicy` / `deleteRole` / `revokeRole` are
+  hard-delete by explicit design (a soft-deleted policy/role name couldn't be reused,
+  and a revoked assignment has no reason to be retained), and subject attributes have
+  no delete operation at all - none of these columns would ever have been set by
+  anything in this codebase.
+
+  `ops.isNull` stays on `IamDrizzleAdapter`'s config: `updateAssignmentScope` still
+  needs it to match a global (unscoped) assignment correctly, independent of the
+  removed soft-delete filtering.
+
+## 5.5.0
+
+### Minor Changes
+
+- 2853214: Add `engine.admin.updateAssignmentScope(subjectId, roleId, fromScope, toScope, actor?)`
+  to move a role assignment to a different scope in one write instead of
+  revoke + assign.
+
+  `IamAdapter.ISubjectStore` gains an optional `updateAssignmentScope`. When an adapter
+  implements it, the engine uses it directly; when it doesn't (or it returns `false`
+  because nothing matched `fromScope`), the engine transparently falls back to
+  revoke + assign, so the call always succeeds either way.
+
+  Implemented for `memory`, `file`, `prisma`, and `drizzle`. `drizzle` additionally needs
+  `ops.isNull` configured (matching `deletedAt` filtering) to match the global/unscoped
+  case correctly; without it, `updateAssignmentScope` returns `false` and the engine falls
+  back automatically. Not implemented for `redis` (scope is encoded into the Set member
+  itself, so there's no cheaper path than remove + add) or `http` (would need a new
+  endpoint on the operator's server) - both already work correctly via the fallback.
+
+  `iamAssignments` gains `updatedAt` / `updatedBy` in the drizzle schema (pg/mysql/sqlite)
+  to support this - the only table getting them in this release, since it's now the only
+  one with a real update path that didn't already have them.
+
+### Patch Changes
+
+- 2853214: Round out audit columns on the drizzle schema (pg/mysql/sqlite): `iamPolicies` and
+  `iamRoles` gain `deletedAt`; `iamSubjectAttrs` gains the `createdBy` it was missing
+  (it already had `updatedBy`) plus `deletedAt`. `iamAssignments`' own audit columns
+  are covered separately, alongside the new `updateAssignmentScope` feature that needs
+  them.
+
+  `IamDrizzleAdapter`'s `ops` config gains an optional `isNull` operator. When
+  provided, `listPolicies` / `getPolicy` / `listRoles` / `getRole` / `getSubjectRoles` /
+  `getSubjectScopedRoles` / `getSubjectAttributes` exclude rows with `deletedAt` set;
+  omitted (the default, matching every version before this column existed), reads are
+  unchanged. `deletePolicy` / `deleteRole` / `revokeRole` still hard-delete on purpose -
+  turning them into soft-deletes would break the unique-name constraint on policies and
+  roles (a "deleted" name couldn't be reused) and orphan the FK cascade from
+  `iamAssignments`. The column is a hook for something outside the adapter to set
+  (an admin tool, a trigger), not something this adapter writes itself.
+
+- 2853214: Fix scoped role assignments not resolving inherited roles. `resolveSubject` closed
+  `subject.roles` over `inherits` but passed `subject.scopedRoles` through unresolved,
+  so a condition reading `subject.scopedRoles` saw only the directly assigned role and
+  not what it inherits, while the exact same role assigned without a scope resolved
+  correctly. Scoped roles now go through the same inheritance closure.
+
+  `IamClient` also gains `PartialPermissionMap`, the type `engine.permissions()`
+  actually returns (only the checked keys, not every possible combination). The React
+  client's `usePermissions` / `createIamPermissionChecker` / `IContextValue.permissions`
+  now use it instead of the full `PermissionMap`, matching what callers really have.
+  `iamBuildPermissionKey` is also re-exported from the React entry so a consumer
+  building a key by hand doesn't need a second import from core.
+
+## 5.4.2
+
+### Patch Changes
+
+- 4d956c8: No functional change. Version bump to resync with the registry after 5.4.1 was
+  published without its git history being committed.
+
+## 5.4.1
+
+### Patch Changes
+
+- 959a8a4: Restructure the drizzle adapter's schema exports into per-dialect folders, matching
+  `@gentleduck/auth`'s layout.
+
+  `@gentleduck/iam/adapters/drizzle/schema/{pg,mysql,sqlite}` is now
+  `@gentleduck/iam/adapters/drizzle/{pg,mysql,sqlite}`. Each folder also exports a
+  `{Pg,Mysql,Sqlite}` types namespace (`PolicyRow`, `RoleRow`, `AssignmentRow`, `AttrRow`)
+  inferred from that dialect's schema, so a consumer pinned to one dialect no longer needs
+  to import the adapter's cross-dialect union types to get a concrete row shape.
+
+  Update imports from `@gentleduck/iam/adapters/drizzle/schema/pg` (etc.) to
+  `@gentleduck/iam/adapters/drizzle/pg` (etc.).
+
+## 5.4.0
+
+### Minor Changes
+
+- 39aaa82: Export the factories, and finish the barrels.
+
+  The previous release gave every publicly constructed class a factory function, but
+  several were never exported, so `new` remained the only reachable spelling for
+  `AnomalyFacet`, `HijackFacet`, `WebhookDeliverer`, `MemoryPasskeyChallengeStore`,
+  `AuthMemoryDeviceFingerprintStore`, `DPoPVerifier`, the data-at-rest providers, the
+  password hashers, and the api-key / magic-link / passkey / saml / passwords impls.
+
+  The channels barrel exported one type and nothing else, so every channel had to be
+  imported by deep path. All six ship from `@gentleduck/auth/channels` now. The anomaly
+  barrel likewise omitted both detectors and the fingerprint store, which meant the
+  detectors could not be registered without reaching past it.
+
+  On the IAM side, `iamEngine` and `iamLRUCache` are exported alongside their classes.
+
+  BREAKING: three aliases in the `@gentleduck/auth` root now name the factory rather than
+  the class, so `new` on them stops compiling.
+
+  - `AuthBackupCodesFacet` is now `backupCodesFacet`; the class is `BackupCodesFacet`.
+  - `AuthInMemoryEvents` is now `inMemoryEvents`; the class is `InMemoryEvents`.
+
+  Both classes are exported under their own names, so `new BackupCodesFacet(...)` and
+  `new InMemoryEvents()` are the mechanical fix.
+
+- 196f52d: Reject a policy whose target names a pair no allow rule covers, instead of warning.
+
+  `UNREACHABLE_TARGET` was a warning, so `PolicyBuilder.build()` accepted the policy and
+  the only symptom was a denial at request time. A denial reads as the permission system
+  working, which is why this cost five separate incidents to recognise: widening a target
+  is one line and widening the rules is another, nothing couples them, and the drift is
+  silent.
+
+  It is now an error, so `build()` throws where the policy is written.
+
+  Two supporting fixes:
+
+  - The check treated a dimension the target omits as a literal `*`, which demanded that
+    every rule be a wildcard. A target naming only `impersonate` was reported unreachable
+    because its allow rule named `.of('users')`. An omitted dimension is one the target
+    does not constrain, so only the dimensions it names are checked.
+  - `PolicyBuilder.build()` dropped the validator's message and reported only the code and
+    path, so every build failure was cryptic. It now includes the message and the policy id.
+
+  Also re-enables the two drizzle adapter suites, commented out wholesale in f3f57cb8
+  "pending rename follow-up" that never landed. `IamDrizzle.IConfig` had gained
+  `<TDb, TType>` in that rename and the suites still referenced it bare. 62 tests back,
+  and they are not decorative: removing the JSONB shape guard, silencing `onPolicyError`,
+  and dropping the WHERE from the single-row lookup are each caught.
+
+  BREAKING: a policy with an unreachable target now throws at build time rather than
+  loading with a silent denial.
+
+### Patch Changes
+
+- Make the not-blank check constraints reject whitespace.
+
+  `length(trim(x)) > 0` only strips ordinary spaces, so a name, subject id, scope or
+  credential secret consisting of a tab, a newline or a form feed passed the check that
+  exists to refuse exactly that. Seven constraints were affected:
+  `auth_credentials.secret`, `iam_assignments.subject_id` and `.scope`, `iam_policies.name`,
+  `iam_roles.name` and `.scope`, `iam_subject_attrs.subject_id`.
+
+  Each dialect gets the strongest form it has. Postgres and MySQL match a non-whitespace
+  character (`~ '[^[:space:]]'` and `REGEXP '[^[:space:]]'`); SQLite has no regexp operator
+  built in, so it trims the whitespace set explicitly and compares against the empty string.
+  All three were verified against a real server for a tab, a newline, a carriage return, a
+  vertical tab, a form feed and a plain space.
+
+  Existing databases need a migration: drop each constraint and add it back in the new form.
+  Any row already holding a whitespace-only value has to be repaired first, or the
+  `ALTER TABLE` is refused.
+
+- Close scoped role assignments over `inherits`, the way direct assignments already were.
+
+  `resolveSubject` ran `resolveEffectiveRoles` over the roles returned by `getSubjectRoles`
+  and passed `getSubjectScopedRoles` through untouched. A deployment that scopes every
+  assignment therefore had an empty `subject.roles` and a flat scoped set, so a condition
+  reading `subject.roles` saw the assigned role and none of the roles it inherits.
+
+  The effect was silent and direction-dependent: RBAC permission resolution walks `inherits`
+  separately, so a superadmin still had every permission its parents grant, while
+  `w.role(...)`, `w.roles(...)` and `w.contains('subject.roles', ...)` behaved as if the
+  hierarchy did not exist. The same policy then decided differently depending on whether the
+  assignment carried a scope, which is not something the API hints at.
+
+  Scoped roles now expand through the same closure, each inherited role keeping the scope of
+  the assignment it came from.
+
+## 5.3.0
+
+### Minor Changes
+
+- Warn when a policy target names an action/resource pair no rule can allow.
+
+  `evaluatePolicy` folds `defaultEffect` when a policy's target matches and none of its
+  rules do, and that default is `deny`. A target therefore widens what a policy refuses,
+  not only what it inspects: adding a resource to `.target({ resources: [...] })` without
+  an allow rule covering it denies every caller for that resource, and the refusal
+  surfaces far from the policy that caused it.
+
+  `validatePolicy` now emits an `UNREACHABLE_TARGET` warning per uncovered pair. It fires
+  only once the policy contains at least one allow rule, so a purely restrictive policy -
+  where denying everything the target names is the whole point - is untouched.
+
+  Warning rather than error: the behaviour is correct deny-by-default and existing
+  policies that rely on it keep validating.
+
+## 5.2.0
+
+### Minor Changes
+
+- bc8a9ea: Prefix the drizzle tables and constraints with `iam_`, and let the Nest access
+  guard contribute resource attributes.
+
+  **Renamed tables and constraints.** The physical tables move from the
+  `access_*` prefix to `iam_*` (`access_policies` becomes `iam_policies`,
+  `access_roles` becomes `iam_roles`), along with every derived `pk_`, `uq_`, `idx_`
+  and `ch_` identifier, in the `mysql`, `pg` and `sqlite` schema builders. This
+  makes the schema attributable to this package once merged into a host
+  application's database.
+
+  Existing databases need a migration renaming those tables and their
+  constraints. New installations are unaffected.
+
+  **`getResourceAttributes` on `iamNestAccessGuard`.** An optional hook that
+  computes the attributes attached to `resource.attributes` before
+  `engine.can()` runs. It receives the resolved `{ action, resource }` alongside
+  the request, because the correct attributes are resource-specific: a `users`
+  row is its own subject, whereas an `iamAssignments` row carries its subject in
+  a column. Passing the resolved pair means callers do not have to re-derive
+  which case they are in from the raw request.
+
+  **Known gap:** the drizzle adapter and native-attr-shape test suites (47 cases)
+  are temporarily disabled while their mock table references are reworked for the
+  rename.
+
+## 5.1.0
+
+### Minor Changes
+
+- Restructure core into `engine/` and `config/` subfolders matching duck-iam patterns.
+  Rename `defineAuth` to `createAuth` as primary entry point. Extract `AuthEngineTypes`
+  and `AuthDefine` into dedicated types files. Add `Auth` prefix to all public classes.
+
+## 5.0.1
+
+### Patch Changes
+
+- fix: strip redundant iam/auth prefixes from public exports
+
+## 5.0.0
+
+### Major Changes
+
+- Prefix all public exports with package namespace (`Auth*` / `Iam*` / `IAM_*` / `AUTH_*`)
+  so the origin is clear at the type level when both packages are imported together.
+  This is a breaking change - all consumers must update import references to the new names.
+
+## 4.0.0
+
+### Major Changes
+
+- a5fb285: Rename the policy builder factory to `definePolicy`, matching `defineRule` and
+  `defineRole`.
+
+  BREAKING: the `policy()` factory and `access.policy()` method are removed. Use
+  `definePolicy()` and `access.definePolicy()` instead - the builder API is
+  otherwise unchanged.
+
+## 3.2.0
+
+### Minor Changes
+
+- f77fb5a: Harden and type the Drizzle adapter schemas (pg, mysql, sqlite).
+
+  - Add `json: 'native' | 'string'` adapter option. `'native'` (default) writes plain
+    objects to `jsonb` / `json` columns so payloads stay queryable; `'string'`
+    JSON-stringifies for SQLite/text columns. The read path accepts both, so switching
+    is migration-safe.
+  - Type every JSON column with `$type<>()` against the `AccessControl` types; constrain
+    `algorithm` with a Postgres enum, a MySQL enum, and a SQLite CHECK.
+  - Add CHECK constraints (non-blank name/subject, `version >= 1`), `created_by` /
+    `updated_by` audit columns, GIN indexes (pg), partial indexes for scoped rows
+    (pg/sqlite), and a `roleId` index.
+  - Collapse NULL scopes in unique constraints (`NULLS NOT DISTINCT` on pg,
+    `COALESCE(scope, '')` on mysql/sqlite) so duplicate global rows are rejected.
+  - Name every constraint (`pk_`, `fk_`, `uq_`, `idx_`, `ch_`).
+
+  Fixes: pg `inherits` was `text[]` but the shared adapter writes JSON, so it is now
+  `jsonb`; the MySQL timestamp default was a static import-time snapshot and is now
+  per-row `CURRENT_TIMESTAMP(3)`.
+
+  Migration note: regenerate migrations with `drizzle-kit generate`. SQLite users must
+  pass `json: 'string'`.
+
+## 3.1.0
+
+### Minor Changes
+
+- e5fc356: Engine structure cleanup + adapter validation hardening.
+
+#### New exports
+
+- **`parsePolicyRow` / `parseRoleRow`** from `@gentleduck/iam/core/validate`. Helpers for
+  custom-adapter authors: take an `unknown` row, return the typed
+  `AccessControl.IPolicy<...>` / `AccessControl.IRole<...>` when structurally valid, or
+  `null` to drop the row. Replaces the pattern of calling `validatePolicy(row)` then
+  casting `row as IPolicy<...>`.
+
+#### Internal refactors (no public API change)
+
+- `engine.ts` split into five single-purpose modules under `core/engine/`:
+  - `engine.invalidation.ts` - cross-instance + in-flight cache invalidation
+  - `engine.loaders.ts` - cache-fronted loaders with single-flight coalescing + adapter
+    timeout + max-row guards
+  - `engine.hooks.ts` - safe hook calls + metrics emission with throw-swallowing
+  - `engine.lifecycle.ts` - preload / health-check / dispose
+  - `engine.stats.ts` - snapshot / reset / hit-rate aggregation
+- File, Redis, Drizzle, and Prisma adapters now route every row-decode path through
+  `parsePolicyRow` / `parseRoleRow` instead of bare `as` casts. Prisma's `listPolicies` /
+  `getPolicy` / `listRoles` / `getRole` now actually validate before returning - this was
+  a latent gap.
+- `core/explain` is now lazy-loaded by `engine.explain()` via dynamic `import()`.
+  Production-mode bundles drop the explain chunk entirely.
+
+#### Tests
+
+- 50 new direct unit tests for the extracted engine helpers (invalidation, hooks, stats,
+  lifecycle, loaders). The class-method shims are proved to delegate to the extracted free
+  functions, not just rename.
+
+#### Documentation
+
+- `AUDIT-RESULTS.md` checked in. 0 runtime advisories.
+- The two reported workspace-level vulnerabilities affecting `@gentleduck/iam` are both in
+  `role-acl` (a benchmark competitor in `devDependencies` only); never installed by
+  consumers.
+
+#### Migration
+
+None required. All changes are additive or internal.
+
+## 3.0.1
+
+### Patch Changes
+
+- 1f5ac74: **@gentleduck/auth**: end-to-end input + tenant + config-time hardening sweep.
+
+  - Provider entry-point caps + typeof guards (api-key, magic-link, oauth, passkey,
+    password, saml). Magic-link `callbackPath` validated at construction (refuses
+    protocol-relative + CR/LF). OAuth `redirectUri` + endpoint URLs validated. SAML
+    `relayState` + `host` CR/LF guard.
+  - Facet input caps (flows, sessions, mfa, apikeys, identities, idempotency).
+    `isProviderIdSafe` guard in `signIn` / `beginProvider`. CAS-claim on recovery +
+    signup. Email canonicalization (`trim().toLowerCase()`) shared between rate-limit +
+    lookup + stored metadata.
+  - Transport hardening: 4 KB bearer cap, 8 KB DPoP cap, 16 KB cookie-header cap, cookie
+    name RFC 6265 validation. JWT `signKey.kid` + `signKey.key` validation.
+    `Number.isFinite` on iat / nonce / counter rollback. `timingSafeEqual` on `ath` +
+    `nonce`.
+  - Adapter parity: memory adapter `findByHashedSecret` respects `ctx.tenantId` (was
+    searching globally) + uses `isRevoked` predicate. `upsert` inherits `tenantId` from
+    ctx. Redis adapter caps key length + clamps NaN/huge ttl. SQL adapters parameterize
+    JSONB queries.
+  - `AuthRoot.strict`: refuse `http://` baseUrl in production.
+  - Webhooks: `redirect: 'error'` SSRF, 1 MiB payload cap, 20-attempt backoff cap,
+    NaN-timestamp rejection.
+  - New `@gentleduck/auth/server/{fastify,koa,nestjs,elysia,grpc}` adapters.
+  - New providers: SAML 2.0 SP, Microsoft, Discord, LinkedIn, Sign in with Apple,
+    api-key sign-in.
+  - New channels: Resend, Twilio, Web Push, AWS SES.
+  - DPoP (RFC 9449) + OAuth refresh-reuse detection.
+  - READMEs: parallel structure across both packages, local logo + LICENSE for npm
+    rendering.
+
+  **@gentleduck/iam**: defense-in-depth + adapter hardening + vitest compat shim.
+
+  - `engine.libs.assertNonEmptyStringParam`: enforce 1024-char cap.
+    `assertAttributesParam`: 256-key + depth-16 caps. `engine.permissions()`: refuse
+    batches over 1024. `engine.can()` / `check()` / `explain()`: subjectId typeof +
+    length-cap; fail-closed in production.
+  - File adapter dicts now `Object.create(null)` (prototype-pollution defense).
+    `setSubjectAttributes('__proto__', ...)` no longer pollutes `Object.prototype`.
+  - HTTP adapter: streaming `readBodyCapped` + `readJsonCapped<T>` so multi-GB remote
+    bodies cannot OOM before slice. ID-length caps. Backoff overflow cap. SSRF
+    `redirect: 'error'`.
+  - Redis invalidator: pre-auth UTF-8 byte-length cap + depth/key-count cap on parsed
+    envelopes.
+  - Hono adapter: body `Reflect.get`-parsed with typeof + length guards.
+  - Vitest compat shim for bun runtime (`stubGlobal` / `unstubAllGlobals` /
+    `describe.runIf`); 8 previously-failing devtools tests now pass.
+
+  **Tests**: +42 across both packages, all green. No functional behavior changes beyond
+  defensive guards on hostile input.
+
 ## 3.0.0
 
 ### Breaking - Engine facet split (cache + stats)
 
-Engine had 16 public methods on one class. Folded the cache-invalidation and observability clusters into two facets so the root surface stays focused on evaluation. Evaluation (`authorize`, `can`, `check`, `explain`, `permissions`) and lifecycle (`constructor`, `dispose`, `preload`, `healthCheck`) stay flat - hot path, single noun.
+`Engine` had 16 public methods on one class. Four clusters were visible: evaluation,
+cache invalidation, lifecycle, and observability. The cache-invalidation and
+observability clusters are folded into two facets so the root surface stays focused.
+Evaluation (`authorize`, `can`, `check`, `explain`, `permissions`) and lifecycle
+(`constructor`, `dispose`, `preload`, `healthCheck`) stay flat - hot path, single noun.
 
 #### Migration
 
-```ts
-// Before (<= 2.x)                          // After (3.0)
-engine.invalidate(opts)                    engine.cache.invalidate(opts)
-engine.invalidateSubject(id, opts)         engine.cache.invalidateSubject(id, opts)
-engine.invalidatePolicies(opts)            engine.cache.invalidatePolicies(opts)
-engine.invalidateRoles(id?, opts)          engine.cache.invalidateRoles(id?, opts)
-engine.stats()                             engine.stats.get()
-engine.resetStats()                        engine.stats.reset()
-engine.iamFlushSharedCaches()                 // REMOVED
-                                           import { iamFlushSharedCaches } from '@gentleduck/iam'
-```
+| Before (`<= 2.x`)                       | After (3.0)                                |
+| --------------------------------------- | ------------------------------------------ |
+| `engine.invalidate(opts)`               | `engine.cache.invalidate(opts)`            |
+| `engine.invalidateSubject(id, opts)`    | `engine.cache.invalidateSubject(id, opts)` |
+| `engine.invalidatePolicies(opts)`       | `engine.cache.invalidatePolicies(opts)`    |
+| `engine.invalidateRoles(id?, opts)`     | `engine.cache.invalidateRoles(id?, opts)`  |
+| `engine.stats()`                        | `engine.stats.get()`                       |
+| `engine.resetStats()`                   | `engine.stats.reset()`                     |
+| `engine.flushSharedCaches()` (removed)  | `import { flushSharedCaches } from ...`    |
 
 Mechanical `sed` per call site - no behavior change. Codemod:
 
@@ -40,111 +507,344 @@ sed -i -E \
 
 #### Why 3.0 now
 
-- `iamFlushSharedCaches` instance method was already scheduled for 3.0 removal - it was misleading (wiped process-globals, affecting every Engine in the process). Bundle the deprecation with the facet split: one major, one migration window.
-- Flat surface drops from 16 -> 9 methods + 2 facet handles. Leaves room for future facet growth (`engine.cache.prewarm()`, `engine.stats.subscribe()`) without polluting the root.
+- The `flushSharedCaches` instance method was already scheduled for 3.0 removal - it was
+  misleading, because it wiped process-globals, so calling it on one engine affected every
+  other engine in the process. The module-level export is the honest surface and has been
+  the documented one since 2.1. Bundling the deprecation with the facet split means one
+  major version and one migration window.
+- The flat surface drops from 16 to 9 methods + 2 facet handles. That leaves room for
+  future facet growth (`engine.cache.prewarm()`, `engine.stats.subscribe()`) without
+  polluting the root.
 
 #### What did not change
 
-- `engine.authorize / can / check / explain / permissions` - identical signatures + semantics.
-- `engine.preload / dispose / healthCheck` - unchanged.
+- `engine.authorize` / `can` / `check` / `explain` / `permissions` - identical signatures
+  and semantics.
+- `engine.preload` / `dispose` / `healthCheck` - unchanged.
 - Bundle size stable at 41.6 KB (internal refactor, no shape change).
-- 948/948 tests pass after bulk rename.
+- 948/948 tests pass after the bulk rename.
 
----
+## 2.2.0
+
+### Architecture debt cleanup + bundle slim
+
+Follow-up to the 2.1.0 security audit. Closes maintenance gaps the cycle surfaced and
+trims the bundle so the "import everything" headline is no longer the only number.
+
+#### Architecture
+
+- **`runSingleFlight` + `runSingleFlightKeyed`**: 5 copies of the sentinel-compare
+  in-flight pattern in `engine.ts` (`_loadPolicies`, `_loadRoles`, `_loadRbacPolicy`,
+  `_loadAllPolicies`, `_resolveSubject`) collapsed to one helper. Same-class bugs (a
+  missed sentinel in the merger) are now structurally impossible.
+- **`runAdminAuthz` + `withAdminAudit`**: extracted from the 4 server adapters
+  (express / hono / nest / next). The csrf + authorize + try + audit shape lives in one
+  place. Future changes land in one file instead of four.
+- **Per-Engine evaluation caches**: `regex` and `path` caches threaded end-to-end through
+  `evaluate` / `evaluateFast` / `evaluatePolicy` / `evaluatePolicyFast` / `matchCandidate` /
+  `ruleApplies` / `evalConditionGroup` / `evalCondition` / `resolve`. Multi-tenant
+  deployments instantiate one Engine per tenant; each owns its own caches and cannot be
+  evicted by hostile-tenant pattern flooding. `flushSharedCaches()` remains for legacy
+  callers.
+- **Drizzle typed selects**: 7 `as unknown as` casts at module-edge consolidated into 3
+  typed helpers (`_selectAll`, `_selectFirst`, `_selectWhere`). Type system is
+  load-bearing again.
+- **Adapter compliance suite** at `src/adapters/__compliance__/`. Every shipped adapter
+  passes the same 21 scenarios. Caught a `revokeRole` drift in `MemoryAdapter` and
+  `FileAdapter` (omitting `scope` should remove all matching role rows, not just the
+  unscoped one).
+- **Builder auto-validate**: `PolicyBuilder.build()` and `RoleBuilder.build()` run
+  `validatePolicy` / `validateRole` and throw on error. Power-users wiring the adapter
+  directly (bypassing `engine.admin.savePolicy`) see failures where the bug was
+  introduced.
+
+#### Bundle slim
+
+- **Lazy validator**: `engine.libs.ts` admin write paths (`savePolicy` / `saveRole` /
+  `import`) now `await import('../validate')` on first call. The 12 KB validator chunk is
+  skipped entirely by read-only services.
+- **Subpath splits**: `@gentleduck/iam/core/validate`, `@gentleduck/iam/core/builder`,
+  `@gentleduck/iam/core/explain`, `@gentleduck/iam/core/schema` each ship as separate
+  entries. Tree-shaking drops them for consumers that don't import the subpath.
+- **Barrel cleanup**: `src/index.ts` no longer re-exports `FileAdapter`, `MemoryAdapter`,
+  or the validator. Adapter consumers go through subpath imports
+  (`@gentleduck/iam/adapters/memory`).
+- **Drop 26 `@deprecated` 2.0 to 3.0 type aliases**. The `.d.ts` surface is clean. The
+  deprecation window from 2.0.0 is closed; consumers were warned for two minor versions.
+- **Forensic comments scrubbed**: 452 redundant `@author` JSDoc tags and 326 audit-trail
+  reference comments removed from source.
+
+#### New APIs
+
+- **`flushSharedCaches`** module-level export (`@gentleduck/iam` and
+  `@gentleduck/iam/core`). The instance method `Engine#flushSharedCaches` is deprecated -
+  it wiped process-globals despite being instance-bound.
+- **`engine.preload({ validator: true })`** eagerly loads the lazy validator chunk at boot
+  for operators who want every cost up front.
+- **`engine.permissions(..., { telemetry: false })`** opts out of per-check `onMetrics` +
+  `signals` allocation. Restores 2.0.x throughput on hot UI gates where `authorize()`
+  already captures the metrics signal.
+- **`escapeHtml`** from `@gentleduck/iam/core/explain`. Safe HTML escape for consumers
+  rendering `Explain.IResult.summary` into a debug panel.
+- **`createEvalCaches`** from `@gentleduck/iam/core` constructs a fresh per-Engine cache
+  pair if a consumer needs to build their own evaluator pipeline.
+- **`splitPermissionKey`** from `@gentleduck/iam/shared/keys` reverses
+  `buildPermissionKey` honouring escape sequences.
+
+#### Tests
+
+- 836 to **943** (+107). The +107 is the new adapter compliance matrix applied to 5
+  adapters.
+
+#### Stryker mutation testing scaffold
+
+`bun run mutation` wires Stryker against engine + evaluate + conditions + resolve +
+validate + server/generic + all 5 adapters. Not in CI by default (5-15 min runtime);
+operators run it on demand or via a scheduled job.
+
+#### Benchmarks
+
+Measured baselines (2.0.1 from a `git worktree` clean build, not eyeballed):
+
+| Path                          | 2.0.1       | 2.1.0    | 2.2.0        |
+| ----------------------------- | ----------- | -------- | ------------ |
+| `evaluatePolicy` (conditions) | 1.33 µs     | 1.00 µs  | 1.00 µs      |
+| `engine.can()` cached         | 4.86 µs     | 5.85 µs  | 5.18 µs      |
+| `engine.permissions()` x20    | 20.06 µs    | 42.71 µs | 48.08 µs     |
+| Bundle "import everything"    | **38.4 KB** | 44.8 KB  | **41.3 KB**  |
+| Bundle realistic profile      | n/a         | n/a      | **15-25 KB** |
+
+Net 2.0.1 to 2.2.0 bundle delta: **+2.9 KB (+7.5%)**. Earlier docs cited a ~21 KB
+pre-cycle number - that was estimated from a partial dist, not a clean build. The full
+security cycle cost ~6 KB raw; the bundle slim cycle recovered ~3 KB; net is +2.9 KB for
+fail-closed hook contracts, per-Engine caches, default-on CSRF, and lazy validator
+scaffolding.
+
+`engine.permissions(..., { telemetry: false })` cuts the batch path back to ~22 µs for
+callers who opt out.
 
 ## 2.1.0
 
 ### Adversarial security audit cycle (21 rescans, ~60 fix commits)
 
-A second multi-round audit pass after 2.0.0, run by independent adversarial security-auditor agents plus a silent-failure hunter and a code-smell scanner. **21 rescan cycles** uncovered 1 CRITICAL, 7 HIGH, 11 Medium, 12 Low, and 4 Info findings on top of the 2.0.0 hardening. Three consecutive clean rescans (Med+ free) declared the source tree exhausted: *"the package is genuinely hard to break."*
+A second multi-round audit pass after 2.0.0, run by two independent adversarial
+security-auditor agents plus a silent-failure hunter and a code-smell scanner. **21 rescan
+cycles** produced **~60 fix commits** addressing 1 CRITICAL, 7 HIGH, 11 Medium, 12 Low, and
+4 Info findings on top of the 2.0.0 hardening. Three consecutive clean rescans (Med+ free)
+declared the source tree exhausted: _"the package is genuinely hard to break."_
 
-The change set is **mostly backward compatible** with three intentional default changes that close trivial auth-bypass / CSRF footguns.
+The change set is **mostly backward compatible** with three intentional default changes
+that close trivial auth-bypass / CSRF footguns.
 
-### What the audit found
+#### CRITICAL (1)
 
-The audit was deliberately adversarial. After the 2.0.0 P0/P1 work, prior assumptions were re-attacked from fresh angles. A representative sampling:
+- `FileAdapter._loadState` swallowed every `readFile` error and silently fell back to an
+  empty store. EACCES (permissions drift), EISDIR (path overwritten), EIO (disk
+  corruption) became `{policies:{},roles:{},...}`, so `defaultEffect` decided every
+  request. With `defaultEffect:'allow'` + `allowFailOpen` this is total silent fail-open
+  ("permit everything until restart"); with `'deny'` it is a total silent outage. Only
+  `ENOENT` now recovers as empty; everything else throws a wrapped `Error`. **SEC-054.**
 
-- **Total silent fail-open** in `IamFileAdapter._loadState` - EACCES, EISDIR, EIO swallowed -> empty store -> `defaultEffect` decided every request. With `'allow'` that's "permit everything until restart" (SEC-054 CRITICAL).
-- **Permanent data destruction** in `IamFileAdapter` - a single transient JSON parse failure silently populated `_cache = {}`, next `_flush()` overwrote the corrupt-but-recoverable file (SEC-064 HIGH).
-- **Trivial auth bypass via spoofable header** in Hono `accessMiddleware` and Next `withAccess` - both defaulted `getUserId` to `x-user-id` request header. `curl -H 'X-User-Id: admin' ...` ran authorize() under the spoofed identity (SEC-101 HIGH).
-- **Decision rewriting via throwing hooks** - `afterEvaluate`/`onDeny` inside `authorize`'s try caught and turned allow into deny; `onMetrics` could escape the fail-closed catch entirely (SEC-055/056 HIGH).
-- **Silent fail-open in batch checks** - `permissions()` passed `undefined` for `onPolicyError`, so a per-policy throw vanished and UI gates silently allowed under `defaultEffect:'allow'` (SEC-057 HIGH).
-- **Silent ABAC denial** - Redis/Drizzle `getSubjectAttributes` returned `{}` on corruption, conditions silently flipped to deny with no operator signal (SEC-058 HIGH).
-- **SSRF via fetch redirect** - construction-time `allowedHosts` validator runs once on `baseUrl`; redirects to `169.254.169.254` or internal hosts followed silently. Now `redirect: 'error'` (SEC-042 HIGH).
-- **Cross-backend authorization drift** - file/memory `getSubjectRoles` returned unscoped-only; redis/drizzle/prisma returned all collapsed. Same subject decided differently across adapters (SEC-059).
-- **Permanent admin DoS** - symlink-escape rejection parked the rejected promise in `_loadInFlight` forever; every subsequent `_loadState()` returned the same rejection. Adapter unusable until process restart (SEC-063).
-- **Validator error reflection** - `assertValidOrThrow` echoed `Invalid algorithm "<value>"`; operator opt-in to `includeErrorMessage` + body echo turned admin endpoint into a probe oracle (SEC-052).
-- **One-shot warn silencing** - Redis invalidator's per-channel warn latch let attacker burn first warn on benign reason then silently flood. Now token-bucket rate-limit + suppressed-count surfacing (SEC-032).
+#### HIGH (8)
 
-Plus 50+ smaller fixes covering cache races, listener swallow, audit string leakage, redirect SSRF residuals, NaN bound bypass, escape-aware key splitting, devtools namespace, file warn dedupe/redact, file TOCTOU per-I/O, NAT64 prefix, validator non-finite priority, and consistent `_safeHookCall` wrapping across `can`/`check`/`permissions`/`authorize`.
+- HTTP adapter followed fetch redirects without re-validation. The `allowedHosts` /
+  private-IP guard runs once at construction against `baseUrl`, so a 302 to
+  `169.254.169.254` or `10.0.0.5:6379` bypassed it. `_fetchOnce` now passes
+  `redirect: 'error'`. **SEC-042.**
+- `_emitMetrics` invoked `onMetrics` without a try/catch. A throwing operator hook escaped
+  `authorize`'s catch arm and replaced the documented fail-closed deny with a raw error.
+  Wrapped via `_safeHookCall`; double-wrapped around `console.error` itself. **SEC-056.**
+- `afterEvaluate` / `onDeny` ran inside `authorize`'s main try block; throws caught by the
+  evaluation catch silently rewrote an allow verdict into a fail-closed deny. Trailing
+  hooks now run outside the evaluation try; throws are routed to `console.error` without
+  reshaping the decision. **SEC-055.**
+- `engine.permissions()` passed `undefined` for `onPolicyError` to the evaluator, so
+  per-policy throws vanished and UI gates silently allowed under `defaultEffect:'allow'`.
+  Now forwards the same shim `authorize()` uses. **SEC-057.**
+- Redis + Drizzle `getSubjectAttributes` returned `{}` on `JSON.parse` failure or a
+  non-object root. ABAC conditions silently flipped to deny with no operator signal. Now
+  throws; the engine routes through `onError` + fail-closed deny. **SEC-058.**
+- `FileAdapter` JSON parse failure silently populated `_cache = {}`. The next `_flush()`
+  overwrote the recoverable-but-corrupt file - **permanent data destruction triggered by a
+  single transient parse error.** Now throws "store corrupt - refusing to load; restore
+  from backup before retrying". **SEC-064.**
+- `can()` / `check()` invoked `this._hooks.onError?.()` unwrapped, so a throwing operator
+  `onError` propagated as an unhandled rejection. Now `_safeHookCall`.
+- Hono and Next default `getUserId` trusted the spoofable `x-user-id` header.
+  **Trivial auth bypass via curl** - `curl -H 'X-User-Id: admin' ...` ran `authorize()`
+  under the spoofed identity. Hono: no header fallback. Next: required option, throws at
+  construction without it. **SEC-101.**
 
-### Behaviour changes (intentional defaults)
+#### Medium (11)
 
-**Hono `accessMiddleware` + `guard` no longer trust `x-user-id`.** Defaults to `c.get('userId')` populated by upstream auth. Operators relying on the header must pass `getUserId` explicitly. **SEC-101.**
+- The admin write path skipped validation. A hostile admin (or a buggy UI) could persist a
+  policy the adapter read-side validator silently drops, leaving a tenant with zero
+  policies so `defaultEffect` decided every request. `createAdmin.savePolicy` / `saveRole` /
+  `import` now call `validatePolicy` / `validateRole` and throw on error.
+- `assertValidOrThrow` echoed attacker-controlled values (`Invalid algorithm "<value>"`).
+  An operator who opted into `includeErrorMessage: true` plus HTTP body echo turned the
+  admin endpoint into a probe oracle. Now emits `INVALID_ALGORITHM at "algorithm"` -
+  structural codes only. **SEC-052.**
+- Redis migration versus `revokeRole` race. `_migrateLegacyAssignment`'s SADD-then-SREM let
+  the migrator resurrect a just-revoked assignment. `_runSerialised` per-key chain orders
+  writes; revoke now SREMs both encodings.
+- File `_assertWithinRoot` ran once per adapter, so an attacker swapping the file for a
+  symlink after the first I/O steered subsequent writes. The latch is dropped; `realpath`
+  re-checks every read and write.
+- `_assertWithinRoot` ran outside the load try, so a rejected promise stuck forever in
+  `_loadInFlight` and every subsequent `_loadState()` returned the same rejection - a
+  permanent admin DoS until process restart. The restructure clears in-flight via `finally`
+  on any throw. **SEC-063.**
+- Admin lockout: `setSubjectAttributes` called the getter first, and the getter now throws
+  on corrupt existing data, so an operator could not overwrite. The setter catches the
+  throw, logs, and treats the existing value as `{}`.
+- HTTP adapter `getSubjectRoles` forwarded the server response verbatim while other
+  adapters enforce unscoped-only. JSDoc now documents the operator's contract
+  responsibility.
+- The admin router shipped without CSRF guidance, exposing cookie-auth deployments to
+  cross-site forms. Optional `csrfCheck` added to all 4 framework adapters; default-on via
+  `defaultCsrfCheck`. **CAVEAT-2.**
+- `engine.permissions()` had no outer try around
+  `Promise.all([_resolveSubject, _loadAllPolicies])`. An adapter rejection crashed the whole
+  batch without `onError` + a fail-closed map. Now wrapped in a try; returns an all-deny map
+  keyed by every requested check and invokes `onError`.
+- `_loadAllPolicies` merger had no in-flight sentinel, so a concurrent invalidate mid-load
+  repopulated stale data. Added a `_mergedInFlight` sentinel.
+- `getSubjectRoles` semantic drift: file/memory returned unscoped-only; redis/drizzle/prisma
+  returned all collapsed. The same subject resolved differently across backends. Aligned all
+  to unscoped-only; documented in `Adapter.ISubjectStore`. **SEC-059.**
 
-**Next `withAccess` requires `getUserId` at construction.** Throws otherwise with a message pointing to cookie/JWT-derived identity. **SEC-101.**
+#### Low (15)
 
-**Admin routers CSRF-check by default.** `adminRouter` / `bindAdminRouter` / `createAdminHandlers` / `createAdminOperations` all apply `iamDefaultCsrfCheck` (rejects `Sec-Fetch-Site: cross-site|cross-origin`). Bearer-token / mTLS APIs opt out via `csrfCheck: false`. Cookie-auth admin UIs get protection without any opt-in. **CAVEAT-2.**
+- No way to chart the fail-open rate. Added `failOpen: boolean` to `IMetricsEvent` plus a
+  counter to `createMetricsAggregator`. Threaded through `evaluate` / `evaluateFast` via
+  optional `IEvalSignals`.
+- The Redis invalidator v:1 envelope was unwrapped without HMAC verification when
+  `secret: null`, so an attacker chose `instanceId` and silenced legitimate cross-instance
+  invalidates. v:1 in unsigned mode is now dropped and warned.
+- `permissions()` bypassed `_emitMetrics` entirely, so dashboards charting fail-open missed
+  every batch UI gate. Now emits per check.
+- File `rootDir` warn fired on every construction, causing log spam that operators filter
+  out. A module-global latch fires it once per process.
+- The file warn echoed the resolved path, giving a path-existence oracle via log scraping.
+  The path is stripped from the message.
+- The Redis invalidator's one-shot per-channel warn latch let an attacker burn the first
+  warn on a benign reason and then flood silently. Replaced with a 60s rate limit plus
+  suppressed-count surfacing. **SEC-032.**
+- `errorToAuditString(includeMessage=true)` returned raw `String(err)` for non-`Error`
+  throws - an unbounded leak. Now tagged `<non-Error <typeof>>`, capped at 256 chars, with
+  a `JSON.stringify` fallback.
+- Devtools `localStorage` prefix `__IAM_DEVTOOLS` is now vendor-namespaced
+  `__GENTLEDUCK_IAM_DEVTOOLS_V1`.
+- `_assertWithinRoot` parent-realpath fallback fired on ANY error, so ELOOP / EACCES
+  bypassed the symlink check via a reconstructed path. Now gated on `code === 'ENOENT'`.
+- The vanilla client listener-throw was totally silent. `console.error` surfacing added.
+- The invalidator dropped shape-mismatched inner payloads without `warnDropOnce`, so
+  operators saw nothing on sustained schema drift. Routed through warn.
+- Invalidator `publish()` failure was silently swallowed. Added an optional
+  `onPublishError(err, channel)` hook plus a rate-limited console fallback.
+- `_safeHookCall` / `_emitMetrics` called `console.error` unwrapped; a throwing logger
+  (closed stdout, broken pipe) would resurrect the failure. Defensive double-wrap added.
+- `dt/lib/flow.ts` listener `catch{}` was silent. `console.error` added.
+- Vanilla `extractAction` split the key on `:` naively, so resources containing `:` were
+  mis-tokenised. Added `splitPermissionKey`, which honours the `\:` and `\\` escapes from
+  `buildPermissionKey`.
 
-**`IamFileAdapter` no longer silently empties on errors.** Non-ENOENT readFile errors throw. JSON parse failure throws "store corrupt - refusing to load; restore from backup before retrying" instead of populating `_cache = {}` and risking permanent overwrite on next flush. **SEC-054 / SEC-064.**
+#### Info (4)
 
-**Redis/Drizzle `getSubjectAttributes` throws on corrupt blob.** Engine routes through `onError` + fail-closed deny + onMetrics. Was silently `{}`. **SEC-058.**
+- `createNextMiddleware` JSDoc example demonstrated the unsafe pattern. Replaced with a
+  `getServerSession` example plus a warning.
+- Only express had a CSRF regression test; hono/next/nest needed parity. Added.
+- **INFO-A** `LRUCache` and Engine `maxPolicies` / `maxRoles` / `adapterTimeoutMs` accepted
+  NaN, which silently disabled the bound. `Number.isFinite` is now required.
+- **INFO-B** `Explain.IResult.summary` is plain text containing attacker-influenced values;
+  consumers rendering it as HTML must escape. JSDoc added.
 
-**All 5 adapters' `getSubjectRoles` return unscoped-only.** Scoped assignments surface via `getSubjectScopedRoles` only. Was inconsistent across backends. **SEC-059.**
+#### Deployment hardening (CAVEAT-1/2/3)
 
-**Engine ctor + IamLRUCache reject NaN/Infinity bounds.** `maxPolicies`, `maxRoles`, `adapterTimeoutMs`, `maxSize`, `ttlMs` all require finite numbers. NaN silently disabled the cap before. **INFO-A.**
+- **CAVEAT-1**: `createRedisInvalidator({ tenantId })` auto-prefixes the channel
+  `'duck-iam:invalidate:tenant:${tenantId}'`. It validates `tenantId` against
+  `/^[A-Za-z0-9_-]{1,64}$/` so attacker-controlled tenant slugs cannot inject pub/sub
+  wildcards.
+- **CAVEAT-2**: Admin routers are default-on CSRF via `defaultCsrfCheck` (a
+  `Sec-Fetch-Site` check). `csrfCheck: false` opts out for bearer / mTLS APIs.
+- **CAVEAT-3**: `SECURITY.md` adds a 10-section **Deployment Hardening Guide** covering
+  identity sourcing, admin CSRF, Redis tenancy, multi-tenant cache scoping,
+  `defaultEffect:'allow'` rationale, `explain()` output trust and HTML-escape
+  responsibility, the adapter trust model, file `rootDir`, HTTP `allowedHosts`, and
+  observability wiring.
+- `getCachedRegex` / `getSegments` accept an optional per-instance cache override.
+  `clearRegexCache()` / `clearPathCache()` are exported. `Engine.flushSharedCaches()` is
+  the ergonomic operator API for multi-tenant deployments.
 
-### New APIs
+#### New APIs (additive)
 
 ```ts
 // Engine: flush process-wide regex + path caches (multi-tenant)
-engine.iamFlushSharedCaches()
+engine.flushSharedCaches()
 
 // Server: built-in Sec-Fetch-Site CSRF predicate
-import { iamDefaultCsrfCheck } from '@gentleduck/iam/server/generic'
+import { defaultCsrfCheck } from '@gentleduck/iam/server/generic'
 
 // Admin router CSRF opt-out
 adminRouter(engine, { authorize, csrfCheck: false })
 
 // Redis invalidator: per-tenant channel + publish error hook
-createIamRedisInvalidator({
+createRedisInvalidator({
   client,
   secret,
-  tenantId: 'acme',                              // 'duck-iam:invalidate:tenant:acme'
+  tenantId: 'acme', // 'duck-iam:invalidate:tenant:acme'
   onPublishError: (err, channel) => alert(err),
 })
 
 // Metrics: fail-open chartable counter
-const m = iamCreateMetricsAggregator()
-m.snapshot().failOpen  // subset of allow attributable to defaultEffect fallback
+const m = createMetricsAggregator()
+m.snapshot().failOpen // subset of allow attributable to defaultEffect fallback
 
 // Shared keys: escape-aware key parser
-import { iamSplitPermissionKey } from '@gentleduck/iam/shared/keys'
+import { splitPermissionKey } from '@gentleduck/iam/shared/keys'
 
 // Low-level cache controls
 import { clearRegexCache } from '@gentleduck/iam/core/conditions'
 import { clearPathCache } from '@gentleduck/iam/core/resolve'
 ```
 
-### Type additions
+#### Type additions
 
-- `IamEngineTypes.IMetricsEvent.failOpen: boolean`
+- `EngineTypes.IMetricsEvent.failOpen: boolean`
 - `Metrics.ISnapshot.failOpen: number`
-- `IamRedisInvalidator.IConfig.tenantId?: string`
-- `IamRedisInvalidator.IConfig.onPublishError?: (err, channel) => void`
-- `IamAdminAudit.IOptions.csrfCheck?: ((req) => boolean) | false`
-- `IamValidate.ValidationCode` extended with `'ERR_REGEX_CATASTROPHIC'`
+- `RedisInvalidator.IConfig.tenantId?: string`
+- `RedisInvalidator.IConfig.onPublishError?: (err, channel) => void`
+- `AdminAudit.IOptions.csrfCheck?: ((req) => boolean) | false`
+- `Validate.ValidationCode` extended with `'ERR_REGEX_CATASTROPHIC'`
 
-### Deployment hardening
+#### Behaviour changes (intentional defaults)
 
-`SECURITY.md` ships a new **10-section Deployment Hardening Guide** covering identity sourcing, admin CSRF, Redis tenancy, multi-tenant cache scoping, `defaultEffect:'allow'` rationale, `explain()` HTML-escape responsibility, adapter trust model, file `rootDir`, HTTP `allowedHosts`, and observability wiring.
+- `adminRouter` / `bindAdminRouter` / `createAdminHandlers` / `createAdminOperations`
+  enforce `defaultCsrfCheck` by default. Pass `csrfCheck: false` to restore the old
+  behaviour. Cookie-auth admin UIs get protection without any opt-in. **CAVEAT-2.**
+- Hono `accessMiddleware` / `guard` no longer fall back to the `x-user-id` request header.
+  The default is now `c.get('userId')`, populated by upstream auth. **SEC-101.**
+- Next `withAccess` requires `getUserId` and throws at construction otherwise, with a
+  message pointing to cookie/JWT-derived identity. **SEC-101.**
+- `FileAdapter.listPolicies` and friends throw on non-ENOENT load failures (was silently
+  empty). **SEC-054.**
+- `FileAdapter` throws on malformed JSON (was silently empty plus permanent file
+  destruction on the next flush). **SEC-064.**
+- Redis / Drizzle `getSubjectAttributes` throw on a corrupt blob (was `{}`). **SEC-058.**
+- All 5 adapters' `getSubjectRoles` return unscoped-only; `getSubjectScopedRoles` still
+  surfaces scoped assignments separately. **SEC-059.**
+- Engine ctor rejects NaN/Infinity for `maxPolicies` / `maxRoles` / `adapterTimeoutMs`.
+  **INFO-A.**
+- `LRUCache` ctor rejects NaN/Infinity for `maxSize` / `ttlMs`. **INFO-A.**
 
-### Migration
+#### Migration
 
 If you used the **Hono header default** for identity:
+
 ```ts
 // Before
-accessMiddleware(engine)  // read x-user-id
+accessMiddleware(engine) // read x-user-id
 
 // After
 accessMiddleware(engine, {
@@ -154,6 +854,7 @@ accessMiddleware(engine, {
 ```
 
 If you used the **Next `withAccess` header default**:
+
 ```ts
 // Before
 withAccess(engine, 'read', 'doc', handler)
@@ -167,133 +868,291 @@ withAccess(engine, 'read', 'doc', handler, {
 })
 ```
 
-If your **admin router** is called server-to-server with bearer tokens (no browser involved):
+If your **admin router** is called server-to-server with bearer tokens (no browser
+involved):
+
 ```ts
 adminRouter(engine, { authorize, csrfCheck: false })
 ```
 
-Cookie-auth admin UIs need no changes - default protects them.
+Cookie-auth admin UIs need no changes - the default protects them.
 
-If you relied on **`getSubjectAttributes`** returning `{}` for corrupt rows, wire `setSubjectAttributes` (which now recovers automatically) or add a `try/catch` at your call site.
+If you relied on **`getSubjectAttributes`** returning `{}` for corrupt rows, wire
+`setSubjectAttributes` (which now recovers automatically) or add a `try` / `catch` at your
+call site.
 
-If you relied on **`IamFileAdapter`** silently emptying on errors, wire `onPolicyError` and handle the thrown error from the read path.
+If you relied on **`FileAdapter`** silently emptying on errors, wire `onPolicyError` and
+handle the thrown error from the read path.
 
-### Tests
+#### Tests
 
-- 785 -> **836 tests** (+51).
-- 5 clean Med+ rescans cumulative across the cycle.
+- 785 to **836 tests** (+51).
+- 5 consecutive clean Med+ rescans: 010, 011, 012, 014, 017, 019, 020, 021 (intermediate
+  Med+ found and fixed in 015 and 018).
 
-### Stats
+#### Audit hygiene
 
-- **30+ fix commits** in this release on top of the 2.0.0 audit.
+- The `audit/` directory is gitignored; per-finding markdown reports and per-cycle
+  `rescan-NNN.md` reports are tracked locally in `audit/STATE.md`.
+
+#### Stats
+
 - **0 P0/P1/P2/Low open** at release time.
-- **3 Info-tier residuals** (SEC-049 doc IPv6 prefix not publicly routed; SEC-050 architectural per-instance refactor deferred behind public `iamFlushSharedCaches` helper).
+- **3 Info-tier residuals** (SEC-049 doc IPv6 prefix not publicly routed; SEC-050
+  architectural per-instance refactor deferred behind the public `flushSharedCaches`
+  helper).
+
+## 2.0.1
+
+### Patch Changes
+
+- 41a45ac: Standardize the README header to match the @duck-md template (centered logo, h1,
+  tagline, nav, npm badges). Switch docs links from `iam.gentleduck.org` to path-based
+  `gentleduck.org/duck-iam`. No runtime code changes.
 
 ## 2.0.0
 
+### Breaking
+
+- **Type API rewrite**: every interface now lives under a per-module namespace
+  (`AccessControl`, `Request`, `Adapter`, `Primitives`, `Client`, `DotPath`, `EngineTypes`,
+  `Evaluate`, `Explain`, `Validate`, `Config`, `Memory`, `File`) with an `I` prefix.
+  Migration: rename `Policy` to `AccessControl.IPolicy`, `Decision` to
+  `AccessControl.IDecision`, `AccessRequest` to `Request.IAccessRequest`, and so on.
+  Interface names carry the `I` prefix; type aliases stay bare.
+- **`Adapter.IAdapter` read methods accept an optional `IReadOptions`** with an
+  `AbortSignal`. Backwards-compatible for adapters that ignore the parameter; custom
+  adapters should plumb the signal through to their underlying driver where possible.
+- **`adminRouter` (Express) signature changed**: it now requires
+  `{ authorize: (req) => boolean }` as the second argument. Mounting unguarded admin
+  endpoints used to be possible; it is no longer.
+
+### Added
+
+- **`policyCombine` cross-policy combine** (`'and'` / `'allow-overrides'` /
+  `'first-applicable'`) configurable via `IConfig.policyCombine`, typed as
+  `AccessControl.PolicyCombine`.
+- **`hooks.onMetrics`** primitive-only telemetry event fired once per evaluation in both
+  modes, payload typed as `EngineTypes.IMetricsEvent`. Zero overhead when unwired.
+- **`hooks.onPolicyError`** routed when a single policy throws during evaluation
+  (fail-skip, not fail-crash).
+- **`engine.preload()`** warms `mergedPolicyCache` so the first request after boot is hot.
+- **`engine.healthCheck()`** returns
+  `{ ok, adapter, cacheHitRate, adapterLatencyMs, lastError? }` for `/healthz`.
+- **`engine.admin.export()` / `engine.admin.import(snapshot, { mode })`** - schema-versioned
+  policy + role snapshots; `'merge'` and `'replace'` modes.
+- **`engine.dispose()`** releases the cross-instance invalidator subscription.
+- **`IConfig.adapterTimeoutMs`** (default 5 s) wraps every adapter read in a timeout that
+  triggers `AbortController.abort()`.
+- **`IConfig.maxPolicies` / `maxRoles`** load-time caps; over-cap throws and routes to a
+  fail-closed deny.
+- **`IConfig.allowFailOpen`** required to combine `mode: 'production'` with
+  `defaultEffect: 'allow'`.
+- **`IConfig.invalidator`** - cross-instance cache-invalidation broadcaster contract.
+- **`createRedisInvalidator`** at `@gentleduck/iam/invalidators/redis` - pub/sub helper with
+  self-echo filtering.
+- **`createMetricsAggregator`** at `@gentleduck/iam/observability/metrics` - p50 / p95 / p99
+  over `onMetrics` events.
+- **Hono `bindAdminRouter`**, **Next.js `createAdminHandlers`**, **NestJS
+  `createAdminOperations`** - all require the `authorize` callback at construction time.
+- **HttpAdapter** retry + per-request timeout + circuit-breaker (`retries`, `backoffMs`,
+  `timeoutMs`, `circuitBreakerThreshold`, `circuitBreakerCooldownMs`).
+- **FileAdapter** at `@gentleduck/iam/adapters/file` - JSON-on-disk store with a pluggable
+  `File.IFS` interface.
+- **`POLICY_JSON_SCHEMA`** - Draft 2020-12 JSON schema export for non-TS consumers and
+  editor tooling.
+- **`engine.stats()` / `resetStats()`** - cache hit/miss counters per cache.
+- **Validator semantic checks** - emits `UNRESOLVABLE_FIELD`, `UNRESOLVABLE_VALUE`,
+  `INHERITANCE_TOO_DEEP`, `BROAD_ALLOW`, and `LIMIT_EXCEEDED` codes.
+- **`POLICY_LIMITS`** - DoS bounds (1000 rules per policy, 100 actions per rule, 100
+  resources per rule, 1000 action x resource cartesian per rule).
+- **`MAX_INHERITANCE_DEPTH = 32`** exported from `core/rbac`. The validator errors on chains
+  that exceed it.
+
+### Fixed
+
+- `first-match` combiner now honors `rule.priority` across trace, fast, precomputed, and
+  explain paths.
+- `engine.explain()` populates `Decision.rule` from the deciding policy's trace.
+- `engine.invalidateRoles(roleId?)` is scoped - only subjects holding the named role are
+  evicted.
+- `setSubjectAttributes` documented contract is now `merge`, matching every built-in
+  adapter.
+- Single-flight on `loadPolicies` / `loadRoles` / `resolveSubject` / `loadRbacPolicy`
+  coalesces concurrent cold-start adapter calls. Sentinel-compare-on-resolve so a pending
+  load can't write stale data after an invalidate.
+- **NotApplicable semantics**: a policy whose `targets` don't match is skipped by the
+  cross-policy combine, not folded as the default effect. The largest correctness fix in
+  the project's history.
+- Empty RBAC policy is skipped from the per-request policy set so it doesn't contribute a
+  default-deny under AND combine.
+- Fast path matches colon-prefix actions (`'posts:*'`), dot-hierarchy resources
+  (`'dashboard.*'`), and parent-prefix patterns (`'org'` matching `'org:project'`)
+  consistently with the trace path.
+- `evaluatePolicyFast` returns `boolean | null` (null = NotApplicable). `evaluateFast`
+  skips null in every combine mode.
+- Engine ctor refuses `mode: 'production'` + `policyCombine: 'first-applicable'`.
+- RBAC rule ids are opaque (`__rbac__#N`) - no longer dotted.
+- `matches` operator refuses `$`-resolved RHS values (ReDoS via user-controlled regex).
+- HttpAdapter `getPolicy` / `getRole` return `null` on 404 instead of throwing.
+- Validator depth bound (`MAX_CONDITION_DEPTH=10`) and field-length cap
+  (`MAX_FIELD_LENGTH=256`).
+- Regex cache is LRU on hit, not FIFO on insert.
+- Synthesised RBAC policy is deep-frozen (every rule + conditions tree).
+- `Number.isFinite` priority check in the validator.
+
+### Build / package
+
+- `sideEffects: false` in `package.json` for tree-shaking.
+- `./adapters/file` subpath export added.
+
+### Tests
+
+- 629 tests across 29 files (up from 309 at 1.7.0).
+- A property-based oracle asserts `evaluate` is equivalent to `evaluateFast` over 1000
+  random policy sets per `(combine, defaultEffect)` pair.
+- Bench harness: `evaluate.bench.ts` + `resolve.bench.ts` + competitor benchmarks.
+
+### Dot-path attribute access (`When` builder)
+
+The `When.attr()` / `When.resourceAttr()` / `When.env()` methods now accept dot-paths into
+nested attribute bags. Previously `resourceAttr` and `env` required `keyof` on the raw
+object shape (one level deep). Now `'profile.tier'` typechecks against
+`{ profile: { tier: string } }` and the value parameter narrows correctly.
+
+New + reorganized in `DotPath`:
+
+- **`SubjectAttrShape<TContext>`** - raw subject attribute bag object.
+- **`ResourceAttrShape<TContext>`** - raw resource attribute bag object.
+- **`EnvAttrShape<TContext>`** - raw environment object.
+- **`SubjectAttrs<TContext>` / `ResourceAttrs<TContext>` / `EnvAttrs<TContext>`** - now
+  return dot-path string unions (consistent), not raw objects.
+- **`AttrValueAt<T, P>`** - walks a dot-path inside an attribute bag to resolve the leaf
+  type.
+- **`AttrValue<T, P>`** - rewritten on top of `AttrValueAt`, with an `AttributeValue`
+  fallback.
+- **`ResolvedResourceAttrPaths<TContext, TResource>`** - dot-paths into per-resource
+  attribute narrowing.
+- **`ResolvedResourceAttrs`** - now returns the resolved attribute SHAPE (object), paired
+  with `ResolvedResourceAttrPaths` for keys.
+
+`When` method signatures dropped `keyof` in favour of these dot-path types. Open attribute
+bags (`IAnyAttributes` via a `string` index signature) widen to `string` so the legacy
+`keyof IAnyAttributes` behaviour is preserved for `IDefaultContext`. The file is
+reorganized into 8 labeled sections (context paths, condition adapters, shape extractors,
+attribute paths, per-resource narrowing, value resolution, defaults, internal helpers).
+
+### Module-local namespaces (added 2.0)
+
+Every bare integration-config interface is now wrapped in a type-only namespace; deprecated
+bare aliases are kept for back-compat and will be removed in `3.0`.
+
+- `Http.IConfig` (was `IHttpAdapterConfig`) - `@gentleduck/iam/adapters/http`
+- `Redis.ILike` + `Redis.IConfig` (was `RedisLike` / `RedisAdapterConfig`) -
+  `@gentleduck/iam/adapters/redis`
+- `Drizzle.IConfig` (was `IDrizzleConfig`) - `@gentleduck/iam/adapters/drizzle`
+- `Express.IOptions` + `Express.IAdminAuthorize` + `Express.IAdminRouterOptions` (were
+  `IExpressOptions` / `IAdminAuthorize` / `IAdminRouterOptions`) -
+  `@gentleduck/iam/server/express`
+- `Hono.IOptions` + `Hono.IAdminAuthorize` + `Hono.IAdminOptions` + `Hono.IRouterLike`
+  (were `IHonoOptions` / `IHonoAdminAuthorize` / `IHonoAdminOptions` / `IHonoRouterLike`) -
+  `@gentleduck/iam/server/hono`
+- `Nest.IAuthorizeMeta` + `Nest.IGuardOptions` + `Nest.IAdminAuthorize` +
+  `Nest.IAdminOptions` (were `IAuthorizeMeta` / `INestGuardOptions` / `INestAdminAuthorize` /
+  `INestAdminOptions`) - `@gentleduck/iam/server/nest`
+- `Next.IWithAccessOptions` + `Next.IMiddlewareOptions` + `Next.IAdminAuthorize` +
+  `Next.IAdminOptions` (were `IWithAccessOptions` / `INextMiddlewareOptions` /
+  `INextAdminAuthorize` / `INextAdminOptions`) - `@gentleduck/iam/server/next`
+- `ReactClient.IContextValue` (was `IContextValue`) - `@gentleduck/iam/client/react`
+- `RedisInvalidator.IPubSubLike` + `RedisInvalidator.IConfig` (were `IRedisPubSubLike` /
+  `IRedisInvalidatorConfig`) - `@gentleduck/iam/invalidators/redis`
+- `Metrics.IAggregator` + `Metrics.ISnapshot` + `Metrics.IConfig` (were
+  `IMetricsAggregator` / `IMetricsSnapshot` / `IMetricsAggregatorConfig`) -
+  `@gentleduck/iam/observability/metrics`
+- `AccessControl.OpFn` (was bare `OpFn` in `conditions.libs.ts`)
+
+Every new namespace is **type-only** (interfaces + type aliases only, no runtime values) so
+it compiles to nothing and bundle size stays unchanged. Runtime helpers
+(`evaluatePolicyFast`, `ops`, `regexCache`, `MAX_*`, `POLICY_*`, every adapter class, every
+server factory, every client factory) remain bare module exports so tree-shaking still
+works.
+
+### Stability
+
+`2.0.0` commits to SemVer. The type-API namespace rewrite is load-bearing; no further
+public-API renames until `3.0.0`. Patch and minor releases stay non-breaking.
+
+## 2.0.0 - detailed notes
+
+The pre-2.0.0 development entry, kept here because it records the 13-round state of the
+work that shipped as 2.0.0. Superseded by the 2.0.0 entry above. It carried an
+`Unreleased` heading for several releases, which put an "unreleased" section in the
+middle of shipped history; the heading was corrected without touching its content.
+
 ### Major refactor: namespaced type API + correctness hardening
 
-18-round audit-driven hardening pass plus a full type-API refactor matching the duck-* monorepo convention. Breaking change: every interface now lives under a per-module namespace with an `I` prefix.
+A 13-round audit-driven hardening pass plus a full type-API refactor matching the duck-\*
+monorepo convention.
 
-**Type API: namespaced + I-prefixed.** Every interface now lives under a per-module namespace (`AccessControl`, `Request`, `Adapter`, `Primitives`, `Client`, `DotPath`, `IamEngineTypes`, `Evaluate`, `Explain`, `Validate`, `Config`, `Memory`, `File`). Interface names carry an `I` prefix; type aliases stay bare.
+**Type API: namespaced + I-prefixed.** Every interface now lives under a per-module
+namespace (`AccessControl`, `Request`, `Adapter`, `Primitives`, `Client`, `DotPath`,
+`EngineTypes`, `Evaluate`, `Explain`, `Validate`, `Config`, `Memory`, `File`). Interface
+names carry an `I` prefix; type aliases stay bare.
 
 **Engine correctness fixes:**
 
-- `first-match` combiner now honors `rule.priority` across trace, fast, precomputed, and explain paths.
+- `first-match` combiner now honors `rule.priority` across trace, fast, precomputed, and
+  explain paths.
 - `engine.explain()` populates `Decision.rule` from the deciding policy's trace.
-- `engine.invalidateRoles(roleId?)` is scoped - only subjects holding the named role are evicted.
+- `engine.invalidateRoles(roleId?)` is scoped - only subjects holding the named role are
+  evicted.
 - `setSubjectAttributes` contract is now `merge`, matching every built-in adapter.
-- Single-flight on `loadPolicies` / `loadRoles` / `resolveSubject` coalesces concurrent cold-start adapter calls.
-- `invalidate()` family clears in-flight slots + sentinel-compare-on-resolve so a pending load can't write stale data.
-- **NotApplicable semantics**: a policy whose `targets` don't match is skipped by the cross-policy combine, not folded as the default effect. Largest correctness fix in the project's history.
-- Empty RBAC policy is skipped from the per-request policy set so it doesn't contribute a default-deny under AND combine.
-- Fast path matches colon-prefix actions (`'posts:*'`), dot-hierarchy resources (`'dashboard.*'`), and parent-prefix patterns (`'org'` matching `'org:project'`) consistently with the trace path.
-- `evaluatePolicyFast` returns `boolean | null` (null = NotApplicable). `evaluateFast` skips null in every combine mode.
+- Single-flight on `loadPolicies` / `loadRoles` / `resolveSubject` coalesces concurrent
+  cold-start adapter calls.
+- The `invalidate()` family clears in-flight slots + sentinel-compare-on-resolve so a
+  pending load can't write stale data.
+- **NotApplicable semantics**: a policy whose `targets` don't match is skipped by the
+  cross-policy combine, not folded as the default effect. The largest correctness fix in
+  the project's history.
+- Empty RBAC policy is skipped from the per-request policy set so it doesn't contribute a
+  default-deny under AND combine.
+- Fast path matches colon-prefix actions (`'posts:*'`), dot-hierarchy resources
+  (`'dashboard.*'`), and parent-prefix patterns (`'org'` matching `'org:project'`)
+  consistently with the trace path.
+- `evaluatePolicyFast` returns `boolean | null` (null = NotApplicable). `evaluateFast`
+  skips null in every combine mode.
 - Engine ctor refuses `mode: 'production'` + `policyCombine: 'first-applicable'`.
 - RBAC rule ids are opaque (`__rbac__#N`) - no longer dotted.
 
 **New APIs:**
 
-- **`AccessControl.PolicyCombine`** - cross-policy combine strategy (`'and'` / `'allow-overrides'` / `'first-applicable'`). Configurable via `IamEngine.policyCombine`.
-- **`IamEngineTypes.IMetricsEvent` + `onMetrics` hook** - primitive-only telemetry payload fired once per evaluation in both dev and prod modes. Zero overhead when unwired.
-- **`IamFileAdapter`** at `@gentleduck/iam/adapters/file` - JSON-on-disk store with pluggable `IamFile.IFS` interface.
-- **`IAM_POLICY_JSON_SCHEMA`** - Draft 2020-12 JSON schema export for non-TS consumers and editor tooling.
-- **`IamEngine.stats()` / `resetStats()`** - cache hit/miss counters per cache.
-- **Validator semantic checks** - emits `UNRESOLVABLE_FIELD`, `UNRESOLVABLE_VALUE`, `INHERITANCE_TOO_DEEP`, `BROAD_ALLOW`, `LIMIT_EXCEEDED` codes.
-- **`IAM_POLICY_LIMITS`** - DoS bounds (1000 rules/policy, 100 actions/rule, 100 resources/rule, 1000 action x resource cartesian/rule).
-- **`MAX_INHERITANCE_DEPTH = 32`** exported from `core/rbac`. Validator errors on chains that exceed it.
+- **`AccessControl.PolicyCombine`** - cross-policy combine strategy (`'and'` /
+  `'allow-overrides'` / `'first-applicable'`). Configurable via `Engine.policyCombine`.
+- **`EngineTypes.IMetricsEvent` + `onMetrics` hook** - primitive-only telemetry payload
+  fired once per evaluation in both dev and prod modes. Zero overhead when unwired.
+- **`FileAdapter`** at `@gentleduck/iam/adapters/file` - JSON-on-disk store with a pluggable
+  `File.IFS` interface.
+- **`POLICY_JSON_SCHEMA`** - Draft 2020-12 JSON schema export for non-TS consumers and
+  editor tooling.
+- **`Engine.stats()` / `resetStats()`** - cache hit/miss counters per cache.
+- **Validator semantic checks** - emits `UNRESOLVABLE_FIELD`, `UNRESOLVABLE_VALUE`,
+  `INHERITANCE_TOO_DEEP`, `BROAD_ALLOW`, and `LIMIT_EXCEEDED` codes.
+- **`POLICY_LIMITS`** - DoS bounds (1000 rules per policy, 100 actions per rule, 100
+  resources per rule, 1000 action x resource cartesian per rule).
+- **`MAX_INHERITANCE_DEPTH = 32`** exported from `core/rbac`. The validator errors on chains
+  that exceed it.
 
 **Build / package:**
 
 - `sideEffects: false` in `package.json` for tree-shaking.
 - `./adapters/file` subpath export added.
 
-**New operability surface (added across rounds 14-18):**
-
-- `engine.preload()` - warm cache at boot.
-- `engine.healthCheck()` - `{ ok, adapter, cacheHitRate, adapterLatencyMs, lastError? }` for `/healthz`.
-- `engine.dispose()` - release the cross-instance invalidator subscription.
-- `engine.admin.export()` / `engine.admin.import(snapshot, { mode })` - schema-versioned policy + role snapshots.
-- `engine.stats()` / `engine.resetStats()` - cache hit / miss counters per cache.
-- `IConfig.adapterTimeoutMs` - wrap every adapter read in an `AbortController`-driven timeout (default `5_000`).
-- `IConfig.maxPolicies` / `maxRoles` - load-time caps that fail closed.
-- `IConfig.allowFailOpen` - explicit opt-in required to combine `mode: 'production'` with `defaultEffect: 'allow'`.
-- `IConfig.invalidator` - cross-instance cache-invalidation broadcaster contract.
-- `hooks.onPolicyError` - routed when a single policy throws; fail-skip, not fail-crash.
-- `hooks.onMetrics` - primitive-only telemetry event fired once per evaluation in both modes.
-- IamHttpAdapter retry + per-request timeout + circuit-breaker (`retries`, `backoffMs`, `timeoutMs`, `circuitBreakerThreshold`, `circuitBreakerCooldownMs`).
-- `createIamRedisInvalidator` at `@gentleduck/iam/invalidators/redis` - pub/sub helper with self-echo filtering.
-- `iamCreateMetricsAggregator` at `@gentleduck/iam/observability/metrics` - p50 / p95 / p99 over `onMetrics` events.
-- Hono `bindAdminRouter`, Next.js `createAdminHandlers`, NestJS `createAdminOperations` - all require `authorize` callback.
-- Express `adminRouter(engine, { authorize })` - `authorize` is now required (was optional).
-
-**Security fixes:**
-
-- `matches` operator refuses `$`-resolved RHS values (ReDoS via user-controlled regex).
-- IamHttpAdapter `getPolicy` / `getRole` return `null` on 404 instead of throwing.
-- Validator depth bound (`MAX_CONDITION_DEPTH=10`) and field-length cap (`IAM_MAX_FIELD_LENGTH=256`).
-- Regex cache is LRU on hit, not FIFO on insert.
-- Synthesised RBAC policy is deep-frozen (every rule + conditions tree).
-- `Number.isFinite` priority check in validator.
-
 **Testing:**
 
-- 629 tests across 29 files (up from 309 at 1.7.0).
-- Property-based oracle asserts `evaluate` equivalent to `evaluateFast` over 1000 random policy sets per `(combine, defaultEffect)` pair.
+- 584 tests across 28 files (up from 309 at 1.7.0).
+- A property-based oracle asserts `evaluate` is equivalent to `evaluateFast` over 1000
+  random policy sets per `(combine, defaultEffect)` pair.
 - Bench harness: `evaluate.bench.ts` + `resolve.bench.ts` + competitor benchmarks.
-
-**Dot-path attribute access:**
-
-`When.attr()` / `resourceAttr()` / `env()` now accept dot-paths into nested attribute bags. `'profile.tier'` typechecks against `{ profile: { tier: string } }` and the value parameter narrows correctly. `keyof` dropped from `resourceAttr` and `env` signatures.
-
-New + reorganized in the `DotPath` namespace:
-
-- `SubjectAttrShape` / `ResourceAttrShape` / `EnvAttrShape` - raw attribute bag objects.
-- `SubjectAttrs` / `ResourceAttrs` / `EnvAttrs` - now return dot-path string unions (consistent), not raw objects.
-- `AttrValueAt<T, P>` - walks a dot-path inside an attribute bag to the leaf type.
-- `AttrValue<T, P>` - rewritten on top of `AttrValueAt` with `AttributeValue` fallback.
-- `ResolvedResourceAttrPaths<TContext, TResource>` - dot-paths into per-resource attribute narrowing.
-- `ResolvedResourceAttrs` returns the resolved attribute SHAPE; pair with `ResolvedResourceAttrPaths` for keys.
-
-The file is reorganized into 8 labeled sections (context paths, condition adapters, shape extractors, attribute paths, per-resource narrowing, value resolution, defaults, internal helpers).
-
-**Module-local namespaces (added 2.0):**
-
-Every bare integration-config interface is now wrapped in a type-only namespace; deprecated bare aliases remain for back-compat and will be removed in `3.0`.
-
-- `Http.IConfig` - `@gentleduck/iam/adapters/http`
-- `Redis.ILike` + `Redis.IConfig` - `@gentleduck/iam/adapters/redis`
-- `Drizzle.IConfig` - `@gentleduck/iam/adapters/drizzle`
-- `Express.IOptions` + `Express.IAdminAuthorize` + `Express.IAdminRouterOptions` - `@gentleduck/iam/server/express`
-- `IamHono.IOptions` + `IamHono.IAdminAuthorize` + `IamHono.IAdminOptions` + `IamHono.IRouterLike` - `@gentleduck/iam/server/hono`
-- `Nest.IAuthorizeMeta` + `Nest.IGuardOptions` + `Nest.IAdminAuthorize` + `Nest.IAdminOptions` - `@gentleduck/iam/server/nest`
-- `IamNext.IWithAccessOptions` + `IamNext.IMiddlewareOptions` + `IamNext.IAdminAuthorize` + `IamNext.IAdminOptions` - `@gentleduck/iam/server/next`
-- `ReactClient.IContextValue` - `@gentleduck/iam/client/react`
-- `IamRedisInvalidator.IPubSubLike` + `IamRedisInvalidator.IConfig` - `@gentleduck/iam/invalidators/redis`
-- `Metrics.IAggregator` + `Metrics.ISnapshot` + `Metrics.IConfig` - `@gentleduck/iam/observability/metrics`
-- `AccessControl.OpFn` moved into the core `AccessControl` namespace.
-
-Every new namespace is type-only (interfaces + type aliases only, no runtime values) so it compiles to nothing and bundle size stays unchanged.
 
 ## 1.7.0
 
@@ -301,11 +1160,18 @@ Every new namespace is type-only (interfaces + type aliases only, no runtime val
 
 - 0e80f84: Add Redis adapter, Drizzle schemas, and full integration test coverage.
 
-  **New: `IamRedisAdapter`** at `@gentleduck/iam/adapters/redis`. Distributed key/value backend with idempotent `assignRole` (set semantics), multi-tenant `keyPrefix`, and a minimal `AuthRedisLike` interface that ioredis, node-redis v4+, and Upstash all satisfy directly.
+  **New: `RedisAdapter`** at `@gentleduck/iam/adapters/redis`. Distributed key/value backend
+  with idempotent `assignRole` (set semantics), multi-tenant `keyPrefix`, and a minimal
+  `RedisLike` interface that ioredis, node-redis v4+, and Upstash all satisfy directly.
 
-  **New: pre-built Drizzle schemas** at `@gentleduck/iam/adapters/drizzle/schema/{pg,mysql,sqlite}`. Drop-in tables for all three SQL dialects with the right column types, FK cascade on `roleId`, unique index on `(subjectId, roleId, scope)`, and auto-managed `created_at`/`updated_at`. Generate migrations via `drizzle-kit generate`.
+  **New: pre-built Drizzle schemas** at
+  `@gentleduck/iam/adapters/drizzle/schema/{pg,mysql,sqlite}`. Drop-in tables for all three
+  SQL dialects with the right column types, FK cascade on `roleId`, a unique index on
+  `(subjectId, roleId, scope)`, and auto-managed `created_at` / `updated_at`. Generate
+  migrations via `drizzle-kit generate`.
 
-  **Test coverage expansion**: every adapter, server middleware, and client integration now has dedicated tests. Total test count went from 309 to 498. New test files:
+  **Test coverage expansion**: every adapter, server middleware, and client integration now
+  has dedicated tests. Total test count went from 309 to 498. New test files:
 
   - `adapters/prisma`, `adapters/drizzle`, `adapters/http`, `adapters/redis`
   - `server/express`, `server/hono`, `server/nest`, `server/next`
@@ -317,7 +1183,12 @@ Every new namespace is type-only (interfaces + type aliases only, no runtime val
 
 ### Patch Changes
 
-- 918b34c: Strip `workspace:*` and `catalog:` protocol tokens from `devDependencies`/`dependencies`/`peerDependencies` of every public package before `changeset publish`. Previously published artifacts leaked these tokens into npm metadata, which broke strict resolvers (bun, deno) for downstream consumers. Adds `scripts/clean-publish.ts` and wires it into the root `release` script with a `git checkout` restore step so source remains workspace-friendly.
+- 918b34c: Strip `workspace:*` and `catalog:` protocol tokens from `devDependencies` /
+  `dependencies` / `peerDependencies` of every public package before `changeset publish`.
+  Previously published artifacts leaked these tokens into npm metadata, which broke strict
+  resolvers (bun, deno) for downstream consumers. Adds `scripts/clean-publish.ts` and wires
+  it into the root `release` script with a `git checkout` restore step so source remains
+  workspace-friendly.
 
 ## 1.6.1
 
@@ -329,13 +1200,15 @@ Every new namespace is type-only (interfaces + type aliases only, no runtime val
 
 ### Minor Changes
 
-- Performance: evaluatePolicyFast now 2x vs CASL (was 5.2x). Inlined hot path, added pre-computed results cache for unconditional rules, fixed empty conditions bug, added combined action+resource index.
+- Performance: `evaluatePolicyFast` now 2x vs CASL (was 5.2x). Inlined hot path, added a
+  pre-computed results cache for unconditional rules, fixed an empty conditions bug, added
+  a combined action+resource index.
 
 ## 1.5.0
 
 ### Minor Changes
 
-- e682b61: Add optional scope parameter to grant() for permission-level scoping
+- e682b61: Add optional scope parameter to `grant()` for permission-level scoping
 
   The `grant()` method now accepts an optional third `scope` argument:
   `.grant('update', 'post', 'org-1')`. This enables permission-level
@@ -349,33 +1222,38 @@ Every new namespace is type-only (interfaces + type aliases only, no runtime val
 
 ### Minor Changes
 
-- 72c449b: Add FlexibleDollarPaths for $-value autocomplete and fix AttrValue for optional properties
+- 72c449b: Add `FlexibleDollarPaths` for $-value autocomplete and fix `AttrValue` for
+  optional properties
 
-  - FlexibleDollarPaths\<TContext> added directly to method value signatures so the IDE shows $-prefixed autocomplete (e.g. $subject.id) even without a custom context
-  - AttrValue now strips undefined from optional properties - yearsExperience?: number correctly resolves to number instead of falling back to AttributeValue
-  - StringConditionValue no longer includes (string & \{\}) internally - the flexible string fallback is handled at the method signature level via FlexibleDollarPaths
+  - `FlexibleDollarPaths<TContext>` added directly to method value signatures so the IDE
+    shows `$`-prefixed autocomplete (e.g. `$subject.id`) even without a custom context
+  - `AttrValue` now strips `undefined` from optional properties - `yearsExperience?: number`
+    correctly resolves to `number` instead of falling back to `AttributeValue`
+  - `StringConditionValue` no longer includes `(string & {})` internally - the flexible
+    string fallback is handled at the method signature level via `FlexibleDollarPaths`
 
 ## 1.3.2
 
 ### Patch Changes
 
-- 2dd9f8b: feat: FlexibleDotPaths for DefaultContext autocomplete and strict ConditionValue type safety
+- 2dd9f8b: feat: `FlexibleDotPaths` for `DefaultContext` autocomplete and strict
+  `ConditionValue` type safety
 
-  - DotPaths now bails to `never` (not `string`) for string-indexed types, preventing
+  - `DotPaths` now bails to `never` (not `string`) for string-indexed types, preventing
     union pollution that killed IDE autocomplete.
-  - New FlexibleDotPaths\<T> detects open-ended attribute bags (like DefaultContext) and
+  - New `FlexibleDotPaths<T>` detects open-ended attribute bags (like `DefaultContext`) and
     adds `(string & {})` so known structural paths autocomplete while arbitrary strings
     are still accepted. Fully typed contexts remain strict.
-  - ConditionValue correctly restricts non-string value types: `env('hour', 'lt', '')`
-    now errors when `hour` is `number`, instead of accepting any AttributeValue.
+  - `ConditionValue` correctly restricts non-string value types: `env('hour', 'lt', '')`
+    now errors when `hour` is `number`, instead of accepting any `AttributeValue`.
 
 ## 1.3.1
 
 ### Patch Changes
 
-- b62bb5b: fix: prevent DotPaths from recursing into array methods and functions
+- b62bb5b: fix: prevent `DotPaths` from recursing into array methods and functions
 
-  DotPaths now treats arrays as leaf paths and skips function-valued properties,
+  `DotPaths` now treats arrays as leaf paths and skips function-valued properties,
   so autocomplete only shows real data properties instead of array methods like
   `length`, `push`, `toString`, etc.
 
@@ -383,19 +1261,22 @@ Every new namespace is type-only (interfaces + type aliases only, no runtime val
 
 ### Minor Changes
 
-- Add DollarPaths type for $-variable autocomplete in conditions, refactor core into modular folders, and add JSDoc and inline FAQs to documentation
+- Add `DollarPaths` type for $-variable autocomplete in conditions, refactor core into
+  modular folders, and add JSDoc and inline FAQs to documentation
 
 ## 1.2.0
 
 ### Minor Changes
 
-- 7fe860f: Add TContext type parameter for typed dot-path intellisense and per-resource attribute narrowing. Split types.ts into modular types/ directory. Add JSDoc across all source files.
+- 7fe860f: Add `TContext` type parameter for typed dot-path intellisense and per-resource
+  attribute narrowing. Split `types.ts` into a modular `types/` directory. Add JSDoc across
+  all source files.
 
 ## 1.1.2
 
 ### Patch Changes
 
-- 66608fe: Add publishConfig with public access for scoped npm package.
+- 66608fe: Add `publishConfig` with public access for scoped npm package.
 
 ## 1.1.1
 
@@ -407,4 +1288,10 @@ Every new namespace is type-only (interfaces + type aliases only, no runtime val
 
 ### Minor Changes
 
-- 29ed55d: Initial release of @gentleduck/iam: identity and access management utilities.
+- 29ed55d: Initial release of `@gentleduck/iam`: identity and access management utilities.
+
+## See also
+
+- [Installation](/duck-iam/installation) - install the current version and its peer dependencies.
+- [Production checklist](/duck-iam/guides/production) - the hardening items several of these releases introduced.
+- [Troubleshooting](/duck-iam/guides/troubleshooting) - symptoms caused by behaviour that changed in 2.1.0 and 3.0.0.

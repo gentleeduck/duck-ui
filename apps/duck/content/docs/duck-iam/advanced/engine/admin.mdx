@@ -1,29 +1,44 @@
 ---
-title: admin API
-description: engine.admin.* - runtime CRUD for policies, roles, role assignments, and subject attributes. Automatically invalidates caches.
+title: Admin API
+description: engine.admin - runtime CRUD for policies, roles, assignments and attributes, with input validation, cache invalidation and snapshot import/export
 section: Advanced
 ---
-## What admin does
+`engine.admin` is a lazily-built facet that wraps the adapter with three things the adapter does not do on its own: argument validation, policy/role schema validation, and cache invalidation. Reads pass through; writes validate, persist, then invalidate. This page documents every method, every error message it can produce, and the two snapshot operations.
 
-`engine.admin` exposes CRUD operations for policies, roles, and subject attributes. **All mutations automatically invalidate the relevant caches.**
+## What an admin write does
 
-Use this when you want to manage authorization data without bypassing the engine. For pure data access (no cache invalidation), call the adapter directly.
+<MermaidDiagram chart={`flowchart TD
+    A["engine.admin.savePolicy(policy)"] --> B["assert argument shapes"]
+    B -- "invalid" --> BX["throw - adapter untouched"]
+    B -- "ok" --> C["lazy import the validator chunk"]
+    C --> D["validatePolicy / validateRole"]
+    D -- "any error-level issue" --> DX["throw - adapter untouched"]
+    D -- "valid" --> E["adapter write"]
+    E --> F["engine.cache.invalidate* for the affected scope"]
+    F --> G["invalidator.publish if one is wired"]
+    G --> H["compiled table dropped, generation bumped"]`} />
 
----
+Both guards at `B` and `D` run **before** the adapter is touched, so a rejected write leaves storage untouched - the engine test `does not touch the adapter when validation fails` pins that. The validator at `C` is a dynamic import of roughly 12 KB gzipped, loaded on the first write and memoised, so a read-only service never pays for it; `engine.preload({ validator: true })` front-loads it at boot instead. Step `F` is described in full on [caching and invalidation](/duck-iam/advanced/engine/caching); `H` matters in both modes, since both evaluate through the table.
 
-## Policy management
+One more step follows `H` when `hooks.onMutation` is wired: the write emits its [mutation event](/duck-iam/advanced/engine/hooks). It fires **after** the adapter write resolves and after invalidation, in that order, so a write that threw emits nothing and a consumer reacting to an event never reads a cache still holding the old answer. With the hook unset the sink is left off entirely and no events are allocated.
 
-```typescript
-// List all policies
-const policies = await engine.admin.listPolicies()
+Reads (`listPolicies`, `getPolicy`, `listRoles`, `getRole`, `getAttributes`, `export`) skip everything from `C` onward - they validate their arguments and delegate.
 
-// Get a specific policy
-const policy = await engine.admin.getPolicy('ip-restriction')
+## API reference
 
-// Save (create or update) a policy
+### Policies
+
+```ts
+listPolicies(): Promise<AccessControl.IPolicy<TAction, TResource, TRole>[]>
+getPolicy(id: string): Promise<AccessControl.IPolicy<TAction, TResource, TRole> | null>
+savePolicy(policy: AccessControl.IPolicy<TAction, TResource, TRole>, opts?: { actor?: string }): Promise<void>
+deletePolicy(id: string, opts?: { actor?: string }): Promise<void>
+```
+
+```ts
 await engine.admin.savePolicy({
   id: 'office-hours',
-  name: 'Office Hours Only',
+  name: 'Office hours only',
   algorithm: 'deny-overrides',
   rules: [
     {
@@ -39,132 +54,146 @@ await engine.admin.savePolicy({
         ],
       },
     },
-    {
-      id: 'allow-all',
-      effect: 'allow',
-      priority: 1,
-      actions: ['*'],
-      resources: ['*'],
-      conditions: { all: [] },
-    },
+    { id: 'allow-all', effect: 'allow', priority: 1, actions: ['*'], resources: ['*'], conditions: { all: [] } },
   ],
 })
 
-// Delete a policy
 await engine.admin.deletePolicy('office-hours')
 ```
 
-`savePolicy` is upsert semantics in every shipped adapter - saving an existing ID updates it.
+`savePolicy` is upsert in every shipped adapter - saving an existing ID replaces it. Both writes call `invalidatePolicies()`.
 
----
+Prefer `definePolicy()` over hand-written objects: the builder validates as you go and produces exactly this shape. See [building policies](/duck-iam/core/policies/building).
 
-## Role management
+### Roles
 
-```typescript
-// List all roles
-const roles = await engine.admin.listRoles()
-
-// Get a specific role
-const role = await engine.admin.getRole('editor')
-
-// Save (create or update) a role
-await engine.admin.saveRole({
-  id: 'moderator',
-  name: 'Moderator',
-  permissions: [
-    { action: 'read', resource: 'post' },
-    { action: 'update', resource: 'post' },
-    { action: 'delete', resource: 'comment' },
-  ],
-  inherits: ['viewer'],
-})
-
-// Delete a role
-await engine.admin.deleteRole('moderator')
+```ts
+listRoles(): Promise<AccessControl.IRole<TAction, TResource, TRole, TScope>[]>
+getRole(id: string): Promise<AccessControl.IRole<TAction, TResource, TRole, TScope> | null>
+saveRole(role: AccessControl.IRole<TAction, TResource, TRole, TScope>, opts?: { actor?: string }): Promise<void>
+deleteRole(id: string, opts?: { actor?: string }): Promise<void>
 ```
 
-For typed builders, use `defineRole().build()` and pass the result to `saveRole()` instead of writing raw `Permission` arrays.
+```ts
+import { defineRole } from '@gentleduck/iam'
 
----
-
-## Role assignments
-
-```typescript
-// Assign a role to a user
-await engine.admin.assignRole('user-1', 'editor')
-
-// Assign a scoped role (multi-tenant)
-await engine.admin.assignRole('user-1', 'admin', 'org-1')
-
-// Revoke a role
-await engine.admin.revokeRole('user-1', 'editor')
-
-// Revoke a scoped role (only the matching scope)
-await engine.admin.revokeRole('user-1', 'admin', 'org-1')
-
-// Revoke all scopes of a role
-await engine.admin.revokeRole('user-1', 'admin')
+await engine.admin.saveRole(
+  defineRole('moderator')
+    .inherits('viewer')
+    .grant('update', 'post')
+    .grant('delete', 'comment')
+    .build(),
+)
 ```
 
-### Idempotency caveat
+`saveRole` invalidates with `role.id`, `deleteRole` with the ID you passed. Both therefore evict only the subject-cache entries that hold that role - directly or through inheritance - not the whole subject cache.
 
-Assignment idempotency depends on the adapter:
+### Assignments
 
-| Adapter | `assignRole` idempotent? |
-| --- | --- |
-| Memory | yes (in-memory check) |
-| Redis | yes (set semantics) |
-| Drizzle | yes (`onConflictDoNothing`) |
-| Prisma | **no** - throws on duplicate against the unique constraint |
-| HTTP | depends on backend |
-
-For the Prisma adapter, wrap in try/catch or check existence first:
-
-```typescript
-const existing = await engine.admin.listSubjectRoles?.('user-1') // adapter-dependent
-if (!existing.includes('editor')) {
-  await engine.admin.assignRole('user-1', 'editor')
-}
+```ts
+assignRole(subjectId: string, roleId: TRole, scope?: TScope, opts?: IamAdapter.IAssignOptions): Promise<void>
+revokeRole(subjectId: string, roleId: TRole, scope?: TScope, opts?: IamAdapter.IRevokeOptions): Promise<void>
+updateAssignmentScope(
+  subjectId: string,
+  roleId: TRole,
+  fromScope: TScope | undefined,
+  toScope: TScope | undefined,
+  actor?: string,
+): Promise<void>
 ```
 
----
+```ts
+await engine.admin.assignRole('user-1', 'editor')             // global
+await engine.admin.assignRole('user-1', 'admin', 'org-1')     // scoped
+await engine.admin.revokeRole('user-1', 'admin', 'org-1')     // that scope only
+await engine.admin.revokeRole('user-1', 'admin')              // every scope
+```
 
-## Subject attributes
+Omitting `scope` on `revokeRole` removes the assignment across **all** scopes, in every shipped adapter. That asymmetry with `assignRole` (where omitting `scope` creates one unscoped grant) is deliberate and contractual.
 
-```typescript
-// Set attributes (built-in adapters merge with existing)
-await engine.admin.setAttributes('user-1', {
-  department: 'engineering',
-  level: 'senior',
-  region: 'us-east',
-})
+`updateAssignmentScope` moves a grant between scopes. When the adapter implements the optional `updateAssignmentScope`, it is one write; otherwise, or when nothing matched `fromScope`, the engine falls back to `revokeRole(fromScope)` followed by `assignRole(toScope)`. Either way the subject's cache entry is invalidated. The `actor` argument reaches the store's provenance column where one exists (`created_by` on the drizzle schemas) and reaches `onMutation` either way.
 
-// Read attributes
+All three invalidate exactly one subject.
+
+#### `'*'` is refused as an assignment scope
+
+`'*'` is a global wildcard on the *lookup* side, so granting it would write a row that covers every scope at once. The engine refuses it on the grant direction and accepts it on the lookup direction:
+
+| Call | Direction | `'*'` |
+| --- | --- | --- |
+| `assignRole` scope | grant | refused |
+| `revokeRole` scope | lookup | accepted |
+| `updateAssignmentScope` `fromScope` | lookup | accepted |
+| `updateAssignmentScope` `toScope` | grant | refused |
+
+A revoke addresses a row that already exists, and an operator holding `'*'` rows written before the guard has to be able to delete them. A move reads one end and writes the other, so `'*'` may be moved *off*, never *to*. The adapters carry the same guard; the engine runs it a layer earlier so a batch fails before it writes anything.
+
+### Batch assignments
+
+```ts
+assignRoles(rows: readonly IAssignRow<TRole, TScope>[]): Promise<Batch.Result<IAssignRow, Batch.Change>>
+revokeRoles(rows: readonly IRevokeRow<TRole, TScope>[]): Promise<Batch.Result<IRevokeRow, Batch.Change>>
+moveRoleScopes(rows: readonly IMoveRow<TRole, TScope>[]): Promise<Batch.Result<IMoveRow>>
+invalidateSubjects(subjectIds: readonly string[]): void
+```
+
+A row is a plain triple plus its own per-call options:
+
+```ts
+interface IAssignRow<TRole, TScope> { subjectId: string; roleId: TRole; scope?: TScope; opts?: IAssignOptions }
+interface IMoveRow<TRole, TScope>   { subjectId: string; roleId: TRole; fromScope?: TScope; toScope?: TScope; actor?: string }
+```
+
+```ts
+const result = await engine.admin.assignRoles([
+  { subjectId: 'user-1', roleId: 'editor', scope: 'org-1' },
+  { subjectId: 'user-2', roleId: 'viewer', scope: 'org-1', opts: { expiresAt: new Date('2026-01-01') } },
+])
+// result.applied === 2
+// result.outcomes[0] === { row: {...}, ok: true, value: { changed: true } }
+```
+
+`Batch.Result` is `{ outcomes, applied }`, with one outcome per input row **in input order**, so matching by index stays exact. An outcome carries the row it describes rather than a key derived from it - a `(subject, role, scope)` triple of free-form strings has no unambiguous encoding into one key, and an earlier space-joined version collided whenever an id contained a space.
+
+Every row comes back `ok`: the grant is in place afterwards whether or not this call is what put it there. `outcome.value.changed` distinguishes the two where the driver could say - `true` when this row accounts for a write the statement made, `false` when the row was already in that state or an earlier row of the same batch already accounts for the write, so a write is credited to exactly one row. It is **absent**, not guessed, when the driver could not report it: MySQL has no `RETURNING`, and the per-row fallback's single-row methods return `void`.
+
+Three behaviours worth knowing:
+
+- **Every row is validated before any is written.** A malformed row aborts the whole batch rather than half-applying it - a caller who fixes that row and retries would otherwise double-apply every row that had already landed.
+- **A batch that throws part-way still settles.** The engine invalidates *every requested* subject, not just the ones known to have landed: the set-based adapters cannot say how far they got, and dropping a cache entry that did not need it costs one reload where keeping a stale one costs a wrong answer. Events are emitted only for rows known to have landed.
+- **One statement where the adapter offers one.** `assignRoles` uses `adapter.assignRoleMany` when present, otherwise one call per row. `moveRoleScopes` delegates to `updateAssignmentScope` per row.
+
+`invalidateSubjects(ids)` drops several subject cache entries in one call, collapsing duplicate ids. Use it after writing to the store outside `engine.admin`.
+
+<Callout tone="info" title="assignRole is idempotent">
+  All six shipped adapters deduplicate a repeated `(subject, role, scope)`:
+  memory and file skip an existing pair, Redis uses `SADD`, Drizzle uses
+  `onConflictDoNothing`, and Prisma reads first and swallows a racing writer's
+  `P2002`. The HTTP adapter behaves however your backend does. On Prisma the
+  read cannot make the write atomic, so the unique index is what actually
+  decides a race - it has to be the `NULLS NOT DISTINCT` one `schema.prisma`
+  tells you to migrate to, since the plain index Prisma generates does not
+  collapse `NULL`s and unscoped duplicates would pile up unchecked.
+</Callout>
+
+### Subject attributes
+
+```ts
+setAttributes(subjectId: string, attrs: IamPrimitives.Attributes, opts?: { actor?: string }): Promise<void>
+getAttributes(subjectId: string): Promise<IamPrimitives.Attributes>
+```
+
+```ts
+await engine.admin.setAttributes('user-1', { department: 'engineering', level: 'senior' })
 const attrs = await engine.admin.getAttributes('user-1')
-// { department: 'engineering', level: 'senior', region: 'us-east' }
 ```
 
-### Merge vs replace
+Shipped adapters shallow-merge rather than replace, so a partial patch keeps untouched keys. Set a key to `null` to blank it. The merge is a read-then-write in the SQL and Redis adapters and is **not** transactional - concurrent writers to the same subject can lose an update. Wrap it yourself when that matters:
 
-The exact merge/replace behavior depends on the adapter implementation:
-
-- **Memory** - shallow-merges new attributes into existing
-- **Prisma** - read-merge-write (race risk under concurrent writes)
-- **Drizzle** - same as Prisma
-- **Redis** - same as above
-- **HTTP** - depends on backend (the built-in HTTP adapter sends PATCH which most servers interpret as merge)
-
-To remove an attribute, set it to `null`. The merge will replace the existing value with `null`.
-
-### Concurrent write race
-
-For high-contention attribute writes (multiple services updating the same subject), wrap in a transaction:
-
-```typescript
-// Prisma
+```ts
 await prisma.$transaction(async (tx) => {
   const existing = await tx.accessSubjectAttr.findUnique({ where: { subjectId: 'user-1' } })
-  const merged = { ...(existing?.data as Attributes), ...newAttrs }
+  const merged = { ...(existing?.data as Record<string, unknown>), ...newAttrs }
   await tx.accessSubjectAttr.upsert({
     where: { subjectId: 'user-1' },
     create: { subjectId: 'user-1', data: merged },
@@ -173,76 +202,147 @@ await prisma.$transaction(async (tx) => {
 })
 ```
 
-The built-in adapters don't wrap reads + merges in transactions - concurrent writes may lose data. For Redis, use `WATCH/MULTI/EXEC` or a Lua script.
+For Redis, use `WATCH`/`MULTI`/`EXEC` or a Lua script.
 
----
+### Argument validation
 
-## Cache invalidation summary
+Every admin method validates before doing anything. All messages are prefixed `[@gentleduck/iam:engine]`.
 
-| Admin call | Invalidates |
+| Guard | Applies to | Message |
+| --- | --- | --- |
+| Non-empty string | `id`, `subjectId`, `roleId` | `<name> must be a non-empty string (got <typeof>)` |
+| 1024-character cap | the same | `<name> exceeds 1024-char cap (got length <n>)` |
+| Optional non-empty string | `scope`, `fromScope`, `toScope` | as above, skipped when `undefined` |
+| Plain object | `attrs` | `attributes must be a plain object (got <typeof>)` |
+| At most 256 own keys | `attrs` | `attributes must have <=256 keys (got <n>)` |
+| Nesting depth at most 16 | `attrs` | `attributes nesting depth <d> exceeds cap (16)` |
+| Schema validity | `policy`, `role` | `<policy\|role> rejected by validator - <CODE> at "<path>"; ...` |
+
+The 1024-character cap exists because these values become URL segments on the HTTP adapter, key components on Redis, and column values on SQL. The 256-key and depth-16 attribute caps bound what a hostile caller can push into a JSON column and what the dot-path resolver has to walk.
+
+<Callout tone="info" title="Error messages never echo the offending value">
+  A rejected `subjectId` is reported by its `typeof`, never by its content, so a
+  hostile value cannot ride into your logs through the error path. The one place
+  a value is interpolated - the snapshot `schemaVersion` - truncates strings at
+  64 characters and reports arrays and objects by shape only.
+</Callout>
+
+### export
+
+```ts
+export(): Promise<IamEngineTypes.ISnapshot<TAction, TResource, TRole, TScope>>
+
+interface ISnapshot {
+  readonly schemaVersion: 1
+  readonly exportedAt: string
+  readonly policies: readonly AccessControl.IPolicy[]
+  readonly roles: readonly AccessControl.IRole[]
+}
+```
+
+A **configuration** snapshot: policies and roles, and deliberately nothing else. Subject assignments and attributes are user data, they vary per environment, and most adapters cannot enumerate subjects cheaply. `exportedAt` is an ISO-8601 timestamp.
+
+### import
+
+```ts
+import(
+  snapshot: IamEngineTypes.ISnapshot<TAction, TResource, TRole, TScope>,
+  options?: { mode?: 'merge' | 'replace' },
+  opts?: { actor?: string },
+): Promise<IamEngineTypes.IImportResult>
+
+interface IImportResult {
+  readonly policiesAdded: number
+  readonly policiesDeleted: number
+  readonly rolesAdded: number
+  readonly rolesDeleted: number
+}
+```
+
+```ts
+const snapshot = await stagingEngine.admin.export()
+writeFileSync('iam-snapshot.json', JSON.stringify(snapshot, null, 2))
+
+const result = await prodEngine.admin.import(JSON.parse(readFileSync('iam-snapshot.json', 'utf8')), {
+  mode: 'replace',
+})
+// { policiesAdded: 12, policiesDeleted: 3, rolesAdded: 7, rolesDeleted: 0 }
+```
+
+| `mode` | Behaviour |
 | --- | --- |
-| `savePolicy` / `deletePolicy` | Policy cache + RBAC cache |
-| `saveRole` / `deleteRole` | Role cache + RBAC cache + all subjects |
-| `assignRole` / `revokeRole` | Specific subject |
-| `setAttributes` | Specific subject |
+| `'merge'` (default) | Upserts every entry. Existing IDs are overwritten; IDs absent from the snapshot are left alone. `policiesDeleted` and `rolesDeleted` are `0`. |
+| `'replace'` | First deletes every existing policy and role whose ID is not in the snapshot, then upserts. Use for a full sync from a source of truth. |
 
-See [caching](/duck-iam/advanced/engine/caching) for full details.
+The **whole snapshot is validated before the adapter is touched**: `schemaVersion`, then that `policies` and `roles` are arrays, then every policy and every role through the validator. Interleaving meant an invalid row halfway through left the store half-applied - and in `'replace'` mode the deletions had already landed, so deny policies could be gone with nothing written back in their place.
 
----
+`schemaVersion` must be exactly `1`. Anything else throws before a single write:
 
-## When NOT to use admin
+```
+[@gentleduck/iam:engine] unsupported snapshot schemaVersion string 'v2'; expected 1
+```
 
-The admin API is the right surface for:
+The counts are snapshot sizes and delete counts, not diffs: `policiesAdded` is `snapshot.policies.length` regardless of how many were already identical.
 
-- Building admin UIs (your team adding/removing roles)
-- Internal scripts that mutate authorization state
-- Webhooks that sync from external IdPs (SCIM, etc.)
+`import` invalidates once at the end - `invalidatePolicies()` followed by `invalidateRoles()` with no role ID, which clears the whole subject cache - rather than paying per-row invalidation across a bulk write.
 
-Don't use it for:
-
-- Data migrations - write directly to the adapter database for speed, then call `engine.cache.invalidate()`
-- Bulk imports - same reason; admin's per-item cache invalidation is overhead
-- Read-only data export - call the adapter directly to skip cache machinery
-
----
+Use it for environment promotion, GitOps-style policy review, disaster recovery, or a `git`-tracked policy bundle.
 
 ## Securing the admin surface
 
-`engine.admin` is **not authenticated** at the programmatic level - anyone with a reference to `engine` can call it. The shipped HTTP admin routers, on the other hand, refuse to construct without an `authorize` callback:
+`engine.admin` is not authenticated. Anything holding a reference to the engine can call it, which is correct for a library API and dangerous the moment it is reachable over HTTP.
 
-```typescript
-import { adminRouter } from '@gentleduck/iam/server/express'
+The shipped admin routers refuse to be constructed without an `authorize` callback:
+
+```ts
+import { iamAdminRouter } from '@gentleduck/iam/server/express'
 
 app.use(
   '/api/access-admin',
-  requireAuth(), // your auth middleware
-  adminRouter(engine, {
+  requireAuth(),
+  iamAdminRouter(engine, {
     authorize: (req) => req.user?.role === 'platform-admin',
   })(() => express.Router()),
 )
 ```
 
-Mounting an admin router unauthenticated is no longer possible - the factory throws at boot when `authorize` is missing. Same secure-by-default contract on the Hono `bindAdminRouter`, Next.js `createAdminHandlers`, and NestJS `createAdminOperations` factories.
+Omitting it throws at boot:
 
----
-
-## Snapshot export / import
-
-`engine.admin.export()` returns a schema-versioned `ISnapshot` of policies + roles (subject assignments are intentionally excluded - they're user data, not config). `engine.admin.import(snapshot, { mode })` applies one back.
-
-```typescript
-// Export from staging
-const snapshot = await stagingEngine.admin.export()
-writeFileSync('iam-snapshot.json', JSON.stringify(snapshot, null, 2))
-
-// Import to prod
-const snapshot = JSON.parse(readFileSync('iam-snapshot.json', 'utf8'))
-const result = await prodEngine.admin.import(snapshot, { mode: 'replace' })
-// -> { policiesAdded, policiesDeleted, rolesAdded, rolesDeleted }
+```
+[@gentleduck/iam] iamAdminRouter requires an `authorize` callback.
+Mounting admin endpoints unauthenticated is never safe.
 ```
 
-- `mode: 'merge'` (default) - upserts every entry; existing rows not in the snapshot are untouched.
-- `mode: 'replace'` - deletes every existing policy / role *not* present in the snapshot, then upserts. Use for full sync from a source of truth.
-- Unknown `schemaVersion` throws *before* any write - snapshots never half-apply.
+The same secure-by-default contract holds for `iamBindAdminRouter` (Hono), `createIamAdminHandlers` (Next.js) and `createIamAdminOperations` (NestJS). All four also apply a default `Sec-Fetch-Site` CSRF check on mutating routes; pass `csrfCheck: false` to opt out, or your own predicate to replace it.
 
-Use for environment promotion (staging -> prod), GitOps-style policy review, disaster recovery, or `git`-tracked policy bundles.
+## When not to use admin
+
+| Task | Do this instead |
+| --- | --- |
+| Data migration | Write to the adapter's storage directly, then call `engine.cache.invalidate()` once |
+| Bulk import of thousands of rows | Same, or use `import()` which invalidates once rather than per row |
+| Read-only export for a report | Call the adapter directly and skip the cache machinery |
+
+<Callout tone="warning" title="import() flushes every subject cache">
+`import()` ends with `cache.invalidatePolicies()` followed by `cache.invalidateRoles()` with no `roleId`. The no-argument form clears the whole `subjectCache`, not just the subjects holding a changed role. One import therefore re-resolves every subject on its next check, and with an invalidator attached that flush broadcasts to every instance. Import during a maintenance window, not under load.
+</Callout>
+
+Admin is the right surface for admin UIs, internal scripts, and IdP or SCIM sync webhooks - anywhere a write must be reflected in the engine's caches immediately.
+
+## Gotchas
+
+- **`import` validates everything before it writes anything**, so a malformed snapshot cannot half-apply. It is still not transactional across the adapter: an *adapter* failure part-way through a `'replace'` leaves the deletions applied. Its mutation events are buffered and emitted only after every write lands, so an import that throws does not report a history of the rows that happened to go first.
+- **`revokeRole` without a scope removes every scope.** That is not a bug; passing `undefined` is not the same as passing an unscoped grant.
+- **`assignRole` is idempotent on every shipped adapter.** A repeat grant is a no-op, not an error.
+- **`setAttributes` merges, and the merge is not transactional.** Concurrent writers to the same subject can lose data.
+- **There is no `listSubjectRoles` on the admin facet.** Use `engine.getEffectiveRoles(subjectId, scope?)` for the resolved role list, or the adapter's own `getSubjectRoles` for the raw assignments.
+- **`'*'` cannot be assigned as a scope, but can be revoked.** The two directions ask different questions.
+- **A batch row that comes back `ok` does not mean this call wrote it.** Read `value.changed`, and treat `undefined` as "the driver could not say".
+
+## See also
+
+- [Engine methods](/duck-iam/advanced/engine/methods)
+- [Caching and invalidation](/duck-iam/advanced/engine/caching)
+- [Validation](/duck-iam/advanced/validation)
+- [Adapters](/duck-iam/integrations/adapters)
+- [Express server integration](/duck-iam/integrations/server/express)

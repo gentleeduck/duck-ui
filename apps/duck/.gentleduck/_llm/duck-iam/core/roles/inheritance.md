@@ -1,8 +1,12 @@
-## Inheriting permissions
+`inherits()` makes a role's permissions include every parent's permissions, resolved recursively. Two independent walks implement it: `collectPermissions()` flattens permissions when roles are converted to a policy, and `resolveEffectiveRoles()` closes a subject's assigned role IDs over the same graph. Both live in `src/core/rbac/rbac.ts`, both stop at `MAX_INHERITANCE_DEPTH`, and both carry the same memo.
 
-When role B inherits from role A, B gets all of A's permissions plus its own. Chains can be arbitrarily deep.
+That memo is a **shallowest-depth map, not a visited set**. Each role records the shallowest depth it was reached at, and a re-reach at the same or greater depth short-circuits. A plain visited set pins a role to whatever depth it happened to be reached at first, so a role reached near the depth cut down a long chain blocks a later, shallower path from expanding its ancestors - and then two set-equal `inherits` arrays written in different orders resolve to different permissions. The same memo cuts cycles: `a inherits b inherits a` terminates with `['a', 'b']`.
 
-```typescript
+## A chain
+
+```ts
+import { defineRole } from '@gentleduck/iam'
+
 const viewer = defineRole('viewer')
   .name('Viewer')
   .grant('read', 'post')
@@ -14,72 +18,125 @@ const editor = defineRole('editor')
   .inherits('viewer')
   .grant('create', 'post')
   .grant('update', 'post')
-  .grant('delete', 'post')
   .build()
 
 const admin = defineRole('admin').name('Admin').inherits('editor').grantAll('*').build()
 ```
 
-Chain: `viewer -> editor -> admin`. An admin gets everything an editor can do (including everything a viewer can do), plus unrestricted access.
+An admin holds everything an editor holds, which is everything a viewer holds, plus its own wildcard grant. Note that `inherits()` takes every parent in **one** call - a second call replaces the first (see [defining roles](/duck-iam/core/roles/definition#inherits)).
 
----
+## The two walks
 
-## How inheritance is resolved
+`resolveEffectiveRoles(assignedRoles, allRoles)` answers "which role IDs does this subject effectively hold?" and is what fills `subject.roles`. `collectPermissions(roleId, rolesMap)` answers "which permissions does this role end up with?" and runs once per role during conversion.
 
-The engine calls `resolveEffectiveRoles()` when loading a subject. For a user with `editor`, the function walks the inheritance tree and returns `['editor', 'viewer']` - the effective role set.
+* `W2` is what makes the walk safe: a role re-reached at the same or greater depth stops there, so a cycle terminates and a diamond contributes once. A role re-reached *shallower* expands its ancestors again from the new depth, but emits its own permissions only once.
+* `DROP` and `KEEP` are the asymmetry. An `inherits` entry that no role defines never reaches `subject.roles`, because a role id there is not only a permission carrier - a hand-written ABAC rule `subject.roles contains 'ghost'` fires on it, and `deleteRole` cascades only the role's *assignments*, so a surviving `inherits: ['ghost']` used to keep feeding the id back. `validateRoles` already calls that catalog state `DANGLING_INHERIT` with `type: 'error'`. Depth 0 - the subject's own assignment - is exempt: that is a row an operator wrote, and dropping it would narrow `getEffectiveRoles` wherever the catalog is not the sole authority on which ids exist. It matches no rule either way, because `rolesToPolicy()` emits nothing for a role it cannot find.
+* `collectPermissions()` follows the identical shape and returns `[...inherited, ...ownPermissions]` - **parent-first order**. It also returns `{ owner, perm }` pairs: the role that *declared* each permission travels with it, which is what makes a declared scope belong to the declarer rather than the inheritor. See [scoped roles](/duck-iam/core/roles/scoped).
 
-`rolesToPolicy()` flattens the inheritance chain when generating the ABAC policy. The editor role's rules include its own and viewer's permissions, each gated by a `subject.roles contains "editor"` condition.
+`engine.getEffectiveRoles(subjectId, scope?)` exposes the resolved set for debugging; it uses the same subject cache as `can()`.
 
----
+## Diamonds resolve once
 
-## Cycles are safe
+Two parents that share a grandparent do not double the grandparent's permissions.
 
-If role A inherits from B which inherits from A, the visited set breaks the recursion. The engine doesn't throw or hang - it just stops descending once it hits a role it's already visited.
+Converting these four roles produces nine rules, not ten. Walking `top` visits `left` first, which pulls in `base`'s `read`; when the walk reaches `right`, `base` was already recorded at depth 2 and this reach is also depth 2, so it short-circuits and `right` contributes only its own `delete`. The rules attributed to `top` are exactly:
 
-`validateRoles()` flags cycles as warnings (not errors) because the runtime handles them safely, but circular inheritance is almost always a modeling mistake worth fixing.
-
----
-
-## Multiple inheritance
-
-A role can inherit from several parents:
-
-```typescript
-const moderator = defineRole('moderator')
-  .name('Moderator')
-  .inherits('viewer', 'commenter')
-  .grant('delete', 'comment')
-  .grant('update', 'comment')
-  .build()
+```txt
+__rbac__#5  Top: read on post
+__rbac__#6  Top: update on post
+__rbac__#7  Top: delete on post
+__rbac__#8  Top: publish on post
 ```
 
-This pulls permissions from `viewer` and `commenter`, then adds the moderator's own.
+`resolveEffectiveRoles(['top'], roles)` returns `['top', 'left', 'base', 'right']` - depth-first, in declaration order, each ID once.
 
----
+Which branch contributes a shared permission depends on the order of the `inherits()` arguments, but the resulting permission set is the same either way. Nothing in the evaluator depends on rule order inside `__rbac__`, because the policy uses `allow-overrides`.
 
-## Caveat: removing inherited permissions
+## Cycles are cut, not rejected
 
-**Not supported.** If `editor` inherits `viewer`, viewer's `read` can't be stripped from the editor.
+If `a` inherits `b` and `b` inherits `a`, neither walk hangs or throws. The second time round the loop the role is re-reached at a greater depth than it was recorded at, and the memo short-circuits.
 
-For finer-grain control, use an ABAC deny rule:
+```ts
+const a = defineRole('a').name('A').inherits('b').grant('read', 'post').build()
+const b = defineRole('b').name('B').inherits('a').grant('write', 'post').build()
 
-```typescript
+rolesToPolicy([a, b]).rules.map((r) => r.description)
+// ['A: write on post', 'A: read on post', 'B: read on post', 'B: write on post']
+```
+
+Four rules, no duplicates, no runaway - pinned by the test "rolesToPolicy terminates on a cyclic inherits graph without duplicating permissions". Both roles converge on the same permission set, which is exactly what a cycle means. `validateRoles()` reports it as the **warning** `CIRCULAR_INHERIT` rather than an error, because the runtime is safe; it is still almost always a modelling mistake.
+
+## The depth cap
+
+```ts
+import { MAX_INHERITANCE_DEPTH } from '@gentleduck/iam'
+// 32
+```
+
+Both walks bail once `depth` exceeds 32. Cycles are already handled by the memo; the cap exists for a long linear chain (or a malformed import) that would otherwise grow the call stack unboundedly and make traversal cost unpredictable. It is a single hard constant with no per-engine override, so every adapter and the validator agree on the same bound. A 1000-deep linear chain resolves to roughly 33 roles and does not blow the stack.
+
+This is the same 32 as `IAM_MAX_COMPILED_ROLES` only by coincidence. That one bounds how many roles the compiled table's grant mask can address; this one bounds how deep an `inherits` chain is walked. They are unrelated numbers that happen to share a value.
+
+It is not a cap on how many roles the catalog may hold, and `getEffectiveRoles()` and `can()` can disagree past it. The two walks are rooted differently: `resolveEffectiveRoles` starts from the roles a *subject* holds, so past depth 32 from an assigned role an id stops entering `subject.roles`. `rolesToPolicy` runs `collectPermissions` from **every role in the catalog**, so a role sitting past the cut from `r0` is still within 32 of some shallower role the subject also holds - and that shallower role's rule carries the permission. In a 34-role linear chain assigned at `r0`, `getEffectiveRoles` omits `r33` while `can()` grants `r33`'s permission through the depth-32 path from `r1`.
+
+Keep role graphs well inside 32 levels, and do not read `getEffectiveRoles()` as an enumeration of what `can()` will allow on a graph that deep. `can()` is the authority on a verdict. Scope still confines the grant either way: a past-cap role that declares its own scope grants only there.
+
+`validateRoles()` reports a chain past the cap as the error `INHERITANCE_TOO_DEEP`. Run it in CI so a graph that grew past 32 fails before deploy rather than surfacing as a role list that no longer matches the verdicts.
+
+## What the validator catches
+
+`validateRoles()` is the only check that sees the whole graph. Import it from the validate subpath:
+
+```ts
+import { validateRoles } from '@gentleduck/iam/core/validate'
+
+const result = validateRoles([viewer, editor, admin])
+for (const issue of result.issues) {
+  console.log(`[${issue.type}] ${issue.code} ${issue.roleId ?? ''} - ${issue.message}`)
+}
+```
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `DUPLICATE_ROLE_ID` | error | Two roles in the set share an `id`. |
+| `DANGLING_INHERIT` | error | A role inherits from an ID that is not in the set. |
+| `CIRCULAR_INHERIT` | warning | A cycle was reached while walking this role's ancestors. |
+| `EMPTY_ROLE` | warning | The role has no permissions **and** no `inherits`. |
+| `INHERITANCE_TOO_DEEP` | error | The longest chain from this role exceeds `MAX_INHERITANCE_DEPTH`. |
+
+`result.valid` is `true` when no issue has `type: 'error'`; warnings do not flip it. `access.validateRoles(roles)` from [`createIam()`](/duck-iam/core/roles/type-safe) is the same function with the role array typed to your declared unions.
+
+`collectPermissions()` returns an empty list for a role ID it cannot find and `resolveEffectiveRoles()` drops the id rather than adding it, so a dangling `inherits` grants nothing and cannot satisfy a `subject.roles contains "<id>"` condition either. It is an error because the intent - "this role should also get those permissions" - is silently unmet.
+
+## Inherited permissions cannot be removed
+
+There is no negative permission and no "except" clause. If `editor` inherits `viewer`, no role definition can take `read` away from an editor. Subtract with a deny rule in a separate policy:
+
+```ts
+import { definePolicy } from '@gentleduck/iam'
+
 const restrictedEditor = defineRole('restricted-editor').inherits('editor').build()
 
-// Add a separate policy:
 const restriction = definePolicy('restrict-editor-deletes')
+  .name('Restrict Editor Deletes')
   .target({ roles: ['restricted-editor'] })
   .algorithm('deny-overrides')
   .rule('no-delete', (r) => r.deny().on('delete').of('post'))
   .build()
 ```
 
-The `deny-overrides` semantics in cross-policy AND-combination ensure the deny wins. See [combining algorithms](/duck-iam/core/policies/combining-algorithms).
+Under the default `policyCombine: 'and'`, a deny from any applicable policy is final, so this beats every allow rule `__rbac__` produced. See [combining algorithms](/duck-iam/core/policies/combining-algorithms) and [cross-policy combining](/duck-iam/core/cross-policy).
 
----
+## Gotchas
 
-## Deep chains
+* **Cost is paid at conversion, not per request.** Flattening runs when the role set is loaded and the result is cached with the `__rbac__` policy. Deep graphs make the policy bigger, not each check slower.
+* **Flattening multiplies rules.** A role at the bottom of a chain emits one rule for every permission it inherits, each gated on its own role ID. Ten roles of ten permissions in a chain of five is hundreds of rules in `__rbac__`; see [rule count](/duck-iam/core/roles/roles-to-policy#why-the-rule-count-inflates).
+* **Prefer shallow graphs.** Three or four levels stays legible. Deep chains hide where a permission originated, and the [explain trace](/duck-iam/advanced/explain) reports the role that emitted the rule, not the ancestor the permission came from.
+* **Scope travels with the permission, not up the chain.** A scoped role inheriting a global role keeps those inherited permissions global. See [scoped roles](/duck-iam/core/roles/scoped#scope-and-inheritance).
 
-Resolved by walking the tree recursively, with a visited set to break cycles. Performance is **linear in the role count** - 10-level chains resolve in microseconds.
+## See also
 
-There's no hard cap on chain depth, but for clarity prefer flat hierarchies (<=3-4 levels). Deep chains hide where permissions actually originate.
+* [The rolesToPolicy conversion](/duck-iam/core/roles/roles-to-policy) - where flattening happens and what it emits
+* [Defining roles](/duck-iam/core/roles/definition) - the `inherits()` signature and its replace-not-append behaviour
+* [Validation](/duck-iam/advanced/validation) - the full validator surface and every issue code
+* [Scoped roles](/duck-iam/core/roles/scoped) - inheritance across scoped assignments

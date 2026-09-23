@@ -1,116 +1,259 @@
 ---
-title: next.js app router
-description: Route handler wrapper, server component checks, permission map generation, and edge middleware for Next.js.
+title: Next.js app router
+description: Route handler wrapper, server component checks, permission maps, edge middleware, and admin handlers for the Next.js app router
 section: Integrations
 ---
+`@gentleduck/iam/server/next` covers four places a Next.js app router application can ask for a decision: `middleware.ts` at the edge, a route handler, a server component or server action, and a layout that hydrates the client. Everything is built on the fetch-API `Request`, so nothing here imports `next`. The shared extraction and audit behaviour lives in [generic helpers](/duck-iam/integrations/server/generic); this page documents only what Next.js adds.
+
 ## Install
 
-```typescript
-import {
-  withAccess,
-  checkAccess,
-  getPermissions,
-  createNextMiddleware,
-} from '@gentleduck/iam/server/next'
-```
-
-Covers four protection layers in Next.js App Router: route handler wrappers, Server Component / Server Action checks, permission map generation for client hydration, and edge middleware.
-
----
-
-## Route handler wrapper
-
-Wrap App Router route handlers (GET, POST, DELETE, etc.).
+<PackageManagerTabs bun="bun add @gentleduck/iam" npm="npm i @gentleduck/iam" pnpm="pnpm add @gentleduck/iam" yarn="yarn add @gentleduck/iam" />
 
 ```ts
-import { withAccess } from '@gentleduck/iam/server/next'
-import { engine } from '@/lib/engine'
+import {
+  withIamAccess,
+  checkIamAccess,
+  getIamPermissions,
+  createIamNextMiddleware,
+  createIamAdminHandlers,
+} from '@gentleduck/iam/server/next'
+import type { IamNext } from '@gentleduck/iam/server/next'
+```
+
+All five runtime exports carry the `iam` prefix since 5.0.0. `withAccess`, `checkAccess`, `getPermissions`, `createNextMiddleware`, and `createAdminHandlers` no longer resolve.
+
+## Pick a layer
+
+| Helper | Where it runs | Granularity | Sees `params.id` | Sees an environment |
+| --- | --- | --- | --- | --- |
+| `createIamNextMiddleware` | `middleware.ts`, before routing | path prefix or regex | no | yes |
+| `withIamAccess` | route handler | route plus resource id | yes | yes |
+| `checkIamAccess` | server component, server action | one explicit check | you pass it | no |
+| `getIamPermissions` | layout, server component | batch for client hydration | per check | no |
+
+All four call `engine.can()` or `engine.permissions()`, so all four resolve the subject through the adapter. None of them is free: the middleware is the earliest gate, not a cheaper one.
+
+## Setup
+
+<Steps>
+<Step>Build the engine in a module the runtime can share</Step>
+
+```ts
+// lib/engine.ts
+import { IamEngine } from '@gentleduck/iam/core'
+import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
+
+export const engine = new IamEngine({ adapter: new IamMemoryAdapter() })
+```
+
+<Step>Write one `getUserId` and reuse it</Step>
+
+It is required by two of the five exports and it is the only place identity is decided.
+
+```ts
+// lib/subject.ts
 import { auth } from '@/lib/auth'
 
-async function handler(req: Request, ctx: { params: Promise<{ id: string }> }) {
+export async function getUserId(_req: Request): Promise<string | null> {
+  const session = await auth()
+  return session?.user?.id ?? null
+}
+```
+
+<Step>Gate the routes that need it</Step>
+
+```ts
+// app/api/posts/[id]/route.ts
+export const DELETE = withIamAccess(engine, 'delete', 'post', handler, { getUserId })
+```
+
+<Step>Hydrate the client from a layout</Step>
+
+```tsx
+const permissions = userId ? await getIamPermissions(engine, userId, checks) : {}
+```
+</Steps>
+
+## One guarded request
+
+This sequence diagram traces `DELETE /api/posts/42` through both server-side layers: `middleware.ts` first, then the wrapped route handler. Each layer runs its own `getUserId` and its own `engine.can()`.
+
+<MermaidDiagram chart={`sequenceDiagram
+    participant C as Client
+    participant M as createIamNextMiddleware
+    participant R as withIamAccess
+    participant E as IamEngine
+    participant H as Route handler
+    C->>M: DELETE /api/posts/42
+    M->>M: refuse an ambiguous path, normalise, refuse % residue
+    M->>M: find first matching rule (prefix or regex)
+    alt no rule matches
+        M-->>R: null, request continues
+    else rule matched
+        M->>M: await getUserId(req)
+        M->>E: can(id, delete, post, env, rule scope)
+        alt denied
+            E-->>M: false
+            M-->>C: 403 Forbidden
+        else allowed
+            E-->>M: true
+            M-->>R: null, request continues
+        end
+    end
+    R->>R: await getUserId(req), await ctx.params
+    R->>E: can(id, delete, post 42, env, opts scope)
+    alt allowed
+        E-->>R: true
+        R->>H: handler(req, ctx)
+        H-->>C: 200
+    else denied
+        E-->>R: false
+        R-->>C: 403 Forbidden
+    end`} />
+
+The two layers are independent: the middleware never passes a resource id, and the wrapper never sees which rule matched. A request that only the middleware protects is gated by route shape alone; a request that only `withIamAccess` protects still reaches the Next.js router. Running both is the normal arrangement — a cheap shape check at the edge, a precise check with `params.id` in the handler.
+
+## `withIamAccess`
+
+Wraps one app-router route handler.
+
+```ts
+export function withIamAccess<
+  TAction extends string = string,
+  TResource extends string = string,
+  TRole extends string = string,
+  TScope extends string = string,
+>(
+  engine: IamEngine<TAction, TResource, TRole, TScope>,
+  action: TAction,
+  resourceType: TResource,
+  handler: (req: Request, ctx: RouteContext) => Promise<Response>,
+  opts?: IamNext.IWithAccessOptions<TScope>,
+): (req: Request, ctx: RouteContext) => Promise<Response>
+```
+
+`RouteContext` is `{ params: Promise<Record<string, string>> | Record<string, string> }`, so both the Next.js 15 promise form and the older object form are accepted; the wrapper awaits whichever it gets and reads `params.id` as the resource id.
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `getUserId` | `(req) => string \| null \| Promise<string \| null>` | **required** — the factory throws without it | Subject id. May be async, unlike Express, Hono, and NestJS. |
+| `getEnvironment` | `(req) => IamRequest.IEnvironment` | `iamExtractEnvironment({ headers: req.headers, method: req.method, url: req.url })` | `{ ip, userAgent, timestamp }`. |
+| `scope` | `TScope` | `undefined` | Fixed scope for this handler. There is no `getScope`. |
+| `onError` | `(err, req) => Response` | `Response.json({ error: 'Internal server error' }, { status: 500 })` | Runs when `ctx.params`, `getEnvironment`, or `engine.can()` throws. |
+
+The 401 (`{ error: 'Unauthorized' }`) and 403 (`{ error: 'Forbidden' }`) responses are fixed: this wrapper has neither `onUnauthorized` nor `onDenied`. `resource.attributes` is always `{}`.
+
+```ts
+// app/api/posts/[id]/route.ts
+import { withIamAccess } from '@gentleduck/iam/server/next'
+import { engine } from '@/lib/engine'
+import { getUserId } from '@/lib/subject'
+
+async function handler(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params
   await deletePost(id)
-  return Response.json({ deleted: true })
+  return Response.json({ deleted: id })
 }
 
-export const DELETE = withAccess(engine, 'delete', 'post', handler, {
-  // SEC-101: `getUserId` is REQUIRED. The constructor throws when omitted.
-  // Never derive identity from request headers - it's spoofable.
-  getUserId: async (req) => {
-    const session = await auth()
-    return session?.user?.id ?? null
+export const DELETE = withIamAccess(engine, 'delete', 'post', handler, {
+  getUserId,
+  onError: (err) => {
+    reportError(err)
+    return Response.json({ error: 'Internal server error' }, { status: 500 })
   },
 })
 ```
 
-The wrapper automatically reads `params.id` as the resource instance ID. `params` may be a Promise (Next.js 15+) or an object.
-
-<Callout type="warning" title="SEC-101 - `getUserId` is required in 2.1.0">
-`withAccess` throws at construction when `opts.getUserId` is omitted. The
-previous default trusted the `x-user-id` request header, which any
-unauthenticated client can spoof with `curl -H 'X-User-Id: admin'`. Wire it
-from your auth library (NextAuth `auth()`, Clerk `auth()`, cookie session, JWT).
+<Callout tone="warning" title="GetUserId is required and identity never comes from headers">
+`withIamAccess` throws at construction when `opts.getUserId` is omitted: `[@gentleduck/iam:next] opts.getUserId is required - deriving identity from request headers is unsafe. Wire it from your auth middleware (cookie session, JWT, etc.).` Before 2.1.0 the default trusted the `x-user-id` request header, which any unauthenticated client can forge with `curl -H 'X-User-Id: admin'`. The test `throws at construction when getUserId is omitted` pins the current behaviour. Derive the subject from NextAuth `auth()`, Clerk, a verified JWT, or your own cookie session.
 </Callout>
 
-<Callout type="info">
-`withAccess()` only auto-binds `params.id`. If your route uses `params.postId` or another
-name, keep the wrapper for coarse route gating and run a deeper `engine.can()` /
-`engine.check()` inside the handler once you have the real instance identifier.
-</Callout>
+### Handler errors are not yours
 
----
+The wrapper returns `handler(req, ctx)` without awaiting it, so a rejection from your handler is **not** routed through `onError` — it propagates to Next.js and becomes the framework's error response. `onError` covers only the wrapper's own work: awaiting `ctx.params`, calling `getEnvironment`, and calling `engine.can()`.
 
-## Server component checks
+## `checkIamAccess`
 
-Check a permission inside a React Server Component or Server Action:
+A positional wrapper over `engine.can()` for server components and server actions.
 
-```typescript
-import { checkAccess } from '@gentleduck/iam/server/next'
+```ts
+export async function checkIamAccess<
+  TAction extends string = string,
+  TResource extends string = string,
+  TRole extends string = string,
+  TScope extends string = string,
+>(
+  engine: IamEngine<TAction, TResource, TRole, TScope>,
+  subjectId: string,
+  action: TAction,
+  resourceType: TResource,
+  resourceId?: string,
+  scope?: TScope,
+): Promise<boolean>
+```
+
+It builds `{ type: resourceType, id: resourceId, attributes: {} }` and passes `undefined` for the environment. Any rule keyed on `environment.userAgent`, `environment.ip` or a custom key therefore reads as a non-match here — only `environment.now`, which the engine injects when the environment is absent, is available. Call `engine.can()` directly with an environment you built when a rule needs one, or when it needs real resource attributes.
+
+```tsx
+// app/posts/[id]/page.tsx
+import { checkIamAccess } from '@gentleduck/iam/server/next'
 import { engine } from '@/lib/engine'
 
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const canDelete = await checkAccess(engine, userId, 'delete', 'post', id)
-  const canEdit = await checkAccess(engine, userId, 'update', 'post', id)
+  const userId = (await auth())?.user?.id ?? ''
+  const [canEdit, canDelete] = await Promise.all([
+    checkIamAccess(engine, userId, 'update', 'post', id),
+    checkIamAccess(engine, userId, 'delete', 'post', id),
+  ])
 
   return (
     <article>
-      <h1>Post {id}</h1>
-      {canEdit && <EditButton />}
-      {canDelete && <DeleteButton />}
+      {canEdit ? <EditButton id={id} /> : null}
+      {canDelete ? <DeleteButton id={id} /> : null}
     </article>
   )
 }
 ```
 
-`checkAccess` is a thin wrapper around `engine.can()` with positional args matching common Next.js patterns (subjectId, action, resourceType, resourceId?, scope?).
+An empty `userId` returns `false` rather than throwing, because `engine.can()` rejects a subject id that is not a string, is empty, or exceeds 1024 characters.
 
----
+## `getIamPermissions`
 
-## Permission map generation
+Builds a permission map for client hydration. It is `engine.permissions(subjectId, checks)` with the argument order kept short; note it takes **no** environment argument, unlike `generateIamPermissionMap` in the generic module.
 
-Generate a `PermissionMap` on the server and pass it to the client for hydration:
+```ts
+export async function getIamPermissions<
+  TAction extends string = string,
+  TResource extends string = string,
+  TRole extends string = string,
+  TScope extends string = string,
+>(
+  engine: IamEngine<TAction, TResource, TRole, TScope>,
+  subjectId: string,
+  checks: readonly IamClient.IPermissionCheck<TAction, TResource, TScope>[],
+): Promise<IamClient.PermissionMap<TAction, TResource, TScope>>
+```
 
-```typescript
-import { getPermissions } from '@gentleduck/iam/server/next'
+```tsx
+// app/layout.tsx
+import { getIamPermissions } from '@gentleduck/iam/server/next'
 import { engine } from '@/lib/engine'
+// export const { AccessProvider } = createIamAccessControl(React) — see client/react
 import { AccessProvider } from '@/lib/access-client'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth()
-  const userId = session?.user?.id
-
+  const userId = (await auth())?.user?.id
   const permissions = userId
-    ? await getPermissions(engine, userId, [
+    ? await getIamPermissions(engine, userId, [
         { action: 'create', resource: 'post' },
         { action: 'delete', resource: 'post' },
-        { action: 'manage', resource: 'team' },
-        { action: 'read', resource: 'analytics' },
+        { action: 'manage', resource: 'team', scope: 'org-acme' },
       ])
     : {}
 
   return (
-    <html>
+    <html lang="en">
       <body>
         <AccessProvider permissions={permissions}>{children}</AccessProvider>
       </body>
@@ -119,118 +262,169 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 }
 ```
 
-See [client/react](/duck-iam/integrations/client/react) for the consuming side.
+The result holds only the keys you asked for, so consume it as `IamClient.PartialPermissionMap` on the client. `engine.permissions()` throws when `subjectId` is empty or longer than 1024 characters or when the batch exceeds 1024 checks. Key format, escaping, and staleness are on the [PermissionMap reference](/duck-iam/integrations/client/permission-map); the consuming side is [client/react](/duck-iam/integrations/client/react).
 
----
+## `createIamNextMiddleware`
 
-## Edge middleware
+Builds an `async (req) => Response | null` for `middleware.ts`. `null` means "not my problem, carry on".
 
-Protect routes at the edge before they reach application code:
+```ts
+export function createIamNextMiddleware<
+  TAction extends string = string,
+  TResource extends string = string,
+  TRole extends string = string,
+  TScope extends string = string,
+>(
+  engine: IamEngine<TAction, TResource, TRole, TScope>,
+  opts: IamNext.IMiddlewareOptions<TAction, TResource, TScope>,
+): (req: Request) => Promise<Response | null>
+```
+
+| Option | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `rules` | `Array<{ pattern, resource, action?, scope? }>` | yes | Checked in order; the **first** match wins and the rest are ignored. |
+| `getUserId` | `(req) => string \| null \| Promise<string \| null>` | yes | No default. There is no header fallback. |
+| `onError` | `(err, req) => Response` | no | Default `500 { error: 'Internal server error' }`. |
+
+Rule fields:
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `pattern` | `string \| RegExp` | yes | A string is a `pathname.startsWith(pattern)` prefix test; a RegExp is `pattern.test(pathname)`. |
+| `resource` | `TResource` | yes | Resource type for the check. No resource id is ever passed. |
+| `action` | `TAction` | no | Falls back to `iamActionForMethod(req.method)`; an unmapped method yields the reserved refusal token, **not** `'read'`. |
+| `scope` | `TScope` | no | Passed straight to `engine.can()`. |
 
 ```ts
 // middleware.ts
-import { createNextMiddleware } from '@gentleduck/iam/server/next'
-import { engine } from '@/lib/engine'
 import { NextResponse } from 'next/server'
+import { createIamNextMiddleware } from '@gentleduck/iam/server/next'
+import { engine } from '@/lib/engine'
+import { getUserId } from '@/lib/subject'
 
-const checkAccess = createNextMiddleware(engine, {
-  // SEC-101: derive identity from a verified source - never trust a raw
-  // header. Cookie session, JWT, or your auth library's session helper.
-  getUserId: async (req) => {
-    const session = await getServerSession(req)
-    return session?.user?.id ?? null
-  },
+const check = createIamNextMiddleware(engine, {
+  getUserId,
   rules: [
     { pattern: '/api/admin', resource: 'admin', action: 'manage' },
-    { pattern: '/api/posts', resource: 'post' }, // action inferred from HTTP method
-    { pattern: /^\/api\/billing/, resource: 'billing', scope: 'admin' },
+    { pattern: /^\/api\/billing/, resource: 'billing', scope: 'org-acme' },
+    { pattern: '/api/posts', resource: 'post' }, // action from the HTTP method
   ],
 })
 
 export async function middleware(req: Request) {
-  const denied = await checkAccess(req)
-  if (denied) return denied // 401 or 403 Response
-  return NextResponse.next()
+  return (await check(req)) ?? NextResponse.next()
 }
 
-export const config = {
-  matcher: ['/api/:path*'],
-}
+export const config = { matcher: ['/api/:path*'] }
 ```
 
-When no rule matches a request path, the middleware returns `null` and the request passes through.
+Order matters, because `rules.find()` stops at the first hit. A broad `'/api'` rule placed first shadows every narrower rule after it.
 
-### Rule patterns
+A string `pattern` is a **prefix** test (`path.startsWith`), not a substring test. Under substring matching `/admin/public-report` would match a `/public` rule listed first and be authorized as `public`. The consequence of prefix matching is that a path merely *containing* a pattern mid-string — `/notes/admin-draft` against `/admin` — matches nothing, and no rule means `return null`: the request passes through with no authorization call at all. A rule list is opt-in.
 
-- **String pattern** - simple prefix match (`/api/posts` matches `/api/posts`, `/api/posts/42`, `/api/posts/foo/bar`)
-- **RegExp pattern** - full regex test against `pathname` (use for stricter matching, optional segments, glob-like behavior)
+### Path refusals, before rule matching
 
----
+Two checks run before `rules.find()`, and both answer `onDenied`:
 
-## Comparing the four entry points
+1. `iamPathIsAmbiguous(url.pathname)` — refused **before** canonicalisation. `/admin/..%2fpublic` keeps its `%2f` through `new URL()`, so a canonicalising middleware resolved the `..`, matched a `/public` rule and allowed, while Next's own router decoded the escape into a path segment and served `/admin`.
+2. After `iamNormalizePathname`, `path.includes('%')` — the double-encoding residue check. Without it, `/posts/%252e%252e/admin` was checked as `posts` while routing to `/admin`, or matched no rule at all and passed through unauthorized.
 
-| Helper | Where it runs | Granularity |
+Normalisation itself matters for a third reason: `//admin` and `/%61dmin` both survive `new URL()` and would skip a `/admin` prefix rule while still routing to `/admin`.
+
+`createIamNextMiddleware` **does** pass an environment. Its `getEnvironment` defaults to `iamExtractEnvironment({ headers, method, url })`, the same as `withIamAccess`. This was once the one integration that passed nothing at all, so a rule keyed on `environment.userAgent` was inert exactly where a Next app puts its edge checks.
+
+<Callout tone="info" title="The middleware is not a cache-free gate">
+`createIamNextMiddleware` calls `engine.can()`, which resolves the subject through your adapter exactly like the route-handler path. On the Edge runtime that means your adapter must be edge-compatible (memory, HTTP, or an edge-capable driver). It is the earliest gate available, not a cheaper one.
+</Callout>
+
+## Error mapping
+
+| Situation | Layer | Response |
 | --- | --- | --- |
-| `createNextMiddleware` | Edge (before handler) | Route-shape gating |
-| `withAccess` | Server (route handler) | Route-shape + resource ID |
-| `checkAccess` | Server (RSC, Server Action) | Single check, full control |
-| `getPermissions` | Server (Layout, RSC) | Batch generation for hydration |
+| the path is ambiguous or holds encoding residue | middleware | `onDenied`, default `403 { error: 'Forbidden' }` |
+| no rule matches | middleware | `null`; the request continues, unauthorized |
+| `getUserId` returns a non-string, `''`, or a blank string | middleware, wrapper | `401`. Fixed in the wrapper; `onUnauthorized` in the middleware |
+| `engine.can()` returns `false` | middleware, wrapper | `403`. Fixed in the wrapper; `onDenied` in the middleware |
+| any extractor throws, `getUserId` included | middleware, wrapper | `onError`, default 500 |
+| `engine.can()` rejects | middleware, wrapper | `onError`, default 500 |
+| the wrapped handler throws | wrapper | not caught; Next.js reports it |
 
-`createNextMiddleware()` is the cheapest - it runs at the edge and never touches the database adapter unless you wire one in. `withAccess()` runs in the function context with full subject resolution. `checkAccess()` and `getPermissions()` are explicit calls inside server logic.
+A blank subject id is refused by `iamIsSubjectId` at this layer, not by the engine: `engine.can` guards `length === 0`, not `trim()`, so `'   '` is a perfectly good cache key to it and any assignment stored under that key would grant its permissions.
 
----
+`getUserId` runs **inside** the try in both layers, so a throwing or rejecting one reaches `onError` rather than escaping to Next's own boundary, where it would be reported as an application error rather than an authorization one.
 
-## Options reference
+`engine.can()` does not throw on an authorisation failure: it catches adapter and policy errors, routes them to the engine's `onError` hook, and returns `false`. See [engine methods](/duck-iam/advanced/engine/methods).
 
-### `withAccess` options
+## Forwarded-IP normalisation
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `getUserId` | `(req) -> string or null or Promise` | **required** (SEC-101) | Extract the subject ID; constructor throws when omitted |
-| `getEnvironment` | `(req) -> Environment` | IP + user agent + timestamp | Extract environment context |
-| `scope` | `string` | `undefined` | Fixed scope for this handler |
-| `onError` | `(err, req) -> Response` | 500 JSON | Custom error handler |
+`withIamAccess` and `createIamNextMiddleware` both default `getEnvironment` to `iamExtractEnvironment({ headers, method, url })`, which leaves **`environment.ip` undefined**. The forwarded headers are handed over, but the extractor declines to read them without `trustProxy`: a fetch `Request` has no socket peer to compare against, so with nothing in front of the app they are headers the client sets itself. Measured against real servers, Next echoed a plain `X-Forwarded-For: 10.0.0.1` into `environment.ip` before this changed, and a header alone satisfied an IP-conditioned admin grant.
 
-### `createNextMiddleware` options
+A condition on `environment.ip` on a default wiring reads as a **non-match**, not an error: a deny rule keyed on it never fires, and the request is allowed, silently.
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `rules` | `Array<Rule>` | -- | Route rules. Required. |
-| `getUserId` | `(req) -> string or null or Promise` | -- | Extract the subject ID. Required. |
-| `onError` | `(err, req) -> Response` | 500 JSON | Custom error handler |
+Opt in only when something in front of the app overwrites those headers on every request:
 
-### Rule format
+```ts
+getEnvironment: (req) =>
+  iamExtractEnvironment({ headers: req.headers, method: req.method, url: req.url }, { trustProxy: true })
+```
 
-| Field | Type | Required | Description |
-| --- | --- | --- | --- |
-| `pattern` | `string or RegExp` | yes | String prefix match or regex pattern |
-| `resource` | `string` | yes | Resource type for matched routes |
-| `action` | `string` | no | Fixed action (defaults to HTTP method map) |
-| `scope` | `string` | no | Required scope for matched routes |
+Under `trustProxy` the chain is the leftmost `x-forwarded-for` hop, then `x-real-ip`, each normalised: reject the whole header above 4096 characters, take the text before the first comma, trim, reject if blank or above 256. The full decision path is on the [generic helpers page](/duck-iam/integrations/server/generic).
 
----
+<Callout tone="warning" title="On Vercel, name the header you trust">
+The platform rewrites `x-forwarded-for` and also exposes `x-vercel-forwarded-for`. Behind your own chain of proxies, count from the right: the leftmost entry is whatever the outermost proxy was handed, including a value the client invented. Pass a custom `getEnvironment` in either case.
+</Callout>
+
+```ts
+export const GET = withIamAccess(engine, 'read', 'report', handler, {
+  getUserId,
+  getEnvironment: (req) => ({
+    ip: req.headers.get('x-vercel-forwarded-for') ?? undefined,
+    userAgent: req.headers.get('user-agent') ?? undefined,
+    timestamp: Date.now(),
+  }),
+})
+```
 
 ## Admin route handlers
 
-`createAdminHandlers` returns pre-bound Route Handlers for admin CRUD. The `authorize` callback is **required** - the factory throws if it's missing.
+`createIamAdminHandlers` returns six pre-bound app-router handlers.
 
 ```ts
-// app/api/admin/policies/route.ts
-import { createAdminHandlers } from '@gentleduck/iam/server/next'
-import { engine } from '@/lib/engine'
-
-const h = createAdminHandlers(engine, {
-  authorize: async (req) => {
-    const session = await getSession(req)
-    return session?.user?.role === 'platform-admin'
-  },
-})
-
-export const GET = h.listPolicies
-export const PUT = h.savePolicy
+export function createIamAdminHandlers<
+  TAction extends string = string,
+  TResource extends string = string,
+  TRole extends string = string,
+  TScope extends string = string,
+>(
+  engine: IamEngine<TAction, TResource, TRole, TScope>,
+  opts: IamNext.IAdminOptions,
+): {
+  listPolicies: RouteHandler
+  listRoles: RouteHandler
+  savePolicy: RouteHandler
+  saveRole: RouteHandler
+  assignRole: RouteHandler
+  revokeRole: RouteHandler
+}
 ```
 
 ```ts
+// app/api/admin/handlers.ts
+import { createIamAdminHandlers } from '@gentleduck/iam/server/next'
+import { engine } from '@/lib/engine'
+
+export const h = createIamAdminHandlers(engine, {
+  authorize: async (req) => (await getSession(req))?.user?.role === 'platform-admin',
+  onAdminMutation: (event) => auditLog.write(event),
+  redactPath: (p) => p.replace(/\/[^/]+$/, '/:id'),
+})
+```
+
+```ts
+// app/api/admin/policies/route.ts
+export const GET = h.listPolicies
+export const PUT = h.savePolicy
+
 // app/api/admin/subjects/[id]/roles/route.ts
 export const POST = h.assignRole
 
@@ -238,57 +432,93 @@ export const POST = h.assignRole
 export const DELETE = h.revokeRole
 ```
 
-Every handler runs `authorize(req)` first; falsy -> `401`. Errors route through optional `onError(err, req)`.
+| Handler | Engine call | Audit `action` / `target` | `targetId` |
+| --- | --- | --- | --- |
+| `listPolicies` | `admin.listPolicies()` | none (reads never audit) | — |
+| `listRoles` | `admin.listRoles()` | none | — |
+| `savePolicy` | `admin.savePolicy(await req.json())` | `replace` / `policy` | `undefined` |
+| `saveRole` | `admin.saveRole(await req.json())` | `replace` / `role` | `undefined` |
+| `assignRole` | `admin.assignRole(params.id, body.roleId, body.scope)` | `create` / `role-assignment` | `params.id` |
+| `revokeRole` | `admin.revokeRole(params.id, params.roleId)` | `delete` / `role-assignment` | `params.id` |
 
-Available handlers: `listPolicies`, `listRoles`, `savePolicy`, `saveRole`, `assignRole`, `revokeRole`.
+`event.path` is `new URL(req.url).pathname`, falling back to the raw `req.url` when the URL cannot be parsed. Route params are resolved before the audit wrapper runs, so a rejecting `ctx.params` produces the `onError` response and no audit event.
 
-### CSRF protection (default-on)
+### Options
 
-Mutation handlers (`savePolicy`, `saveRole`, `assignRole`, `revokeRole`) run
-a `Sec-Fetch-Site` check by default (SEC-103 / CAVEAT-2). Browsers populate
-the header automatically; cross-site form posts are rejected with 403,
-same-site / same-origin requests pass. Non-browser callers (no header) pass -
-they must be gated by bearer / mTLS.
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `authorize` | `(req) => unknown \| Promise<unknown>` | **required** | Runs on every handler, read and write. A falsy return (`false`, `0`, `''`, `null`, `undefined`, `NaN`) is 401; a throw is 500. Return the actor itself, not `true` — `true` authorizes and records `actor: undefined` with a one-time `console.warn`. |
+| `csrfCheck` | `((req) => boolean) \| false` | `iamDefaultCsrfCheck` | Runs on **every** admin request, reads included. `false` disables the phase. |
+| `onUnauthorized` | `(req) => Response` | `401 { error: 'Unauthorized' }` | Replaces the falsy-`authorize` response. |
+| `onError` | `(err, req) => Response` | `500 { error: 'Internal server error' }` | Wraps a throwing `authorize`, param resolution, or handler. |
+| `onAdminMutation` | `IamAdminAudit.Hook` | none | Fire-and-forget, fires on success and failure, never on a read. |
+| `redactPath` | `(path: string) => string` | identity | Rewrites `event.path` before the hook. |
+| `onAuditHookError` | `(err, event) => void` | `console.error` | Sink for a throwing hook. |
+| `includeErrorMessage` | `boolean` | `false` | `event.error` becomes `err.message` instead of the class name. |
+
+The last four are the shared `IamAdminAudit.IOptions`; their exact semantics, the event shape, and the CSRF predicate are documented once on the [generic helpers page](/duck-iam/integrations/server/generic).
+
+<Callout tone="warning" title="authorize is mandatory">
+`createIamAdminHandlers` throws at construction when `opts.authorize` is not a function: `[@gentleduck/iam] createIamAdminHandlers requires an authorize callback.` These handlers write policies, roles, and assignments straight to the adapter, so there is no useful unauthenticated mode.
+</Callout>
+
+<Callout tone="warning" title="CSRF check is on by default">
+All six handlers — the two reads included — run `iamDefaultCsrfCheck` **before** `authorize`, rejecting browser requests whose `Sec-Fetch-Site` is `cross-site` or `cross-origin` with `403 { error: 'Forbidden (CSRF check failed)' }` and firing no audit event. That response is fixed and not covered by `onUnauthorized` or `onError`. A predicate that throws is also a 403. Requests with no such header (curl, server-to-server) pass and must be gated by bearer or mTLS auth inside `authorize`. A one-time `console.info` names the change when you did not pass `csrfCheck` explicitly.
+</Callout>
+
+<Callout tone="warning" title="DELETE /subjects/:id/roles/:roleId is unscoped">
+`assignRole` accepts `scope` in the body; `revokeRole` does not. It calls `admin.revokeRole(subjectId, roleId)` with no third argument, and the adapter contract for an omitted scope is **remove every assignment for that role, across every scope**. One `DELETE` against a subject holding that role in five tenants removes all five. To drop a single scoped assignment, write your own route calling `engine.admin.revokeRole(subjectId, roleId, scope)`. See [scoped roles](/duck-iam/core/roles/scoped).
+</Callout>
+
+<Callout tone="info" title="Malformed JSON is a 400, not a 500">
+Next and Hono are the two adapters that parse the admin body themselves, inside the audited handler, so `iamReadJsonBody` answers `400 { error: 'Invalid request', issues: ['MALFORMED_JSON'] }` for a truncated upload or a form post carrying `Content-Type: application/json`. Before that, the `SyntaxError` escaped into the generic catch and became a 500 — telling a client to retry a request that can never succeed. The parser's own message is deliberately not repeated: it quotes the offending bytes, which is caller-controlled content on its way into an operator's log.
+</Callout>
+
+Rate limiting is out of scope; put it in `middleware.ts` in front of `/api/admin/`.
+
+## API reference
+
+| Export | Kind | Purpose |
+| --- | --- | --- |
+| `withIamAccess(engine, action, resourceType, handler, opts?)` | function | Route-handler wrapper; `getUserId` required |
+| `checkIamAccess(engine, subjectId, action, resourceType, resourceId?, scope?)` | function | Boolean check for server components and actions |
+| `getIamPermissions(engine, subjectId, checks)` | function | Permission map for client hydration |
+| `createIamNextMiddleware(engine, opts)` | function | `(req) => Response \| null` for `middleware.ts` |
+| `createIamAdminHandlers(engine, opts)` | function | Six pre-bound admin route handlers |
+| `IamNext.IWithAccessOptions<TScope>` | interface | `getUserId`, `getEnvironment`, `scope`, `onError` |
+| `IamNext.IMiddlewareOptions<TAction, TResource, TScope>` | interface | `rules`, `getUserId`, `getEnvironment`, `onDenied`, `onUnauthorized`, `onError` |
+| `IamNext.IAdminAuthorize` | type | `(req) => unknown \| Promise<unknown>` |
+| `IamNext.IAdminOptions` | interface | `authorize` plus `onUnauthorized`, `onError`, and `IamAdminAudit.IOptions` |
 
 ```ts
-// Default - cookie-auth admin UIs get CSRF protection with no opt-in.
-createAdminHandlers(engine, { authorize })
-
-// Server-to-server bearer/mTLS API - disable the check entirely.
-createAdminHandlers(engine, { authorize, csrfCheck: false })
-
-// Stricter - Origin allowlist.
-const ADMIN_ORIGINS = new Set(['https://admin.example.com'])
-createAdminHandlers(engine, {
-  authorize,
-  csrfCheck: (req) => ADMIN_ORIGINS.has(req.headers.get('origin') ?? ''),
-})
-```
-
-`withAccess` options conform to `IamNext.IWithAccessOptions`, `createNextMiddleware` options conform to `IamNext.IMiddlewareOptions`, and `createAdminHandlers` options conform to `IamNext.IAdminOptions` with `authorize` of shape `IamNext.IAdminAuthorize`.
-
----
-
-## Types
-
-All types live under the `Next` namespace at `@gentleduck/iam/server/next`. Type-only - zero bundle cost.
-
-- `IamNext.IWithAccessOptions` - options for `withAccess` (`getUserId`, `getEnvironment`, `scope`, `onError`).
-- `IamNext.IMiddlewareOptions` - options for `createNextMiddleware` (`rules`, `getUserId`, `onError`).
-- `IamNext.IAdminAuthorize` - signature of the required `authorize` callback for `createAdminHandlers`.
-- `IamNext.IAdminOptions` - options for `createAdminHandlers`.
-
-```typescript
 import type { IamNext } from '@gentleduck/iam/server/next'
 
 const opts: IamNext.IWithAccessOptions = {
-  getUserId: async (req) => (await auth())?.user?.id ?? null,
+  getUserId: async () => (await auth())?.user?.id ?? null,
 }
 
-const adminAuth: IamNext.IAdminAuthorize = async (req) => {
-  const session = await getSession(req)
-  return session?.user?.role === 'platform-admin'
-}
+const adminAuth: IamNext.IAdminAuthorize = async (req) =>
+  (await getSession(req))?.user?.role === 'platform-admin'
 ```
 
-Deprecated bare aliases (`IWithAccessOptions`, `IMiddlewareOptions`, `IAdminAuthorize`, `IAdminOptions`) remain for back-compat and will be removed in 3.0.
+The namespace is type-only and costs nothing at runtime.
+
+## Gotchas
+
+- `withIamAccess` binds `params.id` and nothing else. For `[postId]`, keep the wrapper as a coarse gate and call `engine.can()` inside the handler with the real identifier.
+- The wrapper's 401 and 403 bodies are fixed. If your API needs a different shape, wrap the wrapper or check with `checkIamAccess` inside the handler.
+- The middleware ignores every rule after the first match, and ignores resource ids entirely.
+- `checkIamAccess` passes no environment, so a policy reading `$environment.ip` or `$environment.userAgent` reads as a non-match there. `createIamNextMiddleware` does pass one, with `ip` left undefined like everywhere else.
+- `getIamPermissions` returns only the keys you asked for despite the `PermissionMap` return type; type the client side as `IamClient.PartialPermissionMap`.
+- `new Request(url)` resolves dot segments while constructing the URL, so a traversal written on the wire never reaches Next middleware as a traversal — it is handed `/public` and authorizes `public`, which is self-consistent and safe, while Express, Nest and the generic helper still see the raw target and refuse it. A recorded, deliberate divergence.
+- Nothing in this module ever answers 404. Every refusal it produces is 400, 401, 403 or 500.
+- Route handlers wrapped for the Edge runtime need an edge-compatible adapter. The wrapper itself has no Node dependency.
+
+## See also
+
+- [Server integrations overview](/duck-iam/integrations/server) for the shared pipeline and the cross-framework comparison
+- [Generic helpers](/duck-iam/integrations/server/generic) for `iamExtractEnvironment`, the CSRF predicate, and the audit pipeline
+- [PermissionMap reference](/duck-iam/integrations/client/permission-map) and [client/react](/duck-iam/integrations/client/react) for the hydration side
+- [Hono](/duck-iam/integrations/server/hono) for the other edge-capable wrapper
+- [Admin API](/duck-iam/advanced/engine/admin) for what the admin handlers call
+- [Engine methods](/duck-iam/advanced/engine/methods) for `can`, `check`, and `permissions`

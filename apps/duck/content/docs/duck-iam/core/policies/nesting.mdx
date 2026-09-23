@@ -1,197 +1,247 @@
 ---
-title: nesting (and / or / not)
-description: Nested condition groups via and(), or(), not(), and whenAny(). Depth limit, empty-group semantics, and composition patterns.
+title: Nesting and/or/not
+description: Nested condition groups with and(), or(), not(), and whenAny() - evaluation order, short-circuiting, the depth limit, and empty-group semantics
 section: Core
 ---
-## Default is AND
+A rule's condition tree is a group of leaves and nested groups. `When` gives you three nesting methods - `and()`, `or()`, `not()` - plus `whenAny()` on the rule for a top-level OR. Leaf operators are on [conditions](/duck-iam/core/policies/conditions).
 
-The `When` builder defaults to AND. Top-level conditions all combine with AND:
+## The three group types
 
-```typescript
-.when((w) => w
-  .attr('department', 'eq', 'engineering')
-  .attr('level', 'gte', 5)
-)
-// Both must be true
+`AccessControl.IConditionGroup` is a union of three shapes. Each builder method emits exactly one of them.
+
+| Builder | Emits | True when |
+| --- | --- | --- |
+| `when(fn)` (rule) / `buildAll()` | `{ all: [...] }` | Every child is true (AND) |
+| `whenAny(fn)` (rule) / `buildAny()` | `{ any: [...] }` | At least one child is true (OR) |
+| `and(fn)` | nested `{ all: [...] }` | Every child of the nested group is true |
+| `or(fn)` | nested `{ any: [...] }` | At least one child of the nested group is true |
+| `not(fn)` | nested `{ none: [...] }` | **No** child is true (NOR) |
+| `buildNone()` | `{ none: [...] }` | Same as `not()`, at the top level |
+
+Each of `and()`, `or()`, and `not()` constructs a fresh `When`, runs your callback against it, and pushes the resulting group into the parent as a **single item**. The parent's own conjunction is unaffected: a group is just one more child.
+
+<Callout tone="warning" title="not() is NOR, not a per-child negation">
+  `w.not((n) => n.a().b())` builds `none: [a, b]`, which is true only when **both** `a` and `b` are false - that is, `NOT (a OR b)`, not `NOT a OR NOT b`. Two separate `not()` calls (`w.not(x).not(y)`) are `NOT x AND NOT y`, which for this shape happens to be the same thing. If you want `NOT a OR NOT b`, write `w.or((o) => o.not((n) => n.a()).not((n) => n.b()))`.
+</Callout>
+
+```ts
+import { when } from '@gentleduck/iam'
+
+when()
+  .not((n) => n.attr('status', 'eq', 'banned').attr('status', 'eq', 'suspended'))
+  .buildAll()
+// {
+//   all: [
+//     { none: [
+//       { field: 'subject.attributes.status', operator: 'eq', value: 'banned' },
+//       { field: 'subject.attributes.status', operator: 'eq', value: 'suspended' },
+//     ] },
+//   ],
+// }
 ```
 
-Use `and()`, `or()`, and `not()` for nested groups.
+## Evaluation order and short-circuiting
 
----
+`evalConditionGroup()` walks children in the order the builder appended them and stops as soon as the answer is known: `all` uses `Array.prototype.every` (stops at the first `false`), `any` uses `some` (stops at the first `true`), and `none` is `!some` (also stops at the first `true`).
 
-## Group types
+<MermaidDiagram chart={`flowchart TD
+    G["group at depth d"] --> D{"d >= 10?"}
+    D -- "yes" --> FC["throw IamConditionGroupError('depth')"]
+    D -- "no" --> K{"group kind"}
+    K -- "all" --> A["child 1, child 2, ... in insertion order"]
+    A --> A1{"child false?"}
+    A1 -- "yes" --> AF["stop, return false"]
+    A1 -- "no, list exhausted" --> AT["return true"]
+    K -- "any" --> B["child 1, child 2, ... in insertion order"]
+    B --> B1{"child true?"}
+    B1 -- "yes" --> BT["stop, return true"]
+    B1 -- "no, list exhausted" --> BF["return false"]
+    K -- "none" --> C["child 1, child 2, ... in insertion order"]
+    C --> C1{"child true?"}
+    C1 -- "yes" --> CF["stop, return false"]
+    C1 -- "no, list exhausted" --> CT["return true"]
+    K -- "empty object" --> U["return true (no conditions)"]
+    K -- "unrecognised keys" --> X["throw IamConditionGroupError('unknown-keys')"]`} />
 
-<MermaidDiagram chart={`flowchart LR
-    subgraph AND_Group["all (AND) -- every child must pass"]
-        direction LR
-        AND_ROOT["all"] --> AND_C1["dept eq 'eng': PASS"]
-        AND_ROOT --> AND_C2["level gte 5: PASS"]
-        AND_ROOT --> AND_C3["status neq 'banned': PASS"]
-        AND_C1 --> AND_RESULT["PASS"]
-        AND_C2 --> AND_RESULT
-        AND_C3 --> AND_RESULT
-    end
+Four consequences of the `D`, `A1`/`B1`/`C1`, `U`, and `X` nodes:
 
-    subgraph OR_Group["any (OR) -- at least one must pass"]
-        direction LR
-        OR_ROOT["any"] --> OR_C1["role 'admin': FAIL"]
-        OR_ROOT --> OR_C2["isOwner: PASS"]
-        OR_C2 --> OR_RESULT["PASS"]
-    end
+- **Key precedence is `all` > `any` > `none`, and extra keys are ignored.** `{ all: [], any: [somethingFalse] }` evaluates the `all` and returns `true`. The validator reports a multi-key group; the evaluator does not.
+- **Order is yours to choose.** Put the cheapest and most selective check first. A leaf that resolves a subject attribute costs a cached path split plus a property walk; a `matches` leaf may compile a regex. In an `all` group, a leading `w.role('admin')` skips everything after it for non-admins.
+- **A short-circuited branch never throws.** The `matches` operator throws `IamRegexInputTooLargeError` on an input over 2048 characters (see [conditions](/duck-iam/core/policies/conditions#regex-safety-matches)). If an earlier sibling in the same `all` group already returned `false`, the `matches` leaf is never reached and the policy is not dropped: `{ all: [falseLeaf, oversizeMatches] }` returns `false`, while `{ all: [oversizeMatches] }` throws.
+- **Only a literally empty object is unconditional.** `{}` returns `true`. A group carrying keys the evaluator does not recognise - a typo'd `all`, a hand-edited store row - throws `IamConditionGroupError('unknown-keys')` naming the keys it saw. Reading it as "no conditions" would turn a conditional allow into an unconditional one; answering `false` would retire a deny just as silently. An array as a group is read structurally: `[]` has no keys and returns `true`, a non-empty array throws with its numeric indices named. `null`, `undefined` and primitives throw a plain `TypeError` (`'all' in undefined` raises before any branch), which is still Indeterminate to every caller - so do not match on the error class.
 
-    subgraph NOT_Group["none (NOT) -- every child must fail"]
-        direction LR
-        NOT_ROOT["none"] --> NOT_C1["status 'banned': false"]
-        NOT_ROOT --> NOT_C2["status 'suspended': false"]
-        NOT_C1 --> NOT_RESULT["PASS (none true)"]
-        NOT_C2 --> NOT_RESULT
-    end`} />
+Groups are pure functions of the request; nothing is memoised between children, so writing the same leaf twice costs twice.
 
----
+## Composing a real tree
 
-## OR - any condition must be true
+```ts
+import { defineRule } from '@gentleduck/iam'
 
-```typescript
-.when((w) => w
-  .or((w) => w
-    .role('admin')
-    .isOwner(),
-  ),
-)
-// Allowed if the subject is an admin OR the owner
-```
-
----
-
-## AND - all conditions must be true (explicit nesting)
-
-```typescript
-.when((w) => w
-  .and((w) => w
-    .attr('department', 'eq', 'engineering')
-    .attr('level', 'gte', 5),
-  ),
-)
-// Allowed if subject is in engineering AND level >= 5
-```
-
-Top-level conditions are already AND'd, so `.and(...)` is mainly useful inside other groups for clarity.
-
----
-
-## NOT - none of the conditions must be true
-
-```typescript
-.when((w) => w
-  .not((w) => w
-    .attr('status', 'eq', 'banned')
-    .attr('status', 'eq', 'suspended'),
-  ),
-)
-// Allowed if subject is NOT banned AND NOT suspended
-```
-
-`not()` is `none` semantics - every child must be false.
-
----
-
-## Composing nested groups
-
-```typescript
-const complexRule = defineRule('complex-access')
+const complexAccess = defineRule('complex-access')
   .allow()
   .on('update')
   .of('post')
-  .when((w) => w
-    // Must not be banned
-    .not((w) => w.attr('status', 'eq', 'banned'))
-    // AND must satisfy one of these
-    .or((w) => w
-      .role('admin')
-      .and((w) => w
-        .isOwner()
-        .resourceAttr('status', 'neq', 'locked'),
+  .when((w) =>
+    w
+      // must not be banned
+      .not((n) => n.attr('status', 'eq', 'banned'))
+      // AND must satisfy one of these
+      .or((o) =>
+        o
+          .role('admin')
+          .and((a) => a.isOwner().resourceAttr('locked', 'neq', true)),
       ),
-    ),
   )
   .build()
-
-// Logic: NOT banned AND (admin OR (owner AND post not locked))
 ```
 
-Evaluation tree:
+Read as: `NOT banned AND (admin OR (owner AND post not locked))`. The exact object `build()` produces:
 
-<MermaidDiagram chart={`flowchart TD
-    ROOT["all (AND)"] --> NOT["none (NOT)"]
-    ROOT --> OR["any (OR)"]
+```json
+{
+  "all": [
+    { "none": [{ "field": "subject.attributes.status", "operator": "eq", "value": "banned" }] },
+    {
+      "any": [
+        { "field": "subject.roles", "operator": "contains", "value": "admin" },
+        {
+          "all": [
+            { "field": "resource.attributes.ownerId", "operator": "eq", "value": "$subject.id" },
+            { "field": "resource.attributes.locked", "operator": "neq", "value": true }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
 
-    NOT --> BANNED["status eq 'banned'"]
-    BANNED --> BAN_RESULT{"User banned?"}
-    BAN_RESULT -- "Yes" --> BAN_TRUE["Condition: true"]
-    BAN_RESULT -- "No" --> BAN_FALSE["Condition: false"]
-    BAN_TRUE --> NOT_FAIL["none: FAIL (child was true)"]
-    BAN_FALSE --> NOT_PASS["none: PASS (child was false)"]
+The chain is three groups deep: the `when()` root `all`, then `none` and `any` as siblings under it, then the inner `all`. Leaves never count toward the depth budget - only groups do.
 
-    OR --> ADMIN["role contains 'admin'"]
-    OR --> AND["all (AND)"]
+`isOwner()` emitted `resource.attributes.ownerId eq '$subject.id'`; that `$` value is resolved against the request at evaluation time, not at build time. See [`$`-variable references](/duck-iam/core/policies/dollar-variables).
 
-    AND --> OWNER["ownerId eq subject.id"]
-    AND --> LOCKED["status neq 'locked'"]
+## whenAny() versus a nested or()
 
-    ADMIN --> ADMIN_CHECK{"Is admin?"}
-    ADMIN_CHECK -- "Yes" --> OR_PASS1["any: PASS"]
-    ADMIN_CHECK -- "No" --> CHECK_AND["Check AND group"]
+`when()` and `whenAny()` set the **root** group kind; `or()` sets a nested one.
 
-    OWNER --> OWNER_CHECK{"Is owner?"}
-    LOCKED --> LOCKED_CHECK{"Post unlocked?"}
-
-    OWNER_CHECK -- "Yes" --> AND_PART1["PASS"]
-    LOCKED_CHECK -- "Yes" --> AND_PART2["PASS"]
-    AND_PART1 --> AND_RESULT["all: PASS"]
-    AND_PART2 --> AND_RESULT
-    AND_RESULT --> OR_PASS2["any: PASS"]`} />
-
----
-
-## Depth limit
-
-Nesting caps at **10 levels**. Past that the condition evaluates to `false` (fail closed). This protects against accidental infinite recursion or stack overflow from generated rules.
-
-If you genuinely need more than 10 levels of nesting, refactor - split logic into separate policies and let the [combining algorithm](/duck-iam/core/policies/combining-algorithms) compose them.
-
----
-
-## Empty condition groups
-
-Empty arrays follow standard logic:
-
-| Group | Semantics |
-| --- | --- |
-| `{ all: [] }` | `true` (vacuous truth: zero conditions all satisfied) |
-| `{ any: [] }` | `false` (no conditions to satisfy) |
-| `{ none: [] }` | `true` (no conditions violated) |
-
-This matches mathematical logic and SQL conventions. An empty `when()` block is equivalent to no `when()` at all - the rule matches unconditionally.
-
----
-
-## whenAny for top-level OR
-
-`whenAny()` makes the top level OR instead of AND:
-
-```typescript
-const rule = defineRule('flexible-access')
+```ts
+// Root is OR: public post, or admin, or owner.
+defineRule('flexible-read')
   .allow()
   .on('read')
   .of('post')
-  .whenAny((w) => w
-    .resourceAttr('visibility', 'eq', 'public')
-    .role('admin')
-    .isOwner(),
-  )
+  .whenAny((w) => w.resourceAttr('visibility', 'eq', 'public').role('admin').isOwner())
   .build()
+// conditions: { any: [ ... ] }
 
-// Allowed if the post is public OR subject is admin OR subject is owner
+// Root is AND with one OR branch: in-hours AND (admin OR owner).
+defineRule('scoped-update')
+  .allow()
+  .on('update')
+  .of('post')
+  .when((w) => w.env('hour', 'gte', 9).or((o) => o.role('admin').isOwner()))
+  .build()
+// conditions: { all: [ envLeaf, { any: [ ... ] } ] }
 ```
 
-Use `whenAny()` when the **whole rule** is one top-level OR expression. Use nested `.or()` groups when the OR logic is only one branch inside a larger AND-shaped rule. The difference is mostly readability.
+`when()` and `whenAny()` **accumulate**: a second call wraps the existing group and the new one in `{ all: [previous, next] }`, so the two are ANDed rather than replaced. That costs one level of depth per extra call. When a rule needs both a hard requirement and an alternation, prefer one `when()` with a nested `or()`, as in `scoped-update` - it reads better and stays one level shallower.
+
+## Depth limit
+
+`MAX_CONDITION_DEPTH` is `10`. The evaluator counts the root group as depth `0` and throws `IamConditionGroupError('depth')` as soon as it reaches a group at depth `10` - that is, **the eleventh group in a chain**. It does not answer `false`: a deny rule whose group is too deep would stop denying, and a seeded policy reached `engine.can` exactly that way, allowing a banned subject. Indeterminate makes a deny-bearing policy vote deny.
+
+The validator uses the same constant, the same `>=` comparison, and the same starting depth for a rule's root group, so the two boundaries coincide: a tree the evaluator refuses is a tree `build()` already rejected.
+
+<MermaidDiagram chart={`flowchart LR
+    L1["chain of 10 groups: root all plus 9 nested"] --> OK["evaluates normally; build() accepts"]
+    L11["11 groups or deeper"] --> HARD["build() throws LIMIT_EXCEEDED; evalConditionGroup throws IamConditionGroupError"]`} />
+
+| Groups in the chain | `evalConditionGroup` | `validatePolicy` |
+| --- | --- | --- |
+| 10 | evaluates | no issues |
+| 11 | throws `IamConditionGroupError('depth')` | `LIMIT_EXCEEDED` |
+| 12 and deeper | throws | `LIMIT_EXCEEDED` |
+
+The error message is `condition nesting exceeds 10`; the validator's is `Condition nesting exceeds MAX_CONDITION_DEPTH (10)` at `rules[i].conditions...`.
+
+Role permissions start one level lower. `rolesToPolicy` wraps a permission's conditions one group down, so the validator checks them from `IAM_RBAC_CONDITION_DEPTH = 1`; anything evaluating a permission's conditions outside the generated policy has to start there too.
+
+The practical budget with the builder: `when()` is the root group, so you get **nine** further `and()` / `or()` / `not()` levels. That is far more than a readable rule needs. If you are approaching it, split the logic into separate rules and let the [combining algorithm](/duck-iam/core/policies/combining-algorithms) compose them, or into separate policies and let [cross-policy combining](/duck-iam/core/cross-policy) do it.
+
+`IAM_MAX_CONDITION_DEPTH` is exported from `@gentleduck/iam` and `@gentleduck/iam/core` if you want to assert against it.
+
+## Empty condition groups
+
+| Group | Result | Why |
+| --- | --- | --- |
+| `{ all: [] }` | `true` | `[].every(...)` is vacuously true - zero requirements, all met |
+| `{ any: [] }` | `false` | `[].some(...)` is false - no alternative can succeed |
+| `{ none: [] }` | `true` | `![].some(...)` - nothing was violated |
+| `{}` | `true` | no conditions at all |
+
+These fall out of `every` / `some` directly; there is no special case in the evaluator. The asymmetry is the contract, and the builder relies on it in both directions.
+
+```ts
+defineRule('x').allow().build().conditions                    // { all: [] }  - matches unconditionally
+defineRule('x').allow().when((w) => w).build().conditions     // { all: [] }  - identical object
+defineRule('x').whenAny((w) => w).build().conditions          // { any: [] }  - matches nothing
+```
+
+`{ any: [] }` is request-independently false, which is not the same as unconditional. `iamMatchesUnconditionally` - the predicate `indexPolicy` and `compileTable` use to decide whether a rule can be treated as matching without running the evaluator - answers `true` only for `{}`, an empty `all`, and an empty `none`. Skipping the evaluator for an empty `any` would turn a rule that never fires into one that always does. Two fast paths once classified this themselves, both read `{ typo: 1 }` as "no conditions", and every divergence ran prod-allows / dev-denies.
+
+The builder treats the two spellings differently for the same reason. `when((w) => w)` with nothing chained does not count as configuring the rule: an empty `all` is the *broadest* group, so `RuleBuilder.build()` refuses the rule unless something else - `allow()`, `deny()`, `on()`, `of()`, `forScope()` - set its shape. `whenAny((w) => w)` is counted unconditionally, because building an `any` list from a collection that turns out to be empty is a legitimate way to say "nobody".
+
+<Callout tone="warning" title="An empty whenAny() is a rule that matches nothing">
+  `whenAny((w) => w)` builds `{ any: [] }`, which no request satisfies. On a `deny` rule that removes the protection; on an `allow` rule it removes the grant. Neither the builder nor the validator objects, because "match nothing" is a legitimate thing to express. Use `when()` (or no condition call at all) for an unconditional rule.
+</Callout>
+
+## API reference
+
+```ts
+class When<TAction, TResource, TRole, TScope, TContext extends object = DotPath.IDefaultContext, TActiveResource extends string = string> {
+  and(fn: (w: When<TAction, TResource, TRole, TScope, TContext, TActiveResource>) => When<TAction, TResource, TRole, TScope, TContext, TActiveResource>): this
+  or(fn: (w: When<...>) => When<...>): this
+  not(fn: (w: When<...>) => When<...>): this
+  buildAll(): { readonly all: ReadonlyArray<AccessControl.ICondition | AccessControl.IConditionGroup> }
+  buildAny(): { readonly any: ReadonlyArray<AccessControl.ICondition | AccessControl.IConditionGroup> }
+  buildNone(): { readonly none: ReadonlyArray<AccessControl.ICondition | AccessControl.IConditionGroup> }
+}
+```
+
+The nested builder is a fresh `When` with the same type parameters, so typed paths, `TRole`, and the `TActiveResource` narrowing set by `of()` all survive into the callback.
+
+Group type:
+
+```ts
+type AccessControl.IConditionGroup = IConditionAll | IConditionAny | IConditionNone
+// { all: ReadonlyArray<ICondition | IConditionGroup> }
+// { any: ReadonlyArray<ICondition | IConditionGroup> }
+// { none: ReadonlyArray<ICondition | IConditionGroup> }
+```
+
+Runtime helpers, exported from `@gentleduck/iam` and `@gentleduck/iam/core`:
+
+| Export | Signature | Use |
+| --- | --- | --- |
+| `iamEvalConditionGroup` | `(req, group, depth?, caches?) => boolean` | Evaluate a tree outside the engine (tests, tooling) |
+| `iamMatchesUnconditionally` | `(group) => boolean` | Ask whether a group is true for every request |
+| `iamIsCondition` | `(item) => item is AccessControl.ICondition` | Distinguish a leaf from a group when walking a tree |
+| `IAM_MAX_CONDITION_DEPTH` | `10` | Assert generated trees before saving |
+
+Pass `depth` only when you are resuming a walk; the default `0` is correct for a rule's root group.
+
+## Gotchas
+
+- `not()` negates the OR of its children, not each child. Re-read the callout above before writing `not()` with more than one child.
+- Nesting cost is real but small: each group is one array iteration plus one recursive call. Depth is bounded at 10, so a worst-case tree is bounded work.
+- A second `when()` or `whenAny()` on the same rule ANDs onto the first and adds a level of depth. It does not replace it.
+- The rule's own `forScope()` condition is prepended to the root `all` group. With `whenAny()`, `build()` wraps your `any` group inside a new `all` alongside the scope leaf, which adds one level to the tree. See [rules](/duck-iam/core/policies/rules#scopes-with-forscope).
+- Nesting only decides whether one rule matches. Whether a matched rule wins is the [combining algorithm](/duck-iam/core/policies/combining-algorithms); whether the policy's verdict survives is [cross-policy combining](/duck-iam/core/cross-policy).
+
+## See also
+
+- [Conditions](/duck-iam/core/policies/conditions) - every leaf operator and its edge semantics
+- [Combining algorithms](/duck-iam/core/policies/combining-algorithms) - what happens after rules match
+- [`$`-variable references](/duck-iam/core/policies/dollar-variables) - values that resolve from the request
+- [Rules](/duck-iam/core/policies/rules) - `when()`, `whenAny()`, and `forScope()` on the rule
+- [Layered policy example](/duck-iam/core/policies/example-layered) - nesting used in a working policy set

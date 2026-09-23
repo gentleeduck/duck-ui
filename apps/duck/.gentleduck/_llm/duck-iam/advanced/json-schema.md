@@ -1,61 +1,237 @@
-duck-iam exports `IAM_POLICY_JSON_SCHEMA` - a JSON Schema (Draft 2020-12)
-document that mirrors the runtime shape of `AccessControl.IPolicy`.
-It's useful for:
+`@gentleduck/iam/core/schema` exports one thing: `POLICY_JSON_SCHEMA`, a JSON Schema
+(Draft 2020-12) document describing the wire shape of `AccessControl.IPolicy`. It exists for
+the consumers TypeScript cannot reach — editors, form generators, other languages.
 
-* **Non-TypeScript consumers** validating policies at the wire boundary.
-* **Editor tooling** (VS Code / IntelliJ schema-driven JSON completion).
-* **Admin dashboards** generating policy forms from the schema.
+The contract with the runtime validator is one-directional and exact: **anything the schema
+rejects, `validatePolicy` rejects too**, so a policy the runtime accepts always validates
+here. The converse does not hold, and the gap is exactly four checks wide (below).
 
-```typescript
-import { IAM_POLICY_JSON_SCHEMA } from '@gentleduck/iam/core/schema'
+It covers **policies only**. There is no published role schema, so a role read from JSON
+has no out-of-band gate — `validateRole` is the only one.
+
+## Import
+
+```ts
+import { POLICY_JSON_SCHEMA } from '@gentleduck/iam/core/schema'
 ```
 
-## Why hand-authored?
+Unlike the validator, `core/schema` **is** re-exported from `core/index.ts`, so
+`@gentleduck/iam` and `@gentleduck/iam/core` work too. It is an `as const` object literal
+with no runtime dependencies — around 8 KB once `JSON.stringify`d — so importing it costs
+only the bytes of the document.
 
-The schema is hand-written to mirror `core/types/access-control.ts`
-instead of derived from the TS types - the type system uses generic
-type parameters (`TAction`, `TResource`) which can't be reflected at
-runtime. The shape here uses `string` for those slots; tighten via
-`$ref` or `enum` in your own downstream schema if you know the closed
-sets.
+The export is `POLICY_JSON_SCHEMA`. There is no `IAM_`-prefixed alias.
 
-## Tightening for your app
+`as const` is a TypeScript annotation, not `Object.freeze` — the object is **not frozen at
+runtime**. A consumer holding it can mutate it in place, and every other consumer in the
+process shares that object. Spread it to specialise it; never edit it.
 
-```typescript
-import { IAM_POLICY_JSON_SCHEMA } from '@gentleduck/iam/core/schema'
+## Who consumes it
 
-const myAppSchema = {
-  ...IAM_POLICY_JSON_SCHEMA,
+Every consumer in that diagram sits *before* the server. The schema is a shape contract for
+the outside; it is not a substitute for [`validatePolicy`](/duck-iam/advanced/validation),
+which runs on the inside. Run the schema in the form layer and the validator on the server
+before persisting.
+
+### The four runtime-only checks
+
+Everything the runtime enforces is in the schema except these, and each cap in the schema
+is read from the same constant the validator uses — `maxItems` from `POLICY_LIMITS`,
+`maxLength` from `MAX_FIELD_LENGTH` and `MAX_CONDITION_VALUE_LENGTH`, the operand branches
+from the same operand-type matrix.
+
+| Runtime-only | Why JSON Schema cannot express it |
+|---|---|
+| `ERR_REGEX_CATASTROPHIC` | Catastrophic backtracking is a property of the pattern, not of its type |
+| `ERR_REGEX_INVALID` | Deciding whether a string compiles as a regex needs a regex engine |
+| `LIMIT_EXCEEDED` on the cartesian | The cap spans two sibling arrays; only the per-list caps are here |
+| `UNREACHABLE_TARGET` | Reachability is a relation between `targets` and `rules` |
+
+`priority` is a near-fifth: the runtime requires it finite, JSON has no `NaN` or `Infinity`
+literal, so `type: 'number'` is as close as the schema gets.
+
+Inside the package nothing imports `POLICY_JSON_SCHEMA` at runtime. Two test files consume
+it: `policy.schema.test.ts` keeps it in lock-step with the builders, and
+`schema-validator-agreement.test.ts` pins the one-directional contract with a hand-written
+mini evaluator over a 17-case corpus plus 4 000 randomised policies from a fixed seed, and
+asserts the runtime-only list is exactly those four.
+
+## Structure
+
+```ts
+export const POLICY_JSON_SCHEMA = {
+  $schema: 'https://json-schema.org/draft/2020-12/schema',
+  $id: 'https://gentleduck.dev/duck-iam/policy.schema.json',
+  title: 'duck-iam Policy',
+  type: 'object',
+  required: ['id', 'name', 'algorithm', 'rules'],
+  additionalProperties: false,
+  properties: { /* id, name, description, version, algorithm, rules, targets */ },
   $defs: {
-    ...IAM_POLICY_JSON_SCHEMA.$defs,
-    Action: { enum: ['create', 'read', 'update', 'delete'] },
-    Resource: { enum: ['post', 'comment', 'user'] },
+    /* condition, conditionGroup, rule,
+       plus conditionGroup1..9 and conditionList..conditionList9 */
+  },
+} as const
+```
+
+### Top level
+
+| Property | Schema | Required |
+|---|---|---|
+| `id` | `string`, `minLength: 1` | yes |
+| `name` | `string`, `minLength: 1` | yes |
+| `description` | `string` | no |
+| `version` | `number` | no |
+| `algorithm` | `enum`: `deny-overrides`, `allow-overrides`, `first-match`, `highest-priority` | yes |
+| `rules` | `array` of `#/$defs/rule`, `maxItems: POLICY_LIMITS.rulesPerPolicy` (1000) | yes |
+| `targets` | `object` with optional `actions`, `resources`, `roles` string arrays | no |
+
+`additionalProperties: false` at the top level and on `targets`, so an unknown key is a
+schema violation rather than being ignored.
+
+### `$defs.rule`
+
+| Property | Schema | Required |
+|---|---|---|
+| `id` | `string`, `minLength: 1` | yes |
+| `effect` | `enum`: `allow`, `deny` | yes |
+| `description` | `string` | no |
+| `priority` | `number` | yes |
+| `actions` | `array`, `minItems: 1`, `maxItems: 100`, string items matching `NO_CONTROL_CHARS` | yes |
+| `resources` | `array`, `minItems: 1`, `maxItems: 100`, string items matching `NO_CONTROL_CHARS` | yes |
+| `conditions` | `#/$defs/conditionGroup` | yes |
+| `metadata` | `object`, `additionalProperties: true` | no |
+
+`metadata` is the one place arbitrary keys are allowed; the rule object itself is
+`additionalProperties: false`.
+
+`NO_CONTROL_CHARS` is the pattern `^[^\u0000-\u001F\u007F]*$`. It mirrors the validator's
+`hasControlChar`, and applies to the same two lists only — not on a policy `id` or `name`, not on a rule `id`, which
+is also where the runtime does not check. The two agree by omission as well as by rule.
+
+### `$defs.conditionGroup`, the `conditionList` chain, `condition`
+
+`conditionGroup` is a `oneOf` over three single-key objects — `{ all }`, `{ any }`, and
+`{ none }`, each `additionalProperties: false` and requiring its key — so a
+`{ all: [...], any: [...] }` group is a schema violation, matching the runtime's
+`INVALID_CONDITION`.
+
+Nesting is **not** a self-recursive `$ref`. It is a finite chain generated from
+`MAX_CONDITION_DEPTH`: `conditionList` admits a `condition` or a `conditionGroup1`,
+`conditionList1` admits a `condition` or a `conditionGroup2`, and so on to
+`conditionList9`, whose items are leaves and nothing else. Level 0 keeps the historical
+unsuffixed names. A self-recursive `$ref` is what let a 40-deep tree read as schema-valid
+while the runtime truncated it; the chain makes the schema's depth bound and the
+evaluator's the same number by construction, and the agreement test asserts the chain has
+exactly `MAX_CONDITION_DEPTH` levels so a drift in the constant cannot silently re-open the
+gap.
+
+`condition` requires `field` (`string`, `minLength: 1`, `maxLength: MAX_FIELD_LENGTH`) and
+`operator`, is `additionalProperties: false`, and declares `value: {}` — then constrains it
+through an `allOf` of `if`/`then` branches:
+
+* every operator but `exists` / `not_exists` **requires** `value` (the runtime's
+  `MISSING_VALUE`);
+* `in` / `nin` / `subset_of` / `superset_of` take an array, `gt` / `gte` / `lt` / `lte` a
+  number, `starts_with` / `ends_with` / `matches` a string, `before` / `after` a number or
+  string — the runtime's operand-type matrix, restated;
+* a string operand starting with `$` satisfies every operand type, because it resolves from
+  the request and its type is unknowable until then;
+* a string `value` is capped at `MAX_CONDITION_VALUE_LENGTH`, and so is each string element
+  of an array `value`.
+
+The operator enum is the closed 19-member set:
+
+```text
+eq  neq  gt  gte  lt  lte  in  nin  contains  not_contains
+starts_with  ends_with  matches  exists  not_exists
+subset_of  superset_of  before  after
+```
+
+That list must stay identical to `VALID_OPERATORS` in `core/validate` and to `ops` in
+`core/conditions`; the schema test asserts the count so a drift fails CI.
+
+## Why it is hand-authored
+
+`AccessControl.IPolicy<TAction, TResource, TRole>` is generic. Those parameters exist only
+at compile time and cannot be reflected into a runtime document, so the schema fills those
+slots with plain `string`. Deriving the schema from the types would either lose the
+generics or require a build step; writing it by hand keeps it a single readable literal that
+the schema test pins against the builders.
+
+"Hand-authored" stops at the caps, though. Every numeric bound and the condition-group
+chain are computed from the same constants the validator imports, so the two cannot drift
+by an edit to one of them.
+
+## Tightening it for your app
+
+If you know your closed sets of actions and resources, specialise the schema downstream.
+Build a new object rather than mutating the exported one — it is shared.
+
+```ts
+import { POLICY_JSON_SCHEMA } from '@gentleduck/iam/core/schema'
+
+const ACTIONS = ['create', 'read', 'update', 'delete'] as const
+const RESOURCES = ['post', 'comment', 'user'] as const
+
+export const appPolicySchema = {
+  ...POLICY_JSON_SCHEMA,
+  $id: 'https://my-app.example/policy.schema.json',
+  $defs: {
+    ...POLICY_JSON_SCHEMA.$defs,
+    action: { enum: [...ACTIONS, '*'] },
+    resource: { enum: [...RESOURCES, '*'] },
+    rule: {
+      ...POLICY_JSON_SCHEMA.$defs.rule,
+      properties: {
+        ...POLICY_JSON_SCHEMA.$defs.rule.properties,
+        // Keep maxItems: replacing the property drops the cap the original carried.
+        actions: { type: 'array', minItems: 1, maxItems: 100, items: { <MathMl mathml="<span class=&quot;math-error&quot;>$ref: '#/$</span>"/>defs/action' } },
+        resources: { type: 'array', minItems: 1, maxItems: 100, items: { <MathMl mathml="<span class=&quot;math-error&quot;>$ref: '#/$</span>"/>defs/resource' } },
+      },
+    },
   },
   properties: {
-    ...IAM_POLICY_JSON_SCHEMA.properties,
-    rules: {
-      type: 'array',
-      items: {
-        ...IAM_POLICY_JSON_SCHEMA.$defs.Rule,
-        properties: {
-          ...IAM_POLICY_JSON_SCHEMA.$defs.Rule.properties,
-          actions: { type: 'array', items: { $ref: '#/$defs/Action' } },
-          resources: { type: 'array', items: { $ref: '#/$defs/Resource' } },
-        },
+    ...POLICY_JSON_SCHEMA.properties,
+    targets: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        actions: { type: 'array', items: { <MathMl mathml="<span class=&quot;math-error&quot;>$ref: '#/$</span>"/>defs/action' } },
+        resources: { type: 'array', items: { <MathMl mathml="<span class=&quot;math-error&quot;>$ref: '#/$</span>"/>defs/resource' } },
+        roles: { type: 'array', items: { type: 'string' } },
       },
     },
   },
 }
 ```
 
-Now an editor or out-of-band validator that ingests `myAppSchema`
-will autocomplete + reject any action / resource outside your closed
-set.
+Overriding `$defs.rule` is enough for the rules array, because the top-level `rules`
+property already points at `#/$defs/rule`. `targets` has to be replaced explicitly since it
+is spelled inline.
+
+## Validating with a schema library
+
+Any Draft 2020-12 validator works. With Ajv:
+
+```ts
+import Ajv2020 from 'ajv/dist/2020'
+import { POLICY_JSON_SCHEMA } from '@gentleduck/iam/core/schema'
+
+const ajv = new Ajv2020({ allErrors: true })
+const check = ajv.compile(POLICY_JSON_SCHEMA)
+
+if (!check(candidate)) {
+  console.error(check.errors)
+}
+```
+
+Then still run `validatePolicy(candidate)` before persisting. The two catch different
+classes of problem and neither subsumes the other.
 
 ## Editor integration
 
-Serve the schema at a stable URL, then point your admin policy editor
-at it via `$schema`:
+Serve the document at a stable URL and point authored files at it:
 
 ```json
 {
@@ -63,32 +239,44 @@ at it via `$schema`:
   "id": "post.editor",
   "name": "Post editor",
   "algorithm": "deny-overrides",
-  "rules": [...]
+  "rules": [
+    {
+      "id": "editor-can-update",
+      "effect": "allow",
+      "priority": 10,
+      "actions": ["update"],
+      "resources": ["post"],
+      "conditions": { "all": [{ "field": "subject.roles", "operator": "contains", "value": "editor" }] }
+    }
+  ]
 }
 ```
 
-VS Code, IntelliJ, and most JSON editors give you autocomplete,
-inline docs, and red squiggles on shape mismatches for free.
+VS Code, IntelliJ, and most JSON editors give autocomplete, inline docs from the schema, and
+squiggles on shape mismatches with no further wiring.
 
-## Pair with `validatePolicy`
+## Gotchas
 
-The JSON Schema is for **external** boundaries (web editors, third-
-party tooling, hand-authored config files). The
-`validatePolicy()` runtime validator is for **internal** call sites
-that also need semantic checks (resolvable paths, cartesian limits,
-catastrophic regex rejection) that JSON Schema cannot express.
-
-The two are intentionally separate; run both when accepting policies
-from an admin dashboard - JSON Schema in the form layer, then
-`validatePolicy` on the server before persisting.
-
-## Adding fields
-
-When adding a field to `AccessControl.IPolicy`, `AccessControl.IRule`,
-or `AccessControl.ICondition`, add it here AND ensure
-[`validatePolicy`](/duck-iam/advanced/validation) covers it.
+* **Schema-valid is not engine-valid.** Regex safety, regex compilability, the per-rule
+  cartesian bound, and target reachability are outside JSON Schema's reach. Always follow
+  with `validatePolicy`.
+* **The reverse never happens.** Anything the schema rejects the validator rejects too, so
+  a green form and a refused write cannot disagree in that direction.
+* **`value: {}` is the declaration, not the constraint.** The `allOf` branches below it
+  apply the operand-type matrix and both length caps, so a 4 KB pattern or an
+  `nin: 'gold'` fails the schema as well as the validator.
+* **`conditions` is required on a rule.** An unconditional rule is `{ "all": [] }`, not an
+  omitted key — the same rule the runtime validator enforces.
+* **Nothing here validates a role.** The schema is policy-only; run `validateRole` and
+  `validateRoles` on the server for those.
+* **`additionalProperties: false` is strict.** If you extend `AccessControl.IPolicy` or
+  `IRule` in your own fork, add the field here too, and to `validatePolicy`, or your rows
+  will be rejected by both.
+* **Do not mutate the export.** It is a shared `as const` literal; spread it.
 
 ## See also
 
-* [Validation](/duck-iam/advanced/validation) - runtime validators with semantic checks.
-* [Types & namespaces](/duck-iam/types) - the typed surface of the same shapes.
+* [Validation](/duck-iam/advanced/validation) — the runtime half, with semantic checks JSON Schema cannot make.
+* [Types and namespaces](/duck-iam/types) — the TypeScript view of the same shapes.
+* [Building policies](/duck-iam/core/policies/building) — the builders the schema test pins against.
+* [Condition operators](/duck-iam/core/policies/conditions) — the semantics behind the 19-member enum.

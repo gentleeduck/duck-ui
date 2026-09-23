@@ -1,144 +1,245 @@
+Conditions are the attribute checks inside a rule. The `When` builder produces `AccessControl.ICondition` leaves (`field`, `operator`, `value`) and nested `AccessControl.IConditionGroup` trees; the engine evaluates them against the request at decision time. This page is the operator reference and covers what happens with missing, wrongly typed, and empty values.
+
+The evaluator distinguishes two failures. A field the request does not carry is a **match failure** - the operator answers `false` (or `true`, for the four negated operators). An operand the operator cannot compare against is a **refusal**: `evalCondition` throws a tagged error, the engine reports it through `hooks.onPolicyError`, and the policy becomes **Indeterminate**. The split exists because `false` is fail-closed only on an `allow` rule; on a `deny` rule it retires the deny, and inside a `none` group the negation turns it into a grant.
+
+Indeterminate is a vote, never a skip. A policy that carries any deny rule votes `deny`; an allow-only policy votes `defaultEffect`. Dropping the policy instead is what would turn a throw into an allow - padding a User-Agent past 2048 characters is enough to make a `matches` rule throw, and no validator sees request attributes. The one exception is the generated `__rbac__` policy when it has no deny rule: its rules are independent grants from separate roles, so one rotten permission abstains rather than poisoning the others.
+
 ## The When builder
 
-The `When` builder defines conditions for rules (and for `grantWhen()` on roles). Conditions added to a `When` builder combine with **AND**.
+Every method appends one leaf or group and returns `this`. Top-level conditions combine with AND when the rule uses `when()`; see [nesting](/duck-iam/core/policies/nesting) for OR / NOT and `whenAny()`.
 
-```typescript
+```ts
 .when((w) => w
   .attr('department', 'eq', 'engineering')
   .attr('level', 'gte', 5)
   .resourceAttr('classification', 'neq', 'top-secret')
 )
-// All three must be true
+// All three must hold
 ```
 
-For OR/NOT/nested logic, see [nesting and/or/not](/duck-iam/core/policies/nesting).
+### Raw check
 
-***
+`check(field, operator, value?)` is the general form. `field` is any resolvable dot-path; `value` may be omitted for unary operators:
 
-## Raw condition check
-
-`check(field, operator, value)` is the general form:
-
-```typescript
+```ts
 .when((w) => w
   .check('subject.attributes.age', 'gte', 18)
   .check('resource.attributes.rating', 'neq', 'restricted')
+  .check('resource.attributes.deletedAt', 'not_exists')
 )
 ```
 
-***
+### Shorthand operator methods
 
-## Shorthand operator methods
+| Method | Emits | Value type |
+| --- | --- | --- |
+| `eq(field, value)` | `eq` | field's type or a `$`-path |
+| `neq(field, value)` | `neq` | same |
+| `in(field, values)` | `in` | array |
+| `contains(field, value)` | `contains` | `string` |
+| `exists(field)` | `exists` | none |
+| `gt / gte / lt / lte(field, value)` | numeric compare | `number` |
+| `matches(field, regex)` | `matches` | `string` pattern |
 
-Common comparisons have direct methods:
+There is no shorthand for `nin`, `not_contains`, `starts_with`, `ends_with`, `not_exists`, `subset_of`, `superset_of`, `before`, or `after` - use `check()`.
 
-```typescript
+```ts
 .when((w) => w
-  .eq('subject.id', 'user-1')                           // field === value
-  .neq('resource.attributes.status', 'archived')        // field !== value
-  .gt('subject.attributes.age', 18)                     // field > value
-  .gte('subject.attributes.level', 5)                   // field >= value
-  .lt('resource.attributes.price', 100)                 // field < value
-  .lte('subject.attributes.risk', 3)                    // field <= value
-  .in('subject.attributes.role', ['admin', 'editor'])   // field in [values]
-  .contains('subject.roles', 'admin')                   // array/string contains
-  .exists('resource.attributes.ownerId')                // not null/undefined
-  .matches('resource.attributes.email', '^.*@company\\.com$') // regex match
+  .eq('subject.id', 'user-1')
+  .neq('resource.attributes.status', 'archived')
+  .gt('subject.attributes.age', 18)
+  .in('subject.attributes.tier', ['pro', 'enterprise'])
+  .contains('subject.roles', 'admin')
+  .exists('resource.attributes.ownerId')
+  .matches('resource.attributes.email', '^.*@company\\.com$')
 )
 ```
 
-***
+### Semantic shortcuts
 
-## Semantic shortcuts
+| Method | Emits |
+| --- | --- |
+| `role(roleId)` | `subject.roles contains roleId` |
+| `roles(...roleIds)` | `subject.roles in [roleIds]` (any overlap) |
+| `scope(id)` | `scope eq id` |
+| `scopes(...ids)` | `scope in [ids]` |
+| `isOwner(ownerField = 'resource.attributes.ownerId')` | `ownerField eq '$subject.id'` |
+| `resourceType(...types)` | `resource.type in [types]` |
+| `attr(key, op, value?)` | `subject.attributes.
 
-Domain-specific helpers for common patterns:
-
-```typescript
-.when((w) => w
-  // Role checks
-  .role('admin')                              // subject.roles contains "admin"
-  .roles('admin', 'editor')                   // subject.roles in ["admin", "editor"]
-
-  // Scope checks
-  .scope('org-1')                             // scope eq "org-1"
-  .scopes('org-1', 'org-2')                   // scope in ["org-1", "org-2"]
-
-  // Ownership check
-  .isOwner()                                  // resource.attributes.ownerId eq $subject.id
-  .isOwner('resource.attributes.createdBy')   // custom owner field
-
-  // Resource type check
-  .resourceType('post', 'comment')            // resource.type in ["post", "comment"]
-
-  // Attribute shortcuts
-  .attr('department', 'eq', 'engineering')    // subject.attributes.department
-  .resourceAttr('status', 'eq', 'published')  // resource.attributes.status
-  .env('ip', 'eq', '10.0.0.1')                // environment.ip
-)
-```
-
-**Typed dot-paths:** By default, `.attr()`, `.resourceAttr()`, `.env()`, and `.check()`
-accept any string. Pass a `context` phantom field to `defineIam()` to get full
-autocompletion and type-checked values. See the
-[type-safe config](/duck-iam/advanced/config) docs.
-
-***
+* `RF`: an invalid or missing path resolves to `null` and never throws (see "Field resolution"). No guard runs on the field side; each operator's own `typeof` test decides.
+* `RV`: only a string value starting with ``-variable references](/duck-iam/core/policies/dollar-variables).
+* `GD` is the operand-type guard. It runs at evaluation time and not only in the validator, because `validatePolicy` guards `savePolicy` and `import` while nothing guards a row that was seeded through an adapter constructor, migrated, or written by direct SQL. Both sides read the same `OPERAND_TYPES` table, so write-time and read-time cannot drift.
+* `exists` and `not_exists` are valueless and skip `GD` entirely: any `value` on them, including a `$`-reference that resolves to nothing, is ignored rather than refused.
 
 ## All condition operators
 
-| Operator | Description | Example |
+`AccessControl.Operator` has nineteen members. "Field" is the resolved left-hand side; "operand" is the resolved right-hand side. A missing field resolves to `null`. An operand of the wrong type is refused before the operator runs, so no operator ever sees one.
+
+| Operator | Operand required | Semantics | Absent field |
+| --- | --- | --- | --- |
+| `eq` | scalar | `f === v`, strict | `false`; `true` if `v` is the literal `null` |
+| `neq` | scalar | `f !== v`, strict | **`true`**; `false` if `v` is the literal `null` |
+| `gt` | number | `typeof f === 'number' && f > v` | `false` |
+| `gte` | number | `f >= v` | `false` |
+| `lt` | number | `f < v` | `false` |
+| `lte` | number | `f <= v` | `false` |
+| `in` | array of scalars | array field: any element is in `v`; scalar field: `v.includes(f)` | `false`; `true` if `v` contains `null` |
+| `nin` | array of scalars | negation of `in` | **`true`** unless `v` contains `null` |
+| `contains` | scalar | `Array.isArray(f) && f.includes(v)` - array membership, never substring search | `false` |
+| `not_contains` | scalar | `f == null` is `true`; a non-array `f` is `false`; else `!f.includes(v)` | **`true`** |
+| `starts_with` | string | `typeof f === 'string' && f.startsWith(v)` | `false` |
+| `ends_with` | string | `f.endsWith(v)` | `false` |
+| `matches` | string, not a `$`-reference | compiled regex `.test(f)` | `false` |
+| `exists` | none (valueless) | `f !== null && f !== undefined` | `false` |
+| `not_exists` | none (valueless) | `f === null \|\| f === undefined` | **`true`** |
+| `subset_of` | array of scalars | both must be arrays; `f.every((i) => v.includes(i))` | `false` |
+| `superset_of` | array of scalars | both must be arrays; `v.every((i) => f.includes(i))` | `false` |
+| `before` | number or ISO-8601 string | `toEpoch(f) < toEpoch(v)`, both finite | `false` |
+| `after` | number or ISO-8601 string | `toEpoch(f) > toEpoch(v)`, both finite | `false` |
+
+The four bold `true`s are the whole risk surface for a missing attribute. `allow if subject.attributes.tier neq 'banned'` grants to a subject that has no `tier` at all. Pair a negated operator with a presence check:
+
+```ts
+.when((w) => w
+  .exists('subject.attributes.tier')
+  .check('subject.attributes.tier', 'neq', 'banned')
+)
+```
+
+Notes per family:
+
+* **`eq`/`neq` are bare `===`/`!==`.** The `scalar` operand requirement exists because a non-scalar operand meant reference equality against a value resolved out of the request - never the same object - so `eq` was permanently false and `neq` permanently true.
+* **`contains` is array membership.** A `groups` claim arriving as the CSV string `'not-admins-really'` used to satisfy `contains 'admins'`, which is the normal shape of a JWT claim. A present non-array field now fails both `contains` and `not_contains`, so the same type confusion cannot bypass one in each direction. An absent field is a different case: an empty list contains nothing, so `not_contains` holds.
+* **`in`/`nin`/`subset_of`/`superset_of` require every operand element to be a scalar**, not just the container, because the membership check is `includes`. Object elements compare by reference and never match.
+* **`before`/`after` coerce with `toEpoch`**: numbers pass through as epoch ms, strings go through `Date.parse`, anything else is `NaN`. Both sides are checked with `Number.isFinite`, so `Infinity` fails too. Pair them with the engine-injected `$environment.now`.
+
+### What a wrong operand does
+
+| Operand | Result |
+| --- | --- |
+| The right type | the operator runs |
+| The `value` key absent on a non-valueless operator | `IamOperandTypeError` - "requires a `value` and the key is absent" |
+| A `$`-reference that resolved to `null` | `IamOperandTypeError` - "operand reference ... resolved to nothing" |
+| Any other type mismatch (`in` with a non-array, `gt` with a string, `matches` with `42`) | `IamOperandTypeError` naming the field and operator |
+| A `$`-reference on `matches` | `IamUserSourcedPatternError`, refused before resolution |
+
+A literal `value: null` is an author explicitly testing for null and still works; only a `$`-reference resolving to nothing is refused. That distinction is what fixed the canonical multi-tenant guard: `subject.attributes.tenant eq $resource.attributes.tenant` compared `null === null` and allowed a request carrying neither attribute, through the fully validated authoring path, because the validator cannot type a `$`-reference.
+
+### Operand narrowing summary
+
+* **Numeric operators** (`gt`, `gte`, `lt`, `lte`) require `typeof 'number'` on both sides. Numeric strings do not coerce; a non-number operand throws rather than returning `false`.
+* **String operators** (`starts_with`, `ends_with`, `matches`) require strings on both sides.
+* **Set operators** (`in`, `nin`, `contains`, `not_contains`, `subset_of`, `superset_of`) only see `IamPrimitives.Scalar` elements (`string | number | boolean | null`); object elements never match.
+* **Missing fields** resolve to `null`. Use `exists` / `not_exists` to test presence rather than `eq`/`neq` against `null`.
+
+## Regex safety (`matches`)
+
+`matches` is the only operator that compiles authored input, so it carries four guards. All four refuse rather than answer `false`, for the reason at the top of this page: a `false` inside a `deny` rule reads as "condition not met" and the deny stops firing.
+
+| Guard | Trigger | Refusal |
 | --- | --- | --- |
-| `eq` | Strict equality (`===`) | `w.eq('subject.id', 'user-1')` |
-| `neq` | Strict inequality (`!==`) | `w.neq('resource.attributes.status', 'deleted')` |
-| `gt` | Greater than (numbers only) | `w.gt('subject.attributes.age', 18)` |
-| `gte` | Greater than or equal (numbers only) | `w.gte('resource.attributes.priority', 5)` |
-| `lt` | Less than (numbers only) | `w.lt('resource.attributes.price', 1000)` |
-| `lte` | Less than or equal (numbers only) | `w.lte('subject.attributes.riskScore', 3)` |
-| `in` | Value is in the given array. If field is array, checks any overlap. | `w.in('subject.attributes.tier', ['pro', 'enterprise'])` |
-| `nin` | Value is NOT in the given array | `w.check('subject.attributes.status', 'nin', ['banned', 'suspended'])` |
-| `contains` | Array contains value, or string contains substring | `w.contains('subject.roles', 'admin')` |
-| `not_contains` | Array does NOT contain value, or string does NOT contain substring | `w.check('subject.attributes.tags', 'not_contains', 'blocked')` |
-| `starts_with` | String starts with the given prefix | `w.check('resource.attributes.path', 'starts_with', '/admin')` |
-| `ends_with` | String ends with the given suffix | `w.check('resource.attributes.email', 'ends_with', '@company.com')` |
-| `matches` | String matches a regex. Patterns over 512 chars return `false` (ReDoS protection). Invalid patterns return `false`. Cached in 256-entry LRU. | `w.matches('resource.attributes.slug', '^[a-z0-9-]+$')` |
-| `exists` | Field is not null and not undefined. The `value` parameter is ignored. | `w.exists('resource.attributes.publishedAt')` |
-| `not_exists` | Field is null or undefined. | `w.check('resource.attributes.deletedAt', 'not_exists')` |
-| `subset_of` | Every element in the field array exists in the value array. Both must be arrays. | `w.check('subject.attributes.permissions', 'subset_of', ['read', 'write', 'admin'])` |
-| `superset_of` | Every element in the value array exists in the field array. Both must be arrays. | `w.check('subject.roles', 'superset_of', ['viewer', 'commenter'])` |
+| No `$`-sourced patterns | the `value` begins with `$` | `IamUserSourcedPatternError`, thrown before the reference is resolved |
+| Pattern length | pattern longer than `MAX_REGEX_LENGTH` (`128`) | `IamPatternRefusedError('too-long')` |
+| ReDoS shape | `detectCatastrophicRegex` refuses it, or it is not a valid regex | `IamPatternRefusedError('uncompilable')` |
+| Input length | the resolved field string is longer than `MAX_REGEX_INPUT_LENGTH` (`2048`) | `IamRegexInputTooLargeError`, carrying `field` and `length` |
 
-***
+`detectCatastrophicRegex` is the single predicate both `getCachedRegex` and the validator run, so a pattern accepted at import time can never be refused at evaluation time or the reverse. It refuses nested quantifiers (`(a+)+`), alternation inside a quantified group (`(a|aa)+`), a backreference followed by a quantifier, a quantified group inside a lookaround, a `{n,m}` bound over 1000, more than four unbounded quantifiers, and unbounded quantifiers competing over overlapping atoms (`^a+a+$`, `.*.*`). Overlap is decided by probing each atom rather than by parsing character classes, so `[a-z]+@[a-z]+\.[a-z]+` stays accepted. At `build()` time the same refusal surfaces as `ERR_REGEX_CATASTROPHIC` (see [building policies](/duck-iam/core/policies/building#what-build-validates)).
 
-## Operator edge cases
+A thrown refusal makes the policy Indeterminate, and a policy holding any deny rule then votes `deny`. Returning `false` instead would let an attacker retire a `deny when email matches ...` rule by sending an oversize string - the deny would read as "condition not met" and the banned subject would be allowed, with nothing reported to `onPolicyError`. The error hook cannot change the vote: it is called from inside the catch that casts it, and a hook that throws is caught and latched rather than allowed to take the decision with it.
 
-* **Numeric operators** (`gt`, `gte`, `lt`, `lte`) - field and value must both be numbers. Anything else returns `false`.
-* **String operators** (`starts_with`, `ends_with`, `matches`) - field and value must both be strings. Anything else returns `false`.
-* **`in` with arrays** - when the field is an array (e.g. `subject.roles`), checks for any overlap with the value array. When the field is a scalar, checks membership.
-* **`contains` with strings vs arrays** - arrays use `Array.includes()`; strings use `String.includes()`. Other types return `false`.
-* **`subset_of` / `superset_of`** - both must be arrays. Non-arrays return `false`.
-* **Missing fields** - a path that resolves to `null` or `undefined` compares against `null` for `eq`, `gt`, etc. Use `exists` / `not_exists` to test presence.
+Compiled patterns are cached in an LRU of `REGEX_CACHE_MAX` (`256`) entries, re-inserted on hit so eviction drops the least recently used. A refused pattern never reaches `new RegExp` and is never cached. The engine passes a per-instance cache so tenants cannot evict each other; the process-wide fallback is flushed with `iamClearRegexCache()`, or with `iamFlushSharedCaches()` from `@gentleduck/iam/core/engine` to clear the path cache alongside it. See [caching](/duck-iam/advanced/engine/caching).
 
-***
+`iamEvaluateOperator(op, field, value)` calls the operator table directly and carries none of the guards above: no operand typing, no `$`-pattern refusal, and the process-wide regex cache rather than a per-Engine one. It exists for a policy linter or a condition preview. Anything deciding or *reporting* access must call `iamEvalCondition` - the explain trace once used `evaluateOperator` and consequently showed a condition as satisfied that the engine had refused.
 
 ## Field resolution
 
-Conditions reference fields using dot-notation paths resolved against the `IamRequest.IAccessRequest` at evaluation time.
-
-### Supported paths
+Fields are dot-paths resolved against the `IamRequest.IAccessRequest` at evaluation time by `resolve()` in `src/core/resolve/resolve.ts`.
 
 | Path | Resolves to |
 | --- | --- |
-| `subject.id` | The subject's ID string |
-| `subject.roles` | The subject's roles array |
-| `subject.attributes.<key>` | A subject attribute. Nest as deep as needed. |
-| `resource.type` | The resource type string |
-| `resource.id` | The resource instance ID |
+| `action` | The request action (whole-path shorthand) |
+| `scope` | The request scope, or `null` when absent |
+| `subject.id` | Subject id |
+| `subject.roles` | Effective roles array (inheritance and scoped-role enrichment applied) |
+| `subject.scopedRoles.<i>.attributes.<key>` | A per-assignment attribute. The bare `subject.scopedRoles` path resolves to `null` - it is an array of objects, which is outside `AttributeValue` |
+| `subject.attributes.<key>` | A subject attribute, any depth |
+| `resource.type` / `resource.id` | Resource type and instance id |
 | `resource.attributes.<key>` | A resource attribute |
-| `environment.<key>` | An environment value (ip, userAgent, timestamp, or custom) |
-| `action` | Shorthand for the action string on the request |
-| `scope` | Shorthand for the scope string on the request |
+| `environment.<key>` | `ip`, `userAgent`, `timestamp`, `now`, or any custom key |
 
-### Security
+Rules:
 
-The resolver only allows traversal under `subject`, `resource`, and `environment`. Access to `__proto__`, `constructor`, and `prototype` is **blocked** to prevent prototype pollution.
+* Only `subject`, `resource`, and `environment` are valid roots, plus the two shorthands. Any other root resolves to `null` and the validator warns `UNRESOLVABLE_FIELD`.
+* `__proto__`, `constructor`, and `prototype` are refused at any segment (prototype-pollution guard) and the result is memoised as invalid, so the path is rejected once rather than walked per request.
+* **The walk reads own properties only.** A plain `Reflect.get` resolved every `Object.prototype` member - `toString`, `valueOf`, `hasOwnProperty` - to a function on any object, and an `exists`-gated allow fired against a subject with no attributes at all. `exists` asks whether the request *carries* the attribute, which is an own-property question.
+* **The result is narrowed, not asserted.** The final value must be a scalar, an array of scalars, or a flat object of scalars. A `Date`, a nested object, an array of objects, or a function from a live `getSubjectAttributes` all resolve to `null`. Adapters deserialise JSON and hand the result straight through, so those shapes genuinely arrive.
+* Traversal stops at the first non-object; `undefined` becomes `null`. A bad path never throws.
+* There is no distinction between "unknown path", "key absent", "key present with `undefined`", and "key present with `null`" - all four are `null`.
+* Split paths are memoised in a 10,000-entry FIFO cache (`PATH_CACHE_MAX`), per engine instance when supplied.
 
-A bad field path doesn't throw - it resolves to `null`. The condition fails closed, evaluation continues. This keeps misconfigured rules from crashing entire requests.
+## API reference
+
+```ts
+class When<TAction, TResource, TRole, TScope, TContext extends object = DotPath.IDefaultContext, TActiveResource extends string = string> {
+  check<P extends DotPath.FlexibleDotPaths<TContext>>(field: P, op: AccessControl.Operator, value?: DotPath.FieldValue<TContext, P> | DotPath.FlexibleDollarPaths<TContext>): this
+  eq<P>(field: P, value: DotPath.FieldValue<TContext, P> | DotPath.FlexibleDollarPaths<TContext>): this
+  neq<P>(field: P, value: ...): this
+  in<P>(field: P, values: Array<DotPath.FieldValue<TContext, P> | DotPath.FlexibleDollarPaths<TContext>>): this
+  contains<P>(field: P, value: string): this
+  exists<P>(field: P): this
+  gt<P>(field: P, value: number): this
+  gte<P>(field: P, value: number): this
+  lt<P>(field: P, value: number): this
+  lte<P>(field: P, value: number): this
+  matches<P>(field: P, regex: string): this
+  role(roleId: TRole): this
+  roles(...roleIds: TRole[]): this
+  scope(id: TScope): this
+  scopes(...ids: TScope[]): this
+  isOwner(ownerField?: DotPath.FlexibleDotPaths<TContext>): this
+  resourceType(...types: (TResource | '*')[]): this
+  attr<K extends DotPath.SubjectAttrs<TContext> & string>(path: K, op: AccessControl.Operator, value?: ...): this
+  resourceAttr<K extends DotPath.ResolvedResourceAttrPaths<TContext, TActiveResource> & string>(path: K, op: AccessControl.Operator, value?: ...): this
+  env<K extends DotPath.EnvAttrs<TContext> & string>(path: K, op: AccessControl.Operator, value?: ...): this
+  and(fn: (w: When) => When): this
+  or(fn: (w: When) => When): this
+  not(fn: (w: When) => When): this
+  buildAll(): { readonly all: ReadonlyArray<AccessControl.ICondition | AccessControl.IConditionGroup> }
+  buildAny(): { readonly any: ReadonlyArray<...> }
+  buildNone(): { readonly none: ReadonlyArray<...> }
+}
+```
+
+Leaf and group types:
+
+```ts
+interface AccessControl.ICondition {
+  readonly field: string
+  readonly operator: AccessControl.Operator
+  readonly value?: IamPrimitives.AttributeValue
+}
+type AccessControl.IConditionGroup = IConditionAll | IConditionAny | IConditionNone
+// { all: [...] } | { any: [...] } | { none: [...] }
+
+type IamPrimitives.Scalar = string | number | boolean | null
+type IamPrimitives.AttributeValue = Scalar | Scalar[] | Record<string, Scalar>
+```
+
+Runtime helpers for tooling and tests, exported from `@gentleduck/iam` and `@gentleduck/iam/core` under the `iam` / `IAM_` prefix: `iamEvalCondition`, `iamEvalConditionGroup`, `iamEvaluateOperator`, `iamMatchesUnconditionally`, `iamResolveConditionValue`, `iamResolveValue`, `iamIsCondition`, `iamIsUserSourcedValue`, `iamGetCachedRegex`, `iamDetectCatastrophicRegex`, `iamClearRegexCache`, and the limits `IAM_MAX_CONDITION_DEPTH`, `IAM_MAX_REGEX_LENGTH`, `IAM_MAX_REGEX_INPUT_LENGTH`, `IAM_MAX_BOUNDED_QUANTIFIER`, `IAM_MAX_UNBOUNDED_QUANTIFIERS`, `IAM_REGEX_CACHE_MAX`. Every condition error class is exported unprefixed: `IamConditionGroupError`, `IamOperandTypeError`, `IamPatternRefusedError`, `IamRegexInputTooLargeError`, `IamUserSourcedPatternError` - route them through `onPolicyError` rather than string-matching `err.name`.
+
+The operator table `ops` and the process-wide `regexCache` are deliberately **not** exported. Neither is frozen at runtime, so withholding them from the barrel is the only thing keeping them internal: `ops.eq = () => false` would retire every `eq` deny rule in both evaluation modes. The engine-side contract is on [evaluation pipeline](/duck-iam/core/evaluation).
+
+## Gotchas
+
+* `contains()` (the shorthand) only accepts a string value; use `check(field, 'contains', 42)` for numbers.
+* `in` with an array field is an overlap test, not equality: `subject.roles in ['admin']` is true for `['viewer', 'admin']`.
+* `eq` takes a scalar operand. An array or object operand is refused as `IamOperandTypeError`; for set equality use `subset_of` plus `superset_of`.
+* `matches` patterns are strings, so escape backslashes twice in TypeScript source (`'^.*@company\\.com$'`).
+
+## See also
+
+* [Nesting and/or/not](/duck-iam/core/policies/nesting) - groups, `whenAny()`, depth limit
+* [`$`-variable references](/duck-iam/core/policies/dollar-variables) - comparing two request fields
+* [Evaluation pipeline](/duck-iam/core/evaluation) - where conditions run and how errors are routed
+* [Typed context](/duck-iam/advanced/config/context) - typed paths and values

@@ -1,249 +1,454 @@
 ---
 title: Cookbook
-description: Common authorization patterns as copy-pasteable recipes - owners, public-vs-private, role hierarchies, multi-tenant, time-bound access.
+description: Copy-pasteable authorization recipes - ownership, visibility, hierarchies, multi-tenancy, time windows, MFA gates, audit, break-glass, shadow rollout
 section: Guides
 ---
 
-A collection of common patterns. Each recipe is self-contained: copy
-the snippet, swap the actions / resources for yours, and ship.
+Self-contained recipes, each checked against the current `@gentleduck/iam` signatures. Swap the actions and resources for yours and ship. Every snippet assumes the typed config and engine from the [quick start](/duck-iam/guides):
+
+```ts title="src/lib/access.ts"
+import { createIam } from '@gentleduck/iam/core'
+
+export const access = createIam({
+  actions: ['create', 'read', 'update', 'delete', 'export', 'approve', 'manage'] as const,
+  resources: ['post', 'comment', 'user', 'report', 'expense', 'billing'] as const,
+  roles: ['viewer', 'editor', 'admin', 'author', 'auditor'] as const,
+  scopes: ['org-1', 'org-2'] as const,
+})
+```
+
+<Callout tone="warning" title="Read this before writing your first policy">
+Under the default `policyCombine: 'and'` every **applicable** policy must
+allow. A policy is skipped as NotApplicable when its `targets` do not match
+**or** when no rule's action/resource shape matches. But once a rule's shape
+matches and its conditions fail, the policy falls to `defaultEffect` - deny -
+and vetoes the request even if a role granted it. That is what makes the
+ownership recipe below work, and it is also the single most common surprise.
+See [cross-policy combination](/duck-iam/core/cross-policy).
+</Callout>
+
+## Picking a combining algorithm
+
+Almost every recipe below starts by choosing how the rules inside one policy combine. This is the decision.
+
+<MermaidDiagram chart={`flowchart TD
+  A["What should this policy do?"] --> B{"Is one rule a veto?"}
+  B -- "yes" --> C["deny-overrides"]
+  B -- "no" --> D{"Several ways to qualify?"}
+  D -- "yes" --> E["allow-overrides"]
+  D -- "no" --> F{"Does an override outrank the rest?"}
+  F -- "yes" --> G["highest-priority"]
+  F -- "no" --> H["first-match"]
+  C --> C1["Suspension, MFA gate, embargo"]
+  E --> E1["Public or owner reads"]
+  G --> G1["Break-glass"]
+  H --> H1["Ordered list, first hit wins"]`} />
+
+`deny-overrides` is the default and the right answer whenever a single condition must be able to veto everything else - the suspension, MFA, and embargo recipes all take that branch. `allow-overrides` is for the opposite shape, where any one of several rules qualifying is enough, which is what the public-or-owner read recipe needs. `highest-priority` reads the numeric `priority` on each rule and is what makes break-glass work without reordering the policy. `first-match` returns the first matching rule regardless of effect, so it depends on rule order and is the one to avoid unless that ordering is the point.
 
 ## Owners can edit their own resources
 
-```typescript
-import { definePolicy, rule, when } from '@gentleduck/iam'
+Two ways. Prefer the role form when ownership is the whole rule; use the policy form when you also need it to veto other grants.
 
-const ownersPolicy = definePolicy('owners', {
-  combine: 'allow-overrides',
-  rules: [
-    rule({
-      effect: 'allow',
-      target: { actions: ['update', 'delete'], resources: ['post', 'comment'] },
-      condition: when().equals('subject.id', '$resource.attributes.ownerId'),
-    }),
-  ],
+```ts title="Role form"
+export const author = access
+  .defineRole('author')
+  .grantRead('post', 'comment')
+  .grant('create', 'post')
+  .grantWhen('update', 'post', (w) => w.isOwner())
+  .grantWhen('delete', 'post', (w) => w.isOwner())
+  .build()
+```
+
+```ts title="Policy form"
+export const ownersPolicy = access
+  .definePolicy('owners')
+  .name('Owners only')
+  .algorithm('deny-overrides')
+  .target({ actions: ['update', 'delete'], resources: ['post', 'comment'] })
+  .rule('owner-writes', (r) =>
+    r.allow().on('update', 'delete').of('post', 'comment').when((w) => w.isOwner()),
+  )
+  .build()
+```
+
+`w.isOwner()` emits the condition `resource.attributes.ownerId eq $subject.id`. Pass a different field with `w.isOwner('resource.attributes.createdBy')`. The check must carry the attribute:
+
+```ts
+await engine.can('user-bob', 'update', {
+  type: 'post',
+  id: 'post-1',
+  attributes: { ownerId: 'user-bob' },
 })
+// -> true
 ```
 
-Pair with a role for **reading** anyone's post:
+The `.target(...)` on the policy form matters: without it the policy would be applicable to `create post` too, find no matching rule shape - and so stay NotApplicable - but adding the target documents the intent and lets `build()` catch a mismatch as `UNREACHABLE_TARGET`.
 
-```typescript
-const viewer = access.defineRole('viewer').grantRead('post', 'comment').build()
+## Public and private resources
+
+```ts
+export const visibilityPolicy = access
+  .definePolicy('visibility')
+  .name('Public and private reads')
+  .algorithm('allow-overrides')
+  .target({ actions: ['read'], resources: ['post'] })
+  .rule('public-read', (r) =>
+    r.allow().on('read').of('post').when((w) => w.resourceAttr('visibility', 'eq', 'public')),
+  )
+  .rule('owner-read', (r) =>
+    r.allow().on('read').of('post').when((w) => w.isOwner()),
+  )
+  .build()
 ```
 
-A user with `viewer` role can read anyone's post but only update / delete
-their own.
-
-## Public-vs-private resources
-
-```typescript
-const publicReadPolicy = definePolicy('public-read', {
-  combine: 'allow-overrides',
-  rules: [
-    // Anyone can read public posts.
-    rule({
-      effect: 'allow',
-      target: { actions: 'read', resources: 'post' },
-      condition: when().equals('$resource.attributes.visibility', 'public'),
-    }),
-    // Only the owner can read private ones.
-    rule({
-      effect: 'allow',
-      target: { actions: 'read', resources: 'post' },
-      condition: when()
-        .equals('$resource.attributes.visibility', 'private')
-        .equals('subject.id', '$resource.attributes.ownerId'),
-    }),
-  ],
-})
-```
+`allow-overrides` means either rule matching is enough. `resourceAttr('visibility', ...)` is shorthand for the dot-path `resource.attributes.visibility`; after `.of('post')` the builder narrows the type so your editor autocompletes that resource's attributes.
 
 ## Role hierarchy
 
-```typescript
-const viewer = access.defineRole('viewer')
-  .grantRead('post', 'comment')
-  .build()
+```ts
+export const viewer = access.defineRole('viewer').grantRead('post', 'comment').build()
 
-const editor = access.defineRole('editor')
-  .inherits(viewer)
+export const editor = access
+  .defineRole('editor')
+  .inherits('viewer')
   .grant('create', 'post')
   .grant('update', 'post')
   .build()
 
-const admin = access.defineRole('admin')
-  .inherits(editor)
+export const admin = access
+  .defineRole('admin')
+  .inherits('editor')
   .grant('delete', 'post')
   .grant('manage', 'user')
   .build()
 ```
 
-`admin` inherits everything `editor` and `viewer` can do.
+`inherits` takes role **IDs**, not role objects, and the parents must exist in the adapter - a dangling parent is caught by `validateRoles()` as `DANGLING_INHERIT`. Inheritance is flattened once at load, not per request, and cycles are cut by a shallowest-depth memo rather than recursing forever. The runtime caps the chain at `MAX_INHERITANCE_DEPTH` (32) and the validator reports `INHERITANCE_TOO_DEEP` past it. See [inheritance](/duck-iam/core/roles/inheritance).
 
-## Multi-tenant: role per organization
+Inherited grants cannot be subtracted. To take something back from a parent, add a deny policy.
 
-```typescript
-const subject: AccessControl.ISubject = {
-  id: 'user-1',
-  tenantId: 'tenant-1',
-  // Scoped assignments: this user is admin in org-1 and viewer in org-2.
-  scopedRoles: {
-    'org:org-1': ['admin'],
-    'org:org-2': ['viewer'],
-  },
-}
+## One role per organization
 
-engine.can({ subject, action: 'delete', resource: 'post', scope: 'org:org-1' })
-// -> true (admin in this org)
+```ts
+await engine.admin.assignRole('user-alice', 'admin', 'org-1')
+await engine.admin.assignRole('user-alice', 'viewer', 'org-2')
 
-engine.can({ subject, action: 'delete', resource: 'post', scope: 'org:org-2' })
-// -> false (viewer can't delete)
+await engine.can('user-alice', 'delete', { type: 'post', attributes: {} }, undefined, 'org-1')
+// -> true
+await engine.can('user-alice', 'delete', { type: 'post', attributes: {} }, undefined, 'org-2')
+// -> false
 ```
 
-See [Scoped roles ->](/duck-iam/core/roles/scoped).
+When you build the subject yourself instead of letting the engine resolve it, the same thing looks like this:
+
+```ts
+import type { IamRequest } from '@gentleduck/iam/core'
+
+const subject: IamRequest.ISubject = {
+  id: 'user-alice',
+  roles: [],
+  scopedRoles: [
+    { role: 'admin', scope: 'org-1' },
+    { role: 'viewer', scope: 'org-2' },
+  ],
+  attributes: {},
+}
+
+await engine.authorize({ subject, action: 'delete', resource: { type: 'post', attributes: {} }, scope: 'org-1' })
+```
+
+`scopedRoles` is an array of `{ role, scope?, attributes? }`, not a keyed object. Entries whose `scope` matches the request are merged into the effective role list alongside the subject's global `roles`. `engine.getEffectiveRoles(subjectId, scope)` returns that merged list. See [scoped roles](/duck-iam/core/roles/scoped).
+
+## Hierarchical scopes
+
+For GitHub- or Slack-shaped tenancy where a grant at the org level should apply to every team and repository below it:
+
+```ts
+const engine = access.createEngine({
+  adapter,
+  scopeMode: 'hierarchical',
+  scopeCombine: 'union',
+})
+
+await engine.admin.assignRole('user-alice', 'admin', 'org-1')
+
+await engine.can('user-alice', 'delete', { type: 'post', attributes: {} }, undefined, 'org-1.team-2.repo-3')
+// -> true: the org-1 grant covers every descendant scope
+```
+
+`scopeMode: 'hierarchical'` treats a dot-delimited scope as a path and matches a grant at any ancestor level. `scopeCombine: 'union'` (default) ORs in every matching level; `'override'` keeps only the most specific match, so a narrower grant shadows a broader one instead of adding to it. A scope with no dots degrades to exact match, so enabling it is safe for apps that never use dotted scopes.
 
 ## Time-bound access
 
-```typescript
-const businessHoursPolicy = definePolicy('business-hours', {
-  combine: 'allow-overrides',
-  rules: [
-    rule({
-      effect: 'allow',
-      target: { actions: 'export', resources: 'report' },
-      condition: when()
-        .gte('context.timestamp', '$businessHoursStart')
-        .lt('context.timestamp', '$businessHoursEnd'),
-    }),
-  ],
-})
+Two flavours. Numeric comparisons on an environment value:
 
-engine.can({
-  subject,
-  action: 'export',
-  resource: 'report',
-  context: {
-    timestamp: Date.now(),
-    businessHoursStart: 9 * 60 * 60 * 1000,
-    businessHoursEnd: 17 * 60 * 60 * 1000,
-  },
-})
+```ts
+export const businessHours = access
+  .definePolicy('business-hours')
+  .name('Business hours only')
+  .algorithm('deny-overrides')
+  .target({ actions: ['export'], resources: ['report'] })
+  .rule('deny-out-of-hours', (r) =>
+    r.deny().on('export').of('report').whenAny((w) => w.env('hour', 'lt', 9).env('hour', 'gte', 18)),
+  )
+  .rule('allow-in-hours', (r) => r.allow().on('export').of('report'))
+  .build()
+
+await engine.can('user-bob', 'export', { type: 'report', attributes: {} }, { hour: new Date().getUTCHours() })
 ```
+
+Temporal comparisons against the evaluation clock:
+
+```ts
+export const embargo = access
+  .definePolicy('embargo')
+  .algorithm('deny-overrides')
+  .target({ actions: ['read'], resources: ['report'] })
+  .rule('deny-before-publish', (r) =>
+    r
+      .deny()
+      .on('read')
+      .of('report')
+      .when((w) => w.check('environment.now', 'before', '$resource.attributes.publishAt')),
+  )
+  .rule('allow-after-publish', (r) => r.allow().on('read').of('report'))
+  .build()
+```
+
+`environment.now` is stamped by the engine as `Date.now()` on every request unless a `beforeEvaluate` hook already pinned it - which is how you get a deterministic clock in tests. The `before` and `after` operators coerce both operands to epoch milliseconds (numbers pass through, ISO-8601 strings are parsed) and return `false` when either side is not temporal.
+
+<Callout tone="warning" title="Do not use `gt` / `lt` on dates">
+`gt`, `gte`, `lt`, and `lte` return `false` unless **both** operands are
+numbers. An ISO-8601 timestamp compared with `gte` is always false, which
+reads as a working deny rule and a broken allow rule. Use `before` / `after`
+for anything temporal. See [condition operators](/duck-iam/core/policies/conditions).
+</Callout>
 
 ## Require MFA for high-risk actions
 
-When you bridge with [duck-auth](/duck-auth), the subject carries the
-session's AAL:
+With the [duck-auth bridge](/duck-iam/guides/auth-bridge), the subject carries the session's assurance level as a number.
 
-```typescript
-const mfaPolicy = definePolicy('mfa-required', {
-  combine: 'deny-overrides',
-  rules: [
-    // Deny by default for sensitive actions...
-    rule({
-      effect: 'deny',
-      target: { actions: ['delete', 'export'], resources: 'user' },
-    }),
-    // ...unless the session is AAL2.
-    rule({
-      effect: 'allow',
-      target: { actions: ['delete', 'export'], resources: 'user' },
-      condition: when().equals('subject.attributes.aal', 'aal2'),
-    }),
-  ],
+```ts
+export const mfaPolicy = access
+  .definePolicy('mfa-required')
+  .name('AAL2 for destructive actions')
+  .algorithm('deny-overrides')
+  .target({ actions: ['delete', 'export'], resources: ['user', 'billing'] })
+  .rule('deny-below-aal2', (r) =>
+    r.deny().on('delete', 'export').of('user', 'billing').when((w) => w.attr('aal', 'lt', 2)),
+  )
+  .rule('allow-at-aal2', (r) => r.allow().on('delete', 'export').of('user', 'billing'))
+  .build()
+```
+
+`deny-overrides` makes the deny rule win whenever it matches, regardless of rule order. The allow rule is the catch-all for sessions that clear the bar. `w.attr('aal', ...)` prefixes `subject.attributes.` for you.
+
+## Field-level permissions
+
+Pass the changed field list on the request environment and test it with set operators.
+
+```ts
+export const fieldsPolicy = access
+  .definePolicy('billing-fields')
+  .name('Billing fields are admin-only')
+  .algorithm('deny-overrides')
+  .target({ actions: ['update'], resources: ['user'] })
+  .rule('deny-billing-fields', (r) =>
+    r
+      .deny()
+      .on('update')
+      .of('user')
+      .when((w) =>
+        w
+          .check('environment.fieldsChanged', 'contains', 'billing.cardNumber')
+          .not((n) => n.contains('subject.roles', 'admin')),
+      ),
+  )
+  .rule('allow-update', (r) => r.allow().on('update').of('user'))
+  .build()
+```
+
+That deny fires only when a non-admin touches a billing field. `contains` on an array is membership; stacking two conditions inside one `.when()` is AND; `.not()` negates the group inside it, which is what turns "is an admin" into "is not an admin". Drop the `.not()` and the rule denies admins and nobody else.
+
+```ts
+await engine.can('user-bob', 'update', { type: 'user', id: 'user-9', attributes: {} }, {
+  fieldsChanged: ['billing.address'],
 })
 ```
 
-The deny is the safety net; the allow lifts it only when the caller is
-authenticated at AAL2.
+`subset_of` and `superset_of` are the operators for whole-set comparisons: `w.check('environment.fieldsChanged', 'subset_of', ['title', 'body'])` allows a write only when every changed field is in the safe list.
 
-## Field-level permissions (column-grained)
+## Deny a suspended subject regardless of role
 
-```typescript
-const fieldsPolicy = definePolicy('fields', {
-  combine: 'first-match',
-  rules: [
-    // Editors can edit everything except billing fields.
-    rule({
-      effect: 'allow',
-      target: { actions: 'update', resources: 'user' },
-      condition: when()
-        .equals('subject.roles', 'editor', { mode: 'includes' })
-        .not(when().intersect('context.fieldsChanged', ['billing.cardNumber', 'billing.address'])),
-    }),
-    // Admins can edit billing.
-    rule({
-      effect: 'allow',
-      target: { actions: 'update', resources: 'user' },
-      condition: when().equals('subject.roles', 'admin', { mode: 'includes' }),
-    }),
-  ],
-})
+A cross-cutting veto. Under the default `policyCombine: 'and'`, one deny is final.
 
-const decision = engine.can({
-  subject,
-  action: 'update',
-  resource: 'user',
-  context: { fieldsChanged: ['billing.address'] },
-})
+```ts
+export const suspensionPolicy = access
+  .definePolicy('suspension')
+  .name('Suspended subjects cannot write')
+  .algorithm('deny-overrides')
+  .target({ actions: ['create', 'update', 'delete'] })
+  .rule('deny-suspended', (r) =>
+    r
+      .deny()
+      .on('create', 'update', 'delete')
+      .of('*')
+      .when((w) => w.attr('status', 'eq', 'suspended')),
+  )
+  .rule('allow-otherwise', (r) => r.allow().on('create', 'update', 'delete').of('*'))
+  .build()
+
+await engine.admin.setAttributes('user-bob', { status: 'suspended' })
+await engine.cache.invalidateSubject('user-bob')
 ```
 
-Pass the `context.fieldsChanged` from your handler before performing
-the update.
+`setAttributes` merges into the subject's attribute bag and invalidates that subject's cache entry itself, so the explicit `invalidateSubject` is only needed if you wrote through the adapter directly. Attributes are capped at 256 own keys and nesting depth 16.
+
+## Break-glass override
+
+`highest-priority` picks the matching rule with the largest `priority`, so an emergency allow can outrank standing denies without reordering anything.
+
+```ts
+export const breakGlass = access
+  .definePolicy('break-glass')
+  .name('Incident override')
+  .algorithm('highest-priority')
+  .target({ resources: ['billing'] })
+  .rule('normal-deny', (r) => r.deny().on('*').of('billing').priority(0))
+  .rule('incident-allow', (r) =>
+    r
+      .allow()
+      .on('*')
+      .of('billing')
+      .priority(100)
+      .when((w) => w.contains('subject.roles', 'admin').env('incidentMode', 'eq', true)),
+  )
+  .build()
+```
+
+`priority` must be a finite number; the validator rejects `NaN` and `Infinity` with `INVALID_RULE` because they break the ranking. Pair this with `onDeny` or `onMetrics` so every break-glass use lands in the audit log.
+
+## Composing rules across policies
+
+Build a rule once with `defineRule`, reuse it with `addRule`.
+
+```ts
+const denyDrafts = access
+  .defineRule('deny-drafts')
+  .deny()
+  .on('read')
+  .of('post')
+  .when((w) => w.resourceAttr('status', 'eq', 'draft'))
+  .build()
+
+export const readPolicy = access
+  .definePolicy('post-reads')
+  .algorithm('deny-overrides')
+  .target({ actions: ['read'], resources: ['post'] })
+  .addRule(denyDrafts)
+  .rule('allow-read', (r) => r.allow().on('read').of('post'))
+  .build()
+```
+
+`.forScope('org-1')` on a rule prepends a `scope eq 'org-1'` condition at build time and composes correctly with `.when()` regardless of call order.
 
 ## Audit every deny
 
-```typescript
-const engine = createEngine({
-  ...config,
-  onDeny(decision) {
-    auditLog.write({
-      ts: Date.now(),
-      subjectId: decision.subject.id,
-      action: decision.action,
-      resource: decision.resource,
-      reason: decision.reason,
-    })
+```ts
+const engine = access.createEngine({
+  adapter,
+  hooks: {
+    onDeny: (request, decision) => {
+      auditLog.write({
+        ts: decision.timestamp,
+        subjectId: request.subject.id,
+        action: request.action,
+        resource: request.resource.type,
+        resourceId: request.resource.id,
+        scope: request.scope,
+        policy: decision.policy,
+        ruleId: decision.rule?.id,
+        reason: decision.reason,
+      })
+    },
   },
 })
 ```
 
-The hook fires on every deny - including denies under the explicit-deny
-combining algorithm - so you have a full audit trail of attempted
-forbidden actions.
+`onDeny(request, decision)` takes two arguments - the request and the `AccessControl.IDecision`, which carries `policy`, `rule`, `reason`, `duration`, and `timestamp`. It fires **only in development mode**, because production mode never allocates a decision. For an audit trail in production mode, use `onMetrics`, whose event carries `subjectId`, `action`, `resource`, `allowed`, `durationMs`, `mode`, and `failOpen`. See [hooks](/duck-iam/advanced/engine/hooks).
 
-## Soft launching a new policy
+## One permission map for a whole page
 
-When deploying a new policy that you're not sure about, run it in
-**shadow mode** alongside the production policy:
+```ts
+const checks = access.checks([
+  { action: 'create', resource: 'post' },
+  { action: 'update', resource: 'post', resourceId: 'post-1' },
+  { action: 'delete', resource: 'post', resourceId: 'post-1' },
+  { action: 'manage', resource: 'billing', scope: 'org-1' },
+])
 
-```typescript
-const engine = createEngine({ ...config })
-const shadowEngine = createEngine({ ...config, policies: [...config.policies, newPolicy] })
+const permissions = await engine.permissions('user-alice', checks)
+// { 'create:post': true, 'update:post:post-1': true, ..., 'org-1:manage:billing': false }
+```
 
-app.post('/api/resource', (req, res) => {
-  const ctx = await auth.resolveSession(req)
-  const subject = projectToSubject(ctx.identity, ctx.session)
-  const args = { subject, action: 'update', resource: 'resource' }
+`permissions()` loads the adapter data once and evaluates every check against it. Keys are built by `iamBuildPermissionKey(action, resource, resourceId?, scope?)` as `[scope:]action:resource[:resourceId]`, with `:` and `\` backslash-escaped per segment - do not build the key by hand. Batches over 1024 checks throw. Pass `{ telemetry: false }` as the fourth argument to skip per-check `onMetrics` on hot UI gates, worth roughly 2x throughput.
 
-  // Real decision drives behaviour.
-  const realDecision = engine.can(args)
+`access.checks([...])` is a typed pass-through: it constrains the tuples to your declared actions, resources, and scopes without changing the value.
 
-  // Shadow decision drives logging only.
-  const shadowDecision = shadowEngine.can(args)
-  if (realDecision !== shadowDecision) {
-    log.warn({ event: 'shadow-mismatch', args, real: realDecision, shadow: shadowDecision })
+## Shadow-test a new policy before enabling it
+
+Run a second engine over the same adapter data plus the candidate policy, compare, and log the disagreements.
+
+```ts
+import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
+
+const shadowAdapter = new IamMemoryAdapter({
+  roles: allRoles,
+  policies: [...currentPolicies, candidatePolicy],
+})
+const shadowEngine = access.createEngine({ adapter: shadowAdapter })
+
+app.post('/api/posts/:id', async (req, res) => {
+  const args = ['user-bob', 'update', { type: 'post', id: req.params.id, attributes: {} }] as const
+
+  const real = await engine.can(...args)
+  const shadow = await shadowEngine.can(...args)
+
+  if (real !== shadow) {
+    log.warn({ event: 'iam-shadow-mismatch', subject: args[0], action: args[1], real, shadow })
   }
 
-  if (!realDecision) return res.status(403).end()
+  if (!real) return res.status(403).end()
   // ...
 })
 ```
 
-After a few days with no mismatches, promote the shadow engine to the
-real one.
+Both engines must run the same `policyCombine` and `defaultEffect` or the comparison is meaningless. Promote the candidate with `engine.admin.savePolicy(candidatePolicy)` once the mismatch rate is zero for a full traffic cycle - or ship it through [`admin.export()` / `import()`](/duck-iam/guides/production#snapshot-policies-and-roles-environment-promotion) as part of the normal promotion path.
+
+## Validate the whole catalog at boot
+
+```ts
+const roleResult = access.validateRoles(allRoles)
+if (!roleResult.valid) {
+  for (const issue of roleResult.issues) {
+    console.error(`[iam] ${issue.type} ${issue.code}${issue.roleId ? ` role=${issue.roleId}` : ''}: ${issue.message}`)
+  }
+  throw new Error('iam role catalog is invalid')
+}
+
+for (const policy of currentPolicies) {
+  const result = access.validatePolicy(policy)
+  if (!result.valid) throw new Error(`policy ${policy.id}: ${result.issues.map((i) => i.code).join(', ')}`)
+}
+```
+
+`IamValidate.IResult` is `{ valid, issues }`, and `valid` is false only when an `error`-type issue exists - warnings such as `BROAD_ALLOW` do not flip it. Both builders already validate on `build()`; running the catalog check at boot catches rows that arrived from an adapter rather than from a builder. See [validation](/duck-iam/advanced/validation).
 
 ## See also
 
-- [Pairing with duck-auth ->](/duck-iam/guides/auth-bridge)
-- [Production hardening ->](/duck-iam/guides/production)
-- [Troubleshooting ->](/duck-iam/guides/troubleshooting)
+- [Quick start](/duck-iam/guides) - the config, roles, and engine these recipes assume
+- [Pairing with duck-auth](/duck-iam/guides/auth-bridge) - where `subject.attributes.aal` comes from
+- [Production hardening](/duck-iam/guides/production) - before any of this takes real traffic
+- [Troubleshooting](/duck-iam/guides/troubleshooting) - when a recipe does not behave
+- [Combining algorithms](/duck-iam/core/policies/combining-algorithms) - `deny-overrides` vs `allow-overrides` vs `first-match` vs `highest-priority`

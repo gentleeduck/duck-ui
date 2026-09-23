@@ -1,14 +1,34 @@
 ---
-title: defineIam()
-description: The factory - input shape, optional fields, how const assertions work, and what the return value gives you.
+title: createIam()
+description: The typed-config factory - every option with its type and default, how the five generics are inferred, and the exact shape of the returned object
 section: Advanced
 ---
-## Factory signature
+`createIam()` is the only function in duck-iam that takes your permission vocabulary and returns builders bound to it. It is a pure factory: it allocates one object literal, stores four arrays, and closes over the builder constructors. This page documents its input, its generics, and its return value against `src/core/config/config.ts` and `src/core/config/config.types.ts`.
 
-```typescript
-import { defineIam } from '@gentleduck/iam'
+## Signature
 
-const access = defineIam({
+```ts
+export function createIam<
+  const TActions extends readonly string[],
+  const TResources extends readonly string[],
+  const TRoles extends readonly string[] = readonly string[],
+  const TScopes extends readonly string[] = readonly string[],
+  TContext extends object = DotPath.IDefaultContext,
+>(
+  input: IamConfig.IAccessConfigInput<TActions, TResources, TRoles, TScopes, TContext>,
+): IamConfig.IAccessConfig<
+  TActions[number],
+  TResources[number],
+  TRoles[number],
+  TScopes[number],
+  TContext
+>
+```
+
+```ts
+import { createIam } from '@gentleduck/iam'
+
+const access = createIam({
   actions: ['create', 'read', 'update', 'delete', 'manage'] as const,
   resources: ['post', 'comment', 'user', 'dashboard'] as const,
   scopes: ['org-1', 'org-2'] as const,
@@ -16,146 +36,131 @@ const access = defineIam({
 })
 ```
 
----
+## Options
 
-## Input shape
+Every field of `IamConfig.IAccessConfigInput`.
 
-```typescript
-interface AccessConfigInput<TActions, TResources, TScopes, TRoles, TContext> {
-  actions: TActions // readonly string[] with const assertion
-  resources: TResources // readonly string[] with const assertion
-  scopes?: TScopes // optional, readonly string[] with const assertion
-  roles?: TRoles // optional, readonly string[] with const assertion
-  context?: TContext // optional, phantom field for typed dot-path intellisense
-}
+| Option | Type | Required | Default | What it constrains |
+|---|---|---|---|---|
+| `actions` | `TActions extends readonly string[]` | yes | none | `grant(action, ...)`, `grantWhen(action, ...)`, `rule.on(...)`, `engine.can(_, action, ...)`, entries in `checks()` |
+| `resources` | `TResources extends readonly string[]` | yes | none | `grant(_, resource)`, `rule.of(...)`, `when().resourceType(...)`, the `type` field of a resource passed to the engine |
+| `scopes` | `TScopes extends readonly string[]` | no | `[]` on the returned object; the type parameter defaults to `readonly string[]` | The third argument of `grant`, `role.scope(...)`, `when().scope(...)` / `when().scopes(...)`, the `scope` argument of engine checks |
+| `roles` | `TRoles extends readonly string[]` | no | `[]` on the returned object; the type parameter defaults to `readonly string[]` | `defineRole(id)`, `inherits(...)`, `when().role(...)` / `when().roles(...)`, `policy.targets.roles` |
+| `context` | `TContext extends object` | no | `DotPath.IDefaultContext` | Field paths and value types on `when().check/eq/neq/in/attr/resourceAttr/env` - see [typed context](/duck-iam/advanced/config/context) |
+
+<Callout tone="info" title="context is a phantom field">
+The runtime value of `context` is read by nothing. It exists so TypeScript can capture `TContext` from an argument position. Give it a value that costs nothing at runtime, such as `{} as unknown as AppContext`; the object is discarded and only the type survives.
+</Callout>
+
+## How the generics resolve
+
+The four vocabulary parameters are declared `const`, so TypeScript preserves the literal tuple at the call site and the factory indexes it with `[number]` to get a union.
+
+<MermaidDiagram chart={`flowchart LR
+    A["actions declared inline as const"] --> B["TActions is a readonly tuple of literals"]
+    B --> C["TActions indexed by number gives the TAction union"]
+    C --> D["IAccessConfig is parameterised on TAction"]
+    D --> E["RoleBuilder, PolicyBuilder, RuleBuilder, When"]
+    D --> F["IamEngine and IPermissionCheck"]
+    G["actions assigned to a plain variable first"] --> H["Already widened to a string array"]
+    H --> I["TAction resolves to string"]
+    I --> J["No compile-time constraint anywhere downstream"]`} />
+
+The two branches are the whole story. Once an array has widened to `string[]` at its declaration site, nothing later in the pipeline can recover the literals, and every builder silently accepts any string. If you want the arrays in a separate module, annotate them there:
+
+```ts
+// vocabulary.ts
+export const ACTIONS = ['create', 'read', 'update', 'delete'] as const
+export const RESOURCES = ['post', 'comment'] as const
+
+// access.ts
+import { createIam } from '@gentleduck/iam'
+import { ACTIONS, RESOURCES } from './vocabulary'
+
+export const access = createIam({ actions: ACTIONS, resources: RESOURCES })
 ```
-
-| Field | Required | What it constrains |
-| --- | --- | --- |
-| `actions` | yes | `grant(action, ...)`, `r.on(action)`, `engine.can(_, action, ...)` |
-| `resources` | yes | `grant(_, resource)`, `r.of(resource)`, resource targets |
-| `scopes` | no | `forScope(scope)`, scoped `grant`, `engine.can(... scope)` |
-| `roles` | no | `defineRole(id)`, `inherits(id)`, `w.role(id)`, `w.roles(...ids)` |
-| `context` | no | Phantom field - see [typed context](/duck-iam/advanced/config/context) |
-
-If you omit `scopes` or `roles`, the config still works. Those parameters accept `string` without constraint. When `roles` is provided, `defineRole()`, `when().role()`, and all builders that reference roles are constrained to the declared role IDs.
-
----
-
-## How `as const` works
-
-TypeScript's `as const` assertion is required for type safety. Without it, arrays are widened:
-
-```typescript
-// Without as const - types are string[]
-const actions = ['create', 'read', 'update']
-// typeof actions = string[]
-
-// With as const - types are literal tuples
-const actions = ['create', 'read', 'update'] as const
-// typeof actions = readonly ['create', 'read', 'update']
-```
-
-When you pass `as const` arrays to `defineIam()`, the factory uses conditional types to extract the union of literal values:
-
-```typescript
-type TAction = (typeof actions)[number]
-// = 'create' | 'read' | 'update'
-
-type TRole = (typeof roles)[number]
-// = 'viewer' | 'editor' | 'admin'
-```
-
-These union types flow through all builders, constraining every parameter: actions, resources, scopes, and roles.
-
----
 
 ## What you get back
 
-`defineIam()` returns an `AccessConfig` object with typed builder methods:
+`IamConfig.IAccessConfig` has four readonly properties and eight methods.
 
-| Method | Purpose |
-| --- | --- |
-| `access.defineRole(id)` | Typed role builder |
-| `access.definePolicy(id)` | Typed policy builder |
-| `access.defineRule(id)` | Typed standalone rule builder |
-| `access.when()` | Typed condition builder for reusable groups |
-| `access.createEngine(config)` | Typed engine instance |
-| `access.checks(arr)` | Typed permission check array (for `engine.permissions()`) |
-| `access.validateRoles(roles)` | Runtime validation, same as standalone `validateRoles()` |
-| `access.validatePolicy(p)` | Runtime validation for untrusted policy objects |
+| Member | Type | Notes |
+|---|---|---|
+| `actions` | `readonly TAction[]` | The array you passed, by reference |
+| `resources` | `readonly TResource[]` | The array you passed, by reference |
+| `scopes` | `readonly TScope[]` | `input.scopes ?? []` |
+| `roles` | `readonly TRole[]` | `input.roles ?? []` |
+| `defineRole(id)` | `RoleBuilder<TAction, TResource, TRole, TScope, TContext>` | `id` constrained to `TRole` |
+| `definePolicy(id)` | `PolicyBuilder<TAction, TResource, TRole, TScope, TContext>` | `id` is a free `string` |
+| `defineRule(id)` | `RuleBuilder<TAction, TResource, TScope, TRole, TContext>` | `id` is a free `string`; note the swapped scope/role parameter order |
+| `when()` | `When<TAction, TResource, TRole, TScope, TContext>` | Fresh builder per call |
+| `createEngine(config)` | `IamEngine<TAction, TResource, TRole, TScope, TMode>` | `TMode` defaults to `'production'`, and is **not** inferred from `config.mode` |
+| `checks(arr)` | the same array, typed | Identity at runtime |
+| `validateRoles(roles)` | `IamValidate.IResult` | Takes the unconstrained `IRole[]`; forwards the declared vocabulary alongside it |
+| `validatePolicy(input)` | `IamValidate.IResult` | Takes `unknown`; forwards to the standalone `validatePolicy` |
 
-See [methods reference](/duck-iam/advanced/config/methods) for full details.
+Full signatures and examples are on the [methods reference](/duck-iam/advanced/config/methods).
 
----
+## Optional-field behaviour
 
-## Inferring types from the config
+<MermaidDiagram chart={`flowchart TD
+    IN["input"] --> S{"scopes present?"}
+    S -- "yes" --> SU["TScope is the declared scope union"]
+    S -- "no" --> SD["TScopes defaults to a readonly string array, so TScope is string"]
+    SD --> SE["config.scopes is an empty array"]
+    IN --> R{"roles present?"}
+    R -- "yes" --> RU["TRole is the declared role union"]
+    R -- "no" --> RD["TRoles defaults to a readonly string array, so TRole is string"]
+    RD --> RE["config.roles is an empty array"]
+    IN --> C{"context present?"}
+    C -- "yes" --> CU["TContext is your interface, dot-paths are narrow"]
+    C -- "no" --> CD["TContext is DotPath.IDefaultContext, dot-paths accept any string"]`} />
 
-Sometimes you need the union types elsewhere - e.g. defining types in a shared module. Extract them from the config:
+The two branches per option are independent, which the `scopes/roles default to [] independently of one another` test pins directly. Concretely:
 
-```typescript
-const access = defineIam({
-  actions: ['create', 'read', 'update'] as const,
-  resources: ['post'] as const,
-})
-
-type Action = Parameters<typeof access.defineRule>['0'] extends infer S
-  ? S
-  : never
-// or via the input arrays directly:
-type ActionFromInput = (typeof access)['_actions'][number]
-```
-
-In practice, define your unions next to the config and re-export:
-
-```typescript
-// access.ts
-export const access = defineIam({
-  actions: ['create', 'read', 'update', 'delete'] as const,
-  resources: ['post', 'comment'] as const,
-} as const)
-
-export type AppAction = 'create' | 'read' | 'update' | 'delete'
-export type AppResource = 'post' | 'comment'
-```
-
-This is one source of truth for both runtime and type-level uses.
-
----
-
-## Optional fields behavior
-
-### Without `roles`
-
-```typescript
-const access = defineIam({
+```ts
+const access = createIam({
   actions: ['read', 'write'] as const,
   resources: ['post'] as const,
-  // no roles
 })
 
-access.defineRole('any-string-here') // OK - no constraint
-access.when().role('any-string') // OK
+access.defineRole('anything-at-all')          // compiles: TRole is string
+access.defineRole('viewer').grant('read', 'post', 'any-scope') // compiles: TScope is string
+access.scopes // []
+access.roles  // []
 ```
 
-Without a `roles` declaration, role-related parameters accept any string.
+Declaring `roles` flips `defineRole`, `inherits`, `when().role()`, and `when().roles()` to the declared union. Declaring `scopes` flips the scope argument of `grant`, `role.scope()`, `when().scope()`, and `when().scopes()`. Declaring `context` is what turns on dot-path autocomplete; without it the builders accept any string field path and `IamPrimitives.AttributeValue` for values, and runtime behaviour is unchanged.
 
-### Without `scopes`
+## Deriving the unions elsewhere
 
-```typescript
-const access = defineIam({
-  actions: ['read'] as const,
-  resources: ['post'] as const,
-  // no scopes
+The config exposes its vocabulary as readonly arrays, so you can index them for the union type instead of restating it:
+
+```ts
+export const access = createIam({
+  actions: ['create', 'read', 'update', 'delete'] as const,
+  resources: ['post', 'comment'] as const,
+  roles: ['viewer', 'editor'] as const,
 })
 
-access.defineRole('viewer').grant('read', 'post', 'any-scope') // OK - no constraint
+export type AppAction = (typeof access.actions)[number]     // 'create' | 'read' | 'update' | 'delete'
+export type AppResource = (typeof access.resources)[number] // 'post' | 'comment'
+export type AppRole = (typeof access.roles)[number]         // 'viewer' | 'editor'
 ```
 
-Same - without `scopes`, scope params accept any string.
+Those aliases are what you pass to `IamMemoryAdapter`, `IamDrizzleAdapter`, or any server wrapper so the adapter's generics line up with the config's.
 
-### Without `context`
+## Gotchas
 
-The condition builder accepts any string for `.attr()`, `.resourceAttr()`, `.env()`, and `.check()` field paths, with `AttributeValue` for values. You lose dot-path autocomplete and value narrowing but the runtime behavior is identical.
+- **`defineRule` has a different generic order.** It is `RuleBuilder<TAction, TResource, TScope, TRole, TContext>` while `defineRole`, `definePolicy`, and `when` are `<TAction, TResource, TRole, TScope, TContext>`. This only bites when you write an explicit type annotation for a rule builder; the factory wires it correctly for you.
+- **`validateRoles` takes the *unconstrained* `IRole`, on purpose.** A runtime validator exists for data whose type you do not trust, and a signature narrowed to the declared unions could only accept values already proven correct. Roles read from a database go through this method directly - and this one, unlike the bare export, also flags a grant naming vocabulary the config never declared (`UNREACHABLE_TARGET`).
+- **`createEngine` does not infer `TMode` from `config.mode`.** `mode` is optional, so the type argument and the config field move independently. Pass both or neither.
+- **`createIam` pulls the validator into your bundle.** `core/index.ts` deliberately does not re-export the validator functions so the roughly 12 KB chunk stays opt-in, but `config.ts` imports `validatePolicy` and `validateRoles` directly and the returned object closes over both. If you use `createIam`, that code is reachable whether or not you call the validate methods.
+- **`as const` on the outer object does nothing useful.** The `const` type parameters already capture the tuples. Annotating each array is what matters.
 
-See [typed context](/duck-iam/advanced/config/context) for what `context` adds.
+## See also
+
+- [Methods reference](/duck-iam/advanced/config/methods) - each returned method with its signature and behaviour.
+- [Typed context](/duck-iam/advanced/config/context) - what the `context` option unlocks.
+- [Typed vs untyped](/duck-iam/advanced/config/comparison) - whether the setup is worth it for your project.
+- [Types and namespaces](/duck-iam/types) - `IamConfig.IAccessConfigInput` and `IamConfig.IAccessConfig` in the wider type map.

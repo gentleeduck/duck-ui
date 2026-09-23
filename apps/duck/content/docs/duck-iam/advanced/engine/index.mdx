@@ -1,190 +1,219 @@
 ---
-title: engine overview
-description: The Engine class - central evaluator. Configuration, the IDecision object, and a tour of the API surface.
+title: Engine overview
+description: IamEngine - the runtime that resolves subjects, loads policies, evaluates decisions and caches everything in between
 section: Advanced
 ---
-## What the engine does
+`IamEngine` is the runtime that answers "may this subject do this action on this resource?". You construct one with an adapter, it loads roles and policies through that adapter, caches them, resolves the subject, runs the evaluation pipeline, and returns either an `AccessControl.IDecision` or a plain `boolean` depending on its mode. This page covers construction, configuration, the decision shape, and the object graph; the sibling pages cover each surface in depth.
 
-The `IamEngine` is the central evaluator. You create an engine with an adapter and optional configuration, then call its methods to check permissions. The engine loads roles and policies from the adapter, resolves the subject, runs the evaluation pipeline, and returns a decision.
+## The object graph
 
-<MermaidDiagram chart={`flowchart LR
-    subgraph Engine_Block["Engine"]
-        direction TB
-        CORE["Core Methods\ncan / check / authorize\npermissions / explain"]
-        CACHE["Cache Layer\npolicy / role / rbac / subject"]
-        HOOKS["Hooks\nbefore / after / deny / error"]
-        ADMIN["Admin API\nsave / delete / assign / revoke"]
-    end
+The engine is one class with three facets hanging off it. Everything else is internal.
 
-    subgraph Adapters["Storage Adapters"]
-        direction TB
-        MEM["Memory"]
-        PRISMA["Prisma"]
-        DRIZZLE["Drizzle"]
-        REDIS["Redis"]
-        HTTP["HTTP"]
-    end
+<MermaidDiagram chart={`flowchart TD
+    APP["Your code"] --> ENG["IamEngine instance"]
+    ENG --> EVAL["Evaluation surface: authorize, can, check, permissions, explain, getEffectiveRoles"]
+    ENG --> LIFE["Lifecycle: preload, healthCheck, dispose"]
+    ENG --> CACHEF["engine.cache facet"]
+    ENG --> STATSF["engine.stats facet"]
+    ENG --> ADMINF["engine.admin facet"]
+    EVAL --> LOAD["Cache-fronted loaders"]
+    CACHEF --> LOAD
+    ADMINF --> AD["IamAdapter.IAdapter"]
+    LOAD --> AD
+    ENG --> HOOKS["hooks: beforeEvaluate, afterEvaluate, onDeny, onError, onPolicyError, onMetrics, onMutation"]
+    CACHEF --> INV["IInvalidator - cross-instance pub/sub"]`} />
 
-    Engine_Block --> Adapters`} />
+`EVAL` and `LIFE` stay flat on the instance because they are the hot path. `CACHEF`, `STATSF` and `ADMINF` are grouped nouns: `engine.cache.*`, `engine.stats.*`, `engine.admin.*`. `LOAD` is the five-cache loader layer described on [caching](/duck-iam/advanced/engine/caching); `AD` is whichever [adapter](/duck-iam/integrations/adapters) you passed in.
 
-```typescript
+```ts
 import { IamEngine } from '@gentleduck/iam'
 import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
 
 const adapter = new IamMemoryAdapter({
-  roles: [viewer, editor, admin],
+  roles: [viewer, editor],
   assignments: { 'user-1': ['editor'] },
 })
 
-const engine = new IamEngine({ adapter })
+const engine = new IamEngine({ adapter, defaultEffect: 'deny' })
 ```
 
----
+<Callout tone="info" title="Adapters ship behind subpath imports">
+  `IamEngine`, `iamEngine`, `iamFlushSharedCaches`, the builders, and every type
+  come from `@gentleduck/iam`. Adapters do not - import `IamMemoryAdapter` from
+  `@gentleduck/iam/adapters/memory`, the Prisma adapter from
+  `@gentleduck/iam/adapters/prisma`, and so on. See [installation](/duck-iam/installation).
+</Callout>
+
+## Where a request goes
+
+One `engine.can()` call goes through these stages.
+
+<MermaidDiagram chart={`flowchart TD
+    A["can(subjectId, action, resource, environment?, scope?)"] --> B{"subjectId valid?"}
+    B -- "no" --> Z["return false"]
+    B -- "yes" --> C["resolveSubject: subject cache, then adapter"]
+    C --> D["authorize(request)"]
+    D --> E["normalise subject.roles to an array"]
+    E --> F["enrichSubjectWithScopedRoles(scope)"]
+    F --> G["beforeEvaluate hook"]
+    G --> H["ensureEnvNow: default environment.now"]
+    H --> I["lookup(compiledTable, roleMask, ...) - the verdict, in both modes"]
+    I --> J{"mode?"}
+    J -- "development" --> K["evaluate(mergedPolicies, request) again, for provenance"]
+    K --> L{"verdicts agree?"}
+    L -- "no" --> N["console.error + throw, caught as a fail-closed deny"]
+    L -- "yes" --> M["afterEvaluate, onDeny, onMetrics"]
+    J -- "production" --> M`} />
+
+The `subjectId` guard at `B` rejects anything that is not a string of 1 to 1024 characters. `C` is the subject cache plus single-flight coalescing. `E` exists because a string `subject.roles` would substring-match a `contains` condition. `F` merges scoped role grants for the request's scope. `G` runs your `beforeEvaluate` hook, and `H` deliberately runs *after* it so a hook-pinned `environment.now` survives.
+
+`I` is the load-bearing step: the [compiled table](/duck-iam/advanced/engine/compiled) produces the verdict in **both** modes. [Development](/duck-iam/advanced/engine/modes) additionally runs the interpreter, because the table cannot explain itself — a `CONST_ALLOW` cell is one byte and policy identity is erased at compile time. That second run is what fills in `decision.policy` and `decision.rule`, and a disagreement between the two throws rather than answering. `M` fires in both modes; production synthesises a verdict-only decision for `afterEvaluate` and `onDeny`, and only when one of them is wired.
 
 ## Reading order
 
 | Page | Covers |
 | --- | --- |
-| [methods](/duck-iam/advanced/engine/methods) | `can`, `check`, `authorize`, `permissions`, `explain`, `preload`, `healthCheck`, `stats`, `dispose` |
-| [hooks](/duck-iam/advanced/engine/hooks) | `beforeEvaluate`, `afterEvaluate`, `onDeny`, `onError`, `onPolicyError`, `onMetrics` |
-| [caching](/duck-iam/advanced/engine/caching) | The four LRU caches, invalidation, multi-instance via `invalidator` |
-| [admin API](/duck-iam/advanced/engine/admin) | `engine.admin.*` CRUD plus `export()` / `import()` snapshots |
-| [modes](/duck-iam/advanced/engine/modes) | Development vs production mode, performance trade-offs, production guards |
+| [Engine methods](/duck-iam/advanced/engine/methods) | `authorize`, `can`, `check`, `getEffectiveRoles`, `permissions`, `explain`, `preload`, `healthCheck`, `setInvalidator`, `withTransaction`, `dispose`, `stats` |
+| [Caching and invalidation](/duck-iam/advanced/engine/caching) | The five LRU caches, every key, single-flight, every invalidation trigger and its ordering |
+| [Hooks](/duck-iam/advanced/engine/hooks) | The seven hooks, their arguments, firing order, and error semantics |
+| [Development vs production mode](/duck-iam/advanced/engine/modes) | What each mode returns, which hooks fire, which options are refused |
+| [Compiled table](/duck-iam/advanced/engine/compiled) | Production's data structure: role bitmasks, the 32-role cap, residual policies |
+| [Admin API](/duck-iam/advanced/engine/admin) | `engine.admin.*` CRUD, input validation, snapshot export and import |
 
----
+## API reference
 
-## IamEngineTypes.IConfig
+### Constructor
 
-The constructor accepts an `IamEngineTypes.IConfig`:
-
-```typescript
-interface IConfig {
-  adapter: IamAdapter.IAdapter             // Required. Storage backend.
-  defaultEffect?: AccessControl.Effect  // Default 'deny'.
-  cacheTTL?: number                     // Default 60 seconds.
-  maxCacheSize?: number                 // Default 1000 subjects.
-  mode?: AccessControl.Mode             // 'development' (default) | 'production'.
-  hooks?: IamEngineTypes.IHooks            // Lifecycle hooks.
-  adapterTimeoutMs?: number             // Per-adapter-call timeout (default 5000 ms).
-  maxPolicies?: number                  // Hard cap on policies loaded (default 10000, fail-closed).
-  maxRoles?: number                     // Hard cap on roles loaded (default 10000, fail-closed).
-  allowFailOpen?: boolean               // Required to combine production + defaultEffect: 'allow'.
-  invalidator?: IamEngineTypes.IInvalidator // Cross-instance cache invalidation broadcaster.
-  policyCombine?: AccessControl.PolicyCombine // How multiple policies combine.
-}
+```ts
+new IamEngine<TAction, TResource, TRole, TScope, TMode>(
+  config: IamEngineTypes.IConfig<TAction, TResource, TRole, TScope, TMode>,
+)
 ```
 
-| Option | Type | Default | Description |
+The five type parameters narrow the API: `TAction` and `TResource` constrain what you may pass to `can`/`check`, `TRole` constrains `admin.assignRole`, `TScope` constrains every `scope` argument, and `TMode` decides statically whether the evaluation methods return `AccessControl.IDecision` or `boolean`. The four string parameters default to `string`; `TMode` defaults to `'production'`.
+
+`TMode` is a *type* argument. `IConfig.mode` is optional, so writing `new IamEngine<A, R, Ro, S, 'development'>({ adapter })` types `check()` as returning `IDecision` while the engine still runs in production and returns a boolean — reading `.allowed` off it yields `undefined`, which is falsy, so the mismatch shows up as assertions that quietly pass. Always pass `mode` explicitly.
+
+A factory is exported for callers who prefer functions to `new`:
+
+```ts
+import { iamEngine } from '@gentleduck/iam'
+
+const engine = iamEngine({ adapter })
+```
+
+`iamEngine` forwards its arguments to the constructor unchanged and returns an untyped `IamEngine` (all type parameters at their defaults), so reach for `new IamEngine<...>()` when you want typed actions or a typed mode.
+
+### IamEngineTypes.IConfig
+
+| Option | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `adapter` | `IamAdapter.IAdapter` | -- | The storage backend. Required. |
-| `defaultEffect` | `'allow' \| 'deny'` | `'deny'` | Final effect when no rule matches |
-| `cacheTTL` | `number` | `60` | How long cached data lives, in seconds |
-| `maxCacheSize` | `number` | `1000` | Max subjects in the LRU cache |
-| `mode` | `'development' \| 'production'` | `'development'` | Evaluation mode - see [modes](/duck-iam/advanced/engine/modes) |
-| `hooks` | `IamEngineTypes.IHooks` | `{}` | Lifecycle hooks - see [hooks](/duck-iam/advanced/engine/hooks) |
-| `adapterTimeoutMs` | `number` | `5000` | Aborts adapter reads via `AbortController` once the budget elapses. Set `0` to disable. |
-| `maxPolicies` | `number` | `10000` | Hard cap on policies loaded from the adapter. Overruns throw at load time (fail-closed). |
-| `maxRoles` | `number` | `10000` | Hard cap on roles loaded from the adapter. Overruns throw at load time (fail-closed). |
-| `allowFailOpen` | `boolean` | `false` | Required when combining `mode: 'production'` with `defaultEffect: 'allow'` |
-| `invalidator` | `IamEngineTypes.IInvalidator` | -- | Cross-instance pub/sub broadcaster - see [caching](/duck-iam/advanced/engine/caching) |
-| `policyCombine` | `'and' \| 'allow-overrides' \| 'first-applicable'` | `'and'` | How decisions from multiple policies combine - see [cross-policy](/duck-iam/core/cross-policy) |
+| `adapter` | `IamAdapter.IAdapter` | required | Storage backend for policies, roles, assignments and attributes |
+| `defaultEffect` | `'allow' \| 'deny'` | `'deny'` | The vote cast when a source is applicable but no rule fired |
+| `cacheTTL` | `number` | `60` | Cache entry lifetime in **seconds**; multiplied by 1000 internally |
+| `maxCacheSize` | `number` | `1000` | Maximum entries in the subject cache only |
+| `mode` | `'development' \| 'production'` | `'production'` | Return shape, and whether the interpreter runs alongside the compiled table |
+| `hooks` | `IamEngineTypes.IHooks` | `{}` | Lifecycle hooks |
+| `policyCombine` | `'and' \| 'allow-overrides' \| 'first-applicable'` | `'and'` | How verdicts from separate policies merge |
+| `maxPolicies` | `number` | `10000` | Hard ceiling on policies read from the adapter |
+| `maxRoles` | `number` | `10000` | Hard ceiling on roles read from the adapter |
+| `allowFailOpen` | `boolean` | `false` | Required acknowledgement for `defaultEffect: 'allow'` |
+| `adapterTimeoutMs` | `number` | `5000` | Per-adapter-call timeout; `0` disables |
+| `maxConcurrentSubjectLoads` | `number` | `512` | Cap on concurrent distinct-subject loads; `0` restores unbounded |
+| `invalidator` | `IamEngineTypes.IInvalidator` | none | Cross-instance cache-invalidation broadcaster |
+| `scopeMode` | `'flat' \| 'hierarchical'` | `'flat'` | Whether a scoped grant matches only its exact scope or every descendant |
+| `scopeCombine` | `'union' \| 'override'` | `'union'` | How multiple matching ancestor levels combine under `'hierarchical'` |
 
-### Production guards
+Notes that are easy to get wrong:
 
-The constructor refuses two combinations when `mode: 'production'` is set:
+- `cacheTTL` is in seconds; `adapterTimeoutMs` is in milliseconds.
+- `maxCacheSize` sizes the **subject** cache. The other four caches are hardcoded to a single entry, because each holds one whole collection.
+- `cacheTTL: 0` does not disable caching cleanly. Every LRU entry expires the instant it is written *and* the compiled table is rebuilt on every request, so each check re-reads `listRoles` and `listPolicies` and re-runs `compileTable`. Correct, and very slow. Tests only.
+- `maxConcurrentSubjectLoads` bounds concurrency, not totals. A call that hits the subject cache, or joins an in-flight load for the same subject, never counts against it. Shedding surfaces as a fail-closed `false` plus `onError`, not as a throw at the call site.
 
-- `policyCombine: 'first-applicable'` - throws. The fast path returns a plain boolean and cannot distinguish "rule fired" from "default applied", so first-applicable is dev-mode only.
-- `defaultEffect: 'allow'` without `allowFailOpen: true` - throws. Fail-open in a production authorization engine is a security footgun; opt in explicitly.
+### Scope options
 
-Both throw at construction time so misconfigurations never serve traffic.
+`scopeMode` and `scopeCombine` govern `enrichSubjectWithScopedRoles`, which merges `subject.scopedRoles` into `subject.roles` before evaluation.
 
-### Hooks reference
+| `scopeMode` | Match rule |
+| --- | --- |
+| `'flat'` | `scopedRole.scope === request.scope`, exact string equality |
+| `'hierarchical'` | The request scope is split on `.` into itself plus every ancestor prefix; a grant at any of those levels matches |
 
-`IamEngineTypes.IHooks` accepts the lifecycle hooks plus two operational hooks:
+Under `'hierarchical'`, a request scope of `'org-1.team-2.repo-3'` walks `['org-1.team-2.repo-3', 'org-1.team-2', 'org-1']`, most specific first. `scopeCombine: 'union'` (the default) merges the roles from every matching level; `'override'` stops at the first level that has any grant, so a narrower grant shadows a broader one rather than adding to it. Under `'flat'` at most one level can ever match, so `scopeCombine` is ignored.
 
-| Hook | When it fires | Description |
+Enrichment is additive and never revokes: a role already on `subject.roles` is deduplicated, never removed. If nothing matches, the original subject object is returned unchanged (no allocation).
+
+### Construction guards
+
+Seven checks run in the constructor body, plus two more inside `IamLRUCache`'s constructor when the caches are built. All are boot-time: a bad config is a failed start, not a surprise on the first request.
+
+<Callout tone="warning" title="defaultEffect 'allow' needs an explicit opt-in in every mode">
+  `defaultEffect: 'allow'` throws unless `allowFailOpen: true` is also passed - in
+  **development mode too**, not only production. Even with the opt-in, the
+  constructor emits a `console.warn` naming the engine as fail-open, so an
+  operator grepping startup logs always finds it.
+</Callout>
+
+| Condition | Error | Message |
 | --- | --- | --- |
-| `beforeEvaluate` | Before every evaluation | Mutate the request (enrich subject/resource attrs) |
-| `afterEvaluate` | After every evaluation (dev mode) | Audit logging, metrics on the resulting decision |
-| `onDeny` | Only when the decision is `deny` | Security alerts, denial logging |
-| `onError` | Any uncaught error during evaluation | Error tracking; engine then fails closed |
-| `onMetrics` | After each evaluation in either mode | Receives timing + cache-hit telemetry for dashboards |
-| `onPolicyError` | When a single policy throws during evaluation | Per-policy error capture without aborting evaluation |
+| `policyCombine` not one of the three valid values | `Error` | `unknown policyCombine ...` |
+| `mode: 'production'` with `policyCombine: 'first-applicable'` | `Error` | `policyCombine 'first-applicable' requires mode 'development'; the production fast path cannot represent it correctly.` |
+| `defaultEffect: 'allow'` without `allowFailOpen: true` | `Error` | `defaultEffect 'allow' is a fail-open footgun. Pass allowFailOpen: true to confirm intent.` |
+| `maxPolicies` non-finite or `< 1` | `RangeError` | `maxPolicies must be a finite number >= 1` |
+| `maxRoles` non-finite or `< 1` | `RangeError` | `maxRoles must be a finite number >= 1` |
+| `adapterTimeoutMs` non-finite or `< 0` | `RangeError` | `adapterTimeoutMs must be a finite number >= 0` |
+| `maxConcurrentSubjectLoads` non-finite, or neither `0` nor `>= 1` | `RangeError` | `maxConcurrentSubjectLoads must be 0 (unbounded) or a finite number >= 1` |
+| `cacheTTL` non-finite or negative | `RangeError` | `ttlMs must be a finite number >= 0` (from `IamLRUCache`) |
+| `maxCacheSize` non-finite or `< 1` | `RangeError` | `maxSize must be a finite number >= 1` (from `IamLRUCache`) |
 
-See [hooks](/duck-iam/advanced/engine/hooks) for full signatures and examples.
+The engine's own messages are prefixed `[@gentleduck/iam:engine]`. The finiteness checks exist because `NaN > x` is always `false`: a `NaN` limit would silently disable the bound it was supposed to enforce rather than failing loudly. The `policyCombine` guard exists because both evaluators branch on `'and'` and `'allow-overrides'` and fall through to first-applicable — the most permissive of the three — for anything else, so a typo silently lost deny-overrides semantics.
 
----
+### AccessControl.IDecision
 
-## Full configuration example
+Development mode returns this object from `authorize` and `check`.
 
-```typescript
-const engine = new IamEngine({
-  adapter,
-  defaultEffect: 'deny',
-  cacheTTL: 120,
-  maxCacheSize: 5000,
-  mode: 'production',
-  hooks: {
-    beforeEvaluate: (request) => ({
-      ...request,
-      environment: { ...request.environment, timestamp: Date.now() },
-    }),
-    afterEvaluate: (request, decision) => {
-      console.log(`[access] ${request.subject.id} ${request.action} ${request.resource.type} -> ${decision.effect}`)
-    },
-    onDeny: (request, decision) => {
-      auditLog.write({
-        event: 'access_denied',
-        subject: request.subject.id,
-        action: request.action,
-        resource: request.resource.type,
-        reason: decision.reason,
-      })
-    },
-    onError: (error, request) => {
-      errorTracker.capture(error, { subject: request.subject.id })
-    },
-  },
-})
-```
-
----
-
-## The IDecision object
-
-Every authorization check in development mode returns an `AccessControl.IDecision`:
-
-```typescript
+```ts
 interface IDecision {
-  allowed: boolean                 // The final yes/no answer
-  effect: AccessControl.Effect     // 'allow' | 'deny'
-  rule?: AccessControl.IRule       // Which rule decided
-  policy?: string                  // Which policy ID
-  reason: string                   // Human-readable explanation
-  duration: number                 // Evaluation time in milliseconds
-  timestamp: number                // When the decision was made (Date.now())
+  readonly allowed: boolean
+  readonly effect: 'allow' | 'deny'
+  readonly rule?: AccessControl.IRule
+  readonly policy?: string
+  readonly reason: string
+  readonly duration: number
+  readonly timestamp: number
+  readonly applicable?: boolean
+  readonly failure?: 'input' | 'resolution' | 'evaluation'
 }
 ```
 
-### Examples
+| Field | Meaning |
+| --- | --- |
+| `allowed` | The verdict. Always `effect === 'allow'`. |
+| `effect` | `'allow'` or `'deny'`. |
+| `rule` | The `AccessControl.IRule` that decided, when one did. Absent on a default-effect verdict. |
+| `policy` | ID of the deciding policy. `'__rbac__'` for the synthetic policy generated from roles. |
+| `reason` | Human-readable explanation, safe to log. |
+| `duration` | Evaluation time in milliseconds. |
+| `timestamp` | `Date.now()` at decision time. |
+| `applicable` | `false` when a policy's targets did not match the request, so it contributed nothing to the cross-policy combine. Omitted otherwise. |
+| `failure` | Set only when the deny came from the engine failing rather than from a policy saying no: `'input'` for a rejected request, `'resolution'` for an unresolvable subject, `'evaluation'` for a throw during evaluation. Absent on every ordinary decision. It is what lets a caller answer 403 for one and 503 for the other. |
 
-**Allowed by a matching rule:**
+Three real shapes:
 
-```typescript
+```ts
+// Allowed by an RBAC-derived rule
 {
   allowed: true,
   effect: 'allow',
-  rule: { id: 'rbac-editor-create-post', /* ... */ },
+  rule: { id: '__rbac__#3', effect: 'allow', priority: 10, /* ... */ },
   policy: '__rbac__',
-  reason: 'Allowed by rule "rbac-editor-create-post" (allow-overrides)',
+  reason: 'Allowed by rule "__rbac__#3" (allow-overrides)',
   duration: 0.42,
   timestamp: 1708300000000,
 }
-```
 
-**Denied - no rules matched:**
-
-```typescript
+// Nothing applicable, defaultEffect: 'deny'
 {
   allowed: false,
   effect: 'deny',
@@ -192,43 +221,44 @@ interface IDecision {
   duration: 0.31,
   timestamp: 1708300000000,
 }
-```
 
-**Denied by an explicit deny rule:**
-
-```typescript
+// Synthesized by the engine when subject resolution threw
 {
   allowed: false,
   effect: 'deny',
-  rule: { id: 'block-external-ips', /* ... */ },
-  policy: 'ip-restriction-policy',
-  reason: 'Denied by rule "block-external-ips"',
-  duration: 0.55,
+  reason: 'Subject resolution error',
+  duration: 0,
   timestamp: 1708300000000,
 }
 ```
 
-In production mode, `engine.authorize()` returns a plain `boolean` - no `IDecision` allocation. See [modes](/duck-iam/advanced/engine/modes).
+The synthesized shapes carry `duration: 0` because no evaluation ran. The engine builds three of them: `'Evaluation error'` from `authorize`'s catch, `'Subject resolution error'` from `check`'s catch, and `'invalid subjectId'` from `check`'s argument guard.
 
----
+Production mode returns a bare `boolean` from `authorize` and `check`, so there is nowhere to carry `failure` — use the `onError` hook. `afterEvaluate` and `onDeny` still fire in production, with a verdict-only decision synthesised for them; `policy`, `rule` and the interpreter's real `reason` are not in it, because the compiled table does not retain policy identity.
 
-## Low-level helpers
+### Module-level exports
 
-Most applications only need the `IamEngine`, but two adjacent exports are worth knowing about:
-
-```typescript
-import { IamLRUCache, iamBuildPermissionKey } from '@gentleduck/iam'
+```ts
+import { IamEngine, iamEngine, iamFlushSharedCaches, IamLRUCache, iamBuildPermissionKey, iamParsePermissionKey, iamSplitPermissionKey } from '@gentleduck/iam'
+import type { IamEngineTypes } from '@gentleduck/iam'
 ```
 
-- `iamBuildPermissionKey(action, resource, resourceId?, scope?)` matches the exact key format used by `engine.permissions()` and all client libraries
-- `IamLRUCache` is the small TTL cache implementation the engine uses internally - import only if you want the same eviction semantics in neighboring application code
+| Export | What it is |
+| --- | --- |
+| `IamEngine` | The engine class. |
+| `iamEngine(config)` | Factory returning `new IamEngine(config)`. |
+| `iamFlushSharedCaches()` | Clears the **process-wide** compiled-regex and dot-path caches. Not the per-engine ones. |
+| `IamLRUCache` / `iamLRUCache` | The TTL+LRU cache the engine uses internally, exported for adjacent application code. |
+| `iamBuildPermissionKey(action, resource, resourceId?, scope?)` | Builds the exact key format `engine.permissions()` returns: `[@scope:]action:resource[:resourceId]`. |
+| `iamSplitPermissionKey(key)` | Tokenises a key into unescaped segments, honouring the `\:`, `\\` and `\@` escapes. |
+| `iamParsePermissionKey(key)` | The inverse of the builder: `{ scope, action, resource, resourceId }`, or `null` for anything not in the builder's image. |
+| `IamEngineTypes` | Namespace holding `IConfig`, `IHooks`, `IAdmin`, `IHealth`, `IMetricsEvent`, `IInvalidator`, `IInvalidateEvent`, `IMutationEvent`, `ISnapshot`, `IImportOptions`, `IImportResult`. |
 
----
+## Full example
 
-## Putting it together
-
-```typescript
-import { defineRole, IamEngine, IamMemoryAdapter } from '@gentleduck/iam'
+```ts
+import { defineRole, IamEngine } from '@gentleduck/iam'
+import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
 
 const viewer = defineRole('viewer').grant('read', 'post').grant('read', 'comment').build()
 const editor = defineRole('editor').inherits('viewer').grant('create', 'post').grant('update', 'post').build()
@@ -242,20 +272,43 @@ const engine = new IamEngine({
   adapter,
   defaultEffect: 'deny',
   cacheTTL: 60,
+  maxCacheSize: 5000,
+  adapterTimeoutMs: 2_000,
   hooks: {
-    afterEvaluate: (req, d) => console.log(`${req.subject.id} ${req.action}:${req.resource.type} = ${d.effect}`),
+    onDeny: (req, decision) => console.warn('denied', req.subject.id, decision.reason),
+    onPolicyError: (err, policyId) => console.error('broken policy', policyId, err),
   },
 })
 
-await engine.can('user-1', 'read', { type: 'post', attributes: {} }) // true
+await engine.preload()
+
+await engine.can('user-1', 'read', { type: 'post', attributes: {} }) // true - inherited from viewer
+await engine.can('user-1', 'delete', { type: 'post', attributes: {} }) // false
 
 await engine.admin.saveRole({
   id: 'admin',
   name: 'Admin',
-  permissions: [{ action: '*', resource: '*' }],
+  permissions: [{ action: 'delete', resource: 'post' }],
   inherits: ['editor'],
 })
 await engine.admin.assignRole('user-1', 'admin')
 
-await engine.can('user-1', 'delete', { type: 'post', attributes: {} }) // true
+await engine.can('user-1', 'delete', { type: 'post', attributes: {} }) // true - caches were invalidated by the writes
 ```
+
+## Gotchas
+
+- **The `defaultEffect: 'allow'` guard is not mode-gated.** A development-mode engine refuses it too.
+- **Naming `TMode` does not set `mode`.** Pass `mode` explicitly.
+- **`cacheTTL` is seconds, `adapterTimeoutMs` is milliseconds.** Passing `cacheTTL: 60000` gives you a 16-hour TTL.
+- **`iamFlushSharedCaches()` is module-level, not an instance method.** It wipes process-global regex and dot-path caches shared by every engine in the process; `engine.cache.invalidate()` does not touch them, and they are separate again from the per-engine regex/path caches each `IamEngine` owns.
+- **Two engines never share evaluation caches.** Each instance holds its own regex and dot-path `Map`s, so one tenant flooding an engine with hostile patterns cannot evict another tenant's entries.
+- **The subject cache is the only sized cache.** Raising `maxCacheSize` does nothing for policies or roles.
+
+## See also
+
+- [Engine methods](/duck-iam/advanced/engine/methods)
+- [Caching and invalidation](/duck-iam/advanced/engine/caching)
+- [Development vs production mode](/duck-iam/advanced/engine/modes)
+- [Evaluation pipeline](/duck-iam/core/evaluation)
+- [Cross-policy combining](/duck-iam/core/cross-policy)

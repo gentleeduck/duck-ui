@@ -1,638 +1,343 @@
-## Goal
+Everything so far ran in `src/main.ts`. This chapter puts DocDuck behind an HTTP server, guards its routes, feeds the engine the document data its owner policy needs, and exposes the permissions endpoint the browser will consume in chapter 7.
 
-BlogDuck has a working authorization engine. Now protect actual HTTP endpoints.
-Pick the framework you use.
+## What you should already have
 
-## How It Works
+After chapter 5, `src/access.ts` exports `adapter`, `engine` (with `scopeMode: 'hierarchical'`) and the `seeded` promise; `src/policies.ts` exports `policies`, now including `tenantIsolation`; `src/documents.ts` exports `findDocument` and `documentAttributes`; and `src/access.ts` already carries the `beforeEvaluate` hook from chapter 4. This chapter adds one new file, `src/server.ts`.
 
-All server integrations share the same pattern:
+## Learning goals
 
-1. Extract the user ID from the request (JWT, session, header)
-2. Determine the action (from HTTP method) and resource (from URL path)
-3. Call `engine.can()` with the extracted context
-4. Allow or deny the request
+* Map an HTTP request onto the five arguments of `engine.can()`.
+* Choose between global middleware, a per-route guard, and a direct `engine.can()` call - and know which one can vary the scope per request.
+* Load resource attributes so ABAC rules written in chapter 3 actually see them.
+* Mount the admin router safely: the mandatory `authorize` callback, the CSRF default, the audit hook.
+* Serve a permission map for the client.
 
-### HTTP Method to Action Mapping
+## One guarded request
 
-duck-iam maps HTTP methods to actions automatically via `IAM_METHOD_ACTION_MAP`:
+The guard sits between authentication and the handler. It never decides *who* the caller is - that is your auth middleware's job, and it must run first. The guard's only inputs are the subject ID your auth layer put on the request, the action, the resource, the environment, and the scope.
 
-```typescript
-const IAM_METHOD_ACTION_MAP = {
-  GET: 'read',
-  HEAD: 'read',
-  OPTIONS: 'read',
-  POST: 'create',
-  PUT: 'update',
-  PATCH: 'update',
-  DELETE: 'delete',
-}
+Every default extractor reads identity from somewhere the client cannot set: Express uses `req.user?.id`, Hono uses `c.get('userId')` (set by an upstream middleware), and the Next.js `withIamAccess` wrapper refuses to construct at all unless you pass `getUserId`, precisely so nobody reaches for `req.headers['x-user-id']`.
+
+## How a request becomes a check
+
+The framework wrappers are thin. Each derives the five `can()` arguments from the request using overridable extractors:
+
+| `can()` argument | Default source | Override with |
+| --- | --- | --- |
+| `subjectId` | `req.user?.id` (Express, Nest also tries `req.user.sub`), `c.get('userId')` (Hono) | `getUserId` |
+| `action` | `IAM_METHOD_ACTION_MAP[req.method]` | `getAction` |
+| `resource` | First path segment as the type, second as the id | `getResource` |
+| `environment` | `iamExtractEnvironment(req)` | `getEnvironment` |
+| `scope` | none | `getScope` (middleware and Nest guard only) |
+
+`IAM_METHOD_ACTION_MAP` is exported from `@gentleduck/iam/server/generic`:
+
+| Method | Action |
+| --- | --- |
+| `GET`, `HEAD`, `OPTIONS` | `read` |
+| `POST` | `create` |
+| `PUT`, `PATCH` | `update` |
+| `DELETE` | `delete` |
+
+An unlisted method falls back to `read`.
+
+`iamExtractEnvironment(req)` sets exactly three keys - `timestamp`, `userAgent`, and `ip` - and **`ip` is `undefined` unless you ask for it**. `X-Forwarded-For` and `X-Real-IP` are ordinary request headers, so with nothing in front of the app a client sets them itself; `req.ip` is skipped for the same reason, because a framework may fill it from a platform header rather than a socket.
+
+Opt in explicitly, one of two ways:
+
+```ts
+// The framework already knows about your proxies:
+getEnvironment: (req) => iamExtractEnvironment(req, { trustProxy: true })
+
+// Or you resolve the client address yourself:
+getEnvironment: (req) => ({ ...iamExtractEnvironment(req), ip: trustedClientIp(req) })
 ```
 
-### URL Path to Resource Mapping
+Under `trustProxy` the chain is `req.ip`, then the **leftmost** `x-forwarded-for` hop, then `x-real-ip`; a header over 4096 characters or a hop over 256 characters is dropped rather than trusted.
 
-The default resource extraction parses the URL path:
+Write `deny when environment.ip in BLOCKLIST` on a default wiring and it never fires - `environment.ip` is `null`, the condition is false, the deny is retired, and the request is allowed. Silently, forever. The same applies to any custom key (`environment.region`, a feature flag): `getEnvironment` is the only place those values can enter.
 
-```
-/api/posts/123
-      ^     ^
-      |     +-- resourceId: '123'
-      +-- resourceType: 'posts'
-```
-
-The first path segment after a base path is the resource type, the second is the resource ID.
-Customize this with the `getResource` callback.
-
-### Environment Extraction
-
-The `extractEnvironment()` helper reads standard headers:
-
-```typescript
-import { extractEnvironment } from '@gentleduck/iam/server/generic'
-
-const env = extractEnvironment(req)
-// {
-//   ip: '192.168.1.1',       // from req.ip or x-forwarded-for or x-real-ip
-//   userAgent: 'Mozilla/...',  // from user-agent header
-//   timestamp: 1708300000000,  // Date.now()
-// }
-```
-
-## Generic Helpers
-
-Framework-agnostic utilities that work with any server.
-
-### generatePermissionMap()
-
-Generate a `PermissionMap` for the client (Chapter 7):
-
-```typescript
-import { generatePermissionMap } from '@gentleduck/iam/server/generic'
-
-const permissions = await generatePermissionMap(engine, userId, [
-  { action: 'create', resource: 'post' },
-  { action: 'update', resource: 'post', resourceId: 'post-1' },
-  { action: 'delete', resource: 'post', resourceId: 'post-1' },
-  { action: 'manage', resource: 'dashboard' },
-  { action: 'manage', resource: 'user', scope: 'acme' },
-])
-// { 'create:post': true, 'update:post:post-1': true, ... }
-```
-
-Pass this map to the client `AccessProvider` for permission-based UI rendering.
-
-### createSubjectCan()
-
-Create a reusable `can` function bound to a user:
-
-```typescript
-import { createSubjectCan } from '@gentleduck/iam/server/generic'
-
-const can = createSubjectCan(engine, userId)
-
-if (await can('delete', 'post', 'post-1')) {
-  // delete the post
-}
-
-if (await can('manage', 'dashboard')) {
-  // show admin panel
-}
-
-// With scope
-if (await can('manage', 'user', undefined, 'acme')) {
-  // manage users in acme
-}
-```
-
-## Engine Mode on the Server
-
-All server integrations call `engine.can()` under the hood, which always returns a boolean
-regardless of engine mode. Middleware, guards, and route handlers work identically in both
-`'development'` and `'production'` mode.
-
-Use `mode: 'production'` for maximum throughput. Production mode skips Decision object
-allocation, timing, and hooks, giving roughly 2x faster:
-
-```typescript title="src/access.ts"
-import { IamEngine } from '@gentleduck/iam'
-import { adapter } from './adapter'
-
-export const engine = new IamEngine({
-  adapter,
-  mode: 'production', // recommended for servers -- ~2x faster, no Decision overhead
-})
-```
-
-Temporarily switch back to `'development'` mode for decision traces. Since `engine.can()`
-returns boolean either way, the rest of your code stays the same.
+`iamAccessMiddleware` derives the resource from `req.path`, so `/documents/doc-1` produces the type `documents` - plural, because your URL is. Either name your resource types after your routes or pass `getResource` and map them yourself. A silent mismatch here reads as "everything is denied".
 
 ## Express
 
-**Global middleware**
+**Install and mount authentication first**
 
-```typescript title="src/server.ts"
+```ts title="src/server.ts"
 import express from 'express'
-import { engine } from './access'  // mode: 'production' recommended
-import { accessMiddleware } from '@gentleduck/iam/server/express'
+import { engine, seeded } from './access'
 
 const app = express()
 app.use(express.json())
 
-app.use(accessMiddleware(engine, {
-  getUserId: (req) => req.headers['x-user-id'] as string,
-  getScope: (req) => req.headers['x-organization'] as string,
+// Your own auth: sets req.user from a verified session or JWT.
+app.use(authenticate)
+```
+
+**Guard one route**
+
+`iamGuard(engine, action, resourceType, opts?)` returns Express middleware. It reads the resource id from `req.params.id` and calls `engine.can()`; on `false` it replies 403, and with no user it replies 401.
+
+```ts title="src/server.ts"
+import { iamGuard } from '@gentleduck/iam/server/express'
+
+app.get('/documents/:id', iamGuard(engine, 'read', 'document'), getDocument)
+app.patch('/documents/:id', iamGuard(engine, 'update', 'document'), updateDocument)
+app.delete('/documents/:id', iamGuard(engine, 'delete', 'document'), deleteDocument)
+```
+
+`opts` accepts `getUserId`, `getEnvironment`, `onDenied`, and a **static** `scope` - a narrower set than the middleware's, and notably no `onError`: a guard that throws calls `next(err)`.
+
+**Guard everything with one middleware**
+
+`iamAccessMiddleware(engine, opts?)` checks every request that passes through it. Use it when your routes are uniform, and give it `getScope` when the tenant is in the URL:
+
+```ts title="src/server.ts"
+import { iamAccessMiddleware } from '@gentleduck/iam/server/express'
+
+app.use('/teams/:team', iamAccessMiddleware(engine, {
+  getUserId: (req) => req.user?.id ?? null,
+  getResource: (req) => {
+    const parts = (req.path ?? '/').split('/').filter(Boolean)
+    return { type: parts[0] === 'documents' ? 'document' : 'team', id: parts[1], attributes: {} }
+  },
+  getScope: (req) => req.params?.team,
+  onDenied: (_req, res) => res.status(403).json({ error: 'Forbidden' }),
 }))
 ```
 
-Missing user ID returns 401. Denied permission returns 403.
+**Check that the document row still reaches the engine**
 
-**Full options:**
+`iamGuard` builds the resource as `{ type, id: req.params.id, attributes: {} }` - an **empty** attribute bag. `document-ownership` reads `resource.attributes.ownerId`, which would resolve to `null`, and its `deny-non-owner-write` rule would fire for everybody.
 
-```typescript
-interface ExpressOptions {
-  getUserId?: (req) => string | null        // default: req.user?.id
-  getResource?: (req) => Resource           // default: parse from URL
-  getAction?: (req) => string               // default: IAM_METHOD_ACTION_MAP
-  getEnvironment?: (req) => Environment     // default: extractEnvironment()
-  getScope?: (req) => string | undefined    // default: none
-  onDenied?: (req, res) => void             // default: res.status(403).json(...)
-  onError?: (err, req, res, next) => void   // default: res.status(500).json(...)
+Chapter 4's `beforeEvaluate` hook is what saves you, and this is the moment it earns its keep - it fills the gap for every entry point at once:
+
+```ts title="src/access.ts (unchanged since chapter 4)"
+const hooks: IamEngineTypes.IHooks = {
+  async beforeEvaluate(request) {
+    if (request.resource.type !== 'document' || !request.resource.id) return request
+    const doc = await findDocument(request.resource.id)
+    if (!doc) return request
+    return {
+      ...request,
+      resource: {
+        ...request.resource,
+        attributes: { ...documentAttributes(doc), ...request.resource.attributes },
+      },
+    }
+  },
+  // afterEvaluate, onDeny, onError, onPolicyError, onMetrics ...
 }
 ```
 
-**Per-route guards**
+`beforeEvaluate` may return a modified request and the engine uses what it returns. It runs on `authorize`, `can`, `check`, every entry of `permissions()`, and `explain()`. Keep it fast and cache aggressively - it is on the hot path of every check. Without a hook like this, every guard that does not build its own resource attributes is checking against an empty bag.
 
-```typescript title="src/server.ts"
-import { guard } from '@gentleduck/iam/server/express'
+## Picking an integration point
 
-// Explicit action and resource
-app.delete('/api/posts/:id',
-  guard(engine, 'delete', 'post', {
-    getUserId: (req) => req.headers['x-user-id'] as string,
-  }),
-  (req, res) => {
-    res.json({ deleted: req.params.id })
+`iamGuard` (Express and Hono) and `withIamAccess` (Next.js) take a **static** `scope` option - one value fixed at mount time. Only `iamAccessMiddleware` and the Nest guard accept a `getScope(request)` callback. When the tenant varies per request and you are on a per-route guard, either switch to the middleware or drop into the handler:
+
+```ts title="src/server.ts"
+import { createIamSubjectCan } from '@gentleduck/iam/server/generic'
+
+app.post('/teams/:team/documents', async (req, res) => {
+  const can = createIamSubjectCan(engine, req.user.id)
+  if (!(await can('create', 'document', undefined, req.params.team))) {
+    return res.status(403).json({ error: 'Forbidden' })
   }
-)
-
-// With a fixed scope
-app.post('/api/admin/users',
-  guard(engine, 'manage', 'user', {
-    getUserId: (req) => req.headers['x-user-id'] as string,
-    scope: 'admin',
-  }),
-  (req, res) => {
-    res.json({ created: true })
-  }
-)
+  res.json(await createDocument(req.body))
+})
 ```
 
-`guard()` takes an explicit action and resource. The resource ID is auto-extracted from `req.params.id`.
+`createIamSubjectCan(engine, subjectId, environment?)` returns `(action, resourceType, resourceId?, scope?) => Promise<boolean>` - the terse form for handler-level checks. `generateIamPermissionMap(engine, subjectId, checks, environment?)` is the other generic helper; it is a thin pass-through to `engine.permissions()`.
 
-**Admin router**
+## The permissions endpoint
 
-```typescript title="src/server.ts"
+The browser cannot run the engine, so the server hands it a **permission map**: one boolean per `(scope, action, resource, resourceId)` combination the UI needs. Chapter 7 consumes it.
+
+```ts title="src/server.ts"
+import type { IamClient } from '@gentleduck/iam'
+
+const UI_CHECKS = [
+  { action: 'create', resource: 'document' },
+  { action: 'update', resource: 'document' },
+  { action: 'delete', resource: 'document' },
+  { action: 'manage', resource: 'team' },
+] as const satisfies readonly IamClient.IPermissionCheck[]
+
+app.get('/api/permissions', async (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Unauthorized' })
+  const team = typeof req.query.team === 'string' ? req.query.team : undefined
+  const checks = team ? UI_CHECKS.map((c) => ({ ...c, scope: team })) : UI_CHECKS
+  res.json(await engine.permissions(req.user.id, checks))
+})
+```
+
+The response is a flat object keyed by `[@scope:]action:resource[:resourceId]`:
+
+```json
+{
+  "@acme.design:create:document": true,
+  "@acme.design:update:document": true,
+  "@acme.design:delete:document": false,
+  "@acme.design:manage:team": false
+}
+```
+
+Three things to know about the batch:
+
+* The subject and the policy set are loaded **once**, then each check is evaluated against them. Scoped role merging is memoised per scope inside the call.
+* The array is capped at 1024 entries; a bigger batch throws rather than truncating.
+* `permissions(subjectId, checks, environment, { telemetry: false })` skips the per-check `onMetrics` hook. Use it on hot UI gates where you already have latency data.
+
+If the subject or the policies fail to load, the whole map comes back all-`false` and `onError` fires - fail closed, never a partial map.
+
+## The admin router
+
+`engine.admin` writes policies, roles and assignments straight to the adapter. Exposing it over HTTP is exactly as dangerous as it sounds, so the router refuses to be constructed without an `authorize` callback.
+
+```ts title="src/server.ts"
 import { Router } from 'express'
-import { adminRouter } from '@gentleduck/iam/server/express'
+import { iamAdminRouter } from '@gentleduck/iam/server/express'
 
-app.use(
-  '/api/access-admin',
-  adminRouter(engine, {
-    authorize: (req) => /* your check, e.g. req.user?.roles.includes('admin') */ true,
-  })(() => Router()),
-)
+app.use('/api/iam-admin', iamAdminRouter(engine, {
+  authorize: (req) => req.user?.isPlatformAdmin === true,
+  onAdminMutation: (event) => auditLog.write(event),
+  redactPath: (path) => path.replace(/\/[^/]+$/, '/:id'),
+})(Router))
 ```
 
-**Exposed endpoints:**
+`iamAdminRouter(engine, opts)` returns a factory that takes the Express `Router` constructor, so the package never imports Express itself. The routes it mounts:
 
-| Method | Path | Description | Body |
-| --- | --- | --- | --- |
-| GET | `/policies` | List all policies | |
-| GET | `/roles` | List all roles | |
-| PUT | `/policies` | Save/update a policy | `Policy` object |
-| PUT | `/roles` | Save/update a role | `Role` object |
-| POST | `/subjects/:id/roles` | Assign role to subject | `{ roleId, scope? }` |
-| DELETE | `/subjects/:id/roles/:roleId` | Revoke role from subject | |
+| Method and path | Calls | Body |
+| --- | --- | --- |
+| `GET /policies` | `admin.listPolicies()` | - |
+| `GET /roles` | `admin.listRoles()` | - |
+| `PUT /policies` | `admin.savePolicy(body)` | a policy object |
+| `PUT /roles` | `admin.saveRole(body)` | a role object |
+| `POST /subjects/:id/roles` | `admin.assignRole(id, roleId, scope)` | `roleId` and optional `scope` |
+| `DELETE /subjects/:id/roles/:roleId` | `admin.revokeRole(id, roleId)` | - |
 
-Protect the admin router with your own auth middleware. Never expose it to unauthenticated users.
+Behaviour worth knowing:
 
-To revoke one scoped assignment without affecting the same role in other scopes,
-call `engine.admin.revokeRole(subjectId, roleId, scope)` directly.
+* **`authorize` runs on every route**, reads included. Returning a falsy value replies 401; throwing replies 500.
+* **CSRF is on by default since 2.1.0, and it applies to reads as well as mutations.** A built-in `Sec-Fetch-Site` check rejects `cross-site` and `cross-origin` with 403, before `authorize` runs and without emitting an audit event. The header is set by the user agent and page script cannot forge it. Requests carrying no such header - curl, server-to-server, native apps - pass, so bearer-token callers are unaffected. Pass `csrfCheck: false` to disable, or a predicate for an Origin allowlist; a predicate that throws is a 403, not a 500. The first construction without an explicit `csrfCheck` logs a one-time notice.
+* **`onAdminMutation` fires after every mutation**, success or failure, and never on a `GET`. It is fire-and-forget: the router does not await it, and a throw inside it is caught. `event.path` carries expanded route parameters (tenant and subject IDs), so pass `redactPath` when your audit sink sits outside your trust boundary. `event.error` is the error's **class name** by default, because driver messages can carry credentials; `includeErrorMessage: true` opts into the full message.
+* **Rate limiting is out of scope.** Compose your own limiter at the mount point.
+* `savePolicy` and `saveRole` run the validator first and throw before writing if it reports an error-level issue.
 
-## Hono
+## Other frameworks
 
-**Global middleware**
+Every wrapper is built on the same generic helpers, so the concepts above transfer unchanged. Only the shapes differ.
 
-```typescript title="src/server.ts"
+### Hono
+
+```ts title="src/server.ts"
 import { Hono } from 'hono'
-import { engine } from './access'  // mode: 'production' recommended
-import { accessMiddleware } from '@gentleduck/iam/server/hono'
+import { iamAccessMiddleware, iamBindAdminRouter, iamGuard } from '@gentleduck/iam/server/hono'
 
 const app = new Hono()
 
-app.use('*', accessMiddleware(engine, {
-  getUserId: (c) => c.get('userId') || c.req.header('x-user-id'),
-  getScope: (c) => c.req.header('x-organization'),
+// Your auth middleware must set c.set('userId', ...) upstream.
+app.patch('/documents/:id', iamGuard(engine, 'update', 'document'), updateDocument)
+
+app.use('/teams/*', iamAccessMiddleware(engine, {
+  getScope: (c) => c.req.param('team'),
 }))
+
+const admin = new Hono()
+iamBindAdminRouter(admin, engine, { authorize: (c) => isPlatformAdmin(c) })
+app.route('/api/iam-admin', admin)
 ```
 
-The default `getUserId` checks `c.get('userId')` first (set by your auth middleware),
-then falls back to the `x-user-id` header.
+`iamBindAdminRouter(router, engine, opts)` wires the same six routes onto a router you already own and returns it for chaining.
 
-For Cloudflare Workers, the IP is extracted from `cf-connecting-ip` (then `x-forwarded-for` as fallback).
+### Next.js App Router
 
-**Full options:**
+```ts title="app/api/documents/[id]/route.ts"
+import { withIamAccess } from '@gentleduck/iam/server/next'
+import { engine } from '@/lib/access'
 
-```typescript
-interface HonoOptions {
-  getUserId?: (c) => string | null
-  getResource?: (c) => Resource
-  getAction?: (c) => string
-  getEnvironment?: (c) => Environment
-  getScope?: (c) => string | undefined
-  onDenied?: (c) => Response
-  onError?: (err, c) => Response
-}
-```
-
-**Per-route guards**
-
-```typescript title="src/server.ts"
-import { guard } from '@gentleduck/iam/server/hono'
-
-app.delete('/api/posts/:id',
-  guard(engine, 'delete', 'post', {
-    getUserId: (c) => c.get('userId'),
-  }),
-  async (c) => {
-    return c.json({ deleted: c.req.param('id') })
-  }
+export const PATCH = withIamAccess(engine, 'update', 'document',
+  async (req, ctx) => {
+    const { id } = await ctx.params
+    return Response.json(await updateDocument(id, await req.json()))
+  },
+  { getUserId: async (req) => (await getSession(req))?.user.id ?? null },
 )
 ```
 
-## NestJS
+`getUserId` is **required** - `withIamAccess` throws at construction without it. The wrapper awaits `ctx.params` (Next 15 makes it a promise) and uses `params.id` as the resource id.
 
-**Create the access module**
+The other Next.js exports:
 
-```typescript title="src/access/access.module.ts"
-import { Module } from '@nestjs/common'
-import { createEngineProvider, IAM_ACCESS_ENGINE_TOKEN } from '@gentleduck/iam/server/nest'
-import { engine } from './access'  // mode: 'production' recommended
+| Export | Use |
+| --- | --- |
+| `checkIamAccess(engine, subjectId, action, resourceType, resourceId?, scope?)` | one check inside a Server Component or server action |
+| `getIamPermissions(engine, subjectId, checks)` | build the permission map in a layout, pass it to the client provider |
+| `createIamNextMiddleware(engine, { rules, getUserId, onError? })` | Edge middleware; returns `null` when the request passes or no rule matches, otherwise a 401/403/500 `Response` |
+| `createIamAdminHandlers(engine, { authorize, ... })` | `{ listPolicies, listRoles, savePolicy, saveRole, assignRole, revokeRole }` route handlers |
 
-@Module({
-  providers: [
-    createEngineProvider(() => engine),
-  ],
-  exports: [IAM_ACCESS_ENGINE_TOKEN],
-})
-export class AccessModule {}
-```
+Each middleware rule is `{ pattern, resource, action?, scope? }`, where `pattern` is a string prefix or a `RegExp`; the first match wins and an omitted `action` is inferred from the HTTP method.
 
-`createEngineProvider()` returns a NestJS provider that makes the engine available
-via dependency injection using the `IAM_ACCESS_ENGINE_TOKEN` injection token.
+### NestJS
 
-**Create the access guard**
-
-```typescript title="src/access/access.guard.ts"
-import { CanActivate, ExecutionContext, Injectable, Inject } from '@nestjs/common'
-import { nestAccessGuard, IAM_ACCESS_ENGINE_TOKEN } from '@gentleduck/iam/server/nest'
-import type { IamEngine } from '@gentleduck/iam'
+```ts title="src/access.guard.ts"
+import { Injectable, type CanActivate } from '@nestjs/common'
+import { IamAuthorize, iamNestAccessGuard } from '@gentleduck/iam/server/nest'
+import { engine } from './access'
 
 @Injectable()
 export class AccessGuard implements CanActivate {
-  private check: ReturnType<typeof nestAccessGuard>
-
-  constructor(@Inject(IAM_ACCESS_ENGINE_TOKEN) engine: IamEngine) {
-    this.check = nestAccessGuard(engine, {
-      getUserId: (req) => req.user?.id || req.user?.sub,
-      getScope: (req) => req.headers['x-organization'],
-      getResourceId: (req) => req.params?.id,
-    })
-  }
-
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    return this.check(context)
-  }
-}
-```
-
-**Full options:**
-
-```typescript
-interface NestGuardOptions {
-  getUserId?: (req) => string | null          // default: req.user?.id or req.user?.sub
-  getEnvironment?: (req) => Environment       // default: extractEnvironment()
-  getResourceId?: (req) => string | undefined // default: req.params?.id
-  getScope?: (req) => string | undefined      // default: none
-  onError?: (err, req) => boolean             // default: return false (deny)
-}
-```
-
-**Use the @Authorize decorator**
-
-```typescript title="src/posts/posts.controller.ts"
-import { Controller, Delete, Get, Post, Param, UseGuards } from '@nestjs/common'
-import { Authorize } from '@gentleduck/iam/server/nest'
-import { AccessGuard } from '../access/access.guard'
-
-@Controller('posts')
-@UseGuards(AccessGuard)
-export class PostsController {
-  // Explicit action and resource
-  @Delete(':id')
-  @Authorize({ action: 'delete', resource: 'post' })
-  async deletePost(@Param('id') id: string) {
-    return { deleted: id }
-  }
-
-  // With scope
-  @Post('admin')
-  @Authorize({ action: 'manage', resource: 'post', scope: 'admin' })
-  async adminAction() {
-    return { success: true }
-  }
-
-  // Infer action from HTTP method, resource from route path
-  @Get()
-  @Authorize()  // infer: true by default
-  async listPosts() {
-    return []
-  }
-}
-```
-
-When `@Authorize()` uses `infer: true` (the default), action is inferred from the HTTP method
-via `IAM_METHOD_ACTION_MAP` and resource is inferred from the route path (last non-parameter segment).
-
-If no `@Authorize` decorator is present, the guard allows the request through.
-
-**AuthorizeMeta interface:**
-
-```typescript
-interface AuthorizeMeta {
-  action?: string       // explicit action
-  resource?: string     // explicit resource type
-  scope?: string        // explicit scope
-  infer?: boolean       // infer from HTTP method + route (default: true)
-}
-```
-
-**Type-safe decorator**
-
-```typescript title="src/access/authorize.ts"
-import { createTypedAuthorize } from '@gentleduck/iam/server/nest'
-
-type AppAction = 'read' | 'create' | 'update' | 'delete' | 'manage'
-type AppResource = 'post' | 'comment' | 'user' | 'dashboard'
-type AppScope = 'acme' | 'globex'
-
-export const Authorize = createTypedAuthorize<AppAction, AppResource, AppScope>()
-
-// Now typos are compile errors:
-// @Authorize({ action: 'delet', resource: 'post' })  // TypeScript error
-```
-
-## Next.js (App Router)
-
-**Protect API route handlers**
-
-```typescript title="app/api/posts/[id]/route.ts"
-import { withAccess } from '@gentleduck/iam/server/next'
-import { engine } from '@/lib/access'  // mode: 'production' recommended
-
-export const DELETE = withAccess(engine, 'delete', 'post',
-  async (req, { params }) => {
-    const { id } = await params
-    return Response.json({ deleted: id })
-  },
-  {
-    getUserId: (req) => req.headers.get('x-user-id'),
-    scope: 'acme',
-  }
-)
-```
-
-**WithAccessOptions:**
-
-```typescript
-interface WithAccessOptions {
-  getUserId?: (req: Request) => string | null | Promise<string | null>
-  getEnvironment?: (req: Request) => Environment
-  scope?: string
-  onError?: (err: Error, req: Request) => Response
-}
-```
-
-`getUserId` can be async, useful for reading from cookies or JWT.
-
-**Check permissions in Server Components**
-
-```typescript title="app/posts/[id]/page.tsx"
-import { checkAccess, getPermissions } from '@gentleduck/iam/server/next'
-import { engine } from '@/lib/access'
-
-export default async function PostPage({ params }) {
-  const { id } = await params
-  const userId = 'alice'  // from your auth
-
-  // Single check
-  const canDelete = await checkAccess(engine, userId, 'delete', 'post', id)
-
-  // Batch check for the client
-  const permissions = await getPermissions(engine, userId, [
-    { action: 'update', resource: 'post', resourceId: id },
-    { action: 'delete', resource: 'post', resourceId: id },
-    { action: 'create', resource: 'comment' },
-  ])
-
-  return (
-    <div>
-      <h1>Post {id}</h1>
-      {canDelete && <button>Delete</button>}
-      <ClientToolbar permissions={permissions} />
-    </div>
-  )
-}
-```
-
-`checkAccess()` returns a boolean. `getPermissions()` returns a `PermissionMap`
-for client-side hydration.
-
-**Next.js middleware for route-level protection**
-
-```typescript title="middleware.ts"
-import { createNextMiddleware } from '@gentleduck/iam/server/next'
-import { engine } from '@/lib/access'
-
-const checkAccess = createNextMiddleware(engine, {
-  rules: [
-    { pattern: '/api/admin', resource: 'dashboard', action: 'manage' },
-    { pattern: /^\/api\/posts\/\w+$/, resource: 'post' },
-    { pattern: '/api/users', resource: 'user', scope: 'admin' },
-  ],
-  getUserId: (req) => req.headers.get('x-user-id'),
-})
-
-export async function middleware(req: Request) {
-  const result = await checkAccess(req)
-  if (result) return result  // 401 or 403
-  // No match or allowed -- continue
+  canActivate = iamNestAccessGuard(engine, {
+    getScope: (req) => req.params?.team,
+    getResourceAttributes: async (req, ctx) =>
+      ctx.resource === 'document' && req.params?.id
+        ? { ownerId: (await findDocument(req.params.id))?.ownerId ?? null }
+        : {},
+  })
 }
 
-export const config = {
-  matcher: ['/api/:path*'],
-}
+// In a controller:
+@IamAuthorize({ action: 'delete', resource: 'document' })
+@Delete(':id')
+remove(@Param('id') id: string) { /* ... */ }
 ```
 
-**Rule matching:**
+A handler with **no** `@IamAuthorize` decorator is allowed through untouched - the guard only enforces what you annotate. `@IamAuthorize({ infer: true })` derives the action from the HTTP method and the resource from the last non-parameter route segment. `getResourceAttributes` receives the resolved `{ action, resource, scope }` so you can load the right row; return `null` for an absent value, never `undefined`.
 
-* String patterns use `path.startsWith(pattern)`, so `/api/admin` matches `/api/admin/users`
-* Regex patterns use `pattern.test(path)` for precise matching
-* First matching rule wins (order matters)
-* No matching rule passes the request through
-* Missing `action` is inferred from the HTTP method
+`createIamEngineProvider(factory)` gives you a `{ provide, useFactory }` descriptor bound to the exported token `IAM_ACCESS_ENGINE_TOKEN`, and `createIamAdminOperations(engine, { authorize })` returns the admin methods for your own controller.
 
-**Rule interface:**
+## Engine mode on the server
 
-```typescript
-interface Rule {
-  pattern: string | RegExp  // URL path pattern
-  resource: string          // resource type
-  action?: string           // optional: explicit action (otherwise inferred)
-  scope?: string            // optional: scope for this route
-}
-```
+Keep `mode: 'development'` while you build: `check()` returns a full decision with a reason, and `explain()` works. Switch to `mode: 'production'` when you deploy - `check()` and `permissions()` return plain booleans, `explain()` throws, and evaluation runs against a compiled lookup table instead of walking policies. `can()` returns a `boolean` in both modes, so guards and middleware behave identically either way. Chapter 8 makes the switch.
 
-## Custom Error Responses
+## What just happened
 
-All integrations support custom error handlers:
+The engine did not change. You wrapped it in three layers, each with one job:
 
-```typescript
-// Express
-accessMiddleware(engine, {
-  onDenied: (req, res) => {
-    res.status(403).json({
-      error: 'forbidden',
-      message: `You cannot ${req.method.toLowerCase()} this resource`,
-    })
-  },
-  onError: (err, req, res, next) => {
-    console.error('Auth error:', err)
-    res.status(500).json({ error: 'internal' })
-  },
-})
+1. **Your auth middleware** establishes identity. duck-iam never does this.
+2. **The wrapper** turns an HTTP request into `(subjectId, action, resource, environment, scope)` using defaults you can override one at a time.
+3. **The `beforeEvaluate` hook** enriches the request with data only your database has, so the ABAC rules written in chapter 3 can read `resource.attributes.ownerId`.
 
-// Hono
-accessMiddleware(engine, {
-  onDenied: (c) => c.json({ error: 'forbidden' }, 403),
-  onError: (err, c) => c.json({ error: 'internal' }, 500),
-})
+The deny path is uniform: no subject gives 401 and a `false` decision gives 403. A thrown error never becomes an allow either - `iamAccessMiddleware` answers it through its own `onError` option, which defaults to a 500, while `iamGuard` hands it to `next(err)` so your Express error handler owns the response. Subject-resolution failures, adapter timeouts and policy-load errors all funnel into the same fail-closed deny inside the engine before any of that.
 
-// NestJS (via guard options)
-nestAccessGuard(engine, {
-  onError: (err, req) => {
-    console.error('Auth error:', err)
-    return false  // deny on error
-  },
-})
+## Try it
 
-// Next.js
-withAccess(engine, 'delete', 'post', handler, {
-  onError: (err, req) => Response.json({ error: 'internal' }, { status: 500 }),
-})
-```
+1. Mount `iamGuard(engine, 'delete', 'document')` on `DELETE /documents/:id` and confirm Bob gets 403 for a document Alice owns, with the `beforeEvaluate` hook in place. Remove the hook and watch every delete start failing - that is the empty-attributes trap.
+2. Add `getScope: (req) => req.params.team` to a `/teams/:team` middleware and prove `PATCH /teams/acme.design/documents/doc-1` succeeds for Bob while `PATCH /teams/acme.eng/documents/doc-1` returns 403.
+3. Call `/api/permissions?team=acme.design` as Bob and check the returned keys carry the `@acme.design:` prefix.
+4. Mount the admin router with `authorize: () => false` and confirm every route replies 401, including `GET /policies`.
+5. Wire `onAdminMutation` to `console.log`, then `PUT /policies` and inspect the event: `action`, `target`, `targetId`, `success`, and a `path` you have redacted.
 
-Default error responses:
+## See also
 
-* `401 Unauthorized`: no user ID found
-* `403 Forbidden`: permission denied
-* `500 Internal Server Error`: unexpected error
-
-## Permissions Endpoint Pattern
-
-A common pattern is a dedicated endpoint that returns permissions for the client:
-
-```typescript title="Express example"
-app.get('/api/permissions', async (req, res) => {
-  const userId = req.headers['x-user-id'] as string
-  if (!userId) return res.status(401).json({ error: 'unauthorized' })
-
-  const scope = req.headers['x-organization'] as string
-
-  const permissions = await generatePermissionMap(engine, userId, [
-    { action: 'create', resource: 'post', scope },
-    { action: 'update', resource: 'post', scope },
-    { action: 'delete', resource: 'post', scope },
-    { action: 'manage', resource: 'dashboard', scope },
-    { action: 'manage', resource: 'user', scope },
-  ])
-
-  res.json(permissions)
-})
-```
-
-The client calls this endpoint and passes the result to `AccessProvider` (Chapter 7).
+* [Express integration](/duck-iam/integrations/server/express) - full options tables for middleware, guard, and admin router
+* [Generic server helpers](/duck-iam/integrations/server/generic) - `iamExtractEnvironment`, `IAM_METHOD_ACTION_MAP`, the audit event shape
+* [Hono](/duck-iam/integrations/server/hono), [Next.js](/duck-iam/integrations/server/next), [NestJS](/duck-iam/integrations/server/nest)
+* [Engine hooks](/duck-iam/advanced/engine/hooks) - `beforeEvaluate` ordering and error semantics
+* [Permission map](/duck-iam/integrations/client/permission-map) - the exact key format
+* [Admin API](/duck-iam/advanced/engine/admin) - what each admin method invalidates
 
 ***
 
-## Chapter 6 FAQ
-
-Which framework integration should I use?
-
-Use the integration that matches your backend. Express and Hono provide middleware
-functions. NestJS provides decorators and guards. Next.js provides route handler
-wrappers and Server Component helpers. If your framework isn't listed, use the generic
-helpers (`generatePermissionMap`, `createSubjectCan`, `extractEnvironment`) and call
-`engine.can()` directly in your middleware.
-
-Should I use global middleware or per-route guards?
-
-Per-route guards are more explicit: you see exactly what action and resource each
-route requires. Global middleware is convenient when the URL structure maps cleanly
-to resources. Most apps use both: global middleware for the common case and per-route
-guards where you need explicit control.
-
-How do I extract the user ID from a JWT?
-
-duck-iam handles authorization only, not authentication. Use your existing auth
-middleware (passport, next-auth, clerk, etc.) to verify the JWT and attach the user
-to the request. Then pass `getUserId: (req) => req.user.id` to the duck-iam
-middleware. Keeping auth and authz separate keeps both systems simpler.
-
-How do I extract the scope from the URL?
-
-Use the `getScope` callback. For a URL like `/api/orgs/acme/posts`, extract the
-org slug: `getScope: (req) => req.params.orgId` (Express) or
-`getScope: (c) => c.req.param('orgId')` (Hono). You can also read it from a header
-(`X-Organization`) or from JWT claims.
-
-Should I protect the admin router?
-
-Yes. The admin router exposes mutation endpoints for policies, roles, and assignments.
-Add authentication and authorization middleware before mounting it, for example
-`guard(engine, 'manage', 'dashboard')` to restrict it to admin users only.
-
-Do I need to change my middleware when switching engine modes?
-
-No. `engine.can()` always returns a boolean regardless of mode, so all middleware,
-guards, and route handlers work identically in both `'development'` and `'production'`
-mode. Use `mode: 'production'` on servers for best throughput. It skips Decision
-allocation, timing, and hooks, giving roughly 2x faster permission checks.
-
-Does duck-iam depend on Express/Hono/NestJS?
-
-No. Each integration uses lightweight type interfaces instead of importing the
-framework, so duck-iam doesn't add the framework to your bundle or require specific
-versions. The integration code uses generic request/response shapes compatible with
-the framework's types.
-
-How does NestJS action/resource inference work?
-
-When `@Authorize()` uses `infer: true` (the default), the guard reads the HTTP method
-to determine the action (via `IAM_METHOD_ACTION_MAP`) and parses the controller route path
-for the resource type, taking the last non-parameter segment (ignoring `:id` style
-params). For `@Controller('posts')` with `@Delete(':id')`, the inferred action is
-`delete` and resource is `posts`.
-
-***
-
-Next: [Chapter 7: Client Libraries](/duck-iam/course/chapter-7)
+Next: [Chapter 7: client libraries](/duck-iam/course/chapter-7)

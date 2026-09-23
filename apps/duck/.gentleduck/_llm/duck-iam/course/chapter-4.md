@@ -1,558 +1,492 @@
-## Goal
+DocDuck now has roles and policies. This chapter is about the thing that runs them. You will wire hooks that load document attributes for you, read the cache counters, batch a screen's worth of checks into one call, and finish with a complete, runnable application - the state chapters 5 to 8 build on.
 
-The engine is more than `engine.can()`. This chapter covers every engine method, hooks for
-enrichment and logging, caching, batch permission checks, the explain API, and the Admin API.
+## Learning goals
 
-beforeEvaluateafterEvaluateonDeny, onError"]
-      C["Caching4 LRU cachesTTL + size limits"]
-      B["Batchpermissions()check many at once"]
-      X["Explainfull evaluation tracedebug denials"]
-      A["Admin APImanage at runtimeauto-invalidate"]
-  end`}
-/>
+* Know every public method on `IamEngine` and what each returns in each mode.
+* Wire all seven hooks and know which one can change a decision.
+* Name the five caches, what invalidates each, and what the counters mean.
+* Batch checks with `permissions()` and read the key format.
+* Read an `explain()` trace and know what it does not do.
+* Use `engine.admin` for runtime changes, and `preload` / `healthCheck` / `dispose` for lifecycle.
 
-## Engine Methods Overview
+## One request, end to end
 
-| Method | Returns (dev) | Returns (prod) | Description |
+`can` and `check` both take this path. `authorize` joins it at the `beforeEvaluate` step because you already handed it a resolved subject. The two hook calls at the end run *outside* the evaluation try block, so a hook that throws cannot turn an allow into a deny.
+
+## Every engine method
+
+| Member | Signature | Development | Production |
 | --- | --- | --- | --- |
-| `engine.can(subjectId, action, resource, env?, scope?)` | `boolean` | `boolean` | Simple yes/no permission check |
-| `engine.check(subjectId, action, resource, env?, scope?)` | `Decision` | `boolean` | Full decision in dev, fast boolean in prod |
-| `engine.authorize(request)` | `Decision` | `Decision` | Low-level: takes a full `AccessRequest` |
-| `engine.permissions(subjectId, checks, env?)` | `PermissionMap` | `Record(core engine logic)"]
-      H3["3. afterEvaluate(always runs)"]
-      H4["4. onDeny(only if denied)"]
-  end
-
-  subgraph Error["On Error"]
-      direction TB
-      E1["onError(if any step throws)"]
-      E2["Result: deny(fail closed)"]
-  end
-
-  H1 --> H2 --> H3 --> H4
-  H1 -.->|"throws"| E1 --> E2
-  H2 -.->|"throws"| E1`}
+| `can` | `(subjectId, action, resource, environment?, scope?)` | `boolean` | `boolean` |
+| `check` | same as `can` | `IDecision` | `boolean` |
+| `authorize` | `(request: IamRequest.IAccessRequest)` | `IDecision` | `boolean` |
+| `permissions` | `(subjectId, checks, environment?, opts?)` | `IamClient.PermissionMap` | `RecordLRU, maxCacheSize entries"]
+  SC --> |"miss"| AD["adapter"]
+  REQ --> MP["mergedPolicies1 entry"]
+  MP --> PC["policies1 entry"]
+  MP --> RB["rbacPolicy1 entry"]
+  RB --> RC["roles1 entry"]
+  PC --> AD
+  RC --> AD
+  INV["cache.invalidateRoles(id)"] --> RC
+  INV --> RB
+  INV --> MP
+  INV --> |"only subjects holding that role"| SC`}
 />
 
-### Hook Type Signatures
+| Cache | Holds | Size |
+| --- | --- | --- |
+| `policies` | the result of `adapter.listPolicies()` | 1 entry |
+| `roles` | the result of `adapter.listRoles()` | 1 entry |
+| `rbacPolicy` | the synthetic `__rbac__` policy built from the roles | 1 entry |
+| `mergedPolicies` | stored policies plus `__rbac__`, ready to evaluate | 1 entry |
+| `subjects` | per-subject resolved roles, scoped roles, attributes | up to `maxCacheSize`, LRU |
 
-```typescript
-interface IamEngineTypes.IHooks {
-  // Runs before evaluation. Can modify the request (enrich with DB data).
-  beforeEvaluate?(
-    request: IamRequest.IAccessRequest,
-  ): IamRequest.IAccessRequest | Promise<IamRequest.IAccessRequest>
+All five honour `cacheTTL` (seconds, default 60; `0` disables caching). Concurrent misses for the same key are collapsed into one in-flight promise, so a cold start does not stampede the adapter.
 
-  // Runs after evaluation, regardless of outcome.
-  afterEvaluate?(
-    request: IamRequest.IAccessRequest,
-    decision: AccessControl.IDecision,
-  ): void | Promise<void>
+| Call | Clears |
+| --- | --- |
+| `engine.cache.invalidate()` | all five, plus every in-flight loader |
+| `engine.cache.invalidatePolicies()` | `policies`, `mergedPolicies` |
+| `engine.cache.invalidateRoles()` | `roles`, `rbacPolicy`, `mergedPolicies`, **all** subjects |
+| `engine.cache.invalidateRoles('editor')` | the same, but only subjects that hold `editor` directly or as a scoped role |
+| `engine.cache.invalidateSubject('bob')` | that one subject |
 
-  // Runs only when the decision is deny.
-  onDeny?(
-    request: IamRequest.IAccessRequest,
-    decision: AccessControl.IDecision,
-  ): void | Promise<void>
+Each takes an options object; pass `{ broadcast: false }` when you are *applying* an event that arrived from another instance, so it does not echo back onto the `invalidator` channel.
 
-  // Runs if any error occurs during evaluation.
-  onError?(
-    error: Error,
-    request: IamRequest.IAccessRequest,
-  ): void | Promise<void>
-
-  // Per-evaluation timing + cache-hit telemetry (fires in both modes).
-  onMetrics?(
-    metrics: IamEngineTypes.IMetrics,
-  ): void | Promise<void>
-
-  // Per-policy error capture - fires when a single policy throws,
-  // evaluation continues with remaining policies.
-  onPolicyError?(
-    error: Error,
-    policyId: string,
-    request: IamRequest.IAccessRequest,
-  ): void | Promise<void>
-}
-```
-
-**beforeEvaluate: enrich the request**
-
-Fetch resource data from a database before evaluation runs:
-
-```typescript title="src/access.ts"
-export const engine = new IamEngine({
-  adapter,
-  hooks: {
-    beforeEvaluate: async (request) => {
-      if (request.resource.type !== 'post') return request
-
-      // Fetch the post to get its ownerId
-      const post = await db.posts.findUnique({
-        where: { id: request.resource.id },
-      })
-
-      return {
-        ...request,
-        resource: {
-          ...request.resource,
-          attributes: {
-            ...request.resource.attributes,
-            ownerId: post?.authorId,
-          },
-        },
-      }
-    },
-  },
-})
-```
-
-Callers don't need to pass `ownerId`; the hook fetches it automatically. The hook
-receives the full `AccessRequest` and returns a (potentially modified) request. You can
-modify any part: subject attributes, resource attributes, environment, etc.
-
-If `beforeEvaluate` throws, evaluation is skipped and the result is deny (fail closed).
-The `onError` hook is called.
-
-**afterEvaluate: audit logging**
-
-```typescript
-hooks: {
-  afterEvaluate: async (request, decision) => {
-    console.log(
-      `[audit] ${request.subject.id} ${decision.effect} ${request.action}` +
-      ` on ${request.resource.type}:${request.resource.id ?? 'any'}`
-    )
-  },
-}
-```
-
-`afterEvaluate` runs regardless of outcome (allow or deny). Use it for audit trails,
-metrics, and analytics.
-
-**onDeny: alert on denied access**
-
-```typescript
-hooks: {
-  onDeny: async (request, decision) => {
-    metrics.increment('access.denied', {
-      action: request.action,
-      resource: request.resource.type,
-      subject: request.subject.id,
-      reason: decision.reason,
-    })
-  },
-}
-```
-
-`onDeny` runs only when the decision is deny, after `afterEvaluate`.
-
-**onError: handle evaluation failures**
-
-```typescript
-hooks: {
-  onError: async (error, request) => {
-    logger.error('Authorization error', {
-      error: error.message,
-      subjectId: request.subject.id,
-      action: request.action,
-      resource: request.resource.type,
-    })
-  },
-}
-```
-
-If any error occurs during evaluation (including in hooks), the engine catches it,
-calls `onError`, and returns deny. Errors never result in accidental allows.
-
-The deny decision includes the error message:
-`{ allowed: false, reason: 'Evaluation error: ...' }`
-
-### Hooks in Batch Permissions
-
-`engine.permissions()` triggers hooks for each check in the batch. Each permission
-check goes through `beforeEvaluate`, evaluation, `afterEvaluate`, and `onDeny` (if denied).
-
-### Hooks in Explain
-
-`engine.explain()` only triggers `beforeEvaluate`, not `afterEvaluate`, `onDeny`, or
-`onError`. The hook may modify the request, which affects the evaluation trace. If subject
-resolution, `beforeEvaluate`, or policy loading throws, the `explain()` call rejects.
-
-## Caching
-
-The engine maintains four LRU caches to avoid hitting the adapter on every check:
-
-all policies from adapter(1 entry)"]
-      RC["Role Cacheall role definitions(1 entry)"]
-      RB["RBAC Policy Cachesynthetic __rbac__ policy(1 entry)"]
-      SC["Subject Cacheper-user roles + attributes(up to maxCacheSize entries)"]
-  end
-
-  REQ["PermissionCheck"] --> SC
-  SC --> |"miss"| ADAPTER["Adapter"]
-  SC --> |"hit"| EVAL["Evaluate"]
-  ADAPTER --> SC`}
-/>
-
-### How Caching Works
-
-1. **Policy cache** (1 entry): stores the result of `adapter.listPolicies()`. All policies
-   are loaded once and cached together.
-2. **Role cache** (1 entry): stores the result of `adapter.listRoles()`. All roles are
-   loaded once and cached together.
-3. **RBAC policy cache** (1 entry): stores the `__rbac__` policy generated from roles.
-   Regenerated only when the role cache is invalidated.
-4. **Subject cache** (up to `maxCacheSize` entries): stores per-user data: resolved roles,
-   scoped roles, and attributes. Uses LRU eviction when full.
-
-All caches use TTL. Entries expire after `cacheTTL` seconds and are re-fetched from the
-adapter on the next access.
-
-### Configuration
-
-```typescript
-const engine = new IamEngine({
-  adapter,
-  cacheTTL: 60,         // seconds (default: 60, set to 0 to disable)
-  maxCacheSize: 1000,   // max cached subjects (default: 1000)
-})
-```
-
-* `cacheTTL: 0` disables caching entirely (useful for tests)
-* The subject cache uses LRU eviction: least recently used entries are dropped first
-* Policy and role caches are single-entry, storing all data in one cache slot
-
-### Manual Invalidation
-
-```typescript
-engine.cache.invalidate()                  // clear ALL caches
-engine.cache.invalidateSubject('user-1')   // clear one user's cached data
-engine.cache.invalidatePolicies()          // clear policy cache only
-engine.cache.invalidateRoles()             // clear role + RBAC + ALL subject caches
-```
-
-`invalidateRoles()` also clears the subject cache because subjects cache their resolved
-roles. If role definitions change, all cached subject data becomes stale.
-
-## Batch Permissions
-
-For UIs checking 10-20 permissions at once, use `engine.permissions()`:
-
-```typescript
-const checks = [
-  { action: 'create', resource: 'post' },
-  { action: 'update', resource: 'post', resourceId: 'post-1' },
-  { action: 'delete', resource: 'post', resourceId: 'post-1' },
-  { action: 'manage', resource: 'dashboard' },
-  { action: 'manage', resource: 'user', scope: 'acme' },
-]
-
-const perms = await engine.permissions('bob', checks)
+```ts
+const s = engine.stats.get()
 // {
-//   'create:post': true,
-//   'update:post:post-1': true,
-//   'delete:post:post-1': false,
-//   'manage:dashboard': false,
-//   'acme:manage:user': true,
+//   policies:       { hits: 0, misses: 1, size: 1 },
+//   roles:          { hits: 3, misses: 1, size: 1 },
+//   rbacPolicy:     { hits: 0, misses: 1, size: 1 },
+//   mergedPolicies: { hits: 8, misses: 1, size: 1 },
+//   subjects:       { hits: 6, misses: 3, size: 3 },
+// }
+engine.stats.reset()
+```
+
+Counters accumulate from construction. `engine.healthCheck()` folds the same numbers into a single `cacheHitRate`.
+
+## Batch permissions
+
+A document list screen needs a dozen answers at once. One call, one subject resolution, one policy load:
+
+```ts
+const perms = await engine.permissions('bob', [
+  { action: 'read', resource: 'document', resourceId: 'doc-2' },
+  { action: 'update', resource: 'document', resourceId: 'doc-2' },
+  { action: 'delete', resource: 'document', resourceId: 'doc-1' },
+  { action: 'manage', resource: 'team' },
+])
+// {
+//   'read:document:doc-2': true,
+//   'update:document:doc-2': false,
+//   'delete:document:doc-1': false,
+//   'manage:team': false,
 // }
 ```
 
-### PermissionCheck Type
-
-```typescript
-interface PermissionCheck {
-  action: string       // the action to check
-  resource: string     // the resource type
-  resourceId?: string  // optional: specific resource instance
-  scope?: string       // optional: scope for this check
+```ts
+interface IPermissionCheck {
+  readonly action: string
+  readonly resource: string
+  readonly resourceId?: string
+  readonly scope?: string
 }
 ```
 
-### PermissionMap Key Format
+| Key shape | Produced when |
+| --- | --- |
+| `action:resource` | neither `scope` nor `resourceId` |
+| `action:resource:resourceId` | `resourceId` only |
+| `@scope:action:resource` | `scope` only |
+| `@scope:action:resource:resourceId` | both |
 
-| Format | Example | When |
-| --- | --- | --- |
-| `action:resource` | `'create:post'` | No resourceId, no scope |
-| `action:resource:resourceId` | `'update:post:post-1'` | With resourceId |
-| `scope:action:resource` | `'acme:manage:user'` | With scope |
-| `scope:action:resource:resourceId` | `'acme:update:post:post-1'` | Both scope and resourceId |
+`PermissionMap` is `Record<PermissionKey, boolean>`. Development mode gives you the precisely-typed key union rather than richer values. Keys are built by `iamBuildPermissionKey`, which escapes `:`, `\` and a leading `@` inside each segment, and `iamSplitPermissionKey` reverses it.
 
-### Performance
+The `@` on the scope is load-bearing. Without it `('read', 'doc', '42')` and `('doc', '42', undefined, 'read')` both spell `read:doc:42`, two different checks share one map entry, and one answers for the other.
 
-`permissions()` is faster than calling `can()` in a loop: subject data is loaded once,
-policies are loaded once, and the adapter is queried once rather than N times.
+Every check still runs the full pipeline, hooks included. Pass `{ telemetry: false }` as the fourth argument to skip per-check `onMetrics` on hot UI gates. A batch of more than 1024 checks throws.
 
-Each check still goes through the full evaluation pipeline including hooks. If any check
-throws, it defaults to `false` and `onError` is called.
+## Explain
 
-### Environment in Batch
-
-```typescript
-const perms = await engine.permissions('bob', checks, {
-  ip: '192.168.1.1',
-  timestamp: Date.now(),
-})
+```ts
+const trace = await engine.explain('bob', 'update', { type: 'document', id: 'doc-2', attributes: {} })
+console.log(trace.summary)
 ```
-
-## Explain and Debug
-
-When a permission check returns an unexpected result, use `engine.explain()`:
-
-```typescript
-const result = await engine.explain('bob', 'update', {
-  type: 'post',
-  id: 'post-2',
-  attributes: { ownerId: 'alice' },
-})
-
-console.log(result.summary)
-```
-
-Output:
 
 ```text
-DENIED: "bob" -> update on post
+DENIED: "bob" attempting update on document
   Roles: [editor, viewer]
-  __rbac__ [allow-overrides]: Allowed by rule "rbac.editor.update.post.0" (1/6 rules matched)
-  owner-restrictions [deny-overrides]: Denied by rule "deny-non-owner-update" (1/1 rules matched)
-  Result: Denied by rule "deny-non-owner-update"
+  __rbac__ [allow-overrides]: Allowed by rule "__rbac__#5" (1/16 rules matched)
+  document-ownership [deny-overrides]: Denied by rule "deny-non-owner-write" (2/2 rules matched)
+  document-lifecycle [deny-overrides]: Allowed by rule "allow-otherwise" (1/3 rules matched)
+  Result: Denied by rule "deny-non-owner-write"
 ```
 
-### ExplainResult Structure
-
-```typescript
-interface ExplainResult {
-  decision: AccessControl.IDecision // the final decision
-  request: {
-    action: string
-    resourceType: string
-    resourceId?: string
-    scope?: string
-  }
-  subject: {
+```ts
+interface IResult {
+  readonly decision: AccessControl.IDecision
+  readonly request: { action: string; resourceType: string; resourceId?: string; scope?: string }
+  readonly subject: {
     id: string
-    roles: string[]                 // base roles
-    scopedRolesApplied: string[]    // additional scoped roles added
-    attributes: Record<string, any>
+    roles: readonly string[]
+    scopedRolesApplied: readonly string[]
+    attributes: Readonly<Record<string, IamPrimitives.AttributeValue>>
   }
-  policies: PolicyTrace[]           // trace for each policy
-  summary: string                   // human-readable summary
+  readonly policies: readonly Explain.IPolicyTrace[]
+  readonly summary: string
 }
 ```
 
-### PolicyTrace and RuleTrace
+Each `IPolicyTrace` carries `policyId`, `policyName`, `algorithm`, `targetMatch`, `result`, `reason`, `decidingRuleId`, `decidingRule`, and a `rules` array. Each `IRuleTrace` carries `ruleId`, `effect`, `priority`, `actionMatch`, `resourceMatch`, `conditionsMet`, `matched`, and a `conditions` tree whose leaves record the resolved `expected` and `actual` values side by side - which is how you find a condition comparing against `null`.
 
-```typescript
-interface PolicyTrace {
-  policyId: string
-  policyName: string
-  algorithm: CombiningAlgorithm
-  targetMatch: boolean           // did the policy targets match?
-  rules: RuleTrace[]             // trace for each rule
-  result: Effect                 // this policy's result
-  reason: string                 // why this policy decided this way
-  decidingRuleId?: string        // which rule decided (if any)
+| Explain does | Explain does not |
+| --- | --- |
+| run `beforeEvaluate` | run `afterEvaluate`, `onDeny`, or `onError` |
+| evaluate every rule in every policy | short-circuit on the first deny |
+| resolve the subject through the normal cache | work in production mode |
+
+`summary` and the condition leaves embed policy names and request attribute values verbatim. If you render a trace in a debug panel, run those strings through `escapeHtml` from `@gentleduck/iam/core/explain` first.
+
+## The admin API
+
+```ts
+await engine.admin.savePolicy(policy)          // invalidates the policy cache
+await engine.admin.deletePolicy('old-policy')  // invalidates the policy cache
+await engine.admin.saveRole(role)              // invalidates roles + subjects holding role.id
+await engine.admin.deleteRole('reviewer')      // invalidates roles + subjects holding that ID
+await engine.admin.assignRole('alice', 'editor')          // invalidates alice
+await engine.admin.revokeRole('alice', 'editor')          // invalidates alice
+await engine.admin.assignRole('alice', 'admin', 'team-acme')  // scoped, chapter 5
+await engine.admin.updateAssignmentScope('alice', 'admin', 'team-acme', 'team-globex')
+await engine.admin.setAttributes('bob', { department: 'platform' })  // merges, invalidates bob
+const attrs = await engine.admin.getAttributes('bob')
+```
+
+Reads - `listPolicies`, `getPolicy`, `listRoles`, `getRole`, `getAttributes` - invalidate nothing. Every mutation invalidates for you; you never need a manual `cache.*` call after an admin write.
+
+`updateAssignmentScope` moves an assignment in one write when the adapter supports it and falls back to revoke plus assign when it does not.
+
+### Snapshots
+
+```ts
+const snapshot = await engine.admin.export()
+// { schemaVersion: 1, exportedAt: '2026-09-02T...', policies: [...], roles: [...] }
+
+const result = await engine.admin.import(snapshot, { mode: 'merge' })
+// { policiesAdded, policiesDeleted, rolesAdded, rolesDeleted }
+```
+
+`export()` is a *configuration* snapshot: policies and roles only. Subjects and assignments are user data, vary per environment, and most adapters cannot enumerate them cheaply. `mode: 'merge'` (the default) upserts; `mode: 'replace'` first deletes everything not in the snapshot. A `schemaVersion` mismatch throws before any write.
+
+`engine.admin` performs no authorization of its own. Anything that reaches `savePolicy` or `assignRole` can rewrite your entire authorization model. Put your own check in front of every admin route.
+
+## Lifecycle
+
+```ts
+await engine.preload()                    // warm policies, roles, __rbac__, merged set
+await engine.preload({ validator: true }) // also pull in the lazy validator chunk
+const health = await engine.healthCheck() // { ok, adapter, cacheHitRate, adapterLatencyMs, lastError? }
+engine.dispose()                          // release the invalidator subscription
+```
+
+Call `preload()` at boot so the first real request does not pay the cold load. Wire `healthCheck()` to `/healthz`: it does one timed adapter round trip and reports `ok: false` when the adapter is unreachable, which is the signal an orchestrator needs to pull the instance. `iamFlushSharedCaches()` clears the process-wide regex and dot-path caches - schedule it periodically in multi-tenant deployments.
+
+## What just happened
+
+Run the finished app and read the log. Four things are worth noticing.
+
+1. **`beforeEvaluate` removed a whole class of caller bug.** `engine.can('bob', 'update', { type: 'document', id: 'doc-4', attributes: {} })` denies with `Denied by rule "deny-archived-writes"` - the caller never mentioned `status`.
+2. **`afterEvaluate` and `onDeny` fire on every check including every batch entry**, which is why the batch call emits four audit lines. `explain()` emits none.
+3. **Denials name their rule.** `No matching rules. Defaulted to deny` means no rule fired at all - usually a missing grant. `Denied by rule "X"` means a deny rule matched. Those two need different fixes.
+4. **The cache counters tell you the shape of your traffic.** After the demo run, `mergedPolicies` shows 8 hits to 1 miss and `subjects` shows 6 hits to 3 misses - three distinct subjects, each loaded once.
+
+## Try it
+
+1. Add a fifth document owned by `carol` with `status: 'draft'`, then confirm Bob cannot read it but Carol can - without passing a single attribute at the call site.
+2. Set `cacheTTL: 0` and rerun. Watch `subjects.misses` climb once per check, and `hits` stay at zero.
+3. Call `engine.admin.saveRole` with an `editor` role that also grants `delete` on `document`, then immediately recheck Bob's delete. It is allowed - the admin write invalidated the role and subject caches for you.
+4. Build a second engine over the same adapter with `mode: 'production'` and compare `check()` return values. Then call `explain()` on it and read the error.
+5. Add `onMetrics` accumulation into a histogram and print p50 and p99 after 1000 checks.
+
+## State so far
+
+This is the complete DocDuck source at the end of chapter 4. Chapters 5 to 8 start from exactly these files.
+
+```
+docduck/
+  src/
+    roles.ts      - three roles, inheritance, startup validation
+    policies.ts   - two ABAC policies
+    documents.ts  - the tiny document store the hook reads
+    access.ts     - adapter, hooks, engine
+    main.ts       - the demo script
+  package.json
+  tsconfig.json
+```
+
+### `src/roles.ts`
+
+```ts title="src/roles.ts"
+import { defineRole } from '@gentleduck/iam'
+import { validateRoles } from '@gentleduck/iam/core/validate'
+
+export const viewer = defineRole('viewer')
+  .name('Viewer')
+  .desc('Read-only access to documents and teams')
+  .grant('read', 'document')
+  .grant('read', 'team')
+  .build()
+
+export const editor = defineRole('editor')
+  .name('Editor')
+  .desc('Writes documents')
+  .inherits('viewer')
+  .grant('create', 'document')
+  .grant('update', 'document')
+  .grant('share', 'document')
+  .build()
+
+export const admin = defineRole('admin')
+  .name('Administrator')
+  .desc('Manages teams and their members')
+  .inherits('editor')
+  .grant('delete', 'document')
+  .grant('archive', 'document')
+  .grant('manage', 'team')
+  .grant('manage', 'user')
+  .meta({ tier: 'staff' })
+  .build()
+
+export const roles = [viewer, editor, admin]
+
+const check = validateRoles(roles)
+if (!check.valid) {
+  throw new Error(check.issues.map((i) => `[${i.code}] ${i.message}`).join('; '))
 }
-
-interface RuleTrace {
-  ruleId: string
-  description?: string
-  effect: Effect
-  priority: number
-  actionMatch: boolean           // did the action match?
-  resourceMatch: boolean         // did the resource match?
-  conditionsMet: boolean         // did all conditions pass?
-  conditions: ConditionGroupTrace // detailed condition trace
-  matched: boolean               // actionMatch AND resourceMatch AND conditionsMet
+for (const issue of check.issues) {
+  if (issue.type === 'warning') console.warn(`[iam] ${issue.code}: ${issue.message}`)
 }
 ```
 
-### ConditionTrace
+### `src/policies.ts`
 
-```typescript
-// Leaf condition trace
-interface ConditionLeafTrace {
-  type: 'condition'
-  field: string           // e.g., 'resource.attributes.ownerId'
-  operator: Operator      // e.g., 'neq'
-  expected: any           // e.g., 'bob' (resolved from $subject.id)
-  actual: any             // e.g., 'alice' (resolved from the resource)
-  result: boolean         // true (alice neq bob = true)
+```ts title="src/policies.ts"
+import { definePolicy } from '@gentleduck/iam'
+
+export const ownershipPolicy = definePolicy('document-ownership')
+  .name('Document ownership')
+  .desc('Writes to a document are limited to its author, unless the subject is an admin')
+  .version(1)
+  .algorithm('deny-overrides')
+  .target({ actions: ['update', 'delete', 'share'], resources: ['document'] })
+  .rule('deny-non-owner-write', (r) =>
+    r
+      .deny()
+      .desc('Only the author may write, admins excepted')
+      .priority(100)
+      .on('update', 'delete', 'share')
+      .of('document')
+      .when((w) => w.resourceAttr('ownerId', 'neq', '$subject.id').not((n) => n.role('admin'))),
+  )
+  .rule('allow-owner-write', (r) =>
+    r
+      .allow()
+      .desc('Nothing above objected, so this policy consents')
+      .priority(1)
+      .on('update', 'delete', 'share')
+      .of('document'),
+  )
+  .build()
+
+export const lifecyclePolicy = definePolicy('document-lifecycle')
+  .name('Document lifecycle')
+  .desc('Drafts are visible only to their author; archived documents are read-only')
+  .version(1)
+  .algorithm('deny-overrides')
+  .target({ resources: ['document'] })
+  .rule('deny-foreign-drafts', (r) =>
+    r
+      .deny()
+      .desc('A draft is visible only to its author')
+      .priority(60)
+      .on('read')
+      .of('document')
+      .when((w) => w.resourceAttr('status', 'eq', 'draft').resourceAttr('ownerId', 'neq', '$subject.id')),
+  )
+  .rule('deny-archived-writes', (r) =>
+    r
+      .deny()
+      .desc('Archived documents cannot be modified')
+      .priority(60)
+      .on('update', 'delete', 'share')
+      .of('document')
+      .when((w) => w.resourceAttr('status', 'eq', 'archived')),
+  )
+  .rule('allow-otherwise', (r) =>
+    r.allow().desc('No lifecycle objection').priority(1).on('*').of('document'),
+  )
+  .build()
+
+export const policies = [ownershipPolicy, lifecyclePolicy]
+```
+
+### `src/documents.ts`
+
+```ts title="src/documents.ts"
+import type { IamPrimitives } from '@gentleduck/iam'
+
+export interface Document {
+  readonly id: string
+  readonly ownerId: string
+  readonly teamId: string
+  readonly status: 'draft' | 'published' | 'archived'
 }
 
-// Group condition trace
-interface ConditionGroupTrace {
-  type: 'group'
-  logic: 'all' | 'any' | 'none'
-  result: boolean
-  children: (ConditionLeafTrace | ConditionGroupTrace)[]
+const store = new Map<string, Document>([
+  ['doc-1', { id: 'doc-1', ownerId: 'bob', teamId: 'team-acme', status: 'published' }],
+  ['doc-2', { id: 'doc-2', ownerId: 'alice', teamId: 'team-acme', status: 'published' }],
+  ['doc-3', { id: 'doc-3', ownerId: 'alice', teamId: 'team-acme', status: 'draft' }],
+  ['doc-4', { id: 'doc-4', ownerId: 'bob', teamId: 'team-globex', status: 'archived' }],
+])
+
+export async function findDocument(id: string): Promise<Document | undefined> {
+  return store.get(id)
+}
+
+export function documentAttributes(doc: Document): IamPrimitives.Attributes {
+  return { ownerId: doc.ownerId, teamId: doc.teamId, status: doc.status }
 }
 ```
 
-### Explain Does Not Short-Circuit
+### `src/access.ts`
 
-Unlike normal evaluation, `explain()` evaluates all rules in all policies, even after a
-deny is found. Normal `evaluate()` stops at the first denying policy for performance.
-
-## Admin API
-
-Manage authorization data at runtime through `engine.admin`:
-
-```typescript
-// Policies
-await engine.admin.listPolicies()
-await engine.admin.getPolicy('owner-restrictions')
-await engine.admin.savePolicy(newPolicy)
-await engine.admin.deletePolicy('old-policy-id')
-
-// Roles
-await engine.admin.listRoles()
-await engine.admin.getRole('editor')
-await engine.admin.saveRole(newRole)
-await engine.admin.deleteRole('old-role-id')
-
-// Subject management
-await engine.admin.assignRole('user-1', 'editor')
-await engine.admin.assignRole('user-1', 'admin', 'acme')  // scoped
-await engine.admin.revokeRole('user-1', 'editor')
-await engine.admin.revokeRole('user-1', 'admin', 'acme')  // scoped
-
-// Subject attributes
-await engine.admin.setAttributes('user-1', { department: 'engineering' })
-const attrs = await engine.admin.getAttributes('user-1')
-```
-
-### Complete Admin API
-
-| Method | Description | Cache Invalidation |
-| --- | --- | --- |
-| `listPolicies()` | List all policies | none |
-| `getPolicy(id)` | Get a single policy | none |
-| `savePolicy(policy)` | Create or update a policy | clears policy cache |
-| `deletePolicy(id)` | Delete a policy | clears policy cache |
-| `listRoles()` | List all roles | none |
-| `getRole(id)` | Get a single role | none |
-| `saveRole(role)` | Create or update a role | clears role + RBAC + subject caches |
-| `deleteRole(id)` | Delete a role | clears role + RBAC + subject caches |
-| `assignRole(subjectId, roleId, scope?)` | Assign a role to a subject | clears that subject's cache |
-| `revokeRole(subjectId, roleId, scope?)` | Revoke a role from a subject | clears that subject's cache |
-| `setAttributes(subjectId, attrs)` | Set subject attributes | clears that subject's cache |
-| `getAttributes(subjectId)` | Get subject attributes | none |
-
-Every mutation automatically invalidates the relevant cache. When you call
-`admin.assignRole('user-1', 'editor')`, the user-1 subject cache is cleared so the next
-check picks up the new role. No manual invalidation needed after admin operations.
-
-## Checkpoint: Complete Engine Setup
-
-Full engine with all features
-
-```typescript
-import { IamEngine, validateRoles } from '@gentleduck/iam'
+```ts title="src/access.ts"
+import { IamEngine, type IamEngineTypes } from '@gentleduck/iam'
 import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
-import { viewer, editor, admin } from './roles'
-import { ownerPolicy } from './policies'
+import { documentAttributes, findDocument } from './documents'
+import { policies } from './policies'
+import { roles } from './roles'
 
-validateRoles([viewer, editor, admin])
-
-const adapter = new IamMemoryAdapter({
-  roles: [viewer, editor, admin],
-  assignments: { alice: ['viewer'], bob: ['editor'], charlie: ['admin'] },
-  policies: [ownerPolicy],
+export const adapter = new IamMemoryAdapter({
+  roles,
+  policies,
+  assignments: {
+    alice: ['viewer'],
+    bob: ['editor'],
+    carol: ['admin'],
+  },
+  attributes: {
+    alice: { department: 'design' },
+    bob: { department: 'engineering' },
+    carol: { department: 'engineering' },
+  },
 })
+
+const hooks: IamEngineTypes.IHooks = {
+  async beforeEvaluate(request) {
+    if (request.resource.type !== 'document' || !request.resource.id) return request
+    const doc = await findDocument(request.resource.id)
+    if (!doc) return request
+    return {
+      ...request,
+      resource: {
+        ...request.resource,
+        attributes: { ...documentAttributes(doc), ...request.resource.attributes },
+      },
+    }
+  },
+  afterEvaluate(request, decision) {
+    console.log(
+      `[audit] ${request.subject.id} ${decision.effect} ${request.action} on ${request.resource.type}:${request.resource.id ?? '*'}`,
+    )
+  },
+  onDeny(request, decision) {
+    console.warn(`[denied] ${request.subject.id} ${request.action} ${request.resource.type}: ${decision.reason}`)
+  },
+  onError(error, request) {
+    console.error(`[iam:error] ${request.subject.id} ${request.action}: ${error.message}`)
+  },
+  onPolicyError(error, policyId) {
+    console.error(`[iam:policy] "${policyId}" threw and was skipped: ${error.message}`)
+  },
+  onMetrics(event) {
+    if (event.failOpen) console.error('[iam:fail-open]', event)
+    if (event.durationMs > 5) console.warn(`[iam:slow] ${event.action}:${event.resource} ${event.durationMs}ms`)
+  },
+}
 
 export const engine = new IamEngine({
   adapter,
+  hooks,
   defaultEffect: 'deny',
+  mode: 'development',
   cacheTTL: 60,
   maxCacheSize: 1000,
-  hooks: {
-    beforeEvaluate: async (request) => {
-      // Enrich with DB data
-      if (request.resource.type === 'post' && request.resource.id) {
-        const post = await db.posts.findUnique({ where: { id: request.resource.id } })
-        return {
-          ...request,
-          resource: {
-            ...request.resource,
-            attributes: { ...request.resource.attributes, ownerId: post?.authorId },
-          },
-        }
-      }
-      return request
-    },
-    afterEvaluate: async (request, decision) => {
-      console.log(`[audit] ${request.subject.id} ${decision.effect} ${request.action}:${request.resource.type}`)
-    },
-    onDeny: async (request, decision) => {
-      console.log(`[denied] ${request.subject.id} -> ${request.action}:${request.resource.type}: ${decision.reason}`)
-    },
-    onError: async (error) => {
-      console.error('[auth-error]', error)
-    },
-  },
+  policyCombine: 'and',
+  adapterTimeoutMs: 5_000,
 })
 ```
 
-***
+### `src/main.ts`
 
-## Chapter 4 FAQ
+```ts title="src/main.ts"
+import { engine } from './access'
 
-In what order do hooks run?
+const doc = (id: string) => ({ type: 'document', id, attributes: {} })
 
-`beforeEvaluate` runs first, `afterEvaluate` runs after the decision is made, `onDeny`
-runs only if denied (after `afterEvaluate`), and `onError` runs if any error occurs.
-If `beforeEvaluate` throws, evaluation is skipped and the result is deny. All hooks are
-async-safe.
+async function main() {
+  await engine.preload()
 
-What if the cache serves stale data?
+  console.log(await engine.can('bob', 'update', doc('doc-1')))    // true
+  console.log(await engine.can('bob', 'update', doc('doc-2')))    // false
+  console.log(await engine.can('carol', 'update', doc('doc-2')))  // true
+  console.log(await engine.can('bob', 'read', doc('doc-3')))      // false
+  console.log(await engine.can('bob', 'update', doc('doc-4')))    // false
 
-The cache has a TTL (default 60 seconds). After that, the next check refreshes from the
-adapter. For immediate consistency after a change, use the Admin API (which auto-invalidates)
-or call `engine.cache.invalidateSubject(id)` manually. For tests, set `cacheTTL: 0`.
+  const perms = await engine.permissions('bob', [
+    { action: 'read', resource: 'document', resourceId: 'doc-2' },
+    { action: 'update', resource: 'document', resourceId: 'doc-2' },
+    { action: 'delete', resource: 'document', resourceId: 'doc-1' },
+    { action: 'manage', resource: 'team' },
+  ])
+  console.log(perms)
+  // { 'read:document:doc-2': true, 'update:document:doc-2': false,
+  //   'delete:document:doc-1': false, 'manage:team': false }
 
-Can I use explain() in production?
+  const trace = await engine.explain('bob', 'update', doc('doc-2'))
+  console.log(trace.summary)
 
-`explain()` is only available in development mode. To use it in a deployed environment,
-create a separate development-mode engine for a debug endpoint or admin tool. Note that
-`explain()` does not trigger side-effect hooks (`afterEvaluate`, `onDeny`, `onError`),
-but it still runs `beforeEvaluate` and evaluates all rules without short-circuiting, so
-it is more expensive than `can()`.
+  await engine.admin.assignRole('alice', 'editor')
+  console.log(await engine.getEffectiveRoles('alice'))            // [ 'viewer', 'editor' ]
+  console.log(await engine.can('alice', 'update', doc('doc-2')))  // true
 
-Should the Admin API be exposed to users?
+  console.log(engine.stats.get().subjects)
+  console.log(await engine.healthCheck())
 
-No. Protect it with its own authorization check (e.g., only users with the `admin` role
-can call admin endpoints). Never expose `savePolicy()` or `assignRole()` to untrusted
-users without validation.
+  engine.dispose()
+}
 
-Can engine.permissions() use scopes?
+void main()
+```
 
-Yes. Each check in the array can include an optional `scope` field:
-`{ action: 'manage', resource: 'user', scope: 'acme' }`. The key in the returned map
-includes the scope: `'acme:manage:user': true`. You can mix scoped and unscoped checks
-in the same batch.
+### Where the model stands
 
-When should I use authorize() instead of can()?
+* **Actions**: `create`, `read`, `update`, `delete`, `share`, `archive`, `manage`.
+* **Resources**: `document`, `team`, `user`.
+* **Roles**: `viewer` to `editor` to `admin`, a straight inheritance chain.
+* **Subjects**: `alice` (viewer, plus editor after the admin call), `bob` (editor), `carol` (admin).
+* **Policies**: `document-ownership` and `document-lifecycle`, both `deny-overrides`, both with a consent rule.
+* **Not used yet**: scopes, `createIam` typing, any adapter other than memory, and the whole server and client surface.
 
-Use `authorize()` when you already have a resolved `Subject` object and want to skip
-the adapter lookup. Useful in middleware where you resolve the user once and check
-multiple permissions, or in tests where you construct subjects manually.
+Chapter 5 puts `teamId` to work: the same subject holding different roles in different teams.
 
-Should I ever change defaultEffect from 'deny'?
+## See also
 
-Almost never. `'deny'` means unmatched requests are denied (fail-closed). Changing to
-`'allow'` means any request that doesn't match a rule is permitted, a security risk.
-The only valid use case is development environments where you want to
-log denials without blocking requests.
-
-Why does invalidateRoles() also clear the subject cache?
-
-Subjects cache their resolved roles (including inherited ones). If you change a role
-definition (e.g., add a permission to `editor`), all cached subjects with that role have
-stale data. `invalidateRoles()` clears the role cache, the RBAC policy cache, and all
-subject caches.
-
-***
-
-Next: [Chapter 5: Multi-Tenant Scoping](/duck-iam/course/chapter-5)
+* [Engine methods](/duck-iam/advanced/engine/methods) - the full reference for every signature here
+* [Hooks](/duck-iam/advanced/engine/hooks) and [modes](/duck-iam/advanced/engine/modes)
+* [Caching](/duck-iam/advanced/engine/caching) and [the admin API](/duck-iam/advanced/engine/admin)
+* [Explain](/duck-iam/advanced/explain) - the trace shape field by field
+* [Chapter 5: multi-tenant scoping](/duck-iam/course/chapter-5)

@@ -1,89 +1,117 @@
 ---
-title: rules
-description: Rule builder API - effect, actions, resources, priority, scopes, and metadata.
+title: Rules
+description: Rule anatomy and the RuleBuilder API - effect, actions, resources, priority, forScope, when, whenAny, metadata, and the built IRule shape
 section: Core
 ---
-## Rule structure
+A rule is the atomic unit of a policy: one effect, the actions and resources it covers, a priority, and a condition tree. This page covers the `RuleBuilder` returned by `defineRule()` and by `PolicyBuilder.rule()`, and the `AccessControl.IRule` object it produces.
 
-A rule has four core pieces:
+## Anatomy
 
-- **Effect** - `allow` or `deny`
-- **Match set** - actions and resources the rule applies to
-- **Priority** - used by the `highest-priority` combining algorithm
-- **Conditions** - contextual checks via the `When` builder (see [conditions](/duck-iam/core/policies/conditions))
+Every rule has the same six parts. The diagram shows which builder call sets each and its default.
 
----
+<MermaidDiagram chart={`flowchart LR
+    RULE["AccessControl.IRule"] --> EFF["effect: allow (default) or deny"]
+    RULE --> ACT["actions: on(...) default ['*']"]
+    RULE --> RES["resources: of(...) default ['*']"]
+    RULE --> PRI["priority: priority(p) default 10"]
+    RULE --> CON["conditions: when / whenAny / forScope default { all: [] }"]
+    RULE --> META["description + metadata: desc(d), meta(m)"]`} />
 
-## Builder methods
+- `EFF`, `ACT`, `RES` decide whether the rule is a candidate for a request (see [rule matching](/duck-iam/core/rule-matching)).
+- `CON` decides whether a candidate matches.
+- `PRI` ranks matched rules under `first-match` and `highest-priority`.
+- `META` never affects evaluation.
 
-| Method | Description |
-| --- | --- |
-| `allow()` | Set effect to `allow` (default) |
-| `deny()` | Set effect to `deny` |
-| `on(...actions)` | Actions this rule applies to. Defaults to `['*']` |
-| `of(...resources)` | Resources this rule applies to. Defaults to `['*']` |
-| `priority(p)` | Numeric priority. Higher wins with `highest-priority` algorithm. Defaults to `10` |
-| `desc(d)` | Optional description |
-| `when(fn)` | Conditions that must ALL be true (AND logic) |
-| `whenAny(fn)` | Conditions where ANY can be true (OR logic) |
-| `forScope(...scopes)` | Restrict this rule to specific scopes. Composes with `when()` |
-| `meta(m)` | Arbitrary metadata |
-| `build()` | Produce the final `AccessControl.IRule` object |
+Built shape (copied from `src/core/types/access-control.ts`):
 
----
+```ts
+interface AccessControl.IRule<TAction extends string = string, TResource extends string = string> {
+  readonly id: string
+  readonly effect: AccessControl.Effect            // 'allow' | 'deny'
+  readonly description?: string
+  readonly priority: number
+  readonly actions: readonly (TAction | '*')[]
+  readonly resources: readonly (TResource | '*')[]
+  readonly conditions: AccessControl.IConditionGroup
+  readonly metadata?: Readonly<IamPrimitives.Attributes>
+}
+```
 
 ## Effect
 
-Every rule is either an allow or a deny:
-
-```typescript
+```ts
 defineRule('owner-allow').allow().on('update').of('post').when((w) => w.isOwner()).build()
 
 defineRule('banned-deny').deny().on('*').of('*').when((w) => w.attr('status', 'eq', 'banned')).build()
 ```
 
-`allow()` is the default effect - calling it explicitly is for clarity.
+`allow` is the default *effect*, but a rule that configures nothing at all is refused by `build()` - the defaults are the broadest possible grant, `allow * on *` unconditional, so returning one silently is not an option. Any of `allow()`, `deny()`, `on()`, `of()`, `forScope()`, `whenAny()`, or a `when()` that actually added a condition counts as configuring the rule. `allow()` is also how you override an earlier `deny()` on the same builder. How a deny interacts with an allow depends on the policy's [combining algorithm](/duck-iam/core/policies/combining-algorithms).
 
----
+```text
+[@gentleduck/iam:builder] RuleBuilder.build("x") was never configured - no effect, action,
+resource, scope or condition was set. The defaults are the broadest possible grant
+(allow * on *, unconditional), so this is refused rather than returned.
+Call `.allow()` if a broad grant is intended.
+```
 
 ## Actions and resources
 
-Pass one or many. Wildcards (`'*'`) match all:
+`on()` and `of()` are variadic and replace the previous value on each call. Wildcards and suffix patterns:
 
-```typescript
-.on('create', 'update', 'delete')   // CRUD subset
-.on('*')                            // all actions
-.of('post', 'comment')              // multiple resource types
-.of('*')                            // all resources
+```ts
+.on('create', 'update', 'delete')   // a set of actions
+.on('*')                            // every action
+.of('post', 'comment')              // several resource types
+.of('*')                            // every resource
+.of('dashboard.*')                  // subtree under dashboard (not dashboard itself)
+.on('posts:*')                      // colon-prefixed actions
 ```
 
-See [building policies](/duck-iam/core/policies/building) for hierarchical resource matching (`dashboard` matches `dashboard.users`).
+A bare literal only matches itself: `.of('dashboard')` does not match `dashboard.users`. The full pattern table is on [building policies](/duck-iam/core/policies/building#wildcards-and-patterns); the matcher is explained on [rule matching](/duck-iam/core/rule-matching).
 
----
+`of()` also narrows the builder's `TActiveResource` type parameter so a following `.when((w) => w.resourceAttr(...))` autocompletes only that resource's attributes when a typed context declares `resourceAttributes`. See [type-safe roles](/duck-iam/core/roles/type-safe#per-resource-attribute-narrowing).
+
+Calling `on()` or `of()` with no arguments produces an empty array, which `RuleBuilder.build()` rejects with `MISSING_FIELD`.
 
 ## Priority
 
-Used by the `highest-priority` combining algorithm. Default is `10`:
+Default `10`. Higher wins. Priority is consulted by two algorithms:
 
-```typescript
+- `highest-priority` - the matched rule with the largest priority wins.
+- `first-match` - also priority-aware: the matched rule with the largest priority wins, and only a tie falls back to source order.
+
+`deny-overrides` and `allow-overrides` ignore priority entirely.
+
+```ts
 defineRule('emergency-override')
   .allow()
   .on('*')
   .of('*')
   .when((w) => w.role('super-admin'))
-  .priority(100) // beats everything
+  .priority(100)
   .build()
 ```
 
-Other algorithms (`deny-overrides`, `allow-overrides`, `first-match`) ignore priority.
+`priority` must be a finite number. `NaN` or `Infinity` is rejected at `build()` (`INVALID_TYPE`). A row that bypassed validation with a non-finite priority ranks as `0` at evaluation time rather than losing every comparison.
 
----
+## Scopes with forScope()
 
-## Scopes (forScope)
+`forScope(...scopes)` restricts the rule to one or more scopes by adding a condition on the request's `scope`. It composes with `when()` / `whenAny()` in any call order. The diagram shows how `build()` merges it.
 
-Restrict a rule to specific scopes. Composes with `when()`:
+<MermaidDiagram chart={`flowchart TD
+    FS["forScope('org-1', 'org-2')"] --> SC["scope condition: one scope = eq, several = in, '*' dropped"]
+    W{"when() or whenAny() also set?"}
+    SC --> W
+    W -- "when(): { all: [...] }" --> A["{ all: [scopeCondition, ...all] }"]
+    W -- "whenAny(): { any: [...] }" --> B["{ all: [scopeCondition, { any: [...] }] }"]
+    W -- "neither" --> C["{ all: [scopeCondition] }"]`} />
 
-```typescript
+- One scope emits `{ field: 'scope', operator: 'eq', value }`; two or more emit `operator: 'in'` (`SC`).
+- `'*'` entries are removed; `forScope('*')` alone is a no-op and `forScope('*', 'org-1')` keeps `org-1`.
+- With `when()`, the scope condition is prepended to the `all` list (`A`). With `whenAny()`, the whole `any` group becomes the second element of a new `all` group (`B`), so the rule reads "scope matches AND (any of ...)".
+- Order independence is pinned by the test "forScope is order-independent relative to when()".
+
+```ts
 defineRule('org-admin-allow')
   .allow()
   .on('manage')
@@ -91,40 +119,73 @@ defineRule('org-admin-allow')
   .forScope('org-1', 'org-2')
   .when((w) => w.role('billing-admin'))
   .build()
+// conditions: { all: [ { field: 'scope', operator: 'in', value: ['org-1', 'org-2'] },
+//                      { field: 'subject.roles', operator: 'contains', value: 'billing-admin' } ] }
 ```
 
-This rule fires only when the request's `scope` is `org-1` or `org-2` AND the subject has the `billing-admin` role.
+This rule fires only when the request's `scope` is `org-1` or `org-2` AND the subject holds `billing-admin`. `When.scope()` / `When.scopes()` produce the same condition inside the `when()` callback; `forScope()` is the rule-level spelling.
 
----
+## Conditions with when() and whenAny()
 
-## Metadata
+`when(fn)` stores `fn(new When()).buildAll()` - every condition must hold. `whenAny(fn)` stores `buildAny()` - at least one must hold. A second call **ANDs** onto the first as `{ all: [previous, next] }` rather than replacing it, which costs one level of nesting depth. Everything you can put inside the callback is on [conditions](/duck-iam/core/policies/conditions) and [nesting](/duck-iam/core/policies/nesting).
 
-Attach arbitrary metadata to rules. Useful for audit logging, debugging, or admin UIs:
+## Description and metadata
 
-```typescript
+`desc()` sets `description`; it appears in the explain trace (`IRuleTrace.description`). `meta()` sets `metadata`, an `IamPrimitives.Attributes` bag that is stored on the rule, round-trips through every adapter, and is never read during evaluation.
+
+```ts
 defineRule('gdpr-consent-required')
   .allow()
   .on('read')
   .of('user-profile')
+  .desc('Profile reads require recorded consent')
   .when((w) => w.attr('gdprConsent', 'eq', true))
-  .meta({
-    compliance: 'GDPR',
-    reviewedBy: 'legal-team',
-    addedAt: '2026-01-15',
-  })
+  .meta({ compliance: 'GDPR', reviewedBy: 'legal-team', addedAt: '2026-01-15' })
   .build()
 ```
 
-Metadata is preserved through serialization and surfaces in [`engine.explain()`](/duck-iam/advanced/explain) traces.
+In `development` mode the deciding rule object is returned whole as `decision.rule`, and `engine.explain()` exposes it as `decidingRule` on each policy trace, so `metadata` is reachable there. See [explain and debug](/duck-iam/advanced/explain).
 
----
+## Empty versus unconditional rules
 
-## Empty rules vs unconditional rules
-
-| Shape | Behavior |
+| Shape | Built `conditions` |
 | --- | --- |
-| `r.allow().on('read').of('post')` (no `when`) | Always matches - fast path in the engine |
-| `r.allow().on('read').of('post').when((w) => w)` (empty when) | Same - vacuously true |
-| `r.allow().on('read').of('post').when((w) => w.eq('x', 'y'))` | Conditional |
+| `r.allow().on('read').of('post')` (no `when`) | `{ all: [] }` |
+| `r.allow().on('read').of('post').when((w) => w)` | `{ all: [] }` |
+| `r.allow().on('read').of('post').whenAny((w) => w)` | `{ any: [] }` - matches nothing |
+| `r.allow().on('read').of('post').when((w) => w.eq('x', 'y'))` | conditional |
 
-The fast-path engine cache (`evaluatePolicyFast`) pre-computes results for unconditional rules at policy-load time. This is the main reason `r.on('read').of('post')` (no `when`) outperforms `r.on('read').of('post').when((w) => w)` even though they're semantically identical.
+The first two forms build identical objects, so there is no performance difference between them. An empty `all` is vacuously true; an empty `any` is false. Note that `when((w) => w)` alone does not configure the rule - the `allow()` in each row above does. Full empty-group semantics on [nesting](/duck-iam/core/policies/nesting#empty-condition-groups).
+
+## API reference
+
+### `RuleBuilder`
+
+| Method | Signature | Default / notes |
+| --- | --- | --- |
+| `allow` | `allow(): this` | Default effect |
+| `deny` | `deny(): this` | - |
+| `desc` | `desc(d: string): this` | Optional |
+| `priority` | `priority(p: number): this` | `10`; must be finite |
+| `on` | `on(...actions: (TAction \| '*')[]): this` | `['*']` |
+| `of` | `of<R extends TResource \| '*'>(...resources: R[]): RuleBuilder<..., R>` | `['*']`; narrows `TActiveResource` |
+| `forScope` | `forScope(...scopes: (TScope \| '*')[]): this` | No scope condition |
+| `when` | `when(fn: (w: When) => When): this` | `{ all: [] }` |
+| `whenAny` | `whenAny(fn: (w: When) => When): this` | - |
+| `meta` | `meta(m: IamPrimitives.Attributes): this` | Optional |
+| `build` | `build(): AccessControl.IRule<TAction, TResource>` | Merges `forScope`, then validates the rule shape; throws on any error |
+
+`RuleBuilder` is exported from `@gentleduck/iam`, `@gentleduck/iam/core`, and `@gentleduck/iam/core/builder`. Factory: [`defineRule`](/duck-iam/core/policies/building#definerule).
+
+## Gotchas
+
+- `RuleBuilder.build()` validates the rule shape and throws, so a rule handed straight to an adapter fails where the bug was introduced rather than at the enclosing policy. Cross-rule and policy-level checks (`DUPLICATE_RULE_ID`, `UNREACHABLE_TARGET`) still only run in `PolicyBuilder.build()`.
+- `when()` and `whenAny()` accumulate with AND. Use one `when()` with a nested `or()` when you need both a requirement and an alternation.
+- `metadata` values must be `IamPrimitives.AttributeValue` (scalars, scalar arrays, or a flat record of scalars).
+
+## See also
+
+- [Building policies](/duck-iam/core/policies/building) - `definePolicy`, `defineRule`, `when`
+- [Conditions](/duck-iam/core/policies/conditions) - the `When` builder
+- [Combining algorithms](/duck-iam/core/policies/combining-algorithms) - how `priority` and effect resolve
+- [Rule matching](/duck-iam/core/rule-matching) - action and resource patterns

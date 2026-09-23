@@ -1,63 +1,86 @@
 ---
-title: policies overview
-description: When and why to use ABAC policies - time, IP, attribute, and dynamic deny rules that go beyond what RBAC roles can express.
+title: Policies overview
+description: When ABAC policies are needed beyond roles, how targets, rules, conditions, and combining algorithms layer, and where each topic is documented
 section: Core
 ---
-## When to Use Policies
+A policy is a named list of rules with a combining algorithm. Roles answer "which subject may do which action on which resource"; policies answer everything that depends on attributes, time, network, or relationships between the subject and the resource.
 
-Roles cover the common case: "editors can update posts." Some requirements need more than roles can express:
+## When to use / When not to use
+
+Roles cover the common case: "editors can update posts." The diagram shows which requirements fit roles and which need a policy.
 
 <MermaidDiagram chart={`flowchart TD
-    subgraph RBAC_Only["RBAC Can Handle"]
+    subgraph RBAC_Only["Roles are enough"]
         direction TB
         R1["Editors can update posts"]
         R2["Admins can delete users"]
         R3["Viewers can read comments"]
     end
-
-    subgraph Need_ABAC["Needs ABAC Policies"]
+    subgraph Need_ABAC["Needs a policy"]
         direction TB
         A1["Deny writes on weekends"]
         A2["Only allow from trusted IPs"]
         A3["Subject dept must match resource dept"]
-        A4["Block banned users dynamically"]
+        A4["Block banned subjects dynamically"]
         A5["Maintenance mode: deny all writes"]
         A6["Senior staff only can publish"]
     end
-
-    RBAC_Only -.- SIMPLE["Simple role-permission mapping"]
+    RBAC_Only -.- SIMPLE["Plain role to permission mapping"]
     Need_ABAC -.- COMPLEX["Attribute-based conditions required"]`} />
 
-- **Time-based restrictions** - deny writes on weekends or outside business hours
-- **IP/geo-fencing** - allow access only from trusted networks
-- **Cross-attribute checks** - allow updates only when subject and resource share a department
-- **Dynamic deny rules** - block specific users or flag suspicious behavior without changing role assignments
-- **Maintenance mode** - deny all writes globally when a feature flag is on
+Use a policy for:
 
-ABAC policies share the role evaluation pipeline. The engine **AND-combines policies** - a deny from any policy is final.
+- **Time-based restrictions** - deny writes on weekends or outside business hours (`A1`).
+- **IP / geo-fencing** - allow access only from trusted networks (`A2`).
+- **Cross-attribute checks** - allow updates only when subject and resource share a department (`A3`, see [`$`-variable references](/duck-iam/core/policies/dollar-variables)).
+- **Dynamic deny rules** - block specific subjects or suspicious behaviour without changing role assignments (`A4`).
+- **Maintenance mode** - deny all writes globally when a feature flag is on (`A5`).
+- **Attribute-gated grants** - only senior staff may publish (`A6`).
 
----
+Do not use a standalone policy when the condition belongs to a single role's permission. Use [`grantWhen()`](/duck-iam/core/roles/conditional) on the role instead; it compiles into the same rule shape.
+
+Roles and policies share one pipeline: [`rolesToPolicy()`](/duck-iam/core/roles/roles-to-policy) turns roles into a synthetic policy (`id: '__rbac__'`, `algorithm: 'allow-overrides'`) that the engine evaluates next to yours. By default the engine combines policies with `policyCombine: 'and'` - a deny from any applicable policy is final. See [cross-policy combining](/duck-iam/core/cross-policy).
+
+## How the layers filter a request
+
+A request passes through concentric filters. Each layer decides whether the next one runs.
+
+<MermaidDiagram chart={`flowchart TD
+    REQ["Request: subject, action, resource, scope, environment"] --> T{"Policy targets match?"}
+    T -- "no" --> NA["NotApplicable: policy skipped by the cross-policy combine"]
+    T -- "yes" --> SHAPE{"Any rule with matching action and resource?"}
+    SHAPE -- "no" --> NA
+    SHAPE -- "yes" --> COND["Evaluate each matching rule's condition tree"]
+    COND --> COMB["Combining algorithm picks one effect from the matched rules"]
+    COMB -- "no rule matched" --> DEF["defaultEffect (deny unless configured)"]
+    COMB -- "a rule matched" --> EFF["allow or deny"]
+    EFF --> CROSS["Cross-policy combine (policyCombine)"]
+    DEF --> CROSS`} />
+
+- `T` is the [target](/duck-iam/core/policies/targets) check: actions, resources, roles.
+- `SHAPE` is the rule action/resource match described in [rule matching](/duck-iam/core/rule-matching). A policy with no rule for this action/resource pair is NotApplicable, exactly like a target miss.
+- `COND` evaluates [conditions](/duck-iam/core/policies/conditions) and [nested groups](/duck-iam/core/policies/nesting).
+- `COMB` is the policy's [combining algorithm](/duck-iam/core/policies/combining-algorithms). When the policy applied but no rule matched, `defaultEffect` is folded in (`DEF`) - this is the one place a policy "votes" without a matching rule.
+- `CROSS` is the engine-level merge described in [evaluation pipeline](/duck-iam/core/evaluation) and [cross-policy combining](/duck-iam/core/cross-policy).
+
+Put broad preconditions in targets, rule-local matching in actions/resources, and contextual logic in conditions.
 
 ## Reading order
 
-Each topic has its own page:
-
 | Page | Covers |
 | --- | --- |
-| [building policies](/duck-iam/core/policies/building) | `definePolicy()` builder, `defineRule()`, wildcards, hierarchical resources |
-| [rules](/duck-iam/core/policies/rules) | Rule structure, effect, priority, scopes, metadata |
-| [conditions](/duck-iam/core/policies/conditions) | The `When` builder - operators, semantic shortcuts, field paths |
-| [`$`-variable references](/duck-iam/core/policies/dollar-variables) | Compare two fields on the same request via `$subject.id` etc. |
-| [nesting and/or/not](/duck-iam/core/policies/nesting) | Compose AND/OR/NOT groups, `whenAny()`, depth limit |
-| [policy targets](/duck-iam/core/policies/targets) | Pre-filter policies by action, resource, or role |
-| [combining algorithms](/duck-iam/core/policies/combining-algorithms) | `deny-overrides`, `allow-overrides`, `first-match`, `highest-priority` |
-| [layered example](/duck-iam/core/policies/example-layered) | Full RBAC + ABAC example, evaluation walkthrough |
-
----
+| [Building policies](/duck-iam/core/policies/building) | `definePolicy()`, `defineRule()`, `when()`, what `build()` validates and throws |
+| [Rules](/duck-iam/core/policies/rules) | Rule anatomy: effect, actions, resources, priority, `forScope`, metadata |
+| [Targets](/duck-iam/core/policies/targets) | Pre-filter a policy by action, resource, or role; NotApplicable semantics |
+| [Conditions](/duck-iam/core/policies/conditions) | The `When` builder, every operator with edge semantics, field resolution |
+| [Nesting and/or/not](/duck-iam/core/policies/nesting) | `and()`, `or()`, `not()`, `whenAny()`, depth limit, empty groups |
+| [Combining algorithms](/duck-iam/core/policies/combining-algorithms) | `deny-overrides`, `allow-overrides`, `first-match`, `highest-priority` with decision diagrams |
+| [`$`-variable references](/duck-iam/core/policies/dollar-variables) | Compare two fields on the same request; resolution rules |
+| [Layered example](/duck-iam/core/policies/example-layered) | Roles plus three policies, wired to an engine, with a walkthrough |
 
 ## Quick example
 
-```typescript
+```ts
 import { definePolicy } from '@gentleduck/iam'
 
 const weekendDeny = definePolicy('deny-weekends')
@@ -77,46 +100,31 @@ const weekendDeny = definePolicy('deny-weekends')
 
 This policy:
 
-- Has algorithm `deny-overrides` (any deny rule that matches -> policy returns deny)
-- Targets writes only (not reads)
-- Uses `env('dayOfWeek', 'in', [0, 6])` - Sunday or Saturday -> deny
-
----
+- Uses `deny-overrides` - any matching deny rule makes the policy deny.
+- Only has a rule for writes, so a `read` request finds no rule shape and the policy is NotApplicable for it.
+- Denies when `environment.dayOfWeek` is Sunday (`0`) or Saturday (`6`). The value `[0, 6]` is a literal array; see [conditions](/duck-iam/core/policies/conditions) for how `in` treats arrays.
 
 ## FAQ
 
-<Accordion type="multiple" collapsible className="w-full">
-  <AccordionItem value="targets-vs-conditions">
-    <AccordionTrigger>Why should I use policy targets instead of only rule conditions?</AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      Targets are a fast pre-filter. They let the engine skip entire policies before it ever inspects individual
-      rules or conditions, which keeps large policy sets easier to reason about and cheaper to evaluate.
-    </AccordionContent>
-  </AccordionItem>
+### Why use policy targets instead of only rule conditions?
 
-  <AccordionItem value="deny-role-allow">
-    <AccordionTrigger>Can a policy deny something that a role allows?</AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      Yes. Roles are converted into an allow-oriented RBAC policy, but your custom policies are still evaluated
-      alongside it. If a deny rule in another policy matches, the final AND-combined result is deny.
-    </AccordionContent>
-  </AccordionItem>
+Targets are a fast pre-filter. They let the engine skip a whole policy before it inspects rules or conditions, and they make a policy NotApplicable rather than a `defaultEffect` vote when they miss. See [targets](/duck-iam/core/policies/targets).
 
-  <AccordionItem value="grantwhen-vs-standalone-policy">
-    <AccordionTrigger>How do I decide between grantWhen() on a role and a standalone policy rule?</AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      Reach for <code className="rounded bg-muted px-2 py-1">grantWhen()</code> when the condition belongs to a single role's
-      permission semantics. Reach for a standalone policy when the rule spans many roles, acts as a global deny layer, or needs a
-      separate combining algorithm and operational lifecycle.
-    </AccordionContent>
-  </AccordionItem>
+### Can a policy deny something that a role allows?
 
-  <AccordionItem value="targets-rules-conditions-layers">
-    <AccordionTrigger>How do targets, rule action/resource filters, and conditions layer together?</AccordionTrigger>
-    <AccordionContent className="text-muted-foreground">
-      Think of them as concentric filters. Targets decide whether the policy is worth evaluating at all. Rule action/resource
-      filters decide which rules are even candidates. Conditions are the final contextual checks on those candidate rules.
-      Put broad preconditions in targets, rule-local matching in actions/resources, and contextual logic in conditions.
-    </AccordionContent>
-  </AccordionItem>
-</Accordion>
+Yes. Roles compile into an allow-only policy (`allow-overrides`), but your policies are evaluated alongside it. Under the default `policyCombine: 'and'`, a deny from any applicable policy wins. See [cross-policy combining](/duck-iam/core/cross-policy).
+
+### `grantWhen()` on a role or a standalone policy rule?
+
+Use `grantWhen()` when the condition belongs to a single role's permission. Use a standalone policy when the rule spans many roles, acts as a global deny layer, or needs its own combining algorithm and lifecycle. See [conditional permissions](/duck-iam/core/roles/conditional).
+
+### How do targets, rule action/resource filters, and conditions layer?
+
+Concentric filters, as in the diagram above: targets decide whether the policy runs, rule actions/resources decide which rules are candidates, conditions are the final contextual check on those candidates.
+
+## See also
+
+- [Rule matching](/duck-iam/core/rule-matching) - wildcard and hierarchical action/resource matching
+- [Evaluation pipeline](/duck-iam/core/evaluation) - the full request lifecycle
+- [Cross-policy combining](/duck-iam/core/cross-policy) - `policyCombine` modes
+- [Roles overview](/duck-iam/core/roles) - the RBAC side

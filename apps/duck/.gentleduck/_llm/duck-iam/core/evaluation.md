@@ -1,123 +1,273 @@
-## The pipeline
+This page follows one check from the call site to the returned decision. Every step maps to a named function in `src/core/engine`, `src/core/rbac`, and `src/core/evaluate`, and each is described exactly as it is implemented. Read [rule matching](/duck-iam/core/rule-matching) for what happens inside a single rule and [cross-policy combination](/duck-iam/core/cross-policy) for the final merge.
 
-When you call `engine.can()` or `engine.authorize()`:
+## Entry points
 
-***
+Five methods start a check. All of them converge on `authorize()`.
 
-## Step by step
-
-### 1. Resolve the subject
-
-Load the user's assigned roles from the adapter, walk inheritance chains for the effective set, then merge any scoped roles that match the request scope.
-
-The result is cached per-subject in the engine LRU until invalidated by role/assignment writes or TTL expiry.
-
-### 2. Convert roles to policy
-
-`rolesToPolicy()` turns every role permission into an ABAC rule with a `subject.roles contains <roleId>` condition. The generated policy uses the `allow-overrides` algorithm.
-
-This conversion is also cached - recomputed only when roles change.
-
-### 3. Collect all policies
-
-Prepend the RBAC-generated policy to the ABAC policies from the adapter:
-
-```
-[ __rbac__,  policy_1, policy_2, ..., policy_N ]
-```
-
-### 4. Evaluate each policy independently
-
-Each policy:
-
-* Checks targets - if `targets.actions/resources/roles` don't match, skip the policy
-* Matches rules against the request's `action` + `resource`
-* Evaluates conditions on matching rules
-* Applies the combining algorithm to produce one effect (allow / deny / fall back to default)
-
-### 5. AND-combine across policies
-
-Walk policy results in order. **Any deny stops evaluation and denies the request.** All policies must allow.
-
-This is fixed engine behavior - a restrictive policy cannot be overridden by a permissive one.
-
-### 6. Return the decision
-
-The `AccessControl.IDecision` object holds:
-
-* `allowed` - boolean for code use
-* `effect` - winning `'allow'` or `'deny'`
-* `rule` / `policy` - references to whichever rule/policy decided
-* `reason` - human-readable explanation
-* `duration` - evaluation time in milliseconds
-* `timestamp` - when the check happened
-
-In production mode the engine skips `AccessControl.IDecision` construction and returns a plain boolean - see below.
-
-***
-
-## Dev vs production mode
-
-The `mode` option chooses the evaluation path:
-
-```typescript
-const engine = new IamEngine({
-  adapter,
-  mode: 'production', // or 'development' (default)
-})
-```
-
-| Mode | Path | Output | Use for |
+| Method | Input | Returns | Notes |
 | --- | --- | --- | --- |
-| `'development'` (default) | `evaluate()` | Full `AccessControl.IDecision` with timing, rule/policy refs, reason | Local dev, `explain()`, debugging |
-| `'production'` | `evaluateFast()` | Plain `boolean` - no allocations | Deployed services |
+| `can(subjectId, action, resource, environment?, scope?)` | subject id | `Promise
 
-Production mode uses pre-computed `Map`s for unconditional rules (CASL-style) and a combined action+resource index for conditional rules. Action + resource lookups are O(1) instead of linear.
+Every adapter arrow above is cache-fronted and single-flighted: a cold start under load issues one adapter call per resource, not one per request. The steps below unpack each stage.
 
-The `explain()` method works only in development mode - calling it in production throws.
+## Step 1 - subject resolution
 
-***
+`resolveSubject()` turns a `subjectId` into an `IamRequest.ISubject`. The order matters, and it is fixed.
 
-## Caching layers
+The steps, in order:
 
-Three caches are layered for speed:
+1. **Cache.** `subjectCache` is an LRU sized by `maxCacheSize` (default 1000) with a TTL of `cacheTTL` seconds (default 60). A hit returns immediately.
+2. **Single flight.** Concurrent misses for the same subject id share one promise. An invalidation that lands mid-flight prevents the late resolver from writing stale data back into the cache.
+3. **Load shedding.** When `maxConcurrentSubjectLoads` distinct, never-before-cached subject loads are already in flight, a new load throws (`subject load shed: N concurrent subject loads already in flight (cap M)`) rather than joining an unbounded herd. The default is `512`; `0` restores unbounded. A cache hit or a join onto an existing load never counts against the cap.
+4. **Three parallel reads.** `adapter.getSubjectRoles(subjectId)`, `adapter.getSubjectAttributes(subjectId)`, and the cached `listRoles()`. Each adapter call runs under `adapterTimeoutMs` (default 5000) with a real `AbortSignal`; a timeout throws and the entry point fails closed.
+5. **Inheritance closure.** `resolveEffectiveRoles(assignedRoles, allRoles)` walks each assigned role's `inherits` chain. Cycles are cut by a shallowest-depth memo, depth is bounded by `MAX_INHERITANCE_DEPTH` (32), and roles past that depth do not enter `subject.roles` - though `can()` may still grant their permissions, because the bound is on traversal and not on the grant. See [role inheritance](/duck-iam/core/roles/inheritance#the-depth-cap). The result is deduplicated and keeps directly assigned ids even when the catalog does not define them; a dangling *inherited* id is dropped.
+6. **Scoped roles.** Only when the adapter implements the optional `getSubjectScopedRoles`. Each scoped assignment is closed over `inherits` too, so a check at an inherited-into scope can see it. The directly assigned role keeps the scope it was assigned at; every *other* role produced by that closure is retagged with its own `IRole.scope`, falling back to the assignment row's scope when the role declares none. This matches how `rolesToPolicy` gates each role's rules.
+7. **Assemble and cache.** `{ id, roles, scopedRoles, attributes }`.
 
+Before 5.5.0, `resolveSubject` closed only the unscoped assignments over `inherits`, so a scoped grant of a child role did not confer its parent's permissions inside that scope. Scoped assignments now go through the same closure.
+
+`engine.getEffectiveRoles(subjectId, scope?)` exposes the result of this step plus the enrichment below, and shares the same cache.
+
+## Step 2 - scoped-role enrichment
+
+`authorize()` does two normalisations before anything is evaluated.
+
+First, a `subject.roles` that is not an array is replaced with `[]`. A bare string would substring-match the `contains` condition that `rolesToPolicy` generates.
+
+Second, when the request carries a `scope` and the subject has scoped roles, `enrichSubjectWithScopedRoles()` merges the matching grants into `subject.roles`. It returns the original object unchanged when nothing matches, so the common case allocates nothing.
+
+| Option | Values | Default | Meaning |
+| --- | --- | --- | --- |
+| `scopeMode` | `'flat'`, `'hierarchical'` | `'flat'` | `'flat'` requires an exact scope match. `'hierarchical'` treats a dotted scope as a path, so a grant at `org-1` applies to `org-1.team-2.repo-3`. Safe to enable for undotted scopes, which degrade to exact match. |
+| `scopeCombine` | `'union'`, `'override'` | `'union'` | Only read under `'hierarchical'`. `'union'` ORs in every matching level; `'override'` applies only the most specific matching level, so a narrower grant shadows a broader one instead of adding to it. |
+
+`scopeAncestors('org-1.team-2.repo-3')` yields `['org-1.team-2.repo-3', 'org-1.team-2', 'org-1']`. Hierarchical union is additive only: there is no per-level revoke.
+
+## Step 3 - hooks and the evaluation clock
+
+`beforeEvaluate` runs next, and it can rewrite the request - this is the supported place to inject environment fields, override a subject attribute, or pin a clock for a replay.
+
+`ensureEnvNow()` runs *after* the hook. It sets `environment.now` to `Date.now()` only when it is still absent, so a hook-pinned or test-pinned `now` always wins. Temporal operators and `$environment.now` references depend on this field existing.
+
+## Step 4 - policy-set assembly
+
+`loadAllPolicies()` produces the array the evaluator walks.
+
+1. `listPolicies()` from the adapter, cached under a single-entry LRU with the `cacheTTL` TTL. An adapter returning more than `maxPolicies` (default 10000) rows throws rather than silently truncating.
+2. `listRoles()` the same way, capped by `maxRoles` (default 10000).
+3. `rolesToPolicy(roles)` builds the synthetic policy, which is then deep-frozen and cached.
+4. The merged array is `[__rbac__, ...adapterPolicies]` - **unless** the generated policy has zero rules, in which case it is omitted entirely so it cannot participate in the combine.
+
+What `rolesToPolicy` emits, for every permission of every role after its own inheritance closure:
+
+```ts
+{
+  id: '__rbac__#0',                 // monotonic counter, stable across identical input
+  effect: 'allow',                  // role permissions are allow-only
+  description: 'Editor: update on post',
+  priority: 10,
+  actions: ['update'],
+  resources: ['post'],
+  conditions: {
+    all: [
+      { field: 'subject.roles', operator: 'contains', value: 'editor' },
+      // present only when the DECLARING role or the permission sets a scope
+      // that is neither undefined nor '*'
+      { field: 'scope', operator: 'eq', value: 'org-1' },
+    ],
+  },
+}
 ```
-[ in-process LRU cache (per engine) ]
-      v cache miss
-[ adapter (Memory / Prisma / Drizzle / Redis / HTTP) ]
-      v persistent storage
-[ database / Redis / remote API ]
+
+The wrapping policy is `{ id: '__rbac__', name: 'RBAC Policies', algorithm: 'allow-overrides', rules }`. A permission that carries its own `conditions` gets `{ all: [{ all: [...base] }, perm.conditions] }` instead - the author's group is nested whole rather than spliced, so an unrecognised group key fails closed and the group always sits at the same depth whatever its key is. Rule ids use the `__rbac__#N` counter rather than interpolated names, because a role, action, or resource containing a dot used to produce ambiguous ids.
+
+Under `scopeMode: 'hierarchical'` the single `scope eq` becomes `{ any: [scope eq S, scope starts_with "S."] }`, so a role-declared scope covers its descendants the way an assignment scope does.
+
+## Step 5 - per-policy evaluation
+
+Each policy is evaluated independently by `evaluatePolicy()`, which produces exactly one of three outcomes: allow, deny, or NotApplicable.
+
+1. `policyApplies()` checks `targets.actions` (with `matchesAction`), `targets.resources` (with `matchesResource`), and `targets.roles` (exact membership in `subject.roles`). Any declared dimension that fails makes the policy NotApplicable.
+2. If no rule in the policy shape-matches the request's action and resource (`ruleTargetsMatch`), the policy is NotApplicable too. A policy about `update` has nothing to say about `read` and must not cast a default-effect vote just because its `targets` were silent.
+3. Otherwise every rule is tested with `ruleApplies()` - shape match plus the full condition group - and the matches are folded by `combiners[policy.algorithm]`.
+
+The combiner returns the winning rule, the effect, and a reason string; `evaluatePolicy` wraps that into an `IDecision`. See [rule matching](/duck-iam/core/rule-matching) for the shape and condition gates, and [combining algorithms](/duck-iam/core/policies/combining-algorithms) for the fold.
+
+## Step 6 - cross-policy combination
+
+`evaluate()` merges the per-policy decisions according to `policyCombine`, skipping every decision marked `applicable: false`. The default is `'and'`: every applicable policy must allow, and the first non-allow short-circuits and is returned as the final decision. A policy that throws is reported through the `onPolicyError` hook and treated as NotApplicable rather than failing the whole request.
+
+The full semantics of all three modes, including the fall-through reasons and what changes in `production`, are on [cross-policy combination](/duck-iam/core/cross-policy).
+
+## Step 7 - the decision
+
+In `development` mode the pipeline returns an `AccessControl.IDecision`:
+
+| Field | Meaning |
+| --- | --- |
+| `allowed` | The verdict as a boolean. |
+| `effect` | `'allow'` or `'deny'`. |
+| `rule` | The `IRule` that decided, when one did. |
+| `policy` | The id of the deciding policy, e.g. `__rbac__`. |
+| `reason` | Text such as `Denied by rule "block-banned"` or `No policy applicable. Defaulted to deny`. |
+| `duration` | Milliseconds measured across the whole cross-policy walk. |
+| `timestamp` | `Date.now()` at the decision. |
+| `applicable` | Only ever `false`, only on a per-policy NotApplicable result. Absent on the final decision returned to you. |
+
+In `production` mode the pipeline returns a plain `boolean` - no decision object is allocated.
+
+```ts
+import { IamEngine } from '@gentleduck/iam'
+import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
+
+// mode defaults to 'production', which returns a bare boolean
+const engine = new IamEngine({ adapter: new IamMemoryAdapter(), mode: 'development' })
+
+const decision = await engine.check('user-1', 'update', {
+  type: 'post',
+  id: 'post-42',
+  attributes: { ownerId: 'user-1', status: 'draft' },
+})
+
+if (typeof decision !== 'boolean' && !decision.allowed) {
+  console.warn(decision.reason, decision.policy, decision.rule?.id)
+}
 ```
 
-| Cache | Scope | TTL |
+## Development versus production
+
+`mode` defaults to `'production'`. It does **not** select the evaluator: both modes get their verdict from the compiled table. What the modes differ in is whether a second evaluator runs alongside it, and how much provenance survives.
+
+| | `development` | `production` (default) |
 | --- | --- | --- |
-| `policyCache` | All policies | `cacheTTL` (default 60s) |
-| `roleCache` | All roles | `cacheTTL` |
-| `rbacPolicyCache` | Result of `rolesToPolicy()` | `cacheTTL` |
-| `subjectCache` | Per-subject (`subjectId` -> resolved roles + attrs) | `cacheTTL`, max `maxCacheSize` entries |
+| Verdict from | the compiled table | the compiled table |
+| Interpreter also runs | yes, for the explanation | no |
+| Return of `authorize` / `check` | `AccessControl.IDecision` | `boolean` |
+| Return of `can` | `boolean` | `boolean` |
+| `explain()` | works | throws |
+| `decision.policy` / `decision.rule` | present | `undefined` |
+| `decision.reason` | the interpreter's real reason | `'Allowed/Denied (production mode; compiled table does not retain policy identity)'` |
+| Table-versus-interpreter cross-check | on | off |
+| `policyCombine: 'first-applicable'` | supported, at the cost of the compiled table | constructor throws |
 
-`engine.admin.*` writes invalidate the relevant caches automatically. Manual invalidation: `engine.cache.invalidatePolicies()`, `engine.cache.invalidateRoles()`, `engine.cache.invalidateSubject(id)`, or `engine.cache.invalidate()` for everything.
+The table is built from the roles and the raw adapter policies; only policies it could not flatten - targeted ones, and ones with non-literal action or resource patterns - fall back to `evaluatePolicyFast()` per request. It is rebuilt lazily on the first `authorize()` after any policy or role invalidation, under a generation counter so a build that started before an invalidation cannot overwrite a newer one.
 
-In multi-instance deploys, broadcast invalidation messages over Redis pub/sub or a cache-coherence protocol so each node clears its LRU when policies change. Without that, nodes may serve stale decisions for up to `cacheTTL`.
+The development-only explanatory run is passed `onPolicyError: undefined` and its own `signals` bag, so a handler wired to an alerting pipeline is not paged twice for one bad policy and a `failOpen` seen only by the explanatory run cannot rewrite what the authoritative path reported. Once the two verdicts agree the signals take the union.
 
-***
+The table cannot explain itself - `CONST_ALLOW` / `CONST_DENY` cells are a single `kind` byte and `allow` is a raw bitmask, so policy identity is erased at compile time, and that erasure is the optimisation. Running the interpreter alongside it in development is what makes a divergence visible: if the two verdicts differ, the engine `console.error`s and throws, `authorize()` catches it and answers a fail-closed `'Evaluation error'` deny. Production does not run the interpreter and therefore cannot detect a disagreement - which is the point, since the second evaluator is the cost the fast path exists to avoid. The compiled path is also verified against the reference evaluator by differential and property-fuzz tests.
+
+`IAM_MAX_COMPILED_ROLES` is 32. Beyond that `compileTable` throws `IamRoleLimitExceededError`, the engine catches that error specifically, warns once, and **both** modes drop to the interpreter for every subsequent request. Verdicts are unchanged; throughput is not, and `healthCheck().compiledTable` reports `{ available: false, reason: 'role-limit-exceeded' }`. The flag is latched for the life of the engine instance, so deleting roles back under 32 does not restore the table - construct a new engine. Every other compile failure still throws and still denies, because a malformed policy is a bug and answering it on a slower correct path would hide it.
+
+## Hooks and error semantics
+
+| Hook | When | Can it change the decision? |
+| --- | --- | --- |
+| `beforeEvaluate(request)` | before the clock is defaulted and policies are loaded | yes - it returns the request that gets evaluated |
+| `onPolicyError(err, policyId)` | a single policy threw | no - that policy is skipped as NotApplicable |
+| `afterEvaluate(request, decision)` | after the decision is final | no |
+| `onDeny(request, decision)` | after a deny decision is final | no |
+| `onError(err, request)` | the whole evaluation threw | no - the engine has already failed closed |
+| `onMetrics(event)` | last, always | no |
+
+The trailing hooks run outside the evaluation `try`, and each is individually wrapped, so a throwing hook cannot rewrite an allow into a deny or suppress its siblings. A throw anywhere in the evaluation itself produces a fail-closed result: `false` in `production`, or a deny decision with reason `Evaluation error`.
+
+`explain()` deliberately fires only `beforeEvaluate` - it applies, because it changes what is evaluated - and skips `afterEvaluate`, `onDeny`, and `onMetrics`. Tracing a request must not emit audit events.
+
+## Caching
+
+Five caches sit in front of the adapter. Four of them hold a single entry; only the subject cache is sized.
+
+| Cache | Key | Entries | TTL |
+| --- | --- | --- | --- |
+| `policies` | `'all'` | 1 | `cacheTTL` (default 60s) |
+| `roles` | `'all'` | 1 | `cacheTTL` |
+| `rbacPolicy` | `'rbac'` | 1 | `cacheTTL` |
+| `mergedPolicies` | `'merged'` | 1 | `cacheTTL` |
+| `subjects` | `subjectId` | `maxCacheSize` (default 1000) | `cacheTTL` |
+
+`engine.admin.*` writes invalidate the right caches automatically. Manual control is on the `engine.cache` facet: `invalidate()`, `invalidatePolicies()`, `invalidateRoles(roleId?)`, `invalidateSubject(subjectId)`, each taking an optional `{ broadcast?: boolean }`. `engine.stats.get()` reports hits, misses, and size per cache.
+
+In a multi-instance deployment, wire an `invalidator` so every node drops its caches when any node writes. Without one, a node can serve a decision from a stale policy set for up to `cacheTTL`. See [caching](/duck-iam/advanced/engine/caching) and the [Redis invalidator](/duck-iam/integrations/invalidators/redis).
 
 ## Tracing with explain()
 
-When you need to know **exactly why** a check decided a certain way, swap `engine.can()` for `engine.explain()`:
+When you need to know exactly why a check decided as it did, swap `can()` for `explain()`.
 
-```typescript
+```ts
 const trace = await engine.explain('user-1', 'update', {
   type: 'post',
   attributes: { ownerId: 'user-1' },
 })
 
 console.log(trace.summary)
-console.log(trace.policies) // per-policy breakdowns
-console.log(trace.rules)    // per-rule match details
+console.log(trace.policies) // per-policy breakdown
+console.log(trace.rules)    // per-rule match detail
 ```
 
-`explain()` runs the same pipeline but builds a richer `Explain.IResult` trace instead of an `AccessControl.IDecision`. Side-effect hooks (`onDeny`, `afterEvaluate`) don't fire - it's read-only.
+The trace also reports which roles came from scoped enrichment: `explain()` records the subject's roles before enrichment and the ones the request's scope added. `Explain.IResult` is documented field by field on [explain and debug](/duck-iam/advanced/explain).
 
-See [explain and debug](/duck-iam/advanced/explain) for the full trace API.
+## API reference
+
+The evaluator is exported from `@gentleduck/iam` and `@gentleduck/iam/core` for callers who want to run it without an engine.
+
+```ts
+function evaluate(
+  policies: AccessControl.IPolicy[],
+  request: IamRequest.IAccessRequest,
+  defaultEffect?: AccessControl.Effect,      // default 'deny'
+  combine?: AccessControl.PolicyCombine,     // default 'and'
+  onPolicyError?: (err: Error, policy: AccessControl.IPolicy) => void,
+  signals?: { failOpen?: boolean },
+  caches?: { regex?: Map<string, RegExp>; path?: Map<string, string[] | null> },
+): AccessControl.IDecision
+
+function evaluatePolicy(
+  policy: AccessControl.IPolicy,
+  request: IamRequest.IAccessRequest,
+  defaultEffect?: AccessControl.Effect,
+  caches?: { regex?: Map<string, RegExp>; path?: Map<string, string[] | null> },
+): AccessControl.IDecision
+
+function evaluateFast(/* same parameters as evaluate */): boolean
+
+function evaluatePolicyFast(/* same parameters as evaluatePolicy */): boolean | null
+
+function indexPolicy(policy: AccessControl.IPolicy): Evaluate.IPolicyRuleIndex
+```
+
+| Export | Returns | Notes |
+| --- | --- | --- |
+| `evaluate` | `IDecision` | Reference implementation. Never throws for a bad policy; routes it to `onPolicyError`. |
+| `evaluatePolicy` | `IDecision` | One policy. `applicable: false` marks NotApplicable. |
+| `evaluateFast` | `boolean` | Allocation-light multi-policy walk. Treats `'first-applicable'` as `'and'`. |
+| `evaluatePolicyFast` | `boolean \| null` | `null` means NotApplicable. |
+| `indexPolicy` | `Evaluate.IPolicyRuleIndex` | Builds (and `WeakMap`-caches) the rule index the fast path uses. |
+
+The optional `signals` parameter is an out-parameter, not a returned value. The evaluator sets `signals.failOpen = true` when - and only when - the result is an allow produced by the `defaultEffect` fallback with no applicable policy. Chart it: it is the signal that a policy set has silently gone missing.
+
+`Evaluate` is the namespace holding the index types:
+
+| Type | What it is |
+| --- | --- |
+| `Evaluate.Combiner` | Signature of a combining-algorithm implementation. |
+| `Evaluate.IIndexedRule` | A rule plus its action and resource pattern sets and precomputed wildcard flags. |
+| `Evaluate.IPolicyRuleIndex` | The four buckets (`byActionResource`, `byActionWildcardResource`, `byResourceWildcardAction`, `wildcardBoth`) plus the `precomputed` result map. |
+
+The index keys literal rules by a NUL-joined action and resource pair. A rule with an expansive pattern on one side is bucketed by whichever side is still literal, so a request only scans the rules whose literal side already matches. Rules that are expansive on both sides stay a linear scan. When a policy has no expansive patterns at all and its algorithm is `deny-overrides`, `allow-overrides`, or `first-match`, unconditional rules are folded into `precomputed`, giving an O(1) answer with no rule scan.
+
+## Gotchas
+
+* **`can()` swallows resolution errors, `check()` does not swallow them silently.** Both fail closed, but `check()` returns a decision whose reason is `Subject resolution error` so you can distinguish it from a real deny.
+* **The subject cache holds resolved roles.** Assigning a role does not take effect on other engine instances until their cache TTL expires or an invalidation reaches them.
+* **`explain()` is not free and not available in production.** It loads its own module chunk lazily so production bundles pay nothing for it.
+* **`permissions()` enriches per scope.** Each check in the batch goes through scoped-role enrichment for its own scope, with the enriched subject memoised per scope for the batch.
+* **`environment.now` is defaulted after `beforeEvaluate`.** Pin it in the hook, not before the call, if you need a deterministic clock.
+* **A rule with a non-finite `priority` ranks as `0`.** It does not vanish from `first-match` and `highest-priority` comparisons, and it does not throw.
+
+## See also
+
+* [Rule matching](/duck-iam/core/rule-matching) - the action, resource, and condition gates inside step 5.
+* [Cross-policy combination](/duck-iam/core/cross-policy) - the semantics of step 6.
+* [Primitives](/duck-iam/core/primitives) - the exact shape of every object this pipeline touches.
+* [Engine modes](/duck-iam/advanced/engine/modes) and [caching](/duck-iam/advanced/engine/caching) - configuration behind steps 4 and 7.
+* [Roles to policy](/duck-iam/core/roles/roles-to-policy) - the generated `__rbac__` policy in full.

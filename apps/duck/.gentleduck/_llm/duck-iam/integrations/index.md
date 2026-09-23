@@ -1,48 +1,128 @@
-## What lives here
+Everything outside the policy engine lives here. `@gentleduck/iam` ships five families of integration, each on its own npm subpath and each replaceable: the adapter decides where policies live, the server helpers turn HTTP requests into decisions, the client SDKs render a pre-computed snapshot, the invalidator keeps a fleet's caches in step, and the metrics aggregator turns decision events into percentiles.
 
-`@gentleduck/iam`'s integration story is sliced by **direction**: where
-the data flows.
+## The five families
 
-| Subpath | Direction | What it does |
+Integrations are sliced by **direction**: which way the data moves relative to the engine.
+
+`adapters/*` is the only family the engine cannot run without. `server/*` sits in front of the engine and translates a framework's request object into a `can` / `authorize` call; `client/*` sits behind it and consumes a snapshot the server already computed. `observability/metrics` is a pure sink on the `onMetrics` hook. `invalidators/redis` is the only one that flows both ways: it publishes local admin writes and applies remote ones.
+
+| Subpath | Direction | What it does | Pages |
+|---|---|---|---|
+| `@gentleduck/iam/adapters/*` | inbound | Where policies, roles, assignments, and subject attributes are stored | [Adapters overview](/duck-iam/integrations/adapters) |
+| `@gentleduck/iam/server/*` | request edge | Express / Hono / Next / Nest middleware and admin routers | [Server overview](/duck-iam/integrations/server) |
+| `@gentleduck/iam/client/*` | outbound | React / Vue / vanilla SDKs over a serialised permission map | [Client overview](/duck-iam/integrations/client) |
+| `@gentleduck/iam/invalidators/redis` | sideways | Signed pub/sub cache invalidation across instances | [Redis invalidator](/duck-iam/integrations/invalidators/redis) |
+| `@gentleduck/iam/observability/metrics` | outbound | Rolling p50 / p95 / p99 and allow / deny / fail-open counters | [Metrics aggregator](/duck-iam/integrations/observability/metrics) |
+
+## Every integration and its page
+
+### Adapters
+
+| Export | Subpath | Page |
 |---|---|---|
-| [`adapters/`](/duck-iam/integrations/adapters) | inbound | Where policies + roles + subjects come from (memory, file, redis, drizzle, prisma, http) |
-| [`server/`](/duck-iam/integrations/server) | inbound + outbound | Express / Hono / Next / Nest middleware. Translates HTTP requests into authorize calls and authorize results back into HTTP responses |
-| [`client/`](/duck-iam/integrations/client) | outbound | React / Vue / vanilla JS SDKs. Renders `<Can>` / `<Cannot>` / `useAccess()` from a snapshot the server pre-computed |
-| [`invalidators/`](/duck-iam/integrations/invalidators) | sideways | Cross-instance cache invalidation. One node mutates a policy; every other node's cache flips stale |
-| [`observability/`](/duck-iam/integrations/observability) | outbound | OpenTelemetry metrics aggregator that turns `onMetrics` events into p50 / p95 / p99 |
+| `IamMemoryAdapter`, `iamMemoryAdapter` | `adapters/memory` | [Memory adapter](/duck-iam/integrations/adapters/memory) |
+| `IamFileAdapter`, `iamFileAdapter` | `adapters/file` | [File adapter](/duck-iam/integrations/adapters/file) |
+| `IamPrismaAdapter`, `iamPrismaAdapter` | `adapters/prisma` | [Prisma adapter](/duck-iam/integrations/adapters/prisma) |
+| `IamDrizzleAdapter`, `iamDrizzleAdapter` | `adapters/drizzle`, `adapters/drizzle/pg`, `adapters/drizzle/mysql`, `adapters/drizzle/sqlite` | [Drizzle adapter](/duck-iam/integrations/adapters/drizzle) |
+| `IamRedisAdapter`, `iamRedisAdapter` | `adapters/redis` | [Redis adapter](/duck-iam/integrations/adapters/redis) |
+| `IamHttpAdapter`, `iamHttpAdapter` | `adapters/http` | [HTTP adapter](/duck-iam/integrations/adapters/http) |
+| `IamAdapter.IAdapter` (the interface) | root entry, type-only | [Custom adapter](/duck-iam/integrations/adapters/custom) |
+
+Not sure which one? [Choosing an adapter](/duck-iam/integrations/adapters/comparison) has the feature matrix and the decision tree.
+
+### Server
+
+| Framework | Subpath | Page |
+|---|---|---|
+| Framework-agnostic helpers | `server` | [Generic helpers](/duck-iam/integrations/server/generic) |
+| Next.js app router | `server/next` | [Next.js](/duck-iam/integrations/server/next) |
+| Express | `server/express` | [Express](/duck-iam/integrations/server/express) |
+| Hono | `server/hono` | [Hono](/duck-iam/integrations/server/hono) |
+| NestJS | `server/nest` | [NestJS](/duck-iam/integrations/server/nest) |
+
+### Client
+
+| Target | Subpath | Page |
+|---|---|---|
+| The wire shape itself | type-only | [PermissionMap reference](/duck-iam/integrations/client/permission-map) |
+| Vanilla JS | `client` | [Vanilla JS](/duck-iam/integrations/client/vanilla) |
+| React | `client/react` | [React](/duck-iam/integrations/client/react) |
+| Vue | `client/vue` | [Vue](/duck-iam/integrations/client/vue) |
+
+### Invalidation and observability
+
+| Export | Subpath | Page |
+|---|---|---|
+| `createIamRedisInvalidator` | `invalidators/redis` | [Redis invalidator](/duck-iam/integrations/invalidators/redis) |
+| `iamCreateMetricsAggregator` | `observability/metrics` | [Metrics aggregator](/duck-iam/integrations/observability/metrics) |
 
 ## Wiring all five at once
 
-A production deployment that uses one of each:
+A production deployment that uses one of each. Every symbol below is a real export; check each linked page for its full option table.
 
-```typescript
+```ts
+import { and, eq, isNull, or } from 'drizzle-orm'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { IamEngine } from '@gentleduck/iam/core'
 import { IamDrizzleAdapter } from '@gentleduck/iam/adapters/drizzle'
-import { adminRouter, guard } from '@gentleduck/iam/server/express'
+import { iamAssignments, iamPolicies, iamRoles, iamSubjectAttrs } from '@gentleduck/iam/adapters/drizzle/pg'
+import { iamAdminRouter, iamGuard } from '@gentleduck/iam/server/express'
 import { createIamRedisInvalidator } from '@gentleduck/iam/invalidators/redis'
 import { iamCreateMetricsAggregator } from '@gentleduck/iam/observability/metrics'
 
-const adapter = new IamDrizzleAdapter(db, schema)
-const invalidator = createIamRedisInvalidator({ client: redis })
-const metrics = iamCreateMetricsAggregator()
+const db = drizzle(pool)
+
+// 1. inbound: where the authorization data lives
+const adapter = new IamDrizzleAdapter({
+  db,
+  tables: { policies: iamPolicies, roles: iamRoles, assignments: iamAssignments, attrs: iamSubjectAttrs },
+  ops: { and, eq, isNull, or }, // isNull and or are optional; omitting either warns and takes a slower path
+})
+
+// 2. sideways: every node drops its caches when any node writes
+const invalidator = createIamRedisInvalidator({
+  client: redisPubSub,
+  secret: process.env.IAM_INVALIDATE_SECRET,
+})
+
+// 3. outbound: rolling latency + allow/deny counters
+const metrics = iamCreateMetricsAggregator({ sampleSize: 2000 })
 
 const engine = new IamEngine({
   adapter,
   invalidator,
+  defaultEffect: 'deny',
+  mode: 'production',
   hooks: { onMetrics: metrics.record },
 })
 
-await engine.preload()  // warm caches before first request
+await engine.preload() // warm the policy and role caches before first request
 
-app.delete('/posts/:id', guard(engine, 'delete', 'post'), handler)
-app.use('/admin', adminRouter(engine, { authorize: (req) => isAdmin(req) })(() => express.Router()))
+// 4. request edge
+app.delete('/posts/:id', iamGuard(engine, 'delete', 'post'), handler)
+app.use('/admin/iam', iamAdminRouter(engine, { authorize: (req) => req.user?.role === 'admin' })(Router))
 
 app.get('/healthz', async (_, res) => res.json(await engine.healthCheck()))
 app.get('/metrics', (_, res) => res.json(metrics.snapshot()))
 ```
 
-## What's NOT here
+`createIamRedisInvalidator` accepts unsigned envelopes when `secret` is omitted, and warns once per process. In that mode anyone with `PUBLISH` rights on the channel can wipe every node's cache. Set `secret` in production - see [Redis invalidator](/duck-iam/integrations/invalidators/redis).
 
-* **The policy engine itself**: see [Core](/duck-iam/core).
-* **The fluent role / policy builder**: see [`@gentleduck/iam/core/builder`](/duck-iam/core/policies).
-* **The validator**: see [Advanced > validate](/duck-iam/advanced/utilities).
+## How the pieces sit in a fleet
+
+Two app instances sharing one database and one Redis. The adapter is the source of truth; Redis carries only invalidation traffic.
+
+Only the cache-miss edges reach the adapter: with `cacheTTL` at its default of 60 seconds, a warm node answers from its own LRU. The `publish` edge exists so Node B does not serve a stale decision for up to a full TTL after Node A revokes a role. Each node aggregates its own metrics, so scrape both.
+
+## What is not here
+
+* **The policy engine itself** - see [Core](/duck-iam/core) and [Engine](/duck-iam/advanced/engine).
+* **The fluent policy and role builder** - see [Policies](/duck-iam/core/policies) and [Roles](/duck-iam/core/roles).
+* **The validator and JSON schema** - see [Validation](/duck-iam/advanced/validation) and [JSON schema](/duck-iam/advanced/json-schema).
+* **`createIam()` typed config** - see [Config](/duck-iam/advanced/config).
+
+## See also
+
+* [Adapters overview](/duck-iam/integrations/adapters) - the storage layer, method by method
+* [Choosing an adapter](/duck-iam/integrations/adapters/comparison) - feature matrix and decision tree
+* [Production checklist](/duck-iam/guides/production) - what to turn on before you ship

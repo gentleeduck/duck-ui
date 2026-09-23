@@ -1,426 +1,430 @@
-## What You Will Build
+This page takes you from an empty project to a passing permission check, then layers on ABAC policies, owner-only conditions, multi-tenant scopes, server guards, and a client permission map. Every snippet is checked against the current `@gentleduck/iam`. If you only have five minutes, stop after step 4 - that is the first passing check.
 
-## Step 1: Define Your Access Config
+## The path
 
-Declare the actions, resources, and scopes your application uses. This creates a typed factory that constrains all subsequent builders:
+Steps 1 to 4 are the vertical slice: a subject with a role, a grant, and a decision. Steps 5 to 9 are layers you add when you need them - attribute rules, ownership, tenancy, then moving the decision out to your routes and your UI.
 
-```typescript title="src/lib/access.ts"
-import { defineIam } from "@gentleduck/iam";
+## Step 1: install
 
-export const access = defineIam({
-  actions: ["create", "read", "update", "delete", "manage"],
-  resources: ["post", "comment", "user", "team", "billing"],
-  scopes: ["org"],
-} as const);
+The package has one runtime dependency (`uuid`, pulled in only by the Drizzle schema helpers). Every adapter, server middleware, and client library lives behind a subpath export, so you only bundle what you import.
+
+## Step 2: declare your access config
+
+`createIam()` is the entry point. Pass your actions and resources as `as const` arrays; the returned config threads those literal unions through every builder.
+
+```ts title="src/lib/access.ts"
+import { createIam } from '@gentleduck/iam/core'
+
+export const access = createIam({
+  actions: ['create', 'read', 'update', 'delete', 'manage'] as const,
+  resources: ['post', 'comment', 'user', 'team', 'billing'] as const,
+  roles: ['viewer', 'editor', 'moderator', 'admin', 'author'] as const,
+  scopes: ['org-1', 'org-2'] as const,
+})
 ```
 
-The `as const` assertion tells TypeScript to infer literal types rather than `string[]`. After this, calling `access.defineRole("x").grant("craete", "post")` produces a compile error because `"craete"` is not in the actions list.
+`as const` is what makes the config type-safe. Without it TypeScript infers `string[]` and every builder falls back to accepting any string. With it, `access.defineRole('viewer').grant('craete', 'post')` is a compile error because `'craete'` is not in the actions tuple.
 
-## Step 2: Define Roles with Inheritance
+| Option | Type | Default | Meaning |
+|---|---|---|---|
+| `actions` | `readonly string[]` | required | Actions your application supports |
+| `resources` | `readonly string[]` | required | Resource types your application manages |
+| `roles` | `readonly string[]` | `[]` | Role IDs; constrains `defineRole` and `assignRole` |
+| `scopes` | `readonly string[]` | `[]` | Scope strings for multi-tenant authorization |
+| `context` | `object` | `DotPath.IDefaultContext` | Phantom field for typed dot-paths. Pass `{} as unknown as AppContext`; the runtime value is never read |
 
-```typescript title="src/lib/roles.ts"
-import { access } from "./access";
+The returned object exposes `defineRole`, `definePolicy`, `defineRule`, `when`, `createEngine`, `checks`, `validateRoles`, and `validatePolicy`. Full reference: [createIam options](/duck-iam/advanced/config/access-config).
+
+## Step 3: define roles
+
+Roles are collections of `(action, resource)` grants. `inherits` closes over parent roles at load time.
+
+```ts title="src/lib/roles.ts"
+import { access } from './access'
 
 export const viewer = access
-  .defineRole("viewer")
-  .desc("Read-only access to content")
-  .grantRead("post", "comment")
-  .build();
+  .defineRole('viewer')
+  .desc('Read-only access to content')
+  .grantRead('post', 'comment')
+  .build()
 
 export const editor = access
-  .defineRole("editor")
-  .desc("Can create and edit content")
-  .inherits("viewer")
-  .grant("create", "post")
-  .grant("update", "post")
-  .grant("create", "comment")
-  .grant("update", "comment")
-  .build();
+  .defineRole('editor')
+  .desc('Can create and edit content')
+  .inherits('viewer')
+  .grant('create', 'post')
+  .grant('update', 'post')
+  .grant('create', 'comment')
+  .grant('update', 'comment')
+  .build()
 
 export const moderator = access
-  .defineRole("moderator")
-  .desc("Can delete content and manage comments")
-  .inherits("editor")
-  .grant("delete", "post")
-  .grant("delete", "comment")
-  .build();
+  .defineRole('moderator')
+  .desc('Can delete content')
+  .inherits('editor')
+  .grant('delete', 'post')
+  .grant('delete', 'comment')
+  .build()
 
 export const admin = access
-  .defineRole("admin")
-  .desc("Full access to everything")
-  .inherits("moderator")
-  .grantCRUD("user")
-  .grant("manage", "team")
-  .grant("manage", "billing")
-  .build();
+  .defineRole('admin')
+  .desc('Full access')
+  .inherits('moderator')
+  .grantCRUD('user')
+  .grant('manage', 'team')
+  .grant('manage', 'billing')
+  .build()
 
-export const allRoles = [viewer, editor, moderator, admin];
+export const allRoles = [viewer, editor, moderator, admin]
 ```
 
-`admin` inherits from `moderator` -> `editor` -> `viewer`. Each role automatically has all permissions from its ancestors plus its own direct grants.
+`grantRead(...resources)` is shorthand for `grant('read', r)` per resource. `grantCRUD(resource)` expands to `create`, `read`, `update`, `delete`. `grantAll(resource)` grants `'*'` on that resource.
 
-## Step 3: Create the Engine
+`build()` runs the validator and throws if the role is malformed - a dangling `inherits`, an empty role, an inheritance chain deeper than the runtime's `MAX_INHERITANCE_DEPTH` of 32. The message is prefixed `[@gentleduck/iam:builder] RoleBuilder.build(): role rejected by validator`. See [role definition](/duck-iam/core/roles/definition) and [inheritance](/duck-iam/core/roles/inheritance).
 
-```typescript title="src/lib/engine.ts"
-import { IamMemoryAdapter } from "@gentleduck/iam";
-import { access } from "./access";
-import { allRoles } from "./roles";
+`inherits` is additive only. To restrict access below what a parent grants, add an ABAC deny policy - see [combining algorithms](/duck-iam/core/policies/combining-algorithms).
+
+## Step 4: create the engine and run your first check
+
+```ts title="src/lib/engine.ts"
+import { IamMemoryAdapter } from '@gentleduck/iam/adapters/memory'
+import { access } from './access'
+import { allRoles } from './roles'
 
 const adapter = new IamMemoryAdapter({
   roles: allRoles,
   assignments: {
-    "user-alice": ["admin"],
-    "user-bob": ["editor"],
-    "user-carol": ["viewer"],
+    'user-alice': ['admin'],
+    'user-bob': ['editor'],
+    'user-carol': ['viewer'],
   },
-});
+})
 
-export const engine = access.createEngine({ adapter });
+export const engine = access.createEngine({ adapter })
 ```
 
-```typescript
-// Alice is an admin -- she can do everything
-await engine.can("user-alice", "manage", { type: "billing", attributes: {} });
+```ts
+// Alice is an admin - she can do everything.
+await engine.can('user-alice', 'manage', { type: 'billing', attributes: {} })
 // -> true
 
-// Bob is an editor -- he can create posts but not delete them
-await engine.can("user-bob", "create", { type: "post", attributes: {} });
+// Bob is an editor - he can create posts but not delete them.
+await engine.can('user-bob', 'create', { type: 'post', attributes: {} })
 // -> true
-
-await engine.can("user-bob", "delete", { type: "post", attributes: {} });
+await engine.can('user-bob', 'delete', { type: 'post', attributes: {} })
 // -> false
 
-// Carol is a viewer -- she can only read
-await engine.can("user-carol", "read", { type: "post", attributes: {} });
+// Carol is a viewer - reads only.
+await engine.can('user-carol', 'read', { type: 'post', attributes: {} })
 // -> true
-
-await engine.can("user-carol", "create", { type: "post", attributes: {} });
+await engine.can('user-carol', 'create', { type: 'post', attributes: {} })
 // -> false
 ```
 
-## Step 4: Add an ABAC Policy
+That is the first passing check. `can(subjectId, action, resource, environment?, scope?)` always returns a plain `boolean`, in either engine mode, and never rejects - a subject-resolution failure or an adapter timeout is routed to `hooks.onError` and returns `false`.
 
-A policy that denies access outside of business hours:
+### What the engine did
 
-```typescript title="src/lib/policies.ts"
-import { access } from "./access";
+Here is the path that first `can()` call took.
+
+The subject cache miss is what makes the first call expensive; every later call for `user-bob` inside the TTL window skips the adapter entirely. `listRoles` is fetched because inheritance is flattened at load, not per request. The roles are compiled into an ABAC policy by `rolesToPolicy()`, so an RBAC grant and an attribute policy go through the same evaluator - there is no second code path. See [evaluation pipeline](/duck-iam/core/evaluation) and [caching](/duck-iam/advanced/engine/caching).
+
+### `can` vs `check` vs `authorize` vs `explain`
+
+| Method | Input | Returns |
+|---|---|---|
+| `can(subjectId, action, resource, environment?, scope?)` | subject ID | `Promise<boolean>` always |
+| `check(subjectId, action, resource, environment?, scope?)` | subject ID | `Promise<boolean>` in production mode, `Promise<AccessControl.IDecision>` in development |
+| `authorize(request)` | a full `IamRequest.IAccessRequest` you built yourself | mode-dependent, same as `check` |
+| `explain(subjectId, action, resource, environment?, scope?)` | subject ID | `Promise<Explain.IResult>`; throws in production mode |
+| `permissions(subjectId, checks, environment?, opts?)` | subject ID plus up to 1024 checks | a permission map |
+
+Full signatures: [engine methods](/duck-iam/advanced/engine/methods).
+
+## Step 5: add an ABAC policy
+
+Roles answer "who". Policies answer "under what conditions". This one blocks writes outside business hours.
+
+```ts title="src/lib/policies.ts"
+import { access } from './access'
 
 export const businessHoursPolicy = access
-  .definePolicy("business-hours")
-  .name("Business Hours Only")
-  .desc("Deny write operations outside 9 AM - 6 PM UTC")
-  .algorithm("first-match")
-  .rule("deny-after-hours", (r) =>
+  .definePolicy('business-hours')
+  .name('Business hours only')
+  .desc('Deny write operations outside 09:00-18:00 UTC')
+  .algorithm('deny-overrides')
+  .rule('deny-after-hours', (r) =>
     r
       .deny()
-      .on("create", "update", "delete")
-      .of("*")
-      .when((w) =>
-        w.or((o) =>
-          o.lt("environment.hour", 9).gte("environment.hour", 18)
-        )
-      )
-      .desc("Block writes outside business hours")
+      .on('create', 'update', 'delete')
+      .of('post', 'comment')
+      .whenAny((w) => w.env('hour', 'lt', 9).env('hour', 'gte', 18))
+      .desc('Block writes outside business hours'),
   )
-  .rule("allow-in-hours", (r) =>
-    r.allow().on("*").of("*").desc("Allow everything else")
-  )
-  .build();
+  .build()
 ```
 
-```typescript
-await engine.admin.savePolicy(businessHoursPolicy);
+```ts
+await engine.admin.savePolicy(businessHoursPolicy)
+
+await engine.can(
+  'user-bob',
+  'create',
+  { type: 'post', attributes: {} },
+  { hour: 22 },
+)
+// -> false
 ```
 
-The `first-match` algorithm evaluates rules in order: the deny rule fires for writes outside 9-18 UTC, and the catch-all allow rule handles everything else.
+`whenAny` is OR: the rule fires when the hour is before 9 **or** at 18 and later. `env('hour', ...)` is shorthand for the dot-path `environment.hour`, read from the `environment` object, the fourth argument to `can()`. `algorithm('deny-overrides')` is the default and means any deny inside this policy wins.
 
-## Step 5: Owner-Only Conditions
+The four intra-policy combining algorithms are `deny-overrides` (default), `allow-overrides`, `first-match`, and `highest-priority`. Across policies the engine's `policyCombine` setting applies - `'and'` by default, meaning every applicable policy must allow. See [combining algorithms](/duck-iam/core/policies/combining-algorithms) and [cross-policy combination](/duck-iam/core/cross-policy).
 
-Use `$subject.id` to compare the requesting user against the resource owner:
+`.target({ actions, resources })` skips the policy when the request does not match. If the target admits a pair that none of the policy's allow rules covers, `build()` throws `UNREACHABLE_TARGET` - every request matching that target would be denied silently. Add a rule that allows the pair, or narrow the target. See [targets](/duck-iam/core/policies/targets).
 
-```typescript title="src/lib/roles.ts"
+## Step 6: owner-only permissions
+
+`grantWhen` attaches a condition to a single grant. `w.isOwner()` is shorthand for `resource.attributes.ownerId eq $subject.id`.
+
+```ts title="src/lib/roles.ts"
 export const author = access
-  .defineRole("author")
-  .desc("Can update and delete own posts only")
-  .inherits("viewer")
-  .grant("create", "post")
-  .grantWhen("update", "post", (w) => w.isOwner())
-  .grantWhen("delete", "post", (w) => w.isOwner())
-  .build();
+  .defineRole('author')
+  .desc('Can update and delete own posts only')
+  .inherits('viewer')
+  .grant('create', 'post')
+  .grantWhen('update', 'post', (w) => w.isOwner())
+  .grantWhen('delete', 'post', (w) => w.isOwner())
+  .build()
 ```
 
-Pass resource attributes when checking:
+Pass the resource's attributes on the check so the condition has something to read:
 
-```typescript
-// Bob owns this post
-await engine.can("user-bob", "update", {
-  type: "post",
-  id: "post-123",
-  attributes: { ownerId: "user-bob" },
-});
+```ts
+await engine.admin.saveRole(author)
+await engine.admin.assignRole('user-dana', 'author')
+
+await engine.can('user-dana', 'update', {
+  type: 'post',
+  id: 'post-123',
+  attributes: { ownerId: 'user-dana' },
+})
 // -> true
 
-// Carol does not own this post
-await engine.can("user-carol", "update", {
-  type: "post",
-  id: "post-123",
-  attributes: { ownerId: "user-bob" },
-});
+await engine.can('user-dana', 'update', {
+  type: 'post',
+  id: 'post-123',
+  attributes: { ownerId: 'user-alice' },
+})
 // -> false
 ```
 
-`isOwner()` generates a condition that checks `resource.attributes.ownerId eq $subject.id`. At evaluation time, `$subject.id` resolves to the actual subject ID from the request.
+The `$` prefix marks a value as a reference into the request rather than a literal. At evaluation time `$subject.id` resolves against the request that is being evaluated. Pass a different owner field with `w.isOwner('resource.attributes.createdBy')`. See [dollar variables](/duck-iam/core/policies/dollar-variables).
 
-## Step 6: Multi-Tenant Scoped Roles
+`eq` is `===`. A subject ID of `'42'` never equals an `ownerId` of `42`. `gt` / `gte` / `lt` / `lte` return `false` unless **both** operands are numbers, so an ISO date string compared with `gte` is always false - use `before` / `after` for temporal values.
 
-```typescript title="src/lib/scoped-engine.ts"
-import { IamMemoryAdapter } from "@gentleduck/iam";
-import { access } from "./access";
-import { allRoles } from "./roles";
+## Step 7: multi-tenant scoped roles
 
-const adapter = new IamMemoryAdapter({
-  roles: allRoles,
-});
+Assign the same subject different roles per scope, then pass the scope on the check.
 
-const engine = access.createEngine({ adapter });
+```ts
+// Alice is admin in org-1 but only a viewer in org-2.
+await engine.admin.assignRole('user-alice', 'admin', 'org-1')
+await engine.admin.assignRole('user-alice', 'viewer', 'org-2')
 
-// Alice is admin in org-1 but viewer in org-2
-await engine.admin.assignRole("user-alice", "admin", "org-1");
-await engine.admin.assignRole("user-alice", "viewer", "org-2");
-
-// Bob is editor in both orgs
-await engine.admin.assignRole("user-bob", "editor", "org-1");
-await engine.admin.assignRole("user-bob", "editor", "org-2");
-```
-
-Pass the scope to constrain evaluation:
-
-```typescript
-// Alice in org-1 -- admin
-await engine.can(
-  "user-alice", "manage", { type: "team", attributes: {} },
-  undefined, "org-1"
-);
+await engine.can('user-alice', 'manage', { type: 'team', attributes: {} }, undefined, 'org-1')
 // -> true
 
-// Alice in org-2 -- viewer only
-await engine.can(
-  "user-alice", "manage", { type: "team", attributes: {} },
-  undefined, "org-2"
-);
+await engine.can('user-alice', 'manage', { type: 'team', attributes: {} }, undefined, 'org-2')
 // -> false
-
-// Bob in org-2 -- editor
-await engine.can(
-  "user-bob", "create", { type: "post", attributes: {} },
-  undefined, "org-2"
-);
-// -> true
 ```
 
-The engine matches the request scope against scoped role assignments. Only roles assigned to the matching scope (plus global roles) are considered.
+The engine merges the subject's global roles with the scoped assignments whose scope matches the request. Matching is exact by default (`scopeMode: 'flat'`). Set `scopeMode: 'hierarchical'` on the engine config to treat a dot-delimited scope as a path, so a grant on `'org-1'` applies to `'org-1.team-2.repo-3'`. See [scoped roles](/duck-iam/core/roles/scoped).
 
-## Step 7: Server Middleware
+`engine.getEffectiveRoles(subjectId, scope?)` returns the merged list if you need to see what the engine resolved.
+
+## Step 8: guard a route
+
+Every framework wrapper is built on `engine.can()` and takes the same three leading arguments.
 
 ### Express
 
-```typescript title="src/server.ts"
-import express from "express";
-import { accessMiddleware, guard } from "@gentleduck/iam/server/express";
-import { engine } from "./lib/engine";
+```ts title="src/server.ts"
+import express from 'express'
+import { iamAccessMiddleware, iamGuard } from '@gentleduck/iam/server/express'
+import { engine } from './lib/engine'
 
-const app = express();
+const app = express()
 
-// Option A: Global middleware -- checks every request
-app.use(
-  accessMiddleware(engine, {
-    getUserId: (req) => req.user?.id ?? null,
-  })
-);
+// Option A: global middleware, infers action from the HTTP method and
+// resource from the first path segment.
+app.use(iamAccessMiddleware(engine, { getUserId: (req) => req.user?.id ?? null }))
 
-// Option B: Per-route guards -- more explicit
-app.get("/posts", guard(engine, "read", "post"), (req, res) => {
-  res.json({ posts: [] });
-});
+// Option B: an explicit per-route guard.
+app.get('/posts', iamGuard(engine, 'read', 'post'), (req, res) => res.json({ posts: [] }))
+app.delete('/posts/:id', iamGuard(engine, 'delete', 'post'), (req, res) => res.json({ deleted: true }))
 
-app.delete("/posts/:id", guard(engine, "delete", "post"), (req, res) => {
-  res.json({ deleted: true });
-});
-
-app.listen(3000);
+app.listen(3000)
 ```
+
+`iamGuard` reads the resource ID from `req.params.id`. Both helpers reply 401 when `getUserId` returns null and 403 when the engine denies.
 
 ### Hono
 
-```typescript title="src/worker.ts"
-import { Hono } from "hono";
-import { accessMiddleware, guard } from "@gentleduck/iam/server/hono";
-import { engine } from "./lib/engine";
+```ts title="src/worker.ts"
+import { Hono } from 'hono'
+import { iamAccessMiddleware, iamGuard } from '@gentleduck/iam/server/hono'
+import { engine } from './lib/engine'
 
-const app = new Hono();
+const app = new Hono()
 
-// Global middleware
-app.use("*", accessMiddleware(engine, {
-  getUserId: (c) => c.get("userId") as string,
-}));
+app.use('*', iamAccessMiddleware(engine, { getUserId: (c) => (c.get('userId') as string | null) ?? null }))
+app.delete('/posts/:id', iamGuard(engine, 'delete', 'post'), (c) => c.json({ deleted: true }))
 
-// Per-route guard
-app.delete("/posts/:id", guard(engine, "delete", "post"), (c) => {
-  return c.json({ deleted: true });
-});
-
-export default app;
+export default app
 ```
 
 ### NestJS
 
-```typescript title="src/posts/posts.controller.ts"
-import { Controller, Get, Delete, Param, UseGuards } from "@nestjs/common";
-import { Authorize, nestAccessGuard } from "@gentleduck/iam/server/nest";
-import { engine } from "../lib/engine";
+```ts title="src/posts/posts.controller.ts"
+import { Controller, Delete, Get, Param, UseGuards } from '@nestjs/common'
+import { IamAuthorize, iamNestAccessGuard } from '@gentleduck/iam/server/nest'
+import { engine } from '../lib/engine'
 
-const AccessGuard = nestAccessGuard(engine, {
-  getUserId: (req) => req.user?.sub ?? null,
-});
+const canActivate = iamNestAccessGuard(engine, { getUserId: (req) => req.user?.sub ?? null })
 
-@Controller("posts")
-@UseGuards(AccessGuard)
+@Controller('posts')
+@UseGuards({ canActivate } as never)
 export class PostsController {
   @Get()
-  @Authorize({ action: "read", resource: "post" })
-  async findAll() {
-    return [];
+  @IamAuthorize({ action: 'read', resource: 'post' })
+  findAll() {
+    return []
   }
 
-  @Delete(":id")
-  @Authorize({ action: "delete", resource: "post" })
-  async remove(@Param("id") id: string) {
-    return { deleted: id };
+  @Delete(':id')
+  @IamAuthorize({ action: 'delete', resource: 'post' })
+  remove(@Param('id') id: string) {
+    return { deleted: id }
   }
 }
 ```
+
+`iamNestAccessGuard` returns a `canActivate` body; handlers with no `IamAuthorize` metadata pass through.
 
 ### Next.js
 
-```typescript title="src/app/api/posts/[id]/route.ts"
-import { withAccess } from "@gentleduck/iam/server/next";
-import { engine } from "@/lib/engine";
-import { getSession } from "@/lib/auth";
+```ts title="src/app/api/posts/[id]/route.ts"
+import { withIamAccess } from '@gentleduck/iam/server/next'
+import { engine } from '@/lib/engine'
+import { getSession } from '@/lib/auth'
 
-export const DELETE = withAccess(
+export const DELETE = withIamAccess(
   engine,
-  "delete",
-  "post",
+  'delete',
+  'post',
   async (req, ctx) => {
-    const params = await ctx.params;
-    return Response.json({ deleted: params.id });
+    const params = ctx.params instanceof Promise ? await ctx.params : ctx.params
+    return Response.json({ deleted: params?.id })
   },
   {
-    getUserId: async (req) => {
-      const session = await getSession();
-      return session?.userId ?? null;
+    getUserId: async () => {
+      const session = await getSession()
+      return session?.userId ?? null
     },
-  }
-);
+  },
+)
 ```
 
-For Server Components, use `checkAccess()` and `getPermissions()`:
+Since 2.1.0 `withIamAccess` throws at construction when `getUserId` is omitted, and the Hono helpers read only `c.get('userId')` - there is no `x-user-id` header fallback on any framework. A raw request header is spoofable with one `curl`. Derive identity from a cookie session, a JWT your middleware verified, or mTLS. See [production hardening](/duck-iam/guides/production).
 
-```typescript title="src/app/layout.tsx"
-import { getPermissions } from "@gentleduck/iam/server/next";
-import { engine } from "@/lib/engine";
-import { getSession } from "@/lib/auth";
+Per-framework detail: [express](/duck-iam/integrations/server/express), [hono](/duck-iam/integrations/server/hono), [nest](/duck-iam/integrations/server/nest), [next](/duck-iam/integrations/server/next).
 
-export default async function Layout({ children }) {
-  const session = await getSession();
+## Step 9: send a permission map to the client
 
-  const permissions = await getPermissions(engine, session.userId, [
-    { action: "create", resource: "post" },
-    { action: "delete", resource: "post" },
-    { action: "manage", resource: "team" },
-  ]);
+`engine.permissions()` evaluates a batch of checks in one pass and returns a map keyed `[scope:]action:resource[:resourceId]`. Serialize it into your page and the client checks become synchronous object lookups.
 
-  return (
-    <AccessProvider permissions={permissions}>
-      {children}
-    </AccessProvider>
-  );
+```tsx title="src/app/layout.tsx"
+import { getIamPermissions } from '@gentleduck/iam/server/next'
+import { engine } from '@/lib/engine'
+import { getSession } from '@/lib/auth'
+import { AccessProvider } from '@/lib/access-client'
+
+export default async function Layout({ children }: { children: React.ReactNode }) {
+  const session = await getSession()
+
+  const permissions = await getIamPermissions(engine, session.userId, [
+    { action: 'create', resource: 'post' },
+    { action: 'delete', resource: 'post' },
+    { action: 'manage', resource: 'team' },
+  ])
+
+  return <AccessProvider permissions={permissions}>{children}</AccessProvider>
 }
 ```
 
-## Step 8: React Client Provider
+```ts title="src/lib/access-client.tsx"
+'use client'
 
-```typescript title="src/lib/access-client.tsx"
-"use client";
+import React from 'react'
+import { createIamAccessControl } from '@gentleduck/iam/client/react'
 
-import React from "react";
-import { createIamClient } from "@gentleduck/iam/client/react";
-
-export const {
-  AccessProvider,
-  useAccess,
-  Can,
-  Cannot,
-} = createIamClient(React);
+export const { AccessProvider, useAccess, usePermissions, Can, Cannot } = createIamAccessControl(React)
 ```
 
 ```tsx title="src/components/post-actions.tsx"
-"use client";
+'use client'
 
-import { Can, useAccess } from "@/lib/access-client";
+import { Can, Cannot, useAccess } from '@/lib/access-client'
 
-export function PostActions({ postId }: { postId: string }) {
-  const { can } = useAccess();
+export function PostActions() {
+  const { can } = useAccess()
 
   return (
     <div>
-      {/* Imperative check */}
-      {can("update", "post") && (
-        <button>Edit Post</button>
-      )}
+      {can('update', 'post') && <button type="button">Edit post</button>}
 
-      {/* Declarative check */}
       <Can action="delete" resource="post" fallback={null}>
-        <button>Delete Post</button>
+        <button type="button">Delete post</button>
       </Can>
 
-      {/* Show message when user lacks permission */}
       <Cannot action="manage" resource="team">
         <p>You do not have permission to manage this team.</p>
       </Cannot>
     </div>
-  );
+  )
 }
 ```
 
-`AccessProvider` receives the `PermissionMap` generated on the server (from Step 7). Client permission checks are synchronous lookups with no network requests.
+`createIamAccessControl(React)` takes the host React module as an argument so the package never bundles its own copy. `permissions()` refuses batches over 1024 checks - that is a caller bug, and it throws rather than failing closed. See [permission map](/duck-iam/integrations/client/permission-map) and [React client](/duck-iam/integrations/client/react).
 
-## Debugging with explain()
+## Debugging with explain
 
-When a permission check produces unexpected results, use `engine.explain()` for a full trace:
+When a decision surprises you, `engine.explain()` returns the whole trace. It is development-mode only and throws `explain() is not available in production mode` otherwise.
 
-```typescript
-const trace = await engine.explain(
-  "user-bob",
-  "delete",
-  { type: "post", id: "post-123", attributes: { ownerId: "user-alice" } }
-);
+```ts
+const trace = await engine.explain('user-dana', 'delete', {
+  type: 'post',
+  id: 'post-123',
+  attributes: { ownerId: 'user-alice' },
+})
 
-console.log(trace.decision);
-// -> { allowed: false, effect: "deny", reason: "..." }
-
-console.log(trace.policies);
-// -> Array of PolicyTrace, each containing:
-//    - policy id and name
-//    - which rules matched
-//    - which conditions passed or failed
-//    - actual vs expected values for each condition
+trace.decision // AccessControl.IDecision: { allowed, effect, reason, duration, timestamp, ... }
+trace.summary  // human-readable one-liner
+trace.subject  // { id, roles, scopedRolesApplied, attributes }
+trace.policies // Explain.IPolicyTrace[]: per policy, per rule, per condition,
+               // with actual vs expected for every comparison
 ```
 
-## Next Steps
+`explain()` does not fire `afterEvaluate`, `onDeny`, or `onError` - it is read-only. It does run `beforeEvaluate`, because that hook changes what is evaluated. Field-by-field reference: [explain](/duck-iam/advanced/explain).
 
-* [Production deployment guide](/duck-iam/guides/production): cache TTL trade-offs, multi-node invalidation, fail-closed defaults, hook set, adapter retry / circuit breaker tuning, health checks, metrics aggregator, snapshot env-promotion - the SRE playbook for going live.
-* [Core Concepts](/duck-iam/core): policies, rules, conditions, and combining algorithms.
-* [Integrations](/duck-iam/integrations/adapters): detailed API reference for every server and client integration.
-* [Advanced](/duck-iam/advanced/config): evaluation hooks, custom adapters, caching configuration, and validation.
-* [FAQs](/www/faqs): common questions and troubleshooting tips.
+## Before you ship
+
+The engine defaults to `mode: 'development'`, which allocates a full `IDecision` per policy per request. Production deployments should set `mode: 'production'`, call `engine.preload()` at boot, and `engine.dispose()` on shutdown. Work through the [production hardening checklist](/duck-iam/guides/production) before you take traffic.
+
+## See also
+
+* [Production hardening](/duck-iam/guides/production) - the pre-flight checklist, with a link per item
+* [Cookbook](/duck-iam/guides/cookbook) - recipes for the patterns above ownership and tenancy
+* [Troubleshooting](/duck-iam/guides/troubleshooting) - symptom, cause, fix, keyed to real error messages
+* [Core concepts](/duck-iam/core) - policies, rules, conditions, combining algorithms
+* [Pairing with duck-auth](/duck-iam/guides/auth-bridge) - where the subject ID comes from

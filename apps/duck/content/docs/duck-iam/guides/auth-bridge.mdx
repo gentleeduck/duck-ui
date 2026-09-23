@@ -1,86 +1,155 @@
 ---
 title: Pairing with duck-auth
-description: duck-iam answers "what may they do?"; duck-auth answers "who are they?". Wire the two with a tiny projectToSubject function.
+description: duck-auth answers "who are they?", duck-iam answers "what may they do?". Wire the two with a projectToSubject function you own
 section: Guides
 ---
 
+`@gentleduck/auth` and `@gentleduck/iam` are separate packages with zero code-level coupling - duck-auth imports nothing from duck-iam, and lists it only as an optional peer dependency. The seam between them is one function you write in your app: a projection from an auth-side identity plus session into an iam-side subject. This page shows that function, the request sequence around it, and the two places the pairing usually goes wrong.
+
 ## The split
 
-- **[duck-auth](/duck-auth)** owns identities, sessions, credentials,
-  MFA, providers, and the runtime that proves who the caller is.
-- **duck-iam** owns roles, policies, conditions, and the engine that
-  decides what they may do.
+- **[duck-auth](/duck-auth)** owns identities, credentials, sessions, MFA, providers, orgs, and the runtime that proves who the caller is.
+- **duck-iam** owns roles, policies, conditions, and the engine that decides what the caller may do.
 
-Keeping the two libraries separate means you can swap either one
-without touching the other. The bridge is a single function in your
-app code.
+Keeping them separate means either can be swapped without touching the other. duck-auth states the contract explicitly in its orgs facet: each membership carries org-scoped roles, apps that pair iam project an `identity x org` pair into a subject whose roles come from `Membership.roles`, and the projection lives in app code.
+
+## The request sequence
+
+One guarded request, from cookie to decision.
+
+<MermaidDiagram chart={`sequenceDiagram
+    participant C as "Client"
+    participant H as "Your handler"
+    participant A as "auth (AuthEngine)"
+    participant P as "projectToSubject"
+    participant E as "engine (IamEngine)"
+    C->>H: "DELETE /posts/123 with session cookie"
+    H->>A: "auth.resolveSession({ headers })"
+    A-->>H: "{ session, identity } or null"
+    alt "null"
+        H-->>C: "401 AUTH_UNAUTHENTICATED"
+    else "resolved"
+        H->>A: "auth.orgs.resolveMembership(orgId, identity.id)"
+        A-->>H: "Org.Membership with roles"
+        H->>P: "projectToSubject(identity, session, membership)"
+        P-->>H: "IamRequest.ISubject"
+        H->>E: "engine.authorize({ subject, action, resource, scope })"
+        E-->>H: "IDecision or boolean"
+        alt "denied"
+            H-->>C: "403"
+        else "allowed"
+            H-->>C: "204"
+        end
+    end`} />
+
+Authentication runs first and is a hard gate - `resolveSession` returning `null` ends the request before the engine is consulted. Authorization runs second and never re-checks identity; it trusts the subject the projection handed it. That ordering is the whole contract: duck-iam has no concept of a credential, and duck-auth has no concept of a policy.
+
+## Two ways to reach the engine
+
+The projection is not always needed. Pick a lane based on where role assignments live.
+
+<MermaidDiagram chart={`flowchart TD
+    Q{"Where do role assignments live?"}
+    Q -- "in the iam adapter" --> A1["engine.can(identity.id, action, resource, env, scope)"]
+    Q -- "in duck-auth org memberships" --> A2["projectToSubject(...) then engine.authorize(request)"]
+    A1 --> N1["Engine resolves roles from its own adapter and caches them"]
+    A2 --> N2["You supply subject.roles; the engine skips subject resolution"]`} />
+
+`can()` takes a subject **ID** and resolves roles through the iam adapter - the subject cache, the TTL, and `engine.cache.invalidateSubject()` all apply. `authorize()` takes a fully-built `IamRequest.IAccessRequest` including the subject, so nothing is resolved and nothing is cached; you own freshness. Use `can()` when duck-iam is the system of record for role assignments. Use `authorize()` with a projection when duck-auth org memberships are.
 
 ## `projectToSubject`
 
-The function takes an auth-side `Identity` plus `Session` and returns
-an iam-side `Subject`:
+The verified shapes:
 
-```typescript title="src/lib/projectToSubject.ts"
-import type { AuthIdentity, AuthSession } from '@gentleduck/auth/core'
-import type { AccessControl } from '@gentleduck/iam'
-import type { access } from '~/lib/access'  // your defineIam instance
+```ts title="src/lib/project-to-subject.ts"
+import type { Identities, Org, Sessions } from '@gentleduck/auth/core'
+import type { IamRequest } from '@gentleduck/iam/core'
 
 type Profile = {
-  displayName: string
-  externalGroups?: string[]
+  username: string
+  email: string
+  displayName?: string
   signupSource?: 'web' | 'cli' | 'api'
 }
 
 export function projectToSubject(
-  identity: Identity<Profile>,
-  session: Session,
-): AccessControl.ISubject<typeof access> {
+  identity: Identities.Me<Profile>,
+  session: Sessions.Me,
+  membership?: Org.Membership | null,
+): IamRequest.ISubject {
   return {
     id: identity.id,
-    tenantId: identity.tenantId,
-    roles: [
-      // 1. Static role from the identity profile (assigned at signup or via admin).
-      ...(identity.profile.role ? [identity.profile.role] : []),
-
-      // 2. Dynamic roles from external groups (e.g. SAML attribute push).
-      ...(identity.profile.externalGroups?.map((g) => `group:${g}`) ?? []),
-    ],
+    // Global roles. Empty here because this app keeps every grant org-scoped.
+    roles: [],
+    // Org-scoped grants. `engine.authorize` merges the entries whose `scope`
+    // matches `request.scope` into the effective role list.
+    scopedRoles: membership
+      ? membership.roles.map((role) => ({ role, scope: membership.orgId }))
+      : [],
     attributes: {
-      email: identity.email,
+      email: identity.profile.email,
       emailVerified: identity.emailVerified,
+      // AAL is 1 | 2 | 3 (NIST 800-63B). Policies gate on it.
       aal: session.aal,
-      amr: session.amr,
-      kind: session.kind,            // 'user' | 'apikey' | 'm2m'
-      displayName: identity.profile.displayName,
-      signupSource: identity.profile.signupSource,
+      // No `amr` field exists; the equivalent is the completed factor methods.
+      factors: session.factors.map((f) => f.method),
+      sessionKind: session.kind, // 'guest' | 'user' | 'apikey'
+      fresh: session.fresh,
+      tenantId: session.tenantId ?? '',
+      impersonating: session.actingAs !== null,
     },
   }
 }
 ```
 
-## Use it in handlers
+The namespace is `Identities`, plural. It was exported as `Identity` for a while and renamed to match the name it carries in its own declaration and in every error message; `Identity` no longer resolves.
 
-```typescript
+### Field by field
+
+| iam `ISubject` field | duck-auth source | Note |
+|---|---|---|
+| `id` | `identity.id` | The auth identity ID doubles as the iam subject ID |
+| `roles` | none | Identities carry **no** `roles` field. Roles exist only on `Org.Membership.roles` |
+| `scopedRoles` | `membership.roles` mapped to `{ role, scope }` | `scope` is your org ID; `IScopedRole` also accepts per-grant `attributes` |
+| `attributes.email` | `identity.profile.email` | There is **no** top-level `identity.email`; email lives inside `profile` |
+| `attributes.emailVerified` | `identity.emailVerified` | This one **is** top-level |
+| `attributes.aal` | `session.aal` | `1` \| `2` \| `3`, not the string `'aal2'` |
+| `attributes.factors` | `session.factors[].method` | There is **no** `session.amr` |
+| `attributes.sessionKind` | `session.kind` | `'guest'` \| `'user'` \| `'apikey'`. There is no `'m2m'` |
+| `attributes.tenantId` | `session.tenantId` | Tenant lives on the **session**, not the identity |
+
+`IamRequest.ISubject` has exactly four fields: `id`, `roles`, `scopedRoles?`, `attributes`. It has no `tenantId` of its own - thread the tenant through `attributes` and through the request's `scope`. Everything a policy condition needs to read must be inside `attributes`, reachable at the dot-path `subject.attributes.<key>`.
+
+<Callout tone="warning" title="Attribute bags are bounded">
+When you write attributes through `engine.admin.setAttributes()` the engine enforces a plain-object shape, at most 256 own keys, and nesting depth at most 16, throwing `[@gentleduck/iam:engine] attributes must have <=256 keys` and friends. Keep the projection flat and small; `session.factors` mapped to method strings rather than the raw objects is the reason for the `.map` above.
+</Callout>
+
+## Use it in a handler
+
+```ts title="src/routes/delete-post.ts"
 import { AuthError } from '@gentleduck/auth/core'
 import { auth } from '~/lib/auth'
-import { iam } from '~/lib/iam'
-import { projectToSubject } from '~/lib/projectToSubject'
+import { engine } from '~/lib/engine'
+import { projectToSubject } from '~/lib/project-to-subject'
 
-app.post('/api/posts/:id/delete', async (req, res, next) => {
+app.delete('/api/orgs/:orgId/posts/:id', async (req, res, next) => {
   try {
-    const ctx = await auth.resolveSession(req)
-    if (!ctx) throw new AuthError('AUTH/UNAUTHENTICATED')
+    const ctx = await auth.resolveSession({ headers: req.headers })
+    if (!ctx || !ctx.identity) throw new AuthError('AUTH_UNAUTHENTICATED')
 
-    const subject = projectToSubject(ctx.identity, ctx.session)
+    const membership = await auth.orgs?.resolveMembership(req.params.orgId, ctx.identity.id)
+    const subject = projectToSubject(ctx.identity, ctx.session, membership)
     const post = await getPost(req.params.id)
 
-    const decision = iam.can({
+    const decision = await engine.authorize({
       subject,
       action: 'delete',
-      resource: { type: 'post', attributes: post },
+      resource: { type: 'post', id: post.id, attributes: { ownerId: post.ownerId, status: post.status } },
+      scope: req.params.orgId,
     })
 
-    if (!decision) return res.status(403).end()
+    const allowed = typeof decision === 'boolean' ? decision : decision.allowed
+    if (!allowed) return res.status(403).json({ error: 'Forbidden' })
 
     await deletePost(req.params.id)
     res.status(204).end()
@@ -90,112 +159,157 @@ app.post('/api/posts/:id/delete', async (req, res, next) => {
 })
 ```
 
-## Conditions that reference auth state
+Three things this snippet gets right that are easy to get wrong:
 
-iam policies can read every attribute you put on the `Subject`. A
-common pattern: gate sensitive actions on the session's AAL or
-freshness:
+- `resolveSession` takes a `{ headers: Headers }`-shaped object, not a framework request. It returns `{ session, identity, anomaly? } | null`, and `identity` can be `null` on a live guest session - check both.
+- `auth.orgs` is `OrgsImpl | null`. It is only constructed when `cfg.stores.orgs` was supplied, so the optional call is not defensive noise.
+- `authorize()` returns `AccessControl.IDecision` in development mode and a plain `boolean` in production mode. Narrow before reading `.allowed`, or use `engine.can()` which is always boolean.
 
-```typescript
-definePolicy('admin-actions', {
-  combine: 'deny-overrides',
-  rules: [
-    rule({
-      effect: 'allow',
-      target: { actions: 'delete', resources: 'post' },
-      condition: when()
-        .equals('subject.attributes.aal', 'aal2')
-        .equals('subject.roles', 'admin', { mode: 'includes' }),
-    }),
-  ],
-})
+<Callout tone="warning" title="Never let the auth error code decide authorization">
+`AuthError` codes are underscored (`AUTH_UNAUTHENTICATED`, `AUTH_AAL_INSUFFICIENT`, `AUTH_SESSION_REVOKED`), not slashed, and each carries an HTTP `status`. Map an auth failure to 401 and an iam deny to 403; collapsing the two hides which layer refused, which is the first thing you need during an incident.
+</Callout>
+
+## Conditions that read session state
+
+Because AAL and factor methods land in `subject.attributes`, a policy can gate on them directly.
+
+```ts title="src/lib/policies.ts"
+import { access } from './access'
+
+export const highRiskPolicy = access
+  .definePolicy('high-risk')
+  .name('Step-up required for destructive actions')
+  .algorithm('deny-overrides')
+  .rule('require-aal2', (r) =>
+    r
+      .deny()
+      .on('delete')
+      .of('post', 'user')
+      .when((w) => w.attr('aal', 'lt', 2))
+      .desc('Block destructive actions below AAL2'),
+  )
+  .rule('require-fresh', (r) =>
+    r
+      .deny()
+      .on('delete')
+      .of('user')
+      .when((w) => w.attr('fresh', 'eq', false))
+      .desc('Block destructive actions on a stale session'),
+  )
+  .build()
 ```
 
-If `subject.attributes.aal !== 'aal2'`, the rule's condition fails and
-the policy denies. Your handler catches the deny and your client
-prompts for MFA.
+`w.attr('aal', 'lt', 2)` compiles to the condition `subject.attributes.aal lt 2`. `lt` returns `false` unless both operands are numbers, so projecting `session.aal` as the number it is - not as a string like `'aal2'` - is what makes this rule work at all. See [condition operators](/duck-iam/core/policies/conditions).
 
-## Step-up driven by iam
+## Driving step-up from an iam deny
 
-You can let iam decide when to step-up. Add a custom `requiresStepUp`
-attribute to policies and check it client-side:
+duck-iam tells you *that* a rule denied and *which* rule; duck-auth performs the step-up. Wire them through the explain trace.
 
-```typescript
-const decision = iam.explain({
-  subject,
-  action: 'delete',
-  resource: { type: 'post', attributes: post },
+```ts
+const trace = await engine.explain(subject.id, 'delete', {
+  type: 'user',
+  id: targetId,
+  attributes: {},
 })
 
-if (decision.matchedConditions.includes('aal2-required') && subject.attributes.aal !== 'aal2') {
-  throw new AuthError('AUTH/STEP_UP_REQUIRED')
-}
-if (!decision.allow) {
-  return res.status(403).end()
+// Find the deny rule that fired, by the rule ID you chose in the policy.
+const steppedUp = trace.policies.some((p) =>
+  p.rules.some((rule) => rule.matched && rule.effect === 'deny' && rule.ruleId === 'require-aal2'),
+)
+
+if (steppedUp) {
+  const outcome = await auth.flows.checkStepUp(session, { aal: 2, methods: ['totp'] })
+  if (!outcome.satisfied) {
+    // outcome.reason is 'mfa-required' | 'fresh-required'; outcome.methods lists what will satisfy it.
+    return res.status(401).json({ code: 'AUTH_STEP_UP_REQUIRED', methods: outcome.methods })
+  }
 }
 ```
 
-The trace from `engine.explain()` shows which condition gated the
-decision - pick that out, surface it as a step-up signal, and the
-client retries after MFA.
+`Explain.IRuleTrace` carries `ruleId`, `effect`, `matched`, `actionMatch`, `resourceMatch`, `conditionsMet`, and the full `conditions` group with actual versus expected per comparison. Naming your deny rules is what makes this pattern maintainable - the rule ID is the step-up signal. `explain()` throws in production mode, so run this path in development, or keep a development-mode engine alongside for diagnostics only.
+
+<Callout tone="warning" title="`explain()` output is not safe to return to a client">
+The trace contains full rule contents, condition operands, and the subject's attributes, and its `summary` string interpolates IDs verbatim. Log it, do not ship it. See [explain](/duck-iam/advanced/explain).
+</Callout>
+
+After MFA completes, `auth.flows.completeStepUp({ currentSid, method: 'totp', code })` rotates the session; re-project and re-authorize with the new session.
 
 ## Multi-tenancy
 
-Both libraries are multi-tenant. The convention is to thread the same
-`tenantId` through both:
+Thread one identifier through both libraries. On the duck-auth side, tenant scope arrives as a `TenantContext` (`{ tenantId?: string }`) that store methods receive on every call, and lands on `session.tenantId`. On the duck-iam side the same value is the request `scope`.
 
-```typescript
-const identity = await auth.identities.findById(id, { tenantId: 'org-123' })
-const subject = projectToSubject(identity, session)
-// subject.tenantId === 'org-123'
+```ts
+const ctx = await auth.resolveSession({ headers: req.headers }, { expectedTenantId: tenant.id })
+// A session belonging to another tenant resolves to `null` rather than throwing.
 
-iam.can({ subject, action, resource, scope: 'org-123' })
-// engine looks up policies + role assignments scoped to 'org-123'
+const orgs = (await auth.orgs?.listForIdentity(ctx.identity.id, { tenantId: tenant.id })) ?? []
+const memberships = await Promise.all(
+  orgs.map((org) => auth.orgs?.resolveMembership(org.id, ctx.identity.id, { tenantId: tenant.id })),
+)
+
+const subject: IamRequest.ISubject = {
+  id: ctx.identity.id,
+  roles: [],
+  scopedRoles: memberships
+    .filter((m): m is NonNullable<typeof m> => m != null)
+    .flatMap((m) => m.roles.map((role) => ({ role, scope: m.orgId }))),
+  attributes: { tenantId: tenant.id },
+}
+
+await engine.authorize({ subject, action: 'delete', resource, scope: 'org-123' })
 ```
 
-A single identity can be `admin` in org-1 and `viewer` in org-2 -
-iam's scoped role assignments handle that natively. The auth side
-doesn't need to know.
+One identity being `admin` in `org-1` and `viewer` in `org-2` is the native shape - the engine merges only the scoped entries whose scope matches the request. Under the engine's `scopeMode: 'hierarchical'`, a grant on `'org-1'` also applies to `'org-1.team-2'`. See [scoped roles](/duck-iam/core/roles/scoped).
 
-## Caching subjects
+<Callout tone="warning" title="Org roles are silently truncated on the auth side">
+`auth.orgs.addMember()` and `setRoles()` sanitize the role list without throwing: non-strings dropped, empty and over-128-character entries dropped, capped at 64 roles. A typo'd role never surfaces as an error - it just does not grant anything. Validate against your iam role catalog before writing, and run [`access.validateRoles()`](/duck-iam/advanced/validation) at boot.
+</Callout>
 
-Building the `Subject` is cheap (it's a plain object), but for
-high-traffic routes that hit `iam.can()` multiple times per request,
-cache the projection per request:
+## Caching the projection
 
-```typescript
-const subjectCache = new WeakMap<Identity, AccessControl.ISubject<typeof access>>()
+Building the subject is a plain-object allocation, but `resolveMembership` is an adapter round-trip. For handlers that authorize several times, project once per request and reuse it.
 
-export function projectToSubject(identity: Identity, session: Session) {
-  const cached = subjectCache.get(identity)
-  if (cached) return cached
-
-  const subject = { /* ... */ }
-  subjectCache.set(identity, subject)
-  return subject
+```ts
+export async function subjectForRequest(req: Req): Promise<IamRequest.ISubject> {
+  if (req._iamSubject) return req._iamSubject
+  const ctx = await auth.resolveSession({ headers: req.headers })
+  if (!ctx?.identity) throw new AuthError('AUTH_UNAUTHENTICATED')
+  const membership = await auth.orgs?.resolveMembership(req.params.orgId, ctx.identity.id)
+  req._iamSubject = projectToSubject(ctx.identity, ctx.session, membership)
+  return req._iamSubject
 }
 ```
 
-For app-wide caching, store the subject under
-`req._authSubject` and reuse it across middlewares.
+Do not cache across requests. The session's `aal`, `fresh`, and `actingAs` fields change under step-up, rotation, and impersonation; a stale projection authorizes against a session state that no longer exists. If you need cross-request caching, cache on the iam side instead - move assignments into the iam adapter and use `engine.can()`, where invalidation is a first-class operation.
 
-## When you don't need iam
+## Impersonation
 
-For very simple apps (one role per user, no per-resource conditions,
-no multi-tenancy), iam may be overkill. Drive permissions directly off
-the auth-side identity:
+`auth.flows.impersonate()` requires an `authorize` predicate that the caller supplies; duck-auth's own comment says iam consumers wire `engine.authorize()` there and warns never to pass `() => true`. The resulting session carries `actingAs: { realIdentityId, startedAt, reason, expiresAt }`, which the projection above surfaces as `subject.attributes.impersonating`. Gate destructive actions on it:
 
-```typescript
-if (identity.profile.role !== 'admin') return res.status(403).end()
-if (session.aal !== 'aal2') throw new AuthError('AUTH/AAL_INSUFFICIENT')
+```ts
+.rule('no-destructive-while-impersonating', (r) =>
+  r.deny().on('delete').of('billing', 'user').when((w) => w.attr('impersonating', 'eq', true)),
+)
 ```
 
-Switch to iam when you need conditions ("editors can only delete their
-own posts"), multi-tenancy, or audit traces.
+duck-auth's event envelope also carries an optional `iamDecisionId` field for correlating an authorization decision with an audit event - the one data-level hook between the two packages.
+
+## When you do not need duck-iam
+
+One role per user, no per-resource conditions, no multi-tenancy: drive permissions off the membership directly.
+
+```ts
+const membership = await auth.orgs?.resolveMembership(orgId, identity.id)
+if (!membership?.roles.includes('admin')) return res.status(403).end()
+if (session.aal < 2) throw new AuthError('AUTH_AAL_INSUFFICIENT', { required: 2, have: session.aal })
+```
+
+Adopt duck-iam when you need conditions ("editors may delete only their own posts"), several combining policies, or an audit trace of why a request was refused.
 
 ## See also
 
-- [Bridging guide on the auth side ->](/duck-auth/guides/iam-bridge)
-- [defineIam() ->](/duck-iam/advanced/config/access-config)
-- [Typed $-references ->](/duck-iam/advanced/config/dollar-paths)
-- [Explain and debug ->](/duck-iam/advanced/explain)
+- [Bridging guide on the duck-auth side](/duck-auth/guides/iam-bridge)
+- [Quick start](/duck-iam/guides) - where the engine and roles in these snippets come from
+- [Scoped roles](/duck-iam/core/roles/scoped) - how `scopedRoles` and `scope` are matched
+- [Explain](/duck-iam/advanced/explain) - the trace shape used for step-up detection
+- [Production hardening](/duck-iam/guides/production) - identity sourcing rules for the guarded path

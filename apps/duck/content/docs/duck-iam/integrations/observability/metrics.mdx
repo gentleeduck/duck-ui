@@ -1,71 +1,79 @@
 ---
-title: metrics aggregator
-description: In-process p50 / p95 / p99 + allow / deny counters over the engine's onMetrics hook.
+title: Metrics aggregator
+description: In-process allow/deny/fail-open counters and p50/p95/p99 latency over the engine's onMetrics hook, with sink wiring and overhead figures
 section: Integrations
 ---
-## What it does
 
-`iamCreateMetricsAggregator` is a ring-buffer histogram over `IamEngineTypes.IMetricsEvent`. Wire its `.record` method to `hooks.onMetrics` and call `.snapshot()` on demand - a `/metrics` route, a Prometheus scrape, an OTel exporter, whatever your pipeline expects.
+`iamCreateMetricsAggregator` is a fixed-size ring buffer and four counters sitting behind the engine's `onMetrics` hook. It turns the per-check event stream into a small snapshot object you can serve from a `/metrics` route, push into Prometheus, or read from a debug console - without a histogram library and without allocating on the hot path.
 
-No external dependencies, no allocations on the hot path beyond a `Float64Array` slot per recorded event.
+## What the engine emits
 
----
-
-## Install
-
-```typescript
-import { iamCreateMetricsAggregator } from '@gentleduck/iam/observability/metrics'
-```
-
----
-
-## Usage
-
-```typescript
-import { IamEngine } from '@gentleduck/iam'
-import { iamCreateMetricsAggregator } from '@gentleduck/iam/observability/metrics'
-
-const metrics = iamCreateMetricsAggregator({ sampleSize: 1000 })
-
-const engine = new IamEngine({
-  adapter,
-  hooks: {
-    onMetrics: metrics.record,
-  },
-})
-
-app.get('/metrics', (_, res) => {
-  res.json(metrics.snapshot())
-})
-```
-
-`snapshot()` returns:
+The aggregator consumes `IamEngineTypes.IMetricsEvent`. The engine fires it once per evaluation, in both `development` and `production` mode, carrying only primitives - production callers skip the full `IDecision` allocation but still get telemetry.
 
 ```ts
-{
-  total: number    // events recorded since last reset
-  allow: number    // allow verdicts
-  deny: number     // deny verdicts
-  failOpen: number // subset of `allow`: verdicts that fired ONLY because
-                   // `defaultEffect: 'allow'` matched (no applicable policy).
-                   // SEC-044.
-  p50: number      // milliseconds
-  p95: number
-  p99: number
-  max: number
-  samples: number  // current window size (capped at sampleSize)
+interface IMetricsEvent<TAction extends string = string, TResource extends string = string> {
+  readonly subjectId: string
+  readonly action: TAction
+  readonly resource: TResource
+  readonly allowed: boolean
+  readonly durationMs: number
+  readonly mode: AccessControl.Mode
+  readonly failOpen: boolean
 }
 ```
 
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `subjectId` | `string` | Subject the check ran against |
+| `action` | `TAction` | Action checked |
+| `resource` | `TResource` | Resource *type* checked, not the instance id |
+| `allowed` | `boolean` | Final verdict |
+| `durationMs` | `number` | Wall-clock evaluation time from `performance.now()`, sub-millisecond precision |
+| `mode` | `'development' \| 'production'` | Engine mode in effect |
+| `failOpen` | `boolean` | `true` only when the verdict was `allow` purely because `defaultEffect: 'allow'` fired with no applicable policy |
+
+The aggregator reads three of these - `allowed`, `durationMs`, `failOpen` - and ignores `subjectId`, `action`, `resource`, and `mode`. If you want per-action or per-resource breakdowns, read them off the event yourself in the hook; see [Multiple aggregators](#multiple-aggregators).
+
+<Callout tone="info" title="The timer only runs when you ask for it">
+The engine takes `performance.now()` at the top of an evaluation only if `hooks.onMetrics` is configured. Without the hook there is no clock read at all, so leaving metrics unwired costs nothing.
+</Callout>
+
+## Every metric in a snapshot
+
+`snapshot()` returns a fresh `IamMetrics.ISnapshot`. Nine numbers, four of them monotonic counters and five of them gauges over the rolling window.
+
+| Metric | Type | Kind | Meaning |
+| --- | --- | --- | --- |
+| `total` | `number` | counter | Events recorded since construction or the last `reset()`. Not capped by `sampleSize` |
+| `allow` | `number` | counter | Allow verdicts. `allow + deny === total` always |
+| `deny` | `number` | counter | Deny verdicts, including fail-closed denies from evaluation errors |
+| `failOpen` | `number` | counter | Allows attributable solely to `defaultEffect: 'allow'`. A strict subset of `allow` |
+| `p50` | `number` (ms) | gauge | Median `durationMs` over the rolling window |
+| `p95` | `number` (ms) | gauge | 95th percentile over the rolling window |
+| `p99` | `number` (ms) | gauge | 99th percentile over the rolling window |
+| `max` | `number` (ms) | gauge | Largest `durationMs` **in the window**, not all-time |
+| `samples` | `number` | gauge | Current window size: usable latency samples since reset, capped at `sampleSize` |
+
+An empty window returns every field as `0` - no `NaN`, no `null`, so a scrape never has to special-case a cold process.
+
+Three of these have edges worth stating explicitly.
+
+**`samples` can be lower than `min(total, sampleSize)`.** The decision is always counted; only the latency sample can be refused. `record` drops a `durationMs` that is `NaN`, `±Infinity`, or negative, because one such value in the `Float64Array` makes the percentile sort's comparator inconsistent and returns `NaN` for every quantile - which a `/metrics` route then serialises as `null` - until the ring rolls over. Zero is kept: it is a legitimate duration for a cache hit. A `samples` count that lags `total` therefore means something upstream handed the hook a non-finite duration, usually a clock that went backwards or a caller forwarding a hand-built event.
+
+**`max` is a window maximum.** With `sampleSize: 3` and durations `100, 1, 2, 3`, the snapshot reports `max: 3` and `samples: 3` while `total` is `4`. The 100 ms outlier has been evicted. If you need all-time worst case, keep it yourself in the hook or scrape frequently enough that no window is ever fully replaced between scrapes.
+
+**`deny` counts fail-closed errors.** When an evaluation throws, the engine calls `onError`, emits a metrics event with `allowed: false` and `failOpen: false`, then returns a deny. Those denies are indistinguishable from policy denies in the snapshot. Use the `onError` hook, not `deny`, to alarm on adapter failures.
+
+### Percentiles
+
+Percentiles are nearest-rank over a sorted copy of the live window - index `clamp(ceil(q * n) - 1, 0, n - 1)`. No interpolation. For 100 samples of `1..100` that gives `p50 = 50`, `p95 = 95`, `p99 = 99`, which is what `metrics.test.ts` pins. With `sampleSize: 1` all three percentiles and `max` collapse to the single most recent duration.
+
 ### Charting fail-open
 
-`failOpen` is the canary for a silently broken policy set - a hostile
-ReDoS-dropped rule, a mass deletion, an adapter outage that drained policies
-to zero. Under `defaultEffect: 'allow'` the boolean `allowed` field hides
-that breakage; `failOpen` surfaces it.
+`failOpen` is the canary for a silently broken policy set - a rule dropped by the ReDoS guard, a mass deletion, an adapter that returned zero policies. Under `defaultEffect: 'allow'` the boolean verdict hides all of that; every request still says "allowed". `failOpen` is the only field that separates "a policy said yes" from "nothing had an opinion".
 
 ```ts
-// Page when >1% of allows are fail-open in a 1-min window.
+// Page when more than 1% of allows in a one-minute window were fail-open.
 setInterval(() => {
   const s = metrics.snapshot()
   if (s.allow > 0 && s.failOpen / s.allow > 0.01) {
@@ -75,40 +83,72 @@ setInterval(() => {
 }, 60_000)
 ```
 
-The per-event flag is also available on `IamEngineTypes.IMetricsEvent.failOpen`
-if you want to push it into a label on a Prometheus counter.
+Under the default `defaultEffect: 'deny'` this counter stays at zero, because the fallback path denies rather than allows. A non-zero `failOpen` on a deny-default engine means someone changed the default.
 
----
+## Wiring a sink
 
-## Rolling window
+<Steps>
+<Step>Create the aggregator</Step>
 
-The aggregator keeps the most recent `sampleSize` durations (default `1000`) in a fixed-size ring buffer. Beyond the cap, the oldest sample is evicted - no memory growth, no allocation per hit after warmup.
+One per engine is the normal case. It holds no reference to the engine, so construction order does not matter.
 
-Percentile computation is O(n log n) per `snapshot()` call (sorts the live window). Fine at the default cap; for higher cap values (e.g. `100_000`), call `snapshot()` less frequently - every minute, not every request.
+<Step>Bind `.record` to `hooks.onMetrics`</Step>
 
----
+`record` is a closure over the buffer, not a prototype method, so passing the bare function reference is safe - there is no `this` to lose.
 
-## Reset
+<Step>Read `.snapshot()` from wherever your pipeline scrapes</Step>
 
-Call `.reset()` to zero all counters and clear the window. Useful for windowed metrics (e.g. per-minute snapshots):
+Snapshots are cheap to take but not free; see [Overhead](#overhead) before calling one per request.
+</Steps>
 
-```typescript
-setInterval(() => {
-  const s = metrics.snapshot()
-  prom.recordIamSnapshot(s)
-  metrics.reset()
-}, 60_000)
+```ts
+import { IamEngine } from '@gentleduck/iam'
+import { iamCreateMetricsAggregator } from '@gentleduck/iam/observability/metrics'
+
+const metrics = iamCreateMetricsAggregator({ sampleSize: 1000 })
+
+const engine = new IamEngine({
+  adapter,
+  hooks: { onMetrics: metrics.record },
+})
+
+app.get('/metrics', (_req, res) => res.json(metrics.snapshot()))
 ```
 
----
+<MermaidDiagram chart={`flowchart LR
+    E["engine.can or authorize"] --> H["hooks.onMetrics"]
+    H --> R["aggregator.record"]
+    R --> C["Counters: total, allow, deny, failOpen"]
+    R --> B["Float64Array ring of durationMs"]
+    C --> S["aggregator.snapshot"]
+    B --> S
+    S --> P["Prometheus, OTel, or a metrics route"]
+    S --> X["aggregator.reset for a fresh window"]`} />
 
-## Prometheus integration
+The diagram shows the only two live paths. `record` is on the request path and touches nothing but the counters and one ring slot. `snapshot` is on the scrape path, reads both, and never mutates them - `reset` is the only thing that clears state, and it is a separate explicit call.
 
-```typescript
+<Callout tone="warning" title="Do not expose the metrics route publicly">
+A snapshot leaks your authorization traffic shape: request volume, deny ratio, and evaluation latency. The `failOpen` count in particular tells an attacker whether your policy set is currently broken. Put the route behind the same network boundary or auth as the rest of your admin surface.
+</Callout>
+
+### Prometheus
+
+The aggregator is a complement to a real metrics client, not a replacement. Record into both from one hook: `prom-client` owns the exported time series, the aggregator gives you a snapshot readable from inside the process.
+
+```ts
 import { Counter, Histogram } from 'prom-client'
 
-const iamTotal = new Counter({ name: 'iam_evaluations_total', help: '...', labelNames: ['outcome'] })
-const iamLatency = new Histogram({ name: 'iam_evaluation_duration_ms', help: '...' })
+const iamTotal = new Counter({
+  name: 'iam_evaluations_total',
+  help: 'duck-iam evaluations',
+  labelNames: ['outcome', 'action', 'resource'],
+})
+const iamLatency = new Histogram({
+  name: 'iam_evaluation_duration_ms',
+  help: 'duck-iam evaluation latency',
+  buckets: [0.1, 0.5, 1, 5, 10, 50],
+})
+const iamFailOpen = new Counter({ name: 'iam_fail_open_total', help: 'allows from defaultEffect' })
 
 const metrics = iamCreateMetricsAggregator()
 
@@ -117,30 +157,48 @@ const engine = new IamEngine({
   hooks: {
     onMetrics: (event) => {
       metrics.record(event)
-      iamTotal.inc({ outcome: event.allowed ? 'allow' : 'deny' })
+      iamTotal.inc({ outcome: event.allowed ? 'allow' : 'deny', action: event.action, resource: event.resource })
       iamLatency.observe(event.durationMs)
+      if (event.failOpen) iamFailOpen.inc()
     },
   },
 })
 ```
 
-The aggregator is a *complement* to Prometheus, not a replacement - it gives you a cheap snapshot you can read from inside the process (debug routes, internal admin UIs) without leaving Node.
+Keep label cardinality in mind. `action` and `resource` come from the caller's declared unions, so their joint cardinality is `|actions| x |resources|` - fine at tens, expensive at thousands. `subjectId` is unbounded and is a customer identifier heading for a store with long retention; never label with it. The event carries `resource.type` and never `resource.id` for the same reason.
 
----
+The one other label operators reach for is the Redis invalidator's `onMessageDropped` `reason`. Every inbound reason is a fixed string from the module itself, but the outbound `publish failed (<message>)` reason interpolates the driver's own error text and is therefore unbounded. Collapse that row to a constant before it becomes a label:
 
-## Constructor config
+```ts
+onMessageDropped: (reason, _channel, suppressed) => {
+  const label = reason.startsWith('publish failed') ? 'publish failed' : reason
+  drops.inc({ reason: label }, 1 + suppressed)
+}
+```
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `sampleSize` | `number` | `1000` | Maximum durations kept in the rolling window |
+### Windowed export
 
----
+For a pull-based sink that wants per-interval numbers rather than since-boot totals, snapshot and reset on the interval. Read before you reset - `reset()` returns nothing.
 
-## Multiple aggregators
+```ts
+setInterval(() => {
+  const s = metrics.snapshot()
+  statsd.gauge('iam.p95', s.p95)
+  statsd.gauge('iam.p99', s.p99)
+  statsd.increment('iam.allow', s.allow)
+  statsd.increment('iam.deny', s.deny)
+  statsd.increment('iam.fail_open', s.failOpen)
+  metrics.reset()
+}, 60_000)
+```
 
-Want one aggregator for `allow`, another for `deny`? Wire both:
+`reset()` zeroes all four counters and empties the window, but keeps the `Float64Array` allocated - the next `record` reuses the same memory. Percentiles after a reset are computed only from post-reset samples.
 
-```typescript
+### Multiple aggregators
+
+The hook is one function, so any split you want is a branch inside it:
+
+```ts
 const allowMetrics = iamCreateMetricsAggregator()
 const denyMetrics = iamCreateMetricsAggregator()
 
@@ -154,24 +212,154 @@ const engine = new IamEngine({
 })
 ```
 
-Same pattern works for per-resource or per-action breakdowns.
+The same shape gives per-resource or per-action aggregators keyed out of a `Map`. Budget memory accordingly - each aggregator carries its own buffer.
 
----
+### Batch checks opt out
 
-## Types
+`engine.permissions(subjectId, checks)` emits one metrics event per check in the batch. A permission map built for a UI can be dozens of checks in one call, so `permissions()` accepts `{ telemetry: false }` to skip `onMetrics` entirely for hot gates - roughly double the throughput. Those checks then contribute nothing to `total`, which is worth knowing before you compare `total` against your request count.
 
-All types live under the `Metrics` namespace at `@gentleduck/iam/observability/metrics`. Type-only - zero bundle cost.
-
-- `Metrics.IAggregator` - return shape of `iamCreateMetricsAggregator` (`record`, `snapshot`, `reset`).
-- `Metrics.ISnapshot` - shape returned by `.snapshot()` (`total`, `allow`, `deny`, `failOpen`, `p50`, `p95`, `p99`, `max`, `samples`).
-- `Metrics.IConfig` - constructor config (`sampleSize`).
-
-```typescript
-import type { Metrics } from '@gentleduck/iam/observability/metrics'
-
-const config: Metrics.IConfig = { sampleSize: 1000 }
-const aggregator: Metrics.IAggregator = iamCreateMetricsAggregator(config)
-const snap: Metrics.ISnapshot = aggregator.snapshot()
+```ts
+const map = await engine.permissions(userId, checks, undefined, { telemetry: false })
 ```
 
-Deprecated bare aliases (`IMetricsAggregator`, `IMetricsSnapshot`, `IMetricsAggregatorConfig`) remain for back-compat and will be removed in 3.0.
+### Hook errors are swallowed
+
+If your `onMetrics` hook throws, the engine catches it, logs `onMetrics hook threw - swallowed to preserve decision` via `console.error`, and returns the decision unchanged. A broken sink degrades observability, never authorization. The aggregator's own `record` has no throwing path once construction succeeded.
+
+## The rolling window and `sampleSize`
+
+Durations live in a `Float64Array` of exactly `sampleSize` slots, written at a moving head that wraps modulo the capacity. Once full, each write overwrites the oldest sample. There is no growth and no allocation after construction.
+
+<MermaidDiagram chart={`flowchart TD
+    N["iamCreateMetricsAggregator config"] --> C["cap = sampleSize or 1000"]
+    C --> V{"Integer and at least 1"}
+    V -- "no" --> T["throw RangeError naming sampleSize"]
+    V -- "yes" --> A["Allocate Float64Array of cap"]
+    A --> W["record writes durationMs at head"]
+    W --> M["head advances modulo cap"]
+    M --> K{"Window already full"}
+    K -- "no" --> I["samples grows by one"]
+    K -- "yes" --> O["Oldest sample overwritten"]
+    I --> S["snapshot sorts a copy of the live region"]
+    O --> S`} />
+
+`metrics.test.ts` pins the wrap behaviour precisely: with `sampleSize: 4` and durations `40, 30, 20, 10`, `max` is `40`; recording a fifth duration of `5` overwrites slot 0, the window becomes `5, 30, 20, 10`, and `max` drops to `30`. Snapshotting in between does not disturb the ring - the sort runs on a copy.
+
+### `sampleSize` validation
+
+```ts
+const cap = config.sampleSize ?? 1000
+if (!Number.isInteger(cap) || cap < 1) {
+  throw new RangeError(`[@gentleduck/iam:metrics] sampleSize must be a positive integer (got ${String(cap)})`)
+}
+```
+
+The factory rejects any `sampleSize` that is not a positive integer, throwing a `RangeError` whose message names the option and echoes the offending value. `metrics-sample-size.test.ts` pins `0`, `-1`, `1.5`, `NaN`, and `Infinity` as rejected, and `1` as accepted.
+
+<Callout tone="warning" title="Why this validation exists">
+`sampleSize: 0` was the dangerous one. It allocates an empty buffer, turns `head % cap` into `NaN`, and makes `buf[NaN] = durationMs` a silent no-op - every sample is discarded, `samples` stays `0`, and every percentile reports `0` forever. A dashboard reading that snapshot shows a perfectly healthy p99 of zero. The other bad values (`-1`, `1.5`, `Infinity`) reached `new Float64Array(cap)` and surfaced a raw `RangeError` about invalid typed-array length that never mentioned `sampleSize`, leaving the operator to guess. Both classes now fail loudly at construction with the option name in the message.
+</Callout>
+
+Choosing a value:
+
+| `sampleSize` | Window memory | When |
+| --- | --- | --- |
+| `100` | 800 B | Low-traffic service; tail percentiles will be coarse |
+| `1000` (default) | 8 KB | Sensible default; `snapshot()` sorts 1000 numbers |
+| `10_000` | 80 KB | High QPS, stable p99 wanted; scrape on an interval, not per request |
+| `100_000` | 800 KB | Only with an infrequent scrape - the sort dominates |
+
+A larger window buys tail accuracy and costs snapshot time, not record time. `record` is `O(1)` at every size.
+
+## Overhead
+
+**Per event.** One counter increment, one conditional increment for `failOpen`, one `Float64Array` store, one modulo. No allocation, no closure creation, no object churn. The event object itself is built by the engine whether or not you aggregate it.
+
+**Memory.** Eight bytes per sample, allocated once at construction and never resized: 8 KB at the default `sampleSize: 1000`. Counters are four numbers. There is no per-subject or per-action state, so nothing scales with cardinality.
+
+**Per snapshot.** `Array.from(buf.subarray(0, samples))` allocates a JS array of `samples` numbers, then sorts it - `O(n log n)`. At the default cap that is a 1000-element numeric sort, sub-millisecond, but it is not free and it allocates. Call it on a scrape interval. A `/metrics` route hit once every 15 seconds is fine; calling `snapshot()` inside a request handler is not.
+
+**Reset.** Constant time. Counters go to zero and the head and count reset; the buffer allocation survives.
+
+## API reference
+
+### `iamCreateMetricsAggregator`
+
+```ts
+function iamCreateMetricsAggregator(config?: IamMetrics.IConfig): IamMetrics.IAggregator
+```
+
+Returns a new aggregator with zeroed counters and an empty window. Throws `RangeError` when `config.sampleSize` is present and is not a positive integer.
+
+#### Options
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `sampleSize` | `number` | `1000` | Durations kept in the rolling window. Must be a positive integer; anything else throws a `RangeError` naming the option |
+
+### `IamMetrics.IAggregator`
+
+```ts
+interface IAggregator {
+  record(event: IamEngineTypes.IMetricsEvent): void
+  snapshot(): ISnapshot
+  reset(): void
+}
+```
+
+| Method | Returns | Notes |
+| --- | --- | --- |
+| `record(event)` | `void` | Bind directly to `hooks.onMetrics`. Safe to pass unbound |
+| `snapshot()` | `IamMetrics.ISnapshot` | A fresh object each call. Never mutates aggregator state |
+| `reset()` | `void` | Zeroes counters and empties the window; keeps the buffer allocation |
+
+### `IamMetrics.ISnapshot`
+
+```ts
+interface ISnapshot {
+  readonly total: number
+  readonly allow: number
+  readonly deny: number
+  readonly failOpen: number
+  readonly p50: number
+  readonly p95: number
+  readonly p99: number
+  readonly max: number
+  readonly samples: number
+}
+```
+
+Field meanings are tabulated in [Every metric in a snapshot](#every-metric-in-a-snapshot).
+
+### Types
+
+All three live in the type-only `IamMetrics` namespace, exported from `@gentleduck/iam/observability/metrics`. Type-only means zero bundle cost.
+
+```ts
+import type { IamMetrics } from '@gentleduck/iam/observability/metrics'
+import { iamCreateMetricsAggregator } from '@gentleduck/iam/observability/metrics'
+
+const config: IamMetrics.IConfig = { sampleSize: 1000 }
+const aggregator: IamMetrics.IAggregator = iamCreateMetricsAggregator(config)
+const snap: IamMetrics.ISnapshot = aggregator.snapshot()
+```
+
+Upgrade note: the bare aliases `IMetricsAggregator`, `IMetricsSnapshot`, and `IMetricsAggregatorConfig` were deprecated when the namespace landed in 2.0.0 and are gone from 3.0.0 onward. The namespace and factory both gained the `Iam` prefix in 5.0.0 - `Metrics` became `IamMetrics`, and `createMetricsAggregator` became `iamCreateMetricsAggregator`.
+
+## Gotchas
+
+- **`total` is not your request count.** Batch checks through `permissions()` contribute one event per check, and `{ telemetry: false }` contributes none. A `permissions()` call that fails to load the subject or the policy set returns an all-deny map through `onError` and emits no events at all, so an adapter outage depresses the batch event rate instead of showing up as denies. The single-check path does emit on its error path, with `allowed: false, failOpen: false`.
+- **`samples` below `total` is a signal, not rounding.** Non-finite or negative durations are dropped from the window; see [Every metric in a snapshot](#every-metric-in-a-snapshot).
+- **`max` decays.** It is the window maximum, so a latency spike disappears once `sampleSize` newer samples have landed. Scrape faster than your window turns over, or track the peak in your sink.
+- **`snapshot()` does not reset.** Two consecutive snapshots with no reset in between report overlapping totals. Pick one convention - cumulative or windowed - and stick to it across dashboards.
+- **`deny` includes fail-closed errors.** An adapter outage shows up as a deny spike, not an error metric. Wire `hooks.onError` for that signal.
+- **`failOpen` stays zero under `defaultEffect: 'deny'`.** That is correct, not a broken counter.
+- **The aggregator is per process.** In a multi-pod deployment each pod has its own window; percentiles are per pod and are not meaningfully averaged across them. Export to a real time-series database if you need fleet-wide tails.
+
+## See also
+
+- [Hooks](/duck-iam/advanced/engine/hooks) - `onMetrics` alongside `beforeEvaluate`, `onDeny`, `onError`, and `onPolicyError`
+- [Engine modes](/duck-iam/advanced/engine/modes) - why `production` mode still emits metrics without building a decision
+- [Caching](/duck-iam/advanced/engine/caching) - `engine.stats.get()` for cache hit rates, the other half of the observability picture
+- [Redis invalidator](/duck-iam/integrations/invalidators/redis) - cross-process cache invalidation, and the `onPublishError` signal worth charting next to these
+- [Production guide](/duck-iam/guides/production) - the full hardening checklist

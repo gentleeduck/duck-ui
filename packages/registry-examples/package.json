@@ -7,7 +7,7 @@
     "@gentleduck/calendar": "workspace:*",
     "@gentleduck/primitives": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
-    "@tabler/icons-react": "3.40.0",
+    "@tabler/icons-react": "3.47.0",
     "@tanstack/react-form": "^1.23.0",
     "@tanstack/react-table": "^8.21.3",
     "date-fns": "^4.1.0",

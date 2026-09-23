@@ -24,7 +24,7 @@
     "@gentleduck/registry-ui": "workspace:*",
     "@gentleduck/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
-    "@types/chrome": "^0.1.31",
+    "@types/chrome": "^0.3.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",

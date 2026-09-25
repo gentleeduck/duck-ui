@@ -6,14 +6,14 @@ section: Advanced
 
 `@gentleduck/iam/core/schema` exports one thing: `POLICY_JSON_SCHEMA`, a JSON Schema
 (Draft 2020-12) document describing the wire shape of `AccessControl.IPolicy`. It exists for
-the consumers TypeScript cannot reach — editors, form generators, other languages.
+the consumers TypeScript cannot reach: editors, form generators, other languages.
 
 The contract with the runtime validator is one-directional and exact: **anything the schema
 rejects, `validatePolicy` rejects too**, so a policy the runtime accepts always validates
 here. The converse does not hold, and the gap is exactly four checks wide (below).
 
 It covers **policies only**. There is no published role schema, so a role read from JSON
-has no out-of-band gate — `validateRole` is the only one.
+has no out-of-band gate; `validateRole` is the only one.
 
 ## Import
 
@@ -23,13 +23,13 @@ import { POLICY_JSON_SCHEMA } from '@gentleduck/iam/core/schema'
 
 Unlike the validator, `core/schema` **is** re-exported from `core/index.ts`, so
 `@gentleduck/iam` and `@gentleduck/iam/core` work too. It is an `as const` object literal
-with no runtime dependencies — around 8 KB once `JSON.stringify`d — so importing it costs
+with no runtime dependencies (around 8 KB once `JSON.stringify`d), so importing it costs
 only the bytes of the document.
 
 <Callout tone="info" title="Naming and mutability">
 The export is `POLICY_JSON_SCHEMA`. There is no `IAM_`-prefixed alias.
 
-`as const` is a TypeScript annotation, not `Object.freeze` — the object is **not frozen at
+`as const` is a TypeScript annotation, not `Object.freeze`: the object is **not frozen at
 runtime**. A consumer holding it can mutate it in place, and every other consumer in the
 process shares that object. Spread it to specialise it; never edit it.
 </Callout>
@@ -56,7 +56,7 @@ before persisting.
 ### The four runtime-only checks
 
 Everything the runtime enforces is in the schema except these, and each cap in the schema
-is read from the same constant the validator uses — `maxItems` from `POLICY_LIMITS`,
+is read from the same constant the validator uses: `maxItems` from `POLICY_LIMITS`,
 `maxLength` from `MAX_FIELD_LENGTH` and `MAX_CONDITION_VALUE_LENGTH`, the operand branches
 from the same operand-type matrix.
 
@@ -126,13 +126,13 @@ schema violation rather than being ignored.
 `additionalProperties: false`.
 
 `NO_CONTROL_CHARS` is the pattern `^[^\u0000-\u001F\u007F]*$`. It mirrors the validator's
-`hasControlChar`, and applies to the same two lists only — not on a policy `id` or `name`, not on a rule `id`, which
+`hasControlChar`, and applies to the same two lists only: not on a policy `id` or `name`, not on a rule `id`, which
 is also where the runtime does not check. The two agree by omission as well as by rule.
 
 ### `$defs.conditionGroup`, the `conditionList` chain, `condition`
 
-`conditionGroup` is a `oneOf` over three single-key objects — `{ all }`, `{ any }`, and
-`{ none }`, each `additionalProperties: false` and requiring its key — so a
+`conditionGroup` is a `oneOf` over three single-key objects (`{ all }`, `{ any }`, and
+`{ none }`, each `additionalProperties: false` and requiring its key) so a
 `{ all: [...], any: [...] }` group is a schema violation, matching the runtime's
 `INVALID_CONDITION`.
 
@@ -147,14 +147,14 @@ exactly `MAX_CONDITION_DEPTH` levels so a drift in the constant cannot silently 
 gap.
 
 `condition` requires `field` (`string`, `minLength: 1`, `maxLength: MAX_FIELD_LENGTH`) and
-`operator`, is `additionalProperties: false`, and declares `value: {}` — then constrains it
+`operator`, is `additionalProperties: false`, and declares `value: {}`, then constrains it
 through an `allOf` of `if`/`then` branches:
 
 - every operator but `exists` / `not_exists` **requires** `value` (the runtime's
   `MISSING_VALUE`);
 - `in` / `nin` / `subset_of` / `superset_of` take an array, `gt` / `gte` / `lt` / `lte` a
   number, `starts_with` / `ends_with` / `matches` a string, `before` / `after` a number or
-  string — the runtime's operand-type matrix, restated;
+  string: the runtime's operand-type matrix, restated;
 - a string operand starting with `$` satisfies every operand type, because it resolves from
   the request and its type is unknowable until then;
 - a string `value` is capped at `MAX_CONDITION_VALUE_LENGTH`, and so is each string element
@@ -186,7 +186,7 @@ by an edit to one of them.
 ## Tightening it for your app
 
 If you know your closed sets of actions and resources, specialise the schema downstream.
-Build a new object rather than mutating the exported one — it is shared.
+Build a new object rather than mutating the exported one; it is shared.
 
 ```ts
 import { POLICY_JSON_SCHEMA } from '@gentleduck/iam/core/schema'
@@ -286,7 +286,7 @@ squiggles on shape mismatches with no further wiring.
   apply the operand-type matrix and both length caps, so a 4 KB pattern or an
   `nin: 'gold'` fails the schema as well as the validator.
 - **`conditions` is required on a rule.** An unconditional rule is `{ "all": [] }`, not an
-  omitted key — the same rule the runtime validator enforces.
+  omitted key: the same rule the runtime validator enforces.
 - **Nothing here validates a role.** The schema is policy-only; run `validateRole` and
   `validateRoles` on the server for those.
 - **`additionalProperties: false` is strict.** If you extend `AccessControl.IPolicy` or
@@ -296,7 +296,7 @@ squiggles on shape mismatches with no further wiring.
 
 ## See also
 
-- [Validation](/duck-iam/advanced/validation) — the runtime half, with semantic checks JSON Schema cannot make.
-- [Types and namespaces](/duck-iam/types) — the TypeScript view of the same shapes.
-- [Building policies](/duck-iam/core/policies/building) — the builders the schema test pins against.
-- [Condition operators](/duck-iam/core/policies/conditions) — the semantics behind the 19-member enum.
+- [Validation](/duck-iam/advanced/validation): the runtime half, with semantic checks JSON Schema cannot make.
+- [Types and namespaces](/duck-iam/types): the TypeScript view of the same shapes.
+- [Building policies](/duck-iam/core/policies/building): the builders the schema test pins against.
+- [Condition operators](/duck-iam/core/policies/conditions): the semantics behind the 19-member enum.

@@ -45,7 +45,7 @@ What it does, in order:
 3. Awaits `beforeEvaluate` if configured, and adopts whatever request it returns.
 4. Defaults `environment.now` to `Date.now()` **only if the caller (or the hook) did not set one**, so a pinned clock survives.
 5. Refuses outright if `action` or `resource.type` is the reserved refusal token `'unknown'`, with `failure: 'input'`. The framework adapters hand the engine that token for a request they could not map, and it has to lose to a wildcard grant rather than match one.
-6. Gets the verdict from the [compiled table](/duck-iam/advanced/engine/compiled) — in **both** modes. Development additionally runs the interpreter for provenance and throws if the two disagree.
+6. Gets the verdict from the [compiled table](/duck-iam/advanced/engine/compiled), in **both** modes. Development additionally runs the interpreter for provenance and throws if the two disagree.
 7. Fires the trailing hooks outside the evaluation `try`, so a throwing hook cannot rewrite the verdict.
 
 ```ts
@@ -88,7 +88,7 @@ if (!(await engine.can('user-1', 'update', { type: 'post', attributes: {} }))) {
 }
 ```
 
-Returns `false` without touching the adapter when `subjectId` is not a string, is empty, or exceeds 1024 characters — and fires **no hook at all** on that path, not even `onError`, so a dashboard built on `onError` will not see it. Subject-resolution failures *are* caught, routed to `onError` with a synthetic request carrying `roles: []`, and returned as `false`.
+Returns `false` without touching the adapter when `subjectId` is not a string, is empty, or exceeds 1024 characters, and fires **no hook at all** on that path, not even `onError`, so a dashboard built on `onError` will not see it. Subject-resolution failures *are* caught, routed to `onError` with a synthetic request carrying `roles: []`, and returned as `false`.
 
 ### check
 
@@ -190,7 +190,7 @@ The `@` on the scope is what makes a three-segment key unambiguous. Without it `
 
 Inside a segment, `:` and `\` are backslash-escaped, and a leading `@` is escaped too so a segment cannot pose as the scope marker. An **empty-string** `scope` or `resourceId` is still a real segment - the builder tests `!== undefined`, not truthiness - so `{ scope: '' }` produces `@:action:resource`, distinct from the unscoped key.
 
-`iamSplitPermissionKey(key)` tokenises a key into its unescaped segments but leaves the leading `@` alone. `iamParsePermissionKey(key)` is the actual inverse: it returns `{ scope, action, resource, resourceId }`, or `null` for anything not in the builder's image — it re-encodes what it parsed and compares, so a hand-built key is rejected rather than guessed at.
+`iamSplitPermissionKey(key)` tokenises a key into its unescaped segments but leaves the leading `@` alone. `iamParsePermissionKey(key)` is the actual inverse: it returns `{ scope, action, resource, resourceId }`, or `null` for anything not in the builder's image; it re-encodes what it parsed and compares, so a hand-built key is rejected rather than guessed at.
 
 <Callout tone="info" title="Values are booleans in both modes">
   `IamClient.PermissionMap` is `Record<PermissionKey, boolean>`. Development mode
@@ -244,7 +244,7 @@ The `this` parameter pins the method to a development-mode engine, so calling it
 
 Hook behaviour is deliberately narrow: `beforeEvaluate` **runs** because it changes the evaluation, and nothing else fires - not `afterEvaluate`, `onDeny`, `onError`, or `onMetrics`. Explain is read-only diagnostics.
 
-`explain` runs the **interpreter only**, never the compiled table — the table erases policy identity at compile time and so cannot name the rule that decided. It also has no fail-closed catch: an adapter read failure rejects rather than returning a denial trace.
+`explain` runs the **interpreter only**, never the compiled table: the table erases policy identity at compile time and so cannot name the rule that decided. It also has no fail-closed catch: an adapter read failure rejects rather than returning a denial trace.
 
 The trace also reports scope work: it captures the subject's roles before enrichment and reports which roles enrichment added. The `../explain` module is loaded with a dynamic `import()` on first call, so production bundles that never reach this line drop the explain chunk entirely (since 3.1.0). See [explain and debug](/duck-iam/advanced/explain) for the `Explain.IResult` fields.
 
@@ -263,7 +263,7 @@ server.listen(PORT)
 
 `{ validator: true }` additionally imports the lazy validator chunk (about 12 KB gzipped), which is otherwise loaded on the first `admin.savePolicy` / `admin.saveRole` / `admin.import`. Read-only services can leave it off. Available since 2.2.0.
 
-`preload` also builds the compiled table, concurrently with the policy load, in **both** modes — both evaluate through it. That is not only warm-up: a role set the table cannot represent surfaces here, at boot, where an orchestrator sees a failed start, rather than inside the first authorization request. An over-limit role count is the one compile failure `preload()` does *not* rethrow, because the interpreter can still serve; every other compile failure propagates.
+`preload` also builds the compiled table, concurrently with the policy load, in **both** modes; both evaluate through it. That is not only warm-up: a role set the table cannot represent surfaces here, at boot, where an orchestrator sees a failed start, rather than inside the first authorization request. An over-limit role count is the one compile failure `preload()` does *not* rethrow, because the interpreter can still serve; every other compile failure propagates.
 
 ### healthCheck
 
@@ -271,7 +271,7 @@ server.listen(PORT)
 healthCheck(): Promise<IamEngineTypes.IHealth>
 ```
 
-One timed-out `listPolicies` round trip plus a compiled-table build, then a cache-hit-rate snapshot. Cheap enough for a 5-10 second probe interval; the table build reuses the cached table when there is one. The probe never throws — a health endpoint that throws tells a load balancer nothing it can act on.
+One timed-out `listPolicies` round trip plus a compiled-table build, then a cache-hit-rate snapshot. Cheap enough for a 5-10 second probe interval; the table build reuses the cached table when there is one. The probe never throws: a health endpoint that throws tells a load balancer nothing it can act on.
 
 ```ts
 interface IHealth {
@@ -313,7 +313,7 @@ The probe goes through the same `adapterTimeoutMs` budget as every other read, s
 setInvalidator(invalidator: IamEngineTypes.IInvalidator<TRole> | null): void
 ```
 
-`IConfig.invalidator` is constructor-only, but engines are commonly built at module import time — before any replica-specific Redis client exists. This closes that gap.
+`IConfig.invalidator` is constructor-only, but engines are commonly built at module import time, before any replica-specific Redis client exists. This closes that gap.
 
 ```ts
 const engine = new IamEngine({ adapter, mode: 'production' })   // at import time
@@ -321,7 +321,7 @@ const engine = new IamEngine({ adapter, mode: 'production' })   // at import tim
 engine.setInvalidator(createIamRedisInvalidator(redis, 'iam'))
 ```
 
-It throws `TypeError` if the argument is neither `null` nor an object with callable `publish` and `subscribe` — a malformed invalidator would otherwise fail at the first mutation, as a lost broadcast rather than a bad argument. The previous subscription is torn down first and unconditionally, so at most one is ever attached. `null` detaches and returns the engine to local-only invalidation. The constructor routes `config.invalidator` through this same setter, so both paths validate identically.
+It throws `TypeError` if the argument is neither `null` nor an object with callable `publish` and `subscribe`: a malformed invalidator would otherwise fail at the first mutation, as a lost broadcast rather than a bad argument. The previous subscription is torn down first and unconditionally, so at most one is ever attached. `null` detaches and returns the engine to local-only invalidation. The constructor routes `config.invalidator` through this same setter, so both paths validate identically.
 
 ### withTransaction
 
@@ -342,7 +342,7 @@ await db.transaction(async (tx) => {
 await pending.flush()   // invalidate + broadcast only after the commit
 ```
 
-The bound engine is built from the same config with the adapter swapped and **fresh caches**. That is the whole trick: an empty cache always misses, so every bound read reaches the transaction and sees its own uncommitted writes, and uncommitted data never enters the shared caches. The invalidator is dropped from the bound config — a bound engine must never broadcast mid-transaction, and must not subscribe either, or a facade built per transaction leaks a subscription each time. Invalidations and `onMutation` events buffer until `pending.flush()`. A rollback needs no cleanup; call `pending.discard()` to say so explicitly.
+The bound engine is built from the same config with the adapter swapped and **fresh caches**. That is the whole trick: an empty cache always misses, so every bound read reaches the transaction and sees its own uncommitted writes, and uncommitted data never enters the shared caches. The invalidator is dropped from the bound config; a bound engine must never broadcast mid-transaction, and must not subscribe either, or a facade built per transaction leaks a subscription each time. Invalidations and `onMutation` events buffer until `pending.flush()`. A rollback needs no cleanup; call `pending.discard()` to say so explicitly.
 
 ### dispose
 

@@ -17,7 +17,7 @@ import at all.
 
 | | `@gentleduck/iam/dt` (v1) | `@gentleduck/iam/dt/v2` |
 |---|---|---|
-| Runtime deps | React only | React, `@gentleduck/registry-ui`, `@gentleduck/libs`, `lucide-react` — all optional peers |
+| Runtime deps | React only | React, `@gentleduck/registry-ui`, `@gentleduck/libs`, `lucide-react`: all optional peers |
 | Styling | one `<style>` tag it injects itself | Tailwind v4 utilities on the host's theme |
 | Class names | `iam-dt-*`, owned by `lib/styles.ts` | duck-ui components plus Tailwind utilities |
 | Colour source | `--iam-dt-*` tokens it declares itself | host tokens (`--card`, `--border`, `--primary`, …) |
@@ -38,7 +38,7 @@ stylesheet's location:
 ```
 
 Without it every utility class in v2 names a rule nobody generated. The exports mirror v1's
-with a `V2` suffix — `IamDevtoolsV2`, and so on — and `IIamDevtoolsV2Props` is v1's props
+with a `V2` suffix (`IamDevtoolsV2`, and so on) and `IIamDevtoolsV2Props` is v1's props
 minus `theme` and `inset`.
 
 **The rest of this page documents v1.**
@@ -49,7 +49,7 @@ minus `theme` and `inset`.
 
 v1 needs `react` and nothing else. It does not import `@gentleduck/registry-ui`,
 `@gentleduck/libs` or `lucide-react`, and a lint sweep over `src/dt` fails the build if a
-module ever does — that self-containment is the whole reason v1 exists.
+module ever does: that self-containment is the whole reason v1 exists.
 
 ```tsx
 import { IamDevtools } from '@gentleduck/iam/dt'
@@ -68,8 +68,8 @@ That renders a floating launcher in the bottom-right. Opening it slides a resiza
 dockable panel in from the bottom.
 
 <Callout tone="warning" title="SEC-DT: never ship this to production">
-The panel reads your entire authorization model — every policy body, every role and its
-permissions, arbitrary subjects' attributes — and the Subjects panel *writes*: it can
+The panel reads your entire authorization model (every policy body, every role and its
+permissions, arbitrary subjects' attributes) and the Subjects panel *writes*: it can
 assign and revoke roles and overwrite attributes through `engine.admin`. Shipping it to a
 deployed environment is CWE-200 (information exposure) and CWE-489 (leftover debug code).
 
@@ -153,7 +153,7 @@ export interface IamIDevtoolsEngine {
 ```
 
 <Callout tone="info" title="stats is an object, not a callable">
-`stats` is the engine's observability facet with `get()` and `reset()` — the same shape
+`stats` is the engine's observability facet with `get()` and `reset()`: the same shape
 `IamEngine` has carried since 3.0.0, so a real engine satisfies this interface structurally
 and needs no shim.
 
@@ -188,7 +188,7 @@ signal:
 | `defaultRequest` | `Partial<IamIDecisionInput>` | — | Pre-fills the Decision panel's form. |
 | `pollMs` | `number` | `1000` | Metrics polling interval, in milliseconds. |
 | `embedded` | `boolean` | `false` | Drop the rounded border and background so the panel fills its own container. |
-| `theme` | `IamDevtoolsTheme` | `'auto'` | Pins v1's own palette: `'auto'`, `'dark'` or `'light'`. `'auto'` follows the viewer's `prefers-color-scheme`; the other two stamp `data-iam-dt-theme` on the root. Not a host-theme hook — v1 has its own palette. v2 has no such prop. |
+| `theme` | `IamDevtoolsTheme` | `'auto'` | Pins v1's own palette: `'auto'`, `'dark'` or `'light'`. `'auto'` follows the viewer's `prefers-color-scheme`; the other two stamp `data-iam-dt-theme` on the root. Not a host-theme hook: v1 has its own palette. v2 has no such prop. |
 
 ### `IIamDevtoolsProps` (chrome, `IamDevtools` only)
 
@@ -216,8 +216,8 @@ signal:
 />
 ```
 
-Three keys are persisted to `localStorage` under the prefix — `_OPEN`, `_SIZE`, and
-`_POSITION` — and every read and write is wrapped in a `try` so a blocked or full storage
+Three keys are persisted to `localStorage` under the prefix (`_OPEN`, `_SIZE`, and
+`_POSITION`) and every read and write is wrapped in a `try` so a blocked or full storage
 degrades to the defaults rather than throwing.
 
 The panel is resizable by dragging its inner edge: minimum 220 px, maximum 90% of the
@@ -231,7 +231,7 @@ sheet is the whole visual layer: every class the components emit is an `iam-dt-*
 declared in it, and every colour is a `--iam-dt-*` custom property the sheet declares
 itself.
 
-v1 reads **no** host CSS variable and emits **no** Tailwind utility, deliberately — it has
+v1 reads **no** host CSS variable and emits **no** Tailwind utility, deliberately; it has
 to render identically in an app that has neither. A lint sweep over `src/dt` (skipping
 `v2/`) fails on a `var(--…)` that is not `--iam-dt-*`, and on an `iam-dt-*` class a
 component emits that has no rule in the shipped sheet. So the panel does not follow your
@@ -249,7 +249,7 @@ theme; it brings its own, and the `theme` prop is how you steer it.
     M --> MM["metrics.snapshot"]`} />
 
 Two panels write. Subjects mutates the store through `engine.admin`, and Metrics' reset
-button clears the running engine's real counters through `engine.stats.reset()` — which is
+button clears the running engine's real counters through `engine.stats.reset()`, which is
 why the guard covers that tab too.
 
 ### Flow
@@ -264,8 +264,8 @@ Without a `flow` prop the tab renders a hint telling you to bind a recorder to
 
 ### Decision
 
-The interactive tester. It builds an `IamIDecisionInput` from the form — subject id, action,
-scope, resource type, resource id, `resource.attributes` JSON, environment JSON — and calls
+The interactive tester. It builds an `IamIDecisionInput` from the form (subject id, action,
+scope, resource type, resource id, `resource.attributes` JSON, environment JSON) and calls
 `engine.explain(subjectId, action, resource, environment)`. A non-empty scope field is
 merged into the environment object as `{ scope }`. Both JSON textareas parse through
 `safeParseJson`, so a syntax error becomes an inline `attributes JSON: ...` message rather
@@ -289,8 +289,8 @@ your own anywhere.
 ### Policies
 
 Calls `engine.admin.listPolicies()` on mount and on the refresh button. Filters by id or
-name. The detail view shows the id, name, algorithm, version, description, and every rule —
-each expandable to its description and its condition tree — plus a collapsible raw JSON view.
+name. The detail view shows the id, name, algorithm, version, description, and every rule
+(each expandable to its description and its condition tree) plus a collapsible raw JSON view.
 
 ### Roles
 
@@ -318,7 +318,7 @@ hook firing per decision would put devtools rendering on the hot path of every c
 
 Without an aggregator the evaluation tiles say so rather than rendering zeroes that look
 like real measurements. Neither build surfaces `snapshot.failOpen`, the count of allows
-attributable solely to `defaultEffect: 'allow'` — read it from the aggregator yourself if
+attributable solely to `defaultEffect: 'allow'`: read it from the aggregator yourself if
 you are watching for silent policy-set breakage.
 
 | Tile | Source |
@@ -329,8 +329,8 @@ you are watching for silent policy-set breakage.
 | `max`, `p50`, `p95`, `p99` | the matching `snapshot` fields, in ms |
 | `deny` | `snapshot.deny` |
 
-Below that, one card per engine cache — `policies`, `roles`, `rbacPolicy`,
-`mergedPolicies`, `subjects` — with a hit-rate badge (green above 80%, blue above 50%,
+Below that, one card per engine cache: `policies`, `roles`, `rbacPolicy`,
+`mergedPolicies`, `subjects`, with a hit-rate badge (green above 80%, blue above 50%,
 amber otherwise), the size, and the raw hit/miss counts. A collapsible raw view dumps both
 objects.
 
@@ -350,13 +350,13 @@ export function iamCreateFlowRecorder(options?: IamIFlowRecorderOptions): IamIFl
 
 | Option | Type | Default | Meaning |
 |---|---|---|---|
-| `bufferSize` | `number` | `250` | Ring size. New entries go to the front; the oldest are dropped. Must be a positive integer — `0`, `-1`, `1.5`, `NaN` and `Infinity` all throw `RangeError` at construction, because unchecked they make the trim comparison always false and the "ring" grows without bound for the life of the process. |
+| `bufferSize` | `number` | `250` | Ring size. New entries go to the front; the oldest are dropped. Must be a positive integer: `0`, `-1`, `1.5`, `NaN` and `Infinity` all throw `RangeError` at construction, because unchecked they make the trim comparison always false and the "ring" grows without bound for the life of the process. |
 
 `IamIFlowEntry` fields: `id` (monotonic from 1), `ts` (`Date.now()` unless you pass one),
 `subjectId`, `action`, `resource`, `resourceId?`, `scope?`, `allowed`, `durationMs?`,
 `reason?`, `decidingPolicy?`, `decidingRule?`, `environment?`.
 
-There is no built-in engine binding — wire it in the `afterEvaluate` hook yourself:
+There is no built-in engine binding; wire it in the `afterEvaluate` hook yourself:
 
 ```tsx
 import { iamCreateFlowRecorder } from '@gentleduck/iam/dt'
@@ -460,14 +460,14 @@ Panel prop signatures, exactly:
 | `IamMetricsPanel` | `{ engine: IamIDevtoolsEngine; metrics?: IamIDevtoolsMetrics; pollMs?: number }` |
 | `IamTraceTree` | `{ result: Explain.IResult }` |
 
-`IamMetricsPanel` requires `engine` — cache stats come from it, and only the evaluation
+`IamMetricsPanel` requires `engine`: cache stats come from it, and only the evaluation
 tiles come from `metrics`.
 
 Every panel that takes an `engine` runs `isDevtoolsAllowed` itself, not only `IamDevtools`
 and `IamDevtoolsInner`: Decision, Policies, Roles, Subjects and Metrics each return `null`
 without a development signal. Guarding only the shells meant a panel composed into someone
 else's admin UI reached the engine with no check anywhere in its path. `IamFlowPanel` and
-`IamTraceTree` are the two exceptions, and they take no engine — they render a buffer and a
+`IamTraceTree` are the two exceptions, and they take no engine; they render a buffer and a
 trace you already hold.
 
 ## Full export list
@@ -521,8 +521,8 @@ stylesheet of its own.
 
 ## See also
 
-- [Explain traces](/duck-iam/advanced/explain) — the trace format the Decision panel renders.
-- [Metrics aggregator](/duck-iam/integrations/observability/metrics) — the source for the Metrics tiles.
-- [Engine hooks](/duck-iam/advanced/engine/hooks) — `afterEvaluate` and `onMetrics`, the two the panel depends on.
-- [Engine admin API](/duck-iam/advanced/engine/admin) — everything the Policies, Roles, and Subjects panels call.
-- [Engine modes](/duck-iam/advanced/engine/modes) — why `development` mode is required.
+- [Explain traces](/duck-iam/advanced/explain): the trace format the Decision panel renders.
+- [Metrics aggregator](/duck-iam/integrations/observability/metrics): the source for the Metrics tiles.
+- [Engine hooks](/duck-iam/advanced/engine/hooks): `afterEvaluate` and `onMetrics`, the two the panel depends on.
+- [Engine admin API](/duck-iam/advanced/engine/admin): everything the Policies, Roles, and Subjects panels call.
+- [Engine modes](/duck-iam/advanced/engine/modes): why `development` mode is required.

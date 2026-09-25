@@ -1,6 +1,6 @@
 ---
 title: Express
-description: The Express middleware, per-route guard, and admin router — signatures, extraction defaults, and error mapping for Express 4 and 5
+description: The Express middleware, per-route guard, and admin router: signatures, extraction defaults, and error mapping for Express 4 and 5
 section: Integrations
 ---
 `@gentleduck/iam/server/express` exposes two request gates and one admin router. It declares no runtime dependency on Express: every function is typed against a minimal `req` / `res` / `next` shape, so it works with Express 4, Express 5, and any router that implements `.get`, `.put`, `.post`, and `.delete`. The shared extraction and audit behaviour lives in [generic helpers](/duck-iam/integrations/server/generic); this page documents only what Express adds.
@@ -116,11 +116,11 @@ export function iamAccessMiddleware<
 | `getResource` | `(req) => IamRequest.IResource` | first two segments of `req.path` | `{ type: parts[0] ?? 'root', id: parts[1], attributes: {} }`. `req.path` defaults to `'/'` when absent. |
 | `getAction` | `(req) => string` | `iamActionForMethod(req.method)` | Method map from the generic helpers; an unmapped method yields the reserved refusal token, **not** `'read'`. |
 | `getEnvironment` | `(req) => IamRequest.IEnvironment` | `iamExtractEnvironment` | `{ ip, userAgent, timestamp }`, with `ip` left `undefined`. |
-| `getScope` | `(req) => TScope \| undefined` | none — `scope` stays `undefined` | Multi-tenant scope. |
+| `getScope` | `(req) => TScope \| undefined` | none: `scope` stays `undefined` | Multi-tenant scope. |
 | `onDenied` | `(req, res) => void` | `res.status(403).json({ error: 'Forbidden' })` | Runs when `engine.can()` returns `false`. |
-| `onError` | `(err, req, res) => void` | `res.status(500).json({ error: 'Internal server error' })` | Runs when any extractor or `engine.can()` throws. **Three arguments — `next` is not passed.** |
+| `onError` | `(err, req, res) => void` | `res.status(500).json({ error: 'Internal server error' })` | Runs when any extractor or `engine.can()` throws. **Three arguments: `next` is not passed.** |
 
-The 401 response is fixed at `{ error: 'Unauthorized' }` and has no option. The `resource.attributes` bag is always `{}` — the middleware never loads the record.
+The 401 response is fixed at `{ error: 'Unauthorized' }` and has no option. The `resource.attributes` bag is always `{}`: the middleware never loads the record.
 
 <Callout tone="warning" title="onError is not handed next, deliberately">
 It used to be, and the obvious handler to write with it - `(err, req, res, next) => next()` - resumes the request with no decision made. That is a fail-open on exactly the path where the decision could not be computed. A cross-adapter test now asserts `onError.mock.calls[0].length === 3`.
@@ -140,7 +140,7 @@ app.use(
 
 ### Path-derived resources
 
-`/posts/42` produces `{ type: 'posts', id: '42' }` — plural, taken verbatim from the URL. `/` produces `{ type: 'root', id: undefined }`. The second segment becomes `resource.id` even when it is not an identifier, so `GET /posts/search` checks `read` on `posts` with `id: 'search'`. Supply `getResource` on such routes, or switch to `iamGuard`.
+`/posts/42` produces `{ type: 'posts', id: '42' }`: plural, taken verbatim from the URL. `/` produces `{ type: 'root', id: undefined }`. The second segment becomes `resource.id` even when it is not an identifier, so `GET /posts/search` checks `read` on `posts` with `id: 'search'`. Supply `getResource` on such routes, or switch to `iamGuard`.
 
 An ambiguous path is refused rather than resolved. `/posts/../admin`, `/posts/%2e%2e/admin`, `/posts/%252e%252e/admin` and `/posts\..\admin` all produce the reserved token `'unknown'`, which the engine denies before consulting any policy. Express is where this matters most: it served `/admin` for `/admin/../public` while a resolving helper had authorized `public` - authorized as one resource, served as another.
 
@@ -162,7 +162,7 @@ export function iamGuard<
 ): (req: Req, res: Res, next: Next) => void
 ```
 
-The guard accepts a strict subset of the middleware options: `getUserId`, `getEnvironment`, `onDenied`, `onError`, plus a fixed `scope`. There is no `getAction`, no `getResource`, and no `getScope` — the action and resource type are the arguments, and the id is `req.params?.id`.
+The guard accepts a strict subset of the middleware options: `getUserId`, `getEnvironment`, `onDenied`, `onError`, plus a fixed `scope`. There is no `getAction`, no `getResource`, and no `getScope`: the action and resource type are the arguments, and the id is `req.params?.id`.
 
 `onError` defaults to the same fixed `500 { error: 'Internal server error' }` the middleware answers. It used to default to `next(err)`, which with no app error handler and `NODE_ENV !== 'production'` made finalhandler write `err.stack` into the response body.
 
@@ -284,7 +284,7 @@ Mutations write `req.method` and `req.path ?? req.url ?? ''` into the audit even
 
 | Option | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `authorize` | `(req) => unknown \| Promise<unknown>` | **required** | Runs on every endpoint, read and write. A falsy return (`false`, `0`, `''`, `null`, `undefined`, `NaN`) is 401; a throw is 500. Return the actor itself, not `true` — see below. |
+| `authorize` | `(req) => unknown \| Promise<unknown>` | **required** | Runs on every endpoint, read and write. A falsy return (`false`, `0`, `''`, `null`, `undefined`, `NaN`) is 401; a throw is 500. Return the actor itself, not `true`; see below. |
 | `csrfCheck` | `((req) => boolean) \| false` | `iamDefaultCsrfCheck` | Runs on **every** admin request, reads included. `false` disables the phase. |
 | `onUnauthorized` | `(req, res) => void` | `401 { error: 'Unauthorized' }` | Replaces the falsy-`authorize` response. |
 | `onError` | `(err, req, res) => void` | `500 { error: 'Internal server error' }` | Same three-argument shape as the gates. |
@@ -300,7 +300,7 @@ The last four are the shared `IamAdminAudit.IOptions`; their exact semantics, th
 </Callout>
 
 <Callout tone="warning" title="CSRF check is on by default">
-All six routes — the two GETs included — run `iamDefaultCsrfCheck` **before** `authorize`, rejecting browser requests whose `Sec-Fetch-Site` is `cross-site` or `cross-origin` with `403 { error: 'Forbidden (CSRF check failed)' }` and firing no audit event. That response is fixed and not covered by `onUnauthorized` or `onError`. A predicate that throws is also a 403, because a predicate that cannot answer has not said yes. Requests with no such header (curl, server-to-server) pass and must be gated by bearer or mTLS auth inside `authorize`. A one-time `console.info` names the change when you did not pass `csrfCheck` explicitly.
+All six routes (the two GETs included) run `iamDefaultCsrfCheck` **before** `authorize`, rejecting browser requests whose `Sec-Fetch-Site` is `cross-site` or `cross-origin` with `403 { error: 'Forbidden (CSRF check failed)' }` and firing no audit event. That response is fixed and not covered by `onUnauthorized` or `onError`. A predicate that throws is also a 403, because a predicate that cannot answer has not said yes. Requests with no such header (curl, server-to-server) pass and must be gated by bearer or mTLS auth inside `authorize`. A one-time `console.info` names the change when you did not pass `csrfCheck` explicitly.
 </Callout>
 
 <Callout tone="warning" title="DELETE /subjects/:id/roles/:roleId is unscoped">

@@ -63,27 +63,27 @@ on the write path. The explicit import is for *your* boundaries.
 
 The validator runs at three moments: when a builder builds, when an admin writes, and when
 one of the file, HTTP, Redis, Drizzle or Prisma adapters reads a row back. `parsePolicyRow`
-is the read-path form — it returns the typed row or `null` instead of a result object.
+is the read-path form: it returns the typed row or `null` instead of a result object.
 
 The two asymmetries there matter more than the shared shape.
 
 A `null` from `parsePolicyRow` is **refused, not skipped**: the adapter reports the row and
 then throws `iamUnreadablePolicy`, so one bad policy row denies every request until it is
 repaired. A `null` from `parseRoleRow` drops that role and continues. The reason is which
-direction each row can fail in — `rolesToPolicy` emits `allow` and nothing else, so a lost
+direction each row can fail in: `rolesToPolicy` emits `allow` and nothing else, so a lost
 role can only cost a subject a grant, while a lost policy may have been the rule saying no.
 
 <Callout tone="warning" title="loadPolicies runs no validator">
 Validation is a **write-path gate**. `engine.loadPolicies()` and `loadRoles()` apply a
 `maxPolicies` / `maxRoles` count cap to the array the adapter returned and cache the rows
-exactly as they arrived — nothing inspects a row's shape. `engine.can()`, `authorize()`,
+exactly as they arrived; nothing inspects a row's shape. `engine.can()`, `authorize()`,
 `permissions()` and `explain()` validate nothing either, and `IamMemoryAdapter` neither
 validates on read nor on constructor seed (seeded policies go through `iamNormalizePolicy`,
 which defaults `version` to `1` and drops unknown keys; seeded roles are stored verbatim).
 
 So a row written by direct SQL, a migration, a second service, or a memory-adapter fixture
 is evaluated as authored, including shapes `savePolicy` refuses. What closes that gap is
-the evaluator refusing to answer — `evalCondition` re-applies the operand-type table and
+the evaluator refusing to answer: `evalCondition` re-applies the operand-type table and
 throws `IamOperandTypeError`, a bad `matches` pattern throws `IamPatternRefusedError`, and
 an over-deep group refuses rather than returning `false`. All three become Indeterminate
 and the engine fails closed. The validator makes that path rare; it is not the only line.
@@ -97,7 +97,7 @@ and the engine fails closed. The validator makes that path rare; it is not the o
 export function validatePolicy(input: unknown): IamValidate.IResult
 ```
 
-Deep-validates an untrusted candidate policy. Accepts `unknown` — the first check is that
+Deep-validates an untrusted candidate policy. Accepts `unknown`: the first check is that
 the input is a non-null, non-array object. Never throws; every problem comes back as an
 issue.
 
@@ -145,7 +145,7 @@ Per condition leaf:
 | The operand's type matches what the operator compares | error | `OPERAND_TYPE_MISMATCH` |
 | No key outside the leaf shape | error | `UNKNOWN_FIELD` |
 | String `value` within `MAX_CONDITION_VALUE_LENGTH` | error | `LIMIT_EXCEEDED` |
-| Array `value` — first oversized string element only | error | `LIMIT_EXCEEDED` |
+| Array `value`: first oversized string element only | error | `LIMIT_EXCEEDED` |
 | `$`-prefixed `value` resolves | warning | `UNRESOLVABLE_VALUE` |
 | `matches` with a literal string pattern passes `detectCatastrophicRegex` | error | `ERR_REGEX_CATASTROPHIC` |
 | `matches` pattern compiles | error | `ERR_REGEX_INVALID` |
@@ -153,14 +153,14 @@ Per condition leaf:
 
 `MISSING_VALUE` covers both `value` absent and `value: undefined`; `JSON.stringify` drops
 the latter, so the two arrive at a store identically. Both then read as `null` at
-evaluation, which compares equal to a missing attribute — the guard passes for exactly the
+evaluation, which compares equal to a missing attribute; the guard passes for exactly the
 subjects it was written to exclude.
 
 The operand-type check is skipped when the value is a `$`-prefixed string, because its type
 is unknowable until the request arrives. For array operands the **elements** are checked
 too, not just the container: `nin: 'gold'` is a mismatch, and `in: [{ id: 1 }]` matched
 nothing by reference and quietly retired the rule holding it. The table it checks against is
-`OPERAND_TYPES` in `core/conditions`, the same one `evalCondition` applies at read time —
+`OPERAND_TYPES` in `core/conditions`, the same one `evalCondition` applies at read time;
 one table, so write-time and read-time verdicts cannot drift.
 
 `UNKNOWN_FIELD` fires on the five places `POLICY_JSON_SCHEMA` sets
@@ -199,7 +199,7 @@ await engine.admin.savePolicy(row as AccessControl.IPolicy)
 ```
 
 The array-value check reports **one** `LIMIT_EXCEEDED` per condition, not one per oversized
-element, and never interpolates the offending value into the message — a 10 MiB string
+element, and never interpolates the offending value into the message: a 10 MiB string
 value produces a short diagnostic, not a 10 MiB one. Both behaviours are pinned by
 `validate-value-length.test.ts`.
 
@@ -230,7 +230,7 @@ looks at other roles, so it cannot detect duplicates, dangling inherits, or cycl
 `inherits: null` is treated as absent, not as an error. An empty `inherits: []` is accepted.
 
 `scope: ''` is refused rather than normalised, on a role and on a permission alike. The
-empty string is a scope *value*, not a missing one — the Redis encoding spells "no scope"
+empty string is a scope *value*, not a missing one: the Redis encoding spells "no scope"
 as `''` and `matchesScope` used to read an empty pattern as global. Omit the field for a
 global permission or an unscoped role.
 
@@ -251,7 +251,7 @@ TypeScript is the only thing requiring it, which means a role assembled from unt
 reaches a store without one.
 
 Unknown keys are not checked on a role or a permission either. `checkKnownKeys` runs on the
-policy, its `targets`, each rule and each condition — never on these. `{ id, name,
+policy, its `targets`, each rule and each condition, but never on these. `{ id, name,
 permissions: [], scop: 'org' }` validates clean, and the engine ignores the misspelled key,
 so the grant stored is not the grant written. Screen both yourself in an admin form.
 </Callout>
@@ -290,7 +290,7 @@ See [access config](/duck-iam/advanced/config/methods).
 | Longest inheritance chain exceeds `MAX_INHERITANCE_DEPTH` (32) | error | `INHERITANCE_TOO_DEEP` |
 
 Cycles are warnings because the runtime cuts them during the inheritance walk with a
-shallowest-depth memo rather than a visited set — the configuration is wrong but not
+shallowest-depth memo rather than a visited set: the configuration is wrong but not
 dangerous. Depth is an **error** because chains
 deeper than the cap truncate silently at runtime, dropping permissions with no signal: the
 symptom is a mysterious denial far from the role definition. `validate.test.ts` pins both
@@ -347,8 +347,8 @@ export function parsePolicyRow<
 
 Runs `validatePolicy` and returns the typed row when `valid` is `true`, `null` otherwise.
 Warnings do not cause a `null`; it gates on `valid`, so a `BROAD_ALLOW` policy still parses.
-It returns the *identical object* on success — a validated narrowing, not a copy or a
-normaliser — and replaces the `validatePolicy(row)`-then-cast pattern that was a
+It returns the *identical object* on success (a validated narrowing, not a copy or a
+normaliser) and replaces the `validatePolicy(row)`-then-cast pattern that was a
 type-safety hole at every adapter boundary.
 
 The three generics are TypeScript-only constraints. Runtime validation cannot verify that a
@@ -403,7 +403,7 @@ bodies are stripped before the quantifier scan, so the literal `*` in a glob-sha
 An unsafe pattern surfaces as an error issue whose message is
 `Condition "matches" pattern rejected: <reason>`, so it never reaches the policy store. The
 guarantee is load-bearing: a `matches` condition that failed at evaluation time would make
-its leaf `false`, which inside a `deny` rule flips the rule to "does not apply" — a ReDoS
+its leaf `false`, which inside a `deny` rule flips the rule to "does not apply"; a ReDoS
 pattern would become an availability *and* an authorization problem.
 
 ## Exported constants
@@ -508,7 +508,7 @@ validator that emits it, its severity, and the message template.
 
 The one code with two severities, and the one worth understanding before it bites.
 
-`evaluatePolicy` folds `defaultEffect` — which is `deny` — when a policy's target matches
+`evaluatePolicy` folds `defaultEffect` (which is `deny`) when a policy's target matches
 and none of its rules do. A target therefore widens what a policy *refuses*, not only what
 it inspects. Adding a resource to `.target({ resources: [...] })` without an allow rule
 covering it denies every caller for that resource, and the denial surfaces far from the
@@ -520,8 +520,8 @@ policy that caused it.
 | The target's pair count exceeds `cartesianPerRule` (1000) | warning | `Target has <n> (action, resource) pairs, over the 1000 checked for unreachable coverage - skipping the check. Narrow the target to validate it.` |
 
 The same code carries a second, unrelated meaning on the role side.
-`createIam(...).validateRoles` — the config-bound form, which has your declared vocabulary
-— emits `UNREACHABLE_TARGET` for a grant naming an action, resource or scope the config
+`createIam(...).validateRoles` (the config-bound form, which has your declared vocabulary)
+emits `UNREACHABLE_TARGET` for a grant naming an action, resource or scope the config
 never declared. Such a grant reads as access granted and behaves as access denied, because
 `engine.check` is constrained to the declared unions and nothing will ever ask the question
 it answers. Three things are never reported: an axis the config left empty (it constrains
@@ -531,7 +531,7 @@ permission is global, not scoped to nowhere).
 Behaviour details on the policy side:
 
 - The check runs only when the policy has at least one `allow` rule. A purely restrictive
-  policy — where denying everything the target names *is* the point — is untouched.
+  policy (where denying everything the target names *is* the point) is untouched.
 - A dimension the target omits is one it does not constrain, so the rules decide it. A
   target naming only `actions: ['impersonate']` is not reported unreachable just because
   its allow rule is scoped `.of('users')`.
@@ -579,7 +579,7 @@ Note that the role builder's message lists codes and paths only, not the full me
   makes traces unreadable. Keep both out of your vocabulary.
 - **Control characters are checked on some fields and not others.** A rule's `actions` and
   `resources`, a role `id`, and a permission's `action` / `resource` are screened; a policy
-  `id` or `name` and a rule `id` are not. Screen those in your admin form — a control
+  `id` or `name` and a rule `id` are not. Screen those in your admin form: a control
   character is invisible in a UI, so the id reads as a different id than it is.
 - **`parsePolicyRow` returns the row when only warnings fired.** It gates on `valid`, not
   on `issues.length`.
@@ -593,8 +593,8 @@ Note that the role builder's message lists codes and paths only, not the full me
 
 ## See also
 
-- [JSON schema](/duck-iam/advanced/json-schema) — the out-of-band, non-TypeScript half of the same job.
-- [Utility helpers](/duck-iam/advanced/utilities) — `parsePolicyRow` in an adapter, and the resolvers that decide what `UNRESOLVABLE_FIELD` means.
-- [Explain traces](/duck-iam/advanced/explain) — what a config mistake looks like at request time.
-- [Custom adapters](/duck-iam/integrations/adapters/custom) — where the row parsers belong.
-- [Role inheritance](/duck-iam/core/roles/inheritance) — the 32-deep cap behind `INHERITANCE_TOO_DEEP`.
+- [JSON schema](/duck-iam/advanced/json-schema): the out-of-band, non-TypeScript half of the same job.
+- [Utility helpers](/duck-iam/advanced/utilities): `parsePolicyRow` in an adapter, and the resolvers that decide what `UNRESOLVABLE_FIELD` means.
+- [Explain traces](/duck-iam/advanced/explain): what a config mistake looks like at request time.
+- [Custom adapters](/duck-iam/integrations/adapters/custom): where the row parsers belong.
+- [Role inheritance](/duck-iam/core/roles/inheritance): the 32-deep cap behind `INHERITANCE_TOO_DEEP`.

@@ -16,7 +16,7 @@ before evaluation, or a hand-rolled pipeline.
 | Matchers, `resolve`, path-cache controls | `@gentleduck/iam` or `@gentleduck/iam/core` | unprefixed |
 | Condition primitives | `@gentleduck/iam` or `@gentleduck/iam/core` | **`iam` / `IAM_` prefixed** |
 | `iamEscapeHtml` | `@gentleduck/iam`, `@gentleduck/iam/core`, or `@gentleduck/iam/core/explain` | prefixed |
-| `IamLRUCache`, key helpers | `@gentleduck/iam` (root only — not in `/core`) | prefixed |
+| `IamLRUCache`, key helpers | `@gentleduck/iam` (root only, not in `/core`) | prefixed |
 | Row parsers | `@gentleduck/iam/core/validate` only | unprefixed |
 
 ```ts
@@ -32,8 +32,8 @@ import {
 ```
 
 <Callout tone="warning" title="The condition primitives are renamed on the way out">
-`core/conditions` exports its internals under short names — `evalCondition`, `resolveValue`,
-`isCondition` — but the barrel renames every one of them before it reaches the package
+`core/conditions` exports its internals under short names (`evalCondition`, `resolveValue`,
+`isCondition`), but the barrel renames every one of them before it reaches the package
 root, because those are names a consumer's own code plausibly uses. The prefix is the house
 convention for exactly that collision.
 
@@ -63,7 +63,7 @@ reference is handing them the ability to retire a deny rule.
 | `ops` | `ops.eq = () => false` retires every `eq` deny rule, in both evaluation modes | `iamEvaluateOperator` |
 | `regexCache` | Seat a permissive `RegExp` under a pattern a deny rule relies on | `iamClearRegexCache()` |
 | `pathCache` | Seat a bogus segment list under a path a deny rule resolves | `clearPathCache()` |
-| `ALLOWED_ROOTS` | Typed `ReadonlySet`, erases to a live `Set` — `.delete('subject')` makes every `subject.*` path unresolvable, and `pathCache` memoises that so it sticks | — |
+| `ALLOWED_ROOTS` | Typed `ReadonlySet`, erases to a live `Set`; `.delete('subject')` makes every `subject.*` path unresolvable, and `pathCache` memoises that so it sticks | — |
 
 Neither is frozen at runtime, so withholding them from the barrel is the only thing keeping
 them internal. The raw `evaluatePolicy` / `evaluatePolicyFast` are withheld for a different
@@ -94,7 +94,7 @@ primitives sit under them.
 
 `matchesScope` is the one that is not part of rule matching: it gates whether an RBAC
 permission applies in a given tenant scope. The dot test in the middle is exactly what
-`traceRule` and the evaluator do — the pattern *or* the request resource type having a dot
+`traceRule` and the evaluator do: the pattern *or* the request resource type having a dot
 is enough to switch to the hierarchical matcher.
 
 ## Pattern matchers
@@ -173,7 +173,7 @@ function matchesScope(
 ): boolean
 ```
 
-An **absent** pattern (`undefined` or `null`) or `'*'` matches any scope — that is a global
+An **absent** pattern (`undefined` or `null`) or `'*'` matches any scope: that is a global
 permission. Otherwise the request must carry a scope, and it must match exactly.
 
 The checks are explicit, not truthiness: `''` is a scope *value*, not a missing one.
@@ -256,7 +256,7 @@ that caps the cache near 2 MB. Multi-tenant deployments should pass a per-engine
 through the `caches` argument so one tenant's path churn cannot evict another's, and can
 call `clearPathCache()` to flush the shared one periodically.
 
-The map itself (`pathCache`) and the root set (`ALLOWED_ROOTS`) are not exported — see
+The map itself (`pathCache`) and the root set (`ALLOWED_ROOTS`) are not exported: see
 [what is deliberately not exported](#what-is-deliberately-not-exported). `ALLOWED_ROOTS` is
 nevertheless the same set `isResolvablePath` in the validator consults, and the two share
 `BLOCKED_SEGMENTS` as well, which is what keeps the `UNRESOLVABLE_FIELD` warning honest
@@ -274,7 +274,7 @@ function iamEvaluateOperator(
 ): boolean
 ```
 
-A thin wrapper over the internal operator table. It applies the operator directly — no
+A thin wrapper over the internal operator table. It applies the operator directly: no
 `$`-resolution, no operand-type guard, and none of `iamEvalCondition`'s refusal of a
 user-sourced `matches` pattern.
 
@@ -352,7 +352,7 @@ iamResolveConditionValue(request, 42)                              // 42
 A `$`-reference that resolves to `null` is not the same as a literal `null` operand.
 `iamEvalCondition` throws `IamOperandTypeError` on the former, because `resolve` answers
 `null` for "unresolvable path", "attribute absent" and "explicitly null" alike, and `eq` is
-a bare `===` — so `subject.attributes.tenant eq $resource.attributes.tenant` compared
+a bare `===`, so `subject.attributes.tenant eq $resource.attributes.tenant` compared
 `null === null` and allowed a request carrying neither attribute. A literal `value: null`
 is an author explicitly testing for null and still works.
 
@@ -370,7 +370,7 @@ function iamIsUserSourcedValue(value: IamPrimitives.AttributeValue): boolean
 `matches` condition whose right-hand side is `$`-resolved: a user-controlled attribute must
 never become a compiled regex.
 
-Such a leaf **throws** `IamUserSourcedPatternError` — it does not evaluate to `false`.
+Such a leaf **throws** `IamUserSourcedPatternError`; it does not evaluate to `false`.
 Answering `false` reads as "condition not met", and the rule holding it is as likely to be a
 deny as an allow: a `deny when email matches $resource.attributes.bannedPattern` rule never
 fired and the banned subject came back ALLOWED, with nothing reported to `onPolicyError`.
@@ -421,7 +421,7 @@ the operand-type table, then dispatches. `iamEvalConditionGroup` walks `all` / `
 | `{ all: [...] }` | every item true |
 | `{ any: [...] }` | at least one item true |
 | `{ none: [...] }` | no item true |
-| `{}` (literally no keys) | `true` — no conditions means unconditional |
+| `{}` (literally no keys) | `true`: no conditions means unconditional |
 | `depth >= IAM_MAX_CONDITION_DEPTH` | **throws** `IamConditionGroupError('depth', …)` |
 | any other key set (a typo'd `all`, a hand-edited row) | **throws** `IamConditionGroupError('unknown-keys', …)` |
 
@@ -457,8 +457,8 @@ const IAM_MAX_CONDITION_DEPTH: number     // 10
 ```
 
 `iamGetCachedRegex` compiles a `matches` pattern once and stores it in an LRU keyed by the
-pattern string; a hit re-inserts the entry to refresh recency. It returns `null` — rather
-than a compiled regex — for any pattern `iamDetectCatastrophicRegex` rejects and for any
+pattern string; a hit re-inserts the entry to refresh recency. It returns `null` (rather
+than a compiled regex) for any pattern `iamDetectCatastrophicRegex` rejects and for any
 pattern that does not compile, so a hostile pattern that reached the runtime past the
 validator never becomes a `RegExp`. Eviction is least-recently-used, bounded at
 `IAM_REGEX_CACHE_MAX`, so pattern churn from one tenant cannot grow memory without bound.
@@ -560,7 +560,7 @@ only one that may start with an unescaped `@`, which is what makes the arity una
 
 Within each segment a literal `\` becomes `\\`, a literal `:` becomes `\:`, and a leading
 `@` is escaped too, so a resource id containing a colon cannot forge an extra segment.
-`iamSplitPermissionKey` reverses that, honouring only those escape sequences — an
+`iamSplitPermissionKey` reverses that, honouring only those escape sequences: an
 attacker-crafted `\x` stays `\x` rather than becoming `x`. `iamParsePermissionKey` goes
 further and returns the named fields, or `null` for a string that is not a well-formed key,
 so a hand-built one is rejected rather than guessed at.
@@ -583,7 +583,7 @@ iamParsePermissionKey('@tenant_a:write:doc:a\\:42')
 The presence check is `!== undefined`, not truthiness.
 `iamBuildPermissionKey('read', 'doc', undefined, '')` produces `'@:read:doc'`, a key
 distinct from the unscoped `'read:doc'`. Passing an empty scope where you meant "no scope"
-silently produces a key nothing will ever match — the same trap as `scope: ''` on a role,
+silently produces a key nothing will ever match: the same trap as `scope: ''` on a role,
 which the validator refuses outright.
 </Callout>
 
@@ -628,7 +628,7 @@ A malformed **policy** row is reported and then **throws** `iamUnreadablePolicy`
 row denies every request until it is repaired. A malformed **role** row is reported and
 dropped. The reason is which direction each can fail in: `rolesToPolicy` emits `allow` and
 nothing else, so a lost role can only cost a subject a grant, while a lost policy may have
-been the rule saying no — and under `policyCombine: 'and'` even an allow-only policy votes
+been the rule saying no, and under `policyCombine: 'and'` even an allow-only policy votes
 deny when none of its rules match. There is no subset of policies an adapter can safely drop
 without knowing the combine mode, which it does not.
 
@@ -657,7 +657,7 @@ See [custom adapters](/duck-iam/integrations/adapters/custom) for the full inter
   missing". Downstream operators like `exists` treat the two identically.
 - **`iamEvaluateOperator` skips every guard.** Only `iamEvalCondition` refuses a
   `$`-resolved regex and applies the operand-type table. If you build a custom pipeline on
-  the raw operator, check `iamIsUserSourcedValue` and the operand type yourself — a wrongly
+  the raw operator, check `iamIsUserSourcedValue` and the operand type yourself: a wrongly
   typed operand made `nin` short-circuit to `true`, so an "allow unless denylisted" rule
   admitted everyone.
 - **The process-wide caches are shared and not exported.** In a multi-tenant process, pass
@@ -666,15 +666,15 @@ See [custom adapters](/duck-iam/integrations/adapters/custom) for the full inter
 - **`IamLRUCache.clear()` keeps stats; `resetStats()` keeps entries.** They are deliberately
   independent.
 - **Engine-supplied policies are deep-frozen.** The synthetic RBAC policy the engine caches
-  is recursively `Object.freeze`d — the policy, its `rules` array, each rule, each rule's
+  is recursively `Object.freeze`d: the policy, its `rules` array, each rule, each rule's
   `actions` and `resources` arrays, and the whole condition tree. `evaluate`, `evaluateFast`,
   and `explain` all read the same reference, so mutating one would corrupt every later
   request. In strict mode the write throws; build your own copy instead.
 
 ## See also
 
-- [Explain traces](/duck-iam/advanced/explain) — the tracer that calls every function on this page.
-- [Validation](/duck-iam/advanced/validation) — `parsePolicyRow`, the limits, and the ReDoS screen.
-- [Rule matching](/duck-iam/core/rule-matching) — the matchers in the context of a full rule.
-- [Condition operators](/duck-iam/core/policies/conditions) — per-operator semantics and edge cases.
-- [Engine caching](/duck-iam/advanced/engine/caching) — where `IamLRUCache` is wired in.
+- [Explain traces](/duck-iam/advanced/explain): the tracer that calls every function on this page.
+- [Validation](/duck-iam/advanced/validation): `parsePolicyRow`, the limits, and the ReDoS screen.
+- [Rule matching](/duck-iam/core/rule-matching): the matchers in the context of a full rule.
+- [Condition operators](/duck-iam/core/policies/conditions): per-operator semantics and edge cases.
+- [Engine caching](/duck-iam/advanced/engine/caching): where `IamLRUCache` is wired in.

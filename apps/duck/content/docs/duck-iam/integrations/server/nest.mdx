@@ -3,7 +3,7 @@ title: NestJS
 description: The @IamAuthorize decorator, the canActivate guard body, the engine provider, and gated admin operations for NestJS controllers
 section: Integrations
 ---
-`@gentleduck/iam/server/nest` is decorator-driven rather than router-driven: you mark controller methods with `@IamAuthorize`, install one guard, and the guard reads the metadata off the handler. It has no hard dependency on `@nestjs/common` — every Nest type it touches is duck-typed — and `reflect-metadata` is optional. The shared extraction and audit behaviour lives in [generic helpers](/duck-iam/integrations/server/generic); this page documents only what NestJS adds.
+`@gentleduck/iam/server/nest` is decorator-driven rather than router-driven: you mark controller methods with `@IamAuthorize`, install one guard, and the guard reads the metadata off the handler. It has no hard dependency on `@nestjs/common` (every Nest type it touches is duck-typed), and `reflect-metadata` is optional. The shared extraction and audit behaviour lives in [generic helpers](/duck-iam/integrations/server/generic); this page documents only what NestJS adds.
 
 ## Install
 
@@ -120,17 +120,17 @@ if (!present) return true            // No @IamAuthorize decorator: allow.
 if (meta === undefined) return onError(new Error('...not readable...; denying.'), request)
 ```
 
-- **No decorator → the guard returns `true`.** An undecorated controller method is not this package's business, and `undefined` counts as absent — that is what an unset reflect key answers, and it is indistinguishable from no decorator.
-- **Present but unreadable → deny, through `onError`.** `null`, `false`, `0`, `''`, a string, a number, an array, `{action: 1}`, `{resource: {}}`, `{scope: 7}`, `{infer: 'true'}` and `{infer: 1}` are all refused and the engine is never consulted. The guard's old `if (!meta) return true` could not tell "no decorator" from "decorator carrying `null`", so a broken decorator opened the route instead of closing it — and a `scope` arriving as a number went straight into `engine.can` as the tenant to answer for. The refusal routes through `onError` so an operator sees which handler is broken rather than hunting a silent 403; the message contains `@gentleduck/iam:nest`.
+- **No decorator → the guard returns `true`.** An undecorated controller method is not this package's business, and `undefined` counts as absent: that is what an unset reflect key answers, and it is indistinguishable from no decorator.
+- **Present but unreadable → deny, through `onError`.** `null`, `false`, `0`, `''`, a string, a number, an array, `{action: 1}`, `{resource: {}}`, `{scope: 7}`, `{infer: 'true'}` and `{infer: 1}` are all refused and the engine is never consulted. The guard's old `if (!meta) return true` could not tell "no decorator" from "decorator carrying `null`", so a broken decorator opened the route instead of closing it, and a `scope` arriving as a number went straight into `engine.can` as the tenant to answer for. The refusal routes through `onError` so an operator sees which handler is broken rather than hunting a silent 403; the message contains `@gentleduck/iam:nest`.
 
-The validator is deliberately permissive about *extra* keys — your own annotation alongside these four is not refused — and strict about the four the guard reads.
+The validator is deliberately permissive about *extra* keys (your own annotation alongside these four is not refused) and strict about the four the guard reads.
 
 <Callout tone="warning" title="A handler with no decorator is allowed">
 Registering `iamNestAccessGuard` as `APP_GUARD` does **not** protect anything; it protects exactly the handlers carrying `@IamAuthorize`. A handler that loses its decorator in a refactor becomes public with no error, no log, and no failing test unless one is written for that route specifically. Pair it with an authentication guard that covers the whole app, and audit new controllers for a missing `@IamAuthorize`.
 </Callout>
 
 <Callout tone="warning" title="@IamAuthorize({}) always denies">
-Every field is optional, so `{}` is readable; with `infer` unset, `resource` falls back to the literal `'unknown'`, which is the engine's reserved refusal token. Same for `@IamAuthorize({ action: 'read' })` with no `resource`. If you mean "check with the defaults", write `@IamAuthorize()` — its default argument is `{ infer: true }`.
+Every field is optional, so `{}` is readable; with `infer` unset, `resource` falls back to the literal `'unknown'`, which is the engine's reserved refusal token. Same for `@IamAuthorize({ action: 'read' })` with no `resource`. If you mean "check with the defaults", write `@IamAuthorize()`: its default argument is `{ infer: true }`.
 </Callout>
 
 ## `@IamAuthorize`
@@ -152,7 +152,7 @@ export function IamAuthorize<
 | `scope` | `TScope` | falls back to the guard's `getScope(request)` | Multi-tenant scope. |
 | `infer` | `boolean` | `false`; the whole `meta` argument defaults to `{ infer: true }` | Derives both action and resource from the request, ignoring `action` and `resource`. |
 
-Omitting the argument entirely gives `{ infer: true }`, which the test `default meta has infer:true` pins. Passing `{ infer: true, action: 'publish' }` still infers — `infer` is checked first and wins for both fields.
+Omitting the argument entirely gives `{ infer: true }`, which the test `default meta has infer:true` pins. Passing `{ infer: true, action: 'publish' }` still infers; `infer` is checked first and wins for both fields.
 
 The decorator writes the metadata twice: through `Reflect.defineMetadata(IAM_ACCESS_METADATA_KEY, meta, descriptor.value)` when `reflect-metadata` is loaded, and as an own `__accessMeta` property on the handler function so the guard also works without that package.
 
@@ -193,13 +193,13 @@ export class PostsController {
 
 | Field | Derivation |
 | --- | --- |
-| action | `iamActionForMethod(request.method)` — an unmapped method yields the reserved refusal token, **not** `'read'` |
+| action | `iamActionForMethod(request.method)`: an unmapped method yields the reserved refusal token, **not** `'read'` |
 | resource | `inferResource(request)`, below |
 
 `inferResource` has to agree with `iamDefaultResource`, or a policy written against Express silently does not apply under Nest. The order matters:
 
-1. If `request.path` is ambiguous, return the refusal token — **before** looking at the route template. A matched template does not make an ambiguous target safe; it only records which route Express picked for it. Express matched `/public/*` for `/public/../admin`, so an earlier version returned a confident `public` while Hono and Next served `/admin`.
-2. If `request.route?.path` is not a string — the normal case under `@nestjs/platform-fastify`, which exposes `routeOptions.url` / `routerPath` and sets no `route` — delegate to `iamDefaultResource(request.path).type`.
+1. If `request.path` is ambiguous, return the refusal token, **before** looking at the route template. A matched template does not make an ambiguous target safe; it only records which route Express picked for it. Express matched `/public/*` for `/public/../admin`, so an earlier version returned a confident `public` while Hono and Next served `/admin`.
+2. If `request.route?.path` is not a string (the normal case under `@nestjs/platform-fastify`, which exposes `routeOptions.url` / `routerPath` and sets no `route`), delegate to `iamDefaultResource(request.path).type`.
 3. Otherwise take the **first** non-`:param` segment of the template.
 
 | Template | Resource |
@@ -213,7 +213,7 @@ export class PostsController {
 | `/%61dmin` | `unknown` |
 | `/:id`, `/` | `root` |
 
-So `@Controller('posts')` with `@Get(':id')` infers `posts`, and `/admin/users/:id/roles` infers `admin`, not `roles`. Taking the *last* segment — the historical behaviour — authorized `/posts/42` against `42` on any platform with no `request.route`. Returning `'*'` verbatim was worse: `'*'` is the engine's wildcard *pattern* sentinel, so a `@Get('*')` route matched every `resources: ['*']` allow and no targeted deny.
+So `@Controller('posts')` with `@Get(':id')` infers `posts`, and `/admin/users/:id/roles` infers `admin`, not `roles`. Taking the *last* segment (the historical behaviour) authorized `/posts/42` against `42` on any platform with no `request.route`. Returning `'*'` verbatim was worse: `'*'` is the engine's wildcard *pattern* sentinel, so a `@Get('*')` route matched every `resources: ['*']` allow and no targeted deny.
 
 For typed actions and resources, parameterise the decorator at the call site rather than looking for a factory:
 
@@ -248,7 +248,7 @@ export function iamNestAccessGuard<
 | `getEnvironment` | `(req: NestRequest) => IamRequest.IEnvironment` | `iamExtractEnvironment(req)` | `{ ip, userAgent, timestamp }`. |
 | `getResourceId` | `(req: NestRequest) => string \| undefined` | `req.params?.id` | Resource instance id. |
 | `getScope` | `(req: NestRequest) => TScope \| undefined` | none | Used only when the decorator carries no `scope`. |
-| `getResourceAttributes` | `(req, ctx) => Attributes \| Promise<Attributes>` | none — attributes stay `{}` | Since 5.2.0. Computes `resource.attributes` before the check. |
+| `getResourceAttributes` | `(req, ctx) => Attributes \| Promise<Attributes>` | none: attributes stay `{}` | Since 5.2.0. Computes `resource.attributes` before the check. |
 | `onError` | `(err: Error, req: NestRequest) => boolean` | `() => false` | The decision when the check throws. Returning `true` fails open. |
 
 ```ts
@@ -297,7 +297,7 @@ iamNestAccessGuard(engine, {
 })
 ```
 
-Values must be `IamPrimitives.AttributeValue`. Express an absent value as `null`, never `undefined` — the test `merges getResourceAttributes into the resource passed to engine.can` uses exactly that convention. The hook is awaited inside the guard's `try`, so a rejection lands in `onError` and, by default, denies.
+Values must be `IamPrimitives.AttributeValue`. Express an absent value as `null`, never `undefined`: the test `merges getResourceAttributes into the resource passed to engine.can` uses exactly that convention. The hook is awaited inside the guard's `try`, so a rejection lands in `onError` and, by default, denies.
 
 ## Subject, scope, and environment
 
@@ -315,7 +315,7 @@ The decorator's `scope` wins over `getScope`; the tests `decorator scope takes p
 
 ### Forwarded-IP normalisation
 
-The default `getEnvironment` passes the Nest request straight to `iamExtractEnvironment`, which leaves **`environment.ip` undefined** — even though express-backed Nest has a perfectly good `req.ip`. The helper ignores it without an opt-in, because an integration may fill `req.ip` from a platform header rather than a socket, and there is no guess that is right on every deployment.
+The default `getEnvironment` passes the Nest request straight to `iamExtractEnvironment`, which leaves **`environment.ip` undefined**, even though express-backed Nest has a perfectly good `req.ip`. The helper ignores it without an opt-in, because an integration may fill `req.ip` from a platform header rather than a socket, and there is no guess that is right on every deployment.
 
 Opt in explicitly, after configuring the platform's own proxy trust:
 
@@ -341,7 +341,7 @@ A condition on `environment.ip` without that opt-in reads as a **non-match**, no
 | `getEnvironment`, `getResourceAttributes`, or `engine.can()` throws | `onError(err, req)`, default `false` | `403 Forbidden` from Nest |
 | `getUserId` throws | inside the guard's `try` | `onError(err, req)`, default `false` |
 
-The guard never produces a 401, because it returns a boolean rather than a response — it has no way to distinguish 401 from 403, so Nest's own filter decides. Distinguish "not logged in" from "not allowed" in an authentication guard placed before this one, or throw `UnauthorizedException` from a custom `getUserId` when the request has no subject.
+The guard never produces a 401, because it returns a boolean rather than a response; it has no way to distinguish 401 from 403, so Nest's own filter decides. Distinguish "not logged in" from "not allowed" in an authentication guard placed before this one, or throw `UnauthorizedException` from a custom `getUserId` when the request has no subject.
 
 `engine.can()` does not throw on an authorisation failure: it validates the subject id, catches adapter and policy errors, routes them to the engine's `onError` hook, and returns `false`. See [engine methods](/duck-iam/advanced/engine/methods).
 
@@ -413,7 +413,7 @@ export class IamAdminController {
 | `assignRole` | `admin.assignRole(subjectId, body.roleId, body.scope)` | `create` / `role-assignment` | the `subjectId` argument |
 | `revokeRole` | `admin.revokeRole(subjectId, roleId)` | `delete` / `role-assignment` | the `subjectId` argument |
 
-`event.method` is `req.method` and `event.path` is `req.route?.path ?? req.path ?? ''` — the **route pattern** when Nest supplies it, so identifiers are usually already absent from the audit path and `redactPath` will be operating on a template. All four adapters fill `targetId` from the document's `id` for policy and role writes.
+`event.method` is `req.method` and `event.path` is `req.route?.path ?? req.path ?? ''`, the **route pattern** when Nest supplies it, so identifiers are usually already absent from the audit path and `redactPath` will be operating on a template. All four adapters fill `targetId` from the document's `id` for policy and role writes.
 
 ### Denials are thrown, not returned
 
@@ -443,7 +443,7 @@ A gate failure happens **before** `iamWithAdminAudit`, so a rejected mutation fi
 
 | Option | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `authorize` | `(req: NestRequest) => unknown \| Promise<unknown>` | **required** | Runs on every operation, read and write. Return the actor itself, not `true` — `true` authorizes and records `actor: undefined` with a one-time `console.warn`. |
+| `authorize` | `(req: NestRequest) => unknown \| Promise<unknown>` | **required** | Runs on every operation, read and write. Return the actor itself, not `true`: `true` authorizes and records `actor: undefined` with a one-time `console.warn`. |
 | `csrfCheck` | `((req) => boolean) \| false` | `iamDefaultCsrfCheck` | Runs on reads **and** writes here. `false` disables it. |
 | `onAdminMutation` | `IamAdminAudit.Hook` | none | Fire-and-forget, fires on success and failure, never on a read. |
 | `redactPath` | `(path: string) => string` | identity | Rewrites `event.path` before the hook. |
@@ -460,7 +460,7 @@ Because Nest owns the response, these three hooks return an **error to throw** r
 
 Both `status` and `statusCode` are set: `statusCode` because Nest's base filter routes a non-`HttpException` to `handleUnknownError`, whose only non-500 branch duck-types `err.statusCode && err.message`; `status` is kept for express-style consumers.
 
-`onError` used to re-throw the original, so every failure except 401/403 arrived at the host with no status at all and an engine error's message rode out intact — `includeErrorMessage: false` governs only the *audit* string, so a driver error reading `DB password=hunter2` reached the host's filter with the flag off. Returning the original from a custom `onError` is now a deliberate choice.
+`onError` used to re-throw the original, so every failure except 401/403 arrived at the host with no status at all and an engine error's message rode out intact; `includeErrorMessage: false` governs only the *audit* string, so a driver error reading `DB password=hunter2` reached the host's filter with the flag off. Returning the original from a custom `onError` is now a deliberate choice.
 
 A document that fails the engine validator is the exception: it throws with `status`/`statusCode` `400` and the validator's `issues` attached, because a malformed document is the caller's mistake and a 500 tells a client to retry a request that can never succeed.
 
@@ -471,7 +471,7 @@ The last four options are the shared `IamAdminAudit.IOptions`, documented once o
 </Callout>
 
 <Callout tone="warning" title="CSRF check is on by default, including on reads">
-`iamDefaultCsrfCheck` runs before `authorize`, rejecting requests whose `Sec-Fetch-Site` is `cross-site` or `cross-origin` with a thrown error carrying `status`/`statusCode` `403`, and firing no audit event. It applies to `listPolicies` and `listRoles` as well as to the four mutations — the read gate calls the same `gateWithActor`. Nest was once the only adapter checking reads; the other three were aligned to it rather than the other way round. A predicate that throws is also a refusal. Requests with no such header (curl, service-to-service) pass and must be gated by bearer or mTLS auth inside `authorize`. A one-time `console.info` names the change when you did not pass `csrfCheck` explicitly.
+`iamDefaultCsrfCheck` runs before `authorize`, rejecting requests whose `Sec-Fetch-Site` is `cross-site` or `cross-origin` with a thrown error carrying `status`/`statusCode` `403`, and firing no audit event. It applies to `listPolicies` and `listRoles` as well as to the four mutations: the read gate calls the same `gateWithActor`. Nest was once the only adapter checking reads; the other three were aligned to it rather than the other way round. A predicate that throws is also a refusal. Requests with no such header (curl, service-to-service) pass and must be gated by bearer or mTLS auth inside `authorize`. A one-time `console.info` names the change when you did not pass `csrfCheck` explicitly.
 </Callout>
 
 <Callout tone="info" title="Scoped revoke is not on the operations">
@@ -486,8 +486,8 @@ The last four options are the shared `IamAdminAudit.IOptions`, documented once o
 | `iamNestAccessGuard(engine, opts?)` | function | `(context) => Promise<boolean>` for `canActivate` |
 | `createIamEngineProvider(factory)` | function | `{ provide: IAM_ACCESS_ENGINE_TOKEN, useFactory }` |
 | `createIamAdminOperations(engine, opts)` | function | Six gated admin operations |
-| `IAM_ACCESS_ENGINE_TOKEN` | `string` — `'ACCESS_ENGINE'` | DI token for the engine |
-| `IAM_ACCESS_METADATA_KEY` | `string` — `'duck-iam:authorize'` | `reflect-metadata` key for the decorator |
+| `IAM_ACCESS_ENGINE_TOKEN` | `string`: `'ACCESS_ENGINE'` | DI token for the engine |
+| `IAM_ACCESS_METADATA_KEY` | `string`: `'duck-iam:authorize'` | `reflect-metadata` key for the decorator |
 | `NestRequest` | interface | The request shape the guard reads |
 | `IamNest.IAuthorizeMeta<TAction, TResource, TScope>` | interface | `action`, `resource`, `scope`, `infer` |
 | `IamNest.IGuardOptions<TScope>` | interface | Guard extractors and `onError` |
@@ -510,7 +510,7 @@ The namespace is type-only and costs nothing at runtime.
 
 - Undecorated handlers are allowed. Global registration is not blanket protection.
 - `infer: true` overrides an explicit `action` and `resource` in the same decorator; do not combine them.
-- Without `infer`, an omitted `resource` becomes the literal `'unknown'` — the engine's reserved refusal token, which `authorize` refuses before consulting any policy. The route is dead-denied, not merely unmatched. An omitted `action` becomes `'read'`.
+- Without `infer`, an omitted `resource` becomes the literal `'unknown'`: the engine's reserved refusal token, which `authorize` refuses before consulting any policy. The route is dead-denied, not merely unmatched. An omitted `action` becomes `'read'`.
 - A `@IamAuthorize` carrying a bad value (`null`, a string, `{scope: 7}`) denies through `onError` rather than allowing. Only a genuinely absent decorator allows.
 - `__accessMeta` is read with `in`, which walks the prototype chain, so an inherited decorator decides an overriding handler's request.
 - Nothing in this module ever answers 404. Every refusal it produces is 400, 401, 403 or 500.

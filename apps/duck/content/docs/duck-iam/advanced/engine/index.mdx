@@ -67,7 +67,7 @@ One `engine.can()` call goes through these stages.
 
 The `subjectId` guard at `B` rejects anything that is not a string of 1 to 1024 characters. `C` is the subject cache plus single-flight coalescing. `E` exists because a string `subject.roles` would substring-match a `contains` condition. `F` merges scoped role grants for the request's scope. `G` runs your `beforeEvaluate` hook, and `H` deliberately runs *after* it so a hook-pinned `environment.now` survives.
 
-`I` is the load-bearing step: the [compiled table](/duck-iam/advanced/engine/compiled) produces the verdict in **both** modes. [Development](/duck-iam/advanced/engine/modes) additionally runs the interpreter, because the table cannot explain itself — a `CONST_ALLOW` cell is one byte and policy identity is erased at compile time. That second run is what fills in `decision.policy` and `decision.rule`, and a disagreement between the two throws rather than answering. `M` fires in both modes; production synthesises a verdict-only decision for `afterEvaluate` and `onDeny`, and only when one of them is wired.
+`I` is the load-bearing step: the [compiled table](/duck-iam/advanced/engine/compiled) produces the verdict in **both** modes. [Development](/duck-iam/advanced/engine/modes) additionally runs the interpreter, because the table cannot explain itself: a `CONST_ALLOW` cell is one byte and policy identity is erased at compile time. That second run is what fills in `decision.policy` and `decision.rule`, and a disagreement between the two throws rather than answering. `M` fires in both modes; production synthesises a verdict-only decision for `afterEvaluate` and `onDeny`, and only when one of them is wired.
 
 ## Reading order
 
@@ -92,7 +92,7 @@ new IamEngine<TAction, TResource, TRole, TScope, TMode>(
 
 The five type parameters narrow the API: `TAction` and `TResource` constrain what you may pass to `can`/`check`, `TRole` constrains `admin.assignRole`, `TScope` constrains every `scope` argument, and `TMode` decides statically whether the evaluation methods return `AccessControl.IDecision` or `boolean`. The four string parameters default to `string`; `TMode` defaults to `'production'`.
 
-`TMode` is a *type* argument. `IConfig.mode` is optional, so writing `new IamEngine<A, R, Ro, S, 'development'>({ adapter })` types `check()` as returning `IDecision` while the engine still runs in production and returns a boolean — reading `.allowed` off it yields `undefined`, which is falsy, so the mismatch shows up as assertions that quietly pass. Always pass `mode` explicitly.
+`TMode` is a *type* argument. `IConfig.mode` is optional, so writing `new IamEngine<A, R, Ro, S, 'development'>({ adapter })` types `check()` as returning `IDecision` while the engine still runs in production and returns a boolean: reading `.allowed` off it yields `undefined`, which is falsy, so the mismatch shows up as assertions that quietly pass. Always pass `mode` explicitly.
 
 A factory is exported for callers who prefer functions to `new`:
 
@@ -167,7 +167,7 @@ Seven checks run in the constructor body, plus two more inside `IamLRUCache`'s c
 | `cacheTTL` non-finite or negative | `RangeError` | `ttlMs must be a finite number >= 0` (from `IamLRUCache`) |
 | `maxCacheSize` non-finite or `< 1` | `RangeError` | `maxSize must be a finite number >= 1` (from `IamLRUCache`) |
 
-The engine's own messages are prefixed `[@gentleduck/iam:engine]`. The finiteness checks exist because `NaN > x` is always `false`: a `NaN` limit would silently disable the bound it was supposed to enforce rather than failing loudly. The `policyCombine` guard exists because both evaluators branch on `'and'` and `'allow-overrides'` and fall through to first-applicable — the most permissive of the three — for anything else, so a typo silently lost deny-overrides semantics.
+The engine's own messages are prefixed `[@gentleduck/iam:engine]`. The finiteness checks exist because `NaN > x` is always `false`: a `NaN` limit would silently disable the bound it was supposed to enforce rather than failing loudly. The `policyCombine` guard exists because both evaluators branch on `'and'` and `'allow-overrides'` and fall through to first-applicable (the most permissive of the three) for anything else, so a typo silently lost deny-overrides semantics.
 
 ### AccessControl.IDecision
 
@@ -234,7 +234,7 @@ Three real shapes:
 
 The synthesized shapes carry `duration: 0` because no evaluation ran. The engine builds three of them: `'Evaluation error'` from `authorize`'s catch, `'Subject resolution error'` from `check`'s catch, and `'invalid subjectId'` from `check`'s argument guard.
 
-Production mode returns a bare `boolean` from `authorize` and `check`, so there is nowhere to carry `failure` — use the `onError` hook. `afterEvaluate` and `onDeny` still fire in production, with a verdict-only decision synthesised for them; `policy`, `rule` and the interpreter's real `reason` are not in it, because the compiled table does not retain policy identity.
+Production mode returns a bare `boolean` from `authorize` and `check`, so there is nowhere to carry `failure`: use the `onError` hook. `afterEvaluate` and `onDeny` still fire in production, with a verdict-only decision synthesised for them; `policy`, `rule` and the interpreter's real `reason` are not in it, because the compiled table does not retain policy identity.
 
 ### Module-level exports
 

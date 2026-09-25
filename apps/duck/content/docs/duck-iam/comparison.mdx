@@ -93,7 +93,7 @@ Rows marked "docs" are read from the other project's documentation rather than t
 
 The duck-iam column is read from the 5.9.0 source and `package.json`. Competitor dependency counts and licenses come from each project's own published metadata, checked 2026-03-30, and go stale when they release. For the numbers behind the "measured here" row, see [benchmarks](/duck-iam/benchmarks).
 
-Two smaller libraries appear in the benchmark suite without a column here, because their surface is too narrow for the axes above. `easy-rbac` is roughly 2 KB and needs no configuration beyond a hierarchical role object — a good fit when hierarchical RBAC is the entire requirement, and it benchmarks faster than duck-iam's own `iamEvaluateFast()`. `@rbac/rbac` is around 4 KB, allows role updates at runtime, and ships Express, NestJS, and Fastify middleware. Neither supports attribute conditions, so neither appears in the ABAC scenarios. Both size figures are bundlephobia numbers checked 2026-03-30.
+Two smaller libraries appear in the benchmark suite without a column here, because their surface is too narrow for the axes above. `easy-rbac` is roughly 2 KB and needs no configuration beyond a hierarchical role object: a good fit when hierarchical RBAC is the entire requirement, and it benchmarks faster than duck-iam's own `iamEvaluateFast()`. `@rbac/rbac` is around 4 KB, allows role updates at runtime, and ships Express, NestJS, and Fastify middleware. Neither supports attribute conditions, so neither appears in the ABAC scenarios. Both size figures are bundlephobia numbers checked 2026-03-30.
 
 ## When to pick duck-iam
 
@@ -102,7 +102,7 @@ Two smaller libraries appear in the benchmark suite without a column here, becau
 - You need multi-tenant [scoped roles](/duck-iam/core/roles/scoped): the same subject holding different roles per organization.
 - You need to answer "why was this denied?" in production support, and [`explain()`](/duck-iam/advanced/explain) gives you the rule, the condition, and the actual versus expected values.
 - Your policies change at runtime, written by an admin UI or promoted between environments through [`engine.admin.export()`](/duck-iam/advanced/engine/admin).
-- You want the operability surface — health probes, cache statistics, cross-instance invalidation, adapter timeouts — without building it.
+- You want the operability surface (health probes, cache statistics, cross-instance invalidation, adapter timeouts) without building it.
 
 ## When to pick something else
 
@@ -131,7 +131,7 @@ Feature rows are not weighted. Casbin's twenty-plus adapters matter more than du
 
 ## See also
 
-- [Benchmarks](/duck-iam/benchmarks) — the measured numbers, the hardware, and the methodology.
-- [Introduction](/duck-iam/introduction) — the model and the docs routing map.
-- [Cookbook](/duck-iam/guides/cookbook) — the patterns this comparison keeps alluding to.
-- [Pairing with duck-auth](/duck-iam/guides/auth-bridge) — the identity half duck-iam deliberately does not do.
+- [Benchmarks](/duck-iam/benchmarks): the measured numbers, the hardware, and the methodology.
+- [Introduction](/duck-iam/introduction): the model and the docs routing map.
+- [Cookbook](/duck-iam/guides/cookbook): the patterns this comparison keeps alluding to.
+- [Pairing with duck-auth](/duck-iam/guides/auth-bridge): the identity half duck-iam deliberately does not do.

@@ -1,6 +1,6 @@
 ---
 title: Hono
-description: The Hono middleware, per-route guard, and admin router — edge-safe, with cf-connecting-ip handling and normalised forwarded IPs
+description: The Hono middleware, per-route guard, and admin router: edge-safe, with cf-connecting-ip handling and normalised forwarded IPs
 section: Integrations
 ---
 `@gentleduck/iam/server/hono` exposes the same two request gates as the Express wrapper plus a function that binds admin routes onto a router you already own. It imports no Node built-ins and no Hono types, so it runs wherever Hono runs: Node, Bun, Deno, Cloudflare Workers, and Vercel Edge. The shared extraction and audit behaviour lives in [generic helpers](/duck-iam/integrations/server/generic); this page documents only what Hono adds.
@@ -74,14 +74,14 @@ This sequence diagram traces `DELETE /posts/42` through a Hono app with the auth
             G-->>C: 403 onDenied
         else allowed
             E-->>G: true
-            G->>H: await next() — outside the try
+            G->>H: await next(), outside the try
             H-->>C: 200, or the app's own onError
         end
     end`} />
 
-**`await next()` sits outside the wrapper's `try`, deliberately.** Hono was once the only one of the five integrations that awaited the downstream handler inside its own try, so a business-logic error thrown by the route came back out of `await next()`, was caught here, and was reported through this middleware's `onError` — pre-empting the app's own `app.onError` and turning every route failure into an authorization-shaped 500. Both `iamAccessMiddleware` and `iamGuard` now let a route error past. An evaluation error still reaches `onError`.
+**`await next()` sits outside the wrapper's `try`, deliberately.** Hono was once the only one of the five integrations that awaited the downstream handler inside its own try, so a business-logic error thrown by the route came back out of `await next()`, was caught here, and was reported through this middleware's `onError`, pre-empting the app's own `app.onError` and turning every route failure into an authorization-shaped 500. Both `iamAccessMiddleware` and `iamGuard` now let a route error past. An evaluation error still reaches `onError`.
 
-Everything before that — `getUserId` included — runs inside the `try`, so a throwing or rejecting extractor reaches this middleware's `onError` rather than the framework boundary.
+Everything before that (`getUserId` included) runs inside the `try`, so a throwing or rejecting extractor reaches this middleware's `onError` rather than the framework boundary.
 
 ## `iamAccessMiddleware`
 
@@ -106,9 +106,9 @@ export function iamAccessMiddleware<
 | `getAction` | `(c) => string` | `iamActionForMethod(c.req.method)` | Method map from the generic helpers; an unmapped method yields the reserved refusal token, **not** `'read'`. |
 | `trustCloudflareHeaders` | `boolean` | `false` | Opt in to reading `cf-connecting-ip` into `environment.ip`. Off, `ip` stays `undefined`. |
 | `getEnvironment` | `(c) => IamRequest.IEnvironment` | the Hono `defaultEnv` below | `{ ip, userAgent, timestamp }`. |
-| `getScope` | `(c) => TScope \| undefined` | none — `scope` stays `undefined` | Multi-tenant scope. |
+| `getScope` | `(c) => TScope \| undefined` | none: `scope` stays `undefined` | Multi-tenant scope. |
 | `onDenied` | `(c) => Response` | `c.json({ error: 'Forbidden' }, 403)` | Runs when `engine.can()` returns `false`. |
-| `onError` | `(err, c) => Response` | `c.json({ error: 'Internal server error' }, 500)` | Runs when an extractor or `engine.can()` throws. **Not** for a downstream route error — that goes to your `app.onError`. |
+| `onError` | `(err, c) => Response` | `c.json({ error: 'Internal server error' }, 500)` | Runs when an extractor or `engine.can()` throws. **Not** for a downstream route error; that goes to your `app.onError`. |
 
 The 401 response is fixed at `c.json({ error: 'Unauthorized' }, 401)` and has no option. `resource.attributes` is always `{}`.
 
@@ -205,7 +205,7 @@ function defaultEnv(c: HonoContext, trustCloudflareHeaders = false): IamRequest.
 On, the chain is `cf-connecting-ip`, then `x-forwarded-for`, then `x-real-ip`, and every one of the three goes through the same normaliser: reject the whole header above 4096 characters, take the text before the first comma, trim, reject if blank or above 256. `cf-connecting-ip` gets no special exemption.
 
 <Callout tone="warning" title="cf-connecting-ip is trustworthy only when Cloudflare is the sole ingress">
-Cloudflare overwrites it on every request, which is what makes it usable — but a Hono app reachable directly lets any client set it. An app behind its own proxy should compute the address in `getEnvironment` instead of enabling this flag.
+Cloudflare overwrites it on every request, which is what makes it usable, but a Hono app reachable directly lets any client set it. An app behind its own proxy should compute the address in `getEnvironment` instead of enabling this flag.
 </Callout>
 
 A condition on `environment.ip` with the flag off reads as a **non-match**, not an error: a deny rule keyed on it never fires, and the request is allowed, silently.
@@ -223,7 +223,7 @@ iamAccessMiddleware(engine, {
 
 ### Malformed JSON bodies
 
-Hono and Next are the two adapters that parse the admin request body themselves, *inside* the audited handler, so `iamReadJsonBody` answers a `400 { error: 'Invalid request', issues: ['MALFORMED_JSON'] }` for a truncated upload or a form post carrying `Content-Type: application/json`. Before that, the `SyntaxError` escaped into the generic catch and became a 500 — telling a client to retry a request that can never succeed. Express and Nest never reach this path, because their hosts parse the body first.
+Hono and Next are the two adapters that parse the admin request body themselves, *inside* the audited handler, so `iamReadJsonBody` answers a `400 { error: 'Invalid request', issues: ['MALFORMED_JSON'] }` for a truncated upload or a form post carrying `Content-Type: application/json`. Before that, the `SyntaxError` escaped into the generic catch and became a 500, telling a client to retry a request that can never succeed. Express and Nest never reach this path, because their hosts parse the body first.
 
 The parser's own message is deliberately not repeated: it quotes the offending bytes, which is caller-controlled content on its way into an operator's log.
 
@@ -284,7 +284,7 @@ app.route('/api/access-admin', admin)
 | `POST /subjects/:id/roles` | `admin.assignRole(id, roleId, scope)` | `create` / `role-assignment` | `c.req.param('id')` |
 | `DELETE /subjects/:id/roles/:roleId` | `admin.revokeRole(id, roleId)` | `delete` / `role-assignment` | `c.req.param('id')` |
 
-Mutations write `c.req.method` and `c.req.path` into the audit event, and `targetId` is the document's `id` for policy and role writes — the same on all four adapters.
+Mutations write `c.req.method` and `c.req.path` into the audit event, and `targetId` is the document's `id` for policy and role writes: the same on all four adapters.
 
 ### Body validation on role assignment
 
@@ -302,7 +302,7 @@ These are returned responses, not throws, so `iamWithAdminAudit` records them wi
 
 | Option | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `authorize` | `(c) => unknown \| Promise<unknown>` | **required** | Runs on every endpoint, read and write. A falsy return (`false`, `0`, `''`, `null`, `undefined`, `NaN`) is 401; a throw is 500. Return the actor itself, not `true` — `true` authorizes and records `actor: undefined` with a one-time `console.warn`. |
+| `authorize` | `(c) => unknown \| Promise<unknown>` | **required** | Runs on every endpoint, read and write. A falsy return (`false`, `0`, `''`, `null`, `undefined`, `NaN`) is 401; a throw is 500. Return the actor itself, not `true`: `true` authorizes and records `actor: undefined` with a one-time `console.warn`. |
 | `csrfCheck` | `((c) => boolean) \| false` | `iamDefaultCsrfCheck` | Runs on **every** admin request, reads included. `false` disables the phase. |
 | `onUnauthorized` | `(c) => Response` | `c.json({ error: 'Unauthorized' }, 401)` | Replaces the falsy-`authorize` response. |
 | `onError` | `(err, c) => Response` | `c.json({ error: 'Internal server error' }, 500)` | Wraps a throwing `authorize` or handler. |
@@ -318,7 +318,7 @@ The last four are the shared `IamAdminAudit.IOptions`; their exact semantics, th
 </Callout>
 
 <Callout tone="warning" title="CSRF check is on by default">
-All six routes — the two GETs included — run `iamDefaultCsrfCheck` **before** `authorize`, rejecting requests whose `Sec-Fetch-Site` is `cross-site` or `cross-origin` with `c.json({ error: 'Forbidden (CSRF check failed)' }, 403)` and firing no audit event. That response is fixed and not covered by `onUnauthorized` or `onError`. A predicate that throws is also a 403. Requests with no such header (curl, Workers-to-Workers) pass and must be gated by bearer or mTLS auth inside `authorize`. A one-time `console.info` names the change when you did not pass `csrfCheck` explicitly.
+All six routes (the two GETs included) run `iamDefaultCsrfCheck` **before** `authorize`, rejecting requests whose `Sec-Fetch-Site` is `cross-site` or `cross-origin` with `c.json({ error: 'Forbidden (CSRF check failed)' }, 403)` and firing no audit event. That response is fixed and not covered by `onUnauthorized` or `onError`. A predicate that throws is also a 403. Requests with no such header (curl, Workers-to-Workers) pass and must be gated by bearer or mTLS auth inside `authorize`. A one-time `console.info` names the change when you did not pass `csrfCheck` explicitly.
 </Callout>
 
 <Callout tone="info" title="Scoped revoke is not on the router">
@@ -327,7 +327,7 @@ All six routes — the two GETs included — run `iamDefaultCsrfCheck` **before*
 
 ## Edge runtimes
 
-The module touches no Node built-in — no `process`, no `Buffer`, no `crypto` import — so it runs unchanged on Workers, Deno Deploy, Bun, and Vercel Edge. What decides edge compatibility is the adapter, not the wrapper:
+The module touches no Node built-in (no `process`, no `Buffer`, no `crypto` import), so it runs unchanged on Workers, Deno Deploy, Bun, and Vercel Edge. What decides edge compatibility is the adapter, not the wrapper:
 
 | Runtime | Works with |
 | --- | --- |

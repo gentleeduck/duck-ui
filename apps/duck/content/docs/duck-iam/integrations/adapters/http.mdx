@@ -1,10 +1,10 @@
 ---
 title: HTTP adapter
-description: Back the store with a remote REST API — the complete wire protocol, authentication, SSRF guards, retry, and circuit breaker.
+description: Back the store with a remote REST API: the complete wire protocol, authentication, SSRF guards, retry, and circuit breaker.
 section: Integrations
 ---
 
-`IamHttpAdapter` turns the fourteen adapter methods it implements into fourteen REST calls against a service you run. It moves *storage* behind a service boundary, not evaluation: the engine still resolves the subject and evaluates policies locally, it just fetches them over `fetch` instead of from a database. The adapter ships the SRE plumbing that implies — per-request timeout, exponential-backoff retry, a circuit breaker, response size caps, and construction-time SSRF validation of the base URL. The wire protocol below is the whole of what your server has to implement.
+`IamHttpAdapter` turns the fourteen adapter methods it implements into fourteen REST calls against a service you run. It moves *storage* behind a service boundary, not evaluation: the engine still resolves the subject and evaluates policies locally, it just fetches them over `fetch` instead of from a database. The adapter ships the SRE plumbing that implies: per-request timeout, exponential-backoff retry, a circuit breaker, response size caps, and construction-time SSRF validation of the base URL. The wire protocol below is the whole of what your server has to implement.
 
 ## Install
 
@@ -45,7 +45,7 @@ const engine = new IamEngine({ adapter })
 | `allowedHosts` | `string[]` | `undefined` | Host allowlist for `baseUrl`. Omitted, any host is accepted and a one-time `console.warn` fires. |
 | `allowPrivateHosts` | `boolean` | `false` | Permits a `baseUrl` whose hostname is a private, loopback, or link-local IP literal. |
 | `headers` | `Record<string, string>` or `() => Record<string, string> \| Promise<…>` | `{}` | Static headers, or a function awaited before every request. This is how the adapter authenticates. |
-| `fetch` | `typeof globalThis.fetch` | `globalThis.fetch` | Custom fetch — a polyfill, or middleware for logging, tracing, or mTLS. |
+| `fetch` | `typeof globalThis.fetch` | `globalThis.fetch` | Custom fetch: a polyfill, or middleware for logging, tracing, or mTLS. |
 | `timeoutMs` | `number >= 0` | `5_000` | Per-request abort. `0` disables it and leaves only the engine's `adapterTimeoutMs`. |
 | `retries` | integer `>= 0` | `2` | Retries on a transient failure, so 3 attempts total. |
 | `backoffMs` | `number >= 0` | `100` | Base for exponential backoff: attempt N waits `backoffMs * 2^(N-1)` plus jitter. |
@@ -70,7 +70,7 @@ Fourteen endpoints, all relative to `baseUrl`. Every path segment interpolated f
 | `GET` | `/policies` | — | JSON array of `AccessControl.IPolicy` | A non-array body is reported once and treated as `[]`. |
 | `GET` | `/policies/{id}` | — | one `IPolicy`, or `404` | `404` maps to `null`, the interface's "not found". |
 | `PUT` | `/policies` | the full `IPolicy` | any 2xx; body ignored | Upsert keyed on `policy.id`. The id is in the body, not the path. |
-| `DELETE` | `/policies/{id}` | — | any 2xx; body ignored | Must be idempotent — a `404` here **throws**, it is not treated as success. |
+| `DELETE` | `/policies/{id}` | — | any 2xx; body ignored | Must be idempotent: a `404` here **throws**, it is not treated as success. |
 | `GET` | `/roles` | — | JSON array of `AccessControl.IRole` | As `/policies`. |
 | `GET` | `/roles/{id}` | — | one `IRole`, or `404` | `404` maps to `null`. |
 | `PUT` | `/roles` | the full `IRole` | any 2xx | Upsert keyed on `role.id`. |
@@ -109,8 +109,8 @@ Two of these obligations are the reason the compliance suite gives this adapter 
 
 ### The unscoped-roles contract
 
-<Callout tone="warning" title="SEC-059 — your server must split scoped from unscoped">
-  `GET /subjects/{id}/roles` must return **global (unscoped) role ids only**. Scoped assignments belong to `GET /subjects/{id}/scoped-roles`. The adapter forwards whatever your server returns and cannot enforce this — it is the one adapter where the contract lives on your side. A server that collapses both into one list gives every subject their scoped roles in *every* scope, so the same subject evaluates with more permissions here than under the memory, file, redis, drizzle, or prisma adapter. The JSDoc on `IamAdapter.ISubjectStore.getSubjectRoles` states it; the compliance suite's reference server implements it.
+<Callout tone="warning" title="SEC-059: your server must split scoped from unscoped">
+  `GET /subjects/{id}/roles` must return **global (unscoped) role ids only**. Scoped assignments belong to `GET /subjects/{id}/scoped-roles`. The adapter forwards whatever your server returns and cannot enforce this: it is the one adapter where the contract lives on your side. A server that collapses both into one list gives every subject their scoped roles in *every* scope, so the same subject evaluates with more permissions here than under the memory, file, redis, drizzle, or prisma adapter. The JSDoc on `IamAdapter.ISubjectStore.getSubjectRoles` states it; the compliance suite's reference server implements it.
 </Callout>
 
 ### Reference server
@@ -118,28 +118,28 @@ Two of these obligations are the reason the compliance suite gives this adapter 
 The package's own compliance test wires a minimal in-memory server the adapter is held against, and it is the clearest executable specification of the protocol. The routing it implements, verbatim in behaviour:
 
 ```ts
-// GET /subjects/:id/roles  — unscoped only, deduplicated
+// GET /subjects/:id/roles: unscoped only, deduplicated
 json([...new Set(entries.filter((e) => e.scope == null).map((e) => e.role))])
 
-// GET /subjects/:id/scoped-roles — scoped only
+// GET /subjects/:id/scoped-roles: scoped only
 json(entries.filter((e) => e.scope != null).map((e) => ({ role: e.role, scope: e.scope })))
 
-// POST /subjects/:id/roles — idempotent on (role, scope)
+// POST /subjects/:id/roles: idempotent on (role, scope)
 if (!entries.some((e) => e.role === roleId && e.scope === scope)) entries.push({ role: roleId, scope })
 
-// DELETE /subjects/:id/roles/:roleId — no scope param means every scope
+// DELETE /subjects/:id/roles/:roleId: no scope param means every scope
 scope === null
   ? entries.filter((e) => e.role !== roleId)
   : entries.filter((e) => !(e.role === roleId && e.scope === scope))
 
-// PATCH /subjects/:id/attributes — merge, never replace
+// PATCH /subjects/:id/attributes: merge, never replace
 attributes.set(subjectId, { ...(attributes.get(subjectId) ?? {}), ...body })
 
-// GET /policies/:id and /roles/:id — 404 for a miss, never 200 with null
+// GET /policies/:id and /roles/:id: 404 for a miss, never 200 with null
 hit ? json(hit) : json({ error: 'not found' }, 404)
 ```
 
-Note that it mounts under a path prefix (`baseUrl` ends in `/access`) and strips that prefix before routing — the adapter appends its paths to whatever `baseUrl` you give, so mounting the API at a subpath is supported.
+Note that it mounts under a path prefix (`baseUrl` ends in `/access`) and strips that prefix before routing: the adapter appends its paths to whatever `baseUrl` you give, so mounting the API at a subpath is supported.
 
 <Callout tone="info" title="The built-in admin router is not a drop-in server">
   `adminRouter` and friends cover part of the admin surface but not this contract: they lack the single-item lookups, the scoped-role read, and the subject-attribute endpoints. To serve `IamHttpAdapter`, implement the full set above or extend the admin router with what is missing. See [Server integrations](/duck-iam/integrations/server).
@@ -147,7 +147,7 @@ Note that it mounts under a path prefix (`baseUrl` ends in `/access`) and strips
 
 ## Authentication
 
-The adapter has no auth of its own — it merges whatever `headers` gives it into every request. Static headers for a fixed service token:
+The adapter has no auth of its own; it merges whatever `headers` gives it into every request. Static headers for a fixed service token:
 
 ```ts
 new IamHttpAdapter({
@@ -170,7 +170,7 @@ new IamHttpAdapter({
 })
 ```
 
-`Content-Type: application/json` is merged first and your `headers` last, so returning a `Content-Type` from your function overrides the default — do not, unless you mean to. There is deliberately no per-call header field: `HeadersInit` has three shapes, the merge handled one of them by spreading, and a `Headers` instance carrying `Authorization` spread to `{}` — the write went out unauthenticated with nothing to see.
+`Content-Type: application/json` is merged first and your `headers` last, so returning a `Content-Type` from your function overrides the default; do not, unless you mean to. There is deliberately no per-call header field: `HeadersInit` has three shapes, the merge handled one of them by spreading, and a `Headers` instance carrying `Authorization` spread to `{}`, so the write went out unauthenticated with nothing to see.
 
 For mTLS or a proxy, supply `fetch` instead and do the transport work there:
 
@@ -201,10 +201,10 @@ new IamHttpAdapter({
 
 `allowedHosts` matching is deliberate about its edges. Comparison is case-insensitive on both sides, a trailing FQDN dot is stripped, and internationalised names are punycoded through `new URL` before comparing. An entry may be a bare hostname or a `host:port` pair: a bare entry matches the hostname at any port, so `['example.com']` accepts `example.com`, `example.com:80`, and `example.com:8443`; a `host:port` entry matches only that exact port, so `example.com:8080` rejects both `example.com` and `example.com:9090`.
 
-The private-host check covers IPv4 (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, `0.0.0.0/8`), IPv6 (`::1`, `::`, `fc00::/7`, `fe80::/10`), and the tunnelling forms that smuggle an IPv4 address inside an IPv6 literal — IPv4-mapped (`::ffff:127.0.0.1` and its hex spelling `::ffff:7f00:1`), IPv4-compatible (`::127.0.0.1`), 6to4 (`2002:7f00:1::`), and NAT64 (`64:ff9b::127.0.0.1`). DNS names are never resolved, because that would need synchronous I/O at construction; constrain those with `allowedHosts`.
+The private-host check covers IPv4 (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, `0.0.0.0/8`), IPv6 (`::1`, `::`, `fc00::/7`, `fe80::/10`), and the tunnelling forms that smuggle an IPv4 address inside an IPv6 literal: IPv4-mapped (`::ffff:127.0.0.1` and its hex spelling `::ffff:7f00:1`), IPv4-compatible (`::127.0.0.1`), 6to4 (`2002:7f00:1::`), and NAT64 (`64:ff9b::127.0.0.1`). DNS names are never resolved, because that would need synchronous I/O at construction; constrain those with `allowedHosts`.
 
-<Callout tone="warning" title="SEC-042 — redirects are refused, not followed">
-  Every request is issued with `redirect: 'error'`. Before 2.1.0 the adapter followed redirects, so a `302` to `169.254.169.254` or an internal host bypassed the construction-time validation entirely — the guard ran once on `baseUrl` and never again. If your API legitimately redirects, point `baseUrl` at the final location.
+<Callout tone="warning" title="SEC-042: redirects are refused, not followed">
+  Every request is issued with `redirect: 'error'`. Before 2.1.0 the adapter followed redirects, so a `302` to `169.254.169.254` or an internal host bypassed the construction-time validation entirely: the guard ran once on `baseUrl` and never again. If your API legitimately redirects, point `baseUrl` at the final location.
 </Callout>
 
 <Callout tone="warning" title="Always set `allowedHosts`">
@@ -224,7 +224,7 @@ A non-2xx response throws `[@gentleduck/iam:http] HTTP <status>: <body>`. The bo
 | Class | Transient? | Behaviour |
 | --- | --- | --- |
 | 5xx | yes | Retried; the body is read once for the error message. |
-| 4xx | no | Thrown immediately as a definitive answer, and it **resets** the breaker's failure counter — the server answered. |
+| 4xx | no | Thrown immediately as a definitive answer, and it **resets** the breaker's failure counter: the server answered. |
 | `AbortError` (including the adapter's own timeout) | yes | Retried. |
 | `TypeError` (fetch's network-failure class) | yes | Retried. |
 | `ECONNRESET`, `ECONNREFUSED`, `ETIMEDOUT`, `ENOTFOUND` | yes | Retried. |
@@ -242,7 +242,7 @@ Backoff for attempt N is `min(backoffMs * 2^(N-1), 60_000)` plus a random jitter
     HalfOpen --> Open : "probe fails"
     Closed --> Closed : "any response, 4xx included, resets the counter"`} />
 
-**Closed** passes traffic. Each request that ends in a thrown error increments a consecutive-failure counter; any response at all — 2xx or 4xx — resets it to zero. At `circuitBreakerThreshold` the circuit opens.
+**Closed** passes traffic. Each request that ends in a thrown error increments a consecutive-failure counter; any response at all (2xx or 4xx) resets it to zero. At `circuitBreakerThreshold` the circuit opens.
 
 **Open** rejects immediately with `[@gentleduck/iam:http] circuit open - refusing request`, without a fetch attempt, for `circuitBreakerCooldownMs`.
 
@@ -269,7 +269,7 @@ The adapter refuses obviously bad input before it reaches the wire, and refuses 
 | `GET /subjects/{id}/roles` returns a non-array | throws `[@gentleduck/iam:http] getSubjectRoles for "<id>" returned object (expected JSON array)` |
 | An entry in it is not a non-empty string | silently skipped |
 | `GET /subjects/{id}/scoped-roles` returns a non-array | throws the equivalent `getSubjectScopedRoles` message |
-| An entry lacks a non-empty string `role` **and** `scope` | silently skipped — a scoped role with no scope is not a global grant |
+| An entry lacks a non-empty string `role` **and** `scope` | silently skipped: a scoped role with no scope is not a global grant |
 | `GET /subjects/{id}/attributes` returns an array, `null`, or a scalar | throws `[@gentleduck/iam:http] getSubjectAttributes for "<id>" returned array (expected JSON object)` |
 
 The asymmetry is deliberate and matches the other adapters. A bad *role* row is dropped, because role permissions are allow-only and losing one can only cost a subject a grant. A bad *policy* row and bad *subject* data both throw, because silently returning `[]` or `{}` would strip a deny rule and change decisions with no signal. See the same rule in a different store on the [Redis](/duck-iam/integrations/adapters/redis#row-validation) and [Prisma](/duck-iam/integrations/adapters/prisma#row-validation) pages.

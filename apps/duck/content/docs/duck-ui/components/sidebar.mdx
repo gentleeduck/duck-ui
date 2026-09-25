@@ -643,7 +643,7 @@ Set `dir="rtl"` on `Sidebar` for a local override, or set `DirectionProvider` on
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionSidebar` for smooth width animations powered by [motion](https://motion.dev). The sidebar width animates with expo-out easing when collapsing and expanding.
+Use `MotionSidebar` for smooth width animations powered by [motion](https://motion.dev). The sidebar width animates with a bouncy spring transition when collapsing and expanding.
 
 <ComponentPreview
   name="sidebar-7"
@@ -657,4 +657,4 @@ Requires the `motion` package. Use `MotionSidebar` instead of `Sidebar`. All oth
 
 ### MotionSidebar
 
-Same props as `Sidebar`. Replaces CSS width transition with motion `m.div animate` using contentTransition (250ms expo-out). Handles icon collapse, offcanvas slide, and floating/inset variants. Requires the `motion` package.
+Same props as `Sidebar`. Replaces CSS width transition with motion `m.div animate` using a `springBouncy` spring transition. Handles icon collapse, offcanvas slide, and floating/inset variants. On mobile, renders through the regular (non-motion) `Sheet`/`SheetContent`. Requires the `motion` package.

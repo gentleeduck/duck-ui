@@ -116,7 +116,7 @@ Set `dir="rtl"` on `Menubar` for a local override, or set `DirectionProvider` on
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionMenubarContent` for a spring-powered enter animation with blur powered by [motion](https://motion.dev). Exit uses the primitive's built-in CSS animation.
+Use `MotionMenubarContent` for a `scaleIn` enter animation with a bouncy spring transition, powered by [motion](https://motion.dev). Exit uses the primitive's built-in CSS animation.
 
 <ComponentPreview name="menubar-3" description="A menubar with motion-powered animations." />
 
@@ -263,4 +263,4 @@ Components in this file wrap `@gentleduck/primitives/menubar`.
 
 ### MotionMenubarContent
 
-Same props as `MenubarContent`. Adds spring scaleIn+blur enter animation via motion. Exit uses the primitive's CSS animation. Requires the `motion` package.
+Same props as `MenubarContent`. Adds a `scaleIn` enter animation with a bouncy spring transition via motion. Exit uses the primitive's CSS animation. Requires the `motion` package.

@@ -145,7 +145,7 @@ Set `dir="rtl"` on `Select` for a local override, or set `DirectionProvider` onc
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionSelect` and `MotionSelectContent` for smooth enter/exit animations powered by [motion](https://motion.dev). The dropdown enters with a bouncy spring scale and blur, and exits with a matching reverse animation.
+Use `MotionSelect` and `MotionSelectContent` for smooth enter/exit animations powered by [motion](https://motion.dev). The dropdown enters and exits with a `scaleIn` preset and a bouncy spring transition. `MotionSelectTrigger` adds tap feedback (scale 0.97) to the trigger button.
 
 <ComponentPreview
   name="select-6"
@@ -153,7 +153,7 @@ Use `MotionSelect` and `MotionSelectContent` for smooth enter/exit animations po
 />
 
 <Callout icon={<Zap />}>
-Requires the `motion` package. Use `MotionSelect` instead of `Select` and `MotionSelectContent` instead of `SelectContent`. All other sub-components stay the same.
+Requires the `motion` package. Use `MotionSelect` instead of `Select` and `MotionSelectContent` instead of `SelectContent`. Optionally use `MotionSelectTrigger` instead of `SelectTrigger` for tap feedback. All other sub-components stay the same.
 </Callout>
 
 ## API Reference
@@ -264,4 +264,12 @@ Same props as `Select`. Wraps the root with motion state management for enter/ex
 
 ### MotionSelectContent
 
-Same props as `SelectContent`. Adds spring-powered enter/exit animation (scale + blur) via `AnimatePresence`. Must be used with `MotionSelect` root. Requires the `motion` package.
+Same props as `SelectContent`. Adds a `scaleIn` enter/exit animation with a `springBouncy` transition, mounted and unmounted via `useMotionRoot`/`useMotionMount` for exit-animation support. Must be used with `MotionSelect` root. Requires the `motion` package.
+
+### MotionSelectTrigger
+
+Same props as `SelectTrigger`. Wraps the trigger with `whileTap` press feedback (scale 0.97). Requires the `motion` package.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `...props` | `ISelectTriggerProps` | - | All props from `SelectTrigger` are supported |

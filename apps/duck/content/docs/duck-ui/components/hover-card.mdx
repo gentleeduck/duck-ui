@@ -159,7 +159,7 @@ Root wrapper that provides hover-card state and context. Wraps `HoverCardPrimiti
 | `closeDelay` | `number` | `300` | Delay before closing on pointer leave/blur |
 | `delayDuration` | `number` | - | Alias for `openDelay`. If both are provided, `openDelay` takes precedence |
 | `skipDelayDuration` | `number` | - | Reserved for future use (currently ignored) |
-| `placement` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'` | Default side for `HoverCardContent` positioning |
+| `placement` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'` | Accepted but has no effect on the base `HoverCard`/`HoverCardContent` pairing; only takes effect with `MotionHoverCard`/`MotionHoverCardContent`, which read it via context to pick the entrance direction |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `'ltr'`). |
 | `children` | `React.ReactNode` | `--` | HoverCard sub-components |
 | `...props` | `React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Root>` | - | Additional props inherited from `HoverCard.Root`. |
@@ -173,9 +173,8 @@ The element that triggers the hover card on hover. Applies `buttonVariants` styl
 | `variant` | `ButtonVariant` | `'outline'` | Button variant style |
 | `size` | `ButtonSize` | `'default'` | Button size |
 | `border` | `ButtonBorder` | `'default'` | Button border style |
-| `asChild` | `boolean` | `false` | Whether to use the child as the trigger element directly |
 | `children` | `React.ReactNode` | `--` | Content rendered inside the trigger button |
-| `...props` | `React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Trigger> & React.ComponentPropsWithoutRef<typeof Button>` | - | Additional props inherited from `HoverCard.Trigger` and `Button`. |
+| `...props` | `React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Trigger> & Variants.VariantProps<typeof buttonVariants>` | - | Additional props inherited from `HoverCard.Trigger`. Always renders a native `a` element; there is no `asChild`/`Slot` support. |
 
 ### HoverCardContent
 
@@ -199,6 +198,7 @@ Wraps with `useMotionRoot` for exit animation support. Requires the `motion` pac
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
+| `placement` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'` | Provided via context to `MotionHoverCardContent`, which uses it as the default entrance/exit direction when its own `side` prop is unset. This is where `placement` actually takes effect. |
 | `...props` | `HoverCardProps` | - | All props from `HoverCard` are supported |
 
 ### MotionHoverCardContent

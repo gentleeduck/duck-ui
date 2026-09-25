@@ -59,7 +59,8 @@ Only the currently focused date has `tabIndex=0`. All other days have `tabIndex=
 The `useAnnouncer` hook (used internally by `useCalendar`) creates an `aria-live="polite"` region that announces:
 
 - Month navigation changes (e.g. "March 2026")
-- Selection changes (e.g. "Selected Saturday, March 14, 2026")
+- Selection changes (e.g. "March 14 selected", or "Range: March 14 to March 18" in range mode)
+- Attempted selection of a disabled date (e.g. "March 14 is unavailable")
 
 When using compound components, the announcer portal is rendered automatically inside `Calendar.Root`.
 

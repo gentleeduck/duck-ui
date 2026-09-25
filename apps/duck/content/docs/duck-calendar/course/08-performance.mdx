@@ -70,7 +70,6 @@ cd packages/duck-calendar && bun run benchmark
 These are the changes that took the core bundle from 7.0 KB down to 4.9 KB gzipped (75% smaller than react-day-picker):
 
 - **Intl.DateTimeFormat caching**: formatters cached per locale+options, avoiding expensive re-instantiation.
-- **React.memo on day cells**: prevents re-rendering 42 unchanged cells on selection change.
 - **Stable keyboard callback**: `configRef` pattern, zero recreation cost.
 - **Pre-computed time field orders**: 4 static arrays replace `Array.filter()` on every keystroke.
 - **Frozen selection constants**: one `UNSELECTED` object shared across unselected days.

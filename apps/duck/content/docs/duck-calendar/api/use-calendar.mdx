@@ -22,7 +22,7 @@ const { state, actions, getDayProps, getGridProps, getNavProps, getHeaderProps, 
 
 ## Config
 
-`useCalendar` accepts a `UseCalendar.IConfig<TDate, M>` object:
+`useCalendar` accepts a `UseCalendar.IUseCalendarConfig<TDate, M>` object:
 
 | Prop | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -77,7 +77,7 @@ const { state, actions, getDayProps, getGridProps, getNavProps, getHeaderProps, 
 | `setViewMode` | `(mode: Calendar.ViewMode) => void` | Switch between day/month/year view |
 | `goToNext` | `() => void` | Navigate to next month |
 | `goToPrevious` | `() => void` | Navigate to previous month |
-| `selectDate` | `(date: TDate) => void` | Select a date |
+| `selectDate` | `(date: TDate, options?: { shiftKey?: boolean }) => void` | Select a date. In `multi-range` mode, `shiftKey: true` splits an existing range longer than 5 days to exclude the clicked date; ignored in other modes |
 | `focusDate` | `(date: TDate) => void` | Move keyboard focus to a date |
 
 ### Prop getters

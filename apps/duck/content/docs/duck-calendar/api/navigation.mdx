@@ -70,7 +70,7 @@ goToMonth(adapter: Adapter.IDateAdapter<TDate>, current: TDate, month: number) =
 
 ### `goToYear`
 
-Navigate to a specific year. Used by the year picker view.
+Navigate to a specific year, keeping the current month. Used by the year picker view. Returns the 1st of that month - the day-of-month is not preserved.
 
 ```tsx
 goToYear(adapter: Adapter.IDateAdapter<TDate>, current: TDate, year: number) => TDate

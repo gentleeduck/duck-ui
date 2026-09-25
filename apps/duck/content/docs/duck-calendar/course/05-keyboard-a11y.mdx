@@ -78,7 +78,8 @@ The prop getters apply all required ARIA attributes:
 The internal `useAnnouncer` hook adds a visually hidden `aria-live="polite"` region. It announces:
 
 - **Month changes**: "March 2026"
-- **Selection changes**: "Selected Saturday, March 14, 2026"
+- **Selection changes**: "March 14 selected" (or "Range: March 14 to March 18" in range mode)
+- **Disabled attempts**: "March 14 is unavailable"
 
 Compound components render the announcer inside `Calendar.Root` automatically.
 

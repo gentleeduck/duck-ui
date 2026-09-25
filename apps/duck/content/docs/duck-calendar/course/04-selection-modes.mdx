@@ -73,7 +73,7 @@ const { state } = useCalendar({ adapter, mode: 'range' })
 // state.value: { from: Date, to: Date | null } | null
 ```
 
-When only `from` is set (one click in), hovering over days shows a preview range. Style the preview through the `data-range-middle` attribute.
+`data-range-middle` (and `data-range-start` / `data-range-end`) reflect the committed selection only - there's no built-in hover preview between the first and second click. Track hover state yourself and compute a candidate range if you want that effect.
 
 ---
 

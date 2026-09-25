@@ -53,29 +53,29 @@ These types are exported from `@gentleduck/calendar` and used across the API:
 | `Grid.ICalendarDay<TDate>` | Day cell with selection/state flags |
 | `Grid.ICalendarWeek<TDate>` | Week with weekNumber + 7 days |
 | `Grid.ICalendarMonth<TDate>` | Month grid with weeks |
-| `Selection.SelectionMode` | `'single' \| 'range' \| 'multi'` |
+| `Selection.SelectionMode` | `'single' \| 'range' \| 'multi' \| 'multi-range'` |
 | `Selection.ISelectionConstraints<TDate>` | Disabled dates and date bounds |
 | `Selection.DateRange<TDate>` | `{ from: TDate, to: TDate \| null }` |
 | `Navigation.Direction` | `'prev' \| 'next'` |
 | `Navigation.Unit` | `'month' \| 'year' \| 'decade'` |
-| `DayProps` | Props returned by `getDayProps` |
-| `GridProps` | Props returned by `getGridProps` |
-| `NavProps` | Props returned by `getNavProps` |
-| `HeaderProps` | Props returned by `getHeaderProps` |
-| `AnnouncerReturn` | Return type of `useAnnouncer` |
-| `KeyboardConfig` | Configuration for the keyboard navigation hook |
-| `KeyboardReturn` | Return type of `useKeyboard` |
-| `TimeFieldProps` | Props returned by `getFieldProps` |
+| `UseCalendar.IDayProps` | Props returned by `getDayProps` |
+| `UseCalendar.IGridProps` | Props returned by `getGridProps` |
+| `UseCalendar.INavProps` | Props returned by `getNavProps` |
+| `UseCalendar.IHeaderProps` | Props returned by `getHeaderProps` |
+| `UseAnnouncer.IAnnouncerReturn` | Return type of `useAnnouncer` |
+| `UseKeyboard.IKeyboardConfig<TDate>` | Configuration for the keyboard navigation hook |
+| `UseKeyboard.IKeyboardReturn` | Return type of `useKeyboard` |
+| `UseTimePicker.ITimeFieldProps` | Props returned by `getFieldProps` |
 | `Time.ITimeValue` | `{ hour, minute, second? }` |
-| `Time.ITimeField` | `'hour' \| 'minute' \| 'second' \| 'ampm'` |
-| `Time.IHourCycle` | `'12' \| '24'` |
+| `Time.TimeField` | `'hour' \| 'minute' \| 'second' \| 'ampm'` |
+| `Time.HourCycle` | `'12' \| '24'` |
 | `Time.ITimePickerConfig` | Configuration for the time picker |
-| `UseCalendarConfig` | Configuration accepted by `useCalendar` |
-| `UseCalendarReturn` | Return type of `useCalendar` |
-| `UseTimePickerConfig` | Configuration accepted by `useTimePicker` |
-| `UseTimePickerReturn` | Return type of `useTimePicker` |
-| `UseDateTimeConfig` | Configuration accepted by `useDateTime` |
-| `UseDateTimeReturn` | Return type of `useDateTime` |
+| `UseCalendar.IUseCalendarConfig<TDate, M>` | Configuration accepted by `useCalendar` |
+| `UseCalendar.IUseCalendarReturn<TDate, M>` | Return type of `useCalendar` |
+| `UseTimePicker.IUseTimePickerConfig` | Configuration accepted by `useTimePicker` |
+| `UseTimePicker.IUseTimePickerReturn` | Return type of `useTimePicker` |
+| `UseDateTime.IUseDateTimeConfig<TDate>` | Configuration accepted by `useDateTime` |
+| `UseDateTime.IUseDateTimeReturn<TDate>` | Return type of `useDateTime` |
 | `Calendar.ViewMode` | `'days' \| 'months' \| 'years'` |
 | `Adapter.WeekStartDay` | Numeric day used as the first day of the week |
 | `Grid.IDecadeEntry` | Entry in the decade view grid |

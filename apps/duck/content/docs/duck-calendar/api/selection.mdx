@@ -25,7 +25,7 @@ selectDay(adapter: Adapter.IDateAdapter<TDate>, mode: Selection.SelectionMode, c
 | `mode` | `Selection.SelectionMode` | `'single'`, `'range'`, `'multi'`, or `'multi-range'` |
 | `current` | `Selection.CalendarValue<TDate, M>` | Current selection value |
 | `date` | `TDate` | The clicked date |
-| `options` | `{ shiftKey?: boolean }` | Optional. When `shiftKey` is true in `multi-range` mode, extends the last range |
+| `options` | `{ shiftKey?: boolean }` | Optional. In `multi-range` mode only: if `shiftKey` is true and the clicked date falls within an existing completed range longer than 5 days, splits that range to exclude the clicked date (shrinks from an edge, or splits in two if clicked in the middle); ignored otherwise |
 
 **Returns** the updated selection value. Shape depends on mode:
 

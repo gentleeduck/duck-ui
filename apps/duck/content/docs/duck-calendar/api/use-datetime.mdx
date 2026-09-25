@@ -32,7 +32,7 @@ function MyDateTimePicker() {
 
 ## Config
 
-`UseDateTime.IConfig<TDate>`
+`UseDateTime.IUseDateTimeConfig<TDate>`
 
 | Prop | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -41,10 +41,10 @@ function MyDateTimePicker() {
 | `value` | `TDate` | - | Controlled datetime value |
 | `defaultValue` | `TDate` | - | Default datetime (uncontrolled) |
 | `onChange` | `(value: TDate) => void` | - | Called when date or time changes |
-| `hourCycle` | `Time.IHourCycle` | `'24'` | `'12'` or `'24'` hour display |
+| `hourCycle` | `Time.HourCycle` | `'24'` | `'12'` or `'24'` hour display |
 | `showSeconds` | `boolean` | `false` | Show the seconds field |
 | `month` | `TDate` | - | Controlled displayed month |
-| `defaultMonth` | `TDate` | - | Default month (uncontrolled) |
+| `defaultMonth` | `TDate` | `adapter.today()` | Default month (uncontrolled); passed through to the internal `useCalendar` |
 | `onMonthChange` | `(month: TDate) => void` | - | Called when month changes |
 | `disabled` | `TDate[] \| (date) => boolean` | - | Disabled dates |
 | `fromDate` | `TDate` | - | Earliest selectable date |
@@ -55,7 +55,7 @@ function MyDateTimePicker() {
 
 ## Return value
 
-`UseDateTime.IReturn<TDate>`
+`UseDateTime.IUseDateTimeReturn<TDate>`
 
 ### `calendar`
 

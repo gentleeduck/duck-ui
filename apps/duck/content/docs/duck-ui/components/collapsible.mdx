@@ -188,8 +188,8 @@ const { open, onOpenChange } = useCollapsible()
 
 ### MotionCollapsibleContent
 
-Animates height from 0 to auto with staggered blur and opacity fade. Requires the `motion` package.
+Animates height from 0 to auto with a blur and opacity fade. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `...props` | `Omit<CollapsibleContentProps, 'onDrag' \| 'onDragStart' \| 'onDragEnd' \| 'onAnimationStart'>` | - | All props from `CollapsibleContent` except motion event handlers |
+| `...props` | `Omit<React.HTMLAttributes<HTMLDivElement>, 'onDrag' \| 'onDragStart' \| 'onDragEnd' \| 'onAnimationStart'>` | - | Additional props to spread to the underlying `section` element. This is a separate component from `CollapsibleContent`, not a wrapper around it, so it does not accept `forceMount`. |

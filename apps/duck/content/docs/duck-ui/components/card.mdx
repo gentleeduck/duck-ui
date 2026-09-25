@@ -112,7 +112,7 @@ Direction is resolved through the shared primitives direction module. Use a loca
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionCard`, `MotionCardHeader`, `MotionCardContent`, and `MotionCardFooter` for staggered fade-up entrance animations powered by [motion](https://motion.dev).
+Use `MotionCard`, `MotionCardHeader`, `MotionCardContent`, and `MotionCardFooter` for staggered scale-and-blur entrance animations powered by [motion](https://motion.dev).
 
 <ComponentPreview
   name="card-4"
@@ -184,16 +184,16 @@ Requires the `motion` package. Replace `Card` with `MotionCard`, `CardHeader` wi
 
 ### MotionCard
 
-Same props as `Card`. Adds fadeUp entrance animation. Requires the `motion` package.
+Same props as `Card`. Adds a `scaleIn` entrance animation with a bouncy spring transition. Requires the `motion` package.
 
 ### MotionCardHeader
 
-Same props as `CardHeader`. Adds fadeUp entrance with 50ms delay. Requires the `motion` package.
+Same props as `CardHeader`. Adds a `scaleIn` entrance with a bouncy spring transition and a 50ms delay. Requires the `motion` package.
 
 ### MotionCardContent
 
-Same props as `CardContent`. Adds fadeUp entrance with 100ms delay. Requires the `motion` package.
+Same props as `CardContent`. Adds a `scaleIn` entrance with a bouncy spring transition and a 100ms delay. Requires the `motion` package.
 
 ### MotionCardFooter
 
-Same props as `CardFooter`. Adds fadeUp entrance with 150ms delay. Requires the `motion` package.
+Same props as `CardFooter`. Adds a `scaleIn` entrance with a bouncy spring transition and a 150ms delay. Requires the `motion` package.

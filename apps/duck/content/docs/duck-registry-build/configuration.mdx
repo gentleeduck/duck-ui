@@ -254,7 +254,7 @@ These fields are still important for docs-style UI registries. They are supporte
 | `path` | `string` | Filesystem path relative to the config file |
 | `packageName` | `string` | Package base used for generated import paths |
 | `glob` | `string` | Discovery pattern, default `**/*.{ts,tsx}` |
-| `ignore` | `string[]` | Ignore globs for discovery, default `['**/__test__/**', '**/*.test.*', '**/*.spec.*']` |
+| `ignore` | `string[]` | Ignore globs for discovery, default `['**/__test__/**', '**/__tests__/**', '**/__snapshots__/**', '**/*.test.*', '**/*.spec.*']` |
 | `indexStrategy` | `'item' \| 'file'` | Emit one index record per registry item or per discovered file |
 | `referencePath` | `string` | Stable logical path stored in generated metadata |
 

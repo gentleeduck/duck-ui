@@ -103,6 +103,10 @@ for direct flag usage.
 
 ## Config discovery rules
 
+Starting from the discovery root, the loader checks each filename below, then
+walks up one parent directory at a time and checks again until it finds a match
+or reaches the filesystem root.
+
 The loader searches for these filenames:
 
 - `registry-build.config.ts`

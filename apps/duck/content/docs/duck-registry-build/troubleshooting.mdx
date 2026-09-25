@@ -79,12 +79,13 @@ Everything must satisfy ``registry:${string}``.
   </AccordionItem>
 
   <AccordionItem value="ts-config-loading">
-    <AccordionTrigger>TS config file does not load outside Bun</AccordionTrigger>
+    <AccordionTrigger>TS config file fails to load</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
 
-Use JSON configs for the most portable runtime path. TS config loading depends on
-the runtime's ability to import TS or the loader fallback. For maximum portability,
-keep the config declarative and move custom logic into plain JS/JSON-safe shapes.
+The loader tries a native `import()` first, then falls back to `jiti` so TS/JS
+configs load in Bun and in plain Node, not just Bun. If both attempts fail, the
+error reports each stage. Use a JSON config only if you need to rule the loader
+out entirely; otherwise keep custom logic in TS/JS and let the fallback handle it.
 
     </AccordionContent>
   </AccordionItem>

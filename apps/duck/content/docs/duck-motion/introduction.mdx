@@ -392,7 +392,7 @@ import { checkersStylePattern } from '@gentleduck/motion'
 
 | Variant | Values | Description |
 | --- | --- | --- |
-| `type` | `'checkbox' \| 'radio' \| 'switch'` | Control type — drives shape, padding, and animation direction |
+| `type` | `'checkbox' \| 'radio' \| 'switch'` | Control type, which drives shape, padding, and animation direction |
 | `indicatorState` | `'default' \| 'both' \| 'indicatorReady' \| 'checkedIndicatorReady'` | Mask image strategy for the indicator SVG |
 
 ---
@@ -437,7 +437,7 @@ const unsubscribe = onDuckReducedMotionChange(() => {
 
 ### `getDuckReducedMotionServerSnapshot`
 
-SSR-safe snapshot — always returns `false` on the server.
+SSR-safe snapshot that always returns `false` on the server.
 
 ```tsx
 import { getDuckReducedMotionServerSnapshot } from '@gentleduck/motion'
@@ -479,6 +479,6 @@ import '@gentleduck/motion/css'
 
 Provides motion tokens and `prefers-reduced-motion` defaults:
 
-- `--gentleduck-motion-ease` — cubic-bezier easing curve
-- `--gentleduck-motion-spring` — spring-like easing via `linear()` keyframe stops
-- `--gentleduck-motion-dur` — default duration (150ms)
+- `--gentleduck-motion-ease`: cubic-bezier easing curve
+- `--gentleduck-motion-spring`: spring-like easing via `linear()` keyframe stops
+- `--gentleduck-motion-dur`: default duration (150ms)

@@ -60,7 +60,7 @@ You can layer presets - the last one is dominant where they conflict:
 ```typescript
 import { authApplyCompliancePreset } from '@gentleduck/auth/core'
 
-// Apply both — HIPAA wins on overlapping keys (Argon2 vs scrypt)
+// Apply both: HIPAA wins on overlapping keys (Argon2 vs scrypt)
 const layered = authApplyCompliancePreset(
   authApplyCompliancePreset(base, 'gdpr'),
   'hipaa',

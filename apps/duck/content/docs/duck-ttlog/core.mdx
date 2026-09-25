@@ -1,6 +1,6 @@
 ---
 title: Core Engine
-description: "The ttlog crate — Trace orchestrator, writer/listener threads, ring buffer, and listener API."
+description: "The ttlog crate: trace orchestrator, writer/listener threads, ring buffer, and listener API."
 section: Core
 order: 0
 ---
@@ -72,12 +72,12 @@ Two built-in listeners ship with TTLog:
 - **`StdoutListener`**: formats and prints logs to standard output.
 - **`FileListener`**: writes logs to a file.
 
-Implement the trait for any other destination — network service, database, anything.
+Implement the trait for any other destination, whether that's a network service, a database, or anything else.
 
 ### Snapshots
 
 TTLog keeps a lock-free, in-memory ring buffer of the last `N` log events (`N` is the
-`capacity` passed to `init`). Listeners don't consume it — the buffer exists for crash
+`capacity` passed to `init`). Listeners don't consume it; the buffer exists for crash
 diagnostics.
 
 A snapshot dumps the buffer plus application metadata. Snapshots fire on:
@@ -98,5 +98,5 @@ On the first `info!("Starting up")` call in `src/main.rs`, the interner stores
 `"Starting up"`, `"my_app::main"`, and `"src/main.rs"` in a global thread-safe hash
 map, assigning each a unique integer ID.
 
-Later calls reuse the cached ID — an integer lookup. A `thread_local!` cache avoids
+Later calls reuse the cached ID, a simple integer lookup. A `thread_local!` cache avoids
 lock contention in the hot path.

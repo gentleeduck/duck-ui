@@ -92,7 +92,7 @@ Dismiss behavior is event-driven, not hardcoded. Key hooks:
 
 Cancel dismissal with `event.preventDefault()`.
 
-Use this for guarded flows — unsaved changes, in-flight requests, multi-step
+Use this for guarded flows: unsaved changes, in-flight requests, multi-step
 confirmation.
 
 ---
@@ -139,7 +139,7 @@ Primitives use scoped contexts so nested instances remain independent.
 ```
 
 When wrapper components fail in nested cases, the root cause is usually prop
-swallowing or broken ref forwarding — not primitive context.
+swallowing or broken ref forwarding, not primitive context.
 
 ---
 

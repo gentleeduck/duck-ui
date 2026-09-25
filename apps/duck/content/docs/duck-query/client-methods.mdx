@@ -149,7 +149,7 @@ const { data } = await client.post('/api/files/upload', {
 
 ## put
 
-Sends a **PUT** request with a JSON body — use for full resource updates.
+Sends a **PUT** request with a JSON body. Use it for full resource updates.
 
 ```ts
 client.put<P extends PathsByMethod<Routes, 'PUT'>>(
@@ -173,7 +173,7 @@ const { data: updated } = await client.put('/api/users/:id', {
 
 ## patch
 
-Sends a **PATCH** request with a JSON body — use for partial updates.
+Sends a **PATCH** request with a JSON body, for partial updates rather than full replacement.
 
 ```ts
 client.patch<P extends PathsByMethod<Routes, 'PATCH'>>(
@@ -254,7 +254,7 @@ friends for tighter types.
 
 ## byMethod
 
-Pass the HTTP method as the first argument — this gives the strongest type checking.
+Pass the HTTP method as the first argument, which gives the strongest type checking.
 The path is constrained to routes supporting that method.
 
 ```ts

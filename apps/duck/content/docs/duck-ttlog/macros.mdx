@@ -1,6 +1,6 @@
 ---
 title: Macros
-description: "Procedural macros for ttlog — info!, debug!, warn!, error! with compile-time work and string interning."
+description: "Procedural macros for ttlog: info!, debug!, warn!, error! with compile-time work and string interning."
 section: Getting Started
 order: 10
 ---
@@ -77,7 +77,7 @@ The macros push work from runtime to compile time.
    lookups.
 
 2. **Static metadata**: file path, module path, and line number come from `file!()`,
-   `module_path!()`, and `line!()` — no runtime gathering.
+   `module_path!()`, and `line!()`, so nothing is gathered at runtime.
 
 3. **Value serialization**: key-value pairs serialize to a compact binary format.
    Primitive integers (`i64`, `u64`) and floats (`f32`, `f64`) convert to strings

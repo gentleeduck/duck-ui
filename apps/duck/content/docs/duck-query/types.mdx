@@ -62,7 +62,7 @@ type PingRoute = {
 
 ### DuckApiRoutes
 
-Route map alias — a `Record` of path strings to `DuckRouteMeta`:
+Route map alias: a `Record` of path strings to `DuckRouteMeta`.
 
 ```ts
 type DuckApiRoutes = Record<string, DuckRouteMeta>
@@ -78,7 +78,7 @@ function createLogger<R extends DuckApiRoutes>(client: DuckQueryClient<R>) {
 
 ### DuckQueryClient
 
-Return type of `createDuckQueryClient` — all client methods:
+Return type of `createDuckQueryClient`, covering all client methods:
 
 ```ts
 type DuckQueryClient<Routes> = {
@@ -214,7 +214,7 @@ These combine path and method filtering for exact type extraction.
 
 ### RouteOfMethod
 
-Route metadata for a path **filtered by method** — handy when a path supports multiple
+Route metadata for a path **filtered by method**, handy when a path supports multiple
 methods:
 
 ```ts

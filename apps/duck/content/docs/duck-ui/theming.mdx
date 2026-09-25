@@ -27,24 +27,30 @@ You can choose between using CSS variables (recommended) or utility classes for 
 <div className="bg-background text-foreground" />
 ```
 
-To use CSS variables for theming set `tailwind.cssVariables` to `true` in your `components.json` file.
+To use CSS variables for theming set `tailwind.cssVariables` to `true` in your `duck-ui.config.json` file.
 
-```json {8} title="components.json" showLineNumbers
+```json {12} title="duck-ui.config.json" showLineNumbers
 {
-  "rsc": true,
+  "schema": "https://gentleduck.org/schema.json",
+  "rsc": false,
+  "monorepo": false,
+  "workspace": {
+    "root": ".",
+    "project": "."
+  },
   "tailwind": {
-    "config": "",
-    "css": "app/globals.css",
-    "baseColor": "neutral",
-    "cssVariables": true
+    "baseColor": "zinc",
+    "css": "./src/styles/globals.css",
+    "cssVariables": true,
+    "prefix": ""
   },
   "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils",
-    "ui": "@/components/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
-  },
+    "ui": "~/ui",
+    "libs": "~/libs",
+    "hooks": "~/hooks",
+    "pages": "~/pages",
+    "layouts": "~/layouts"
+  }
 }
 ```
 
@@ -54,24 +60,30 @@ To use CSS variables for theming set `tailwind.cssVariables` to `true` in your `
 <div className="bg-zinc-950 dark:bg-white" />
 ```
 
-To use utility classes for theming set `tailwind.cssVariables` to `false` in your `components.json` file.
+To use utility classes for theming set `tailwind.cssVariables` to `false` in your `duck-ui.config.json` file.
 
-```json {8} title="components.json" showLineNumbers
+```json {12} title="duck-ui.config.json" showLineNumbers
 {
-  "rsc": true,
+  "schema": "https://gentleduck.org/schema.json",
+  "rsc": false,
+  "monorepo": false,
+  "workspace": {
+    "root": ".",
+    "project": "."
+  },
   "tailwind": {
-    "config": "",
-    "css": "app/globals.css",
-    "baseColor": "neutral",
-    "cssVariables": false
+    "baseColor": "zinc",
+    "css": "./src/styles/globals.css",
+    "cssVariables": false,
+    "prefix": ""
   },
   "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils",
-    "ui": "@/components/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
-  },
+    "ui": "~/ui",
+    "libs": "~/libs",
+    "hooks": "~/hooks",
+    "pages": "~/pages",
+    "layouts": "~/layouts"
+  }
 }
 ```
 

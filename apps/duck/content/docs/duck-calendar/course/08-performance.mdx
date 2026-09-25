@@ -14,7 +14,7 @@ order: 8
 
 We replaced `react-day-picker` with `@gentleduck/calendar`. Comparison against the major React calendar libraries:
 
-### Bundle size — all competitors
+### Bundle size across all competitors
 
 | Library | Bundle (gzipped) | Improvement |
 | :--- | :--- | :--- |
@@ -69,22 +69,22 @@ cd packages/duck-calendar && bun run benchmark
 
 These are the changes that took the core bundle from 7.0 KB down to 4.9 KB gzipped (75% smaller than react-day-picker):
 
-- **Intl.DateTimeFormat caching** — formatters cached per locale+options, avoiding expensive re-instantiation.
-- **React.memo on day cells** — prevents re-rendering 42 unchanged cells on selection change.
-- **Stable keyboard callback** — `configRef` pattern, zero recreation cost.
-- **Pre-computed time field orders** — 4 static arrays replace `Array.filter()` on every keystroke.
-- **Frozen selection constants** — one `UNSELECTED` object shared across unselected days.
-- **Dev JSX elimination** — production build uses `createElement` directly, no `jsxDEV` metadata.
+- **Intl.DateTimeFormat caching**: formatters cached per locale+options, avoiding expensive re-instantiation.
+- **React.memo on day cells**: prevents re-rendering 42 unchanged cells on selection change.
+- **Stable keyboard callback**: `configRef` pattern, zero recreation cost.
+- **Pre-computed time field orders**: 4 static arrays replace `Array.filter()` on every keystroke.
+- **Frozen selection constants**: one `UNSELECTED` object shared across unselected days.
+- **Dev JSX elimination**: production build uses `createElement` directly, no `jsxDEV` metadata.
 
 ---
 
 ## Why it's fast
 
-- **Pure functions** — grid building and selection allocate no closures and hold no subscriptions.
-- **No date library dependency** — `NativeAdapter` uses native `Date` and `Intl.DateTimeFormat`.
-- **Tree-shakeable** — import only what you need; if it's just `buildCalendarMonth`, the rest goes.
-- **Minimal React overhead** — hooks use `useMemo` to avoid rebuilding grids on every render.
-- **No CSS runtime** — no CSS-in-JS overhead, no stylesheet injection.
+- **Pure functions**: grid building and selection allocate no closures and hold no subscriptions.
+- **No date library dependency**: `NativeAdapter` uses native `Date` and `Intl.DateTimeFormat`.
+- **Tree-shakeable**: import only what you need; if it's just `buildCalendarMonth`, the rest goes.
+- **Minimal React overhead**: hooks use `useMemo` to avoid rebuilding grids on every render.
+- **No CSS runtime**: no CSS-in-JS overhead, no stylesheet injection.
 
 ---
 
@@ -95,6 +95,6 @@ These are the changes that took the core bundle from 7.0 KB down to 4.9 KB gzipp
 - Wrap day cells in `React.memo` to skip re-renders on unchanged days.
 - Use `numberOfMonths: 1` unless you need multi-month views.
 - Use `fixedWeeks: false` to render fewer day cells.
-- Memoize the adapter instance outside the component — it's stateless.
+- Memoize the adapter instance outside the component, since it's stateless.
 
 </Callout>

@@ -7,13 +7,13 @@ order: 0
 
 <Callout type="warning">
 **`@gentleduck/gen` is deprecated and no longer maintained.** Use the
-NestJS-native toolchain instead — it covers the same surface (typed routes,
+NestJS-native toolchain instead. It covers the same surface (typed routes,
 typed bodies, runtime validation, SDK generation) with a real compiler
 transformer, full tooling, and an active community.
 
-- **[nestia](https://nestia.io/)** — typed `@TypedRoute` / `@TypedBody` /
+- **[nestia](https://nestia.io/)**: typed `@TypedRoute` / `@TypedBody` /
   `@TypedQuery` / `@TypedParam` decorators, automatic SDK generation, Swagger
-- **[typia](https://typia.io/)** — runtime validators, serializers, JSON
+- **[typia](https://typia.io/)**: runtime validators, serializers, JSON
   schema generation from TypeScript types via a TS transformer plugin
 
 Migration: replace `@Body(typiaBody<X>())` with `@TypedBody()`, `@Get()` with
@@ -242,7 +242,7 @@ bun run generate
 | [Configuration](/duck-gen/configuration) | Every config option explained with examples. |
 | [API Routes](/duck-gen/api-routes) | How route scanning works, supported decorators, request shape rules, and examples. |
 | [Messages](/duck-gen/messages) | How message scanning works, tag formats, i18n type generation. |
-| [Generated Types](/duck-gen/generated-types) | Deep dive into every exported type with usage examples. |
+| [Generated Types](/duck-gen/generated-types) | Every exported type, covered in detail with usage examples. |
 | [Duck Query](/duck-query) | Use generated types with a type-safe HTTP client. |
 | [Templates](/duck-gen/templates) | Complete NestJS + Duck Query example project. |
 

@@ -14,16 +14,16 @@ order: 1
 
 Every React calendar library we evaluated hit at least one of these problems:
 
-- **Too large** — `react-datepicker` ships 32 KB gzipped with 3 runtime dependencies.
-- **Coupled to a date library** — `react-day-picker` requires `date-fns` (~15 KB).
-- **Not tree-shakeable** — monolithic components bundle everything even if you only need a date picker.
-- **Ships CSS** — forces you to import and override stylesheets.
+- **Too large**: `react-datepicker` ships 32 KB gzipped with 3 runtime dependencies.
+- **Coupled to a date library**: `react-day-picker` requires `date-fns` (~15 KB).
+- **Not tree-shakeable**: monolithic components bundle everything even if you only need a date picker.
+- **Ships CSS**: forces you to import and override stylesheets.
 
 We wanted:
 
 - Under 10 KB gzipped, zero dependencies.
 - Any date library through an adapter.
-- Headless — no opinions on rendering.
+- Headless, with no opinions on rendering.
 - WAI-ARIA grid pattern built in.
 
 ---

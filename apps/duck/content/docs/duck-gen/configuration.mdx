@@ -7,7 +7,7 @@ order: 10
 ## Overview
 
 Duck Gen reads config from a `duck-gen.json` file at the project root. The file is
-**required** — the CLI fails if it can't find or parse it.
+**required**, and the CLI fails if it can't find or parse it.
 
 All paths resolve **relative to the config file**.
 
@@ -71,7 +71,7 @@ The schema ships with the `@gentleduck/gen` package.
 | **Required** | Yes |
 | **Accepted values** | `"nestjs"` |
 
-The target framework adapter. Only `nestjs` is supported today — other values fail
+The target framework adapter. Only `nestjs` is supported today; other values fail
 validation. More adapters are planned.
 
 ## Shared options
@@ -296,7 +296,7 @@ on purpose.
 Extra output locations for API route types only. Same semantics as
 `shared.outputSource`, scoped to the routes file.
 
-Adds to `shared.outputSource` — both sets of locations receive the file.
+Adds to `shared.outputSource`, so both sets of locations receive the file.
 
 ## Messages options
 

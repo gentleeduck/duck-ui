@@ -10,7 +10,7 @@ predictability and type safety.
 
 ## Command in, events out
 
-There is one way to change state — `dispatch(command)` — and one way to observe it —
+There is one way to change state: `dispatch(command)`. There is one way to observe it:
 `subscribe` for snapshots and `on` for typed events. Concentrating mutations behind a command
 pipeline (command → reducer → new state → effects → events) makes the engine testable and
 race-free, and gives plugins a single place to observe everything.
@@ -23,7 +23,7 @@ The result generic `R` is threaded through the whole system rather than degradin
 - Internal and public completion events carry `R`.
 - `upload.completed` emits it; `completed` items keep it on `item.result`.
 
-So UI code reads `item.result.url` with no cast — TypeScript already knows the shape.
+So UI code reads `item.result.url` with no cast, because TypeScript already knows the shape.
 
 ## Dedupe without fake intents
 
@@ -46,7 +46,7 @@ same store works in Node, a worker, Vue, or vanilla JS.
 ## Immutable state updates
 
 Every reducer step returns a new state object; nothing mutates the `items` map in place. This
-fixed `useSyncExternalStore` tearing — React can compare snapshots by reference and re-render
+fixed `useSyncExternalStore` tearing, so React can compare snapshots by reference and re-render
 exactly when something changed. Cleanup and eviction return new state too.
 
 ## One event-emission layer
@@ -65,7 +65,7 @@ custom protocols slot in without forking the engine.
 
 - Error **messages are static**; tainted values live on `context`, closing an XSS vector (see
   [Errors](/duck-upload/core/errors)).
-- The multipart strategy validates every signed part URL — protocol, optional host allow-list,
-  and private/loopback IP rejection — before handing it to the transport.
+- The multipart strategy validates every signed part URL (protocol, optional host allow-list,
+  and private/loopback IP rejection) before handing it to the transport.
 - Persisted snapshots are treated as untrusted: guarded by `isPurpose`/`isIntent` and stripped
   of prototype-polluting keys on the way in.

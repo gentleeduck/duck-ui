@@ -6,7 +6,7 @@ order: 30
 ---
 
 The registry owns the set of available strategies and keeps the engine decoupled from any
-concrete protocol. `createStrategyRegistry()` returns an **empty** registry — you populate it
+concrete protocol. `createStrategyRegistry()` returns an **empty** registry: you populate it
 with `.set()`.
 
 ## Why it exists
@@ -38,7 +38,7 @@ strategies.set(PostStrategy())
 strategies.set(multipartStrategy())
 ```
 
-There is no array constructor form — always create empty and `set()` each strategy.
+There is no array constructor form: always create empty and `set()` each strategy.
 
 ## How resolution works
 
@@ -89,4 +89,4 @@ strategies.set(myPutStrategy())
 ```
 
 The `id` must exactly match the intent's `strategy` field, and both must be keys of your intent
-map — the registry's generics enforce it.
+map; the registry's generics enforce it.

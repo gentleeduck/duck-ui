@@ -36,7 +36,7 @@ strategy_missing -> 'upload strategy not found'
 aborted / network / http / timeout / auth / rate_limit / server / unknown
 ```
 
-Because the message is a constant the library owns, `err.message` is safe to render directly —
+Because the message is a constant the library owns, `err.message` is safe to render directly:
 in a toast, as React children, even with `dangerouslySetInnerHTML`.
 
 ## Why static messages
@@ -45,7 +45,7 @@ Filenames are attacker-controlled. `` new Error(`upload of ${file.name} failed`)
 name like `<img src=x onerror=alert(1)>.png` to reach your DOM if you render `error.message`
 unsafely. Keeping the message constant removes that whole class of XSS.
 
-Tainted inputs live on `err.context` instead — and you **must** escape those before HTML
+Tainted inputs live on `err.context` instead, and you **must** escape those before HTML
 rendering (React children auto-escape; raw `innerHTML` does not).
 
 ## Typed subclasses
@@ -98,7 +98,7 @@ if (err instanceof UploadEngineError && err.cause instanceof Response) {
 
 ## The plain error shape
 
-Errors surfaced through events and stored on items use the `UploadError` type — either a
+Errors surfaced through events and stored on items use the `UploadError` type: either a
 `UploadEngineError` instance or a plain `Contracts.Errors.Error` object. Both always expose
 `code`, `message`, and `retryable`, so event handlers can rely on those three without an
 `instanceof` check:
@@ -111,5 +111,5 @@ store.on('upload.error', ({ error, retryable }) => {
 
 ## See also
 
-- [Contracts](/duck-upload/core/contracts) — the `Contracts.Errors` union and validation shapes.
-- [Engine](/duck-upload/core/engine) — where errors originate and how retry re-enters.
+- [Contracts](/duck-upload/core/contracts): the `Contracts.Errors` union and validation shapes.
+- [Engine](/duck-upload/core/engine): where errors originate and how retry re-enters.

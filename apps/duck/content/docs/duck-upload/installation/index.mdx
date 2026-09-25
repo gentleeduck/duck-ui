@@ -60,7 +60,7 @@ type Purpose = 'avatar' | 'document'
 type Result = Contracts.Result.Base & { url: string }
 ```
 
-`Contracts.Result.Base` is `{ fileId: string; key: string }` — extend it with whatever your
+`Contracts.Result.Base` is `{ fileId: string; key: string }`: extend it with whatever your
 backend returns.
 
 ### 2. Implement the backend contract
@@ -79,7 +79,7 @@ const api: Contracts.Api.Me<Intents, Purpose, Result> = {
       signal: ctx.signal,
     })
     if (!res.ok) throw new Error(`intent failed: ${res.status}`)
-    // Returns a value from the intent map — here a PostStrategy.Intent.
+    // Returns a value from the intent map: here a PostStrategy.Intent.
     return res.json()
   },
   async complete({ fileId, filename, contentType, size }, ctx) {
@@ -163,6 +163,6 @@ function UploadList() {
 
 ## Next
 
-- [Design Decisions](/duck-upload/design) — why the engine is shaped this way.
-- [Core Overview](/duck-upload/core) — the modules behind the store.
-- [Guides](/duck-upload/guides) — copy-paste recipes for common scenarios.
+- [Design Decisions](/duck-upload/design): why the engine is shaped this way.
+- [Core Overview](/duck-upload/core): the modules behind the store.
+- [Guides](/duck-upload/guides): copy-paste recipes for common scenarios.

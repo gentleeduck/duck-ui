@@ -1,6 +1,6 @@
 ---
 title: "Chapter 5: Pause, Resume & Retry"
-description: "Control the upload lifecycle — pause, resume, cancel — and configure automatic retry with backoff."
+description: "Control the upload lifecycle (pause, resume, cancel) and configure automatic retry with backoff."
 section: Course
 order: 5
 ---
@@ -70,7 +70,7 @@ const { store } = useUploaderActions<PhotoIntents, PhotoCursors, PhotoPurpose, P
     ```
 
     Cancel aborts any in-flight request with mode `'cancel'` and is terminal. `remove` deletes
-    the item entirely — handy for clearing terminal rows from the UI.
+    the item entirely, handy for clearing terminal rows from the UI.
   </Step>
 
   <Step>
@@ -251,7 +251,7 @@ export function PhotoUploader() {
   <AccordionItem value="c5-pause-queued">
     <AccordionTrigger>What happens if I pause a queued item?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      It reverts to `ready` — no request is aborted because none started. Start it again later.
+      It reverts to `ready`; no request is aborted because none started. Start it again later.
     </AccordionContent>
   </AccordionItem>
 
@@ -259,7 +259,7 @@ export function PhotoUploader() {
     <AccordionTrigger>Why does resume need a file?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
       `File` objects can't be serialized, so items restored from persistence have
-      `file: undefined`. Resume is a no-op without a file. Use `rebind` first — it checks the new
+      `file: undefined`. Resume is a no-op without a file. Use `rebind` first: it checks the new
       file's fingerprint matches. Chapter 6 covers the flow.
     </AccordionContent>
   </AccordionItem>

@@ -41,16 +41,16 @@ phases while progress and completion events fire.
     import type { Contracts } from '@gentleduck/upload/core'
     import type { PostStrategy } from '@gentleduck/upload/strategies'
 
-    // M — which strategies exist and the intent each returns
+    // M: which strategies exist and the intent each returns
     type PhotoIntents = { post: PostStrategy.Intent }
 
-    // C — resume state per strategy (POST has none)
+    // C: resume state per strategy (POST has none)
     type PhotoCursors = { post?: PostStrategy.Cursor }
 
-    // P — the kinds of uploads in the app
+    // P: the kinds of uploads in the app
     type PhotoPurpose = 'photo'
 
-    // R — what your backend returns from complete()
+    // R: what your backend returns from complete()
     type PhotoResult = Contracts.Result.Base & { url: string }
     ```
 
@@ -229,8 +229,8 @@ else if (outcome.status === 'error') console.log('failed', outcome.error)
 ```
 photoduck/
   src/
-    upload.ts   -- types + api + store
-    main.ts     -- dispatch + event listeners
+    upload.ts   : types + api + store
+    main.ts     : dispatch + event listeners
 ```
 
 <Accordion type="single" collapsible className="w-full">
@@ -309,7 +309,7 @@ export const store = createUploadStore<PhotoIntents, PhotoCursors, PhotoPurpose,
   <AccordionItem value="c1-autostart">
     <AccordionTrigger>Can uploads start without startAll?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      Yes — set `config.autoStart`, either an array (`autoStart: ['photo']`) or a predicate
+      Yes, set `config.autoStart`, either an array (`autoStart: ['photo']`) or a predicate
       (`autoStart: (p) => p !== 'draft'`). Matching files upload as soon as their intent is
       created.
     </AccordionContent>

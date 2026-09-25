@@ -1,6 +1,6 @@
 ---
 title: Contracts
-description: The Contracts namespace — the API, transport, and strategy interfaces that connect your backend to the engine.
+description: The Contracts namespace: the API, transport, and strategy interfaces that connect your backend to the engine.
 section: Core
 order: 20
 ---
@@ -28,7 +28,7 @@ Every method takes call-specific `args` plus a **context** object `ctx`.
 
 ### createIntent (required)
 
-Asks your backend how a file should be uploaded. Returns a value from the intent map `M` — the
+Asks your backend how a file should be uploaded. Returns a value from the intent map `M`: the
 `strategy` field on the returned object selects which registered strategy runs.
 
 ```ts
@@ -64,14 +64,14 @@ Use the sanitized `filename` from `args`, never the raw browser `File.name`.
 
 | Method | Enables |
 | --- | --- |
-| `findByChecksum(args, ctx)` | Deduplication — return `R` to skip the upload, or `null` |
+| `findByChecksum(args, ctx)` | Deduplication: return `R` to skip the upload, or `null` |
 | `getSignedPreviewUrl(args, ctx)` | Fetch a signed URL for a completed file |
 | `multipart.signPart` / `multipart.completeMultipart` | Required by the multipart strategy |
 | `multipart.listParts` / `multipart.abort` | Optional multipart housekeeping |
 | `tus.create` / `tus.getOffset` | Contract hooks for a TUS strategy |
 
 > The `tus` methods exist in the contract, but the package does **not** ship a built-in TUS
-> strategy yet — only `PostStrategy` and `multipartStrategy`. To use TUS today you'd write a
+> strategy yet: only `PostStrategy` and `multipartStrategy`. To use TUS today you'd write a
 > custom strategy (see [Strategy Registry](/duck-upload/strategies/registry)) that consumes
 > these methods.
 
@@ -83,7 +83,7 @@ Every method receives a `Contracts.Api.Context<P, M>`. Handy fields:
 | --- | --- |
 | `localId` | Client id for this item |
 | `purpose` | The upload's purpose |
-| `fingerprint` | `{ name, size, type, lastModified, checksum? }` — always present |
+| `fingerprint` | `{ name, size, type, lastModified, checksum? }`, always present |
 | `attempt` | 1-based, increments on retry |
 | `meta` | Caller metadata from `addFiles` (never persisted) |
 | `signal` | Abort signal (present in `createIntent`/`complete`) |
@@ -99,9 +99,9 @@ and `signal`; `CompleteContext` also guarantees `intent`.
 The transport abstracts raw HTTP so strategies stay testable. Two implementations ship, and the
 store installs `createXHRTransport()` by default:
 
-- **`createXHRTransport()`** — browser transport built on `XMLHttpRequest` for real upload
+- **`createXHRTransport()`**: browser transport built on `XMLHttpRequest` for real upload
   progress events. The default.
-- **`createFetchTransport()`** — `fetch`-based transport for Node, SSR, edge, and workers (any
+- **`createFetchTransport()`**: `fetch`-based transport for Node, SSR, edge, and workers (any
   runtime without `XMLHttpRequest`). Pass it via the `transport` store option.
 
 ```ts
@@ -116,7 +116,7 @@ type Options = {
 
 Each upload method takes a `url`, a body/fields, an `AbortSignal`, and an optional `onProgress`
 callback. `patch` is used by the [tus strategy](/duck-upload/strategies/tus); `head` reads its
-resume offset; `get` is an optional streaming download. `get` and `head` are optional — check
+resume offset; `get` is an optional streaming download. `get` and `head` are optional: check
 for presence before calling. Provide your own `Transport.Options` for a custom runtime or mocks.
 
 ```ts
@@ -162,13 +162,13 @@ Build one with `createStrategyRegistry()` and populate it via `.set()`.
 
 ## Supporting shapes
 
-- `Contracts.Result.Base` — `{ fileId: string; key: string }`; extend it as `R`.
-- `Contracts.Intent.Base<K>` — `{ strategy: K; fileId: string }`; the base for every intent.
-- `Contracts.FingerprintFile` — the file identity signature (optionally with a `checksum`).
-- `Contracts.ValidationRules` — the per-purpose rules described in
+- `Contracts.Result.Base`: `{ fileId: string; key: string }`; extend it as `R`.
+- `Contracts.Intent.Base<K>`: `{ strategy: K; fileId: string }`; the base for every intent.
+- `Contracts.FingerprintFile`: the file identity signature (optionally with a `checksum`).
+- `Contracts.ValidationRules`: the per-purpose rules described in
   [Store Options](/duck-upload/core/client).
-- `Contracts.Validation.Rejection` — the discriminated reason a file was rejected.
-- `Contracts.Errors.Error` — the plain error shape carried through events (see
+- `Contracts.Validation.Rejection`: the discriminated reason a file was rejected.
+- `Contracts.Errors.Error`: the plain error shape carried through events (see
   [Errors](/duck-upload/core/errors)).
 
 ## Upload lifecycle sequence

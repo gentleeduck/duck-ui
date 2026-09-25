@@ -8,9 +8,9 @@ order: 0
 ## What is Duck Upload?
 
 Duck Upload (`@gentleduck/upload`) is a framework-agnostic engine for moving files from a
-browser into object storage. It owns the hard parts of uploading — a lifecycle state machine,
+browser into object storage. It owns the hard parts of uploading: a lifecycle state machine,
 concurrency scheduling, retries with backoff, pause/resume, deduplication, and crash-safe
-persistence — and leaves the transport protocol to pluggable **strategies**.
+persistence. It leaves the transport protocol to pluggable **strategies**.
 
 The mental model is close to a data-fetching library like TanStack Query: a small typed core
 holds all the state and does the scheduling, adapters plug into the edges, and a thin React
@@ -151,7 +151,7 @@ for (const outcome of await store.waitFor(ids)) {
 
 ## Where to go next
 
-- [Installation](/duck-upload/installation) — add the package and wire the pieces.
-- [Core Overview](/duck-upload/core) → [Engine](/duck-upload/core/engine) — the state machine.
-- [React Overview](/duck-upload/react) — the provider and hooks.
-- [Course](/duck-upload/course) — build a full app, chapter by chapter.
+- [Installation](/duck-upload/installation): add the package and wire the pieces.
+- [Core Overview](/duck-upload/core) → [Engine](/duck-upload/core/engine): the state machine.
+- [React Overview](/duck-upload/react): the provider and hooks.
+- [Course](/duck-upload/course): build a full app, chapter by chapter.

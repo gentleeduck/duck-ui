@@ -99,7 +99,7 @@ function UploadPage() {
 ```
 
 `item.progress` only exists once you're in a phase that has it (`uploading`, `completing`,
-`paused`) — narrow on `item.phase` first.
+`paused`); narrow on `item.phase` first.
 
 ## Support large files with multipart
 
@@ -116,7 +116,7 @@ strategies.set(PostStrategy())
 strategies.set(multipartStrategy({ maxPartConcurrency: 4 }))
 ```
 
-Your `createIntent` chooses a strategy by returning the matching intent — the engine dispatches
+Your `createIntent` chooses a strategy by returning the matching intent: the engine dispatches
 on the intent's `strategy` field. The multipart strategy also needs `api.multipart.signPart`
 and `api.multipart.completeMultipart` (see [Multipart Strategy](/duck-upload/strategies/multipart)).
 
@@ -130,7 +130,7 @@ createUploadStore({
 })
 ```
 
-Matching files upload as soon as their intent is created — no manual `start`.
+Matching files upload as soon as their intent is created, no manual `start` needed.
 
 ## Enable resume across reloads
 

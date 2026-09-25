@@ -32,7 +32,7 @@ store from `UploadProvider`.
 | `dispatch` | `(cmd: Engine.Command<P>) => void` | Send commands |
 | `on` / `off` | event helpers | Subscribe / unsubscribe (`on` returns an unsubscribe fn) |
 
-Note `failed` maps to the `error` **phase** — when you check `item.phase`, use `'error'`.
+Note `failed` maps to the `error` **phase**, so when you check `item.phase`, use `'error'`.
 
 ## Dispatching commands
 
@@ -50,7 +50,7 @@ Batch variants (`startAll`, `pauseAll`, `cancelAll`) accept an optional `purpose
 
 ## Listening for events
 
-`on` returns its own unsubscribe function — return it straight from an effect:
+`on` returns its own unsubscribe function; return it straight from an effect:
 
 ```tsx
 React.useEffect(() => on('upload.progress', ({ localId, pct }) => {
@@ -78,7 +78,7 @@ React.useEffect(() => on('upload.progress', ({ localId, pct }) => {
 
 ### useUploaderActions
 
-Returns `{ dispatch, on, store }` without subscribing to snapshots — use it for buttons or
+Returns `{ dispatch, on, store }` without subscribing to snapshots; use it for buttons or
 side-effect components that shouldn't re-render on progress:
 
 ```tsx

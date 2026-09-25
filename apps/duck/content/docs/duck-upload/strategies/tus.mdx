@@ -1,6 +1,6 @@
 ---
 title: tus Strategy
-description: Resumable uploads over the tus protocol — HEAD for the offset, chunked PATCH, cursor-persisted resume.
+description: Resumable uploads over the tus protocol: HEAD for the offset, chunked PATCH, cursor-persisted resume.
 section: Adapters
 order: 25
 ---
@@ -8,7 +8,7 @@ order: 25
 `TusStrategy` implements resumable uploads over the [tus protocol](https://tus.io). It is
 **creation-less**: your backend creates the tus upload server-side (via the tus creation
 extension) and returns a ready upload URL in the intent, so the strategy only performs the
-transfer half of the protocol — a `HEAD` to read the server's `Upload-Offset`, then a sequence
+transfer half of the protocol: a `HEAD` to read the server's `Upload-Offset`, then a sequence
 of `PATCH` requests. The offset is persisted in the cursor, so a refresh-and-rebind (or a
 resumed session on a fresh device) continues where it left off.
 
@@ -44,7 +44,7 @@ type Intent = {
 ```
 
 Because creation happens on the backend, the client never sends `Upload-Length` /
-`Upload-Metadata` and never parses a `Location` header — one fewer CORS surface and no presign
+`Upload-Metadata` and never parses a `Location` header: one fewer CORS surface and no presign
 logic in the browser.
 
 ## Cursor shape
@@ -59,10 +59,10 @@ type Cursors = { tus?: TusStrategy.Cursor }
 ## How it runs
 
 1. **Validate** the upload URL through the SSRF guard.
-2. **Resolve the offset** — start from the persisted cursor, then confirm against the server
+2. **Resolve the offset**: start from the persisted cursor, then confirm against the server
    with `HEAD` (the server's `Upload-Offset` is authoritative on resume). If the transport has
    no `head()`, the persisted cursor is used as-is.
-3. **PATCH in chunks** — for each slice, send `Upload-Offset`, `Tus-Resumable: 1.0.0`, and
+3. **PATCH in chunks**: for each slice, send `Upload-Offset`, `Tus-Resumable: 1.0.0`, and
    `Content-Type: application/offset+octet-stream`. Trust the server's returned `Upload-Offset`
    to advance; persist it after each accepted chunk.
 

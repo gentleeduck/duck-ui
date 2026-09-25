@@ -6,7 +6,7 @@ order: 10
 ---
 
 `multipartStrategy` slices a file into parts, signs each part on demand, PUTs them concurrently,
-and finalizes with `completeMultipart`. It is resumable — completed part ETags are stored in the
+and finalizes with `completeMultipart`. It is resumable: completed part ETags are stored in the
 cursor and skipped on resume.
 
 ```ts
@@ -26,7 +26,7 @@ strategies.set(multipartStrategy({ maxPartConcurrency: 4 }))
 | `allowPrivateHosts` | `false` | Allow private/loopback IPs in signed URLs |
 
 Every signed part URL is validated before use: it must be `http`/`https`, must not contain `..`,
-must match `allowedHosts` when set, and — unless `allowPrivateHosts` is true — must not point at
+must match `allowedHosts` when set, and (unless `allowPrivateHosts` is true) must not point at
 a private, loopback, link-local, or cloud-metadata address. If you leave `allowedHosts` unset,
 the strategy warns once that signed URLs are host-unrestricted.
 
@@ -137,7 +137,7 @@ in flight.
 
 `resumable` is `true`. Pausing aborts in-flight PUTs; the cursor already holds every completed
 part. On resume the strategy reads the cursor, skips done parts, and continues. If the cursor is
-marked `completed`, it skips `completeMultipart` too — no double assembly.
+marked `completed`, it skips `completeMultipart` too, avoiding double assembly.
 
 ## When to use
 

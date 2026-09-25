@@ -1,12 +1,12 @@
 ---
 title: useDropzone
-description: Headless drag-and-drop and file-picker hook — prop getters, isDragging, accept filtering.
+description: Headless drag-and-drop and file-picker hook: prop getters, isDragging, accept filtering.
 section: Integrations
 order: 30
 ---
 
 `useDropzone` is a headless hook that wires drag-and-drop and the native file picker to the
-upload store. It ships **no markup and no styling** — you get prop getters for a drop target and
+upload store. It ships **no markup and no styling**: you get prop getters for a drop target and
 a hidden `<input type="file">`, plus a live `isDragging` flag. Everything visual is yours.
 
 ```tsx
@@ -29,7 +29,7 @@ function Drop() {
 ```
 
 Dropped or selected files are dispatched to the store as `addFiles` (or handed to your own
-`onFiles`). The hook reads the store from `<UploadProvider>` context — or pass an explicit
+`onFiles`). The hook reads the store from `<UploadProvider>` context, or pass an explicit
 `store`.
 
 ## Options
@@ -38,7 +38,7 @@ Dropped or selected files are dispatched to the store as `addFiles` (or handed t
 useDropzone<P>({
   purpose: P                          // forwarded to the addFiles command (required)
   meta?: Record<string, unknown>      // caller metadata forwarded to backend API calls
-  accept?: string                     // "image/*,.pdf" — filters files and sets input accept
+  accept?: string                     // "image/*,.pdf": filters files and sets input accept
   multiple?: boolean                  // default true; false keeps only the first file
   disabled?: boolean                  // default false; no drop, no click-to-open
   noClick?: boolean                   // default false; don't open the picker on root click
@@ -69,18 +69,18 @@ A file passes if it matches **any** token. An absent or empty `accept` allows ev
 | `getRootProps` | `(extra?) => props` | Spread onto the drop target |
 | `getInputProps` | `(extra?) => props` | Spread onto the hidden `<input type="file">` |
 
-Both getters **merge** any handlers/styles you pass, calling yours first — so
+Both getters **merge** any handlers/styles you pass, calling yours first, so
 `getRootProps({ onClick })` still runs your `onClick` before opening the picker.
 
 ## Behavior notes
 
-- **Nested children don't flicker** — an internal depth counter tracks `dragenter`/`dragleave`,
+- **Nested children don't flicker**: an internal depth counter tracks `dragenter`/`dragleave`,
   so `isDragging` stays true while hovering child elements.
-- **`drop` is enabled** — the root's `dragover`/`drop` call `preventDefault`, so the browser
+- **`drop` is enabled**: the root's `dragover`/`drop` call `preventDefault`, so the browser
   won't navigate away when a file is dropped.
-- **Re-selecting the same file works** — the input's value is reset after each change, so
+- **Re-selecting the same file works**: the input's value is reset after each change, so
   picking the same file twice still fires.
-- **Filtering happens before dispatch** — files rejected by `accept` never reach the store; with
+- **Filtering happens before dispatch**: files rejected by `accept` never reach the store; with
   `multiple: false` only the first accepted file is dispatched.
 
 ## Custom handling
@@ -107,5 +107,5 @@ fileMatchesAccept(file, 'image/*,.pdf')                     // boolean
 
 ## Next
 
-- [useUploader](/duck-upload/react/use-uploader) — render the items the dropzone adds.
-- [UploadProvider](/duck-upload/react/upload-provider) — the store context the hook reads.
+- [useUploader](/duck-upload/react/use-uploader): render the items the dropzone adds.
+- [UploadProvider](/duck-upload/react/upload-provider): the store context the hook reads.

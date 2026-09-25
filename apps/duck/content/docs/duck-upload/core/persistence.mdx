@@ -5,7 +5,7 @@ section: Core
 order: 50
 ---
 
-Persistence snapshots resumable upload state — intent plus cursor plus progress — so a user can
+Persistence snapshots resumable upload state (intent plus cursor plus progress) so a user can
 refresh the page (or survive a tab crash) and pick up where they left off. Only in-flight,
 resumable items are stored; terminal ones are not.
 
@@ -77,7 +77,7 @@ const store = createUploadStore<Intents, Cursors, Purpose, Result>({
 ## What gets stored
 
 The built-in serializer keeps only items that have an intent and are in a non-terminal phase.
-`completed`, `canceled`, and `error` items are excluded — persistence is for resuming, not
+`completed`, `canceled`, and `error` items are excluded: persistence is for resuming, not
 history. For each item it stores the fingerprint, the intent, the cursor, and last-known
 progress. It never stores the browser `File` (see below).
 
@@ -92,7 +92,7 @@ flowchart LR
 ## Restore behavior
 
 On construction the store loads the snapshot and hydrates state. Restored items come back in the
-`paused` phase with `file: undefined` — browser `File` objects can't be serialized. Progress and
+`paused` phase with `file: undefined`, because browser `File` objects can't be serialized. Progress and
 cursor are restored when present. Each item is only restored if `isPurpose`/`isIntent` pass, the
 intent's `strategy` is registered, and the cursor's strategy matches. Anything that fails a check
 is silently skipped, which keeps old snapshots from a previous app version safe.
@@ -100,7 +100,7 @@ is silently skipped, which keeps old snapshots from a previous app version safe.
 ## Rebinding files
 
 Because `file` is missing after restore, the user must re-select it before resuming. The
-`rebind` command computes the new file's fingerprint and compares it against the stored one — the
+`rebind` command computes the new file's fingerprint and compares it against the stored one: the
 match checks `name`, `size`, and `lastModified` (not `type`). On a match it attaches the file; on
 a mismatch it's a silent no-op (the item stays paused without a file).
 
@@ -110,7 +110,7 @@ store.dispatch({ type: 'resume', localId })
 ```
 
 `rebind` sets the file synchronously in the reducer, so to auto-resume, check the snapshot right
-after dispatching — `resume` is a no-op if the file wasn't attached:
+after dispatching, since `resume` is a no-op if the file wasn't attached:
 
 ```ts
 store.dispatch({ type: 'rebind', localId, file: reselectedFile })

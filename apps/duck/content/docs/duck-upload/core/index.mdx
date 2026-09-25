@@ -5,7 +5,7 @@ section: Core
 order: 0
 ---
 
-`@gentleduck/upload/core` is the engine — the store, the reducer, the contracts your backend
+`@gentleduck/upload/core` is the engine: the store, the reducer, the contracts your backend
 implements, the persistence layer, the typed error classes, and the default transport. It has
 no React dependency and runs anywhere `File`, `Blob`, and `AbortController` exist.
 
@@ -15,7 +15,7 @@ no React dependency and runs anywhere `File`, `Blob`, and `AbortController` exis
 
 | Export | Purpose |
 | --- | --- |
-| `createUploadStore(options)` | Build the store — the single runtime object you interact with |
+| `createUploadStore(options)` | Build the store: the single runtime object you interact with |
 | `resolveUploadConfig(partial)` | Apply config defaults (mostly used internally and in tests) |
 | `createXHRTransport()` | The browser transport (installed automatically when `transport` is omitted) |
 | `LocalStorageAdapter`, `IndexedDBAdapter`, `MemoryAdapter`, `createMemoryAdapter()` | Persistence adapters |
@@ -53,15 +53,15 @@ and the store handle is `Store.UploadStore<M, C, P, R>`.
 - **Immutable snapshots.** Every reducer step returns a new state object, so reference equality
   drives React re-renders correctly.
 - **One event layer.** Public events emit from a single place after transitions, never from
-  inside handlers — no duplicates, consistent semantics.
+  inside handlers: no duplicates, consistent semantics.
 - **Typed results end-to-end.** `R` flows from `complete()` through events to `item.result`.
 - **Protocol-agnostic.** The engine selects a strategy by the intent's `strategy` field and
   never depends on a concrete protocol.
 
 ## Continue
 
-- [Client](/duck-upload/core/client) — store options, plugins, hooks, custom fingerprinting.
-- [Contracts](/duck-upload/core/contracts) — the API, transport, and strategy interfaces.
-- [Engine](/duck-upload/core/engine) — phases, scheduling, and retries.
-- [Errors](/duck-upload/core/errors) — the typed error model.
-- [Persistence](/duck-upload/core/persistence) — resume across reloads.
+- [Client](/duck-upload/core/client): store options, plugins, hooks, custom fingerprinting.
+- [Contracts](/duck-upload/core/contracts): the API, transport, and strategy interfaces.
+- [Engine](/duck-upload/core/engine): phases, scheduling, and retries.
+- [Errors](/duck-upload/core/errors): the typed error model.
+- [Persistence](/duck-upload/core/persistence): resume across reloads.

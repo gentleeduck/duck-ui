@@ -1,6 +1,6 @@
 ---
 title: diff
-description: Show differences between local component copies and the latest registry versions. Syntax-highlighted side-by-side TUI.
+description: Show differences between local component copies and the latest registry versions. Plain text by default, with an optional interactive TUI.
 section: Commands
 ---
 ## Usage
@@ -9,7 +9,7 @@ section: Commands
 npx @gentleduck/cli diff [components...]
 ```
 
-Compares your local component source against the latest registry version. Default output is a **syntax-highlighted side-by-side TUI**; pass `--gui false` for plain text.
+Compares your local component source against the latest registry version. **Default output is plain text** printed to the terminal (unified-diff style, colorized). Pass `-g`/`--gui` to open an interactive TUI instead.
 
 ---
 
@@ -18,21 +18,23 @@ Compares your local component source against the latest registry version. Defaul
 | Flag | Description |
 | --- | --- |
 | `-c, --cwd <cwd>` | Working directory |
-| `-g, --gui` | Force TUI mode (default when stdout is a TTY) |
+| `-g, --gui` | Open in interactive GUI mode (off by default) |
 | `-w, --workspace <path>` | Target workspace |
+
+`--gui` is a plain on/off flag - it doesn't take a value. There's no `--gui false`; to get plain text just omit the flag.
 
 ---
 
 ## Examples
 
 ```bash
-# Diff a specific component
+# Diff a specific component (plain text)
 npx @gentleduck/cli diff button
 
-# Diff all installed components
+# Diff all installed components (plain text)
 npx @gentleduck/cli diff
 
-# Force TUI even in non-interactive shells (e.g. CI logs you'll page later)
+# Open the interactive TUI
 npx @gentleduck/cli diff button --gui
 ```
 
@@ -40,33 +42,41 @@ npx @gentleduck/cli diff button --gui
 
 ## What you see
 
-The TUI renders three panels:
+Without `--gui`, each changed file prints as a unified diff: old/new line numbers, then a `+`/`-`/space prefix, then the content, colored green/red:
 
 ```
-┌──── local ─────────────────┬──── registry ─────────────────┐
-│ export function Button() { │ export function Button(props) {│
-│   return <button />        │   return <button {...props} /> │
-│ }                          │ }                              │
-└────────────────────────────┴───────────────────────────────┘
-                          [j/k] move  [q] quit  [u] update
+  12  12   function Button() {
+  13     -   return <button />
+      13 +   return <button {...props} />
+  14  14   }
 ```
 
-Press `u` to launch [`update`](/duck-cli/commands/update) on the currently-focused component without leaving the TUI.
+With `--gui`, you first pick a component from a list, then see the diff rendered full-screen. It starts in unified view; press `Tab` to switch to a side-by-side `LOCAL` / `REGISTRY` layout.
+
+| Key | Action |
+| --- | --- |
+| `j` / `k` | Scroll |
+| `n` / `p` | Jump to next/previous hunk |
+| `Tab` | Toggle unified / side-by-side view |
+| `h` / `l` | Switch file (when a component has more than one changed file) |
+| `Esc` | Back to the component list |
+
+There's no key to launch `update` from inside the diff TUI - run it separately.
 
 ---
 
 ## Common workflow
 
 1. `cli diff`: see what's drifted from upstream
-2. `cli update <name>`: pull changes via the merge TUI (preserves your local edits)
+2. `cli update <name>`: pull changes, choosing merge to resolve conflicts hunk-by-hunk (preserves your local edits)
 3. `cli diff <name>`: verify the merge resolved correctly
 
 ---
 
 ## Use in CI
 
-For CI / scripts, diff exits with code `1` when there's a diff and `0` when in sync:
+For CI / scripts, diff (in its default plain-text mode) exits with code `1` when there's a diff and `0` when in sync:
 
 ```bash
-npx @gentleduck/cli diff --gui false || echo "drift detected"
+npx @gentleduck/cli diff || echo "drift detected"
 ```

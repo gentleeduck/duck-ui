@@ -9,7 +9,7 @@ section: Commands
 npx @gentleduck/cli update [components...]
 ```
 
-Updates installed components to the latest registry versions. If you have local modifications, the CLI launches an **interactive merge TUI** for hunk-by-hunk conflict resolution.
+Updates installed components to the latest registry versions. For each component whose local content differs from the current registry version, you're asked to **Overwrite**, **Skip**, or **Merge**; only "Merge" opens the interactive hunk-by-hunk TUI. Passing `-y`/`--yes` skips this entirely and force-overwrites every selected component - including ones with local edits.
 
 ---
 
@@ -26,20 +26,18 @@ Updates installed components to the latest registry versions. If you have local 
 
 ## The merge TUI
 
-For each changed file, hunks are presented one at a time:
+Opens when you pick **Merge** for a component. For a `modified` file, hunks are presented one at a time; a `deleted` file (registry removed it) gets its own two-way choice instead:
 
 | Key | Action |
 | --- | --- |
-| `1` | Keep your local version |
-| `2` | Take the registry version |
-| `3` | Keep both |
+| `1` | Modified file: keep your local hunk · Deleted file: keep it |
+| `2` | Modified file: take the registry hunk · Deleted file: remove it |
+| `3` | Modified file only: keep both |
 | `h` / `l` | Navigate between files |
-| `j` / `k` | Navigate between hunks |
-| `N` / `P` | Jump to next/previous unresolved hunk |
-| `Enter` | Confirm and write the merged result |
-| `Esc` | Abort, leave files untouched |
-
-After resolving all hunks, you see a preview of the merged result before writing to disk.
+| `j` / `k` (or `n` / `p`) | Navigate between hunks |
+| `N` / `P` | Jump to the previous/next unresolved hunk - swapped from what you'd expect; verify against your installed CLI version before relying on it |
+| `Enter` | Once every hunk is resolved: show a preview. Pressed again from the preview: write to disk |
+| `Esc` | From the hunk view: abort, leave files untouched. From the preview: go back to the hunk view |
 
 No git merge markers. No manual conflict resolution. No diff tool required.
 
@@ -60,12 +58,12 @@ npx @gentleduck/cli update --all --workspace packages/ui
 
 ---
 
-## When the merge TUI does NOT open
+## When you're not prompted at all
 
-- **No local changes**: file matches registry, replaced silently
-- **No registry changes**: local file is already up to date
+- **`-y`/`--yes` passed**: every selected component is force-overwritten with the registry version, no diff check, no prompt - local edits are lost silently.
+- **Local content already matches the current registry version**: nothing to resolve, it's just updated.
 
-The TUI only triggers when both sides diverged.
+Otherwise, any component whose local files differ at all from the current registry version triggers the Overwrite/Skip/Merge prompt - including one you never edited yourself, if the registry has simply moved on since you installed it. The CLI diffs your local copy against the latest registry content; it keeps no record of what you originally installed, so it can't distinguish "you changed this" from "upstream changed since you installed it."
 
 ---
 

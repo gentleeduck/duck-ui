@@ -5,21 +5,21 @@ section: Guides
 ---
 ## Workspace-aware CLI
 
-When `duck-ui.config.json` has `"monorepo": true`, the CLI resolves the install target from:
+When `duck-ui.config.json` has `"monorepo": true`, the CLI resolves the install target in this priority order:
 
-1. The `workspace` field in `duck-ui.config.json`
-2. The `--workspace` flag (overrides config)
-3. Auto-detection from the nearest parent `package.json`
+1. The `--workspace` flag, if passed - wins outright.
+2. Otherwise, the nearest parent directory (from your cwd, bounded by the config's `workspace.root`) containing a `package.json` - auto-detected.
+3. Otherwise, the `workspace.project` value stored in `duck-ui.config.json` - the default picked (or prompted for) during `init`.
 
-The CLI **validates** that the target workspace has `package.json` and `tsconfig.json` before installing.
+The CLI **validates** that the target workspace has `package.json` (and, for `init`, `tsconfig.json`) before installing.
 
 ---
 
 ## Examples
 
 ```bash
-# Init monorepo
-npx @gentleduck/cli init --monorepo --workspace apps/web
+# Init monorepo (passing --workspace implies monorepo mode)
+npx @gentleduck/cli init --workspace apps/web
 
 # Add component to specific workspace
 npx @gentleduck/cli add button --workspace apps/dashboard
@@ -84,9 +84,8 @@ Failing any check aborts with a clear error pointing at the missing file.
 ```bash
 # In a workspace bootstrap script
 npx @gentleduck/cli init \
-  --monorepo \
   --workspace packages/ui \
-  --project-type next \
+  --project-type VITE \
   --yes \
   --all
 ```

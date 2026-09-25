@@ -22,9 +22,9 @@ section: Getting Started
 
 ## What this CLI does
 
-Most component CLIs only add components. gentleduck/cli also updates them with an interactive merge, removes them cleanly, diffs them against the registry with syntax highlighting, and manages theme tokens.
+Most component CLIs only add components. gentleduck/cli also updates them with an optional interactive merge, removes installed source files, diffs them against the registry (plain text by default, or an interactive TUI), and manages theme tokens.
 
-The **update** command matters most. When you update a component you have modified locally, the CLI opens an interactive merge screen in your terminal. Each change appears as a hunk and you choose per-hunk what to keep:
+The **update** command matters most. When a component you've updated has local modifications, the CLI asks whether to overwrite, skip, or merge it; picking **merge** opens an interactive screen in your terminal where each change appears as a hunk and you choose per-hunk what to keep:
 
 - Press **1** to keep your local version
 - Press **2** to take the registry version
@@ -40,9 +40,9 @@ No git merge markers. No manual conflict resolution. No diff tool required.
 |---|---|---|
 | `init` | Yes | Yes |
 | `add` | Yes | Yes |
-| `diff` with TUI | Syntax-highlighted side-by-side view | Plain text diff |
-| `update` with merge | Interactive hunk-by-hunk merge TUI | Not available |
-| `remove` | Clean uninstall with dep cleanup | Not available |
+| `diff` | Colorized unified diff by default; `--gui` opens a scrollable/side-by-side TUI | Plain text diff |
+| `update` with merge | Optional interactive hunk-by-hunk merge TUI (opt in per component) | Not available |
+| `remove` | Deletes installed component source (npm deps are left in place) | Not available |
 | `list` | Filter by type, JSON output | Not available |
 | `theme` | List, inspect, install themes from registry | Not available |
 | Template scaffolding | `--template` flag for full project scaffold | Not available |
@@ -67,7 +67,7 @@ npm install -D @gentleduck/cli
 | [`init`](/duck-cli/commands/init) | Initialize project config, optionally install components |
 | [`add`](/duck-cli/commands/add) | Install components from the registry |
 | [`update`](/duck-cli/commands/update) | Update installed components with the interactive merge TUI |
-| [`remove`](/duck-cli/commands/remove) | Remove components and clean up unused dependencies |
+| [`remove`](/duck-cli/commands/remove) | Delete installed component source files |
 | [`diff`](/duck-cli/commands/diff) | Show diffs between local copies and registry versions |
 | [`list`](/duck-cli/commands/list) | List available components from the registry |
 | [`theme`](/duck-cli/commands/theme) | Manage theme tokens (list, info, add) |

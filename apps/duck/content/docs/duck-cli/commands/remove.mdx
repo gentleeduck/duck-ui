@@ -9,7 +9,7 @@ section: Commands
 npx @gentleduck/cli remove [components...]
 ```
 
-Deletes the component source files and prunes any npm dependencies that no other installed component still uses.
+Deletes the component's local source folder(s). It does not touch `package.json` - npm dependencies the component pulled in are never pruned.
 
 ---
 
@@ -38,18 +38,19 @@ npx @gentleduck/cli remove dialog -y
 
 ---
 
-## How dependency cleanup works
+## What it actually does
 
-1. **Resolves the component's npm deps**: e.g. `dialog` declared `@radix-ui/react-dialog`.
-2. **Scans other installed components**: does any still need `@radix-ui/react-dialog`?
-3. **Removes if orphaned**: runs `bun remove` / `npm uninstall` on the unused packages.
+1. **Resolves installed components**: scans your components directory and matches each subfolder against the registry index.
+2. **Confirms** (unless `-y`): lists the components and asks before deleting.
+3. **Deletes each component's folder**: a plain recursive removal of `localPath` - no dependency graph walk, no `bun remove` / `npm uninstall` call.
 
-The CLI never removes a dep you'd hand-installed yourself unless it's also declared by the component being removed.
+If you want the npm packages a component pulled in gone too, remove them yourself.
 
 ---
 
 ## What stays
 
+- npm dependencies the component declared (never pruned - see above)
 - Your custom edits to other files
 - Imports from removed components in **your own code**: they'll error at compile time, and you fix them
 - Theme tokens written by `theme add`

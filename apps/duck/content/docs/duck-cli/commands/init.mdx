@@ -19,16 +19,19 @@ Creates `duck-ui.config.json` in the current directory and (optionally) seeds in
 | --- | --- |
 | `-y, --yes` | Skip prompts, use defaults |
 | `-c, --cwd <cwd>` | Working directory |
-| `-p, --project-type <type>` | Project type (`next`, `vite`, `remix`, `manual`) |
-| `-b, --base-color <color>` | Base color for theme |
-| `--alias <alias>` | Import alias for components (e.g. `@/components`) |
-| `--css <path>` | Path to global CSS file |
+| `-p, --project-type <type>` | Project type (`NEXT_JS`, `VITE`, `TANSTACK_START`, `UNKNOWN`) |
+| `-b, --base-color <color>` | Base color for theme (any name from [`theme list`](/duck-cli/commands/theme)) |
+| `--alias <alias>` | Import alias root (default: `~`); components are written under `<alias>/ui`, `<alias>/libs`, `<alias>/hooks`, `<alias>/pages`, `<alias>/layouts` |
+| `--css <path>` | Path to global CSS file (default: `./src/styles.css`) |
 | `--css-variables` / `--no-css-variables` | Enable/disable CSS variables |
-| `--monorepo` / `--no-monorepo` | Monorepo mode |
-| `-w, --workspace <path>` | Target workspace in monorepo |
-| `--template <name>` | Scaffold from a project template |
-| `--prefix <prefix>` | Component prefix |
+| `--no-monorepo` | Force single-project mode even when monorepo signals are detected |
+| `-w, --workspace <path>` | Workspace where components are installed (implies monorepo) |
+| `--css-workspace <path>` | Workspace that owns the CSS file (defaults to `--workspace`; implies monorepo) |
+| `-t, --template <name>` | Scaffold from a project template |
+| `--prefix <prefix>` | Tailwind class prefix (e.g. `tw-`); leave empty for none |
 | `-a, --all` | Install all components |
+
+There is no standalone `--monorepo` flag. Monorepo mode is auto-detected (turbo/pnpm/nx/lerna/rush/`package.json` workspaces) and prompted for interactively; passing `-w/--workspace` or `--css-workspace` implies it, and `--no-monorepo` forces it off.
 
 ---
 
@@ -41,8 +44,8 @@ npx @gentleduck/cli init
 # Init with template scaffold
 npx @gentleduck/cli init --template acme
 
-# Init monorepo with workspace target
-npx @gentleduck/cli init --monorepo --workspace apps/web
+# Init monorepo with an explicit workspace target
+npx @gentleduck/cli init --workspace apps/web
 
 # Init and install all components in one shot
 npx @gentleduck/cli init --all -y
@@ -52,24 +55,36 @@ npx @gentleduck/cli init --all -y
 
 ## What it writes
 
-A new `duck-ui.config.json` at the project root (or `--cwd`):
+A new `duck-ui.config.json` at the project root (or `--cwd`/`--workspace`):
 
 ```jsonc
 {
-  "projectType": "next",
-  "tsx": true,
-  "tailwind": { "css": "app/globals.css", "config": "tailwind.config.ts" },
-  "aliases": { "components": "@/components", "lib": "@/lib", "hooks": "@/hooks", "utils": "@/lib/utils" },
-  "monorepo": false
+  "schema": "https://gentleduck.org/schema.json",
+  "rsc": true,
+  "monorepo": false,
+  "workspace": { "root": ".", "project": "." },
+  "tailwind": {
+    "baseColor": "zinc",
+    "css": "./src/styles.css",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "aliases": {
+    "ui": "~/ui",
+    "libs": "~/libs",
+    "hooks": "~/hooks",
+    "pages": "~/pages",
+    "layouts": "~/layouts"
+  }
 }
 ```
 
-Plus theme CSS variables (when `--css-variables` is on) appended to your globals.css.
+`rsc` is derived from `--project-type`: `true` only for `NEXT_JS`. Plus the generated theme CSS (light/dark tokens under a Tailwind v4 `@theme inline` block) written to the `tailwind.css` path.
 
 ---
 
 ## Notes
 
-- **TypeScript only**: `tsx: true` is the default; `tsx: false` is not supported.
+- **TypeScript is required**: declining the "install TypeScript?" prompt aborts `init` entirely (unless TypeScript is already installed, or `-y/--yes` is passed, which always installs it). There's no JS-output mode.
 - **Tailwind required**: components ship with Tailwind classes. Vanilla CSS is not currently a supported output mode.
-- **Path aliases**: derived from your `tsconfig.json` `paths` if present.
+- **Aliases are fixed suffixes, not tsconfig-derived**: `init` writes `<alias>/ui`, `<alias>/libs`, etc. from whatever you type for `--alias` (default `~`) - it doesn't read your `tsconfig.json`. Later commands (`add`/`update`/...) resolve that alias against your `tsconfig.json`'s `compilerOptions.paths` to find where on disk to write files.

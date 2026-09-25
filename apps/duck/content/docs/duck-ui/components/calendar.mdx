@@ -15,7 +15,7 @@ order: 10
 
 ## Philosophy
 
-Calendars are complex accessibility challenges disguised as simple grids. We own the entire calendar stack  -  from the headless engine ([`@gentleduck/calendar`](/duck-calendar)) to the compound primitives (`@gentleduck/primitives/calendar`) to this styled component. The adapter pattern lets you swap date libraries, the hook layer handles state management, and this component applies Tailwind styling via `data-*` attribute selectors.
+Calendars are complex accessibility challenges disguised as simple grids. We own the calendar stack from the headless engine ([`@gentleduck/calendar`](/duck-calendar)) to this styled component. The adapter pattern lets you swap date libraries, the hook layer handles state management, and this component applies Tailwind styling via `data-*` attribute selectors.
 
 ## How It's Built
 
@@ -24,7 +24,7 @@ Calendars are complex accessibility challenges disguised as simple grids. We own
   Calendar --> hook["useCalendar"]:::internal
   Calendar --> libs["@gentleduck/libs"]:::internal
   Calendar --> lucide["lucide-react"]:::external
-  Calendar --> select["Select"]:::component
+  Calendar --> dropdown["VirtualizedDropdown"]:::internal
 
   hook --> adapter["DateAdapter"]:::internal
   hook --> grid["buildCalendarMonth"]:::internal
@@ -34,7 +34,6 @@ Calendars are complex accessibility challenges disguised as simple grids. We own
 
   classDef external fill:#818cf8,stroke:#6366f1,color:#fff
   classDef internal fill:#2dd4bf,stroke:#14b8a6,color:#fff
-  classDef component fill:#fb923c,stroke:#f97316,color:#fff
 `} />
 
 ## Installation
@@ -63,9 +62,9 @@ npx @gentleduck/cli add calendar
 npm install @gentleduck/calendar @gentleduck/libs
 ```
 
-<Step>Add the `Button` and `Select` components to your project.</Step>
+<Step>Add the `Button` component to your project.</Step>
 
-The `Calendar` uses the [`Button`](/duck-ui/components/button) variant styles and the [`Select`](/duck-ui/components/select) component for month/year dropdowns.
+The `Calendar` uses the [`Button`](/duck-ui/components/button) variant styles for navigation. Month/year dropdowns are a self-contained virtualized list built into the component, not the shared [`Select`](/duck-ui/components/select) component.
 
 <Step>Copy and paste the following code into your project.</Step>
 

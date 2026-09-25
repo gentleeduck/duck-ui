@@ -34,7 +34,8 @@ const features = [
   {
     icon: ShieldCheck,
     title: 'Secret-safe by default',
-    description: '`toJSON()` decides what metadata is safe to serialize, so secrets never leak into logs or API responses.',
+    description:
+      '`toJSON()` decides what metadata is safe to serialize, so secrets never leak into logs or API responses.',
     bg: 'bg-emerald-500/10',
     color: 'text-emerald-500',
   },
@@ -48,7 +49,8 @@ const features = [
   {
     icon: Fingerprint,
     title: 'Branded types',
-    description: '`detail()` and `fault()` brand a plain status number, so a code from one kit can never satisfy another.',
+    description:
+      '`detail()` and `fault()` brand a plain status number, so a code from one kit can never satisfy another.',
     bg: 'bg-orange-500/10',
     color: 'text-orange-500',
   },
@@ -117,8 +119,8 @@ export default async function DuckErrorPage() {
               One registry. One class. Fully typed.
             </h2>
             <p className="mx-auto max-w-lg text-base text-muted-foreground leading-relaxed">
-              Build one error class per subsystem from a registry literal. No separate type
-              declarations to keep in sync, no secrets leaking into a response.
+              Build one error class per subsystem from a registry literal. No separate type declarations to keep in
+              sync, no secrets leaking into a response.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

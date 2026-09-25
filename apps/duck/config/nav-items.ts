@@ -161,7 +161,8 @@ export const navItems = [
       {
         title: '@gentleduck/error',
         href: '/duck-error',
-        description: 'Typed, registry-driven error classes. Branded codes, secret-safe serialization, zero dependencies.',
+        description:
+          'Typed, registry-driven error classes. Branded codes, secret-safe serialization, zero dependencies.',
         icon: OctagonAlert,
         color: '#dc2626',
       },

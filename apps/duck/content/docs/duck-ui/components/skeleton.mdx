@@ -88,7 +88,7 @@ Direction is resolved through the shared primitives direction module. Use a loca
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionSkeleton` for staggered entrance animations powered by [motion](https://motion.dev). Each skeleton block uses a `scaleIn` entrance with a bouncy spring transition, staggered by 50ms via the `index` prop.
+Use `MotionSkeleton` for staggered entrance animations powered by [motion](https://motion.dev). Each skeleton block uses a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition, staggered by 50ms via the `index` prop.
 
 <ComponentPreview
   name="skeleton-4"
@@ -109,7 +109,7 @@ Requires the `motion` package. Use `MotionSkeleton` instead of `Skeleton`. Same 
 
 ### MotionSkeleton
 
-Staggered `scaleIn` entrance with `springBouncy` transition. Requires the `motion` package.
+Staggered `scaleIn` entrance (fade, scale, and blur) with `springBouncy` transition. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

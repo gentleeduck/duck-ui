@@ -159,7 +159,7 @@ Direction is resolved through the shared primitives direction module. Use a loca
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionPreviewPanel` for a smooth entrance animation powered by [motion](https://motion.dev). The panel uses a `scaleIn` entrance with a bouncy spring transition on mount, and its internal controls (buttons, separators, badges, tooltips) use the full motion stack.
+Use `MotionPreviewPanel` for a smooth entrance animation powered by [motion](https://motion.dev). The panel uses a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition on mount, and its internal controls (buttons, separators, badges, tooltips) use the full motion stack.
 
 <ComponentPreview
   name="preview-panel-6"
@@ -194,7 +194,7 @@ The core pan-zoom container.
 
 ### MotionPreviewPanel
 
-`scaleIn` entrance with `springBouncy` transition on mount. Zoom controls use `MotionButton`, `MotionBadge`, `MotionSeparator`, and `MotionTooltip` internally. Requires the `motion` package.
+`scaleIn` entrance (fade, scale, and blur) with `springBouncy` transition on mount. Zoom controls use `MotionButton`, `MotionBadge`, `MotionSeparator`, and `MotionTooltip` internally. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

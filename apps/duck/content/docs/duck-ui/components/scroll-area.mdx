@@ -141,7 +141,7 @@ Direction is resolved through the shared primitives direction module. Use a loca
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionScrollArea` for a smooth entrance animation powered by [motion](https://motion.dev). The container uses the shared `scaleIn` preset with a `springBouncy` transition on mount.
+Use `MotionScrollArea` for a smooth entrance animation powered by [motion](https://motion.dev). The container uses the shared `scaleIn` preset (fade, scale, and blur) with a `springBouncy` transition on mount.
 
 <ComponentPreview
   name="scroll-area-4"
@@ -168,7 +168,7 @@ Requires the `motion` package. Use `MotionScrollArea` instead of `ScrollArea`. S
 
 ### MotionScrollArea
 
-`scaleIn` entrance with `springBouncy` transition on mount. Requires the `motion` package.
+`scaleIn` entrance (fade, scale, and blur) with `springBouncy` transition on mount. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

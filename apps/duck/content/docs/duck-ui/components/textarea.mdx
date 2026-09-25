@@ -121,7 +121,7 @@ Direction is resolved through the shared primitives direction module. Use a loca
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionTextarea` for a smooth entrance animation powered by [motion](https://motion.dev). The textarea uses a `scaleIn` entrance with a `springBouncy` transition on mount.
+Use `MotionTextarea` for a smooth entrance animation powered by [motion](https://motion.dev). The textarea uses a `scaleIn` entrance (fade, scale, and blur) with a `springBouncy` transition on mount.
 
 <ComponentPreview
   name="textarea-9"
@@ -142,7 +142,7 @@ Requires the `motion` package. Use `MotionTextarea` instead of `Textarea`. Same 
 
 ### MotionTextarea
 
-`scaleIn` entrance with `springBouncy` transition on mount. Requires the `motion` package.
+`scaleIn` entrance (fade, scale, and blur) with `springBouncy` transition on mount. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

@@ -143,7 +143,7 @@ Direction is resolved through the shared primitives direction module. Use a loca
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionTable` and `MotionTableRow` for staggered entrance animations powered by [motion](https://motion.dev). The table uses a `scaleIn` entrance with a bouncy spring transition, and each row staggers by 50ms via the `index` prop.
+Use `MotionTable` and `MotionTableRow` for staggered entrance animations powered by [motion](https://motion.dev). The table uses a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition, and each row staggers by 50ms via the `index` prop.
 
 <ComponentPreview
   name="table-3"
@@ -224,7 +224,7 @@ Requires the `motion` package. Use `MotionTable` instead of `Table` and `MotionT
 
 ### MotionTable
 
-`scaleIn` entrance with `springBouncy` transition on mount. Requires the `motion` package.
+`scaleIn` entrance (fade, scale, and blur) with `springBouncy` transition on mount. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -232,7 +232,7 @@ Requires the `motion` package. Use `MotionTable` instead of `Table` and `MotionT
 
 ### MotionTableRow
 
-Staggered `scaleIn` entrance with `springBouncy` transition. Requires the `motion` package.
+Staggered `scaleIn` entrance (fade, scale, and blur) with `springBouncy` transition. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

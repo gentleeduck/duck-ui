@@ -145,7 +145,7 @@ Set `dir="rtl"` on `Select` for a local override, or set `DirectionProvider` onc
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionSelect` and `MotionSelectContent` for smooth enter/exit animations powered by [motion](https://motion.dev). The dropdown enters and exits with a `scaleIn` preset and a bouncy spring transition. `MotionSelectTrigger` adds tap feedback (scale 0.97) to the trigger button.
+Use `MotionSelect` and `MotionSelectContent` for smooth enter/exit animations powered by [motion](https://motion.dev). The dropdown enters and exits with a `scaleIn` preset (fade, scale, and blur) and a bouncy spring transition. `MotionSelectTrigger` adds tap feedback (scale 0.97) to the trigger button.
 
 <ComponentPreview
   name="select-6"
@@ -264,7 +264,7 @@ Same props as `Select`. Wraps the root with motion state management for enter/ex
 
 ### MotionSelectContent
 
-Same props as `SelectContent`. Adds a `scaleIn` enter/exit animation with a `springBouncy` transition, mounted and unmounted via `useMotionRoot`/`useMotionMount` for exit-animation support. Must be used with `MotionSelect` root. Requires the `motion` package.
+Same props as `SelectContent`. Adds a `scaleIn` enter/exit animation (fade, scale, and blur) with a `springBouncy` transition, mounted and unmounted via `useMotionRoot`/`useMotionMount` for exit-animation support. Must be used with `MotionSelect` root. Requires the `motion` package.
 
 ### MotionSelectTrigger
 

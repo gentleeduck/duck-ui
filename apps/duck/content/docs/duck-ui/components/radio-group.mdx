@@ -136,7 +136,7 @@ Set `dir="rtl"` on `RadioGroup` for a local override, or set `DirectionProvider`
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionRadioGroup` and `MotionRadioGroupItem` for staggered entrance animations powered by [motion](https://motion.dev). Each item fades in with scale and blur, staggered by 50ms.
+Use `MotionRadioGroup` and `MotionRadioGroupItem` for staggered entrance animations powered by [motion](https://motion.dev). Each item uses a `scaleIn` entrance with a bouncy spring transition, staggered by 50ms.
 
 <ComponentPreview
   name="radio-group-4"

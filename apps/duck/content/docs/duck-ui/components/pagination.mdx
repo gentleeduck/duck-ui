@@ -163,7 +163,7 @@ Use the `text` prop on `PaginationPrevious`, `PaginationNext`, and `PaginationEl
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionPagination` with `MotionPaginationLink`, `MotionPaginationPrevious`, and `MotionPaginationNext` for staggered entrance animations and tap feedback powered by [motion](https://motion.dev). Each link fades in with scale and blur, staggered by 50ms via the `index` prop.
+Use `MotionPagination` with `MotionPaginationLink`, `MotionPaginationPrevious`, and `MotionPaginationNext` for staggered entrance animations and tap feedback powered by [motion](https://motion.dev). Each link uses a `scaleIn` entrance with a bouncy spring transition, staggered by 50ms via the `index` prop.
 
 <ComponentPreview
   name="pagination-4"

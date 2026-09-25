@@ -112,7 +112,7 @@ Direction is resolved through the shared primitives direction module. Use a loca
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionKbd` for a staggered `scaleIn` entrance with a bouncy spring transition on keyboard shortcuts, powered by [motion](https://motion.dev).
+Use `MotionKbd` for a staggered `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition on keyboard shortcuts, powered by [motion](https://motion.dev).
 
 <ComponentPreview name="kbd-7" description="Keyboard shortcuts with motion-powered staggered entrance." />
 
@@ -146,4 +146,4 @@ Groups multiple `Kbd` components together in an inline layout.
 
 ### MotionKbd
 
-Same props as `Kbd` plus an optional `index` prop for stagger delay (30ms per index). Adds a `scaleIn` entrance with a bouncy spring transition. Requires the `motion` package.
+Same props as `Kbd` plus an optional `index` prop for stagger delay (30ms per index). Adds a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition. Requires the `motion` package.

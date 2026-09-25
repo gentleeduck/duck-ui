@@ -77,7 +77,7 @@ Direction is resolved through the shared primitives direction module. Use a loca
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionLabel` for a `scaleIn` entrance animation with a bouncy spring transition, powered by [motion](https://motion.dev). Pairs well with `MotionInput` for staggered form field entrance.
+Use `MotionLabel` for a `scaleIn` entrance animation (fade, scale, and blur) with a bouncy spring transition, powered by [motion](https://motion.dev). Pairs well with `MotionInput` for staggered form field entrance.
 
 <ComponentPreview name="label-4" description="Labels with motion-powered staggered entrance." />
 
@@ -102,4 +102,4 @@ Renders an accessible label element associated with form controls.
 
 ### MotionLabel
 
-Same props as `Label` plus an optional `index` prop for stagger delay (50ms per index). Adds a `scaleIn` entrance with a bouncy spring transition. Requires the `motion` package.
+Same props as `Label` plus an optional `index` prop for stagger delay (50ms per index). Adds a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition. Requires the `motion` package.

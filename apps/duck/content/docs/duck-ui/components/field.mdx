@@ -231,7 +231,7 @@ Direction is resolved through the shared primitives direction module. Use a loca
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionField` and `MotionFieldGroup` for staggered `scaleIn` entrance animations powered by [motion](https://motion.dev). Pass `index` to `MotionField` for stagger delay.
+Use `MotionField` and `MotionFieldGroup` for staggered `scaleIn` entrance animations (fade, scale, and blur) powered by [motion](https://motion.dev). Pass `index` to `MotionField` for stagger delay.
 
 <ComponentPreview
   name="field-14"
@@ -351,12 +351,12 @@ When the `errors` array contains multiple messages, the component renders a list
 
 ### MotionField
 
-Same props as `Field` plus an optional `index` prop for stagger delay (50ms per index). Adds a `scaleIn` entrance animation with a bouncy spring transition. Requires the `motion` package.
+Same props as `Field` plus an optional `index` prop for stagger delay (50ms per index). Adds a `scaleIn` entrance animation (fade, scale, and blur) with a bouncy spring transition. Requires the `motion` package.
 
 ### MotionFieldGroup
 
-Same props as `FieldGroup`. Adds a `scaleIn` entrance animation with a bouncy spring transition. Requires the `motion` package.
+Same props as `FieldGroup`. Adds a `scaleIn` entrance animation (fade, scale, and blur) with a bouncy spring transition. Requires the `motion` package.
 
 ### MotionFieldError
 
-Same props as `FieldError`. Adds a `scaleIn` entrance with a bouncy spring transition and a 50ms delay. Requires the `motion` package.
+Same props as `FieldError`. Adds a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition and a 50ms delay. Requires the `motion` package.

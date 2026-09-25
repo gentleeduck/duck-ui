@@ -40,9 +40,9 @@ npx @gentleduck/cli remove dialog -y
 
 ## How dependency cleanup works
 
-1. **Resolves the component's npm deps** — e.g. `dialog` declared `@radix-ui/react-dialog`.
-2. **Scans other installed components** — does any still need `@radix-ui/react-dialog`?
-3. **Removes if orphaned** — runs `bun remove` / `npm uninstall` on the unused packages.
+1. **Resolves the component's npm deps**: e.g. `dialog` declared `@radix-ui/react-dialog`.
+2. **Scans other installed components**: does any still need `@radix-ui/react-dialog`?
+3. **Removes if orphaned**: runs `bun remove` / `npm uninstall` on the unused packages.
 
 The CLI never removes a dep you'd hand-installed yourself unless it's also declared by the component being removed.
 
@@ -51,7 +51,7 @@ The CLI never removes a dep you'd hand-installed yourself unless it's also decla
 ## What stays
 
 - Your custom edits to other files
-- Imports from removed components in **your own code** — they'll error at compile time, you fix them
+- Imports from removed components in **your own code**: they'll error at compile time, and you fix them
 - Theme tokens written by `theme add`
 - `duck-ui.config.json`
 

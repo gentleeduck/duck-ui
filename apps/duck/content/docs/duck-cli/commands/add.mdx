@@ -1,6 +1,6 @@
 ---
 title: add
-description: Install components from the registry. Source files copied directly into your project — no runtime dependency.
+description: Install components from the registry. Source files copied directly into your project, with no runtime dependency.
 section: Commands
 ---
 ## Usage
@@ -9,7 +9,7 @@ section: Commands
 npx @gentleduck/cli add [components...]
 ```
 
-Components are **copied as source files** into your project. You own the code afterward — patch, restyle, extend without forking.
+Components are **copied as source files** into your project. You own the code afterward: patch, restyle, extend without forking.
 
 ---
 
@@ -46,8 +46,8 @@ npx @gentleduck/cli add button --force
 ## How it works
 
 1. **Resolves** the component from the configured registry (`https://gentleduck.org/r` by default; override with `COMPONENTS_REGISTRY_URL`).
-2. **Walks dependency graph** — installs registry-level dependencies (e.g. `dialog` pulls in `button`).
-3. **Installs npm dependencies** — runs `bun add` / `npm install` for any external packages declared by the component.
+2. **Walks dependency graph**: installs registry-level dependencies (e.g. `dialog` pulls in `button`).
+3. **Installs npm dependencies**: runs `bun add` / `npm install` for any external packages declared by the component.
 4. **Writes files** to the configured aliases (`@/components`, `@/hooks`, `@/lib`).
 
 If a target file already exists, the CLI asks before overwriting unless `--force` or `--yes` is set.
@@ -56,6 +56,6 @@ If a target file already exists, the CLI asks before overwriting unless `--force
 
 ## Notes
 
-- **No version drift** — your component is now your source. The registry won't push silent changes.
-- **Diff to track upstream** — see [`diff`](/duck-cli/commands/diff) to compare your copy against the latest registry version.
-- **Update with merge** — see [`update`](/duck-cli/commands/update) to pull upstream changes via the interactive merge TUI.
+- **No version drift**: your component is now your source. The registry won't push silent changes.
+- **Diff to track upstream**: see [`diff`](/duck-cli/commands/diff) to compare your copy against the latest registry version.
+- **Update with merge**: see [`update`](/duck-cli/commands/update) to pull upstream changes via the interactive merge TUI.

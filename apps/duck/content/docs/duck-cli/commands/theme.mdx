@@ -1,6 +1,6 @@
 ---
 title: theme
-description: Manage theme tokens — list available themes, inspect color values, install one into your globals.css.
+description: Manage theme tokens: list available themes, inspect color values, install one into your globals.css.
 section: Commands
 ---
 ## Usage
@@ -110,7 +110,7 @@ Writes a guarded block of CSS variables into your `globals.css`:
 /* @gentleduck/cli theme:end */
 ```
 
-Re-running `theme add` with another name **replaces the block in place** — swapping themes is a one-command operation:
+Re-running `theme add` with another name **replaces the block in place**, so swapping themes is a one-command operation:
 
 ```bash
 npx @gentleduck/cli theme add rose   # swap zinc -> rose
@@ -140,12 +140,12 @@ The first match wins. If none match, the command errors and you must pass `--css
 
 `amber`, `blue`, `gray`, `green`, `neutral`, `orange`, `purple`, `red`, `rose`, `slate`, `stone`, `teal`, `violet`, `yellow`, `zinc`
 
-Custom themes can be served from your own registry (`COMPONENTS_REGISTRY_URL`) — see [registry-build](/duck-registry-build) for authoring.
+Custom themes can be served from your own registry (`COMPONENTS_REGISTRY_URL`). See [registry-build](/duck-registry-build) for authoring.
 
 ---
 
 ## Notes
 
-- **Tailwind v4** — themes use OKLCH and CSS custom properties, paired with Tailwind v4's `@theme` directive
-- **Replaceable** — markers around the block let you swap themes without touching surrounding CSS
-- **Idempotent** — running `theme add zinc` twice produces the same output
+- **Tailwind v4**: themes use OKLCH and CSS custom properties, paired with Tailwind v4's `@theme` directive
+- **Replaceable**: markers around the block let you swap themes without touching surrounding CSS
+- **Idempotent**: running `theme add zinc` twice produces the same output

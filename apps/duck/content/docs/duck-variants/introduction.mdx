@@ -76,8 +76,8 @@ const fn = cva(baseOrOptions, maybeOptions?)
 fn(props?) // returns string
 ```
 
-**Important types:** `Variants.VariantProps<typeof fn>`, `Variants.Props<TVariants>`,
-`Variants.ClassValue`.
+**Important types:** `Variants.VariantProps<typeof fn>`, `Variants.Props<TVariants, TDefaults>`,
+`Variants.CompoundConditions<TVariants>`, `Variants.ClassValue`.
 
 For complete signatures and the TypeScript definitions, see the Types
 Reference section at the bottom.
@@ -144,7 +144,7 @@ Real bundle size and runtime performance compared to class-variance-authority, t
   className="[&_.preview]:h-200 [&_.preview]:items-start"
 />
 
-Run `bun run benchmark` in `packages/duck-variants` to regenerate. Data in `public/data/benchmarks/variants.json`.
+Run `bun run benchmark` in `packages/duck-variants` to regenerate. Data in `public/benchmarks/results.json`.
 
 ---
 
@@ -224,18 +224,34 @@ All types are exported under the `Variants` namespace from `@gentleduck/variants
 
 ### 1. Variant Params (`Variants.VariantParams`)
 
-Maps each variant key to a selected value or array of values.
-Accepts either a single key or a `ReadonlyArray` of keys for each variant, or `null` to clear a default.
+Maps each variant key to a single selected value, `Unset` to explicitly skip it, or `null` to
+clear a default. Arrays are **not** accepted here - passing one silently stringifies to
+`"a,b"` and matches nothing; use `CompoundConditions` below for "match any of these".
 
 
 ```tsx title="variants.types.ts"
 export type VariantParams<TVariants extends VariantDefinitions> = {
-  readonly [K in keyof TVariants]?: keyof TVariants[K] | ReadonlyArray<keyof TVariants[K]> | null
+  readonly [K in keyof TVariants]?: keyof TVariants[K] | Unset | null
 }
 ```
 
 
-### 2. CVA Options (`Variants.Options`)
+### 2. Compound Conditions (`Variants.CompoundConditions`)
+
+Conditions for matching a `compoundVariants` entry. Unlike `VariantParams`, a value here
+**may** be a `ReadonlyArray` of options, meaning "match any of these":
+
+
+```tsx title="variants.types.ts"
+export type CompoundConditions<TVariants extends VariantDefinitions> = {
+  readonly [K in keyof TVariants]?: keyof TVariants[K] | ReadonlyArray<keyof TVariants[K]> | Unset | null
+}
+```
+
+This is what powers `{ size: 'lg', tone: ['default', 'success'], className: '...' }` in the
+compound-variants example above.
+
+### 3. CVA Options (`Variants.Options`)
 
 Options for creating a CVA function, without the `base` classes.
 
@@ -243,7 +259,7 @@ Options for creating a CVA function, without the `base` classes.
 | --- | --- |
 | `variants` | Base mapping of variants -> classes. |
 | `defaultVariants` | Defaults applied when no value is passed. |
-| `compoundVariants` | Conditional styles that apply when multiple variants match. |
+| `compoundVariants` | Conditional styles that apply when multiple variants match; conditions use `CompoundConditions`, so array values are allowed here even though they are not in `defaultVariants`. |
 
 
 ```tsx title="variants.types.ts"
@@ -251,7 +267,7 @@ export type Options<TVariants extends VariantDefinitions> = {
   readonly variants?: TVariants
   readonly defaultVariants?: VariantParams<TVariants>
   readonly compoundVariants?: ReadonlyArray<
-    VariantParams<TVariants> & {
+    CompoundConditions<TVariants> & {
       readonly class?: ClassValue
       readonly className?: ClassValue
     }
@@ -260,7 +276,7 @@ export type Options<TVariants extends VariantDefinitions> = {
 ```
 
 
-### 3. CVA Config (`Variants.Config`)
+### 4. CVA Config (`Variants.Config`)
 
 Full configuration accepted by `cva()`: `Options` plus optional `base` classes.
 
@@ -272,21 +288,31 @@ export type Config<TVariants extends VariantDefinitions> = Options<TVariants> & 
 ```
 
 
-### 4. CVA Props (`Variants.Props`)
+### 5. CVA Props (`Variants.Props`)
 
-Props that a **CVA-generated function** accepts.
-Includes both **variant selections** and optional `class`/`className` overrides.
+Props that a **CVA-generated function** accepts: one prop per variant key, plus optional
+`class`/`className` overrides. A second type parameter, `TDefaults`, controls which variant
+keys are optional - a key present in `TDefaults` becomes an optional prop, and a key with no
+default becomes a **required** prop. This is the compile-time check the Philosophy section
+above refers to: omitting a non-defaulted variant is a type error, not a silent fallback.
 
 
 ```tsx title="variants.types.ts"
-export type Props<TVariants extends VariantDefinitions> = VariantParams<TVariants> & {
+export type Props<
+  TVariants extends VariantDefinitions,
+  TDefaults extends VariantParams<TVariants> | undefined = undefined,
+> = {
+  readonly [K in Exclude<keyof TVariants, DefaultedKeys<TVariants, TDefaults>>]: keyof TVariants[K] | Unset | null
+} & {
+  readonly [K in Extract<DefaultedKeys<TVariants, TDefaults>, keyof TVariants>]?: keyof TVariants[K] | Unset | null
+} & {
   readonly className?: ClassValue
   readonly class?: ClassValue
 }
 ```
 
 
-### 5. Variant Props (`Variants.VariantProps`)
+### 6. Variant Props (`Variants.VariantProps`)
 
 Utility type to **extract only the variant-related props** from a CVA function, omitting `class` and `className`.
 
@@ -295,16 +321,6 @@ Utility type to **extract only the variant-related props** from a CVA function, 
 export type VariantProps<T> = T extends (props?: infer P) => string
   ? Omit<NonNullable<P>, 'class' | 'className'>
   : never
-```
-
-
-### 6. Infer (`Variants.Infer`)
-
-Infers the `variants` field from an `Options` object. Useful when you want to extract the variant map from a config constant.
-
-
-```tsx title="variants.types.ts"
-export type Infer<T extends Options<VariantDefinitions>> = T['variants']
 ```
 
 

@@ -12,11 +12,11 @@ The TypeScript ecosystem already has three well-known options that overlap with 
 | | duck-ttest | tsd | expect-type | type-fest |
 | --- | --- | --- | --- | --- |
 | **What it is** | Assertion API **+** utility library | Assertion API, CLI runner | Assertion API, fluent | Utility library |
-| **Runner** | Your `tsc --noEmit` | Bundled CLI on top of `tsc` | Your `tsc --noEmit` | n/a — types only |
+| **Runner** | Your `tsc --noEmit` | Bundled CLI on top of `tsc` | Your `tsc --noEmit` | n/a: types only |
 | **Assertion style** | `AssertTrue<Equal<X, Y>, Msg>` | `expectType<X>(value)` | `expectTypeOf(value).toEqualTypeOf<X>()` | n/a |
 | **Strict equality** | `Equal<X, Y>` (variance-preserving) | `expectType` is structural | `.toEqualTypeOf` is variance-preserving | n/a |
-| **Utility breadth** | 35 modules — guards, brands, SQL, router, fp, geometry, ... | None | None | Broad object/string/number utilities |
-| **Runtime cost** | Zero (`type`-only) | Zero | Zero (compile time) — small runtime function for fluent API | Zero |
+| **Utility breadth** | 35 modules: guards, brands, SQL, router, fp, geometry, ... | None | None | Broad object/string/number utilities |
+| **Runtime cost** | Zero (`type`-only) | Zero | Zero (compile time): small runtime function for fluent API | Zero |
 | **Custom error messages** | `Msg` generic on every assertion | TS diagnostic | TS diagnostic | n/a |
 | **Sub-path imports** | Per-module | Single import | Single import | Per-utility |
 | **Best for** | Schema generators, ORMs, type-heavy SDKs | Public APIs that ship type tests | Drop-in expect-style ergonomics | Stocking your own type lib |
@@ -31,7 +31,7 @@ The TypeScript ecosystem already has three well-known options that overlap with 
 ## When to pick `tsd` instead
 
 - Your library publishes a `.d.ts` and you want a CLI that runs over a `test-d/` folder as part of `npm test`.
-- You don't care about a custom utility library — only assertion ergonomics.
+- You don't care about a custom utility library: only assertion ergonomics.
 
 ## When to pick `expect-type` instead
 
@@ -43,7 +43,7 @@ The TypeScript ecosystem already has three well-known options that overlap with 
 - You only need utility types (`Simplify`, `RequireAtLeastOne`, `Get`, ...).
 - You don't write assertions.
 
-duck-ttest can be used **alongside** any of the above. They aren't mutually exclusive — `type-fest`'s utilities will type-check just fine in a duck-ttest assertion.
+duck-ttest can be used **alongside** any of the above. They aren't mutually exclusive: `type-fest`'s utilities will type-check just fine in a duck-ttest assertion.
 
 ## What duck-ttest is not
 
@@ -53,5 +53,5 @@ duck-ttest can be used **alongside** any of the above. They aren't mutually excl
 
 ## See also
 
-- [Getting started](/duck-ttest/getting-started) — the five-minute tour.
-- [Core / Type-level testing](/duck-ttest/core/type-level-testing) — combining duck-ttest with `@ts-expect-error` and `tsd`.
+- [Getting started](/duck-ttest/getting-started): the five-minute tour.
+- [Core / Type-level testing](/duck-ttest/core/type-level-testing): combining duck-ttest with `@ts-expect-error` and `tsd`.

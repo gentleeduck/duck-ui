@@ -60,8 +60,8 @@ function read<T>(getter: () => MaybePromise<T>): Promise<T> {
   return Promise.resolve(getter())
 }
 
-read(() => 1)                     // ok — sync number
-read(() => Promise.resolve('a'))  // ok — async string
+read(() => 1)                     // ok: sync number
+read(() => Promise.resolve('a'))  // ok: async string
 ```
 
 ## Promisable

@@ -5,7 +5,7 @@ section: Guides
 order: 3
 ---
 
-duck-ttest is built for the case where types are the contract — schema generators, ORMs, route registries, validation libraries. This guide is a worked example: a minimal type-safe column-builder using `Brand`, `InferSchema`, and the assertion API.
+duck-ttest is built for the case where types are the contract: schema generators, ORMs, route registries, validation libraries. This guide is a worked example: a minimal type-safe column-builder using `Brand`, `InferSchema`, and the assertion API.
 
 ## Goal
 
@@ -22,7 +22,7 @@ type User = typeof users.row
 //   ^? { id?: number; email: string; name: string | null }
 ```
 
-The type at `users.row` should be inferred entirely from the builder calls — no manual type annotation. We'll use `InferSchema` to emit the row shape, and ttest assertions to lock the contract in tests.
+The type at `users.row` should be inferred entirely from the builder calls: no manual type annotation. We'll use `InferSchema` to emit the row shape, and ttest assertions to lock the contract in tests.
 
 ## Strategy 1: SQL-string carrier
 
@@ -44,7 +44,7 @@ type IdSchema = InferSchema<'CREATE TABLE users (id INT PRIMARY KEY AUTOINCREMEN
 //   ^? { id?: number }
 ```
 
-This works because `InferSchema` is a pure type-level parser — it doesn't need a real database.
+This works because `InferSchema` is a pure type-level parser: it doesn't need a real database.
 
 ## Strategy 2: Lock the contract in tests
 
@@ -64,7 +64,7 @@ type _ = [
 ]
 ```
 
-If the DDL parser ever regresses, the assertion breaks at type-check time — before the schema reaches production.
+If the DDL parser ever regresses, the assertion breaks at type-check time, before the schema reaches production.
 
 ## Strategy 3: Narrow at the boundary
 
@@ -115,7 +115,7 @@ This is how a multi-table builder propagates foreign-key types end-to-end.
 ### Asserting the full inferred row in one shot
 
 ```ts
-// Brittle — every key change rewrites the assertion.
+// Brittle: every key change rewrites the assertion.
 type _ = AssertTrue<
   Equal<UserRow, { id?: number; email: string; name: string | null }>,
   'full row'
@@ -159,6 +159,6 @@ import type { IsAny, IsOptional } from '@gentleduck/ttest/primitive'
 
 ## See also
 
-- [API / sql](/duck-ttest/api/sql) — the full parsing pipeline.
-- [API / brand](/duck-ttest/api/brand) — phantom-type carriers for builder DSLs.
-- [Guides / Catching regressions](/duck-ttest/guides/catching-regressions) — wiring schema tests into CI.
+- [API / sql](/duck-ttest/api/sql): the full parsing pipeline.
+- [API / brand](/duck-ttest/api/brand): phantom-type carriers for builder DSLs.
+- [Guides / Catching regressions](/duck-ttest/guides/catching-regressions): wiring schema tests into CI.

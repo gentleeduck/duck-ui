@@ -13,7 +13,7 @@ The assertion API is intentionally tiny. Two assertion types and one strict-equa
 import type { AssertTrue } from '@gentleduck/ttest/assert'
 ```
 
-`AssertTrue<T extends true, Msg extends string>` resolves to `true` when `T` is `true`. When `T` is not exactly `true`, the constraint `T extends true` fails and the compiler reports the assertion line — your `Msg` string lives there as a constant reminder of what was being checked.
+`AssertTrue<T extends true, Msg extends string>` resolves to `true` when `T` is `true`. When `T` is not exactly `true`, the constraint `T extends true` fails and the compiler reports the assertion line: your `Msg` string lives there as a constant reminder of what was being checked.
 
 ```ts
 type pass = AssertTrue<true, 'always passes'>
@@ -53,7 +53,7 @@ type Equal<X, Y> =
 This is the only equality check in the type system that reliably distinguishes:
 
 - `any` from `unknown` (a structural `X extends Y && Y extends X` would say they're equal)
-- `string` from `string & {}` (which `Equal` treats as different — important when authoring `LiteralUnion`)
+- `string` from `string & {}` (which `Equal` treats as different: important when authoring `LiteralUnion`)
 - mutable from `readonly` tuples
 
 ```ts
@@ -62,7 +62,7 @@ import type { Equal } from '@gentleduck/ttest/equality'
 
 type t1 = AssertTrue<Equal<{ a: 1 }, { a: 1 }>, 'identical shapes equal'>
 type t2 = AssertTrue<Equal<any, unknown>, 'any equals unknown'>
-//        ^ FAILS: Equal returns false here — that is the point.
+//        ^ FAILS: Equal returns false here, which is the point.
 ```
 
 ## NotEqual
@@ -77,19 +77,19 @@ Inverse of `Equal`. Useful when negating reads cleaner than wrapping in `AssertF
 
 ## Extends / NotExtends
 
-duck-ttest does not ship dedicated `Extends` / `NotExtends` aliases — write the assertion directly:
+duck-ttest does not ship dedicated `Extends` / `NotExtends` aliases; write the assertion directly:
 
 ```ts
 import type { AssertTrue, AssertFalse } from '@gentleduck/ttest/assert'
 
-// "X extends Y" — assignability
+// "X extends Y": assignability
 type _ext  = AssertTrue<'admin' extends 'admin' | 'user' ? true : false, 'admin is a role'>
 
 // "X does not extend Y"
 type _next = AssertFalse<string extends 'admin' ? true : false, 'string is not the literal admin'>
 ```
 
-For union-position assertions, wrap with `[X] extends [Y]` to disable distribution — see [Composing tests / Distribution traps](/duck-ttest/core/composing-tests).
+For union-position assertions, wrap with `[X] extends [Y]` to disable distribution: see [Composing tests / Distribution traps](/duck-ttest/core/composing-tests).
 
 ## ShallowEqual / Extends-style checks
 
@@ -127,7 +127,7 @@ A short catalog of what each error message usually means.
 
 | Compiler error | What broke | Fix |
 | --- | --- | --- |
-| `TS2344: Type 'false' does not satisfy 'true'` | `AssertTrue<Predicate, ...>` failed — the inner predicate is `false`. | Print the predicate's value (hover, or extract to a named type) and inspect both sides. |
+| `TS2344: Type 'false' does not satisfy 'true'` | `AssertTrue<Predicate, ...>` failed: the inner predicate is `false`. | Print the predicate's value (hover, or extract to a named type) and inspect both sides. |
 | `TS2344: Type 'true' does not satisfy 'false'` | `AssertFalse<Predicate, ...>` failed. | Same shape, opposite polarity. |
 | `Type 'boolean' does not satisfy 'true'` | Predicate returned `true \| false`. Usually distribution over `any`, `boolean`, or a wide union. | Wrap in `[T] extends [U]` or guard with [`IsAny`](/duck-ttest/api/any) first. |
 | `Type instantiation is excessively deep` | Recursive helper hit the type-checker's depth cap. | Cap recursion depth (`Paths<T, 4>`), or split the test into smaller files. |
@@ -135,7 +135,7 @@ A short catalog of what each error message usually means.
 
 ## Grouping assertions
 
-Tuples are the smallest unit of grouping — TypeScript will report the index along with the message:
+Tuples are the smallest unit of grouping; TypeScript will report the index along with the message:
 
 ```ts
 type tests = [

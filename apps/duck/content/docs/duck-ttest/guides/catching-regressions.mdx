@@ -9,7 +9,7 @@ Type tests are most valuable when they run on every change. This guide shows the
 
 ## In a vitest project
 
-duck-ttest assertions compile through vitest's TypeScript transform — failing assertions block the test run with the message in the diagnostic.
+duck-ttest assertions compile through vitest's TypeScript transform: failing assertions block the test run with the message in the diagnostic.
 
 ```ts title="src/user.test.ts"
 import { describe, it, expect } from 'vitest'
@@ -23,7 +23,7 @@ describe('createUser', () => {
     expect(u).toMatchObject({ name: 'Ada' })
   })
 
-  // type assertions — these break the build, not the test
+  // type assertions: these break the build, not the test
   type _ = [
     AssertTrue<Equal<ReturnType<typeof createUser>, User>, 'must return User'>,
     AssertTrue<Equal<User['name'], string>, 'name is string'>,
@@ -33,7 +33,7 @@ describe('createUser', () => {
 
 ## In a `tsc` CI step
 
-Most reliable for libraries — the same compile your consumers run.
+Most reliable for libraries: the same compile your consumers run.
 
 ```json title="package.json"
 {
@@ -131,7 +131,7 @@ type Action = typeof ACTIONS[number]
 
 type _ = AssertTrue<
   Equal<Action, 'create' | 'read' | 'update' | 'delete'>,
-  'ACTIONS widened to string — did someone drop the `as const`?'
+  'ACTIONS widened to string: did someone drop the `as const`?'
 >
 ```
 
@@ -142,7 +142,7 @@ If a refactor drops `as const`, `Action` becomes `string` and the assertion fire
 ### Assertions that pass for the wrong reason
 
 ```ts
-// Both sides resolve to `any` — the assertion is vacuous.
+// Both sides resolve to `any`: the assertion is vacuous.
 type _ = AssertTrue<Equal<typeof someApi, any>, 'api shape'>
 ```
 
@@ -166,20 +166,20 @@ export function createUser(name: string): User { /* ... */ }
 type _ = AssertTrue<Equal<ReturnType<typeof createUser>, User>, 'returns User'>
 ```
 
-The assertion compiles into the published artifact. Move it to `user.test-d.ts` or `user.test.ts` — files that production code never imports.
+The assertion compiles into the published artifact. Move it to `user.test-d.ts` or `user.test.ts`: files that production code never imports.
 
 ### Asserting against runtime values
 
 ```ts
 const ROLES = ['admin', 'editor']  // no `as const`
 type _ = AssertTrue<Equal<typeof ROLES[number], 'admin' | 'editor'>, 'roles'>
-// FAILS — `ROLES` widens to `string[]`, so the inferred member is `string`.
+// FAILS: `ROLES` widens to `string[]`, so the inferred member is `string`.
 ```
 
 The fix is at the runtime declaration: `['admin', 'editor'] as const`. The assertion then catches future drift, not the present-day declaration sloppiness.
 
 ## See also
 
-- [Core / Type-level testing](/duck-ttest/core/type-level-testing) — the three runner workflows.
-- [Core / Composing tests](/duck-ttest/core/composing-tests) — naming, grouping, and performance.
-- [API / any](/duck-ttest/api/any) — `IsAny` and friends.
+- [Core / Type-level testing](/duck-ttest/core/type-level-testing): the three runner workflows.
+- [Core / Composing tests](/duck-ttest/core/composing-tests): naming, grouping, and performance.
+- [API / any](/duck-ttest/api/any): `IsAny` and friends.

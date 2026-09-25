@@ -28,7 +28,7 @@ type Variant = LiteralUnion<'primary' | 'danger', string>
 // accepts:      any string
 
 const a: Variant = 'primary'    // ok
-const b: Variant = 'custom-x'   // ok — any string
+const b: Variant = 'custom-x'   // ok: any string
 ```
 
 ## Exact
@@ -37,14 +37,14 @@ const b: Variant = 'custom-x'   // ok — any string
 type Exact<T, Shape>
 ```
 
-Force `T` to match `Shape` exactly — no extra properties allowed. Useful for constructor configs that must be airtight.
+Force `T` to match `Shape` exactly: no extra properties allowed. Useful for constructor configs that must be airtight.
 
 ```ts
 type Config = { id: number }
 function init<T>(c: Exact<T, Config>) { /* ... */ }
 
 init({ id: 1 })             // ok
-init({ id: 1, extra: 2 })   // Error — excess property `extra`
+init({ id: 1, extra: 2 })   // Error: excess property `extra`
 ```
 
 ## Widen
@@ -70,7 +70,7 @@ Edge case: `Widen<string>` is `string` (pass-through). `Widen<'a' | 'b'>` distri
 type Narrow<T>
 ```
 
-Prevent inference from widening literal arguments. Use as a generic constraint when you want literals preserved in inferred types — equivalent to applying `as const` retroactively.
+Prevent inference from widening literal arguments. Use as a generic constraint when you want literals preserved in inferred types: equivalent to applying `as const` retroactively.
 
 ```ts
 function defineRoles<T extends Narrow<T>>(roles: T): T { return roles }

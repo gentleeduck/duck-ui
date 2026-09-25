@@ -23,7 +23,7 @@ A pass of canonicalization removed three duplicated/typo'd sub-paths. Update you
 # In your project
 rg -l '@gentleduck/ttest/predictates' | xargs sed -i 's|/predictates|/predicates|g'
 rg -l '@gentleduck/ttest/objects'     | xargs sed -i 's|/objects|/object|g'
-# 'domain' splits — review each import by hand and route to /json or /format.
+# 'domain' splits: review each import by hand and route to /json or /format.
 ```
 
 ## Type renames
@@ -63,8 +63,8 @@ const row = await db.fetchRow() as { settings: JSONValue }
 
 These symbols still re-export from `~/sql` with `@deprecated` JSDoc. They will be removed in a future major.
 
-- `Trim` — canonical home is `@gentleduck/ttest/template`.
-- `UnionToIntersection` — canonical home is `@gentleduck/ttest/union`.
+- `Trim`: canonical home is `@gentleduck/ttest/template`.
+- `UnionToIntersection`: canonical home is `@gentleduck/ttest/union`.
 
 ```ts
 // Before
@@ -85,7 +85,7 @@ rm -rf dist
 bun run build
 ```
 
-The npm tarball only ships `src/`, so registry consumers are unaffected — this only matters when iterating on duck-ttest itself.
+The npm tarball only ships `src/`, so registry consumers are unaffected; this only matters when iterating on duck-ttest itself.
 
 ## Checklist
 

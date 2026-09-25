@@ -82,7 +82,7 @@ type Matchers<U, K extends keyof U, R> = {
 }
 ```
 
-Pattern-match handler object — one method per tag value.
+Pattern-match handler object: one method per tag value.
 
 ```ts
 type ShapeMatchers = Matchers<Shape, 'kind', number>

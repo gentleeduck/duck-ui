@@ -113,10 +113,10 @@ type Weeks        = Duration<'w'>
 type AnyDuration = Milliseconds | Seconds | Minutes | Hours | Days | Weeks
 ```
 
-Branded `number`s — runtime is still a number, but `Milliseconds` and `Seconds` are not assignable to each other.
+Branded `number`s: runtime is still a number, but `Milliseconds` and `Seconds` are not assignable to each other.
 
 ```ts
 function sleep(ms: Milliseconds) { /* ... */ }
 sleep(500 as Milliseconds)
-sleep(2 as Seconds)  // Error — Seconds is not Milliseconds.
+sleep(2 as Seconds)  // Error: Seconds is not Milliseconds.
 ```

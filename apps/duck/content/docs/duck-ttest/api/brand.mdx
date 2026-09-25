@@ -1,6 +1,6 @@
 ---
 title: brand
-description: Nominal typing via a phantom tag — Brand, Opaque, Unbrand.
+description: Nominal typing via a phantom tag: Brand, Opaque, Unbrand.
 section: API
 order: 6
 ---
@@ -19,15 +19,15 @@ Branded types attach a phantom tag to a base type, producing values that are run
 type Brand<T, B extends string | symbol>
 ```
 
-Nominal wrapper. `Brand<string, 'UserId'>` is incompatible with `Brand<string, 'OrderId'>` and with plain `string`. Runtime values are unaffected — the tag is phantom.
+Nominal wrapper. `Brand<string, 'UserId'>` is incompatible with `Brand<string, 'OrderId'>` and with plain `string`. Runtime values are unaffected: the tag is phantom.
 
 ```ts
 type UserId  = Brand<string, 'UserId'>
 type OrderId = Brand<string, 'OrderId'>
 
 const u = 'u_1' as UserId
-const o: OrderId = u  // Error — UserId is not OrderId
-const s: string  = u  // Error — string isn't a UserId either (the inverse holds via Unbrand)
+const o: OrderId = u  // Error: UserId is not OrderId
+const s: string  = u  // Error: string isn't a UserId either (the inverse holds via Unbrand)
 ```
 
 ```ts
@@ -42,7 +42,7 @@ type User = { id: UserId; email: Email }
 type Branded<T, B extends string | symbol> = Brand<T, B>
 ```
 
-Alias of `Brand`. Use whichever reads better in context — some codebases prefer `Branded<T, 'Tag'>` for the adjectival form.
+Alias of `Brand`. Use whichever reads better in context; some codebases prefer `Branded<T, 'Tag'>` for the adjectival form.
 
 ## Unbrand
 
@@ -62,7 +62,7 @@ type c = Unbrand<number>  // number
 ```ts
 // Serializing a brand at the boundary.
 function serialize(id: UserId): Unbrand<UserId> {
-  return id  // base type — no cast needed downstream
+  return id  // base type: no cast needed downstream
 }
 ```
 
@@ -79,7 +79,7 @@ type Money = Tagged<number, 'currency', 'USD'>
 //        ^? number & { __currency: 'USD' }
 
 const m: Money = 100 as Money
-const eur: Tagged<number, 'currency', 'EUR'> = m  // Error — different __currency
+const eur: Tagged<number, 'currency', 'EUR'> = m  // Error: different __currency
 ```
 
 ## Opaque
@@ -100,7 +100,7 @@ type Token = Opaque<string, 'JWT'>
 type Nominal<T, B extends string | symbol> = Brand<T, B>
 ```
 
-Another semantic alias — favored in OO-influenced codebases that talk in nominal/structural terms.
+Another semantic alias: favored in OO-influenced codebases that talk in nominal/structural terms.
 
 ```ts
 type EmployeeId = Nominal<number, 'EmployeeId'>
@@ -124,8 +124,8 @@ type b = BrandOf<string>  // never
 import type { AssertTrue } from '@gentleduck/ttest/assert'
 import type { Equal } from '@gentleduck/ttest/equality'
 
-// Lock the brand tag in a test — defends against accidental brand renames.
+// Lock the brand tag in a test: defends against accidental brand renames.
 type _ = AssertTrue<Equal<BrandOf<UserId>, 'UserId'>, 'brand tag is UserId'>
 ```
 
-Edge case: `Equal<Brand<string, 'X'>, string>` is `false` — branded types do not equal their base. This is by design but a frequent confusion. See [Core / Composing tests](/duck-ttest/core/composing-tests) for the brand-aware assertion pattern.
+Edge case: `Equal<Brand<string, 'X'>, string>` is `false`, because branded types do not equal their base. This is by design but a frequent confusion. See [Core / Composing tests](/duck-ttest/core/composing-tests) for the brand-aware assertion pattern.

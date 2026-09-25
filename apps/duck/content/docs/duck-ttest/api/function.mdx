@@ -49,7 +49,7 @@ type b = ParametersSafe<() => 1>                          // []
 type c = ParametersSafe<{ kind: 'data' }>                 // never
 ```
 
-Edge case: overloaded function types collapse to the last overload's parameters — this matches the built-in `Parameters` behavior.
+Edge case: overloaded function types collapse to the last overload's parameters, matching the built-in `Parameters` behavior.
 
 ## Curried
 

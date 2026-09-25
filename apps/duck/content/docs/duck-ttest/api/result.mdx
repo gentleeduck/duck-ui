@@ -16,7 +16,7 @@ import type {
 } from '@gentleduck/ttest/result'
 ```
 
-Type-level discriminated unions modeling `Result<T, E>` and `Option<T>` from Rust. The shapes are designed to discriminate on `ok` / `some` — see [`discriminated`](/duck-ttest/api/discriminated) for the broader pattern.
+Type-level discriminated unions modeling `Result<T, E>` and `Option<T>` from Rust. The shapes are designed to discriminate on `ok` / `some`: see [`discriminated`](/duck-ttest/api/discriminated) for the broader pattern.
 
 ## Ok
 
@@ -27,7 +27,7 @@ interface Ok<T> {
 }
 ```
 
-The success branch of `Result`. Always `ok: true` — `true` is a literal, not `boolean`, so the union is discriminable.
+The success branch of `Result`. Always `ok: true`: `true` is a literal, not `boolean`, so the union is discriminable.
 
 ```ts
 const v: Ok<number> = { ok: true, value: 1 }
@@ -178,7 +178,7 @@ type V = UnwrapSome<Option<number>>  // number
 type MapResult<R, F>
 ```
 
-Map the `Ok` value of `R` through `Apply<F, X>` (an HKT — see [`fp`](/duck-ttest/api/fp)).
+Map the `Ok` value of `R` through `Apply<F, X>` (an HKT, see [`fp`](/duck-ttest/api/fp)).
 
 ```ts
 import type { Fn } from '@gentleduck/ttest/fp'
@@ -226,4 +226,4 @@ type V = SomeOrElse<None, null>             // null
 type W = SomeOrElse<Some<'hi'>, null>       // 'hi'
 ```
 
-Edge case: `MapResult` and `MapOption` are HKT-driven — the second generic is a `Fn` interface from [`fp`](/duck-ttest/api/fp), not a TypeScript function type. Pass an interface whose `return` projection consumes `this['arg']`.
+Edge case: `MapResult` and `MapOption` are HKT-driven; the second generic is a `Fn` interface from [`fp`](/duck-ttest/api/fp), not a TypeScript function type. Pass an interface whose `return` projection consumes `this['arg']`.

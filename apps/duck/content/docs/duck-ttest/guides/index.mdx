@@ -116,7 +116,7 @@ type Config = {
 }
 
 type Top  = Paths<Config, 2>  // cheap: only first two levels
-type Full = Paths<Config>     // default cap 6 — usually fine, but slow on very wide trees
+type Full = Paths<Config>     // default cap 6: usually fine, but slow on very wide trees
 ```
 
 ## Build a typed event emitter

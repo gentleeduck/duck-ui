@@ -62,7 +62,7 @@ type a = Not<true>   // false
 type b = Not<false>  // true
 ```
 
-Edge case: `Not<boolean>` is `boolean` — the distribution over `true | false` flips each member back to a union of both.
+Edge case: `Not<boolean>` is `boolean`, because the distribution over `true | false` flips each member back to a union of both.
 
 ## Xor
 
@@ -70,7 +70,7 @@ Edge case: `Not<boolean>` is `boolean` — the distribution over `true | false` 
 type Xor<A extends boolean, B extends boolean>
 ```
 
-Exclusive OR — `true` iff exactly one input is `true`. Useful for "one or the other but not both" assertions.
+Exclusive OR: `true` iff exactly one input is `true`. Useful for "one or the other but not both" assertions.
 
 ```ts
 type a = Xor<true,  false>  // true
@@ -85,7 +85,7 @@ type d = Xor<false, false>  // false
 type Xnor<A extends boolean, B extends boolean> = Not<Xor<A, B>>
 ```
 
-Exclusive NOR — `true` iff both inputs are equal. Equivalent to type-level equality on `boolean`.
+Exclusive NOR: `true` iff both inputs are equal. Equivalent to type-level equality on `boolean`.
 
 ```ts
 type a = Xnor<true,  true>   // true
@@ -107,4 +107,4 @@ type a = Branch<true>   // 'yes'
 type b = Branch<false>  // 'no'
 ```
 
-Edge case: every boolean operator here constrains both generics to `boolean`. Passing `boolean` (the union `true | false`) distributes — the result is also `boolean`. Pin to a literal first if that is not what you want.
+Edge case: every boolean operator here constrains both generics to `boolean`. Passing `boolean` (the union `true | false`) distributes, so the result is also `boolean`. Pin to a literal first if that is not what you want.

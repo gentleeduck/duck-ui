@@ -12,7 +12,7 @@ import type {
 } from '@gentleduck/ttest/bit'
 ```
 
-Bits are modeled as fixed-length little-endian tuples of `0 | 1`. TypeScript doesn't model numbers as binary, so each helper costs recursion depth per bit. Keep tuple length modest — 8-bit and 16-bit shapes are comfortable, 32+ bits start to strain the type-checker.
+Bits are modeled as fixed-length little-endian tuples of `0 | 1`. TypeScript doesn't model numbers as binary, so each helper costs recursion depth per bit. Keep tuple length modest: 8-bit and 16-bit shapes are comfortable, 32+ bits start to strain the type-checker.
 
 ## Bit
 
@@ -83,7 +83,7 @@ type b = BitNot<[0, 0, 0, 0]>  // [1, 1, 1, 1]
 type PopCount<A extends readonly Bit[], Acc extends unknown[] = []>
 ```
 
-Number of `1` bits in the tuple. The `Acc` parameter is internal — don't pass it explicitly.
+Number of `1` bits in the tuple. The `Acc` parameter is internal, so don't pass it explicitly.
 
 ```ts
 type a = PopCount<[1, 0, 1, 1, 0]>  // 3
@@ -133,4 +133,4 @@ type a = ShiftRight<[1, 0, 1, 0], 1>  // [0, 1, 0, 0]
 type b = ShiftRight<[1, 1, 1, 1], 2>  // [1, 1, 0, 0]
 ```
 
-Edge case across all helpers: tuples are *little-endian* — index 0 is the least-significant bit. This matters when interpreting `FromBits` results or comparing with hand-written binary literals.
+Edge case across all helpers: tuples are *little-endian* (index 0 is the least-significant bit). This matters when interpreting `FromBits` results or comparing with hand-written binary literals.

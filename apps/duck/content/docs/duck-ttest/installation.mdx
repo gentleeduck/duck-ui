@@ -9,7 +9,7 @@ order: 1
 
 - TypeScript **5.0+**. Several utilities rely on `infer ... extends ...` constraints and const type parameters.
 - A `tsc` invocation as part of your test or CI step. `tsc --noEmit` is the entire runner.
-- Bun, npm, pnpm, or yarn — duck-ttest is a plain TypeScript-only package.
+- Bun, npm, pnpm, or yarn: duck-ttest is a plain TypeScript-only package.
 
 ---
 
@@ -33,7 +33,7 @@ pnpm add -D @gentleduck/ttest
 yarn add -D @gentleduck/ttest
 ```
 
-duck-ttest is a `devDependency` — its types are erased at compile time, so it never reaches your production bundle.
+duck-ttest is a `devDependency`: its types are erased at compile time, so it never reaches your production bundle.
 
 <Step>Import a sub-path</Step>
 
@@ -101,7 +101,7 @@ import type { Emitter, EventMap, Handlers } from '@gentleduck/ttest/emitter'
 // http / json / literal / locale / number / pattern / predicates / promise / template
 ```
 
-Always use `import type` (or enable `verbatimModuleSyntax`) — every export is a pure type.
+Always use `import type` (or enable `verbatimModuleSyntax`): every export is a pure type.
 
 ---
 
@@ -125,9 +125,9 @@ If the type-check passes, the install is correct.
 
 ## Next steps
 
-- [Getting started](/duck-ttest/getting-started) — a five-minute tutorial.
-- [Core / Assertions](/duck-ttest/core/assertions) — the full assertion API.
-- [API reference](/duck-ttest/api/any) — every exported type, grouped by module.
+- [Getting started](/duck-ttest/getting-started): a five-minute tutorial.
+- [Core / Assertions](/duck-ttest/core/assertions): the full assertion API.
+- [API reference](/duck-ttest/api/any): every exported type, grouped by module.
 
 ---
 
@@ -153,7 +153,7 @@ If the type-check passes, the install is correct.
   <AccordionItem value="subpath-vs-root">
     <AccordionTrigger>Can I import everything from the package root?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      No — duck-ttest only exports sub-paths (<code className="rounded bg-muted px-2 py-1">@gentleduck/ttest/&lt;module&gt;</code>).
+      No, duck-ttest only exports sub-paths (<code className="rounded bg-muted px-2 py-1">@gentleduck/ttest/&lt;module&gt;</code>).
       This keeps the type-checker from materializing utility modules you don&apos;t use.
     </AccordionContent>
   </AccordionItem>

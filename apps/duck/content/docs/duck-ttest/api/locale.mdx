@@ -12,7 +12,7 @@ import type {
 } from '@gentleduck/ttest/locale'
 ```
 
-Curated subsets of ISO and IANA codes useful for constraining user input, building dropdowns, or type-checking i18n keys. Widen to `string` at the consumer boundary when you need codes outside the curated list — these unions are deliberately a common-case subset, not the full registry.
+Curated subsets of ISO and IANA codes useful for constraining user input, building dropdowns, or type-checking i18n keys. Widen to `string` at the consumer boundary when you need codes outside the curated list: these unions are deliberately a common-case subset, not the full registry.
 
 ## LanguageCode
 
@@ -25,7 +25,7 @@ ISO 639-1 two-letter codes (lowercase). Roughly 80 of the most-used languages.
 ```ts
 const a: LanguageCode = 'en'
 const b: LanguageCode = 'ar'
-const c: LanguageCode = 'EN'  // Error — codes are lowercase
+const c: LanguageCode = 'EN'  // Error: codes are lowercase
 ```
 
 ## CountryCode
@@ -39,7 +39,7 @@ ISO 3166-1 alpha-2 codes (uppercase). Roughly 130 of the most-used countries.
 ```ts
 const a: CountryCode = 'US'
 const b: CountryCode = 'JP'
-const c: CountryCode = 'us'  // Error — codes are uppercase
+const c: CountryCode = 'us'  // Error: codes are uppercase
 ```
 
 ## CurrencyCode
@@ -68,7 +68,7 @@ BCP-47 tag: a `LanguageCode`, optionally followed by `-` and a `CountryCode`. Co
 const a: LocaleTag = 'en'      // language only
 const b: LocaleTag = 'en-US'   // language + region
 const c: LocaleTag = 'fr-CA'   // valid
-const d: LocaleTag = 'en-us'   // Error — region must be uppercase
+const d: LocaleTag = 'en-us'   // Error: region must be uppercase
 ```
 
 Edge case: extended tags like `'zh-Hant-TW'` or grandfathered tags like `'i-klingon'` are not in the curated union. Widen to `string` at the consumer boundary if you need them.
@@ -79,12 +79,12 @@ Edge case: extended tags like `'zh-Hant-TW'` or grandfathered tags like `'i-klin
 type TimeZone = 'UTC' | 'GMT' | 'Europe/London' | 'Asia/Tokyo' | ... | 'America/Argentina/Buenos_Aires'
 ```
 
-Common IANA time-zone identifiers — about 30 of the most-used. The full IANA tz database is much larger; widen to `string` for user-supplied values.
+Common IANA time-zone identifiers: about 30 of the most-used. The full IANA tz database is much larger; widen to `string` for user-supplied values.
 
 ```ts
 function inZone(d: Date, tz: TimeZone) { /* ... */ }
 inZone(new Date(), 'Asia/Tokyo')          // ok
-inZone(new Date(), 'Pacific/Galapagos')   // Error — not in curated set
+inZone(new Date(), 'Pacific/Galapagos')   // Error: not in curated set
 ```
 
 ## IsLocaleTag
@@ -106,4 +106,4 @@ type _ = [
 ]
 ```
 
-Edge case: `IsLocaleTag<string>` is `boolean` — a wide `string` doesn't extend a finite union. Always narrow before checking.
+Edge case: `IsLocaleTag<string>` is `boolean`, since a wide `string` doesn't extend a finite union. Always narrow before checking.

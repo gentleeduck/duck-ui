@@ -15,7 +15,7 @@ import type {
 } from '@gentleduck/ttest/aria'
 ```
 
-Curated string unions matching WAI-ARIA 1.2. Narrower than `string`, broader than hand-rolled per-component unions — use them to constrain prop types in design-system components.
+Curated string unions matching WAI-ARIA 1.2. Narrower than `string`, broader than hand-rolled per-component unions; use them to constrain prop types in design-system components.
 
 ## LandmarkRole
 
@@ -31,7 +31,7 @@ Major page regions. One landmark per `<header>`, `<nav>`, `<main>`, etc.
 type WidgetRole = 'button' | 'checkbox' | 'menuitem' | 'radio' | 'switch' | 'tab' | 'textbox' | ...
 ```
 
-Interactive component roles — the building blocks of forms and controls.
+Interactive component roles: the building blocks of forms and controls.
 
 ## CompositeRole
 
@@ -80,7 +80,7 @@ function setRole(el: HTMLElement, role: AriaRole) {
 
 setRole(el, 'button')   // ok
 setRole(el, 'banner')   // ok
-setRole(el, 'spinner')  // Error — not in any role group
+setRole(el, 'spinner')  // Error: not in any role group
 ```
 
 ## AriaLive
@@ -151,7 +151,7 @@ Marks the current item within a set.
 type AriaDropEffect = 'none' | 'copy' | 'execute' | 'link' | 'move' | 'popup'
 ```
 
-Drag-and-drop effect indication. Deprecated by WAI-ARIA 1.1 — kept for legacy parity.
+Drag-and-drop effect indication. Deprecated by WAI-ARIA 1.1, kept for legacy parity.
 
 ## AriaInvalid
 
@@ -183,7 +183,7 @@ function setAria(el: HTMLElement, name: AriaAttribute, value: string) {
 }
 
 setAria(el, 'aria-label', 'Close')    // ok
-setAria(el, 'aria-typo', 'oops')      // Error — 'typo' not in AriaAttributeName
+setAria(el, 'aria-typo', 'oops')      // Error: 'typo' not in AriaAttributeName
 ```
 
 Edge case: every union here is finite. If a future WAI-ARIA revision adds tokens, widen to `string` at the consumer boundary or upstream the additions to this module.

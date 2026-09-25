@@ -41,7 +41,7 @@ Methods that must not modify server state. `SafeMethod` ⊂ `IdempotentMethod` �
 type IdempotentMethod = 'GET' | 'HEAD' | 'OPTIONS' | 'TRACE' | 'PUT' | 'DELETE'
 ```
 
-Methods whose repeated invocation has the same effect as a single one — safe to retry.
+Methods whose repeated invocation has the same effect as a single one: safe to retry.
 
 ## IsSafeMethod
 
@@ -95,7 +95,7 @@ type Redirection = 300 | 301 | 302 | 303 | 304 | 305 | 307 | 308
 type ClientError = 400 | 401 | 402 | ... | 451
 ```
 
-4xx status codes — every code IANA currently assigns.
+4xx status codes: every code IANA currently assigns.
 
 ## ServerError
 
@@ -119,7 +119,7 @@ Union of every standard status code.
 type StatusFamily<S extends HttpStatusCode>
 ```
 
-Grouping label — one of `'1xx' | '2xx' | '3xx' | '4xx' | '5xx'`.
+Grouping label: one of `'1xx' | '2xx' | '3xx' | '4xx' | '5xx'`.
 
 ```ts
 type a = StatusFamily<200>  // '2xx'
@@ -173,7 +173,7 @@ interface HttpRequestShape<M extends HttpMethod = HttpMethod, Body = unknown> {
 }
 ```
 
-Minimal request descriptor — useful in type-safe client builders.
+Minimal request descriptor: useful in type-safe client builders.
 
 ```ts
 function send<B>(req: HttpRequestShape<'POST', B>): Promise<Response> { /* ... */ }
@@ -198,4 +198,4 @@ function handle<S extends HttpStatusCode>(res: HttpResponseShape<S>): StatusFami
 }
 ```
 
-Edge case: every status union is a literal-number set. `404 satisfies HttpStatusCode` works; `Number('404') satisfies HttpStatusCode` does not — call sites typically need `as const` on numeric literals or an explicit annotation.
+Edge case: every status union is a literal-number set. `404 satisfies HttpStatusCode` works; `Number('404') satisfies HttpStatusCode` does not; call sites typically need `as const` on numeric literals or an explicit annotation.

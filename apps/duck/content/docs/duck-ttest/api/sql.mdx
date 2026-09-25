@@ -1,6 +1,6 @@
 ---
 title: sql
-description: Parse CREATE TABLE strings into typed row shapes — InferSchema, SQLTypeMap.
+description: Parse CREATE TABLE strings into typed row shapes: InferSchema, SQLTypeMap.
 section: API
 order: 33
 ---
@@ -22,7 +22,7 @@ import type {
 } from '@gentleduck/ttest/sql'
 ```
 
-The most ambitious module — a type-level SQL DDL parser.
+The most ambitious module: a type-level SQL DDL parser.
 
 ## SQLTypeMap
 
@@ -123,7 +123,7 @@ Constraint-aware nullability and optionality based on the column string.
 
 <Callout icon={<Zap />}>
 
-These are SQL-level — not the same as the TS-level [`IsOptional`](/duck-ttest/api/primitive) / [`IsNullable`](/duck-ttest/api/primitive). The SQL-prefix rename happened in v1; see [Migration](/duck-ttest/migration).
+These are SQL-level, not the same as the TS-level [`IsOptional`](/duck-ttest/api/primitive) / [`IsNullable`](/duck-ttest/api/primitive). The SQL-prefix rename happened in v1; see [Migration](/duck-ttest/migration).
 
 </Callout>
 
@@ -146,7 +146,7 @@ type ResolveRef   <T, Schemas extends Record<string, unknown>>
 type ResolveFields<T, Schemas extends Record<string, unknown>>
 ```
 
-Resolve `Ref<Table, Column>` placeholders against a registry of schemas — useful for multi-table inference.
+Resolve `Ref<Table, Column>` placeholders against a registry of schemas: useful for multi-table inference.
 
 ## Deprecated re-exports
 

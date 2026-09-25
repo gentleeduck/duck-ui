@@ -44,7 +44,7 @@ const registry: Record<string, Class<any>> = {
 type AbstractClass<T = unknown, Args extends unknown[] = any[]> = abstract new (...args: Args) => T
 ```
 
-An abstract class constructor. Accepts both concrete and abstract classes — useful when you want to constrain a generic to "anything `instanceof`-checkable" without forbidding abstracts.
+An abstract class constructor. Accepts both concrete and abstract classes: useful when you want to constrain a generic to "anything `instanceof`-checkable" without forbidding abstracts.
 
 ```ts
 abstract class Base { abstract greet(): string }
@@ -89,7 +89,7 @@ type b = ConstructorParametersSafe<typeof Date>  // [] | [number] | [string] | .
 type c = ConstructorParametersSafe<() => void>   // never
 ```
 
-Edge case: like `ParametersSafe`, overloaded constructors collapse to the last overload — matches the built-in behavior.
+Edge case: like `ParametersSafe`, overloaded constructors collapse to the last overload, matching the built-in behavior.
 
 ## IsClass
 
@@ -110,4 +110,4 @@ type _ = [
 ]
 ```
 
-Edge case: arrow functions and plain functions are not constructors — `IsClass<() => void>` is `false`. Use [`IsFunction`](/duck-ttest/api/guard) or `ReturnTypeSafe` for those.
+Edge case: arrow functions and plain functions are not constructors, so `IsClass<() => void>` is `false`. Use [`IsFunction`](/duck-ttest/api/guard) or `ReturnTypeSafe` for those.

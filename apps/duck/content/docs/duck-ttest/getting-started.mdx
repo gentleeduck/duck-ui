@@ -5,7 +5,7 @@ section: Getting Started
 order: 2
 ---
 
-This page walks through a single failing test, the error it produces, and how to fix it. Everything happens at compile time — there is no test runner to install and no command to add to `package.json` beyond `tsc --noEmit`.
+This page walks through a single failing test, the error it produces, and how to fix it. Everything happens at compile time: there is no test runner to install and no command to add to `package.json` beyond `tsc --noEmit`.
 
 ## 1. Set up a test folder
 
@@ -18,7 +18,7 @@ src/
     schema.test-d.ts
 ```
 
-The `.test-d.ts` suffix is purely a convention — duck-ttest doesn't care about file names.
+The `.test-d.ts` suffix is purely a convention: duck-ttest doesn't care about file names.
 
 ## 2. Write a passing test
 
@@ -54,7 +54,7 @@ src/__type_tests__/user.test-d.ts:5:31 - error TS2344:
   Type 'false' does not satisfy the constraint 'true'.
 ```
 
-`AssertTrue<T extends true, Msg extends string>` constrains `T` to `true`. When the constraint fails, the compiler points at the assertion line, and the second generic — your message — is right there in the source.
+`AssertTrue<T extends true, Msg extends string>` constrains `T` to `true`. When the constraint fails, the compiler points at the assertion line, and the second generic (your message) is right there in the source.
 
 ## 4. Use the message
 
@@ -68,7 +68,7 @@ type assertions = [
 ]
 ```
 
-When any one of these breaks, the error includes the surrounding tuple index — narrow it down with the message string.
+When any one of these breaks, the error includes the surrounding tuple index: narrow it down with the message string.
 
 ## 5. Test that something is **not** assignable
 
@@ -140,6 +140,6 @@ Vitest runs the runtime test; `tsc` runs the type test. They live in the same fi
 
 ## Where next
 
-- [Core / Assertions](/duck-ttest/core/assertions) — every assertion, with edge cases.
-- [Core / Type-level testing](/duck-ttest/core/type-level-testing) — how this composes with `@ts-expect-error` and `tsd`.
-- [Guides / Catching regressions](/duck-ttest/guides/catching-regressions) — folding type tests into a vitest project.
+- [Core / Assertions](/duck-ttest/core/assertions): every assertion, with edge cases.
+- [Core / Type-level testing](/duck-ttest/core/type-level-testing): how this composes with `@ts-expect-error` and `tsd`.
+- [Guides / Catching regressions](/duck-ttest/guides/catching-regressions): folding type tests into a vitest project.

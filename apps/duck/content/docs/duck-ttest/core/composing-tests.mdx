@@ -11,11 +11,11 @@ A page of accumulated rules from real codebases.
 
 Pick one of:
 
-- `*.test-d.ts` — convention borrowed from `tsd`. Good when type tests are separate from runtime tests.
-- `*.test.ts` — co-locate with runtime tests when using vitest / jest / bun-test.
-- `*.types.test.ts` — explicit, no ambiguity.
+- `*.test-d.ts`: convention borrowed from `tsd`. Good when type tests are separate from runtime tests.
+- `*.test.ts`: co-locate with runtime tests when using vitest / jest / bun-test.
+- `*.types.test.ts`: explicit, no ambiguity.
 
-duck-ttest does not care which you pick — the runner is `tsc`. Pick one and stick to it across the project.
+duck-ttest does not care which you pick; the runner is `tsc`. Pick one and stick to it across the project.
 
 ## Group with tuples
 
@@ -47,7 +47,7 @@ The message goes into the error; the type alias name goes into the IDE hover. Ma
 
 ## Brand-aware assertions
 
-Branded types do not equal their base. This is by design — but it's a common source of confusing failures:
+Branded types do not equal their base. This is by design, but it's a common source of confusing failures:
 
 ```ts
 import type { Brand } from '@gentleduck/ttest/brand'
@@ -56,7 +56,7 @@ import type { Equal } from '@gentleduck/ttest/equality'
 
 type UserId = Brand<string, 'UserId'>
 
-// FAILS — UserId is not equal to string.
+// FAILS: UserId is not equal to string.
 type bad = AssertTrue<Equal<UserId, string>, 'no'>
 
 // Use Unbrand or assert against the brand explicitly.
@@ -70,7 +70,7 @@ Once `any` appears anywhere inside a generic argument, `Equal` cooperates with y
 
 ```ts
 type wrong = AssertTrue<Equal<any, any>, 'always passes'>
-//                       ^ both sides are any — Equal returns true
+//                       ^ both sides are any, so Equal returns true
 ```
 
 Always test against the **expected** concrete type, never `any`. If you must, use `IsAny` from `@gentleduck/ttest/any`:
@@ -107,7 +107,7 @@ import type { Equal } from '@gentleduck/ttest/equality'
 type Wrap<T> = T extends unknown ? [T] : never
 
 type bad = AssertTrue<Equal<Wrap<'a' | 'b'>, ['a' | 'b']>, 'wraps the union'>
-//                                ^ FAILS — Wrap distributes, so the LHS is `['a'] | ['b']`
+//                                ^ FAILS: Wrap distributes, so the LHS is `['a'] | ['b']`
 ```
 
 The fix is the standard `[T] extends [U]` wrap that disables distribution:
@@ -118,11 +118,11 @@ type WrapNoDist<T> = [T] extends [unknown] ? [T] : never
 type good = AssertTrue<Equal<WrapNoDist<'a' | 'b'>, ['a' | 'b']>, 'wraps once'>
 ```
 
-A similar trap shows up around `never` — `never` distributes to `never`, so `T extends X ? Y : Z` with `T = never` is just `never`. Always wrap in `[T]` if the assertion's correctness depends on `never` being a single inhabited type.
+A similar trap shows up around `never`: `never` distributes to `never`, so `T extends X ? Y : Z` with `T = never` is just `never`. Always wrap in `[T]` if the assertion's correctness depends on `never` being a single inhabited type.
 
 ## Keep test files leaf-only
 
-If a `.test-d.ts` re-exports types that production code imports, you've created a circular path. Treat test files as leaves of the import graph — they import production types, never the other way around.
+If a `.test-d.ts` re-exports types that production code imports, you've created a circular path. Treat test files as leaves of the import graph: they import production types, never the other way around.
 
 ## When tests get slow
 
@@ -142,6 +142,6 @@ The fix is usually to extract the helper type and parameterize the test rather t
 
 ## See also
 
-- [Core / Assertions](/duck-ttest/core/assertions) — the underlying API.
-- [API / fp](/duck-ttest/api/fp) — `Reduce` / `Match` are useful but recursion-heavy.
-- [API / object](/duck-ttest/api/object) — `Paths<T, D>` and its depth cap.
+- [Core / Assertions](/duck-ttest/core/assertions): the underlying API.
+- [API / fp](/duck-ttest/api/fp): `Reduce` / `Match` are useful but recursion-heavy.
+- [API / object](/duck-ttest/api/object): `Paths<T, D>` and its depth cap.

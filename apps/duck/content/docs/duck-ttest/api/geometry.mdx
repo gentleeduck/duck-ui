@@ -94,7 +94,7 @@ type Degrees = number & { readonly [DEG_UNIT]: 'deg' }
 type Radians = number & { readonly [RAD_UNIT]: 'rad' }
 ```
 
-Branded scalars — `Degrees` and `Radians` are not assignable to each other.
+Branded scalars: `Degrees` and `Radians` are not assignable to each other.
 
 ```ts
 function rotate(angle: Radians) { /* ... */ }

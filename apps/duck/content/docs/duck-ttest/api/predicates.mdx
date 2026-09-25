@@ -1,6 +1,6 @@
 ---
 title: predicates
-description: Property-modifier guards — IsMutable, IsReadonly, IsPartial, IsRequired.
+description: Property-modifier guards: IsMutable, IsReadonly, IsPartial, IsRequired.
 section: API
 order: 28
 ---
@@ -84,11 +84,11 @@ type c = IsRequired<{}>                  // true   (vacuously)
 Edge cases for all four predicates:
 
 - Empty objects (`{}`) trivially pass every modifier check.
-- These are *whole-object* predicates. For per-key arithmetic see [`extraction`](/duck-ttest/api/extraction) — `OptionalKeys`, `RequiredKeys`, `ReadonlyKeys`, `MutableKeys`.
+- These are *whole-object* predicates. For per-key arithmetic see [`extraction`](/duck-ttest/api/extraction): `OptionalKeys`, `RequiredKeys`, `ReadonlyKeys`, `MutableKeys`.
 - `IsRequired<any>` and `IsRequired<unknown>` are not meaningful. Narrow before checking.
 
 <Callout icon={<Zap />}>
 
-**Renamed in v1.** This module was previously `@gentleduck/ttest/predictates` (typo). Update imports — see the [Migration guide](/duck-ttest/migration).
+**Renamed in v1.** This module was previously `@gentleduck/ttest/predictates` (typo). Update imports: see the [Migration guide](/duck-ttest/migration).
 
 </Callout>

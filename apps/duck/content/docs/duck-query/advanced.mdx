@@ -360,7 +360,9 @@ export const external = createDuckQueryClient<ExternalRoutes>({
 - **Path type checking**: `client.post()` only accepts POST-capable paths. Posting to a
   GET-only route is a compile-time error.
 - **Param encoding**: path params run through `encodeURIComponent`.
-- **Slash normalization**: double slashes in built URLs collapse to one.
+- **No slash normalization**: the built URL is `baseURL + path` with param substitution
+  only; a `baseURL` ending in `/` combined with a path starting with `/` produces a double
+  slash. Keep one side without a trailing/leading slash.
 
 ## Next steps
 

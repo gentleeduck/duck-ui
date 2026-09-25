@@ -1,0 +1,32 @@
+---
+title: "Function: scrubMeta()"
+description: "Every secret-bearing key dropped, at any depth. Past the cap the subtree is truncated, not walked."
+---
+
+> **scrubMeta**(`meta`: `object`, `depth?`: `number`): `Record`\<`string`, `unknown`\>
+
+Defined in: [scrub.ts:26](https://github.com/gentleeduck/duck-error/blob/afafbc52384eb8a41b91f1249021a401f0245774/packages/duck-error/src/scrub.ts#L26)
+
+Every secret-bearing key dropped, at any depth. Past the cap the subtree is truncated, not walked.
+
+## Parameters
+
+### meta
+
+`object`
+
+### depth?
+
+`number` = `0`
+
+## Returns
+
+`Record`\<`string`, `unknown`\>
+
+## Example
+
+```ts
+scrubMeta({ widgetId: 'w1', detail: { password: 'leak-me' } })
+// -> { widgetId: 'w1', detail: {} } — 'password' matches the secret pattern, 'detail' and 'widgetId' don't
+```
+

@@ -1,0 +1,78 @@
+---
+title: extending
+description: Composing multiple kits in one application, adding fields to a response at the HTTP layer without touching the kit, and what subclassing ErrorClass does and doesn't buy you.
+---
+
+## Composing multiple kits
+
+The recommended way to grow past a single registry is more kits, not a bigger one (see
+[Core concepts](/duck-error/core-concepts)). A top-level handler that needs to deal with several
+subsystems' kits checks each in turn:
+
+```typescript
+import { AuthError } from './auth/errors'
+import { BillingError } from './billing/errors'
+import { StorageError } from './storage/errors'
+
+function toResponse(err: unknown) {
+  if (err instanceof AuthError) return { status: err.status, body: err.toJSON() }
+  if (err instanceof BillingError) return { status: err.status, body: err.toJSON() }
+  if (err instanceof StorageError) return { status: err.status, body: err.toJSON() }
+  return { status: 500, body: { ok: false, error: { code: 'INTERNAL', status: 500 } } }
+}
+```
+
+Because every kit's `toJSON()` returns the same `{ ok, error: { code, status, ...meta } }`
+shape, this stays flat regardless of how many kits you add — there's no need for a common base
+class to get a common response shape.
+
+---
+
+## Adding fields at the HTTP layer, not the kit
+
+A common ask is attaching something request-scoped — a request id, a trace id — to every error
+response. Do this by decorating `toJSON()`'s output where you build the response, not by
+modifying the kit:
+
+```typescript
+function respond(
+  res: { status(code: number): { json(body: unknown): void } },
+  err: KitError<any>,
+  requestId: string,
+) {
+  const body = err.toJSON()
+  res.status(err.status).json({ ...body, error: { ...body.error, requestId } })
+}
+```
+
+This keeps the kit itself free of anything request-scoped — `AppError` has no idea an HTTP
+request exists, which is what makes it reusable from a queue worker, a CLI, or a test, none of
+which have a `requestId` to attach.
+
+---
+
+## Subclassing `ErrorClass`
+
+`kit.ErrorClass` is a real, ordinary JavaScript class — `class AppError extends kit.ErrorClass {
+}` works the same way extending any other class does, and an instance of the subclass still
+passes `instanceof kit.ErrorClass` and `hasErrorCode`.
+
+```typescript
+class LoggedAppError extends AppError {
+  constructor(...args: ConstructorParameters<typeof AppError>) {
+    super(...args)
+    logger.warn(this.code, this.meta)
+  }
+}
+```
+
+<Callout type="warning" title="Prefer composition over subclassing here">
+Reach for this only for a genuinely cross-cutting concern like the logging example above.
+Subclassing does not give you a way to add new codes or change `Args` — those still come
+entirely from the registry passed to `createErrorKit`, which is a module-level, not a
+class-level, concept in this package. If what you want is "a few extra codes beyond what the
+base kit defines," write a second registry (spreading the first one's entries in, if you want to
+extend rather than replace it) and call `createErrorKit` again — that keeps the
+[one-kit-per-subsystem](/duck-error/core-concepts) isolation guarantee intact, which a subclass
+does not.
+</Callout>

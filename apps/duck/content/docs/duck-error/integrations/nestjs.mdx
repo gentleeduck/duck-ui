@@ -1,0 +1,70 @@
+---
+title: NestJS
+description: Map @gentleduck/error instances to NestJS HTTP responses with an ExceptionFilter, using statusCode for compatibility with Nest's base filter.
+---
+
+## Overview
+
+`KitError` exposes `statusCode` alongside `status` specifically so it lines up with what
+NestJS's base `HttpException`/exception-filter machinery reads. Writing a filter is the
+idiomatic way to turn every thrown kit error into a consistent JSON body without touching each
+controller.
+
+Full runnable example: [`examples/nestjs`](https://github.com/gentleeduck/duck-error/tree/main/examples/nestjs).
+
+## Exception filter
+
+```typescript
+import { type ArgumentsHost, Catch, type ExceptionFilter } from '@nestjs/common'
+import type { Response } from 'express'
+import { AppError } from './errors'
+
+@Catch(AppError)
+export class AppErrorFilter implements ExceptionFilter {
+  catch(err: AppError, host: ArgumentsHost) {
+    const res = host.switchToHttp().getResponse<Response>()
+    res.status(err.statusCode).json(err.toJSON())
+  }
+}
+```
+
+```typescript
+import 'reflect-metadata'
+import { NestFactory } from '@nestjs/core'
+import { AppModule } from './app.module'
+import { AppErrorFilter } from './app-error.filter'
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule)
+  app.useGlobalFilters(new AppErrorFilter())
+  await app.listen(3000)
+}
+bootstrap()
+```
+
+Because `@Catch(AppError)` names the class `createErrorKit` returned, only instances of *this*
+kit are routed here -- an unrelated thrown value falls through to Nest's default filter, which
+is the correct behavior: a kit's errors are the ones this filter knows how to shape, nothing
+else.
+
+## Throwing from a service
+
+```typescript
+import { Injectable } from '@nestjs/common'
+import { throwAppError } from './errors'
+
+@Injectable()
+export class WidgetsService {
+  async findOne(id: string) {
+    const widget = await db.widgets.findById(id)
+    if (!widget) throwAppError('NOT_FOUND', { resource: 'widget', id })
+    return widget
+  }
+}
+```
+
+<Callout type="info">
+`throwAppError`'s return type is `never`, so a controller method that calls it in every branch
+still type-checks against a non-`void` return type -- TypeScript sees the call as unreachable
+past that point, the same as a native `throw`.
+</Callout>

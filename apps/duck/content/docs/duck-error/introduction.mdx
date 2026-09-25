@@ -1,0 +1,93 @@
+---
+title: introduction
+description: Typed, registry-driven error classes for TypeScript. Branded codes, secret-safe serialization, framework-agnostic, zero dependencies.
+---
+
+## Overview
+
+`@gentleduck/error` builds one error class per subsystem from a plain object literal: a
+registry mapping string codes to HTTP status numbers. The class it returns is fully typed --
+which codes exist, what metadata each one carries, and whether metadata is required -- all
+inferred from the registry, with no separate type declaration to keep in sync.
+
+<MermaidDiagram chart={`flowchart TD
+    REG["Registry\n{ CODE: status, ... }"] --> KIT["createErrorKit(name, registry)"]
+    KIT --> CLASS["ErrorClass\nnew AppError(code, meta?)"]
+    KIT --> FAIL["fail(code, meta?)\nconstructs, never throws"]
+    KIT --> THROW["throwError(code, meta?)\nconstructs and throws"]
+    KIT --> AS["asError(err, code, meta?)\npasses through or wraps"]
+    KIT --> RETHROW["rethrowError(err, code, meta?)"]
+    KIT --> HAS["hasErrorCode(err, code)\ntype guard"]
+    KIT --> META["metaOf(err, code)\ntyped meta read"]
+
+    CLASS --> JSON["toJSON()\nsecret-safe response body"]`} />
+
+```sh
+bun add @gentleduck/error
+```
+
+```typescript
+import { createErrorKit, detail, fault } from '@gentleduck/error'
+
+const REGISTRY = {
+  NOT_FOUND: 404,
+  RATE_LIMITED: detail<{ retryAfter: number }>(429),
+  STORAGE_FAILED: fault<{ cause?: string }>(500),
+} as const satisfies Record<string, number>
+
+const kit = createErrorKit('AppError', REGISTRY)
+export const AppError = kit.ErrorClass
+export const throwAppError = kit.throwError
+
+throw new AppError('RATE_LIMITED', { retryAfter: 60 })
+// err.status === 429, err.code === 'RATE_LIMITED'
+// err.toJSON() -> { ok: false, error: { code: 'RATE_LIMITED', status: 429, retryAfter: 60 } }
+```
+
+Full walkthrough: [Getting started](/duck-error/getting-started).
+
+---
+
+## Why a registry, not a class hierarchy
+
+The usual alternative is one subclass per error kind (`NotFoundError extends AppError`), which
+scales linearly in files and forces every catch site to chain `instanceof` checks in the right
+order. A registry keeps every code, its status, and its metadata shape in one literal that is
+also the map a caller reads to know what a subsystem can raise -- `Object.keys(REGISTRY)` is the
+exhaustive list, not a guess from grepping `extends`. Two kits never satisfy each other's
+`instanceof`, even with identical registries -- each call to `createErrorKit` declares its own
+class. Details: [Core concepts](/duck-error/core-concepts).
+
+## Zero dependencies
+
+`packages/duck-error` has no runtime dependencies. `typescript` is an optional peer, needed
+only for the types. It runs anywhere JavaScript does -- server, browser, edge runtimes -- see
+[Browser and isomorphic usage](/duck-error/browser-and-isomorphic-usage).
+
+---
+
+## All the docs
+
+**Concepts**
+- [Getting started](/duck-error/getting-started) -- install, build a registry from one code to three
+- [Core concepts](/duck-error/core-concepts) -- the registry as source of truth, one kit per subsystem, construct vs. throw
+- [Branded types](/duck-error/branded-types) -- how `detail`/`fault` drive `Args`, `Bare`, `Meta`, `Faults`
+- [Error codes and status design](/duck-error/error-codes-and-status-design) -- naming, HTTP status selection, growing a registry safely
+
+**Using it**
+- [Type narrowing](/duck-error/type-narrowing) -- `hasErrorCode`, `metaOf`, exhaustive code-to-behavior maps
+- [Wrapping unknown errors](/duck-error/wrapping-unknown-errors) -- `asError`/`rethrowError` at I/O boundaries
+- [Secret redaction](/duck-error/secret-redaction) -- exactly what `toJSON()` strips, and what it doesn't
+- [Testing](/duck-error/testing) -- asserting codes, proving redaction, pinning exhaustiveness
+- [Extending](/duck-error/extending) -- composing multiple kits, decorating responses, subclassing
+- [Browser and isomorphic usage](/duck-error/browser-and-isomorphic-usage) -- client-side gotchas
+- [FAQ](/duck-error/faq) -- runtime validation, cloning, stack traces, JavaScript-only usage, and more
+
+**Reference**
+- [API reference](/duck-error/api-reference) -- every export, every signature, in prose
+- [API / types](/duck-error/api) -- the same surface, generated from source with TypeDoc
+
+**Framework integrations**
+- [Overview](/duck-error/integrations/overview) -- the shared three-step pattern
+- [NestJS](/duck-error/integrations/nestjs) -- [Express](/duck-error/integrations/express) -- [Fastify](/duck-error/integrations/fastify) -- [Hono](/duck-error/integrations/hono) -- [Next.js](/duck-error/integrations/nextjs)
+- Runnable code for all five: [`examples/`](https://github.com/gentleeduck/duck-error/tree/main/examples)

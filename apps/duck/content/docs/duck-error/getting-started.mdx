@@ -1,0 +1,153 @@
+---
+title: getting started
+description: Install @gentleduck/error and build your first error kit, from a one-code registry to a typed, secret-safe error class.
+---
+
+## Install
+
+```sh
+bun add @gentleduck/error
+```
+
+```sh
+npm install @gentleduck/error
+pnpm add @gentleduck/error
+yarn add @gentleduck/error
+```
+
+`typescript` is an optional peer dependency (`>=5.0.0`). The package has no runtime
+dependencies at all -- it works in plain JavaScript too, you simply lose the type inference
+described below.
+
+---
+
+## Step 1: a registry with one code
+
+Every kit starts from a plain object literal mapping string codes to HTTP status numbers.
+
+```typescript
+// errors.ts
+import { createErrorKit } from '@gentleduck/error'
+
+const REGISTRY = {
+  NOT_FOUND: 404,
+} as const satisfies Record<string, number>
+
+const kit = createErrorKit('AppError', REGISTRY)
+
+export const AppError = kit.ErrorClass
+export const throwAppError = kit.throwError
+```
+
+```typescript
+throwAppError('NOT_FOUND')
+// Uncaught AppError: NOT_FOUND
+```
+
+`satisfies Record<string, number>` is the load-bearing half of that line: every code already
+resolves to a number-compatible type (`detail`/`fault` return a branded number; a bare code is a
+plain number), and `satisfies` checks that without erasing those specific types the way an
+`: Record<string, number>` annotation would. `as const` on top is good practice for a bare code's
+status -- it keeps `404` a literal `404` instead of widening to `number` -- but the compile-time
+argument checking later in this walkthrough comes from `detail`/`fault`'s own branded return
+types, not from `as const`.
+
+## Step 2: a code that carries metadata
+
+`NOT_FOUND` above takes no arguments -- calling `throwAppError('NOT_FOUND', { anything: true })`
+is a compile error. Most real codes carry something. Wrap the status in `detail` and give it a
+type parameter:
+
+```typescript
+import { createErrorKit, detail } from '@gentleduck/error'
+
+const REGISTRY = {
+  NOT_FOUND: 404,
+  RATE_LIMITED: detail<{ retryAfter: number }>(429),
+} as const satisfies Record<string, number>
+
+const kit = createErrorKit('AppError', REGISTRY)
+export const AppError = kit.ErrorClass
+export const throwAppError = kit.throwError
+```
+
+```typescript
+throwAppError('RATE_LIMITED', { retryAfter: 60 })
+// the second argument is now required, and its shape is checked:
+
+throwAppError('RATE_LIMITED')
+// Error: Expected 2 arguments, but got 1.
+
+throwAppError('RATE_LIMITED', { retryAfter: 'soon' })
+// Error: Type 'string' is not assignable to type 'number'.
+```
+
+## Step 3: a code an adapter can raise
+
+`fault` is the same as `detail`, for a code that represents your own storage/adapter layer
+failing rather than a caller mistake or a business rule. It behaves identically at runtime --
+the distinction exists so you can select on it later (see
+[Branded types](/duck-error/branded-types)).
+
+```typescript
+import { createErrorKit, detail, fault } from '@gentleduck/error'
+
+const REGISTRY = {
+  NOT_FOUND: 404,
+  RATE_LIMITED: detail<{ retryAfter: number }>(429),
+  STORAGE_FAILED: fault<{ cause?: string }>(500),
+} as const satisfies Record<string, number>
+
+const kit = createErrorKit('AppError', REGISTRY)
+
+export const AppError = kit.ErrorClass
+export const throwAppError = kit.throwError
+export const asAppError = kit.asError
+export const hasAppErrorCode = kit.hasErrorCode
+```
+
+This exports `AppError` as a value only -- enough for everything on this page. Once you want to
+write a function signature like `err: AppError` or `code: AppError.Code`, see the declaration
+merge every framework guide uses, in [API reference](/duck-error/api-reference) under
+`ErrorClass`, to make `AppError` work as a type too.
+
+## Step 4: catching and responding
+
+```typescript
+try {
+  await handler(req)
+} catch (err) {
+  if (err instanceof AppError) {
+    res.status(err.status).json(err.toJSON())
+    return
+  }
+  // Not one of ours -- wrap it so callers downstream have one shape to handle.
+  const wrapped = asAppError(err, 'STORAGE_FAILED', { cause: String(err) })
+  res.status(wrapped.status).json(wrapped.toJSON())
+}
+```
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "RATE_LIMITED",
+    "status": 429,
+    "retryAfter": 60
+  }
+}
+```
+
+Any key in `meta` that looks like a secret (`token`, `password`, `hash`, and more) is stripped
+before this JSON is produced -- see [Secret redaction](/duck-error/secret-redaction) for the
+exact rule.
+
+---
+
+## Where to go next
+
+- [Core concepts](/duck-error/core-concepts) -- the registry pattern, why one kit per subsystem, why the message is always the code
+- [Branded types](/duck-error/branded-types) -- how `detail`/`fault` drive the compiler, in depth
+- [API reference](/duck-error/api-reference) -- every export, every signature
+- A framework guide: [NestJS](/duck-error/integrations/nestjs), [Express](/duck-error/integrations/express), [Fastify](/duck-error/integrations/fastify), [Hono](/duck-error/integrations/hono), [Next.js](/duck-error/integrations/nextjs)
+- [FAQ](/duck-error/faq) -- runtime validation, cloning, stack traces, JavaScript-only usage, and more

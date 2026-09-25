@@ -1,0 +1,23 @@
+---
+title: "Type Alias: Faults<R *extends* Registry>"
+description: "Every code in the registry branded [fault](../../../../functions/fault.md) — the ones a store or adapter can raise itself, as opposed to only flow/validation logic."
+---
+
+> **Faults**\<`R` *extends* [`Registry`](Registry)\> = `{ [C in Code<R>]: R[C] extends Fault ? C : never }`\[[`Code`](Code)\<`R`\>\]
+
+Defined in: [kit.ts:28](https://github.com/gentleeduck/duck-error/blob/afafbc52384eb8a41b91f1249021a401f0245774/packages/duck-error/src/kit.ts#L28)
+
+Every code in the registry branded [fault](../../../../functions/fault) — the ones a store or adapter can raise itself, as opposed to only flow/validation logic.
+
+## Type Parameters
+
+### R
+
+`R` *extends* [`Registry`](Registry)
+
+## Example
+
+```ts
+type StoreRaisable = ErrorKit.Faults<typeof REGISTRY> // 'STORAGE_FAILED' | 'INTERNAL'
+```
+

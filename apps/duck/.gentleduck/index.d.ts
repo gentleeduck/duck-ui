@@ -15,6 +15,9 @@ export declare const duckCalendar: DuckCalendar[]
 export type DuckCli = NonNullable<Collections['duckCli']['schema']>['_output']
 export declare const duckCli: DuckCli[]
 
+export type DuckError = NonNullable<Collections['duckError']['schema']>['_output']
+export declare const duckError: DuckError[]
+
 export type DuckGen = NonNullable<Collections['duckGen']['schema']>['_output']
 export declare const duckGen: DuckGen[]
 

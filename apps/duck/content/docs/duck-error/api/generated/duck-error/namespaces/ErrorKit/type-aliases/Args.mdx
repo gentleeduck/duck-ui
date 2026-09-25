@@ -1,0 +1,37 @@
+---
+title: "Type Alias: Args<R *extends* Registry, C *extends* Code<R>>"
+description: "No args for a bare code, else optional/required per Meta's required keys — gated on the value's own Carries brand, not on Meta, since a bare code's Meta resolves to `{}` which anything would satisfy."
+---
+
+> **Args**\<`R` *extends* [`Registry`](Registry), `C` *extends* [`Code`](Code)\<`R`\>\> = `R`\[`C`\] *extends* [`Carries`](../../Brand/type-aliases/Carries)\<`any`\> ? \[[`HasRequired`](HasRequired)\<[`Meta`](Meta)\<`R`, `C`\>\>\] *extends* \[`never`\] ? \[[`Meta`](Meta)\<`R`, `C`\>\] : \[[`Meta`](Meta)\<`R`, `C`\>\] : \[\]
+
+Defined in: [kit.ts:58](https://github.com/gentleeduck/duck-error/blob/afafbc52384eb8a41b91f1249021a401f0245774/packages/duck-error/src/kit.ts#L58)
+
+No args for a bare code, else optional/required per Meta's required keys — gated on the value's own Carries brand, not on Meta, since a bare code's Meta resolves to `{}` which anything would satisfy.
+
+## Type Parameters
+
+### R
+
+`R` *extends* [`Registry`](Registry)
+
+### C
+
+`C` *extends* [`Code`](Code)\<`R`\>
+
+## Example
+
+```ts
+const REGISTRY = {
+  TEST_BARE: 500, // Args -> []
+  TEST_DETAIL: detail<{ field: string }>(400), // Args -> [meta: { field: string }]
+  TEST_DETAIL_NO_ARG: detail(400), // no <M> given -> Args -> [] (behaves like bare)
+} as const satisfies Record<string, number>
+const TestError = createErrorKit('TestError', REGISTRY).ErrorClass
+
+new TestError('TEST_BARE') // ok, no second argument
+// @ts-expect-error a code that carries something cannot be raised without it
+new TestError('TEST_DETAIL')
+new TestError('TEST_DETAIL', { field: 'x' }) // ok
+```
+

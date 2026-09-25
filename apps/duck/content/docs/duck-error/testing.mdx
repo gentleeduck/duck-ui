@@ -1,0 +1,134 @@
+---
+title: testing
+description: Assert on thrown codes, verify the response body, prove secret stripping, and pin registry exhaustiveness with @ts-expect-error — with runnable vitest examples.
+---
+
+## Asserting a specific code was thrown
+
+```typescript
+import { describe, expect, it } from 'vitest'
+import { AppError, throwAppError } from '../errors'
+
+describe('widget lookup', () => {
+  it('raises NOT_FOUND for a missing id', async () => {
+    await expect(findWidget('missing-id')).rejects.toThrow(AppError)
+
+    try {
+      await findWidget('missing-id')
+    } catch (err) {
+      expect((err as InstanceType<typeof AppError>).code).toBe('NOT_FOUND')
+    }
+  })
+})
+```
+
+`toThrow(AppError)` only confirms the class. Because `message` always equals `code` (see
+[Core concepts](/duck-error/core-concepts)), you can also assert on message directly instead of
+a `try`/`catch`:
+
+```typescript
+await expect(findWidget('missing-id')).rejects.toThrow('NOT_FOUND')
+```
+
+Prefer this form when you don't also need to inspect `meta`, and the `try`/`catch` form (reading
+`.code` and `.meta` off the caught error) when you do.
+
+## Asserting the response shape
+
+```typescript
+it('reports the retry window', () => {
+  const err = new AppError('RATE_LIMITED', { retryAfter: 60 })
+  expect(err.toJSON()).toEqual({
+    ok: false,
+    error: { code: 'RATE_LIMITED', status: 429, retryAfter: 60 },
+  })
+})
+```
+
+## Proving secret stripping actually strips
+
+The single highest-value test class for this package: prove that every field your registry's
+metadata can carry which *looks* secret is actually gone from the serialized body, not merely
+that the happy path looks right.
+
+```typescript
+describe('toJSON strips secrets', () => {
+  for (const key of ['token', 'password', 'apiKey', 'sessionHash']) {
+    it(`removes ${key}`, () => {
+      const err = new AppError('STORAGE_FAILED', { [key]: 'super-secret-value' } as never)
+      expect(JSON.stringify(err.toJSON())).not.toContain('super-secret-value')
+    })
+  }
+
+  it('strips a secret nested inside an object', () => {
+    const err = new AppError('STORAGE_FAILED', { detail: { inner: { token: 'leak-me' } } } as never)
+    expect(JSON.stringify(err.toJSON())).not.toContain('leak-me')
+  })
+})
+```
+
+`as never` here is doing real work, not just silencing the compiler: it's how you deliberately
+construct a metadata shape your registry's types don't actually allow, so the test exercises the
+*runtime* redaction path (which has no schema and cannot itself refuse an unexpected key — see
+[Core concepts](/duck-error/core-concepts)) independent of whatever the compiler would normally
+have caught first.
+
+## Testing `asError`/`rethrowError` wrapping
+
+```typescript
+describe('rethrowAppError', () => {
+  it('passes an existing AppError through unchanged', () => {
+    const original = new AppError('RATE_LIMITED', { retryAfter: 60 })
+    try {
+      kit.rethrowError(original, 'STORAGE_FAILED', { cause: 'unused' })
+    } catch (err) {
+      expect(err).toBe(original) // same instance, not a new wrapper
+      expect((err as InstanceType<typeof AppError>).code).toBe('RATE_LIMITED')
+    }
+  })
+
+  it('wraps a plain Error under the fallback code, preserving it on .cause', () => {
+    const driverErr = new Error('connection refused')
+    try {
+      kit.rethrowError(driverErr, 'STORAGE_FAILED', { cause: driverErr.message })
+    } catch (err) {
+      expect(err).toBeInstanceOf(AppError)
+      expect((err as InstanceType<typeof AppError>).code).toBe('STORAGE_FAILED')
+      expect((err as InstanceType<typeof AppError>).cause).toBe(driverErr)
+    }
+  })
+
+  it('does not leak the original message into the wrapper', () => {
+    try {
+      kit.rethrowError(new Error('postgres://user:pw@host/db'), 'STORAGE_FAILED', { cause: 'redacted' })
+    } catch (err) {
+      expect((err as InstanceType<typeof AppError>).message).toBe('STORAGE_FAILED')
+      expect(JSON.stringify((err as InstanceType<typeof AppError>).toJSON())).not.toContain('postgres://')
+    }
+  })
+})
+```
+
+That last test matters more than it looks: a wrapped error's `message` is the wrapper's own
+code, never the original error's message — so a connection string, a stack fragment, or any
+other free text a lower-level library put in *its* `.message` cannot reach a client by way of
+`toJSON()`, even though it's fully preserved (for your own logs) on `.cause`.
+
+## Pinning registry exhaustiveness at compile time
+
+A code with required metadata should be *impossible* to construct without it — that's a claim
+about the type system, and it deserves a test that would fail to compile if it ever stopped
+being true:
+
+```typescript
+// @ts-expect-error a code that carries required metadata cannot be raised without it
+void new AppError('RATE_LIMITED')
+// @ts-expect-error nor with the wrong shape
+void new AppError('RATE_LIMITED', { retryAfter: 'soon' })
+```
+
+Each line is a compile error the *test file* expects — `@ts-expect-error` flips a would-be
+failure into the assertion. Run `check-types` (not just your test runner) in CI so a change that
+accidentally widens `Args<R, C>` and makes one of these compile again gets caught: a passing
+test *runner* proves nothing here, since there's no `expect()` to fail — the type checker is the
+only thing watching these lines.

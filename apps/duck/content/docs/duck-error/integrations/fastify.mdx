@@ -1,0 +1,53 @@
+---
+title: Fastify
+description: Register a setErrorHandler that maps @gentleduck/error instances to JSON responses, matching Fastify's single-handler error model.
+---
+
+## Overview
+
+Fastify routes every error -- thrown, rejected, or passed to a callback -- through one
+registered handler, set via `setErrorHandler`. There is no middleware chain to order; the
+handler you set is the only one that runs.
+
+Full runnable example: [`examples/fastify`](https://github.com/gentleeduck/duck-error/tree/main/examples/fastify).
+
+## Error handler
+
+```typescript
+import Fastify from 'fastify'
+import { AppError } from './errors'
+
+const app = Fastify()
+
+app.setErrorHandler((err, _req, reply) => {
+  if (err instanceof AppError) {
+    reply.status(err.status).send(err.toJSON())
+    return
+  }
+  app.log.error(err)
+  reply.status(500).send({ ok: false, error: { code: 'INTERNAL', status: 500 } })
+})
+```
+
+## Throwing from a route
+
+Fastify awaits an `async` handler's returned promise natively, so a thrown `AppError` reaches
+`setErrorHandler` with no extra wiring:
+
+```typescript
+import { throwAppError } from './errors'
+
+app.get('/widgets/:id', async (req) => {
+  const { id } = req.params as { id: string }
+  const widget = await db.widgets.findById(id)
+  if (!widget) throwAppError('NOT_FOUND', { resource: 'widget', id })
+  return widget
+})
+```
+
+<Callout type="info">
+Fastify's own `error.validation` and `FST_ERR_*` errors (from its schema validation) are plain
+`Error` instances, not `AppError` -- the `instanceof AppError` check above lets those fall
+through to the generic branch, which is the correct default until you decide to map specific
+Fastify error codes onto your own registry.
+</Callout>

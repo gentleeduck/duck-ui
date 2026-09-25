@@ -1,0 +1,80 @@
+---
+title: error codes and status design
+description: Practical guidance for naming codes, choosing HTTP statuses, and deciding detail vs fault when you design your own registry.
+---
+
+## Naming codes
+
+`SCREAMING_SNAKE_CASE`, prefixed by subsystem, is the convention every example in these docs
+follows: `AUTH_SESSION_EXPIRED`, `BILLING_CARD_DECLINED`, `STORAGE_ADAPTER_UNAVAILABLE`. Three
+reasons this pays off as a registry grows:
+
+- **Greppable.** `AUTH_` finds every code a subsystem can raise, across the codebase, without
+  needing to open the registry file.
+- **Collision-free across kits.** Two kits with identically-named codes still never satisfy each
+  other's `instanceof` (see [Core concepts](/duck-error/core-concepts)), but distinct prefixes
+  also make a stack trace or log line legible without needing to know which kit raised it.
+- **Stable as a wire contract.** `code` is the field a client is expected to `switch` on (see
+  [Type narrowing](/duck-error/type-narrowing)). Renaming a shipped code is the breaking change,
+  not adding one -- treat the registry the same way you'd treat a public API, because a client
+  matching on `err.error.code === 'AUTH_SESSION_EXPIRED'` is exactly as coupled to that string as
+  it would be to a function name.
+
+## Choosing a status
+
+A short, opinionated cheat-sheet for the statuses that come up in practice:
+
+| Status | Use for | Not for |
+| --- | --- | --- |
+| `400` | Malformed request the client sent -- bad shape, wrong type | A well-formed request that's merely disallowed (`403`) |
+| `401` | No valid credential presented at all | A valid credential that lacks permission (`403`) |
+| `403` | Authenticated, but this action is refused | Unauthenticated (`401`) |
+| `404` | The named resource does not exist (or you don't want to say whether it does) | A resource that exists but the request against it is invalid (`400`/`409`) |
+| `409` | The request conflicts with current state (duplicate, stale write) | A plain validation failure (`400`/`422`) |
+| `422` | Well-formed request, semantically invalid (failed a business rule) | Malformed JSON/shape (`400`) |
+| `429` | Rate limited | Any other refusal |
+| `500` | Your own code or storage broke in a way the caller couldn't have prevented | Anything the caller could fix by sending a different request |
+| `503` | Temporarily unavailable (maintenance, breaker open, dependency down) | A permanent failure |
+
+`401` vs `404` for "this exists but you can't see it" is a real design decision, not a mechanical
+lookup: returning `404` for an authorization failure (rather than `403`) is a common and
+legitimate choice when you don't want to confirm a resource's existence to a caller who
+shouldn't be able to see it either way.
+
+## `detail` vs `fault`
+
+Both behave identically at runtime -- the only difference is which type-level bucket a code
+lands in (`ErrorKit.Faults<R>`, see [Branded types](/duck-error/branded-types)). The convention
+this package's own code follows:
+
+- **`detail`** -- raised by your flow, validation, or business-rule logic. The caller sent
+  something that, categorically, will not succeed no matter how many times it's retried
+  unchanged: bad input, a permission check that failed, a rate limit.
+- **`fault`** -- raised by (or on behalf of) a store or adapter: a database that refused a
+  write, an upstream service that returned 500, a connection that dropped. The caller did
+  nothing wrong; the failure is in infrastructure that might recover.
+
+The distinction is what makes an automated retry policy or an alerting rule possible to write
+correctly later (see `Faults<R>` in [Branded types](/duck-error/branded-types)) -- get it right
+at registry-design time, since it's a judgment call nothing can check for you after the fact.
+
+## One registry per subsystem
+
+Covered in depth in [Core concepts](/duck-error/core-concepts): prefer `AuthError`,
+`BillingError`, `StorageError` as separate kits over one `AppError` registry for an entire
+service. A registry that only lists what one subsystem can actually raise is also a better piece
+of documentation for that subsystem than a 200-entry flat list interleaving unrelated concerns.
+
+## Growing a registry safely
+
+- **Adding a code** is additive and safe -- existing callers and existing clients are
+  unaffected.
+- **Removing or renaming a code** is a breaking change for any code that raises it and any
+  client that matches on it. Treat it like removing a public export: a major version bump, a
+  changeset, a deprecation window if you can manage one.
+- **Changing a code's status** is a breaking change for any client-side logic keyed on status
+  rather than (or in addition to) `code` -- prefer keying client logic on `code`, which is
+  exactly why `code` exists as a separate, stable field from `status`.
+- **Changing a code's metadata shape** (adding a required field to an existing `detail`/`fault`)
+  breaks every existing call site that raises it, at compile time -- which is the type system
+  doing you a favor: the break is caught before merge, not in production.

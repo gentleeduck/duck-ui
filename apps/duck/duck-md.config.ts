@@ -8,6 +8,7 @@ const cfg = createDocsVeliteConfig({
     'duck-auth',
     'duck-calendar',
     'duck-cli',
+    'duck-error',
     'duck-gen',
     'duck-hooks',
     'duck-iam',

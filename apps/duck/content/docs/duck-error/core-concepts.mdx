@@ -1,0 +1,113 @@
+---
+title: core concepts
+description: The registry as the single source of truth, one kit per subsystem, why the message always equals the code, and construct-vs-throw.
+---
+
+## The registry is the whole contract
+
+A kit has no separate type declaration to keep in sync with its runtime codes. The registry
+literal you pass to `createErrorKit` **is** the type source: `Object.keys(REGISTRY)` at runtime
+equals `ErrorKit.Code<R>` at compile time, and `REGISTRY[code]`'s branded type is where each
+code's required/optional metadata shape comes from. There is exactly one place to add, remove,
+or reshape a code.
+
+<MermaidDiagram chart={`flowchart LR
+    R["REGISTRY literal\n(the only source of truth)"] -->|as const satisfies| T["Compile-time types\nCode, Meta, Args, Bare"]
+    R -->|Object.entries| V["Runtime status lookup\nKitErrorImpl.status"]
+    T -.same object.- V`} />
+
+This is why the registry is written `as const satisfies Record<string, number>` rather than
+declared against a separate `interface` -- an interface would be a second place for a code to
+go stale against.
+
+---
+
+## One kit per subsystem, not one kit per app
+
+`createErrorKit` is cheap to call more than once. Prefer a kit per subsystem or bounded context
+-- `AuthError`, `BillingError`, `StorageError` -- over one giant registry for a whole
+application:
+
+```typescript
+const AuthError = createErrorKit('AuthError', AUTH_CODES).ErrorClass
+const BillingError = createErrorKit('BillingError', BILLING_CODES).ErrorClass
+```
+
+Two reasons:
+
+1. **Isolation.** Each call to `createErrorKit` declares its own class internally. `err
+   instanceof AuthError` is `false` for every `BillingError` instance, even if a code name
+   collided between the two registries. A catch block written for one subsystem cannot
+   accidentally swallow an error from an unrelated one.
+2. **A registry that stays readable.** A 200-entry flat registry is a worse map of "what can
+   this subsystem raise" than five 40-entry ones, each scoped to the part of the app that
+   actually raises those codes.
+
+Nothing stops you from using one kit for a small app -- the isolation guarantee simply has
+nothing to isolate from in that case.
+
+---
+
+## The message is always the code
+
+```typescript
+new AppError('RATE_LIMITED', { retryAfter: 60 }).message === 'RATE_LIMITED'
+```
+
+There is no free-text message parameter. This is deliberate: a message is often where a
+developer writes exactly the kind of interpolated, unreviewed string that ends up leaking a
+value it shouldn't (`` `user ${email} not found` ``). Making `message` equal the code removes
+that entire class of mistake -- anything you want to say beyond the code goes in `meta`, which
+passes through the same secret-scrubbing `toJSON` runs on every other field, or you look the
+code up in a table you control (see [Type narrowing](/duck-error/type-narrowing) for a pattern
+that maps codes to user-facing copy).
+
+---
+
+## `fail` vs `throwError`: construct, or construct-and-throw
+
+```typescript
+kit.fail(code, meta?)        // returns the instance. Never throws.
+kit.throwError(code, meta?)  // constructs, then throws. Returns `never`.
+```
+
+Reach for `fail` when you want the error value itself without unwinding the stack -- attaching
+it to a `Result`-shaped return, collecting several validation failures before deciding what to
+do with them, or logging one without stopping execution. Reach for `throwError` for the
+ordinary imperative case: a precondition fails, and this function has nothing more useful to do
+than stop.
+
+```typescript
+// fail: collect, don't stop
+const failures = fields
+  .map((f) => (isValid(f) ? null : kit.fail('INVALID_FIELD', { field: f.name })))
+  .filter((e): e is InstanceType<typeof AppError> => e !== null)
+
+// throwError: stop now
+if (!widget) throwAppError('NOT_FOUND', { resource: 'widget', id })
+```
+
+---
+
+## Metadata has no runtime schema
+
+`ErrorKit.Args<R, C>` constrains what you can pass **at the call site**, at compile time. Once
+inside the constructor, nothing re-validates it -- `this.meta = { ...meta }` is a shallow copy,
+not a schema check. A value that reaches the constructor through an `as never` cast, a JS
+caller with no type checker, or a deserialized/reconstructed object bypasses the compile-time
+guarantee entirely.
+
+<Callout type="info">
+This is a deliberate scope boundary, not a gap: this package is a typed *shape* for errors, not
+a runtime validation library. If you need to validate data crossing a real trust boundary (an
+HTTP request body, a message queue payload), validate it before it becomes `meta`, with
+whatever schema tool your project already uses.
+</Callout>
+
+---
+
+## Next
+
+- [Branded types](/duck-error/branded-types) -- exactly how `detail`/`fault` make the above type-checking happen
+- [Error codes and status design](/duck-error/error-codes-and-status-design) -- naming and organizing a registry in practice
+- [Wrapping unknown errors](/duck-error/wrapping-unknown-errors) -- `asError`/`rethrowError` at I/O boundaries

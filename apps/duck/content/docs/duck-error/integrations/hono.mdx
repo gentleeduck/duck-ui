@@ -1,0 +1,52 @@
+---
+title: Hono
+description: Map @gentleduck/error instances to JSON responses with Hono's app.onError hook, portable across every Hono runtime target.
+---
+
+## Overview
+
+Hono centralizes error handling in one `app.onError` hook, called for anything thrown inside a
+route or middleware. Because Hono targets multiple runtimes (Node, Bun, Deno, Cloudflare
+Workers, Vercel Edge), the handler builds a `Response` directly rather than relying on a
+Node-specific `res` object.
+
+Full runnable example: [`examples/hono`](https://github.com/gentleeduck/duck-error/tree/main/examples/hono).
+
+## Error hook
+
+```typescript
+import { Hono } from 'hono'
+import { AppError } from './errors'
+
+const app = new Hono()
+
+app.onError((err, c) => {
+  if (err instanceof AppError) {
+    return c.json(err.toJSON(), err.status as any)
+  }
+  console.error(err)
+  return c.json({ ok: false, error: { code: 'INTERNAL', status: 500 } }, 500)
+})
+```
+
+<Callout type="info" title="Why the status cast">
+Hono's `c.json(body, status)` types `status` against a fixed union of known HTTP status codes,
+not `number` -- so a status computed at runtime from `err.status` needs a cast at that one call
+site. It is a type-level restriction only; any number reaches the response as the same status
+either way.
+</Callout>
+
+## Throwing from a route
+
+```typescript
+import { throwAppError } from './errors'
+
+app.get('/widgets/:id', async (c) => {
+  const widget = await db.widgets.findById(c.req.param('id'))
+  if (!widget) throwAppError('NOT_FOUND', { resource: 'widget', id: c.req.param('id') })
+  return c.json(widget)
+})
+```
+
+`onError` catches a throw from inside an `async` route handler the same way it catches a
+synchronous one -- no wrapping needed.

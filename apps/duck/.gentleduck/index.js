@@ -3,6 +3,7 @@ export { default as docs } from './docs.json' with { type: 'json' }
 export { default as duckAuth } from './duckAuth.json' with { type: 'json' }
 export { default as duckCalendar } from './duckCalendar.json' with { type: 'json' }
 export { default as duckCli } from './duckCli.json' with { type: 'json' }
+export { default as duckError } from './duckError.json' with { type: 'json' }
 export { default as duckGen } from './duckGen.json' with { type: 'json' }
 export { default as duckHooks } from './duckHooks.json' with { type: 'json' }
 export { default as duckIam } from './duckIam.json' with { type: 'json' }

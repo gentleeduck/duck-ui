@@ -1,0 +1,117 @@
+---
+title: type narrowing
+description: Narrow an unknown or a KitError to a specific code with hasErrorCode and metaOf, and write exhaustive code-to-behavior maps the compiler checks for you.
+---
+
+## `instanceof` narrows the kit, not the code
+
+```typescript
+try {
+  doThing()
+} catch (err) {
+  if (err instanceof AppError) {
+    // err.code is `any` here, not narrowed to the registry's codes -- TypeScript can't
+    // resolve the constructor's generic code parameter from an `instanceof` check alone.
+    // err.meta is Record<string, unknown>.
+  }
+}
+```
+
+`instanceof AppError` tells you the error came from this kit. It does not narrow `err.code` to
+a specific literal -- `err.code` stays `any`, and `err.meta` stays `Record<string, unknown>`,
+effectively untyped either way. Narrowing to one code needs a second check.
+
+## `hasErrorCode`: narrow to one code and its metadata shape
+
+```typescript
+kit.hasErrorCode<C>(err: unknown, code: C): err is Error & { readonly meta: ErrorKit.Meta<R, C> }
+```
+
+```typescript
+catch (err) {
+  if (hasAppErrorCode(err, 'RATE_LIMITED')) {
+    // err.meta is now { retryAfter: number } — narrowed, no cast
+    setHeader('Retry-After', String(err.meta.retryAfter))
+  }
+}
+```
+
+Two things make this the right tool over a manual `err instanceof AppError && err.code ===
+'RATE_LIMITED'`:
+
+1. **It's the only thing that actually narrows.** `err.code === 'RATE_LIMITED'` looks like it
+   should narrow `err.code` to that literal, but it doesn't -- `err.code`'s declared type is
+   already `any` after `instanceof AppError` alone (see above), and comparing an `any` against a
+   literal doesn't narrow it. Both `err.code` and `err.meta` stay untyped after the manual check;
+   `hasErrorCode`'s type predicate is what actually narrows both.
+2. **It survives duplicate package instances.** It checks `'code' in err && err.code === code`,
+   not `instanceof`. In a monorepo or a dependency tree where two versions of this package ended
+   up installed, an error constructed by one copy fails `instanceof` against the other copy's
+   class -- a real, common failure mode for `instanceof`-based checks across package boundaries.
+   `hasErrorCode` doesn't have that problem, at the cost of not verifying `err` is *this specific
+   kit's* error rather than a lookalike with a matching `code` string. In practice, prefixed code
+   names (see [Error codes and status design](/duck-error/error-codes-and-status-design)) make
+   an accidental collision between unrelated kits vanishingly unlikely.
+
+## `metaOf`: read a meta you've already confirmed the shape of
+
+```typescript
+kit.metaOf<C>(err: KitError<R>, code: C): ErrorKit.Meta<R, C>
+```
+
+`metaOf` does **no runtime check** -- it exists purely to attach a type to a read you've already
+established is safe some other way (typically, you're inside a branch where `err.code === code`
+is already known, but `hasErrorCode`'s inline narrowing wasn't available -- e.g. after a
+`switch`):
+
+```typescript
+switch (err.code) {
+  case 'RATE_LIMITED': {
+    const meta = kit.metaOf(err, 'RATE_LIMITED') // { retryAfter: number }
+    break
+  }
+}
+```
+
+Reach for `hasErrorCode` first; `metaOf` is for the narrower set of cases where you already have
+the narrowing some other way and just need the type.
+
+---
+
+## Exhaustive code-to-behavior maps
+
+`ErrorKit.Code<R>` is a plain string union, which means `satisfies Record<Code, X>` gives you a
+compile error the moment a registry gains a code your map doesn't handle:
+
+```typescript
+const STATUS_MESSAGE = {
+  NOT_FOUND: 'Not found.',
+  RATE_LIMITED: 'Too many requests, try again shortly.',
+  STORAGE_FAILED: 'Something went wrong on our end.',
+} as const satisfies Record<ErrorKit.Code<typeof REGISTRY>, string>
+```
+
+Add a new code to the registry and forget to update `STATUS_MESSAGE`, and this line fails to
+compile -- the same exhaustiveness guarantee `Bare<R>`/`Args<R, C>` give the constructor, applied
+to your own downstream code. This is the pattern to prefer over a `switch` with a `default`
+branch, which silently swallows an unhandled code instead of failing to build.
+
+If you do use a `switch` for control flow rather than a lookup table, get the same guarantee
+with a `never` check in the default branch:
+
+```typescript
+function messageFor(code: ErrorKit.Code<typeof REGISTRY>): string {
+  switch (code) {
+    case 'NOT_FOUND':
+      return 'Not found.'
+    case 'RATE_LIMITED':
+      return 'Too many requests, try again shortly.'
+    case 'STORAGE_FAILED':
+      return 'Something went wrong on our end.'
+    default: {
+      const _exhaustive: never = code
+      return _exhaustive
+    }
+  }
+}
+```

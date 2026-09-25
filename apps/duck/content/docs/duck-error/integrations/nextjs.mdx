@@ -1,0 +1,83 @@
+---
+title: Next.js
+description: Handle @gentleduck/error instances in Route Handlers and Server Actions, the two places Next.js needs a manual catch.
+---
+
+## Overview
+
+Next.js has no single error-handling hook for API-style code the way Express, Fastify, or Hono
+do. A Route Handler that throws produces an unhandled 500 with no body shape you control, and a
+Server Action that throws surfaces only a generic message to the client in production. Both need
+an explicit `try`/`catch` at the boundary.
+
+Full runnable example: [`examples/nextjs`](https://github.com/gentleeduck/duck-error/tree/main/examples/nextjs).
+
+## Route Handlers
+
+```typescript
+// app/api/widgets/[id]/route.ts
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
+import { asAppError, throwAppError } from '@/lib/errors'
+
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params
+    const widget = await db.widgets.findById(id)
+    if (!widget) throwAppError('NOT_FOUND', { resource: 'widget', id })
+    return NextResponse.json(widget)
+  } catch (err) {
+    // STORAGE_FAILED here is this app's fallback fault code — see Error codes and status design
+    // for why "the code your own registry uses to mean 'something broke on our end'" is the
+    // right fallback, not a hardcoded string outside the registry.
+    const typed = asAppError(err, 'STORAGE_FAILED', { cause: String(err) })
+    return NextResponse.json(typed.toJSON(), { status: typed.status })
+  }
+}
+```
+
+`asAppError` (the kit's `asError`) is the right call here rather than a bare `instanceof` check:
+it passes an existing `AppError` through unchanged and wraps anything else (a driver throw, a
+`TypeError` from a bug) under a fallback code, so the `catch` block has exactly one shape to
+handle either way.
+
+## Server Actions
+
+A Server Action's thrown error does not reach the client as structured data in production --
+Next.js replaces it with a generic message unless you catch it and return a value instead:
+
+```typescript
+'use server'
+import { asAppError } from '@/lib/errors'
+
+export async function createWidget(input: unknown) {
+  try {
+    const widget = await db.widgets.create(input)
+    return { ok: true as const, widget }
+  } catch (err) {
+    const typed = asAppError(err, 'STORAGE_FAILED', { cause: String(err) })
+    return { ok: false as const, error: typed.toJSON().error }
+  }
+}
+```
+
+```tsx
+'use client'
+import { createWidget } from './actions'
+
+async function onSubmit(input: unknown) {
+  const result = await createWidget(input)
+  if (!result.ok) {
+    // result.error is the same secret-scrubbed shape a Route Handler would return
+    toast.error(result.error.code)
+    return
+  }
+  // result.widget
+}
+```
+
+<Callout type="warning" title="Do not let a Server Action throw an AppError across the boundary">
+Whatever a Server Action throws is what Next.js's error serialization decides the client sees,
+and in production that is a generic digest, not your error's `meta`. Returning a discriminated
+`{ ok, ... }` value, as above, is what actually gets your `toJSON()` shape to the client.
+</Callout>

@@ -1,0 +1,23 @@
+---
+title: "Type Alias: Bare<R *extends* Registry>"
+description: "A code that needs nothing beyond itself."
+---
+
+> **Bare**\<`R` *extends* [`Registry`](Registry)\> = `{ [C in Code<R>]: [HasRequired<Meta<R, C>>] extends [never] ? C : never }`\[[`Code`](Code)\<`R`\>\]
+
+Defined in: [kit.ts:37](https://github.com/gentleeduck/duck-error/blob/afafbc52384eb8a41b91f1249021a401f0245774/packages/duck-error/src/kit.ts#L37)
+
+A code that needs nothing beyond itself.
+
+## Type Parameters
+
+### R
+
+`R` *extends* [`Registry`](Registry)
+
+## Example
+
+```ts
+type NoMetaNeeded = ErrorKit.Bare<typeof REGISTRY> // every code declared with a plain number, no detail()/fault()<M>
+```
+

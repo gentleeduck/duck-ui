@@ -9,7 +9,7 @@ order: 10
 
 ## Philosophy
 
-Sliders let users select values within a range through direct manipulation. We build on Radix's accessible foundation (keyboard arrows, ARIA attributes, RTL support) and add the visual track/range/thumb styling. The Root/Track/Range/Thumb decomposition lets you restyle any part without rebuilding the interaction logic.
+Sliders let users select values within a range through direct manipulation. The `@gentleduck/primitives/slider` layer provides its own accessible foundation (keyboard arrows, ARIA attributes, RTL support), and this component adds the visual track/range/thumb styling on top. The Root/Track/Range/Thumb decomposition lets you restyle any part without rebuilding the interaction logic.
 
 ## How It's Built
 
@@ -117,7 +117,7 @@ Set `dir="rtl"` on `Slider` for a local override, or set `DirectionProvider` onc
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionSlider` for a smooth entrance animation powered by [motion](https://motion.dev). The slider fades in with scale and blur on mount using `springBouncy`.
+Use `MotionSlider` for a smooth entrance animation powered by [motion](https://motion.dev). The slider uses a `scaleIn` entrance with a `springBouncy` transition on mount.
 
 <ComponentPreview
   name="slider-6"

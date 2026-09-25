@@ -155,7 +155,7 @@ Set `dir="rtl"` on `JsonEditor` for a local override, or set `DirectionProvider`
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionJsonTextareaField` for a spring-powered entrance animation with blur powered by [motion](https://motion.dev).
+Use `MotionJsonTextareaField` for a `scaleIn` entrance animation with a bouncy spring transition, powered by [motion](https://motion.dev).
 
 <ComponentPreview
   name="json-editor-5"
@@ -229,7 +229,7 @@ type JsonEditorExpandPayload<TFieldValues extends FieldValues> = {
 
 ### MotionJsonTextareaField
 
-Same props as `JsonTextareaField`. Adds spring scaleIn+blur entrance animation via motion. Requires the `motion` package.
+Same props as `JsonTextareaField`. Adds a `scaleIn` entrance animation with a bouncy spring transition via motion. Requires the `motion` package.
 
 ### Keyboard shortcuts
 

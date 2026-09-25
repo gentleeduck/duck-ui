@@ -1,6 +1,6 @@
 ---
 title: browser and isomorphic usage
-description: @gentleduck/error has zero runtime dependencies and ships both ESM and CJS, so it runs in the browser, edge runtimes, and React Native — with one real gotcha on the client.
+description: @gentleduck/error has zero runtime dependencies and ships both ESM and CJS, so it runs in the browser, edge runtimes, and React Native, with one real gotcha on the client.
 ---
 
 ## Where it runs
@@ -30,22 +30,22 @@ function validateEmail(value: string) {
 
 ## The one real gotcha: `instanceof` does not survive JSON
 
-A server's `err.toJSON()` output travels to the client as plain JSON — a client-side `fetch`
+A server's `err.toJSON()` output travels to the client as plain JSON, and a client-side `fetch`
 response body has no prototype chain. **You cannot `instanceof AppError` a deserialized error on
 the client**, because it was never actually constructed there; it's a plain object shaped like
 `{ ok: false, error: { code, status, ...meta } }`.
 
 ```typescript
-// WRONG — body is plain JSON, never an AppError instance
+// WRONG: body is plain JSON, never an AppError instance
 const body = await res.json()
 if (body instanceof AppError) { /* never true */ }
 
-// RIGHT — switch on the code field directly
+// RIGHT: switch on the code field directly
 const body = await res.json()
 if (!body.ok) {
   switch (body.error.code) {
     case 'RATE_LIMITED':
-      // body.error.retryAfter is present, but not type-narrowed —
+      // body.error.retryAfter is present, but not type-narrowed.
       // TypeScript can't connect a client-side literal string to the
       // server's registry types across a network boundary.
       showRetryToast(body.error.retryAfter)
@@ -58,14 +58,14 @@ if (!body.ok) {
 ```
 
 If you want the narrowing back on the client, share the registry's `Code`/`Meta` types (not the
-kit itself — `createErrorKit` should still only run once, wherever the errors are actually
+kit itself, since `createErrorKit` should still only run once, wherever the errors are actually
 constructed) through whatever your project already uses to share types between client and
-server — a shared `types.ts` module, a generated OpenAPI/tRPC client, and so on. This package
+server, such as a shared `types.ts` module, a generated OpenAPI/tRPC client, and so on. This package
 does not do that wiring for you; it only guarantees the shape on the wire is consistent enough
 to make that wiring straightforward.
 
 <Callout type="info">
-This is exactly the same reason `hasErrorCode` checks `'code' in err`, not `instanceof` — see
+This is exactly the same reason `hasErrorCode` checks `'code' in err`, not `instanceof`. See
 [Type narrowing](/duck-error/type-narrowing). The property check works identically whether `err`
 came from `instanceof`-eligible same-process construction or from parsed JSON with the right
 shape; only the *class identity* is what JSON serialization can't carry across.

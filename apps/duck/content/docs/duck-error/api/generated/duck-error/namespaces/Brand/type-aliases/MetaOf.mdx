@@ -5,7 +5,7 @@ description: "What a status says its code hands back. A plain status says nothin
 
 > **MetaOf**\<`S`\> = `S` *extends* [`Carries`](Carries)\<infer M\> ? `M` : `Record`\<`never`, `never`\>
 
-Defined in: [brand.ts:45](https://github.com/gentleeduck/duck-error/blob/8232a7627a981ede4008575208050f91eebb8fb3/packages/duck-error/src/brand.ts#L45)
+Defined in: [brand.ts:45](https://github.com/gentleeduck/duck-error/blob/47cead89678ec7866f36fc8a3328634b06598fff/packages/duck-error/src/brand.ts#L45)
 
 What a status says its code hands back. A plain status says nothing, which is a meta with no keys.
 
@@ -23,6 +23,6 @@ The status to read the meta from.
 const REGISTRY = { WIDGET_NOT_FOUND: detail<{ widgetId: string }>(404) } as const satisfies Record<string, number>
 
 type Meta = Brand.MetaOf<(typeof REGISTRY)['WIDGET_NOT_FOUND']> // { widgetId: string }
-type Bare = Brand.MetaOf<500> // Record<never, never> — a plain status carries nothing
+type Bare = Brand.MetaOf<500> // Record<never, never>: a plain status carries nothing
 ```
 

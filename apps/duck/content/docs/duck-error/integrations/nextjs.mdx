@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     if (!widget) throwAppError('NOT_FOUND', { resource: 'widget', id })
     return NextResponse.json(widget)
   } catch (err) {
-    // STORAGE_FAILED here is this app's fallback fault code — see Error codes and status design
+    // STORAGE_FAILED here is this app's fallback fault code. See Error codes and status design
     // for why "the code your own registry uses to mean 'something broke on our end'" is the
     // right fallback, not a hardcoded string outside the registry.
     const typed = asAppError(err, 'STORAGE_FAILED', { cause: String(err) })
@@ -43,7 +43,7 @@ handle either way.
 
 ## Server Actions
 
-A Server Action's thrown error does not reach the client as structured data in production --
+A Server Action's thrown error does not reach the client as structured data in production.
 Next.js replaces it with a generic message unless you catch it and return a value instead:
 
 ```typescript

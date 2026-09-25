@@ -16,7 +16,7 @@ reasons this pays off as a registry grows:
   also make a stack trace or log line legible without needing to know which kit raised it.
 - **Stable as a wire contract.** `code` is the field a client is expected to `switch` on (see
   [Type narrowing](/duck-error/type-narrowing)). Renaming a shipped code is the breaking change,
-  not adding one -- treat the registry the same way you'd treat a public API, because a client
+  not adding one. Treat the registry the same way you'd treat a public API, because a client
   matching on `err.error.code === 'AUTH_SESSION_EXPIRED'` is exactly as coupled to that string as
   it would be to a function name.
 
@@ -26,7 +26,7 @@ A short, opinionated cheat-sheet for the statuses that come up in practice:
 
 | Status | Use for | Not for |
 | --- | --- | --- |
-| `400` | Malformed request the client sent -- bad shape, wrong type | A well-formed request that's merely disallowed (`403`) |
+| `400` | Malformed request the client sent: bad shape, wrong type | A well-formed request that's merely disallowed (`403`) |
 | `401` | No valid credential presented at all | A valid credential that lacks permission (`403`) |
 | `403` | Authenticated, but this action is refused | Unauthenticated (`401`) |
 | `404` | The named resource does not exist (or you don't want to say whether it does) | A resource that exists but the request against it is invalid (`400`/`409`) |
@@ -43,19 +43,19 @@ shouldn't be able to see it either way.
 
 ## `detail` vs `fault`
 
-Both behave identically at runtime -- the only difference is which type-level bucket a code
+Both behave identically at runtime. The only difference is which type-level bucket a code
 lands in (`ErrorKit.Faults<R>`, see [Branded types](/duck-error/branded-types)). The convention
 this package's own code follows:
 
-- **`detail`** -- raised by your flow, validation, or business-rule logic. The caller sent
+- **`detail`**: raised by your flow, validation, or business-rule logic. The caller sent
   something that, categorically, will not succeed no matter how many times it's retried
   unchanged: bad input, a permission check that failed, a rate limit.
-- **`fault`** -- raised by (or on behalf of) a store or adapter: a database that refused a
+- **`fault`**: raised by (or on behalf of) a store or adapter: a database that refused a
   write, an upstream service that returned 500, a connection that dropped. The caller did
   nothing wrong; the failure is in infrastructure that might recover.
 
 The distinction is what makes an automated retry policy or an alerting rule possible to write
-correctly later (see `Faults<R>` in [Branded types](/duck-error/branded-types)) -- get it right
+correctly later (see `Faults<R>` in [Branded types](/duck-error/branded-types)). Get it right
 at registry-design time, since it's a judgment call nothing can check for you after the fact.
 
 ## One registry per subsystem
@@ -67,14 +67,14 @@ of documentation for that subsystem than a 200-entry flat list interleaving unre
 
 ## Growing a registry safely
 
-- **Adding a code** is additive and safe -- existing callers and existing clients are
+- **Adding a code** is additive and safe: existing callers and existing clients are
   unaffected.
 - **Removing or renaming a code** is a breaking change for any code that raises it and any
   client that matches on it. Treat it like removing a public export: a major version bump, a
   changeset, a deprecation window if you can manage one.
 - **Changing a code's status** is a breaking change for any client-side logic keyed on status
-  rather than (or in addition to) `code` -- prefer keying client logic on `code`, which is
+  rather than (or in addition to) `code`. Prefer keying client logic on `code`, which is
   exactly why `code` exists as a separate, stable field from `status`.
 - **Changing a code's metadata shape** (adding a required field to an existing `detail`/`fault`)
-  breaks every existing call site that raises it, at compile time -- which is the type system
+  breaks every existing call site that raises it, at compile time. This is the type system
   doing you a favor: the break is caught before merge, not in production.

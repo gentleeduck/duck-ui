@@ -16,7 +16,7 @@ yarn add @gentleduck/error
 ```
 
 `typescript` is an optional peer dependency (`>=5.0.0`). The package has no runtime
-dependencies at all -- it works in plain JavaScript too, you simply lose the type inference
+dependencies at all. It works in plain JavaScript too, you simply lose the type inference
 described below.
 
 ---
@@ -48,13 +48,13 @@ throwAppError('NOT_FOUND')
 resolves to a number-compatible type (`detail`/`fault` return a branded number; a bare code is a
 plain number), and `satisfies` checks that without erasing those specific types the way an
 `: Record<string, number>` annotation would. `as const` on top is good practice for a bare code's
-status -- it keeps `404` a literal `404` instead of widening to `number` -- but the compile-time
+status: it keeps `404` a literal `404` instead of widening to `number`, but the compile-time
 argument checking later in this walkthrough comes from `detail`/`fault`'s own branded return
 types, not from `as const`.
 
 ## Step 2: a code that carries metadata
 
-`NOT_FOUND` above takes no arguments -- calling `throwAppError('NOT_FOUND', { anything: true })`
+`NOT_FOUND` above takes no arguments. Calling `throwAppError('NOT_FOUND', { anything: true })`
 is a compile error. Most real codes carry something. Wrap the status in `detail` and give it a
 type parameter:
 
@@ -85,7 +85,7 @@ throwAppError('RATE_LIMITED', { retryAfter: 'soon' })
 ## Step 3: a code an adapter can raise
 
 `fault` is the same as `detail`, for a code that represents your own storage/adapter layer
-failing rather than a caller mistake or a business rule. It behaves identically at runtime --
+failing rather than a caller mistake or a business rule. It behaves identically at runtime, and
 the distinction exists so you can select on it later (see
 [Branded types](/duck-error/branded-types)).
 
@@ -106,7 +106,7 @@ export const asAppError = kit.asError
 export const hasAppErrorCode = kit.hasErrorCode
 ```
 
-This exports `AppError` as a value only -- enough for everything on this page. Once you want to
+This exports `AppError` as a value only, enough for everything on this page. Once you want to
 write a function signature like `err: AppError` or `code: AppError.Code`, see the declaration
 merge every framework guide uses, in [API reference](/duck-error/api-reference) under
 `ErrorClass`, to make `AppError` work as a type too.
@@ -121,7 +121,7 @@ try {
     res.status(err.status).json(err.toJSON())
     return
   }
-  // Not one of ours -- wrap it so callers downstream have one shape to handle.
+  // Not one of ours: wrap it so callers downstream have one shape to handle.
   const wrapped = asAppError(err, 'STORAGE_FAILED', { cause: String(err) })
   res.status(wrapped.status).json(wrapped.toJSON())
 }
@@ -139,15 +139,15 @@ try {
 ```
 
 Any key in `meta` that looks like a secret (`token`, `password`, `hash`, and more) is stripped
-before this JSON is produced -- see [Secret redaction](/duck-error/secret-redaction) for the
+before this JSON is produced. See [Secret redaction](/duck-error/secret-redaction) for the
 exact rule.
 
 ---
 
 ## Where to go next
 
-- [Core concepts](/duck-error/core-concepts) -- the registry pattern, why one kit per subsystem, why the message is always the code
-- [Branded types](/duck-error/branded-types) -- how `detail`/`fault` drive the compiler, in depth
-- [API reference](/duck-error/api-reference) -- every export, every signature
+- [Core concepts](/duck-error/core-concepts): the registry pattern, why one kit per subsystem, why the message is always the code
+- [Branded types](/duck-error/branded-types): how `detail`/`fault` drive the compiler, in depth
+- [API reference](/duck-error/api-reference): every export, every signature
 - A framework guide: [NestJS](/duck-error/integrations/nestjs), [Express](/duck-error/integrations/express), [Fastify](/duck-error/integrations/fastify), [Hono](/duck-error/integrations/hono), [Next.js](/duck-error/integrations/nextjs)
-- [FAQ](/duck-error/faq) -- runtime validation, cloning, stack traces, JavaScript-only usage, and more
+- [FAQ](/duck-error/faq): runtime validation, cloning, stack traces, JavaScript-only usage, and more

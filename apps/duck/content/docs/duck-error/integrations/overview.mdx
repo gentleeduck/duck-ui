@@ -1,11 +1,11 @@
 ---
 title: framework integrations overview
-description: Every framework needs the same three things wired up — catch the typed error, read status off it, write the scrubbed JSON body — but each one's hook for doing so is different.
+description: Every framework needs the same three things wired up, catching the typed error, reading status off it, and writing the scrubbed JSON body. Only the hook for doing so differs.
 ---
 
 ## The shared pattern
 
-`@gentleduck/error` has no framework adapters of its own — it's deliberately zero-dependency,
+`@gentleduck/error` has no framework adapters of its own. It's deliberately zero-dependency,
 so there's nothing to import for Express or NestJS specifically. Every integration is the same
 three-step wiring, expressed through whichever hook that framework gives you for "run this when
 a handler throws":
@@ -25,26 +25,26 @@ with.
 | --- | --- | --- | --- |
 | [NestJS](/duck-error/integrations/nestjs) | `@Catch()` + `ExceptionFilter` | Underlying platform `Response` (Express or Fastify) | Use `err.statusCode`, which exists specifically for Nest's base filter compatibility |
 | [Express](/duck-error/integrations/express) | 4-arg `(err, req, res, next)` middleware, registered last | `res` | Express 4 needs a manual `try`/`catch` + `next(err)` in async handlers; Express 5 forwards rejections automatically |
-| [Fastify](/duck-error/integrations/fastify) | `app.setErrorHandler(...)` | `reply` | One handler for the whole app — no ordering to get right |
+| [Fastify](/duck-error/integrations/fastify) | `app.setErrorHandler(...)` | `reply` | One handler for the whole app, no ordering to get right |
 | [Hono](/duck-error/integrations/hono) | `app.onError((err, c) => ...)` | Built `Response` via `c.json(...)` | Same hook works unmodified across every Hono runtime target (Node, Bun, Deno, Workers) |
-| [Next.js](/duck-error/integrations/nextjs) | Manual `try`/`catch` | `NextResponse.json(...)` (Route Handlers) or a returned discriminated value (Server Actions) | The only framework here with no centralized hook — see why in its own page |
+| [Next.js](/duck-error/integrations/nextjs) | Manual `try`/`catch` | `NextResponse.json(...)` (Route Handlers) or a returned discriminated value (Server Actions) | The only framework here with no centralized hook, see why in its own page |
 
 All five runnable in full under [`examples/`](https://github.com/gentleeduck/duck-error/tree/main/examples).
 
 ## What stays the same everywhere
 
 - **The check**: `err instanceof AppError` (or `asError(err, FALLBACK_CODE)` when you want a
-  uniform shape for both typed and untyped errors in one step — see
+  uniform shape for both typed and untyped errors in one step. See
   [Wrapping unknown errors](/duck-error/wrapping-unknown-errors)).
-- **The status**: `err.status` (or `err.statusCode` — identical value, present for NestJS).
-- **The body**: `err.toJSON()`, already secret-scrubbed — see
+- **The status**: `err.status` (or `err.statusCode`, an identical value present for NestJS).
+- **The body**: `err.toJSON()`, already secret-scrubbed. See
   [Secret redaction](/duck-error/secret-redaction).
-- **The client**: whichever framework produced it, the response is the same plain JSON — no
-  `instanceof` survives the wire — see
+- **The client**: whichever framework produced it, the response is the same plain JSON. No
+  `instanceof` survives the wire. See
   [Browser and isomorphic usage](/duck-error/browser-and-isomorphic-usage) for how to consume it
   from a `fetch` call.
 
 Nothing about the kit itself changes between frameworks. If you're adding a sixth framework not
-listed here, this three-step pattern is the whole of what you need to replicate — find that
+listed here, this three-step pattern is the whole of what you need to replicate: find that
 framework's equivalent of "run this when a handler throws or a promise it returned rejects," and
 wire the same three lines into it.

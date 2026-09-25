@@ -3,7 +3,7 @@ title: "Interface: KitError<R *extends* Registry, C *extends* Code<R> = Code<R>>
 description: "The shape every kit's error instances have, independent of which kit built them."
 ---
 
-Defined in: [kit.ts:77](https://github.com/gentleeduck/duck-error/blob/8232a7627a981ede4008575208050f91eebb8fb3/packages/duck-error/src/kit.ts#L77)
+Defined in: [kit.ts:77](https://github.com/gentleeduck/duck-error/blob/47cead89678ec7866f36fc8a3328634b06598fff/packages/duck-error/src/kit.ts#L77)
 
 The shape every kit's error instances have, independent of which kit built them.
 
@@ -34,7 +34,7 @@ err.toJSON() // { ok: false, error: { code: 'WIDGET_NOT_FOUND', status: 404, wid
 
 > `readonly` **code**: `C`
 
-Defined in: [kit.ts:78](https://github.com/gentleeduck/duck-error/blob/8232a7627a981ede4008575208050f91eebb8fb3/packages/duck-error/src/kit.ts#L78)
+Defined in: [kit.ts:78](https://github.com/gentleeduck/duck-error/blob/47cead89678ec7866f36fc8a3328634b06598fff/packages/duck-error/src/kit.ts#L78)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [kit.ts:78](https://github.com/gentleeduck/duck-error/blob/8232a7627
 
 > `readonly` **meta**: `Record`\<`string`, `unknown`\>
 
-Defined in: [kit.ts:82](https://github.com/gentleeduck/duck-error/blob/8232a7627a981ede4008575208050f91eebb8fb3/packages/duck-error/src/kit.ts#L82)
+Defined in: [kit.ts:82](https://github.com/gentleeduck/duck-error/blob/47cead89678ec7866f36fc8a3328634b06598fff/packages/duck-error/src/kit.ts#L82)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [kit.ts:82](https://github.com/gentleeduck/duck-error/blob/8232a7627
 
 > `readonly` **status**: `number`
 
-Defined in: [kit.ts:79](https://github.com/gentleeduck/duck-error/blob/8232a7627a981ede4008575208050f91eebb8fb3/packages/duck-error/src/kit.ts#L79)
+Defined in: [kit.ts:79](https://github.com/gentleeduck/duck-error/blob/47cead89678ec7866f36fc8a3328634b06598fff/packages/duck-error/src/kit.ts#L79)
 
 ***
 
@@ -58,7 +58,7 @@ Defined in: [kit.ts:79](https://github.com/gentleeduck/duck-error/blob/8232a7627
 
 > `readonly` **statusCode**: `number`
 
-Defined in: [kit.ts:81](https://github.com/gentleeduck/duck-error/blob/8232a7627a981ede4008575208050f91eebb8fb3/packages/duck-error/src/kit.ts#L81)
+Defined in: [kit.ts:81](https://github.com/gentleeduck/duck-error/blob/47cead89678ec7866f36fc8a3328634b06598fff/packages/duck-error/src/kit.ts#L81)
 
 Same value as `status`, under the name Nest's base exception filter reads.
 
@@ -68,7 +68,7 @@ Same value as `status`, under the name Nest's base exception filter reads.
 
 > **toJSON**(): \{ `error`: \{ `code`: `C`; `status`: `number`; \} & `Record`\<`string`, `unknown`\>; `ok`: `false`; \}
 
-Defined in: [kit.ts:83](https://github.com/gentleeduck/duck-error/blob/8232a7627a981ede4008575208050f91eebb8fb3/packages/duck-error/src/kit.ts#L83)
+Defined in: [kit.ts:83](https://github.com/gentleeduck/duck-error/blob/47cead89678ec7866f36fc8a3328634b06598fff/packages/duck-error/src/kit.ts#L83)
 
 #### Returns
 

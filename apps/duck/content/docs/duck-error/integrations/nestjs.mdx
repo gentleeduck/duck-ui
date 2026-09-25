@@ -43,14 +43,14 @@ bootstrap()
 ```
 
 Because `@Catch(AppError)` names the class `createErrorKit` returned, only instances of *this*
-kit are routed here -- an unrelated thrown value falls through to Nest's default filter, which
+kit are routed here. An unrelated thrown value falls through to Nest's default filter, which
 is the correct behavior: a kit's errors are the ones this filter knows how to shape, nothing
 else.
 
 ## Throwing from a route
 
 `@Get()`/`@Post()`/etc. register the route; nothing about throwing a kit error is
-NestJS-specific once inside the handler -- the filter above catches it regardless of which
+NestJS-specific once inside the handler. The filter above catches it regardless of which
 decorator dispatched the request.
 
 ```typescript
@@ -77,7 +77,7 @@ export class WidgetsController {
 }
 ```
 
-`findOne` throws directly; `boom` shows the other shape -- catching a plain `Error` from
+`findOne` throws directly; `boom` shows the other shape: catching a plain `Error` from
 somewhere else and converting it with `asAppError` before it leaves the handler. Both reach the
 same `AppErrorFilter`, because `@Catch(AppError)` matches on the thrown value's class, not on
 which method or decorator produced it.
@@ -100,6 +100,6 @@ export class WidgetsService {
 
 <Callout type="info">
 `throwAppError`'s return type is `never`, so a controller method that calls it in every branch
-still type-checks against a non-`void` return type -- TypeScript sees the call as unreachable
+still type-checks against a non-`void` return type. TypeScript sees the call as unreachable
 past that point, the same as a native `throw`.
 </Callout>

@@ -5,7 +5,7 @@ description: Register a setErrorHandler that maps @gentleduck/error instances to
 
 ## Overview
 
-Fastify routes every error -- thrown, rejected, or passed to a callback -- through one
+Fastify routes every error, whether thrown, rejected, or passed to a callback, through one
 registered handler, set via `setErrorHandler`. There is no middleware chain to order; the
 handler you set is the only one that runs.
 
@@ -47,7 +47,7 @@ app.get('/widgets/:id', async (req) => {
 
 <Callout type="info">
 Fastify's own `error.validation` and `FST_ERR_*` errors (from its schema validation) are plain
-`Error` instances, not `AppError` -- the `instanceof AppError` check above lets those fall
+`Error` instances, not `AppError`. The `instanceof AppError` check above lets those fall
 through to the generic branch, which is the correct default until you decide to map specific
 Fastify error codes onto your own registry.
 </Callout>

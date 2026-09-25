@@ -5,7 +5,7 @@ description: Use asError and rethrowError at I/O boundaries to give every catch 
 
 ## The boundary problem
 
-A `catch` block receives `unknown` — a driver throw, a `TypeError` from a bug, a string someone
+A `catch` block receives `unknown`: a driver throw, a `TypeError` from a bug, a string someone
 threw, or an instance of your own kit rethrown from lower in the call stack. Handling all four
 shapes at every catch site does not scale. `asError`/`rethrowError` collapse them to one shape:
 either the value already was this kit's error (passed through unchanged), or it becomes one,
@@ -26,13 +26,13 @@ try {
 
 If `driver.query` threw a plain `Error` (a Postgres driver error, say), this wraps it as an
 `AppError('STORAGE_FAILED', ...)` with the original on `.cause`. If it threw (or rethrew) an
-`AppError` already -- from a nested call that itself used `rethrowError` -- **that instance
+`AppError` already (from a nested call that itself used `rethrowError`), **that instance
 passes through unchanged**, `code` and all. This is what makes it safe to call at every layer of
 a call stack without stacking wrappers: only the innermost, most specific `rethrowError` call
 actually sets the code.
 
 <Callout type="warning" title="The return type does not narrow to your fallback code">
-`asError`'s return type is `KitError<R>` — the general union of every code in the registry — not
+`asError`'s return type is `KitError<R>`, the general union of every code in the registry, not
 `KitError<R, C>` narrowed to the `code` you passed. This is correct, not a limitation to work
 around: the passed-through branch can carry *any* code already in the error, so the type
 honestly reflects that the fallback code is only what gets used, not guaranteed.
@@ -53,12 +53,12 @@ try {
 ```
 
 `.cause` is a standard `Error` property (`super(code)` inside the kit does not set it; `asError`
-assigns `typed.cause = error` itself). It is **not** included in `toJSON()`'s output — see
+assigns `typed.cause = error` itself). It is **not** included in `toJSON()`'s output. See
 [Secret redaction](/duck-error/secret-redaction) for why that split exists: `cause` is the
 full-fidelity channel for your own logs, `toJSON()` is the scrubbed channel for a client.
 
 Putting a *string* summary of the cause into `meta` (as `{ cause: String(err) }` above) is a
-judgment call, not a requirement — do it when you want that summary to reach a client's response
+judgment call, not a requirement. Do it when you want that summary to reach a client's response
 body (subject to the same secret-stripping every other `meta` field gets), and skip it when
 `.cause` alone is enough for your logs.
 
@@ -66,8 +66,8 @@ body (subject to the same secret-stripping every other `meta` field gets), and s
 
 ## A top-level catch-all
 
-The same pattern closes the loop at the outermost boundary of a process — an HTTP framework's
-final error handler, or an `unhandledRejection`/`uncaughtException` listener — where you want a
+The same pattern closes the loop at the outermost boundary of a process: an HTTP framework's
+final error handler, or an `unhandledRejection`/`uncaughtException` listener, where you want a
 single normalized shape no matter what reached that point:
 
 ```typescript
@@ -79,5 +79,5 @@ process.on('unhandledRejection', (reason) => {
 
 ## Next
 
-- [Testing](/duck-error/testing) — asserting on wrapped errors and their `.cause`
-- [Secret redaction](/duck-error/secret-redaction) — what does and doesn't reach `toJSON()`
+- [Testing](/duck-error/testing): asserting on wrapped errors and their `.cause`
+- [Secret redaction](/duck-error/secret-redaction): what does and doesn't reach `toJSON()`

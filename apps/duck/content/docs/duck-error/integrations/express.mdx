@@ -5,8 +5,8 @@ description: A terminal error-handling middleware that maps @gentleduck/error in
 
 ## Overview
 
-Express identifies error-handling middleware by arity -- a handler with **four** parameters
-`(err, req, res, next)` -- and dispatches to it whenever a route calls `next(err)` or throws
+Express identifies error-handling middleware by arity: a handler with **four** parameters
+`(err, req, res, next)`, and dispatches to it whenever a route calls `next(err)` or throws
 inside an async handler wrapped to forward its rejection. Register one at the end of the
 middleware chain, after every route.
 
@@ -46,7 +46,7 @@ app.listen(3000)
 
 ## Throwing from a route
 
-Express does not catch a rejected promise from an `async` handler on its own -- forward it to
+Express does not catch a rejected promise from an `async` handler on its own. Forward it to
 `next` explicitly, or wrap the handler:
 
 ```typescript
@@ -68,6 +68,6 @@ widgetsRouter.get('/:id', async (req, res, next) => {
 
 <Callout type="info">
 Express 5 forwards a rejected async handler's promise to `next` automatically, which removes the
-need for the `try`/`catch` above. Express 4 does not -- confirm which major version you're on
+need for the `try`/`catch` above. Express 4 does not. Confirm which major version you're on
 before dropping it.
 </Callout>

@@ -1,6 +1,6 @@
 ---
 title: testing
-description: Assert on thrown codes, verify the response body, prove secret stripping, and pin registry exhaustiveness with @ts-expect-error — with runnable vitest examples.
+description: Assert on thrown codes, verify the response body, prove secret stripping, and pin registry exhaustiveness with @ts-expect-error, all with runnable vitest examples.
 ---
 
 ## Asserting a specific code was thrown
@@ -69,7 +69,7 @@ describe('toJSON strips secrets', () => {
 
 `as never` here is doing real work, not just silencing the compiler: it's how you deliberately
 construct a metadata shape your registry's types don't actually allow, so the test exercises the
-*runtime* redaction path (which has no schema and cannot itself refuse an unexpected key — see
+*runtime* redaction path (which has no schema and cannot itself refuse an unexpected key). See
 [Core concepts](/duck-error/core-concepts)) independent of whatever the compiler would normally
 have caught first.
 
@@ -110,13 +110,13 @@ describe('rethrowAppError', () => {
 ```
 
 That last test matters more than it looks: a wrapped error's `message` is the wrapper's own
-code, never the original error's message — so a connection string, a stack fragment, or any
+code, never the original error's message, so a connection string, a stack fragment, or any
 other free text a lower-level library put in *its* `.message` cannot reach a client by way of
 `toJSON()`, even though it's fully preserved (for your own logs) on `.cause`.
 
 ## Pinning registry exhaustiveness at compile time
 
-A code with required metadata should be *impossible* to construct without it — that's a claim
+A code with required metadata should be *impossible* to construct without it. That's a claim
 about the type system, and it deserves a test that would fail to compile if it ever stopped
 being true:
 
@@ -127,8 +127,8 @@ void new AppError('RATE_LIMITED')
 void new AppError('RATE_LIMITED', { retryAfter: 'soon' })
 ```
 
-Each line is a compile error the *test file* expects — `@ts-expect-error` flips a would-be
+Each line is a compile error the *test file* expects, and `@ts-expect-error` flips a would-be
 failure into the assertion. Run `check-types` (not just your test runner) in CI so a change that
 accidentally widens `Args<R, C>` and makes one of these compile again gets caught: a passing
-test *runner* proves nothing here, since there's no `expect()` to fail — the type checker is the
+test *runner* proves nothing here, since there's no `expect()` to fail. The type checker is the
 only thing watching these lines.

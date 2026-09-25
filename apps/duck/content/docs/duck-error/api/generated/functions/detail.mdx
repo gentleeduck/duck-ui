@@ -1,13 +1,13 @@
 ---
 title: "Function: detail()"
-description: "M can't be inferred (no parameter uses it), so it defaults to never, not object — object would silently accept any meta shape."
+description: "M can't be inferred (no parameter uses it), so it defaults to never, not object. Object would silently accept any meta shape."
 ---
 
 > **detail**\<`M` *extends* `object` = `never`\>(`status`: `number`): [`Carries`](../duck-error/namespaces/Brand/type-aliases/Carries)\<`M`\>
 
-Defined in: [brand.ts:59](https://github.com/gentleeduck/duck-error/blob/8232a7627a981ede4008575208050f91eebb8fb3/packages/duck-error/src/brand.ts#L59)
+Defined in: [brand.ts:59](https://github.com/gentleeduck/duck-error/blob/47cead89678ec7866f36fc8a3328634b06598fff/packages/duck-error/src/brand.ts#L59)
 
-M can't be inferred (no parameter uses it), so it defaults to never, not object — object would silently accept any meta shape.
+M can't be inferred (no parameter uses it), so it defaults to never, not object. Object would silently accept any meta shape.
 
 ## Type Parameters
 
@@ -32,7 +32,7 @@ The meta shape the code carries.
 ```ts
 const REGISTRY = {
   WIDGET_NOT_FOUND: detail<{ widgetId: string }>(404), // meta required at the call site
-  BAD_INPUT: detail(400), // no <M> given — behaves like a bare code, not an unchecked one
+  BAD_INPUT: detail(400), // no <M> given, behaves like a bare code, not an unchecked one
 } as const satisfies Record<string, number>
 ```
 

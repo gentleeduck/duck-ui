@@ -1,13 +1,13 @@
 ---
 title: "Type Alias: Args<R *extends* Registry, C *extends* Code<R>>"
-description: "No args for a bare code, else optional/required per Meta's required keys — gated on the value's own Carries brand, not on Meta, since a bare code's Meta resolves to {} which anything would satisfy."
+description: "No args for a bare code, else optional/required per Meta's required keys. Gated on the value's own Carries brand, not on Meta, since a bare code's Meta resolves to {} which anything would satisfy."
 ---
 
 > **Args**\<`R` *extends* [`Registry`](Registry), `C` *extends* [`Code`](Code)\<`R`\>\> = `R`\[`C`\] *extends* [`Carries`](../../Brand/type-aliases/Carries)\<`any`\> ? \[[`HasRequired`](HasRequired)\<[`Meta`](Meta)\<`R`, `C`\>\>\] *extends* \[`never`\] ? \[[`Meta`](Meta)\<`R`, `C`\>\] : \[[`Meta`](Meta)\<`R`, `C`\>\] : \[\]
 
-Defined in: [kit.ts:61](https://github.com/gentleeduck/duck-error/blob/8232a7627a981ede4008575208050f91eebb8fb3/packages/duck-error/src/kit.ts#L61)
+Defined in: [kit.ts:61](https://github.com/gentleeduck/duck-error/blob/47cead89678ec7866f36fc8a3328634b06598fff/packages/duck-error/src/kit.ts#L61)
 
-No args for a bare code, else optional/required per Meta's required keys — gated on the value's own Carries brand, not on Meta, since a bare code's Meta resolves to `{}` which anything would satisfy.
+No args for a bare code, else optional/required per Meta's required keys. Gated on the value's own Carries brand, not on Meta, since a bare code's Meta resolves to `{}` which anything would satisfy.
 
 ## Type Parameters
 

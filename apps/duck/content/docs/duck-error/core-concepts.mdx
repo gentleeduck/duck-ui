@@ -17,15 +17,15 @@ or reshape a code.
     T -.same object.- V`} />
 
 This is why the registry is written `as const satisfies Record<string, number>` rather than
-declared against a separate `interface` -- an interface would be a second place for a code to
+declared against a separate `interface`. An interface would be a second place for a code to
 go stale against.
 
 ---
 
 ## One kit per subsystem, not one kit per app
 
-`createErrorKit` is cheap to call more than once. Prefer a kit per subsystem or bounded context
--- `AuthError`, `BillingError`, `StorageError` -- over one giant registry for a whole
+`createErrorKit` is cheap to call more than once. Prefer a kit per subsystem or bounded context,
+such as `AuthError`, `BillingError`, `StorageError`, over one giant registry for a whole
 application:
 
 ```typescript
@@ -43,7 +43,7 @@ Two reasons:
    this subsystem raise" than five 40-entry ones, each scoped to the part of the app that
    actually raises those codes.
 
-Nothing stops you from using one kit for a small app -- the isolation guarantee simply has
+Nothing stops you from using one kit for a small app. The isolation guarantee simply has
 nothing to isolate from in that case.
 
 ---
@@ -57,7 +57,7 @@ new AppError('RATE_LIMITED', { retryAfter: 60 }).message === 'RATE_LIMITED'
 There is no free-text message parameter. This is deliberate: a message is often where a
 developer writes exactly the kind of interpolated, unreviewed string that ends up leaking a
 value it shouldn't (`` `user ${email} not found` ``). Making `message` equal the code removes
-that entire class of mistake -- anything you want to say beyond the code goes in `meta`, which
+that entire class of mistake. Anything you want to say beyond the code goes in `meta`, which
 passes through the same secret-scrubbing `toJSON` runs on every other field, or you look the
 code up in a table you control (see [Type narrowing](/duck-error/type-narrowing) for a pattern
 that maps codes to user-facing copy).
@@ -71,7 +71,7 @@ kit.fail(code, meta?)        // returns the instance. Never throws.
 kit.throwError(code, meta?)  // constructs, then throws. Returns `never`.
 ```
 
-Reach for `fail` when you want the error value itself without unwinding the stack -- attaching
+Reach for `fail` when you want the error value itself without unwinding the stack: attaching
 it to a `Result`-shaped return, collecting several validation failures before deciding what to
 do with them, or logging one without stopping execution. Reach for `throwError` for the
 ordinary imperative case: a precondition fails, and this function has nothing more useful to do
@@ -92,7 +92,7 @@ if (!widget) throwAppError('NOT_FOUND', { resource: 'widget', id })
 ## Metadata has no runtime schema
 
 `ErrorKit.Args<R, C>` constrains what you can pass **at the call site**, at compile time. Once
-inside the constructor, nothing re-validates it -- `this.meta = { ...meta }` is a shallow copy,
+inside the constructor, nothing re-validates it. `this.meta = { ...meta }` is a shallow copy,
 not a schema check. A value that reaches the constructor through an `as never` cast, a JS
 caller with no type checker, or a deserialized/reconstructed object bypasses the compile-time
 guarantee entirely.
@@ -108,6 +108,6 @@ whatever schema tool your project already uses.
 
 ## Next
 
-- [Branded types](/duck-error/branded-types) -- exactly how `detail`/`fault` make the above type-checking happen
-- [Error codes and status design](/duck-error/error-codes-and-status-design) -- naming and organizing a registry in practice
-- [Wrapping unknown errors](/duck-error/wrapping-unknown-errors) -- `asError`/`rethrowError` at I/O boundaries
+- [Branded types](/duck-error/branded-types): exactly how `detail`/`fault` make the above type-checking happen
+- [Error codes and status design](/duck-error/error-codes-and-status-design): naming and organizing a registry in practice
+- [Wrapping unknown errors](/duck-error/wrapping-unknown-errors): `asError`/`rethrowError` at I/O boundaries

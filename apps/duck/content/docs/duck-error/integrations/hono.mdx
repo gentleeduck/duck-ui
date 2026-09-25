@@ -31,7 +31,7 @@ app.onError((err, c) => {
 
 <Callout type="info" title="Why the status cast">
 Hono's `c.json(body, status)` types `status` against a fixed union of known HTTP status codes,
-not `number` -- so a status computed at runtime from `err.status` needs a cast at that one call
+not `number`, so a status computed at runtime from `err.status` needs a cast at that one call
 site. It is a type-level restriction only; any number reaches the response as the same status
 either way.
 </Callout>
@@ -49,4 +49,4 @@ app.get('/widgets/:id', async (c) => {
 ```
 
 `onError` catches a throw from inside an `async` route handler the same way it catches a
-synchronous one -- no wrapping needed.
+synchronous one. No wrapping needed.

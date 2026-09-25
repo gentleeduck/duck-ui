@@ -1,6 +1,6 @@
 ---
 title: API reference
-description: Every export of @gentleduck/error — createErrorKit, the brand helpers, and the secret-scrubbing utilities — with full signatures.
+description: Every export of @gentleduck/error, including createErrorKit, the brand helpers, and the secret-scrubbing utilities, with full signatures.
 ---
 
 ## `createErrorKit(name, registry)`
@@ -14,13 +14,13 @@ function createErrorKit<const R extends Record<string, number>, Name extends str
 
 Builds one error class from a registry literal. `name` becomes the class's runtime `.name`
 (what shows in a stack trace and in `err.name`) and, together with the registry's own identity,
-is why two calls to `createErrorKit` -- even with identical registries -- produce classes that
+is why two calls to `createErrorKit`, even with identical registries, produce classes that
 never satisfy each other's `instanceof`.
 
 Pass the registry `as const satisfies Record<string, number>`. `satisfies` is the load-bearing
-half -- it checks every value is number-compatible without erasing `detail`/`fault`'s branded
+half: it checks every value is number-compatible without erasing `detail`/`fault`'s branded
 return types (see below) the way an `: Record<string, number>` annotation would. `as const` is
-good practice for a bare code's literal status, but isn't what carries the brand -- `detail`/
+good practice for a bare code's literal status, but isn't what carries the brand. `detail`/
 `fault` already return a branded type regardless.
 
 Returns an `ErrorKit<R>` object with seven members.
@@ -39,11 +39,11 @@ The class itself, for `instanceof` checks or as a base to extend. Every instance
 | `status` | `number` | the registry's value for that code |
 | `statusCode` | `number` | same value as `status`, under the name NestJS's base `HttpException` reads |
 | `meta` | `Record<string, unknown>` | `{}` when no metadata was passed |
-| `message` | `string` | always equals `code` -- the message is not free text |
+| `message` | `string` | always equals `code`, the message is not free text |
 | `name` | `string` | the kit's `name` argument |
 
 <Callout type="info" title="Using AppError as a type, not just a value">
-`export const AppError = kit.ErrorClass` alone only puts `AppError` in the *value* namespace --
+`export const AppError = kit.ErrorClass` alone only puts `AppError` in the *value* namespace,
 `err: AppError` or `AppError.Code` won't compile, since TypeScript looks in the *type* namespace
 for those. Every framework guide in these docs adds two more exports, via ordinary TypeScript
 declaration merging, to close that gap:
@@ -59,7 +59,7 @@ export namespace AppError {
 With this in place, `AppError` works as a value (`new AppError(...)`, `instanceof AppError`) and
 as a type (`err: AppError`, `code: AppError.Code`) at once. Snippets elsewhere in these docs that
 only export the plain value use `InstanceType<typeof AppError>` or `ErrorKit.Code<typeof
-REGISTRY>` instead, precisely because they don't assume this merge is in place -- reach for the
+REGISTRY>` instead, precisely because they don't assume this merge is in place. Reach for the
 merge in your own `errors.ts` once you want `AppError` usable both ways, the way every runnable
 example under [`examples/`](https://github.com/gentleeduck/duck-error/tree/main/examples) does.
 </Callout>
@@ -71,7 +71,7 @@ kit.fail<C>(code: C, ...args: ErrorKit.Args<R, C>): KitError<R, C>
 ```
 
 Constructs and returns an instance. Never throws. Use this when you want the error object
-itself -- to attach it to a result type, log it, or throw it yourself later.
+itself, to attach it to a result type, log it, or throw it yourself later.
 
 ### `throwError(code, meta?)`
 
@@ -112,7 +112,7 @@ try {
 kit.hasErrorCode<C>(err: unknown, code: C): err is Error & { readonly meta: ErrorKit.Meta<R, C> }
 ```
 
-A type guard checked by property (`'code' in err && err.code === code`), not `instanceof` --
+A type guard checked by property (`'code' in err && err.code === code`), not `instanceof`,
 so it still matches an instance from a duplicated copy of this package (a common outcome of
 mismatched versions across a monorepo). Checks for `'meta' in err` too, since narrowing on
 `code` alone would let a value through that has the right code but no `meta` at all.
@@ -124,7 +124,7 @@ kit.metaOf<C>(err: KitError<R>, code: C): ErrorKit.Meta<R, C>
 ```
 
 Reads `err.meta` at the type `code` declares. Only call this after `hasErrorCode` or an
-equivalent `err.code === code` check -- `metaOf` itself does no runtime verification, it exists
+equivalent `err.code === code` check. `metaOf` itself does no runtime verification; it exists
 purely to give the already-known-shape read a type.
 
 ---
@@ -141,7 +141,7 @@ function detail<M extends object = never>(status: number): Brand.Carries<M>
 ```
 
 A status whose code carries metadata of shape `M`, raised by flow or validation logic. `M` has
-no default that would accept anything -- omit the type parameter and `M` is `never`, which
+no default that would accept anything. Omit the type parameter and `M` is `never`, which
 makes passing metadata a type error, matching a code that was meant to stay bare.
 
 ### `fault(status)`
@@ -152,8 +152,8 @@ function fault<M extends object>(status: number): Brand.Carries<M> & Brand.Fault
 ```
 
 The same declaration as `detail`, for a code that a store or adapter can answer with itself
-(as opposed to one only application logic raises). The distinction is informational -- both
-brands behave identically at runtime -- but `Brand.Fault` is exposed as `ErrorKit.Faults<R>`,
+(as opposed to one only application logic raises). The distinction is informational: both
+brands behave identically at runtime, but `Brand.Fault` is exposed as `ErrorKit.Faults<R>`,
 a type listing every fault code in a registry, for callers that want to branch on it (for
 example, deciding whether a code is safe to retry).
 
@@ -169,7 +169,7 @@ function isSecretKey(key: string): boolean
 
 Case-insensitive test against a fixed pattern:
 `secret|password|passphrase|plaintext|token|hash|salt|signature|credential|private|otp|recovery|apikey|api_key`.
-Matches by substring, not exact name, deliberately -- see
+Matches by substring, not exact name, deliberately. See
 [Secret redaction](/duck-error/secret-redaction) for why.
 
 ### `scrubMeta(meta, depth?)`
@@ -181,7 +181,7 @@ function scrubMeta(meta: object, depth?: number): Record<string, unknown>
 Walks an object recursively, dropping every key `isSecretKey` matches at any depth, capping
 recursion at depth 8 (a deeper subtree is replaced by the string `'[depth-cap]'`, not walked or
 returned unredacted). This is what `KitError.toJSON()` calls internally on `.meta` before
-serializing -- you will not usually call it directly, but it is exported for building your own
+serializing. You will not usually call it directly, but it is exported for building your own
 response formatting on top of the same guarantee.
 
 ---
@@ -213,6 +213,6 @@ required, per code: `[]` for a bare code, `[meta?]` for one with only optional m
 
 <Callout type="info" title="Generated reference">
 This page is a hand-written tour of the surface above. For every signature exactly as TypeScript
-sees it — including every type parameter, overload, and source line — see [API / types](/duck-error/api),
+sees it, including every type parameter, overload, and source line, see [API / types](/duck-error/api),
 generated straight from `packages/duck-error/src` with TypeDoc.
 </Callout>

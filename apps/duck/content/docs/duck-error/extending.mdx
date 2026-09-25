@@ -23,15 +23,15 @@ function toResponse(err: unknown) {
 ```
 
 Because every kit's `toJSON()` returns the same `{ ok, error: { code, status, ...meta } }`
-shape, this stays flat regardless of how many kits you add — there's no need for a common base
+shape, this stays flat regardless of how many kits you add. There's no need for a common base
 class to get a common response shape.
 
 ---
 
 ## Adding fields at the HTTP layer, not the kit
 
-A common ask is attaching something request-scoped — a request id, a trace id — to every error
-response. Do this by decorating `toJSON()`'s output where you build the response, not by
+A common ask is attaching something request-scoped, such as a request id or a trace id, to every
+error response. Do this by decorating `toJSON()`'s output where you build the response, not by
 modifying the kit:
 
 ```typescript
@@ -45,7 +45,7 @@ function respond(
 }
 ```
 
-This keeps the kit itself free of anything request-scoped — `AppError` has no idea an HTTP
+This keeps the kit itself free of anything request-scoped. `AppError` has no idea an HTTP
 request exists, which is what makes it reusable from a queue worker, a CLI, or a test, none of
 which have a `requestId` to attach.
 
@@ -53,7 +53,7 @@ which have a `requestId` to attach.
 
 ## Subclassing `ErrorClass`
 
-`kit.ErrorClass` is a real, ordinary JavaScript class — `class AppError extends kit.ErrorClass {
+`kit.ErrorClass` is a real, ordinary JavaScript class. `class AppError extends kit.ErrorClass {
 }` works the same way extending any other class does, and an instance of the subclass still
 passes `instanceof kit.ErrorClass` and `hasErrorCode`.
 
@@ -68,11 +68,11 @@ class LoggedAppError extends AppError {
 
 <Callout type="warning" title="Prefer composition over subclassing here">
 Reach for this only for a genuinely cross-cutting concern like the logging example above.
-Subclassing does not give you a way to add new codes or change `Args` — those still come
+Subclassing does not give you a way to add new codes or change `Args`. Those still come
 entirely from the registry passed to `createErrorKit`, which is a module-level, not a
 class-level, concept in this package. If what you want is "a few extra codes beyond what the
 base kit defines," write a second registry (spreading the first one's entries in, if you want to
-extend rather than replace it) and call `createErrorKit` again — that keeps the
+extend rather than replace it) and call `createErrorKit` again, which keeps the
 [one-kit-per-subsystem](/duck-error/core-concepts) isolation guarantee intact, which a subclass
 does not.
 </Callout>

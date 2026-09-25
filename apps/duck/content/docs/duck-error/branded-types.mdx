@@ -1,12 +1,12 @@
 ---
 title: branded types
-description: How detail() and fault() brand a plain status number so the compiler can compute each code's metadata requirement — Carries, Fault, Bare, Args, and Faults in depth.
+description: How detail() and fault() brand a plain status number so the compiler can compute each code's metadata requirement, covering Carries, Fault, Bare, Args, and Faults in depth.
 ---
 
 ## The problem a brand solves
 
 A registry's values are `number`. If `detail`/`fault` just returned `number`, the type system
-would have nowhere to record "this particular 429 also carries `{ retryAfter: number }}`" --
+would have nowhere to record "this particular 429 also carries `{ retryAfter: number }}`", so
 every code would look identical to every other at the type level, indistinguishable from a bare
 status. Branding attaches that extra information to the *type* of the number, invisibly, with
 zero runtime cost.
@@ -32,7 +32,7 @@ namespace Brand {
 }
 ```
 
-`__carries` and `__fault` are never actually present on the value at runtime -- `detail(429)`
+`__carries` and `__fault` are never actually present on the value at runtime, since `detail(429)`
 returns the plain number `429`. The intersection type is a compile-time-only marker; casting the
 return value (`status as Brand.Carries<M>`) is what attaches it, and nothing reads `__carries`
 back except other types in this same module.
@@ -49,7 +49,7 @@ function fault<M extends object>(status: number): Brand.Carries<M> & Brand.Fault
 `detail`'s `M` defaults to `never`, not `object`. This matters: if it defaulted to `object`,
 `detail(429)` with no type argument would silently accept *any* metadata shape at every call
 site. Defaulting to `never` means a bare `detail(429)` (no `<M>` given) behaves like a code that
-carries nothing, the same as writing the plain number `429` -- there is no accidental "carries
+carries nothing, the same as writing the plain number `429`, so there is no accidental "carries
 anything" state.
 
 ---
@@ -61,7 +61,7 @@ type MetaOf<S> = S extends Carries<infer M> ? M : Record<never, never>
 ```
 
 Conditional-type inference is how the metadata shape gets back out of the branded number.
-`Record<never, never>` -- not `{}` -- is the "nothing" case: unlike `{}`, which any object
+`Record<never, never>`, not `{}`, is the "nothing" case: unlike `{}`, which any object
 structurally satisfies, `Record<never, never>` combined with `HasRequired` (below) is what lets
 the type system tell a bare code apart from one whose metadata happens to be all-optional.
 
@@ -75,7 +75,7 @@ type HasRequired<T> = { [K in keyof T]-?: undefined extends T[K] ? never : K }[k
 
 For each key, this resolves to that key's name if the key is required (its value type does not
 include `undefined`), or `never` if it's optional. Indexing the resulting object type by
-`keyof T` collects every required key's name into a union -- which is `never` itself if there
+`keyof T` collects every required key's name into a union, which is `never` itself if there
 were none. `[HasRequired<Meta<R, C>>] extends [never]` (wrapped in tuples so a `never` union
 doesn't distribute away) is the test `Bare` and `Args` both use to ask "does this code's
 metadata have at least one required field?"
@@ -90,7 +90,7 @@ type Bare<R extends Registry> = {
 }[Code<R>]
 ```
 
-A union of every code whose metadata has no required keys -- which includes both genuinely bare
+A union of every code whose metadata has no required keys, which includes both genuinely bare
 codes (`NOT_FOUND: 404`) and codes whose metadata is present but entirely optional
 (`detail<{ reason?: string }>(400)`). Exported so you can write a helper that only accepts codes
 safe to raise with zero context:
@@ -123,10 +123,10 @@ Three possible shapes, resolved per code:
 | --- | --- | --- |
 | `CODE: 404` (plain number) | `[]` | `new AppError('CODE')` |
 | `CODE: detail<{ reason?: string }>(400)` | `[meta?: { reason?: string }]` | `new AppError('CODE')` or `new AppError('CODE', { reason: 'x' })` |
-| `CODE: detail<{ retryAfter: number }>(429)` | `[meta: { retryAfter: number }]` | `new AppError('CODE', { retryAfter: 60 })` -- required |
+| `CODE: detail<{ retryAfter: number }>(429)` | `[meta: { retryAfter: number }]` | `new AppError('CODE', { retryAfter: 60 })`, required |
 
 The outer check (`R[C] extends Brand.Carries<any>`) is gated on the *value's* brand, not on
-whether `Meta<R, C>` happens to be non-empty -- a bare code's `Meta` resolves to
+whether `Meta<R, C>` happens to be non-empty, since a bare code's `Meta` resolves to
 `Record<never, never>`, which is structurally `{}`, and `{}` is satisfied by any object. Gating
 on `Meta` instead of the brand would make every bare code silently accept an arbitrary metadata
 argument.
@@ -140,7 +140,7 @@ type Faults<R extends Registry> = { [C in Code<R>]: R[C] extends Brand.Fault ? C
 ```
 
 A union of every code branded with `fault`, as opposed to `detail`. `fault` and `detail` behave
-identically at runtime -- this type is the entire point of the distinction. A concrete use: a
+identically at runtime, and this type is the entire point of the distinction. A concrete use: a
 retry policy that only retries fault codes, since a `detail`-branded code (a validation
 rejection, a business-rule refusal) will not succeed on retry, while a `fault`-branded one (a
 transient storage failure) might:
@@ -156,11 +156,11 @@ function isRetryable(
 ```
 
 <Callout type="info">
-There's no built-in `isRetryable` -- `Faults<R>` only gives you the type. Building the matching
+There's no built-in `isRetryable`. `Faults<R>` only gives you the type. Building the matching
 runtime check (as above) is on you, because only you know your registry's actual fault codes.
 </Callout>
 
 ## Next
 
-- [Error codes and status design](/duck-error/error-codes-and-status-design) -- when to reach for `fault` vs `detail` in practice
-- [API reference](/duck-error/api-reference) -- the full signature list
+- [Error codes and status design](/duck-error/error-codes-and-status-design): when to reach for `fault` vs `detail` in practice
+- [API reference](/duck-error/api-reference): the full signature list

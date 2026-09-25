@@ -1,6 +1,6 @@
 ---
 title: FAQ
-description: Answers to the questions that come up most once you're past the quick start — runtime validation, cloning, stack traces, JavaScript-only usage, and more.
+description: Answers to the questions that come up most once you're past the quick start, covering runtime validation, cloning, stack traces, and JavaScript-only usage.
 ---
 
 <Accordion type="multiple" collapsible className="w-full">
@@ -10,7 +10,7 @@ description: Answers to the questions that come up most once you're past the qui
       No. <code className="rounded bg-muted px-2 py-1">ErrorKit.Args</code> constrains what you can
       pass at the call site, at compile time only. The constructor does a shallow copy
       (<code className="rounded bg-muted px-2 py-1">{'{ ...meta }'}</code>) with no schema check. If
-      metadata is crossing a real trust boundary, validate it before it becomes <code className="rounded bg-muted px-2 py-1">meta</code> — see
+      metadata is crossing a real trust boundary, validate it before it becomes <code className="rounded bg-muted px-2 py-1">meta</code>. See
       <a href="/duck-error/core-concepts"> Core concepts</a>.
     </AccordionContent>
   </AccordionItem>
@@ -20,7 +20,7 @@ description: Answers to the questions that come up most once you're past the qui
     <AccordionContent className="text-muted-foreground">
       Yes, nothing stops you from passing the same registry literal to two <code className="rounded bg-muted px-2 py-1">createErrorKit</code> calls.
       They will still produce two distinct classes whose instances do not satisfy each other's
-      <code className="rounded bg-muted px-2 py-1"> instanceof</code> — the isolation comes from the
+      <code className="rounded bg-muted px-2 py-1"> instanceof</code>. The isolation comes from the
       call to <code className="rounded bg-muted px-2 py-1">createErrorKit</code> itself, not from the registry object's identity.
     </AccordionContent>
   </AccordionItem>
@@ -28,7 +28,7 @@ description: Answers to the questions that come up most once you're past the qui
   <AccordionItem value="duplicate-status">
     <AccordionTrigger>What happens if two codes share the same status?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      Nothing special — it's allowed and common (most registries have several codes at 400 or
+      Nothing special. It's allowed and common (most registries have several codes at 400 or
       404). <code className="rounded bg-muted px-2 py-1">code</code> is the field designed to be
       unique and specific; <code className="rounded bg-muted px-2 py-1">status</code> only needs to
       be a reasonable HTTP status for that code.
@@ -38,7 +38,7 @@ description: Answers to the questions that come up most once you're past the qui
   <AccordionItem value="meta-cloning">
     <AccordionTrigger>Is meta deep-cloned when an error is constructed?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      No — it's a shallow copy (<code className="rounded bg-muted px-2 py-1">{'{ ...meta }'}</code>).
+      No, it's a shallow copy (<code className="rounded bg-muted px-2 py-1">{'{ ...meta }'}</code>).
       A top-level key you didn't pass cannot appear later, but a nested object or array inside
       <code className="rounded bg-muted px-2 py-1"> meta</code> is still the same reference you
       passed in. Mutating that nested object after construction mutates what <code className="rounded bg-muted px-2 py-1">err.meta</code> holds.
@@ -50,8 +50,8 @@ description: Answers to the questions that come up most once you're past the qui
     <AccordionContent className="text-muted-foreground">
       A free-text message is where an interpolated, unreviewed string most often leaks a value
       it shouldn't. Making <code className="rounded bg-muted px-2 py-1">message</code> equal to
-      <code className="rounded bg-muted px-2 py-1"> code</code> removes that failure mode entirely
-      — anything else you want to say goes in <code className="rounded bg-muted px-2 py-1">meta</code>,
+      <code className="rounded bg-muted px-2 py-1"> code</code> removes that failure mode entirely.
+      Anything else you want to say goes in <code className="rounded bg-muted px-2 py-1">meta</code>,
       which is scrubbed the same way on every code. See <a href="/duck-error/core-concepts">Core concepts</a>.
     </AccordionContent>
   </AccordionItem>
@@ -59,10 +59,10 @@ description: Answers to the questions that come up most once you're past the qui
   <AccordionItem value="custom-tojson">
     <AccordionTrigger>Can I customize what toJSON() returns?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      Not on the kit itself — <code className="rounded bg-muted px-2 py-1">toJSON</code> is fixed
+      Not on the kit itself. <code className="rounded bg-muted px-2 py-1">toJSON</code> is fixed
       to <code className="rounded bg-muted px-2 py-1">{'{ ok: false, error: { code, status, ...scrubbed meta } } '}</code>.
       Add fields (a request id, for example) where you build the HTTP response instead, by
-      spreading its output — see <a href="/duck-error/extending">Extending</a>.
+      spreading its output. See <a href="/duck-error/extending">Extending</a>.
     </AccordionContent>
   </AccordionItem>
 
@@ -70,7 +70,7 @@ description: Answers to the questions that come up most once you're past the qui
     <AccordionTrigger>Does secret redaction apply to .cause?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
       No. <code className="rounded bg-muted px-2 py-1">.cause</code> is not part of
-      <code className="rounded bg-muted px-2 py-1"> toJSON()</code>'s output at all — it's the
+      <code className="rounded bg-muted px-2 py-1"> toJSON()</code>'s output at all. It's the
       full-fidelity channel meant for your own logs, not a client response. See
       <a href="/duck-error/secret-redaction"> Secret redaction</a>.
     </AccordionContent>
@@ -82,17 +82,17 @@ description: Answers to the questions that come up most once you're past the qui
       A class-per-error-kind hierarchy scales in files (one class per error) and forces catch
       sites to chain <code className="rounded bg-muted px-2 py-1">instanceof</code> checks in the
       right order. A registry keeps every code, status, and metadata shape for a subsystem in one
-      literal, with exhaustiveness the compiler can check — see <a href="/duck-error/core-concepts">Core concepts</a>.
+      literal, with exhaustiveness the compiler can check. See <a href="/duck-error/core-concepts">Core concepts</a>.
     </AccordionContent>
   </AccordionItem>
 
   <AccordionItem value="stack-traces">
     <AccordionTrigger>Do error instances have working stack traces?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      Yes — <code className="rounded bg-muted px-2 py-1">KitErrorImpl extends Error</code>, so
+      Yes, <code className="rounded bg-muted px-2 py-1">KitErrorImpl extends Error</code>, so
       <code className="rounded bg-muted px-2 py-1"> .stack</code> is populated the same way it
       would be for any custom <code className="rounded bg-muted px-2 py-1">Error</code> subclass
-      on your engine (V8 — Node, Bun, and Chromium-based browsers — populates it automatically on
+      on your engine (V8, meaning Node, Bun, and Chromium-based browsers, populates it automatically on
       construction).
     </AccordionContent>
   </AccordionItem>
@@ -100,7 +100,7 @@ description: Answers to the questions that come up most once you're past the qui
   <AccordionItem value="javascript-only">
     <AccordionTrigger>Can I use this from plain JavaScript, with no TypeScript?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
-      Yes — <code className="rounded bg-muted px-2 py-1">typescript</code> is an optional peer
+      Yes, <code className="rounded bg-muted px-2 py-1">typescript</code> is an optional peer
       dependency needed only for the types. At runtime this is a small, dependency-free module;
       every guarantee described elsewhere in these docs about required metadata, <code className="rounded bg-muted px-2 py-1">Bare</code>,
       and exhaustiveness is compile-time only and simply does not apply without a type checker in
@@ -112,11 +112,12 @@ description: Answers to the questions that come up most once you're past the qui
     <AccordionTrigger>Why would instanceof ever fail against the right class?</AccordionTrigger>
     <AccordionContent className="text-muted-foreground">
       If two different versions (or two separately-installed copies) of <code className="rounded bg-muted px-2 py-1">@gentleduck/error</code> end
-      up in the dependency tree — common in a monorepo or behind certain package manager hoisting
-      strategies — an error constructed by one copy's <code className="rounded bg-muted px-2 py-1">createErrorKit</code> call
+      up in the dependency tree, which is common in a monorepo or behind certain package manager
+      hoisting strategies, an error constructed by one copy's <code className="rounded bg-muted px-2 py-1">createErrorKit</code> call
       fails <code className="rounded bg-muted px-2 py-1">instanceof</code> against a class from the
       other copy, even with an identical registry. <code className="rounded bg-muted px-2 py-1">hasErrorCode</code> exists
-      specifically to keep working in that situation — see <a href="/duck-error/type-narrowing">Type narrowing</a>.
+      specifically to keep working in that situation. See <a href="/duck-error/type-narrowing">Type narrowing</a>.
     </AccordionContent>
   </AccordionItem>
+
 </Accordion>

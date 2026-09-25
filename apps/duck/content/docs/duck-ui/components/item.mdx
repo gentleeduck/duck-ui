@@ -180,7 +180,7 @@ Direction is resolved through the shared primitives direction module. Use a loca
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionItem` and `MotionItemGroup` for staggered fade-up entrance animations powered by [motion](https://motion.dev). Pass `index` to `MotionItem` for stagger delay.
+Use `MotionItem` and `MotionItemGroup` for staggered `scaleIn` entrance animations powered by [motion](https://motion.dev). Pass `index` to `MotionItem` for stagger delay.
 
 <ComponentPreview
   name="item-12"
@@ -328,8 +328,8 @@ Displays a footer spanning the full width of the item.
 
 ### MotionItem
 
-Same props as `Item` plus an optional `index` prop for stagger delay (40ms per index). Adds fadeUp entrance animation. Requires the `motion` package.
+Same props as `Item` plus an optional `index` prop for stagger delay (40ms per index). Adds a `scaleIn` entrance animation with a bouncy spring transition. Requires the `motion` package.
 
 ### MotionItemGroup
 
-Same props as `ItemGroup`. Adds fadeUp entrance animation. Requires the `motion` package.
+Same props as `ItemGroup`. Adds a `scaleIn` entrance animation with a bouncy spring transition. Requires the `motion` package.

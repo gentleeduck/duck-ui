@@ -11,7 +11,7 @@ production-ready components covering forms, navigation, data display, overlays, 
 layout.
 
 Unlike most component libraries, Duck UI doesn't install as a dependency. The CLI
-**copies source code directly into your project**. You own every line — read it,
+**copies source code directly into your project**. You own every line: read it,
 modify it, delete parts you don't need, and never worry about a breaking upstream
 update.
 
@@ -155,17 +155,17 @@ CSS overrides, wrapper components, or abandoned forks.
 
 Duck UI takes a different approach:
 
-- **Full control** — every component is a file you own. Change the border radius,
+- **Full control**: every component is a file you own. Change the border radius,
   swap an icon, add a prop, remove a feature.
-- **No version lock** — your code, your pace. No coupling to upstream releases.
-- **Learn by reading** — the source is right there. See exactly how a dialog
+- **No version lock**: your code, your pace. No coupling to upstream releases.
+- **Learn by reading**: the source is right there. See exactly how a dialog
   manages focus or how a combobox handles keyboard events.
-- **Tree-shaking by default** — only the components you use ship. No dead code in
+- **Tree-shaking by default**: only the components you use ship. No dead code in
   the bundle.
 
 <Callout title="Component-as-code">
   Run `@gentleduck/cli add button` and you get the full `button.tsx` source in your
-  project. It's not a dependency — it's your code.
+  project. It's not a dependency; it's your code.
 </Callout>
 
 ---
@@ -174,11 +174,11 @@ Duck UI takes a different approach:
 
 Every component uses the same GentleDuck packages you can adopt on their own:
 
-- **@gentleduck/primitives** — headless behavior (focus, keyboard, ARIA).
-- **@gentleduck/variants** — type-safe styling with `cva()`.
-- **@gentleduck/hooks** — React hooks for component logic.
-- **@gentleduck/motion** — enter/exit animations.
-- **@gentleduck/libs** — utilities (`cn`, `Slot`, `Portal`).
+- **@gentleduck/primitives**: headless behavior (focus, keyboard, ARIA).
+- **@gentleduck/variants**: type-safe styling with `cva()`.
+- **@gentleduck/hooks**: React hooks for component logic.
+- **@gentleduck/motion**: enter/exit animations.
+- **@gentleduck/libs**: utilities (`cn`, `Slot`, `Portal`).
 
 The components are the reference implementation of these packages working together.
 Read the source to learn the patterns and apply them to custom components.

@@ -28,7 +28,7 @@ smaller bundles.
 | Change | Details |
 | --- | --- |
 | **Recharts v3.7.0** | Upgraded across all 6 packages that depend on recharts. |
-| **Accessibility by default** | `accessibilityLayer` removed from 47 chart files — v3 enables it by default. |
+| **Accessibility by default** | `accessibilityLayer` removed from 47 chart files: v3 enables it by default. |
 | **`activeIndex` migrated** | Replaced the removed `activeIndex` prop on `Bar`/`Pie` with Tooltip `defaultIndex` in 3 components. |
 | **Type imports updated** | `PieSectorDataItem` moved from a deep path to the main `recharts` export. |
 | **SSR via `next/dynamic`** | The registry build now emits `next/dynamic({ ssr: true })` instead of `React.lazy()`. Components render on the server and still code-split on the client. |
@@ -89,18 +89,18 @@ Accordion, Alert, Alert Dialog, Aspect Ratio, Avatar, Badge, Breadcrumb, Button,
 
 ### Philosophy Sections
 
-Every component and package page now has a **Philosophy** section explaining the design rationale -- why the component exists, what problem it solves, and the architectural decisions behind it.
+Every component and package page now has a **Philosophy** section explaining the design rationale: why the component exists, what problem it solves, and the architectural decisions behind it.
 
 ### Mermaid Diagrams
 
 Two types of diagrams were added across 50+ pages:
 
-- **Composition diagrams** -- Show how complex components nest sub-components. For example, how `DropdownMenu` composes `Command`, `Popover`, `Button`, and `RadioGroup`.
-- **Dependency diagrams** -- Show which internal packages (`@gentleduck/primitives`, `@gentleduck/variants`, `@gentleduck/motion`, `@gentleduck/libs`) and external libraries each component is built from.
+- **Composition diagrams**: Show how complex components nest sub-components. For example, how `DropdownMenu` composes `Command`, `Popover`, `Button`, and `RadioGroup`.
+- **Dependency diagrams**: Show which internal packages (`@gentleduck/primitives`, `@gentleduck/variants`, `@gentleduck/motion`, `@gentleduck/libs`) and external libraries each component is built from.
 
 ### Callout Icons and Cross-Links
 
-All `<Callout>` blocks across the documentation now include contextual icons for better visual scanning. Related components link to each other -- Dialog links to Sheet and Drawer, Toggle links to Toggle Group, Button links to Button Group.
+All `<Callout>` blocks across the documentation now include contextual icons for better visual scanning. Related components link to each other: Dialog links to Sheet and Drawer, Toggle links to Toggle Group, Button links to Button Group.
 
 ---
 
@@ -114,9 +114,9 @@ A panel component for previewing content with multiple layout modes. Supports in
 
 A structured editor for JSON data with form-based editing, validation, and multiple display modes:
 
-- **Inline/sheet mode** -- Edit JSON in a sliding panel
-- **Popover mode** -- Edit in a floating popover
-- **Callback expand mode** -- Expand into a full editor view
+- **Inline/sheet mode**: Edit JSON in a sliding panel
+- **Popover mode**: Edit in a floating popover
+- **Callback expand mode**: Expand into a full editor view
 
 Built on top of `alert-dialog`, `button`, `popover`, `react-hook-form`, and `sheet`.
 
@@ -158,12 +158,12 @@ Fixed component dependency declarations in `registry-ui.ts` and `registry-exampl
 
 All 9 core package pages now have structured documentation with architecture diagrams, philosophy sections, and API overviews:
 
-- **@gentleduck/cli** -- CLI tool for scaffolding components
-- **@gentleduck/lazy** -- Lazy-loading utilities
-- **@gentleduck/variants** -- Type-safe variant system (CVA wrapper)
-- **@gentleduck/vim** -- Keyboard navigation engine
-- **@gentleduck/primitives** -- Headless UI primitives
-- **@gentleduck/libs** -- Shared utilities (cn, Slot, Portal)
-- **@gentleduck/hooks** -- React hooks collection
-- **@gentleduck/ttest** -- Visual testing framework
-- **@gentleduck/template** -- Project scaffolding templates
+- **@gentleduck/cli**: CLI tool for scaffolding components
+- **@gentleduck/lazy**: Lazy-loading utilities
+- **@gentleduck/variants**: Type-safe variant system (CVA wrapper)
+- **@gentleduck/vim**: Keyboard navigation engine
+- **@gentleduck/primitives**: Headless UI primitives
+- **@gentleduck/libs**: Shared utilities (cn, Slot, Portal)
+- **@gentleduck/hooks**: React hooks collection
+- **@gentleduck/ttest**: Visual testing framework
+- **@gentleduck/template**: Project scaffolding templates

@@ -313,7 +313,7 @@ Direction is resolved through the shared primitives direction module. Use a loca
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionCalendar` for smooth month navigation transitions and staggered day cell entry powered by [motion](https://motion.dev). The grid slides directionally when navigating months, and day cells fade in with a stagger effect.
+Use `MotionCalendar` for a mount entrance plus smooth month navigation transitions and staggered day cell entry powered by [motion](https://motion.dev). The whole calendar uses a `scaleIn` entrance (fade, scale, and blur) on mount, the grid slides directionally when navigating months, and day cells fade in with a stagger effect.
 
 <ComponentPreview
   name="calendar-25"
@@ -439,7 +439,7 @@ The calendar uses `data-*` attributes on day cells for styling. Target these in 
 
 ### MotionCalendar
 
-Adds directional slide transitions on month navigation (with blur) and staggered day cell entry animation. Uses `LazyMotion` for a lightweight bundle (~5KB). Requires the `motion` package.
+Adds a `scaleIn` entrance (fade, scale, and blur) with a `springBouncy` transition on mount, directional slide transitions on month navigation (with blur), and staggered day cell entry animation. Uses `LazyMotion` for a lightweight bundle (~5KB). Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

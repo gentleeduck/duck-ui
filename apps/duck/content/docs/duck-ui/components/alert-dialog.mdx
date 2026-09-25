@@ -215,7 +215,7 @@ Same props as `AlertDialog`. Wraps with `useMotionRoot` for exit animation suppo
 | `className` | `string` | `-` | Additional class names to apply |
 | `children` | `React.ReactNode` | `-` | Content displayed inside the dialog |
 
-Requires `motion` package installed. Uses a spring transition (stiffness 400, damping 30) for a snappier feel that conveys urgency. Automatically respects `prefers-reduced-motion`.
+Requires `motion` package installed. Content uses a `scaleIn` entrance (fade, scale, and blur) with a spring transition (stiffness 400, damping 30) for a snappier feel that conveys urgency; the overlay fades in independently. Automatically respects `prefers-reduced-motion`.
 
 ### AlertDialogHeader
 

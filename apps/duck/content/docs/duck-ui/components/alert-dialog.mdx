@@ -176,9 +176,8 @@ Requires the `motion` package. Use `MotionAlertDialog` instead of `AlertDialog` 
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `asChild` | `boolean` | `false` | If `true`, renders using a `Slot` instead of a `button` element |
 | `children` | `React.ReactNode` | `--` | Content of the trigger |
-| `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Trigger>` | - | Additional props inherited from `AlertDialogPrimitive.Trigger` |
+| `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Trigger>` | - | Additional props inherited from `AlertDialogPrimitive.Trigger`. Always renders a native `button` element; there is no `asChild`/`Slot` support. |
 
 ### AlertDialogPortal
 

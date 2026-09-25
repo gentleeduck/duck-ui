@@ -47,6 +47,41 @@ kit are routed here -- an unrelated thrown value falls through to Nest's default
 is the correct behavior: a kit's errors are the ones this filter knows how to shape, nothing
 else.
 
+## Throwing from a route
+
+`@Get()`/`@Post()`/etc. register the route; nothing about throwing a kit error is
+NestJS-specific once inside the handler -- the filter above catches it regardless of which
+decorator dispatched the request.
+
+```typescript
+import { Controller, Get, Param } from '@nestjs/common'
+import { asAppError, throwAppError } from './errors'
+
+@Controller()
+export class WidgetsController {
+  @Get('widgets/:id')
+  findOne(@Param('id') id: string) {
+    const widget = WIDGETS[id]
+    if (!widget) throwAppError('NOT_FOUND', { resource: 'widget', id })
+    return widget
+  }
+
+  @Get('boom')
+  boom() {
+    try {
+      throw new Error('connection refused')
+    } catch (err) {
+      throw asAppError(err, 'STORAGE_FAILED', { cause: String(err) })
+    }
+  }
+}
+```
+
+`findOne` throws directly; `boom` shows the other shape -- catching a plain `Error` from
+somewhere else and converting it with `asAppError` before it leaves the handler. Both reach the
+same `AppErrorFilter`, because `@Catch(AppError)` matches on the thrown value's class, not on
+which method or decorator produced it.
+
 ## Throwing from a service
 
 ```typescript

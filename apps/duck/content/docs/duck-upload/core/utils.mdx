@@ -27,7 +27,7 @@ here to explain the machinery, not to hand you an import list. The public entry 
 Even though you don't import these directly, their behavior shapes the public API:
 
 - **Fingerprints** decide item identity. `computeFingerprint` reads `name`, `size`, `type`, and
-  `lastModified`. Supplying a `checksum` (via the `fingerprint` store option) is what unlocks
+  `lastModified`. Supplying a `checksum` (via the `fingerprint` store option) is what enables
   content-based deduplication through `findByChecksum`. `fingerprintMatches` is what the `rebind`
   command uses to confirm the user re-selected the same file.
 - **The typed emitter** is what makes `store.on('upload.completed', …)` type the payload

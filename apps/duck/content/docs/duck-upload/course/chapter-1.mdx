@@ -201,7 +201,7 @@ Common events: `file.added`, `file.rejected`, `intent.creating`, `intent.created
 ## Reading state
 
 `getSnapshot()` returns immutable state with `items: Map<string, Engine.Item>`. Because
-`Engine.Item` is a discriminated union over `phase`, narrowing unlocks phase-specific fields:
+`Engine.Item` is a discriminated union over `phase`, narrowing gives you phase-specific fields:
 
 ```typescript
 for (const item of store.getSnapshot().items.values()) {

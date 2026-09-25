@@ -28,7 +28,7 @@ its union.
 | `canceled` | Canceled by the user |
 
 `Engine.Item` is a discriminated union over `phase`, so checking `item.phase === 'uploading'`
-narrows the type and unlocks `item.progress`, `item.intent`, and friends.
+narrows the type and gives you `item.progress`, `item.intent`, and friends.
 
 ## State machine
 

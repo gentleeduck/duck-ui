@@ -9,7 +9,6 @@ order: 10
 
 <Callout icon={<Lightbulb />}>
 
-**Rewritten version:**
 **Note:** You might wonder why we don't use the `CommandShortcut` component from the `command` module.
 The reason is that we want to give you the flexibility to use the `kbd` component in any context, not just within a command.
 Additionally, the `CommandShortcut` component is specifically designed to represent a keyboard shortcut associated with a command, not a plain HTML element.
@@ -113,7 +112,7 @@ Direction is resolved through the shared primitives direction module. Use a loca
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionKbd` for staggered fade+blur entrance on keyboard shortcuts powered by [motion](https://motion.dev).
+Use `MotionKbd` for a staggered `scaleIn` entrance with a bouncy spring transition on keyboard shortcuts, powered by [motion](https://motion.dev).
 
 <ComponentPreview name="kbd-7" description="Keyboard shortcuts with motion-powered staggered entrance." />
 
@@ -131,7 +130,8 @@ Displays an individual keyboard key with consistent styling.
 | --- | --- | --- | --- |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `'ltr'`). |
 | `className` | `string` | - | Additional class names for the kbd element |
-| `children` | `React.ReactNode` | - | Key label text or icon |
+| `keys` | `string` | - | Raw key combo string formatted for display via `@gentleduck/vim`'s `formatForDisplay`. Used as a fallback when `children` is not provided. |
+| `children` | `React.ReactNode` | - | Key label text or icon. Takes precedence over `keys` when both are provided. |
 | `...props` | `React.HTMLProps<HTMLElement>` | - | Additional props to spread to the kbd element |
 
 ### KbdGroup
@@ -146,4 +146,4 @@ Groups multiple `Kbd` components together in an inline layout.
 
 ### MotionKbd
 
-Same props as `Kbd` plus an optional `index` prop for stagger delay (30ms per index). Adds fade+blur entrance. Requires the `motion` package.
+Same props as `Kbd` plus an optional `index` prop for stagger delay (30ms per index). Adds a `scaleIn` entrance with a bouncy spring transition. Requires the `motion` package.

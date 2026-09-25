@@ -331,7 +331,7 @@ function TocTree({
             href={item.url}
             onClick={(e) => handleClick(e, item)}
             className={cn(
-              'relative block py-1.5 no-underline transition-colors [overflow-wrap:anywhere]',
+              'relative block py-1.5 no-underline transition-colors [overflow-wrap:break-word]',
               item.url === `#${activeItem}`
                 ? 'font-medium text-primary'
                 : 'text-muted-foreground text-sm hover:text-foreground',

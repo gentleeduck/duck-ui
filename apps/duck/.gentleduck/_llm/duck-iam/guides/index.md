@@ -80,7 +80,7 @@ export const allRoles = [viewer, editor, moderator, admin]
 
 `grantRead(...resources)` is shorthand for `grant('read', r)` per resource. `grantCRUD(resource)` expands to `create`, `read`, `update`, `delete`. `grantAll(resource)` grants `'*'` on that resource.
 
-`build()` runs the validator and throws if the role is malformed - a dangling `inherits`, an empty role, an inheritance chain deeper than the runtime's `MAX_INHERITANCE_DEPTH` of 32. The message is prefixed `[@gentleduck/iam:builder] RoleBuilder.build(): role rejected by validator`. See [role definition](/duck-iam/core/roles/definition) and [inheritance](/duck-iam/core/roles/inheritance).
+`build()` runs the validator and throws if the role is malformed - a dangling `inherits`, an empty role, an inheritance chain deeper than the runtime's `MAX_INHERITANCE_DEPTH` of 32. It throws `IAM_VALIDATION_FAILED` (`meta: { kind: 'role', issues: string[] }`), the same coded error `PolicyBuilder.build()` throws. See [role definition](/duck-iam/core/roles/definition) and [inheritance](/duck-iam/core/roles/inheritance).
 
 `inherits` is additive only. To restrict access below what a parent grants, add an ABAC deny policy - see [combining algorithms](/duck-iam/core/policies/combining-algorithms).
 
@@ -341,7 +341,7 @@ Per-framework detail: [express](/duck-iam/integrations/server/express), [hono](/
 
 ## Step 9: send a permission map to the client
 
-`engine.permissions()` evaluates a batch of checks in one pass and returns a map keyed `[scope:]action:resource[:resourceId]`. Serialize it into your page and the client checks become synchronous object lookups.
+`engine.permissions()` evaluates a batch of checks in one pass and returns a map keyed by `iamBuildPermissionKey`: `action:resource[:resourceId]`, or `@scope:action:resource[:resourceId]` when a scope is passed - the leading `@` is what keeps a scoped key unambiguous, so it is never dropped. Serialize it into your page and the client checks become synchronous object lookups.
 
 ```tsx title="src/app/layout.tsx"
 import { getIamPermissions } from '@gentleduck/iam/server/next'
@@ -399,7 +399,7 @@ export function PostActions() {
 
 ## Debugging with explain
 
-When a decision surprises you, `engine.explain()` returns the whole trace. It is development-mode only and throws `explain() is not available in production mode` otherwise.
+When a decision surprises you, `engine.explain()` returns the whole trace. It is development-mode only and throws the coded `IAM_ENGINE_EXPLAIN_UNAVAILABLE` otherwise.
 
 ```ts
 const trace = await engine.explain('user-dana', 'delete', {
@@ -428,3 +428,4 @@ The engine defaults to `mode: 'development'`, which allocates a full `IDecision`
 * [Troubleshooting](/duck-iam/guides/troubleshooting) - symptom, cause, fix, keyed to real error messages
 * [Core concepts](/duck-iam/core) - policies, rules, conditions, combining algorithms
 * [Pairing with duck-auth](/duck-iam/guides/auth-bridge) - where the subject ID comes from
+* [Real-world examples](/duck-iam/guides/examples) - this walkthrough's patterns, wired into four real framework backends

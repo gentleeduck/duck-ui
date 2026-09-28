@@ -59,7 +59,7 @@ const admin = access
 
 Create an adapter and the engine
 
-`IamMemoryAdapter` seeds roles, policies, assignments, and subject attributes from a plain object. Pass `mode: 'production'` outside development; it defaults to `'development'`.
+`IamMemoryAdapter` seeds roles, policies, assignments, and subject attributes from a plain object. `mode` defaults to `'production'`; pass `mode: 'development'` explicitly when you want rich decisions and `explain()`.
 
 ```ts title="src/lib/access.ts"
 const adapter = new IamMemoryAdapter({
@@ -93,7 +93,7 @@ const trace = await engine.explain('user-2', 'delete', { type: 'post', attribute
 
 Batch checks for a UI gate
 
-`permissions()` resolves the subject and loads the catalog once for the whole batch. Keys are built by `iamBuildPermissionKey`, so they read `[scope:]action:resource[:resourceId]`.
+`permissions()` resolves the subject and loads the catalog once for the whole batch. Keys are built by `iamBuildPermissionKey(action, resource, resourceId?, scope?)` as `action:resource[:resourceId]`, or `@scope:action:resource[:resourceId]` when a scope is passed - the leading `@` is what keeps a scoped key unambiguous, so it is never dropped.
 
 ```ts
 const map = await engine.permissions('user-2', [
@@ -257,16 +257,16 @@ console.log(await engine.healthCheck())
 `@gentleduck/iam` re-exports `core` plus `IamLRUCache`, `iamLRUCache`, `iamBuildPermissionKey`, `iamParsePermissionKey`, and `iamSplitPermissionKey`. Importing `IamMemoryAdapter`, middleware, or a client from the root fails. Use the subpath.
 
 * Barrel imports cost roughly 41 KB gzipped. Subpath imports plus tree-shaking land real deployments at 15 to 25 KB; see [benchmarks](/duck-iam/benchmarks).
-* `mode` defaults to `'development'`, which allocates a decision object per policy per request. Set it from your environment as shown above.
+* `mode` defaults to `'production'` since 5.8.1 (it used to default to `'development'`). Pass `mode: 'development'` explicitly to get rich `AccessControl.IDecision` objects and `explain()`; see [modes](/duck-iam/advanced/engine/modes).
 * SQLite Drizzle deployments must pass `json: 'string'` to the adapter, because the SQLite schema stores JSON columns as text.
 * The devtools entries pull React for real, and `dt/v2` pulls duck-ui and `lucide-react` on top. Keep either behind a development-only import so it cannot reach a production bundle.
 
 ## See also
 
-* [Introduction](/duck-iam/introduction) — the model and the docs routing map.
-* [Quick start](/duck-iam/guides) — the end-to-end walkthrough after this page.
-* [Adapters](/duck-iam/integrations/adapters) — choosing and configuring storage.
-* [createIam()](/duck-iam/advanced/config/access-config) — every option on the config factory.
+* [Introduction](/duck-iam/introduction): the model and the docs routing map.
+* [Quick start](/duck-iam/guides): the end-to-end walkthrough after this page.
+* [Adapters](/duck-iam/integrations/adapters): choosing and configuring storage.
+* [createIam()](/duck-iam/advanced/config/access-config): every option on the config factory.
 
 ## Installation FAQ
 

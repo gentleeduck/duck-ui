@@ -40,8 +40,8 @@ async explain(
 
 | Guard | Behaviour |
 |---|---|
-| `mode: 'production'` | Throws `Error('explain() is not available in production mode')` |
-| `subjectId` not a string, empty, or over 1024 chars | Throws `[@gentleduck/iam:engine] explain(): subjectId must be a non-empty string <=1024 chars` |
+| `mode: 'production'` | Throws the coded `IamError` `IAM_ENGINE_EXPLAIN_UNAVAILABLE` |
+| `subjectId` not a string, empty, or over 1024 chars | Throws the coded `IamError` `IAM_ENGINE_PARAM_INVALID` (`meta: { name: 'explain(): subjectId', reason: 'empty' \| 'too-long', got?, length? }`) |
 
 The explain module is loaded with a dynamic `import('../explain')` *after* the mode check,
 so a production bundle never pulls in the explain chunk at all.
@@ -111,11 +111,13 @@ Three things in that graph are easy to miss:
 - `tracePolicy` runs for **every** policy, including ones whose targets do not match. A
   non-matching policy still produces an `IPolicyTrace`, with `targetMatch: false`, an empty
   `rules` array, and `result` set to the engine's `defaultEffect`.
-- `traceGroup` is depth-capped at `MAX_TRACE_DEPTH = 10`, and past it it **throws**
-  `IamConditionGroupError` rather than returning `false`. `traceRule` catches that, records
-  the message on the rule trace's `conditionError` field, and leaves `conditions` as an
-  empty failing `all` group. `tracePolicy` then casts the Indeterminate vote the decision
-  path casts; see [when a condition cannot be traced](#when-a-condition-cannot-be-traced).
+- `traceGroup` is depth-capped at `MAX_TRACE_DEPTH = 10`, and past it it **throws** the coded
+  `IamError` `IAM_CONDITION_GROUP_INVALID` rather than returning `false`. `traceRule` catches
+  that, records its message - the bare code, since an `IamError`'s `message` is just its
+  `code` and the detail lives on `meta` - on the rule trace's `conditionError` field, and
+  leaves `conditions` as an empty failing `all` group. `tracePolicy` then casts the
+  Indeterminate vote the decision path casts; see
+  [when a condition cannot be traced](#when-a-condition-cannot-be-traced).
 - `applyCombiner` reproduces the per-policy combining algorithm; `decideFinal` then applies
   the cross-policy `policyCombine` strategy. They are two separate steps and both appear in
   the output: the per-policy result on each `IPolicyTrace`, the final one on `decision`.

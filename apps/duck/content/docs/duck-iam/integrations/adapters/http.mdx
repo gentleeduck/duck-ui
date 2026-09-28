@@ -1,6 +1,6 @@
 ---
 title: HTTP adapter
-description: Back the store with a remote REST API: the complete wire protocol, authentication, SSRF guards, retry, and circuit breaker.
+description: Back the store with a remote REST API, covering the complete wire protocol, authentication, SSRF guards, retry, and circuit breaker.
 section: Integrations
 ---
 
@@ -55,10 +55,10 @@ const engine = new IamEngine({ adapter })
 
 ### The numeric options are validated at construction
 
-`undefined` takes the default; anything else must be a number the adapter can act on, and a value outside the bounds above throws immediately - `` [@gentleduck/iam:http] `retries` must be a finite integer >= 0, got null ``. The failures being guarded against were severe and silent. `retries: NaN` made the retry loop's condition false on the first evaluation, so the adapter issued **no request at all** and then threw the `lastError` it had never assigned. `timeoutMs: NaN` is the same shape one layer down: `setTimeout(fn, NaN)` fires on the next tick, so every request aborts before it can answer. `NaN` arrives the ordinary way, from `Number(process.env.IAM_HTTP_RETRIES)` on an unset variable.
+`undefined` takes the default; anything else must be a number the adapter can act on, and a value outside the bounds above throws `IAM_HTTP_OPTION_INVALID` immediately (`meta: { field: 'retries', got: 'null', constraint: 'finite integer >= 0' }`). The failures being guarded against were severe and silent. `retries: NaN` made the retry loop's condition false on the first evaluation, so the adapter issued **no request at all** and then threw the `lastError` it had never assigned. `timeoutMs: NaN` is the same shape one layer down: `setTimeout(fn, NaN)` fires on the next tick, so every request aborts before it can answer. `NaN` arrives the ordinary way, from `Number(process.env.IAM_HTTP_RETRIES)` on an unset variable.
 
 <Callout tone="warning" title="`circuitBreakerThreshold: 0` throws">
-  The `IamHttp.IConfig` docblock still says "Set to `0` to disable". The constructor is what runs, and it reads the field with `{ integer: true, min: 1 }`, so `0` throws `` `circuitBreakerThreshold` must be a finite integer >= 1, got 0 ``. There is an internal disable path, but no accepted config value reaches it. To effectively turn the breaker off, set a threshold higher than any burst you expect.
+  The `IamHttp.IConfig` docblock still says "Set to `0` to disable". The constructor is what runs, and it reads the field with `{ integer: true, min: 1 }`, so `0` throws `IAM_HTTP_OPTION_INVALID` (`meta: { field: 'circuitBreakerThreshold', got: '0', constraint: 'finite integer >= 1' }`). There is an internal disable path, but no accepted config value reaches it. To effectively turn the breaker off, set a threshold higher than any burst you expect.
 </Callout>
 
 ## Wire protocol
@@ -82,7 +82,7 @@ Fourteen endpoints, all relative to `baseUrl`. Every path segment interpolated f
 | `GET` | `/subjects/{id}/attributes` | — | a JSON object | `{}` for an unknown subject. An array, `null`, or a scalar throws. |
 | `PATCH` | `/subjects/{id}/attributes` | the partial attribute object | any 2xx | **Merge, do not replace.** Keys absent from the body survive. |
 
-There is no endpoint for `updateAssignmentScope`; the adapter does not implement it, so `engine.admin.updateAssignmentScope` falls back to `DELETE` then `POST` on `/subjects/{id}/roles`. It has no `withClient` either, so `engine.withTransaction` throws against this adapter.
+There is no endpoint for `updateAssignmentScope`; the adapter does not implement it, so `engine.admin.updateAssignmentScope` falls back to `DELETE` then `POST` on `/subjects/{id}/roles`. It has no `withClient` either, so `engine.withTransaction` throws the coded `IAM_ENGINE_ADAPTER_NOT_TRANSACTIONAL` against this adapter.
 
 Two of these obligations are the reason the compliance suite gives this adapter a flag of its own. The operator's server owns the role catalog, so the adapter cannot phrase the unstored-role refusal itself; `delegatesRoleExistence` waives the *wording* of that refusal and nothing else. The refusal itself is still asserted, and so is the `deleteRole` cascade.
 
@@ -191,13 +191,15 @@ new IamHttpAdapter({
 
 `baseUrl` is parsed and checked once, in the constructor. Each failure throws immediately rather than at first request.
 
-| Condition | Error |
-| --- | --- |
-| Not parseable as a URL | `[@gentleduck/iam:http] invalid baseUrl "…"` |
-| Scheme is not `http:` or `https:` | `[@gentleduck/iam:http] baseUrl scheme must be http: or https:, got …` |
-| Contains a query string or fragment | `[@gentleduck/iam:http] baseUrl must not contain a query string or fragment` |
-| Host not in a non-empty `allowedHosts` | `[@gentleduck/iam:http] baseUrl host "…" not in allowedHosts` |
-| Private or loopback IP literal without `allowPrivateHosts` | `[@gentleduck/iam:http] baseUrl host "…" resolves to a private/loopback range - set allowPrivateHosts: true to opt in` |
+Every row throws `IAM_HTTP_BASE_URL_INVALID`, distinguished only by `meta.reason`:
+
+| Condition | `meta.reason` | Other `meta` fields |
+| --- | --- | --- |
+| Not parseable as a URL | `'unparseable'` | `baseUrl` |
+| Scheme is not `http:` or `https:` | `'bad-scheme'` | `scheme` |
+| Contains a query string or fragment | `'has-query-or-fragment'` | — |
+| Host not in a non-empty `allowedHosts` | `'host-not-allowed'` | `host` |
+| Private or loopback IP literal without `allowPrivateHosts` | `'private-host'` | `host` |
 
 `allowedHosts` matching is deliberate about its edges. Comparison is case-insensitive on both sides, a trailing FQDN dot is stripped, and internationalised names are punycoded through `new URL` before comparing. An entry may be a bare hostname or a `host:port` pair: a bare entry matches the hostname at any port, so `['example.com']` accepts `example.com`, `example.com:80`, and `example.com:8443`; a `host:port` entry matches only that exact port, so `example.com:8080` rejects both `example.com` and `example.com:9090`.
 
@@ -215,7 +217,7 @@ The private-host check covers IPv4 (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`
 
 ### Response handling
 
-A non-2xx response throws `[@gentleduck/iam:http] HTTP <status>: <body>`. The body is read as a stream with a 4 KiB hard ingest cap and truncated to 200 characters with a `...(truncated)` suffix, so a hostile remote cannot exhaust memory building an error message. Successful bodies go through the same treatment at a larger scale: reading stops at 4 MiB and throws `[@gentleduck/iam:http] response body exceeds 4 MiB cap`.
+A non-2xx response throws `IAM_HTTP_RESPONSE_ERROR` (`meta: { status, body }`). The body is read as a stream with a 4 KiB hard ingest cap and truncated to 200 characters with a `...(truncated)` suffix before it lands in `meta.body`, so a hostile remote cannot exhaust memory building an error message. Successful bodies go through the same treatment at a larger scale: reading stops at 4 MiB and throws `IAM_HTTP_RESPONSE_TOO_LARGE` (`meta: { capBytes }`).
 
 `404` is special only for `getPolicy` and `getRole`, which return `null` for it. On every other endpoint a `404` is an error.
 
@@ -244,9 +246,9 @@ Backoff for attempt N is `min(backoffMs * 2^(N-1), 60_000)` plus a random jitter
 
 **Closed** passes traffic. Each request that ends in a thrown error increments a consecutive-failure counter; any response at all (2xx or 4xx) resets it to zero. At `circuitBreakerThreshold` the circuit opens.
 
-**Open** rejects immediately with `[@gentleduck/iam:http] circuit open - refusing request`, without a fetch attempt, for `circuitBreakerCooldownMs`.
+**Open** rejects immediately with `IAM_HTTP_CIRCUIT_OPEN` (`meta: { state: 'open' }`), without a fetch attempt, for `circuitBreakerCooldownMs`.
 
-**Half-open** begins when the cooldown elapses. Exactly one probe is allowed through; concurrent callers reject fast with `[@gentleduck/iam:http] circuit half-open probe in flight` so a recovering upstream is not flooded the instant it comes back. The probe's outcome closes the circuit or re-opens it for another cooldown.
+**Half-open** begins when the cooldown elapses. Exactly one probe is allowed through; concurrent callers reject fast with the same `IAM_HTTP_CIRCUIT_OPEN` code (`meta: { state: 'half-open-busy' }`) so a recovering upstream is not flooded the instant it comes back. The probe's outcome closes the circuit or re-opens it for another cooldown.
 
 Breaker state is per adapter instance, not per process. It cannot be disabled by configuration - `0` is rejected at construction - so raise the threshold above any burst you expect instead.
 
@@ -262,15 +264,16 @@ The adapter refuses obviously bad input before it reaches the wire, and refuses 
 | --- | --- |
 | Any id that is empty, non-string, contains `/` or `\`, is all dots, or is over 1024 characters | **throws**, no request issued. Reads and writes share one guard, so a write cannot store an id a read could never fetch back. It used to return `null`, `[]` or `{}` instead; the `{}` was the sharp end, because a rule denying on `attributes.suspended === true` then evaluated as though the attribute were absent - a guard meant to bound a URL was quietly retiring deny rules. |
 | `assignRole` with `scope: ''` or `scope: '*'`, or with `startsAt` / `expiresAt` / `attributes` | throws, naming the option; this adapter stores none of them |
-| `setSubjectAttributes` with a non-object `attrs` | throws `[@gentleduck/iam:http] attributes for "<id>" must be a plain object (got string)` |
+| `setSubjectAttributes` with a non-object `attrs` | throws `IAM_ATTRIBUTES_INVALID` (`meta: { adapter: 'http', subjectId, reason: 'not-object', got }`) - the same shared guard every adapter uses |
+| `setSubjectAttributes` with a `__proto__` own key in `attrs` | throws the same `IAM_ATTRIBUTES_INVALID`, but `meta.reason: 'forbidden-key'` - `__proto__` cannot round-trip through `JSON.parse` intact, so it is refused rather than silently mishandled |
 | `GET /policies` or `/roles` returns a non-array | reported through `onPolicyError` with `rowId` set to the path, treated as `[]` |
-| A **policy** row fails `parsePolicyRow` | reported, then the whole read **throws** - a dropped policy may be the one that denies |
+| A **policy** row fails `parsePolicyRow` | reported, then the whole read **throws** `IAM_UNREADABLE_POLICY` (`meta: { adapter: 'http', policyId, detail }`) - a dropped policy may be the one that denies |
 | A **role** row fails `parseRoleRow` | dropped and reported; the rest of the catalog is returned. The row's own `id` is used as the `rowId` when present, else `"/roles[3]"` |
-| `GET /subjects/{id}/roles` returns a non-array | throws `[@gentleduck/iam:http] getSubjectRoles for "<id>" returned object (expected JSON array)` |
+| `GET /subjects/{id}/roles` returns a non-array | throws `IAM_HTTP_SUBJECT_ROLES_INVALID` (`meta: { subjectId, reason: 'not-array', got }`) |
 | An entry in it is not a non-empty string | silently skipped |
-| `GET /subjects/{id}/scoped-roles` returns a non-array | throws the equivalent `getSubjectScopedRoles` message |
+| `GET /subjects/{id}/scoped-roles` returns a non-array | throws `IAM_HTTP_SUBJECT_SCOPED_ROLES_INVALID` (`meta: { subjectId, reason: 'not-array', got }`) |
 | An entry lacks a non-empty string `role` **and** `scope` | silently skipped: a scoped role with no scope is not a global grant |
-| `GET /subjects/{id}/attributes` returns an array, `null`, or a scalar | throws `[@gentleduck/iam:http] getSubjectAttributes for "<id>" returned array (expected JSON object)` |
+| `GET /subjects/{id}/attributes` returns an array, `null`, or a scalar | throws `IAM_ATTRIBUTES_CORRUPT` (`meta: { adapter: 'http', subjectId, reason: 'not-object' }`) - the same shared read-path guard every adapter uses, which also fires on a stored `__proto__`-keyed bag |
 
 The asymmetry is deliberate and matches the other adapters. A bad *role* row is dropped, because role permissions are allow-only and losing one can only cost a subject a grant. A bad *policy* row and bad *subject* data both throw, because silently returning `[]` or `{}` would strip a deny rule and change decisions with no signal. See the same rule in a different store on the [Redis](/duck-iam/integrations/adapters/redis#row-validation) and [Prisma](/duck-iam/integrations/adapters/prisma#row-validation) pages.
 

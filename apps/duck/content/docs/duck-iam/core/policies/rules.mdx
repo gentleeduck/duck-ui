@@ -47,12 +47,7 @@ defineRule('banned-deny').deny().on('*').of('*').when((w) => w.attr('status', 'e
 
 `allow` is the default *effect*, but a rule that configures nothing at all is refused by `build()` - the defaults are the broadest possible grant, `allow * on *` unconditional, so returning one silently is not an option. Any of `allow()`, `deny()`, `on()`, `of()`, `forScope()`, `whenAny()`, or a `when()` that actually added a condition counts as configuring the rule. `allow()` is also how you override an earlier `deny()` on the same builder. How a deny interacts with an allow depends on the policy's [combining algorithm](/duck-iam/core/policies/combining-algorithms).
 
-```text
-[@gentleduck/iam:builder] RuleBuilder.build("x") was never configured - no effect, action,
-resource, scope or condition was set. The defaults are the broadest possible grant
-(allow * on *, unconditional), so this is refused rather than returned.
-Call `.allow()` if a broad grant is intended.
-```
+An unconfigured builder throws the coded `IamError` `IAM_BUILDER_RULE_UNCONFIGURED` (`meta: { ruleId }`) - not the validator path at all, since there is no rule object yet to validate.
 
 ## Actions and resources
 

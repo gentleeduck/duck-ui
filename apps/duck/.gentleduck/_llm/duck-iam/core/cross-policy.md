@@ -14,7 +14,7 @@ The distinction the diagram turns on is between a policy that has nothing to say
 | `'allow-overrides'` | Any applicable allow wins. Only if all applicable policies deny is the result a deny. | Layered grants where one permissive policy must beat stricter ones - break-glass roles, support escalation. |
 | `'first-applicable'` | The first policy that produces a decision **with a deciding rule** wins. A policy that was applicable but fell back to `defaultEffect` does not decide. | Ordered-by-specificity policy sets, XACML style, where policy order is deliberately part of the security model. |
 
-The engine constructor throws when `mode: 'production'` is combined with `policyCombine: 'first-applicable'`, because the fast path cannot represent it faithfully. The message names both: `policyCombine 'first-applicable' requires mode 'development'`. In development the pair is accepted, but `_getCompiledTable()` returns `null` for it and every request runs on the interpreter.
+The engine constructor throws when `mode: 'production'` is combined with `policyCombine: 'first-applicable'`, because the fast path cannot represent it faithfully. It throws the coded `IAM_ENGINE_POLICY_COMBINE_INCOMPATIBLE`, whose `meta` carries both `mode` and `policyCombine` (an `IamError`'s message is the bare code; read `meta` for the detail). In development the pair is accepted, but `_getCompiledTable()` returns `null` for it and every request runs on the interpreter.
 
 Each mode has its own fall-through reason string when nothing applied, which is the fastest way to identify the mode from a log line:
 

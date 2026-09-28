@@ -219,7 +219,7 @@ interface ICondition {
 .when((w) => w.or((o) => o.role('admin').and((a) => a.role('editor').isOwner())))
 ```
 
-Groups nest up to `MAX_CONDITION_DEPTH`, which is 10; the comparison is `>=`, so a tree exactly ten groups deep evaluates and eleven throws `IamConditionGroupError`. It throws rather than answering `false` for the reason above - a `false` inside a `none` group is a grant. `validateRoles` and `validatePolicy` enforce the same bound at authoring time, so a policy that builds cannot hit it at runtime.
+Groups nest up to `MAX_CONDITION_DEPTH`, which is 10; the comparison is `>=`, so a tree exactly ten groups deep evaluates and eleven throws the coded `IamError` `IAM_CONDITION_GROUP_INVALID` (`meta: { reason: 'depth', detail }`). It throws rather than answering `false` for the reason above - a `false` inside a `none` group is a grant. `validateRoles` and `validatePolicy` enforce the same bound at authoring time, so a policy that builds cannot hit it at runtime.
 
 ## The RuleBuilder API
 

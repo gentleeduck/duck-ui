@@ -1,6 +1,6 @@
 ---
 title: Hono
-description: The Hono middleware, per-route guard, and admin router: edge-safe, with cf-connecting-ip handling and normalised forwarded IPs
+description: The Hono middleware, per-route guard, and admin router, edge-safe, with cf-connecting-ip handling and normalised forwarded IPs
 section: Integrations
 ---
 `@gentleduck/iam/server/hono` exposes the same two request gates as the Express wrapper plus a function that binds admin routes onto a router you already own. It imports no Node built-ins and no Hono types, so it runs wherever Hono runs: Node, Bun, Deno, Cloudflare Workers, and Vercel Edge. The shared extraction and audit behaviour lives in [generic helpers](/duck-iam/integrations/server/generic); this page documents only what Hono adds.
@@ -314,7 +314,7 @@ These are returned responses, not throws, so `iamWithAdminAudit` records them wi
 The last four are the shared `IamAdminAudit.IOptions`; their exact semantics, the event shape, and the CSRF predicate are documented once on the [generic helpers page](/duck-iam/integrations/server/generic).
 
 <Callout tone="warning" title="authorize is mandatory">
-`iamBindAdminRouter` throws at construction when `opts.authorize` is not a function: `[@gentleduck/iam] iamBindAdminRouter requires an authorize callback.` The router writes policies, roles, and assignments straight to the adapter, so there is no useful unauthenticated mode.
+`iamBindAdminRouter` throws at construction when `opts.authorize` is not a function: the coded `IamError` `IAM_SERVER_ADMIN_AUTHORIZE_REQUIRED` (`meta: { framework: 'hono', fn: 'iamBindAdminRouter' }`). The router writes policies, roles, and assignments straight to the adapter, so there is no useful unauthenticated mode.
 </Callout>
 
 <Callout tone="warning" title="CSRF check is on by default">

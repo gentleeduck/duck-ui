@@ -10,12 +10,12 @@ engine. Conflating them produces a panel of unstyled boxes, or a package that wi
 
 | | `@gentleduck/iam/dt` (v1) | `@gentleduck/iam/dt/v2` |
 |---|---|---|
-| Runtime deps | React only | React, `@gentleduck/registry-ui`, `@gentleduck/libs`, `lucide-react` — all optional peers |
+| Runtime deps | React only | React, `@gentleduck/registry-ui`, `@gentleduck/libs`, `lucide-react`: all optional peers |
 | Styling | one `
 
 v1 needs `react` and nothing else. It does not import `@gentleduck/registry-ui`,
 `@gentleduck/libs` or `lucide-react`, and a lint sweep over `src/dt` fails the build if a
-module ever does — that self-containment is the whole reason v1 exists.
+module ever does: that self-containment is the whole reason v1 exists.
 
 ```tsx
 import { IamDevtools } from '@gentleduck/iam/dt'
@@ -33,8 +33,8 @@ export function App() {
 That renders a floating launcher in the bottom-right. Opening it slides a resizable,
 dockable panel in from the bottom.
 
-The panel reads your entire authorization model — every policy body, every role and its
-permissions, arbitrary subjects' attributes — and the Subjects panel *writes*: it can
+The panel reads your entire authorization model (every policy body, every role and its
+permissions, arbitrary subjects' attributes) and the Subjects panel *writes*: it can
 assign and revoke roles and overwrite attributes through `engine.admin`. Shipping it to a
 deployed environment is CWE-200 (information exposure) and CWE-489 (leftover debug code).
 
@@ -106,7 +106,7 @@ export interface IamIDevtoolsEngine {
 }
 ```
 
-`stats` is the engine's observability facet with `get()` and `reset()` — the same shape
+`stats` is the engine's observability facet with `get()` and `reset()`: the same shape
 `IamEngine` has carried since 3.0.0, so a real engine satisfies this interface structurally
 and needs no shim.
 
@@ -140,7 +140,7 @@ signal:
 | `defaultRequest` | `Partial
 
 Two panels write. Subjects mutates the store through `engine.admin`, and Metrics' reset
-button clears the running engine's real counters through `engine.stats.reset()` — which is
+button clears the running engine's real counters through `engine.stats.reset()`, which is
 why the guard covers that tab too.
 
 ### Flow
@@ -155,8 +155,8 @@ Without a `flow` prop the tab renders a hint telling you to bind a recorder to
 
 ### Decision
 
-The interactive tester. It builds an `IamIDecisionInput` from the form — subject id, action,
-scope, resource type, resource id, `resource.attributes` JSON, environment JSON — and calls
+The interactive tester. It builds an `IamIDecisionInput` from the form (subject id, action,
+scope, resource type, resource id, `resource.attributes` JSON, environment JSON) and calls
 `engine.explain(subjectId, action, resource, environment)`. A non-empty scope field is
 merged into the environment object as `{ scope }`. Both JSON textareas parse through
 `safeParseJson`, so a syntax error becomes an inline `attributes JSON: ...` message rather
@@ -180,8 +180,8 @@ your own anywhere.
 ### Policies
 
 Calls `engine.admin.listPolicies()` on mount and on the refresh button. Filters by id or
-name. The detail view shows the id, name, algorithm, version, description, and every rule —
-each expandable to its description and its condition tree — plus a collapsible raw JSON view.
+name. The detail view shows the id, name, algorithm, version, description, and every rule
+(each expandable to its description and its condition tree) plus a collapsible raw JSON view.
 
 ### Roles
 
@@ -209,7 +209,7 @@ hook firing per decision would put devtools rendering on the hot path of every c
 
 Without an aggregator the evaluation tiles say so rather than rendering zeroes that look
 like real measurements. Neither build surfaces `snapshot.failOpen`, the count of allows
-attributable solely to `defaultEffect: 'allow'` — read it from the aggregator yourself if
+attributable solely to `defaultEffect: 'allow'`: read it from the aggregator yourself if
 you are watching for silent policy-set breakage.
 
 | Tile | Source |
@@ -220,8 +220,8 @@ you are watching for silent policy-set breakage.
 | `max`, `p50`, `p95`, `p99` | the matching `snapshot` fields, in ms |
 | `deny` | `snapshot.deny` |
 
-Below that, one card per engine cache — `policies`, `roles`, `rbacPolicy`,
-`mergedPolicies`, `subjects` — with a hit-rate badge (green above 80%, blue above 50%,
+Below that, one card per engine cache: `policies`, `roles`, `rbacPolicy`,
+`mergedPolicies`, `subjects`, with a hit-rate badge (green above 80%, blue above 50%,
 amber otherwise), the size, and the raw hit/miss counts. A collapsible raw view dumps both
 objects.
 
@@ -241,13 +241,13 @@ export function iamCreateFlowRecorder(options?: IamIFlowRecorderOptions): IamIFl
 
 | Option | Type | Default | Meaning |
 |---|---|---|---|
-| `bufferSize` | `number` | `250` | Ring size. New entries go to the front; the oldest are dropped. Must be a positive integer — `0`, `-1`, `1.5`, `NaN` and `Infinity` all throw `RangeError` at construction, because unchecked they make the trim comparison always false and the "ring" grows without bound for the life of the process. |
+| `bufferSize` | `number` | `250` | Ring size. New entries go to the front; the oldest are dropped. Must be a positive integer: `0`, `-1`, `1.5`, `NaN` and `Infinity` all throw the coded `IamError` `IAM_DT_FLOW_BUFFER_SIZE_INVALID` (`meta: { got }`) at construction, because unchecked they make the trim comparison always false and the "ring" grows without bound for the life of the process. |
 
 `IamIFlowEntry` fields: `id` (monotonic from 1), `ts` (`Date.now()` unless you pass one),
 `subjectId`, `action`, `resource`, `resourceId?`, `scope?`, `allowed`, `durationMs?`,
 `reason?`, `decidingPolicy?`, `decidingRule?`, `environment?`.
 
-There is no built-in engine binding — wire it in the `afterEvaluate` hook yourself:
+There is no built-in engine binding; wire it in the `afterEvaluate` hook yourself:
 
 ```tsx
 import { iamCreateFlowRecorder } from '@gentleduck/iam/dt'
@@ -278,8 +278,10 @@ const engine = new IamEngine({
 })
 ```
 
-`afterEvaluate` fires in `development` mode only, which lines up exactly with when the panel
-can render. A listener that throws is caught and logged with
+`afterEvaluate` fires in both modes whenever it is wired - it is not gated to `development`
+the way `explain()` is. Wiring the flow recorder in a production engine works and records
+real traffic; the panel simply will not render there to read it. A listener that throws is
+caught and logged with
 `[@gentleduck/iam:dt:flow] listener threw - continuing`, so one broken subscriber cannot
 break the recorder.
 
@@ -351,14 +353,14 @@ Panel prop signatures, exactly:
 | `IamMetricsPanel` | `{ engine: IamIDevtoolsEngine; metrics?: IamIDevtoolsMetrics; pollMs?: number }` |
 | `IamTraceTree` | `{ result: Explain.IResult }` |
 
-`IamMetricsPanel` requires `engine` — cache stats come from it, and only the evaluation
+`IamMetricsPanel` requires `engine`: cache stats come from it, and only the evaluation
 tiles come from `metrics`.
 
 Every panel that takes an `engine` runs `isDevtoolsAllowed` itself, not only `IamDevtools`
 and `IamDevtoolsInner`: Decision, Policies, Roles, Subjects and Metrics each return `null`
 without a development signal. Guarding only the shells meant a panel composed into someone
 else's admin UI reached the engine with no check anywhere in its path. `IamFlowPanel` and
-`IamTraceTree` are the two exceptions, and they take no engine — they render a buffer and a
+`IamTraceTree` are the two exceptions, and they take no engine; they render a buffer and a
 trace you already hold.
 
 ## Full export list
@@ -412,8 +414,8 @@ stylesheet of its own.
 
 ## See also
 
-* [Explain traces](/duck-iam/advanced/explain) — the trace format the Decision panel renders.
-* [Metrics aggregator](/duck-iam/integrations/observability/metrics) — the source for the Metrics tiles.
-* [Engine hooks](/duck-iam/advanced/engine/hooks) — `afterEvaluate` and `onMetrics`, the two the panel depends on.
-* [Engine admin API](/duck-iam/advanced/engine/admin) — everything the Policies, Roles, and Subjects panels call.
-* [Engine modes](/duck-iam/advanced/engine/modes) — why `development` mode is required.
+* [Explain traces](/duck-iam/advanced/explain): the trace format the Decision panel renders.
+* [Metrics aggregator](/duck-iam/integrations/observability/metrics): the source for the Metrics tiles.
+* [Engine hooks](/duck-iam/advanced/engine/hooks): `afterEvaluate` and `onMetrics`, the two the panel depends on.
+* [Engine admin API](/duck-iam/advanced/engine/admin): everything the Policies, Roles, and Subjects panels call.
+* [Engine modes](/duck-iam/advanced/engine/modes): why `development` mode is required.

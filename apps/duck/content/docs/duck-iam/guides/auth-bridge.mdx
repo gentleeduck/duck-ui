@@ -121,7 +121,7 @@ The namespace is `Identities`, plural. It was exported as `Identity` for a while
 `IamRequest.ISubject` has exactly four fields: `id`, `roles`, `scopedRoles?`, `attributes`. It has no `tenantId` of its own - thread the tenant through `attributes` and through the request's `scope`. Everything a policy condition needs to read must be inside `attributes`, reachable at the dot-path `subject.attributes.<key>`.
 
 <Callout tone="warning" title="Attribute bags are bounded">
-When you write attributes through `engine.admin.setAttributes()` the engine enforces a plain-object shape, at most 256 own keys, and nesting depth at most 16, throwing `[@gentleduck/iam:engine] attributes must have <=256 keys` and friends. Keep the projection flat and small; `session.factors` mapped to method strings rather than the raw objects is the reason for the `.map` above.
+When you write attributes through `engine.admin.setAttributes()` the engine enforces a plain-object shape, at most 256 own keys, and nesting depth at most 16, throwing `IAM_ENGINE_ATTRIBUTES_PARAM_INVALID` (`meta.reason`: `'not-object'` / `'too-many-keys'` / `'too-deep'`). Keep the projection flat and small; `session.factors` mapped to method strings rather than the raw objects is the reason for the `.map` above.
 </Callout>
 
 ## Use it in a handler

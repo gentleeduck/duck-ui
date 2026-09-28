@@ -320,14 +320,14 @@ A bad **role** row is **skipped and named**: `listRoles` drops it, returns the r
 
 What you saw without that warning: the role's permissions stop applying, every role inheriting it silently loses that branch, and, because `resolveEffectiveRoles` keeps a directly assigned id whether or not the catalog defines it, subjects still *hold* the role id while it grants nothing. A support ticket with no log line behind it.
 
-A bad **policy** row is refused outright: the read **throws** and the engine denies until the row is repaired, because a dropped policy may be the one that says NO. `getPolicy` on a corrupt row throws rather than returning `null`, so a corrupt row cannot impersonate a deleted one.
+A bad **policy** row is refused outright: it is `console.warn`'d (`` `[@gentleduck/iam:prisma] unreadable policy row "<id>": <issues>` ``) and the read **throws** `IAM_UNREADABLE_POLICY` (`meta: { adapter: 'prisma', policyId, detail }`), so the engine denies until the row is repaired - a dropped policy may be the one that says NO. `getPolicy` on a corrupt row throws rather than returning `null`, so a corrupt row cannot impersonate a deleted one.
 
 Reporting is `console.warn` rather than `onPolicyError` for a structural reason: this adapter takes no options object, so there is nowhere to wire a handler without changing its constructor.
 
 Subject attributes behave differently on purpose.
 
 <Callout tone="warning" title="SEC-058: a corrupt attribute blob throws, it does not return `{}`">
-  `getSubjectAttributes` throws `[@gentleduck/iam:prisma] corrupted attributes for "<id>" (expected JSON object, got array)`, or `null`, or `string`, or whatever the stored value actually is, rather than falling back to an empty bag. An empty bag would silently strip every ABAC condition and flip decisions with no operator signal. The engine routes the throw through `onError`, fails closed with a deny, and records it on `onMetrics`. Since 2.1.0.
+  `getSubjectAttributes` throws `IAM_ATTRIBUTES_CORRUPT` (`meta: { adapter: 'prisma', subjectId, reason: 'not-object' }`, whatever the stored value actually is - array, `null`, a bare string) rather than falling back to an empty bag. An empty bag would silently strip every ABAC condition and flip decisions with no operator signal. The engine routes the throw through `onError`, fails closed with a deny, and records it on `onMetrics`. Since 2.1.0.
 </Callout>
 
 The returned object is rebuilt key by key into a fresh `Record` rather than handed back as the Prisma-managed value, so the engine cannot hold a reference into Prisma's result. `setSubjectAttributes` is the one path that recovers from corruption: it catches the failed read and merges onto `{}`, so an operator can always overwrite a broken row instead of being locked out of fixing it.

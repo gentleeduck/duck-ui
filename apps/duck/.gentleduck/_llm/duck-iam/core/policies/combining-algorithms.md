@@ -158,7 +158,7 @@ const tiered = definePolicy('classified-docs')
 | Anyone reads a top-secret document | `normal-read`, `classified-deny` | `classified-deny` (p=50) | **deny** |
 | Incident commander with `breakGlass` reads it | all three | `break-glass` (p=100) | **allow** |
 
-`priority` defaults to `10` and must be a finite number - `priority(NaN)` and `priority(Infinity)` are rejected by `build()` with `INVALID_TYPE`. A row that reached the store with a non-finite priority anyway is ranked as `0` rather than losing every comparison, so it still competes with default-priority rules instead of disappearing. Details on [rules](/duck-iam/core/policies/rules#priority).
+`priority` defaults to `10` and must be a finite number - `priority(NaN)` and `priority(Infinity)` are rejected by `build()` with `INVALID_TYPE`. A row that reached the store with a non-finite priority anyway - a seed, a migration, a direct write - is not ranked as `0`: `rulePriority()` throws `IAM_EVALUATE_RULE_PRIORITY_INVALID` the moment it is read, which both evaluators treat as the policy going Indeterminate, denying if it holds any deny rule and falling back to `defaultEffect` otherwise. Ranking it as `0` was the earlier behavior and was itself the bug - it let a deny at a broken priority lose to any allow with a positive one, which reads the same as the deny silently disappearing. Details on [rules](/duck-iam/core/policies/rules#priority).
 
 ## When no rule matched
 
@@ -219,6 +219,7 @@ interface AccessControl.IDecision {
   readonly duration: number                     // ms
   readonly timestamp: number                    // epoch ms
   readonly applicable?: boolean                 // false only for NotApplicable
+  readonly failure?: 'input' | 'resolution' | 'evaluation' // set when the engine failed, not a policy
 }
 ```
 

@@ -163,7 +163,7 @@ The offending policy stays **applicable** and votes Indeterminate: it denies if 
 
 RBAC is the one deliberate exception. `rbacVote` catches per grant group rather than around the whole scan, because scoped and conditioned role grants are independent grants from separate roles that only look like one policy because the compiler folds them into a single allow-only `__rbac__`. Abstaining per grant is safe there precisely because role permissions are allow-only - there is no deny to lose - and wrapping the whole loop instead let one unreadable permission delete every unrelated grant in the cell.
 
-A compile failure is reported the same way: `IamPolicyCompileError` is forwarded here with its `policyId` and then rethrown, and every request is denied until the policy is fixed. The forward is wrapped in its own try, so a throwing handler cannot replace the compile error.
+A compile failure is reported the same way: the coded `IamError` `IAM_POLICY_COMPILE_FAILED` (`meta: { policyId, detail }`) is forwarded here with its `policyId` and then rethrown, and every request is denied until the policy is fixed. The forward is wrapped in its own try, so a throwing handler cannot replace the compile error.
 
 With no handler, a policy that throws on every request votes Indeterminate
 forever with nobody told. Under `defaultEffect: 'allow'` an allow-only policy

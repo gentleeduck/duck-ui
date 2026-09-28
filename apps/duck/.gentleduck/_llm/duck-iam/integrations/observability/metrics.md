@@ -154,13 +154,13 @@ The one other label operators reach for is the Redis invalidator's `onMessageDro
 ```ts
 const cap = config.sampleSize ?? 1000
 if (!Number.isInteger(cap) || cap < 1) {
-  throw new RangeError(`[@gentleduck/iam:metrics] sampleSize must be a positive integer (got ${String(cap)})`)
+  throwIamError('IAM_METRICS_SAMPLE_SIZE_INVALID', { got: cap })
 }
 ```
 
-The factory rejects any `sampleSize` that is not a positive integer, throwing a `RangeError` whose message names the option and echoes the offending value. `metrics-sample-size.test.ts` pins `0`, `-1`, `1.5`, `NaN`, and `Infinity` as rejected, and `1` as accepted.
+The factory rejects any `sampleSize` that is not a positive integer, throwing the coded `IamError` `IAM_METRICS_SAMPLE_SIZE_INVALID` (`meta: { got }`) naming the offending value. `metrics-sample-size.test.ts` pins `0`, `-1`, `1.5`, `NaN`, and `Infinity` as rejected, and `1` as accepted.
 
-`sampleSize: 0` was the dangerous one. It allocates an empty buffer, turns `head % cap` into `NaN`, and makes `buf[NaN] = durationMs` a silent no-op - every sample is discarded, `samples` stays `0`, and every percentile reports `0` forever. A dashboard reading that snapshot shows a perfectly healthy p99 of zero. The other bad values (`-1`, `1.5`, `Infinity`) reached `new Float64Array(cap)` and surfaced a raw `RangeError` about invalid typed-array length that never mentioned `sampleSize`, leaving the operator to guess. Both classes now fail loudly at construction with the option name in the message.
+`sampleSize: 0` was the dangerous one. It allocates an empty buffer, turns `head % cap` into `NaN`, and makes `buf[NaN] = durationMs` a silent no-op - every sample is discarded, `samples` stays `0`, and every percentile reports `0` forever. A dashboard reading that snapshot shows a perfectly healthy p99 of zero. The other bad values (`-1`, `1.5`, `Infinity`) reached `new Float64Array(cap)` and surfaced a raw `RangeError` about invalid typed-array length that never mentioned `sampleSize`, leaving the operator to guess. Both classes now fail loudly at construction with `IAM_METRICS_SAMPLE_SIZE_INVALID` and the offending value on `meta.got`.
 
 Choosing a value:
 
@@ -191,13 +191,13 @@ A larger window buys tail accuracy and costs snapshot time, not record time. `re
 function iamCreateMetricsAggregator(config?: IamMetrics.IConfig): IamMetrics.IAggregator
 ```
 
-Returns a new aggregator with zeroed counters and an empty window. Throws `RangeError` when `config.sampleSize` is present and is not a positive integer.
+Returns a new aggregator with zeroed counters and an empty window. Throws the coded `IamError` `IAM_METRICS_SAMPLE_SIZE_INVALID` when `config.sampleSize` is present and is not a positive integer.
 
 #### Options
 
 | Option | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `sampleSize` | `number` | `1000` | Durations kept in the rolling window. Must be a positive integer; anything else throws a `RangeError` naming the option |
+| `sampleSize` | `number` | `1000` | Durations kept in the rolling window. Must be a positive integer; anything else throws `IAM_METRICS_SAMPLE_SIZE_INVALID` (`meta: { got }`) |
 
 ### `IamMetrics.IAggregator`
 

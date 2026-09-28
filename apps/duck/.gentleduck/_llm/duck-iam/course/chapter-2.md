@@ -259,7 +259,7 @@ interface IIssue {
 
 `valid` is `false` only for error-level issues. Treat warnings as build failures in CI anyway - both of them describe configuration that does nothing useful.
 
-`RoleBuilder.build()` calls `validateRole` on the single role and throws with a message prefixed `[@gentleduck/iam:builder] RoleBuilder.build(): role rejected by validator`. What `build()` cannot see is the *set*: duplicates, dangling parents, and cycles are cross-role facts, which is what `validateRoles` is for.
+`RoleBuilder.build()` calls `validateRole` on the single role and throws the coded `IamError` `IAM_VALIDATION_FAILED` (`meta: { kind: 'role', issues }`). What `build()` cannot see is the *set*: duplicates, dangling parents, and cycles are cross-role facts, which is what `validateRoles` is for.
 
 ## What just happened
 

@@ -119,10 +119,10 @@ Notes per family:
 | Operand | Result |
 | --- | --- |
 | The right type | the operator runs |
-| The `value` key absent on a non-valueless operator | `IamOperandTypeError` - "requires a `value` and the key is absent" |
-| A `$`-reference that resolved to `null` | `IamOperandTypeError` - "operand reference ... resolved to nothing" |
-| Any other type mismatch (`in` with a non-array, `gt` with a string, `matches` with `42`) | `IamOperandTypeError` naming the field and operator |
-| A `$`-reference on `matches` | `IamUserSourcedPatternError`, refused before resolution |
+| The `value` key absent on a non-valueless operator | coded `IamError` `IAM_CONDITION_OPERAND_TYPE` - detail "requires a `value` and the key is absent" on `meta` |
+| A `$`-reference that resolved to `null` | `IAM_CONDITION_OPERAND_TYPE` - detail "operand reference ... resolved to nothing" on `meta` |
+| Any other type mismatch (`in` with a non-array, `gt` with a string, `matches` with `42`) | `IAM_CONDITION_OPERAND_TYPE`, `meta: { field, operator, detail }` |
+| A `$`-reference on `matches` | `IAM_CONDITION_USER_SOURCED_PATTERN`, refused before resolution |
 
 A literal `value: null` is an author explicitly testing for null and still works; only a `$`-reference resolving to nothing is refused. That distinction is what fixed the canonical multi-tenant guard: `subject.attributes.tenant eq $resource.attributes.tenant` compared `null === null` and allowed a request carrying neither attribute, through the fully validated authoring path, because the validator cannot type a `$`-reference.
 
@@ -139,10 +139,10 @@ A literal `value: null` is an author explicitly testing for null and still works
 
 | Guard | Trigger | Refusal |
 | --- | --- | --- |
-| No `$`-sourced patterns | the `value` begins with `$` | `IamUserSourcedPatternError`, thrown before the reference is resolved |
-| Pattern length | pattern longer than `MAX_REGEX_LENGTH` (`128`) | `IamPatternRefusedError('too-long')` |
-| ReDoS shape | `detectCatastrophicRegex` refuses it, or it is not a valid regex | `IamPatternRefusedError('uncompilable')` |
-| Input length | the resolved field string is longer than `MAX_REGEX_INPUT_LENGTH` (`2048`) | `IamRegexInputTooLargeError`, carrying `field` and `length` |
+| No `$`-sourced patterns | the `value` begins with `$` | `IAM_CONDITION_USER_SOURCED_PATTERN`, thrown before the reference is resolved |
+| Pattern length | pattern longer than `MAX_REGEX_LENGTH` (`128`) | `IAM_CONDITION_PATTERN_REFUSED`, `meta: { field, reason: 'too-long', detail }` |
+| ReDoS shape | `detectCatastrophicRegex` refuses it, or it is not a valid regex | `IAM_CONDITION_PATTERN_REFUSED`, `meta: { field, reason: 'uncompilable', detail }` |
+| Input length | the resolved field string is longer than `MAX_REGEX_INPUT_LENGTH` (`2048`) | `IAM_CONDITION_REGEX_INPUT_TOO_LARGE`, `meta: { field, length }` |
 
 `detectCatastrophicRegex` is the single predicate both `getCachedRegex` and the validator run, so a pattern accepted at import time can never be refused at evaluation time or the reverse. It refuses nested quantifiers (`(a+)+`), alternation inside a quantified group (`(a|aa)+`), a backreference followed by a quantifier, a quantified group inside a lookaround, a `{n,m}` bound over 1000, more than four unbounded quantifiers, and unbounded quantifiers competing over overlapping atoms (`^a+a+$`, `.*.*`). Overlap is decided by probing each atom rather than by parsing character classes, so `[a-z]+@[a-z]+\.[a-z]+` stays accepted. At `build()` time the same refusal surfaces as `ERR_REGEX_CATASTROPHIC` (see [building policies](/duck-iam/core/policies/building#what-build-validates)).
 
@@ -226,7 +226,15 @@ type IamPrimitives.Scalar = string | number | boolean | null
 type IamPrimitives.AttributeValue = Scalar | Scalar[] | Record<string, Scalar>
 ```
 
-Runtime helpers for tooling and tests, exported from `@gentleduck/iam` and `@gentleduck/iam/core` under the `iam` / `IAM_` prefix: `iamEvalCondition`, `iamEvalConditionGroup`, `iamEvaluateOperator`, `iamMatchesUnconditionally`, `iamResolveConditionValue`, `iamResolveValue`, `iamIsCondition`, `iamIsUserSourcedValue`, `iamGetCachedRegex`, `iamDetectCatastrophicRegex`, `iamClearRegexCache`, and the limits `IAM_MAX_CONDITION_DEPTH`, `IAM_MAX_REGEX_LENGTH`, `IAM_MAX_REGEX_INPUT_LENGTH`, `IAM_MAX_BOUNDED_QUANTIFIER`, `IAM_MAX_UNBOUNDED_QUANTIFIERS`, `IAM_REGEX_CACHE_MAX`. Every condition error class is exported unprefixed: `IamConditionGroupError`, `IamOperandTypeError`, `IamPatternRefusedError`, `IamRegexInputTooLargeError`, `IamUserSourcedPatternError` - route them through `onPolicyError` rather than string-matching `err.name`.
+Runtime helpers for tooling and tests, exported from `@gentleduck/iam` and `@gentleduck/iam/core` under the `iam` / `IAM_` prefix: `iamEvalCondition`, `iamEvalConditionGroup`, `iamEvaluateOperator`, `iamMatchesUnconditionally`, `iamResolveConditionValue`, `iamResolveValue`, `iamIsCondition`, `iamIsUserSourcedValue`, `iamGetCachedRegex`, `iamDetectCatastrophicRegex`, `iamClearRegexCache`, and the limits `IAM_MAX_CONDITION_DEPTH`, `IAM_MAX_REGEX_LENGTH`, `IAM_MAX_REGEX_INPUT_LENGTH`, `IAM_MAX_BOUNDED_QUANTIFIER`, `IAM_MAX_UNBOUNDED_QUANTIFIERS`, `IAM_REGEX_CACHE_MAX`.
+
+The condition engine does not export its own error classes. Every refusal above throws the
+coded `IamError` with one of `IAM_CONDITION_GROUP_INVALID`, `IAM_CONDITION_OPERAND_TYPE`,
+`IAM_CONDITION_PATTERN_REFUSED`, `IAM_CONDITION_REGEX_INPUT_TOO_LARGE`, or
+`IAM_CONDITION_USER_SOURCED_PATTERN` - `IamError.Code` registry entries, not exported symbols.
+Route them through `onPolicyError`, and inside a handler test the code with
+`hasIamErrorCode(err, '<code>')` and read the detail off `metaOf(err, '<code>')`, never by
+string-matching `err.name` or `err.message` (an `IamError`'s `message` is just its bare code).
 
 The operator table `ops` and the process-wide `regexCache` are deliberately **not** exported. Neither is frozen at runtime, so withholding them from the barrel is the only thing keeping them internal: `ops.eq = () => false` would retire every `eq` deny rule in both evaluation modes. The engine-side contract is on [evaluation pipeline](/duck-iam/core/evaluation).
 
@@ -234,7 +242,7 @@ The operator table `ops` and the process-wide `regexCache` are deliberately **no
 
 * `contains()` (the shorthand) only accepts a string value; use `check(field, 'contains', 42)` for numbers.
 * `in` with an array field is an overlap test, not equality: `subject.roles in ['admin']` is true for `['viewer', 'admin']`.
-* `eq` takes a scalar operand. An array or object operand is refused as `IamOperandTypeError`; for set equality use `subset_of` plus `superset_of`.
+* `eq` takes a scalar operand. An array or object operand is refused as the coded `IamError` `IAM_CONDITION_OPERAND_TYPE`; for set equality use `subset_of` plus `superset_of`.
 * `matches` patterns are strings, so escape backslashes twice in TypeScript source (`'^.*@company\\.com$'`).
 
 ## See also

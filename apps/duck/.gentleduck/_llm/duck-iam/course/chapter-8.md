@@ -63,7 +63,7 @@ export const engine = new IamEngine({
 What production mode changes:
 
 * `check()` and `permissions()` return plain booleans instead of decision objects. `can()` returns `boolean` in both modes, so guards and middleware are unaffected.
-* `explain()` **throws** - `explain() is not available in production mode`. Keep a staging deployment in development mode for debugging.
+* `explain()` **throws** the coded `IAM_ENGINE_EXPLAIN_UNAVAILABLE`. Keep a staging deployment in development mode for debugging.
 * Evaluation runs against a compiled lookup table plus a role bitmask, rebuilt lazily and guarded by a generation counter so a concurrent invalidation cannot install a stale table.
 
 Two configurations the constructor refuses outright, both at construction rather than at request time:

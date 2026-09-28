@@ -89,7 +89,7 @@ Anywhere the builder takes a value: `check()`, `eq()`, `neq()`, `in()`, `gt`/`gt
 
 Two operators refuse or ignore the `$` form:
 
-* **`matches` refuses it.** A `matches` condition whose value starts with `$` throws `IamUserSourcedPatternError` before the reference is resolved, so no attacker-controlled attribute can ever supply the regex. It throws rather than answering `false` because `false` reads as "condition not met": measured through `engine.can` on a seeded policy, `deny when email matches $resource.attributes.bannedPattern` never fired and the banned subject was allowed, with nothing reported to `onPolicyError`. Details on [conditions](/duck-iam/core/policies/conditions#regex-safety-matches).
+* **`matches` refuses it.** A `matches` condition whose value starts with `$` throws the coded `IamError` `IAM_CONDITION_USER_SOURCED_PATTERN` (`meta: { field, value }`) before the reference is resolved, so no attacker-controlled attribute can ever supply the regex. It throws rather than answering `false` because `false` reads as "condition not met": measured through `engine.can` on a seeded policy, `deny when email matches $resource.attributes.bannedPattern` never fired and the banned subject was allowed, with nothing reported to `onPolicyError`. Details on [conditions](/duck-iam/core/policies/conditions#regex-safety-matches).
 * **Array literals are not resolved element by element.** `w.in('resource.attributes.ownerId', ['$subject.id'])` compares against the literal seven-character string `'$subject.id'`, not the subject id, and is therefore always false. Only a whole value that is a `$`-string is resolved.
 
 A `$` path that resolves **to** an array does work with the set operators, because the resolved value is a real array:
@@ -110,7 +110,7 @@ The second form is the useful one: with an array on both sides, `in` is an overl
 
 **On the field (left-hand) side, `null` is a match failure.** No guard runs; each operator's own `typeof` test decides, and most answer `false`. The four negated operators (`neq`, `nin`, `not_contains`, `not_exists`) answer `true`. That table is on [conditions](/duck-iam/core/policies/conditions#all-condition-operators).
 
-**On the operand (right-hand) side, a `$`-reference that resolves to `null` is a refusal.** `evalCondition` throws `IamOperandTypeError` naming the field, the operator, and the reference that resolved to nothing. The engine reports it through `hooks.onPolicyError` and the policy becomes Indeterminate: it still votes, and a policy carrying any deny rule votes `deny`. Under the default `policyCombine: 'and'` that deny is final.
+**On the operand (right-hand) side, a `$`-reference that resolves to `null` is a refusal.** `evalCondition` throws the coded `IamError` `IAM_CONDITION_OPERAND_TYPE` (`meta: { field, operator, detail }`) naming the field, the operator, and the reference that resolved to nothing. The engine reports it through `hooks.onPolicyError` and the policy becomes Indeterminate: it still votes, and a policy carrying any deny rule votes `deny`. Under the default `policyCombine: 'and'` that deny is final.
 
 This is what fixed the canonical multi-tenant guard. `subject.attributes.tenant eq $resource.attributes.tenant` used to compare `null === null` and **allow** a request that carried neither attribute - through the fully validated authoring path, since the validator cannot type a `$`-reference and so had nothing to say about it. The refusal is scoped to `$`-references on purpose: a literal `value: null` is an author explicitly testing for null and still works.
 
@@ -278,7 +278,7 @@ type DotPath.FlexibleDollarPaths<TContext> = DotPath.DollarPaths<TContext> | (st
 
 * A `$` is only special in the **first** character of a **string** condition value. `'price-$100'` is a literal; `['$subject.id']` is a literal array.
 * `$` on the `field` side is not a thing - fields are already paths. `check('$subject.id', ...)` looks for a root named `$subject`, which is unresolvable, and the validator warns `UNRESOLVABLE_FIELD`.
-* `eq` takes a scalar operand, so a `$` path that resolves to an array or object is refused as `IamOperandTypeError`. Use `subset_of` plus `superset_of` for set equality.
+* `eq` takes a scalar operand, so a `$` path that resolves to an array or object is refused as the coded `IamError` `IAM_CONDITION_OPERAND_TYPE`. Use `subset_of` plus `superset_of` for set equality.
 * `$scope` is `null` for an unscoped request, so `check('resource.attributes.orgId', 'eq', '$scope')` refuses on every unscoped request and takes its policy out of the decision. Guard the rule with `exists('scope')`, or use `forScope()` so the rule only applies to scoped requests.
 * Nothing resolves at build time, so a policy exported to JSON and re-imported behaves identically. See [admin export and import](/duck-iam/advanced/engine/admin).
 

@@ -38,7 +38,7 @@ Production does not run the interpreter and therefore cannot detect a disagreeme
 | `decision.reason` | the interpreter's real reason | `'Allowed/Denied (production mode; compiled table does not retain policy identity)'` |
 | `decision.policy` / `decision.rule` | present | `undefined` |
 | `decision.failure` | `'input'` / `'resolution'` / `'evaluation'` | no object to carry it: use `onError` |
-| `explain()` | works | throws `explain() is not available in production mode` |
+| `explain()` | works | throws the coded `IAM_ENGINE_EXPLAIN_UNAVAILABLE` |
 | `beforeEvaluate` | fires | fires |
 | `afterEvaluate` / `onDeny` | fire, with the full decision | fire, with a synthesised verdict-only decision |
 | `onError` / `onPolicyError` / `onMetrics` / `onMutation` | fire | fire |
@@ -59,12 +59,7 @@ The verdict-only decision is built by the engine **only when `afterEvaluate` or 
 
 ### Options production refuses
 
-`policyCombine: 'first-applicable'` throws at construction when combined with `mode: 'production'`:
-
-```
-[@gentleduck/iam:engine] policyCombine 'first-applicable' requires mode 'development';
-the production fast path cannot represent it correctly.
-```
+`policyCombine: 'first-applicable'` throws at construction when combined with `mode: 'production'`: the coded `IamError` `IAM_ENGINE_POLICY_COMBINE_INCOMPATIBLE` (`meta: { mode, policyCombine }`) - the production fast path cannot represent it correctly.
 
 `lookup()` folds its votes with `some` for `'allow-overrides'` and `every` for everything else, so first-applicable would arrive there as plain `'and'`. It never learns which policy voted first, or whether a vote was a real decision rather than a default.
 
@@ -72,7 +67,7 @@ The constructor refuses the combination outright in production. In **development
 
 ### The 32-role cap
 
-The table's RBAC grant mask is a `Uint32Array`, one bit per role. Past 32 roles the bit index would wrap - `1 << 32` is `1 << 0` in JavaScript - and role 33 would silently inherit role 0's grants. `compileTable` throws `IamRoleLimitExceededError` instead.
+The table's RBAC grant mask is a `Uint32Array`, one bit per role. Past 32 roles the bit index would wrap - `1 << 32` is `1 << 0` in JavaScript - and role 33 would silently inherit role 0's grants. `compileTable` throws the coded `IamError` `IAM_ROLE_LIMIT_EXCEEDED` (`meta: { roleCount, limit }`) instead.
 
 Because both modes evaluate through the table, the cap applies to both. It is **not** an error and not a deny: the engine catches that error specifically, warns once, and drops to the interpreter, which answers every question correctly and more slowly. `healthCheck()` then reports it on `compiledTable` with `ok` still `true`, since what was lost is throughput. Full rationale on [the compiled table page](/duck-iam/advanced/engine/compiled).
 

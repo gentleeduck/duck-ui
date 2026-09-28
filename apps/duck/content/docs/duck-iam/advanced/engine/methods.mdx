@@ -239,7 +239,7 @@ The `this` parameter pins the method to a development-mode engine, so calling it
 
 | Condition | Message |
 | --- | --- |
-| engine is in production mode | `explain() is not available in production mode` |
+| engine is in production mode | throws the coded `IAM_ENGINE_EXPLAIN_UNAVAILABLE` |
 | `subjectId` invalid | `explain(): subjectId must be a non-empty string <=1024 chars` |
 
 Hook behaviour is deliberately narrow: `beforeEvaluate` **runs** because it changes the evaluation, and nothing else fires - not `afterEvaluate`, `onDeny`, `onError`, or `onMetrics`. Explain is read-only diagnostics.
@@ -321,7 +321,7 @@ const engine = new IamEngine({ adapter, mode: 'production' })   // at import tim
 engine.setInvalidator(createIamRedisInvalidator(redis, 'iam'))
 ```
 
-It throws `TypeError` if the argument is neither `null` nor an object with callable `publish` and `subscribe`: a malformed invalidator would otherwise fail at the first mutation, as a lost broadcast rather than a bad argument. The previous subscription is torn down first and unconditionally, so at most one is ever attached. `null` detaches and returns the engine to local-only invalidation. The constructor routes `config.invalidator` through this same setter, so both paths validate identically.
+It throws the coded `IamError` `IAM_ENGINE_INVALIDATOR_SHAPE_INVALID` if the argument is neither `null` nor an object with callable `publish` and `subscribe`: a malformed invalidator would otherwise fail at the first mutation, as a lost broadcast rather than a bad argument. The previous subscription is torn down first and unconditionally, so at most one is ever attached. `null` detaches and returns the engine to local-only invalidation. The constructor routes `config.invalidator` through this same setter, so both paths validate identically.
 
 ### withTransaction
 
@@ -329,7 +329,7 @@ It throws `TypeError` if the argument is neither `null` nor an object with calla
 withTransaction(client: unknown): Bound.IamEngine<TAction, TResource, TRole, TScope, TMode>
 ```
 
-Returns a facade whose reads and writes run against a transaction-bound adapter. Throws when the adapter has no `withClient`, rather than silently leaving the writes outside your transaction.
+Returns a facade whose reads and writes run against a transaction-bound adapter. Throws the coded `IAM_ENGINE_ADAPTER_NOT_TRANSACTIONAL` when the adapter has no `withClient`, rather than silently leaving the writes outside your transaction.
 
 ```ts
 let pending

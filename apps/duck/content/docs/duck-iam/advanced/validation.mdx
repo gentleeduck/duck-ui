@@ -84,9 +84,10 @@ which defaults `version` to `1` and drops unknown keys; seeded roles are stored 
 So a row written by direct SQL, a migration, a second service, or a memory-adapter fixture
 is evaluated as authored, including shapes `savePolicy` refuses. What closes that gap is
 the evaluator refusing to answer: `evalCondition` re-applies the operand-type table and
-throws `IamOperandTypeError`, a bad `matches` pattern throws `IamPatternRefusedError`, and
-an over-deep group refuses rather than returning `false`. All three become Indeterminate
-and the engine fails closed. The validator makes that path rare; it is not the only line.
+throws the coded `IamError` `IAM_CONDITION_OPERAND_TYPE`, a bad `matches` pattern throws
+`IAM_CONDITION_PATTERN_REFUSED`, and an over-deep group refuses rather than returning
+`false`. All three become Indeterminate and the engine fails closed. The validator makes
+that path rare; it is not the only line.
 </Callout>
 
 ## API reference
@@ -554,15 +555,14 @@ definePolicy('p1')
   .target({ actions: ['publish'], resources: ['post'] })
   .rule('r1', (r) => r.allow().on('read').of('post'))
   .build()
-// throws:
-// [@gentleduck/iam:builder] PolicyBuilder.build("p1") rejected by validator -
-//   UNREACHABLE_TARGET at "targets": Target admits "publish" on "post" but no allow rule
-//   covers it, so every request matching it is denied by this policy. ...
+// throws the coded IamError IAM_VALIDATION_FAILED
+// meta: { kind: 'policy', issues: [
+//   'UNREACHABLE_TARGET at "targets": Target admits "publish" on "post" but no allow rule
+//    covers it, so every request matching it is denied by this policy. ...'
+// ] }
 ```
 
-`RoleBuilder.build()` throws the analogous
-`[@gentleduck/iam:builder] RoleBuilder.build(): role rejected by validator - <codes>`.
-Note that the role builder's message lists codes and paths only, not the full messages.
+`RoleBuilder.build()` throws through the identical path: the same coded `IamError` `IAM_VALIDATION_FAILED`, with `meta.kind: 'role'` and `meta.issues` formatted the same way (`CODE at "path": message`) - there is no longer a format difference between the three builders' failures.
 
 ## Gotchas
 

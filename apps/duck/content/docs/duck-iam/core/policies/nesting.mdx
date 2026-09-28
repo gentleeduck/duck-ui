@@ -46,7 +46,7 @@ when()
 
 <MermaidDiagram chart={`flowchart TD
     G["group at depth d"] --> D{"d >= 10?"}
-    D -- "yes" --> FC["throw IamConditionGroupError('depth')"]
+    D -- "yes" --> FC["throw IAM_CONDITION_GROUP_INVALID reason depth"]
     D -- "no" --> K{"group kind"}
     K -- "all" --> A["child 1, child 2, ... in insertion order"]
     A --> A1{"child false?"}
@@ -61,14 +61,14 @@ when()
     C1 -- "yes" --> CF["stop, return false"]
     C1 -- "no, list exhausted" --> CT["return true"]
     K -- "empty object" --> U["return true (no conditions)"]
-    K -- "unrecognised keys" --> X["throw IamConditionGroupError('unknown-keys')"]`} />
+    K -- "unrecognised keys" --> X["throw IAM_CONDITION_GROUP_INVALID reason unknown-keys"]`} />
 
 Four consequences of the `D`, `A1`/`B1`/`C1`, `U`, and `X` nodes:
 
 - **Key precedence is `all` > `any` > `none`, and extra keys are ignored.** `{ all: [], any: [somethingFalse] }` evaluates the `all` and returns `true`. The validator reports a multi-key group; the evaluator does not.
 - **Order is yours to choose.** Put the cheapest and most selective check first. A leaf that resolves a subject attribute costs a cached path split plus a property walk; a `matches` leaf may compile a regex. In an `all` group, a leading `w.role('admin')` skips everything after it for non-admins.
-- **A short-circuited branch never throws.** The `matches` operator throws `IamRegexInputTooLargeError` on an input over 2048 characters (see [conditions](/duck-iam/core/policies/conditions#regex-safety-matches)). If an earlier sibling in the same `all` group already returned `false`, the `matches` leaf is never reached and the policy is not dropped: `{ all: [falseLeaf, oversizeMatches] }` returns `false`, while `{ all: [oversizeMatches] }` throws.
-- **Only a literally empty object is unconditional.** `{}` returns `true`. A group carrying keys the evaluator does not recognise - a typo'd `all`, a hand-edited store row - throws `IamConditionGroupError('unknown-keys')` naming the keys it saw. Reading it as "no conditions" would turn a conditional allow into an unconditional one; answering `false` would retire a deny just as silently. An array as a group is read structurally: `[]` has no keys and returns `true`, a non-empty array throws with its numeric indices named. `null`, `undefined` and primitives throw a plain `TypeError` (`'all' in undefined` raises before any branch), which is still Indeterminate to every caller - so do not match on the error class.
+- **A short-circuited branch never throws.** The `matches` operator throws the coded `IamError` `IAM_CONDITION_REGEX_INPUT_TOO_LARGE` on an input over 2048 characters (see [conditions](/duck-iam/core/policies/conditions#regex-safety-matches)). If an earlier sibling in the same `all` group already returned `false`, the `matches` leaf is never reached and the policy is not dropped: `{ all: [falseLeaf, oversizeMatches] }` returns `false`, while `{ all: [oversizeMatches] }` throws.
+- **Only a literally empty object is unconditional.** `{}` returns `true`. A group carrying keys the evaluator does not recognise - a typo'd `all`, a hand-edited store row - throws `IAM_CONDITION_GROUP_INVALID` (`meta: { reason: 'unknown-keys', detail }`) naming the keys it saw. Reading it as "no conditions" would turn a conditional allow into an unconditional one; answering `false` would retire a deny just as silently. An array as a group is read structurally: `[]` has no keys and returns `true`, a non-empty array throws with its numeric indices named. `null`, `undefined` and primitives throw a plain `TypeError` (`'all' in undefined` raises before any branch), which is still Indeterminate to every caller - so match on `hasIamErrorCode`/`instanceof TypeError`, never on `err.name`.
 
 Groups are pure functions of the request; nothing is memoised between children, so writing the same leaf twice costs twice.
 
@@ -148,18 +148,18 @@ defineRule('scoped-update')
 
 ## Depth limit
 
-`MAX_CONDITION_DEPTH` is `10`. The evaluator counts the root group as depth `0` and throws `IamConditionGroupError('depth')` as soon as it reaches a group at depth `10` - that is, **the eleventh group in a chain**. It does not answer `false`: a deny rule whose group is too deep would stop denying, and a seeded policy reached `engine.can` exactly that way, allowing a banned subject. Indeterminate makes a deny-bearing policy vote deny.
+`MAX_CONDITION_DEPTH` is `10`. The evaluator counts the root group as depth `0` and throws the coded `IamError` `IAM_CONDITION_GROUP_INVALID` (`meta: { reason: 'depth', detail }`) as soon as it reaches a group at depth `10` - that is, **the eleventh group in a chain**. It does not answer `false`: a deny rule whose group is too deep would stop denying, and a seeded policy reached `engine.can` exactly that way, allowing a banned subject. Indeterminate makes a deny-bearing policy vote deny.
 
 The validator uses the same constant, the same `>=` comparison, and the same starting depth for a rule's root group, so the two boundaries coincide: a tree the evaluator refuses is a tree `build()` already rejected.
 
 <MermaidDiagram chart={`flowchart LR
-    L1["chain of 10 groups: root all plus 9 nested"] --> OK["evaluates normally; build() accepts"]
-    L11["11 groups or deeper"] --> HARD["build() throws LIMIT_EXCEEDED; evalConditionGroup throws IamConditionGroupError"]`} />
+    L1["chain of 10 groups: root all plus 9 nested"] --> OK["evaluates normally, build() accepts"]
+    L11["11 groups or deeper"] --> HARD["build() throws LIMIT_EXCEEDED, evalConditionGroup throws IAM_CONDITION_GROUP_INVALID"]`} />
 
 | Groups in the chain | `evalConditionGroup` | `validatePolicy` |
 | --- | --- | --- |
 | 10 | evaluates | no issues |
-| 11 | throws `IamConditionGroupError('depth')` | `LIMIT_EXCEEDED` |
+| 11 | throws `IAM_CONDITION_GROUP_INVALID` (`reason: 'depth'`) | `LIMIT_EXCEEDED` |
 | 12 and deeper | throws | `LIMIT_EXCEEDED` |
 
 The error message is `condition nesting exceeds 10`; the validator's is `Condition nesting exceeds MAX_CONDITION_DEPTH (10)` at `rules[i].conditions...`.

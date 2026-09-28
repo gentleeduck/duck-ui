@@ -230,7 +230,7 @@ const invalidator: IamEngineTypes.IInvalidator = {
 
 `publish` may return `void` or a promise; the engine calls it fire-and-forget. `subscribe` must return a teardown function, which `engine.dispose()` invokes.
 
-`IConfig.invalidator` is constructor-only, but engines are commonly built at module import time, before any replica-specific client exists. `engine.setInvalidator(invalidator | null)` attaches one later: it validates that `publish` and `subscribe` are callable and throws `TypeError` otherwise, tears down the previous subscription first and unconditionally so at most one is ever attached, and takes `null` to detach. The constructor routes `config.invalidator` through the same setter.
+`IConfig.invalidator` is constructor-only, but engines are commonly built at module import time, before any replica-specific client exists. `engine.setInvalidator(invalidator | null)` attaches one later: it validates that `publish` and `subscribe` are callable and throws the coded `IamError` `IAM_ENGINE_INVALIDATOR_SHAPE_INVALID` otherwise, tears down the previous subscription first and unconditionally so at most one is ever attached, and takes `null` to detach. The constructor routes `config.invalidator` through the same setter.
 
 The event union is four members, discriminated on `kind`:
 

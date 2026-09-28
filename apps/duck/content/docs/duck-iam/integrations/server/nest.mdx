@@ -253,7 +253,7 @@ export function iamNestAccessGuard<
 
 ```ts
 const canActivate = iamNestAccessGuard(engine, {
-  getUserId: (req) => req.session?.identityId ?? req.user?.id ?? null,
+  getUserId: (req) => req.identity?.id ?? req.user?.id ?? null,
   getScope: (req) => (typeof req.headers?.['x-org-id'] === 'string' ? req.headers['x-org-id'] : undefined),
   getResourceId: (req) => req.params?.id,
   onError: (err, req) => {
@@ -263,7 +263,7 @@ const canActivate = iamNestAccessGuard(engine, {
 })
 ```
 
-The exported `NestRequest` interface is the shape the guard touches: `user`, `params`, `method`, `path`, `route`, `headers`, `ip`, plus `session` and `identity` slots for auth middleware such as duck-auth, and a string index signature for everything else.
+The exported `NestRequest` interface is the shape the guard touches: `user`, `params`, `method`, `path`, `route`, `headers`, `ip`, plus `session` and `identity` slots for auth middleware (duck-auth's guard fills `identity`), and a string index signature for everything else.
 
 <Callout tone="warning" title="Identity never comes from request headers">
 The default `getUserId` reads `req.user.id` then `req.user.sub`, both populated by your authentication layer. No header is consulted. A falsy result makes the guard return `false` before `engine.can()` runs, so an unauthenticated request is denied rather than checked. If a trusted ingress injects a verified identity header, read it in an explicit `getUserId` and validate it there.
@@ -467,7 +467,7 @@ A document that fails the engine validator is the exception: it throws with `sta
 The last four options are the shared `IamAdminAudit.IOptions`, documented once on the [generic helpers page](/duck-iam/integrations/server/generic).
 
 <Callout tone="warning" title="authorize is mandatory">
-`createIamAdminOperations` throws at construction when `opts.authorize` is not a function: `[@gentleduck/iam] createIamAdminOperations requires an authorize callback.` The operations write policies, roles, and assignments straight to the adapter, so a controller cannot be instantiated unguarded.
+`createIamAdminOperations` throws at construction when `opts.authorize` is not a function: the coded `IamError` `IAM_SERVER_ADMIN_AUTHORIZE_REQUIRED` (`meta: { framework: 'nest', fn: 'createIamAdminOperations' }`). The operations write policies, roles, and assignments straight to the adapter, so a controller cannot be instantiated unguarded.
 </Callout>
 
 <Callout tone="warning" title="CSRF check is on by default, including on reads">
@@ -526,4 +526,4 @@ The namespace is type-only and costs nothing at runtime.
 - [Express](/duck-iam/integrations/server/express) for the router-shaped equivalent under the same Node platform
 - [Admin API](/duck-iam/advanced/engine/admin) for what the six operations call
 - [Engine methods](/duck-iam/advanced/engine/methods) for `can`, `check`, and `permissions`
-- [Auth bridge guide](/duck-iam/guides/auth-bridge) for populating `req.session` and `req.identity` from duck-auth
+- [Auth bridge guide](/duck-iam/guides/auth-bridge) for populating `req.identity` from duck-auth

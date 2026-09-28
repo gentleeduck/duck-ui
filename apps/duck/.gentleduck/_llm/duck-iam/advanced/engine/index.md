@@ -29,7 +29,7 @@ One `engine.can()` call goes through these stages.
 
 The `subjectId` guard at `B` rejects anything that is not a string of 1 to 1024 characters. `C` is the subject cache plus single-flight coalescing. `E` exists because a string `subject.roles` would substring-match a `contains` condition. `F` merges scoped role grants for the request's scope. `G` runs your `beforeEvaluate` hook, and `H` deliberately runs *after* it so a hook-pinned `environment.now` survives.
 
-`I` is the load-bearing step: the [compiled table](/duck-iam/advanced/engine/compiled) produces the verdict in **both** modes. [Development](/duck-iam/advanced/engine/modes) additionally runs the interpreter, because the table cannot explain itself — a `CONST_ALLOW` cell is one byte and policy identity is erased at compile time. That second run is what fills in `decision.policy` and `decision.rule`, and a disagreement between the two throws rather than answering. `M` fires in both modes; production synthesises a verdict-only decision for `afterEvaluate` and `onDeny`, and only when one of them is wired.
+`I` is the load-bearing step: the [compiled table](/duck-iam/advanced/engine/compiled) produces the verdict in **both** modes. [Development](/duck-iam/advanced/engine/modes) additionally runs the interpreter, because the table cannot explain itself: a `CONST_ALLOW` cell is one byte and policy identity is erased at compile time. That second run is what fills in `decision.policy` and `decision.rule`, and a disagreement between the two throws rather than answering. `M` fires in both modes; production synthesises a verdict-only decision for `afterEvaluate` and `onDeny`, and only when one of them is wired.
 
 ## Reading order
 
@@ -54,7 +54,7 @@ new IamEngine<TAction, TResource, TRole, TScope, TMode>(
 
 The five type parameters narrow the API: `TAction` and `TResource` constrain what you may pass to `can`/`check`, `TRole` constrains `admin.assignRole`, `TScope` constrains every `scope` argument, and `TMode` decides statically whether the evaluation methods return `AccessControl.IDecision` or `boolean`. The four string parameters default to `string`; `TMode` defaults to `'production'`.
 
-`TMode` is a *type* argument. `IConfig.mode` is optional, so writing `new IamEngine<A, R, Ro, S, 'development'>({ adapter })` types `check()` as returning `IDecision` while the engine still runs in production and returns a boolean — reading `.allowed` off it yields `undefined`, which is falsy, so the mismatch shows up as assertions that quietly pass. Always pass `mode` explicitly.
+`TMode` is a *type* argument. `IConfig.mode` is optional, so writing `new IamEngine<A, R, Ro, S, 'development'>({ adapter })` types `check()` as returning `IDecision` while the engine still runs in production and returns a boolean: reading `.allowed` off it yields `undefined`, which is falsy, so the mismatch shows up as assertions that quietly pass. Always pass `mode` explicitly.
 
 A factory is exported for callers who prefer functions to `new`:
 
@@ -81,6 +81,7 @@ const engine = iamEngine({ adapter })
 | `maxRoles` | `number` | `10000` | Hard ceiling on roles read from the adapter |
 | `allowFailOpen` | `boolean` | `false` | Required acknowledgement for `defaultEffect: 'allow'` |
 | `adapterTimeoutMs` | `number` | `5000` | Per-adapter-call timeout; `0` disables |
+| `hookTimeoutMs` | `number` | `5000` | Bounds `beforeEvaluate` and every `_safeHookCall`-wrapped hook (`afterEvaluate`, `onDeny`, `onError`, `onMutation`, ...); `0` disables and logs a `warnGuardDisabled` notice |
 | `maxConcurrentSubjectLoads` | `number` | `512` | Cap on concurrent distinct-subject loads; `0` restores unbounded |
 | `invalidator` | `IamEngineTypes.IInvalidator` | none | Cross-instance cache-invalidation broadcaster |
 | `scopeMode` | `'flat' \| 'hierarchical'` | `'flat'` | Whether a scoped grant matches only its exact scope or every descendant |
@@ -108,26 +109,30 @@ Enrichment is additive and never revokes: a role already on `subject.roles` is d
 
 ### Construction guards
 
-Seven checks run in the constructor body, plus two more inside `IamLRUCache`'s constructor when the caches are built. All are boot-time: a bad config is a failed start, not a surprise on the first request.
+Eleven checks run in the constructor body, plus two more inside `IamLRUCache`'s constructor when the caches are built. All are boot-time: a bad config is a failed start, not a surprise on the first request. Every one throws the coded `IamError` `IAM_ENGINE_INVALID_CONFIG` (`meta: { field, got, ... }`) unless the table below names a different code.
 
 `defaultEffect: 'allow'` throws unless `allowFailOpen: true` is also passed - in
 **development mode too**, not only production. Even with the opt-in, the
 constructor emits a `console.warn` naming the engine as fail-open, so an
 operator grepping startup logs always finds it.
 
-| Condition | Error | Message |
+| Condition | Code | Meta |
 | --- | --- | --- |
-| `policyCombine` not one of the three valid values | `Error` | `unknown policyCombine ...` |
-| `mode: 'production'` with `policyCombine: 'first-applicable'` | `Error` | `policyCombine 'first-applicable' requires mode 'development'; the production fast path cannot represent it correctly.` |
-| `defaultEffect: 'allow'` without `allowFailOpen: true` | `Error` | `defaultEffect 'allow' is a fail-open footgun. Pass allowFailOpen: true to confirm intent.` |
-| `maxPolicies` non-finite or `< 1` | `RangeError` | `maxPolicies must be a finite number >= 1` |
-| `maxRoles` non-finite or `< 1` | `RangeError` | `maxRoles must be a finite number >= 1` |
-| `adapterTimeoutMs` non-finite or `< 0` | `RangeError` | `adapterTimeoutMs must be a finite number >= 0` |
-| `maxConcurrentSubjectLoads` non-finite, or neither `0` nor `>= 1` | `RangeError` | `maxConcurrentSubjectLoads must be 0 (unbounded) or a finite number >= 1` |
-| `cacheTTL` non-finite or negative | `RangeError` | `ttlMs must be a finite number >= 0` (from `IamLRUCache`) |
-| `maxCacheSize` non-finite or `< 1` | `RangeError` | `maxSize must be a finite number >= 1` (from `IamLRUCache`) |
+| `mode` not `'development'` or `'production'` | `IAM_ENGINE_INVALID_CONFIG` | `{ field: 'mode', got, allowed }` |
+| `scopeMode` not `'flat'` or `'hierarchical'` | `IAM_ENGINE_INVALID_CONFIG` | `{ field: 'scopeMode', got, allowed }` |
+| `scopeCombine` not `'union'` or `'override'` | `IAM_ENGINE_INVALID_CONFIG` | `{ field: 'scopeCombine', got, allowed }` |
+| `policyCombine` not `'and'`, `'allow-overrides'`, or `'first-applicable'` | `IAM_ENGINE_INVALID_CONFIG` | `{ field: 'policyCombine', got, allowed }` |
+| `mode: 'production'` with `policyCombine: 'first-applicable'` | `IAM_ENGINE_POLICY_COMBINE_INCOMPATIBLE` | `{ mode, policyCombine }` |
+| `defaultEffect: 'allow'` without `allowFailOpen: true` | `IAM_ENGINE_FAIL_OPEN_NOT_CONFIRMED` | none |
+| `maxPolicies` non-finite or `< 1` | `IAM_ENGINE_INVALID_CONFIG` | `{ field: 'maxPolicies', got, constraint: 'finite number >= 1' }` |
+| `maxRoles` non-finite or `< 1` | `IAM_ENGINE_INVALID_CONFIG` | `{ field: 'maxRoles', got, constraint: 'finite number >= 1' }` |
+| `adapterTimeoutMs` non-finite or `< 0` | `IAM_ENGINE_INVALID_CONFIG` | `{ field: 'adapterTimeoutMs', got, constraint: 'finite number >= 0' }` |
+| `hookTimeoutMs` non-finite or `< 0` | `IAM_ENGINE_INVALID_CONFIG` | `{ field: 'hookTimeoutMs', got, constraint: 'finite number >= 0' }` |
+| `maxConcurrentSubjectLoads` non-finite, or neither `0` nor `>= 1` | `IAM_ENGINE_INVALID_CONFIG` | `{ field: 'maxConcurrentSubjectLoads', got }` |
+| `cacheTTL` non-finite or negative (from `IamLRUCache`) | `IAM_CACHE_CONFIG_INVALID` | `{ field: 'ttlMs', got, constraint: '>= 0' }` |
+| `maxCacheSize` non-finite or `< 1` (from `IamLRUCache`) | `IAM_CACHE_CONFIG_INVALID` | `{ field: 'maxSize', got, constraint: '>= 1' }` |
 
-The engine's own messages are prefixed `[@gentleduck/iam:engine]`. The finiteness checks exist because `NaN > x` is always `false`: a `NaN` limit would silently disable the bound it was supposed to enforce rather than failing loudly. The `policyCombine` guard exists because both evaluators branch on `'and'` and `'allow-overrides'` and fall through to first-applicable — the most permissive of the three — for anything else, so a typo silently lost deny-overrides semantics.
+Every `IamError`'s `message` is just its bare code - read the detail off `meta`, not off the message. The finiteness checks exist because `NaN > x` is always `false`: a `NaN` limit would silently disable the bound it was supposed to enforce rather than failing loudly. The `policyCombine` guard exists because both evaluators branch on `'and'` and `'allow-overrides'` and fall through to first-applicable (the most permissive of the three) for anything else, so a typo silently lost deny-overrides semantics.
 
 ### AccessControl.IDecision
 
@@ -194,7 +199,7 @@ Three real shapes:
 
 The synthesized shapes carry `duration: 0` because no evaluation ran. The engine builds three of them: `'Evaluation error'` from `authorize`'s catch, `'Subject resolution error'` from `check`'s catch, and `'invalid subjectId'` from `check`'s argument guard.
 
-Production mode returns a bare `boolean` from `authorize` and `check`, so there is nowhere to carry `failure` — use the `onError` hook. `afterEvaluate` and `onDeny` still fire in production, with a verdict-only decision synthesised for them; `policy`, `rule` and the interpreter's real `reason` are not in it, because the compiled table does not retain policy identity.
+Production mode returns a bare `boolean` from `authorize` and `check`, so there is nowhere to carry `failure`: use the `onError` hook. `afterEvaluate` and `onDeny` still fire in production, with a verdict-only decision synthesised for them; `policy`, `rule` and the interpreter's real `reason` are not in it, because the compiled table does not retain policy identity.
 
 ### Module-level exports
 

@@ -39,7 +39,7 @@ await adapter.savePolicy({
 const allowed = await engine.can('user-1', 'read', { type: 'post', attributes: {} })
 ```
 
-The adapter calls `mkdir` on the immediate parent **without** `{ recursive: true }`, so a missing grandparent is an error rather than a silently created deep tree. If `/var/lib/myapp` does not exist, the first write fails with `[@gentleduck/iam:file] IamFileAdapter parent directory "/var/lib/myapp" is not accessible (ENOENT). Create it explicitly; the adapter no longer does recursive mkdir.` Create the directory in your deploy step.
+The adapter calls `mkdir` on the immediate parent **without** `{ recursive: true }`, so a missing grandparent is an error rather than a silently created deep tree. If `/var/lib/myapp` does not exist, the first write fails with `IAM_FILE_MKDIR_FAILED` (`meta: { path: '/var/lib/myapp', code: 'ENOENT' }`). Create the directory in your deploy step.
 
 ## API reference
 
@@ -68,7 +68,37 @@ The constructor is synchronous and does no I/O, but it does validate `init.path`
 | `fs` | `IamFile.IFS` | required | The filesystem driver. Pass `await import('node:fs/promises')` in Node or Bun, or any object with the same shape. |
 | `onPolicyError` | `(err: Error, ctx: { adapter: 'file'; rowId: string }) => void` | `undefined` | Called for every row dropped at load time. Without it the adapter falls back to `console.warn` with the message `[@gentleduck/iam:file] dropped malformed row "
 
-Reading the branches from the top: the containment check runs first, so a hostile symlink is rejected before any bytes are read. `ENOENT` is the only recoverable read error - a genuinely missing file becomes an empty store. Any other errno (`EACCES`, `EISDIR`, `EIO`) throws `[@gentleduck/iam:file] load failed (
+Reading the branches from the top: the containment check runs first, so a hostile symlink is rejected before any bytes are read. `ENOENT` is the only recoverable read error - a genuinely missing file becomes an empty store. Any other errno (`EACCES`, `EISDIR`, `EIO`) throws `IAM_FILE_READ_FAILED` (`meta: { code, detail }`) rather than presenting an empty store, because an empty store means "deny everything" under `defaultEffect: 'deny'` and "allow everything" under `'allow'`. A file that exists but is not parseable JSON, or whose root is not an object, throws `IAM_FILE_STORE_CORRUPT` (`meta: { path, reason: 'parse-failed' | 'not-object', got? }`) and - crucially - does **not** populate the cache, so a later `_flush` cannot overwrite a recoverable file. Only individual rows are dropped silently-but-reported.
+
+### What happens to bad data
+
+| Situation | Result | Reported |
+|---|---|---|
+| File does not exist | empty store, then created on first write | no |
+| `readFile` fails with a non-`ENOENT` errno | throws `IAM_FILE_READ_FAILED` (`meta: { code, detail }`); nothing is cached, so a later read can still succeed | no |
+| File is not valid JSON | throws `IAM_FILE_STORE_CORRUPT` (`meta: { path, reason: 'parse-failed' }`) | yes, with the path as `rowId` |
+| Root is an array, string, or `null` | throws `IAM_FILE_STORE_CORRUPT` (`meta: { path, reason: 'not-object', got }`) | yes |
+| `policies` or `roles` is present but not an object | throws `IAM_FILE_STORE_FIELD_INVALID` (`meta: { field, got }`) | yes |
+| A **policy** row fails `parsePolicyRow` | reported, then the read **throws** `IAM_UNREADABLE_POLICY` (`meta: { adapter: 'file', policyId, detail }`) - no policy is returned | yes, with the row's key and the validator's issues |
+| A **role** row fails `parseRoleRow` | that row is dropped, the rest of the catalog loads | yes |
+| `assignments` is not an object | all assignments load empty | yes |
+| One `assignments` entry is malformed | that entry alone is dropped, reported with its index; the subject's other grants survive | yes |
+| `attributes` is not an object | all attributes load empty | yes |
+| One `attributes` row is not an object | that subject is marked corrupt; `getSubjectAttributes` **throws** `IAM_ATTRIBUTES_CORRUPT` (`meta: { adapter: 'file', subjectId, reason: 'not-object' }`) until an admin write replaces it | yes |
+| Subject id is `__proto__` or `constructor` | reads return `[]` / `{}`; writes do not touch `Object.prototype` | no |
+
+Two of those are deliberate fail-closed choices rather than conveniences. A corrupt `policies` field throws rather than loading empty, because zero policies reads as "no denies exist"; a malformed policy *row* throws for the same reason, while a malformed role row is only dropped, because role permissions are allow-only and losing one can only cost a subject a grant. And a corrupt attributes row throws instead of returning `{}`, because `{}` would silently strip every ABAC condition about that subject - which usually widens access. An admin write recovers it:
+
+```ts
+await adapter.setSubjectAttributes('user-bad', { tier: 'pro' })
+await adapter.getSubjectAttributes('user-bad') // { tier: 'pro' } - the corrupt marker is cleared
+```
+
+All the maps built during a load use `Object.create(null)`, so an attacker-controlled row id such as `__proto__` can neither read `Object.prototype` back nor pollute the prototype chain.
+
+## Write durability
+
+Every mutation is a full read-modify-write of the entire document.
 
 When the driver exposes `rename`, the write is not an overwrite: the adapter writes `${path}.<base36-time>-<random>.tmp` and renames it over the store, so a crash mid-write leaves the previous file intact rather than a truncated one that would load as zero policies - that is, as if every deny had been deleted. Without `rename` it writes in place, which a crash can truncate. That is the reason to pass the real `node:fs/promises`.
 
@@ -101,16 +131,17 @@ If you need concurrent writers, the answer is a different adapter, not a lock fi
 
 ## Path hardening
 
-The constructor rejects a bad `path` before any I/O happens. Each of these throws synchronously:
+The constructor rejects a bad `path` before any I/O happens. Every row below throws `IAM_FILE_PATH_INVALID`, distinguished by `meta.reason`:
 
-| Input | Error |
-|---|---|
-| A segment equal to `..` | `IamFileAdapter path contains a ".." segment: "<path>"` |
-| A relative path | `IamFileAdapter path must be supplied as an absolute path: "<path>"` |
-| A `rootDir` that is not absolute | `IamFileAdapter rootDir must be absolute: "<rootDir>"` |
-| A `path` outside `rootDir` | `IamFileAdapter path "<resolved>" escapes rootDir "<rootDir>"` |
+| Input | `meta.reason` | Other `meta` fields |
+|---|---|---|
+| A segment equal to `..` | `'dotdot-segment'` | `path` |
+| `path.resolve(path)` does not land on an absolute path | `'not-resolvable-absolute'` | `path` |
+| A relative path | `'not-absolute'` | `path` |
+| A `rootDir` that is not absolute | `'rootdir-not-absolute'` | `rootDir` |
+| A `path` outside `rootDir` | `'escapes-rootdir'` | `path` (resolved), `rootDir` (resolved) |
 
-`..` is checked textually *before* `path.resolve`, because `resolve` would collapse it and hide the intent. At read and write time `_assertWithinRoot` canonicalises through `realpath` (falling back to the parent directory when the file does not exist yet) and throws `realpath "<canonical>" escapes rootDir "<rootDir>" (symlink traversal)` if the canonical path is outside. A non-`ENOENT` `realpath` failure - `ELOOP`, `EACCES` - propagates rather than falling through to the parent, so a hostile link cannot bypass the check by failing.
+`..` is checked textually *before* `path.resolve`, because `resolve` would collapse it and hide the intent. At read and write time `_assertWithinRoot` canonicalises through `realpath` (falling back to the parent directory when the file does not exist yet) and throws the same `IAM_FILE_PATH_INVALID` with `meta.reason: 'symlink-escapes-rootdir'` if the canonical path is outside. A non-`ENOENT` `realpath` failure - `ELOOP`, `EACCES` - propagates rather than falling through to the parent, so a hostile link cannot bypass the check by failing.
 
 Omitting `rootDir` logs once per process:
 
@@ -133,7 +164,7 @@ Bad fits:
 
 * Multi-process or multi-instance servers - writes clobber each other
 * Write-heavy workloads - every mutation serialises the whole document
-* Anything needing transactional updates across policies, roles, and assignments - there is no `withClient` here, so `engine.withTransaction` throws
+* Anything needing transactional updates across policies, roles, and assignments - there is no `withClient` here, so `engine.withTransaction` throws the coded `IAM_ENGINE_ADAPTER_NOT_TRANSACTIONAL`
 * Anywhere the store must survive a crash on a driver with no `rename`
 
 ## Gotchas

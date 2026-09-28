@@ -1,69 +1,46 @@
 ---
-title: Elysia adapter
-description: Elysia (Bun) - Web-Fetch-native, fast cold starts. Mounts as a plugin.
+title: Elysia
+description: Mounting the auth routes on Elysia, giving sessions the client IP, and guarding your own routes
 section: Server
 ---
-
-## Setup
-
-```typescript
+```ts
+import {
+  elysiaProviderBegin,
+  elysiaProviderCallback,
+  elysiaSession,
+  elysiaSignIn,
+  elysiaSignOut,
+} from '@gentleduck/auth/server/elysia'
 import { Elysia } from 'elysia'
-import { elysiaAuth } from '@gentleduck/auth/server/elysia'
-import { auth } from './lib/auth'
 
 const app = new Elysia()
-  .use(elysiaAuth({ auth, prefix: '/auth' }))
-  .get('/api/me', async ({ request, set }) => {
-    const ctx = await auth.resolveSession(request)
-    if (!ctx) {
-      set.status = 401
-      return { code: 'AUTH/UNAUTHENTICATED' }
-    }
-    return ctx.identity
-  })
-  .listen(3000)
+  .derive(({ server, request }) => ({ ip: server?.requestIP(request)?.address }))
+  .post('/auth/signin', elysiaSignIn(auth))
+  .post('/auth/signout', elysiaSignOut(auth))
+  .get('/auth/session', elysiaSession(auth))
+  .post('/auth/providers/:id/begin', elysiaProviderBegin(auth))
+  .get('/auth/providers/:id/callback', elysiaProviderCallback(auth))
+  .post('/auth/providers/:id/callback', elysiaProviderCallback(auth))
 ```
 
-The plugin mounts `signin`, `signout`, `session`, and `providers/:providerId/begin`
-under `prefix`.
+- Elysia resolves no client IP. The `derive` gives the handlers the socket's address, which the session records; behind a proxy, derive it from the header your proxy sets instead.
+- The callback answers the session cookies and an empty 200. To land the browser on a page, write the callback yourself, as on the [OAuth page](/duck-auth/providers/oauth#the-routes).
 
-## Validation
+## Your own routes
 
-Elysia ships with TypeBox; you can validate input shapes upstream of
-duck-auth:
+```ts
+import { elysiaCsrf, elysiaWithActor } from '@gentleduck/auth/server/elysia'
 
-```typescript
-import { t } from 'elysia'
-
-app.post(
-  '/auth/signin',
-  ({ body }) => mountSignInHandler(body),
-  {
-    body: t.Object({
-      providerId: t.String(),
-      input: t.Record(t.String(), t.Any()),
+app.group('/api', (api) =>
+  api.onBeforeHandle(elysiaCsrf(auth)).get(
+    '/me',
+    elysiaWithActor(auth, async ({ request }) => {
+      const resolved = await auth.resolveSession(request).orNull()
+      if (!resolved) return Response.json({ error: 'unauthenticated' }, { status: 401 })
+      return Response.json(resolved.identity)
     }),
-  },
+  ),
 )
 ```
 
-Malformed payloads return 400 before reaching the duck-auth runtime.
-
-## Cold-start posture
-
-Elysia + Bun starts in <20ms. duck-auth adds a few ms (loading lazy
-peers, instantiating the AuthEngine). For best cold-start, avoid wiring
-peers you don't use - the lazy-load is per-feature.
-
-## Error handling
-
-```typescript
-import { AuthError } from '@gentleduck/auth/core'
-
-app.onError(({ code, error, set }) => {
-  if (error instanceof AuthError) {
-    set.status = error.status
-    return error.toJSON()
-  }
-})
-```
+Elysia composes no `next`, so the actor scope wraps each handler. `elysiaCaller(ctx)` is the IP and User-Agent to pass to a flow you call yourself.

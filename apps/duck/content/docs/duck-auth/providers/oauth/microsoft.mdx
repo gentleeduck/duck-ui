@@ -1,112 +1,30 @@
 ---
-title: Microsoft OAuth
-description: Microsoft Entra ID / personal Microsoft accounts via OpenID Connect.
+title: Microsoft
+description: Sign in with Microsoft Entra ID and personal Microsoft accounts, whose email is never treated as verified
 section: Providers
 ---
-
-## Setup
-
 1. Register an application in the [Microsoft Entra admin center](https://entra.microsoft.com/).
-2. Under **Authentication**, add a redirect URI of type **Web**:
-   `https://app.example.com/auth/microsoft/callback`.
-3. Under **Certificates & secrets**, create a client secret.
-4. Note the **Application (client) ID** and the **Directory (tenant) ID**.
+2. Under **Authentication**, add a **Web** redirect URI: `https://app.example.com/auth/providers/oauth:microsoft/callback`.
+3. Under **Certificates & secrets**, create a client secret, and note the **Application (client) ID**.
 
-```typescript
-import { authMicrosoft } from '@gentleduck/auth/providers/oauth/microsoft'
+```ts
+import { microsoft } from '@gentleduck/auth/providers/oauth/microsoft'
 
-export const auth = new AuthEngine({
-  // ...
-  providers: [
-    authMicrosoft({
-      clientId: process.env.MICROSOFT_CLIENT_ID!,
-      clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-      tenant: process.env.MICROSOFT_TENANT_ID!,   // or 'common' for multi-tenant
-      redirectUri: 'https://app.example.com/auth/microsoft/callback',
-      stateSigningSecret: process.env.OAUTH_STATE_SECRET!,
-      scopes: ['openid', 'email', 'profile'],
-      onSignIn: async ({ profile, tenantId }) => {
-        let identity = await auth.identities.findByProviderSub({
-          providerId: 'microsoft',
-          sub: profile.sub,
-        })
-        if (!identity) {
-          identity = await auth.identities.create({
-            email: profile.email,
-            emailVerified: true,
-            profile: {
-              displayName: profile.name,
-              tid: profile.tid,           // Microsoft tenant id
-              upn: profile.preferred_username,
-            },
-          })
-          await auth.identities.linkProvider(identity.id, {
-            providerId: 'microsoft',
-            sub: profile.sub,
-          })
-        }
-        return { identityId: identity.id }
-      },
-    }),
-  ],
+microsoft({
+  clientId: process.env.MICROSOFT_CLIENT_ID ?? '',
+  clientSecret: process.env.MICROSOFT_CLIENT_SECRET ?? '',
+  tenant: process.env.MICROSOFT_TENANT_ID, // default 'common'
+  redirectUri: 'https://app.example.com/auth/providers/oauth:microsoft/callback',
+  stateSigningSecret: process.env.OAUTH_STATE_SECRET ?? '',
+  nonceStore,
+  profileToIdentityProfile: (p) => (p.email ? { email: p.email, username: `microsoft:${p.sub}`, name: p.name } : null),
 })
 ```
 
-## Tenant scoping
+The provider id is `oauth:microsoft`, and the default scopes are `openid profile email User.Read`.
 
-The `tenant` option controls which directories can sign in:
+`tenant` picks who may sign in: `'common'` for any organization and personal accounts, `'organizations'`, `'consumers'`, or your directory's id to admit only your own.
 
-| Value | Allowed accounts |
-| --- | --- |
-| Your tenant ID (GUID) | Only users in your Entra tenant. |
-| `common` | Any Microsoft work, school, or personal account. |
-| `organizations` | Any Microsoft work or school account (not personal). |
-| `consumers` | Only personal Microsoft accounts. |
+The `email` Entra returns is set by each tenant's administrators and Microsoft documents it as unverified, so it is never marked verified. Under `'common'` anyone can create a tenant claiming any address. `'link-if-verified'` therefore never links a Microsoft sign-in to an existing account; link deliberately instead.
 
-For B2B SaaS apps that want to support any organization, use `common`
-or `organizations`. For internal apps, use your tenant ID for a hard
-gate.
-
-## Multi-tenant: restrict by `tid`
-
-Even with `tenant: 'common'`, you can post-filter by the `tid` claim
-inside `onSignIn`:
-
-```typescript
-onSignIn: async ({ profile }) => {
-  const allowedTenants = ['<contoso tid>', '<fabrikam tid>']
-  if (!allowedTenants.includes(profile.tid)) {
-    throw new AuthError('AUTH/PROVIDER_FAILED', {
-      reason: 'tenant-not-whitelisted',
-    })
-  }
-  // ...
-}
-```
-
-## What the profile contains
-
-Microsoft's userinfo endpoint returns OIDC standard claims plus
-Microsoft extensions:
-
-```typescript
-{
-  sub: 'A1B2C3D4-...',                   // stable user id within the tenant
-  oid: 'A1B2C3D4-...',                   // object id (same as sub for Entra)
-  tid: 'E5F6G7H8-...',                   // tenant id
-  email: 'ada@contoso.com',
-  preferred_username: 'ada@contoso.com', // UPN
-  name: 'Ada Lovelace',
-  given_name: 'Ada',
-  family_name: 'Lovelace',
-}
-```
-
-## Common errors
-
-| Error | duck-auth code | Cause |
-| --- | --- | --- |
-| `AADSTS50011` | `AUTH/PROVIDER_FAILED` | Redirect URI mismatch. |
-| `AADSTS70008` | `AUTH/PROVIDER_FAILED` | Auth code expired. |
-| `AADSTS65001` | `AUTH/PROVIDER_FAILED` | Admin consent required for app's scopes. |
-| `AADSTS500113` | `AUTH/PROVIDER_FAILED` | No reply address registered. |
+The routes, the options every provider shares and account linking are on the [OAuth](/duck-auth/providers/oauth) page.

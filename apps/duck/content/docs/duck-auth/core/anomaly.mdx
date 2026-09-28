@@ -1,164 +1,67 @@
 ---
 title: Anomaly detection
-description: Detector registry. Impossible-travel and device-fingerprint detectors. Aggregator emits allow / deny / step-up.
+description: Scoring whether a request with a valid session looks like the person it was issued to, with the device and impossible-travel detectors
 section: Core
 ---
+A valid session can still arrive from somewhere it should not. `auth.anomaly` runs detectors over each request, combines what they notice into one score, and recommends `allow`, `step-up` or `deny`. It recommends only; the server adapters refuse a `deny`, and the rest is yours to act on.
 
-## Why anomaly detection?
+Nothing is registered by default, and with no detectors the step is skipped entirely.
 
-A correctly-authenticated session isn't always a **legitimate** session.
-A leaked password, a stolen token, or a compromised device can produce
-a sign-in that passes every gate but is wrong. duck-auth's anomaly
-facet runs an additional risk evaluation pass over every
-`resolveSession()` call.
+## Registering detectors
 
-```typescript
-const ctx = await auth.resolveSession(req, {
-  requestSnapshot: {
-    ip: req.ip,
-    userAgent: req.headers.get('user-agent'),
-    geo: await geoip.lookup(req.ip),
-  },
-})
+```ts
+import { authMemoryDeviceFingerprintStore, deviceFingerprintDetector, sha256 } from '@gentleduck/auth/core'
 
-if (ctx?.anomaly?.decision === 'step-up') {
-  return new Response('AUTH/STEP_UP_REQUIRED', { status: 403 })
-}
-if (ctx?.anomaly?.decision === 'deny') {
-  return new Response('AUTH/LOCKED', { status: 423 })
-}
+auth.anomaly.register(deviceFingerprintDetector({ store: authMemoryDeviceFingerprintStore(), authSha256: sha256 }))
 ```
 
-## Shipped detectors
+| Detector | Signal | Needs |
+| --- | --- | --- |
+| `deviceFingerprintDetector` | `new-device`, scoring 0.7, the first time an identity is seen on a device (`sha256` of the User-Agent and the IP's /24 or /48 network) | A store. The memory one is per process; implement `AuthDeviceFingerprint.IStore` over shared storage for a fleet. |
+| `authImpossibleTravelDetector` | `impossible-travel`, when the distance from the last known position implies more than 900 km/h | `getLastSeen(identityId)`, answering a position you record, and `geo` on the request. |
 
-### `authImpossibleTravelDetector`
+A detector is any `{ id, evaluate(ctx) }` answering signals `{ kind, score, evidence }`, with `score` from 0 to 1.
 
-```typescript
-import { authImpossibleTravelDetector } from '@gentleduck/auth/core'
+## Running them
 
-auth.anomaly.register(authImpossibleTravelDetector({
-  maxSpeedKmh: 900,          // default - jet speed
-  scoreOnViolation: 100,     // default - maximum
-  geoipProvider: async (ip) => {
-    const r = await maxmindLookup(ip)
-    return { lat: r.lat, lng: r.lng }
-  },
-}))
+The detectors need the request, so they run only when `resolveSession` gets a `requestSnapshot`. The server adapters' actor wrappers pass one once you give them `getCaller`:
+
+```ts
+app.use(
+  expressActorContext(auth, {
+    getCaller: (req) => ({ ...expressCaller(req), geo: lookupGeo(req.ip) }),
+    onAnomaly: async (result) => {
+      // called for every decision but 'allow', in place of the default refusal
+      if (result.decision === 'deny') throw new AuthError('AUTH_ANOMALY_DENIED', { score: result.score })
+      throw new AuthError('AUTH_STEP_UP_REQUIRED', { challenge: result.signals })
+    },
+  }),
+)
 ```
 
-For each session, the detector records the (timestamp, lat, lng) of
-the last sign-in. If the current request comes from a location that
-would require travel faster than `maxSpeedKmh` since the previous
-record, it raises an anomaly signal.
+- Without `onAnomaly`, a `deny` is refused with `AUTH_ANOMALY_DENIED` (403) and a `step-up` is let through, since a new device alone reaches the step-up score and refusing it would demand MFA on every first visit.
+- With `onAnomaly`, the decision is yours: throw to refuse, including for a `deny`.
+- What a detector learns, such as a new device, is recorded only once the request is let through.
 
-### `deviceFingerprintDetector`
+Calling `resolveSession({ headers }, { requestSnapshot })` yourself, branch on `result.anomaly?.decision` and call `result.anomaly?.admit()` once you serve the request.
 
-```typescript
-import { deviceFingerprintDetector } from '@gentleduck/auth/core'
+## Scoring
 
-auth.anomaly.register(deviceFingerprintDetector({
-  scoreOnUnknown: 50,   // default - moderate
-}))
-```
+Signals combine as `1 - (1 - a)(1 - b)...`, so more evidence always raises the score and it never passes 1.
 
-Tracks `(userAgent, OS-fingerprint)` per identity. A request from a new
-fingerprint raises a moderate signal - combined with another signal
-(impossible-travel, IP-reputation), it tips the aggregator into
-`step-up`.
+| Setting | Default | Effect |
+| --- | --- | --- |
+| `stepUpAt` | 0.7 | At or above: `step-up`. |
+| `denyAt` | 0.95 | At or above: `deny`. |
+| `threshold` | 0.7 | Emits `suspicious` for an `allow` scoring this much; every other decision always emits. |
+| `detectorTimeoutMs` | 1000 | A detector slower than this is dropped for the request. |
+| `reactions` | none | Per detector id, then signal kind (`'*'` for any detector): `'allow'` mutes the signal, `'step-up'` or `'deny'` forces at least that. |
 
-## Writing a custom detector
-
-```typescript
-import type { AuthAnomaly } from '@gentleduck/auth/core'
-
-export const ipReputationDetector = (opts: { providerUrl: string }): AuthAnomaly.IDetector => ({
-  id: 'ip-reputation',
-  async evaluate({ snapshot, identity }) {
-    const score = await fetch(`${opts.providerUrl}?ip=${snapshot.ip}`)
-      .then((r) => r.json())
-      .then((r) => r.score as number)   // 0-100
-
-    if (score < 30) return null   // no signal
-
-    return {
-      kind: 'ip-reputation',
-      score,
-      evidence: { ip: snapshot.ip, score },
-    }
-  },
-})
-
-auth.anomaly.register(ipReputationDetector({ providerUrl: 'https://...' }))
-```
-
-Detectors are pure async functions. They:
-- Take a `snapshot` (`ip`, `userAgent`, `geo`) and the resolved `identity`.
-- Return `null` for "no signal" or `AnomalySignal { kind, score (0-100), evidence }`.
-
-## The aggregator
-
-Detector signals are combined into a single `decision`:
-
-```
-total = sum(detector.score for each signal)
-
-total >= 100  -> deny
-total >=  50  -> step-up
-total <   50  -> allow
-```
-
-You can override the thresholds:
-
-```typescript
-new AuthEngine({
-  anomaly: {
-    thresholds: { deny: 80, stepUp: 40 },
-  },
+```ts
+createAuth({
+  // ...
+  anomaly: { denyAt: 0.9, reactions: { '*': { 'impossible-travel': 'deny' } } },
 })
 ```
 
-## Reactions
-
-When the aggregator returns `step-up`:
-
-```typescript
-import { AuthError } from '@gentleduck/auth/core'
-
-if (ctx.anomaly.decision === 'step-up') {
-  // Require a fresh re-auth or MFA challenge
-  throw new AuthError('AUTH/STEP_UP_REQUIRED', {
-    signals: ctx.anomaly.signals,
-  })
-}
-```
-
-When it returns `deny`:
-
-```typescript
-if (ctx.anomaly.decision === 'deny') {
-  await auth.hijack.lockout(ctx.identity.id, { reason: 'anomaly-deny' })
-  throw new AuthError('AUTH/LOCKED')
-}
-```
-
-Pair with the `hijack` facet to escalate from soft-deny (step-up) to
-hard-lock (lockout the identity) when patterns repeat.
-
-## Fail-open vs fail-closed
-
-Detectors that throw or time out **fail open** by default - the signal
-is logged but not raised, and the request proceeds. This is intentional:
-a detector outage shouldn't lock everyone out.
-
-For high-security deployments, override the policy:
-
-```typescript
-new AuthEngine({
-  anomaly: {
-    onDetectorError: 'deny',  // 'allow' (default) | 'step-up' | 'deny'
-  },
-})
-```
-
-The SOC2 compliance preset sets this to `step-up`; the FIPS preset to
-`deny`.
+A detector that throws, times out or answers garbage is logged and skipped, so a broken plugin never locks users out, and a broken detector looks like one that found nothing. Watch the logs.

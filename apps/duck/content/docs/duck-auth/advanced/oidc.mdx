@@ -1,147 +1,30 @@
 ---
 title: OIDC discovery
-description: Expose /.well-known/openid-configuration + /.well-known/jwks.json so downstream services treat your auth issuer as an OIDC OP.
+description: Publishing a discovery document and JWKS so other services can verify the tokens a JwtTransport signs, and reading another issuer's document
 section: Advanced
 ---
+A discovery document and a JWKS let another service verify the tokens your [JWT transport](/duck-auth/core/transports/jwt) signs without calling you. For a full OpenID provider, with `/authorize` and `/token`, see [OIDC provider](/duck-auth/advanced/oidc-op).
 
-> **Need a full OP** (`/authorize`, `/token`, `/userinfo`, `/introspect`,
-> `/revoke`, RFC 7591 dynamic client registration)? See
-> [OIDC OP](/duck-auth/advanced/oidc-op). This page covers the
-> discovery doc + JWKS helper only.
-
-## Why OIDC discovery?
-
-When your `AuthEngine` issues JWTs (via `JwtTransport`), downstream
-services may want to **verify those JWTs locally** without calling
-your auth service. OIDC discovery is the standard way to publish:
-
-- The list of supported algorithms, scopes, claims.
-- The JWKS endpoint where verify keys live.
-- The token endpoint where refreshes happen.
-
-duck-auth ships an OIDC discovery builder and a JWKS handler. Downstream
-RPs (resource providers) point an OIDC client library at your
-`/.well-known/openid-configuration` URL, and verification works
-automatically.
-
-## Building the discovery document
-
-```typescript
+```ts
 import { authBuildOidcDiscovery } from '@gentleduck/auth/oidc'
 
-const discovery = authBuildOidcDiscovery({
-  issuer: 'https://api.example.com',
-  prefix: '/auth',                 // default
-  jwksPath: '/.well-known/jwks.json',  // default
-  signingAlgs: ['ES256'],          // must match JwtTransport
-  scopesSupported: ['openid', 'profile', 'email'],
-  extraClaims: {
-    grant_types_supported: ['authorization_code', 'refresh_token'],
-    response_types_supported: ['code'],
-  },
-})
+const discovery = authBuildOidcDiscovery({ issuer: 'https://auth.example.com', signingAlgs: ['ES256'] })
+
+app.get('/.well-known/openid-configuration', (_req, res) => res.json(discovery))
+app.get('/.well-known/jwks.json', (_req, res) => res.json(jwt.jwks()))
 ```
 
-The result is a plain object. Serve it as JSON at the well-known URL:
+- `issuer` must be `https` unless `allowHttp: true`; a trailing slash is dropped.
+- `signingAlgs` defaults to `['HS256']`; set it to your transport's algorithm. HS256 secrets never appear in the JWKS, so only an asymmetric key can be verified elsewhere.
+- The OAuth endpoints it advertises sit under `prefix` (default `/auth`), and `jwks_uri` under `jwksPath` (default `/.well-known/jwks.json`). `extraClaims` adds fields but cannot replace these.
+- Build the JWKS per request, so a key added by `rotateSignKey` appears. `authBuildOidcRoutes({ config, transport })` answers both documents at once, with the JWKS as of that call.
 
-```typescript
-// Express
-app.get('/.well-known/openid-configuration', (req, res) => {
-  res.json(discovery)
-})
+## Reading another issuer
 
-// Hono
-app.get('/.well-known/openid-configuration', (c) => c.json(discovery))
+```ts
+import { authFetchOidcDiscovery } from '@gentleduck/auth/oidc'
 
-// Next.js
-export function GET() { return Response.json(discovery) }
+const doc = await authFetchOidcDiscovery('https://accounts.example.com')
 ```
 
-## JWKS endpoint
-
-For asymmetric JWTs (`ES256`, `RS256`, `EdDSA`), expose the public
-verify keys at `/.well-known/jwks.json`:
-
-```typescript
-import { buildJwksHandler } from '@gentleduck/auth/oidc'
-
-const jwks = buildJwksHandler(transport)  // JwtTransport instance
-
-// Express
-app.get('/.well-known/jwks.json', async (req, res) => {
-  res.json(await jwks(req))
-})
-
-// Hono
-app.get('/.well-known/jwks.json', async (c) => c.json(await jwks(c.req.raw)))
-```
-
-The handler reads `transport.verifyKeys` and emits a spec-compliant
-JWKS document - one `kid` per key, with the correct `alg`, `kty`, and
-key material (`x` / `y` for EC, `n` / `e` for RSA, `x` for Ed25519).
-
-For HS256 (symmetric), the JWKS endpoint is **not** safe to publish -
-the secret is the verify key, and exposing it lets anyone forge JWTs.
-The handler returns an empty `keys: []` array for HS256 to defend
-against accidental publication.
-
-## Rotation behaviour
-
-When you rotate keys (`transport.rotateSignKey(...)`), the JWKS document
-auto-updates on the next request - no caching layer involved:
-
-```typescript
-transport.rotateSignKey({ kid: 'kid-2026-06', key: newKey })
-// Next call to GET /.well-known/jwks.json returns both kids.
-
-// Later, after the longest exp has passed:
-transport.retireVerifyKey('kid-2026-05')
-// JWKS now returns only kid-2026-06.
-```
-
-For downstream RPs, set the OIDC client's JWKS-cache TTL to under your
-rotation overlap window so they refetch and find the new key in time.
-
-## Caching headers
-
-OIDC RPs cache JWKS responses, often for hours. Be deliberate about
-cache headers:
-
-```typescript
-app.get('/.well-known/jwks.json', async (req, res) => {
-  res.setHeader('cache-control', 'public, max-age=300, must-revalidate')
-  res.json(await jwks(req))
-})
-```
-
-Short max-age (5-10 minutes) keeps the rotation overlap brief; long
-max-age reduces load on your auth service but extends the overlap
-window you need to maintain.
-
-## Tying it together
-
-The minimal OIDC issuer:
-
-```typescript
-import { JwtTransport } from '@gentleduck/auth/core/transport'
-import { buildJwksHandler, authBuildOidcDiscovery } from '@gentleduck/auth/oidc'
-
-const transport = new JwtTransport({
-  signKey: { kid: 'k1', key: signKey },
-  verifyKeys: [{ kid: 'k1', key: verifyKey }],
-  issuer: 'https://api.example.com',
-  ttlMs: 15 * 60 * 1000,
-})
-
-const discovery = authBuildOidcDiscovery({
-  issuer: 'https://api.example.com',
-  signingAlgs: ['ES256'],
-})
-const jwks = buildJwksHandler(transport)
-
-app.get('/.well-known/openid-configuration', (req, res) => res.json(discovery))
-app.get('/.well-known/jwks.json', async (req, res) => res.json(await jwks(req)))
-```
-
-Downstream services can now verify your JWTs by pointing an OIDC client
-library at `https://api.example.com/.well-known/openid-configuration`.
+It fetches `/.well-known/openid-configuration` under the issuer, refuses `http` unless `allowHttp: true`, and caches the answer for an hour. `bypassCache: true` refetches, and `authFlushOidcDiscoveryCache()` empties the cache.

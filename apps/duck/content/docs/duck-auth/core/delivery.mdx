@@ -1,0 +1,95 @@
+---
+title: Delivery
+description: How duck-auth hands every magic link, reset link and verification link to your own mailer through one deliver function
+section: Core
+---
+duck-auth mints tokens but never sends them. Every outbound message goes through one function you pass as `deliver`, so the transport (SMTP, Resend, SES, an SMS gateway, a queue) is whatever your app already uses.
+
+## The contract
+
+```ts
+import type { Deliver } from '@gentleduck/auth/core'
+
+const deliver: Deliver = async ({ kind, identity, vars, tenant }) => {
+  // kind:     which message this is
+  // identity: the recipient's whole identity row
+  // vars:     what the message needs, narrowed by kind
+  // tenant:   the tenant the flow ran under
+}
+```
+
+`vars.url` is the full link, already carrying its token, built as `baseUrl + callbackPath + '?token=...'`. `vars.ttlMin` is how long it stays good.
+
+| `kind` | Sent by | Extra `vars` | Default path, TTL |
+| --- | --- | --- | --- |
+| `magic-link` | The magic-link provider's `begin` | none | `/auth/magic-link/callback`, 10 min |
+| `password-reset` | `flows.requestPasswordReset` | `requiresMfa` | `/auth/reset-password`, 30 min |
+| `email-verification` | `flows.requestEmailVerification` | none | `/auth/verify-email`, 30 min |
+| `account-deletion` | `flows.requestAccountDeletion` | none | `/auth/delete-account`, 30 min |
+| `account-deletion-cancel` | `flows.completeAccountDeletion` with `sendUndoLink: true` | `restorableUntil` (epoch ms) | `/auth/cancel-deletion`, the grace window |
+
+Each flow takes a `callbackPath` and a `ttlMs` to override the default; the magic-link provider takes them as options. The path must be same-origin (it starts with `/` and has no `//`): a flow replaces one that is not with its default, and the magic-link provider refuses one at construction.
+
+`requiresMfa` is true when the account has TOTP or WebAuthn MFA enrolled. Completing that reset then needs a stepped-up session of the same account, so the mail can say so.
+
+## Wiring it
+
+Pass `deliver` to `createAuth`. The flows read it from there. The magic-link provider takes its own `deliver`, so register it as a thunk to receive the engine's:
+
+```ts
+import { MemoryAdapter } from '@gentleduck/auth/adapters/memory'
+import { createAuth, type Deliver, orNull } from '@gentleduck/auth/core'
+import { magicLink } from '@gentleduck/auth/providers/magic-link'
+
+const stores = new MemoryAdapter()
+
+const deliver: Deliver = async (message) => {
+  switch (message.kind) {
+    case 'password-reset':
+      return sendMail(message.identity.profile.email, 'Reset your password', message.vars.url)
+    case 'magic-link':
+      return sendMail(message.identity.profile.email, 'Your sign-in link', message.vars.url)
+    default:
+      return sendMail(message.identity.profile.email, 'Confirm it is you', message.vars.url)
+  }
+}
+
+const auth = createAuth({
+  baseUrl: 'https://app.example.com',
+  deliver,
+  stores,
+  providers: [
+    (_engine, send) =>
+      magicLink({ deliver: send, findIdentityByEmail: (email) => orNull(stores.identities.find({ email })) }),
+  ],
+})
+
+declare function sendMail(to: string, subject: string, url: string): Promise<void>
+```
+
+## Failure and timing
+
+- **Reset and magic-link requests do not wait for `deliver`.** Both take an email address from a stranger, and awaiting the mailer would make the answer slower for an address that exists. The answer is `{ ok: true }` either way and the message goes out behind it. The verification and deletion flows run for a known identity and await it.
+- **A throw is reported, not raised.** duck-auth emits `signin.failed` with `reason: 'deliver threw'` and the message kind as `providerId`. It never reads the thrown error, since a mailer's error text tends to carry the recipient and the link.
+- **No `deliver` is a misconfiguration.** A flow that needs one throws `AUTH_MISCONFIGURED`, and under `strict({ env: 'production' })` a magic-link provider without one fails at boot.
+- **An unknown address sends nothing.** `requestPasswordReset` and the magic-link `begin` answer the same for a stranger as for an account, and do the same store work, so neither the body nor the timing tells them apart.
+
+## Testing
+
+`authTestDeliver()` from `@gentleduck/auth/test` records messages instead of sending them:
+
+```ts
+import { MemoryAdapter } from '@gentleduck/auth/adapters/memory'
+import { createAuth } from '@gentleduck/auth/core'
+import { passwords } from '@gentleduck/auth/providers/passwords'
+import { authTestDeliver } from '@gentleduck/auth/test'
+
+const { deliver, outbox } = authTestDeliver()
+const auth = createAuth({ baseUrl: 'http://localhost', deliver, stores: new MemoryAdapter(), providers: [passwords()] })
+
+const ada = await auth.identities.create({ profile: { email: 'ada@example.com', username: 'ada' } })
+await auth.flows.requestEmailVerification({ identityId: ada.id })
+outbox[0]?.vars.url // 'http://localhost/auth/verify-email?token=...'
+```
+
+See [Testing](/duck-auth/advanced/testing).

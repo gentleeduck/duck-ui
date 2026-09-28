@@ -1,107 +1,29 @@
 ---
-title: Discord OAuth
-description: Discord Sign-in. Useful for community apps, gated content, and game services.
+title: Discord
+description: Sign in with Discord, keyed on the account's snowflake id
 section: Providers
 ---
+1. Create an application in the [Discord Developer Portal](https://discord.com/developers/applications).
+2. Under **OAuth2**, add `https://app.example.com/auth/providers/oauth:discord/callback` as a redirect.
+3. Copy the client id and secret.
 
-## Setup
+```ts
+import { discord } from '@gentleduck/auth/providers/oauth/discord'
 
-1. Open the [Discord Developer Portal](https://discord.com/developers/applications).
-2. Create an application.
-3. Under **OAuth2 -> General**, add a redirect URL:
-   `https://app.example.com/auth/discord/callback`.
-4. Copy the client ID and client secret.
-
-```typescript
-import { authDiscord } from '@gentleduck/auth/providers/oauth/discord'
-
-export const auth = new AuthEngine({
-  // ...
-  providers: [
-    authDiscord({
-      clientId: process.env.DISCORD_CLIENT_ID!,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-      redirectUri: 'https://app.example.com/auth/discord/callback',
-      stateSigningSecret: process.env.OAUTH_STATE_SECRET!,
-      scopes: ['identify', 'email'],
-      onSignIn: async ({ profile }) => {
-        let identity = await auth.identities.findByProviderSub({
-          providerId: 'discord',
-          sub: profile.id,
-        })
-        if (!identity) {
-          identity = await auth.identities.create({
-            email: profile.email,
-            emailVerified: profile.verified,
-            profile: {
-              displayName: profile.global_name ?? profile.username,
-              avatarUrl: profile.avatar
-                ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
-                : undefined,
-              discordUsername: profile.username,
-            },
-          })
-          await auth.identities.linkProvider(identity.id, {
-            providerId: 'discord',
-            sub: profile.id,
-          })
-        }
-        return { identityId: identity.id }
-      },
-    }),
-  ],
+discord({
+  clientId: process.env.DISCORD_CLIENT_ID ?? '',
+  clientSecret: process.env.DISCORD_CLIENT_SECRET ?? '',
+  redirectUri: 'https://app.example.com/auth/providers/oauth:discord/callback',
+  stateSigningSecret: process.env.OAUTH_STATE_SECRET ?? '',
+  nonceStore,
+  profileToIdentityProfile: (p) => (p.email ? { email: p.email, username: `discord:${p.sub}`, name: p.name } : null),
 })
 ```
 
-## What the profile contains
+The provider id is `oauth:discord`, and the default scopes are `identify email`.
 
-Discord's `/users/@me`:
+- `sub` is the account's id, which survives a username change.
+- `name` is the display name, else the username. `avatarUrl` is built from the avatar hash on Discord's CDN.
+- `emailVerified` is set only when Discord answers `verified: true`.
 
-```typescript
-{
-  id: '123456789012345678',           // numeric snowflake
-  username: 'ada',                     // current unique handle
-  global_name: 'Ada Lovelace',         // display name (may be null)
-  discriminator: '0',                  // legacy; always '0' on new accounts
-  email: 'ada@example.com',
-  verified: true,
-  avatar: 'a1b2c3...',                 // hash; build URL from cdn.discordapp.com
-  banner: 'd4e5f6...',                 // banner hash
-  accent_color: 12345678,
-  locale: 'en-US',
-}
-```
-
-## Gating by guild (server) membership
-
-If your app should only allow members of a specific Discord server:
-
-```typescript
-authDiscord({
-  // ...
-  scopes: ['identify', 'email', 'guilds'],
-  onSignIn: async ({ profile }) => {
-    const guilds = await fetch('https://discord.com/api/users/@me/guilds', {
-      headers: { Authorization: `Bearer ${profile._accessToken}` },
-    }).then((r) => r.json())
-
-    const inMyServer = guilds.some((g) => g.id === '999999999999999999')
-    if (!inMyServer) {
-      throw new AuthError('AUTH/PROVIDER_FAILED', {
-        reason: 'not-in-guild',
-      })
-    }
-    // ...
-  },
-})
-```
-
-For per-role checks (only allow Moderators to sign in), use the
-`guilds.members.read` scope and call
-`/users/@me/guilds/{guild.id}/member` for the user's role IDs.
-
-## Bot integrations
-
-duck-auth's `discord` provider is for **user** sign-in (OAuth2). If
-you're building a bot that uses Discord's gateway, that's a separate
-protocol (`gateway.discord.gg`) - not in scope here.
+The routes, the options every provider shares and account linking are on the [OAuth](/duck-auth/providers/oauth) page.

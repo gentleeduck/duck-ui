@@ -1,0 +1,151 @@
+---
+title: "Chapter 3: sessions"
+description: What a session row holds, its two deadlines, why every sign-in mints a new sid, signing out other devices, and reacting to a stolen cookie
+section: Course
+order: 3
+---
+Ada now signs in from a laptop and a phone. This chapter looks at what each sign-in left behind, how long it lasts, and what happens when a cookie turns up somewhere it should not.
+
+## Learning goals
+
+- Read a session row and tell its two deadlines apart.
+- Set the session lifetimes and a per-person cap.
+- List a person's devices and sign out all but one.
+- Configure hijack detection and carry out its reaction.
+
+## Two sessions, one person
+
+<MermaidDiagram chart={`flowchart LR
+    ADA["Ada"] --> L["laptop session: Firefox, 203.0.113.7"]
+    ADA --> P["phone session: Safari, 198.51.100.4"]
+    L --> R1["row keyed by hash of sid"]
+    P --> R2["row keyed by hash of sid"]`} />
+
+Each sign-in is its own row, recording the IP and User-Agent it was issued to. The plaintext `sid` exists only in the caller's cookie; the store holds its SHA-256.
+
+## Step by step
+
+<Steps>
+
+<Step>Set the deadlines and the hijack policy</Step>
+
+```ts title="src/auth.ts"
+import { MemoryAdapter } from '@gentleduck/auth/adapters/memory'
+import { createAuth } from '@gentleduck/auth/core'
+import { cookieTransport } from '@gentleduck/auth/core/transport'
+import { passwords } from '@gentleduck/auth/providers/passwords'
+import { deliver } from './mailer'
+
+export const auth = createAuth({
+  baseUrl: 'http://localhost:3000',
+  deliver,
+  stores: new MemoryAdapter(),
+  transport: cookieTransport({ name: 'sid', secure: false }),
+  providers: [passwords()],
+  session: {
+    ttlMs: 24 * 60 * 60 * 1000,
+    absoluteTtlMs: 14 * 24 * 60 * 60 * 1000,
+    maxSessionsPerIdentity: 5,
+  },
+  hijack: { onIpChange: 'rotate', onUserAgentChange: 'revoke' },
+})
+
+auth.events.on('suspicious', ({ signal, score }) => console.log('suspicious', signal, score))
+```
+
+<Step>Two devices, then one</Step>
+
+```ts title="src/main.ts"
+import { AuthError } from '@gentleduck/auth/core'
+import { auth } from './auth'
+
+const ada = await auth.identities.create({ profile: { username: 'ada', email: 'ada@example.com' } })
+await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials)
+const input = { email: 'ada@example.com', password: 'correct-horse-battery' }
+
+const laptop = await auth.flows.signIn({ providerId: 'password', input, ip: '203.0.113.7', userAgent: 'Firefox' })
+const phone = await auth.flows.signIn({ providerId: 'password', input, ip: '198.51.100.4', userAgent: 'Safari' })
+
+console.log(laptop.session?.id === laptop.sid, laptop.session?.expiresAt, laptop.session?.absoluteExpiresAt)
+// false  <tomorrow>  <in two weeks>
+
+const devices = await auth.sessions.listForIdentity(ada.id)
+console.log(devices.map((session) => `${session.userAgent} from ${session.ip}`))
+// [ 'Firefox from 203.0.113.7', 'Safari from 198.51.100.4' ]
+
+await auth.sessions.revokeAllExcept(ada.id, laptop.sid)
+console.log((await auth.sessions.listForIdentity(ada.id)).map((session) => session.userAgent))
+// [ 'Firefox' ]
+console.log('phone', await auth.resolveSession({ headers: new Headers({ cookie: `sid=${phone.sid}` }) }).orNull())
+// phone null
+```
+
+<Step>A cookie somewhere it should not be</Step>
+
+Add to `src/main.ts`:
+
+```ts title="src/main.ts"
+const cookie = new Headers({ cookie: `sid=${laptop.sid}` })
+const resolved = await auth.resolveSession({ headers: cookie })
+
+console.log(await auth.hijack.evaluate(resolved.session, { ip: '192.0.2.99', userAgent: 'Firefox' }))
+// suspicious ip-change 0.6
+// { ok: false, reaction: 'rotate', signal: 'ip-change', from: '203.0.113.7', to: '192.0.2.99' }
+
+const drift = await auth.hijack.evaluate(resolved.session, { ip: '203.0.113.7', userAgent: 'curl/8.0' })
+// suspicious user-agent-change 0.8
+try {
+  if (!drift.ok) await auth.hijack.applyReaction(drift.reaction, resolved.session)
+} catch (err) {
+  if (err instanceof AuthError) console.log('refused', err.code)
+  // refused AUTH_SESSION_REVOKED
+}
+console.log('laptop', await auth.resolveSession({ headers: cookie }).orNull())
+// laptop null
+```
+
+</Steps>
+
+## What just happened
+
+1. **The row id is not the sid.** `session.id` is the SHA-256 of `sid`, so a leaked session table holds nothing a browser can present.
+2. **Two deadlines.** `expiresAt` is the idle one: a day here, slid forward by `resolveSession` once less than half of it is left. `absoluteExpiresAt` is fixed at creation, two weeks here, and nothing moves it. Past either, the session reads as gone.
+3. **`revokeAllExcept` kept the laptop.** It is the "sign out other devices" button. The phone's cookie now resolves to `null`.
+4. **An IP change answered `'rotate'`.** Networks change, so the default reaction is to re-issue the session, not to end it. `evaluate` only judges; performing a rotate is yours, through `auth.sessions.rotateOrCreate` with `purpose: 'drift'`.
+5. **A User-Agent change answered `'revoke'`,** because this engine said so. `applyReaction` ended the session and threw `AUTH_SESSION_REVOKED`. The default for a User-Agent change is `'mfa'`, which throws `AUTH_STEP_UP_REQUIRED` instead.
+6. **Every drift emitted `suspicious`,** whatever the reaction.
+
+## Rotation
+
+Every change to who a session belongs to, or how strongly it was proven, mints a new row and a new sid. A sid planted in a browser before sign-in never becomes a signed-in one.
+
+<MermaidDiagram chart={`flowchart LR
+    A["sid A: guest or stale"] --> S["signIn"]
+    S --> B["sid B: new row"]
+    S --> X["sid A revoked"]
+    B --> U["step-up: chapter 7"]
+    U --> C["sid C at AAL 2"]`} />
+
+`flows.signIn` takes `previousSid`, the sid the request arrived with, and revokes it. The server adapters pass it for you from chapter 4 on.
+
+## Try it
+
+1. Sign Ada in six times. With `maxSessionsPerIdentity: 5`, the oldest session is revoked as the sixth is minted.
+2. Change `onUserAgentChange` to `'ignore'` and rerun. `suspicious` still fires, `evaluate` answers `{ ok: true }`, and the laptop session survives.
+3. Leave out the `userAgent` on the drifted request. The reaction softens from `'revoke'` to `'rotate'`, so a proxy stripping a header cannot revoke every session behind it. `onMissingSignal: 'strict'` turns that off.
+
+## Where we are
+
+```
+ducknotes/
+  src/
+    mailer.ts
+    auth.ts   - now with session lifetimes and a hijack policy
+    main.ts
+```
+
+## See also
+
+- [Sessions](/duck-auth/core/sessions): the row, rotation purposes, guests, minting by hand.
+- [Anomaly detection](/duck-auth/core/anomaly): scoring sign-ins beyond IP and User-Agent.
+- [Chapter 4: behind HTTP](/duck-auth/course/chapter-4)

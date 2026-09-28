@@ -1,106 +1,75 @@
 ---
 title: Adapters
-description: Storage backends for identities, sessions, credentials, and orgs. Memory for dev, Redis for production, SQL bridge for Postgres / MySQL / SQLite via Drizzle.
+description: The stores an engine persists through, the shipped adapters, mixing Redis sessions with SQL, transactions, limiters, and writing your own
 section: Adapters
 ---
+An adapter is three stores: identities, credentials and sessions. Pass one as `stores`:
 
-## What is an adapter?
+```ts
+import { drizzlePgAdapter } from '@gentleduck/auth/adapters/drizzle/pg'
 
-An adapter is a bundle of store implementations: `AuthIdentity.IStore`,
-`AuthSession.IStore`, `AuthCredential.IStore`, optionally `AuthOrg.IStore`. You wire
-the stores into `AuthEngine.stores`:
-
-```typescript
-import { AuthMemoryAdapter } from '@gentleduck/auth/adapters/memory'
-
-const adapter = new AuthMemoryAdapter()
-
-export const auth = new AuthEngine({
-  stores: {
-    identities: adapter.identities,
-    sessions: adapter.sessions,
-    credentials: adapter.credentials,
-    orgs: adapter.orgs,    // optional - enables the orgs facet
-  },
+const auth = createAuth({
+  baseUrl: 'https://app.example.com',
+  stores: drizzlePgAdapter(process.env.DATABASE_URL ?? ''),
+  // ...
 })
 ```
 
-Adapters are not coupled - you can mix and match. The typical
-production posture is **SQL for identities/credentials** plus
-**Redis for sessions/limiter/idempotency/events**.
+| Adapter | Import | Holds | For |
+| --- | --- | --- | --- |
+| [Memory](/duck-auth/adapters/memory) | `adapters/memory` | All three, and orgs | Tests and local runs. `strict()` refuses it in production. |
+| [Drizzle](/duck-auth/adapters/drizzle) | `adapters/drizzle/{pg,mysql,sqlite}` | All three | Production. |
+| [Redis and Valkey](/duck-auth/adapters/redis) | `adapters/redis`, `adapters/valkey` | Sessions, events, nonces | Sessions across instances, and the shared state beside them. |
 
-## Shipped adapters
+An [orgs store](/duck-auth/core/orgs#the-store) is yours to write over your own tables.
 
-| Adapter | Stores | When to pick |
+## Mixing stores
+
+Each store is independent, so sessions can live in Redis beside identities in SQL:
+
+```ts
+import { session } from '@gentleduck/auth/adapters/redis'
+
+const sql = drizzlePgAdapter(db)
+createAuth({
+  // ...
+  stores: { identities: sql.identities, credentials: sql.credentials, sessions: session({ redis }) },
+})
+```
+
+## Transactions
+
+`auth.withTransaction(tx)` answers the engine bound to your transaction handle, so its writes commit or roll back with yours. Its events wait in `pending`, so flush them once the transaction commits:
+
+```ts
+await db.transaction(async (tx) => {
+  const bound = auth.withTransaction(tx)
+  const ada = await bound.identities.create({ profile: { email: 'ada@example.com', username: 'ada' } })
+  await tx.insert(accounts).values({ ownerId: ada.id })
+  return bound.pending
+}).then((pending) => pending.flush())
+```
+
+Only a Drizzle adapter passed whole can join one. A hand-built mix and the memory adapter throw `AUTH_MISCONFIGURED`.
+
+## Limiters
+
+The limiter is what every sign-in, link request and challenge spends from. Pass one as `limiter`:
+
+| Limiter | Import | Notes |
 | --- | --- | --- |
-| [`AuthMemoryAdapter`](/duck-auth/adapters/memory) | identities, sessions, credentials, orgs | Dev/test only. `strict()` rejects it in production. |
-| [`adapters/redis`](/duck-auth/adapters/redis) | sessions, idempotency, DPoP nonce, limiter, events | Production session store + cross-process state. |
-| [`adapters/sql` + Drizzle examples](/duck-auth/adapters/sql) | identities, credentials, sessions, orgs | Production durable store. Bundled schemas for pg / mysql / sqlite. |
+| `redisLimiter({ redis })` | `limiters/redis` | Shared across instances. Default 10 per 15 minutes per key. |
+| `valkeyLimiter({ redis })` | `limiters/valkey` | The same over an ioredis or iovalkey client. |
+| `new MemoryLimiter()` | `limiters/memory` | One process only. |
+| `noopLimiter()` | `limiters/mock` | Never refuses. Tests only. |
 
-## The compliance suite
+Without one, the engine counts in a `MemoryLimiter`. `strict()` refuses that in production, and the noop one: a limiter per process grants every budget once per instance.
 
-Every shipped adapter passes the same compliance test matrix exported from:
+## Writing your own
 
-```typescript
-import {
-  authRunCredentialStoreCompliance,
-  authRunIdentityStoreCompliance,
-  authRunSessionStoreCompliance,
-} from '@gentleduck/auth/adapters/__compliance__'
-```
+Implement `Identities.Store`, `Credential.Store` and `Sessions.Store` from `@gentleduck/auth/core`. The contract each method keeps is on its type.
 
-If you implement a custom store, run these suites against it. They
-catch the dozen subtle bugs that have bit every adapter ever shipped:
-
-- Cross-tenant reads must return `null`, not throw.
-- Soft-delete grace must hide rows from `findByEmail` but expose them
-  to `findById` with `deletedAt` set.
-- Optimistic concurrency must throw `AUTH/STALE_WRITE` on stale
-  `updateConditional`, not silently no-op.
-- Provider link uniqueness must be enforced per `(providerId, sub)`,
-  not per `(providerId, sub, tenantId)`.
-- Session revocation must be instant (next read returns `null`), not
-  TTL-eventually.
-
-## Choosing an adapter
-
-```
-Dev / test / local CI?
-  -> AuthMemoryAdapter
-
-Single-replica production app, low traffic?
-  -> SQL (Drizzle/pg) for everything; no Redis needed
-
-Multi-replica, sessions across processes, rate limit across processes?
-  -> SQL for identities/credentials/orgs + Redis for sessions/limiter
-
-Stateless JWT, but need DPoP jti replay defence across processes?
-  -> SQL + AuthRedisDPoPNonceStore (the JWT is verified locally, no session store needed)
-
-Migrating from an existing auth system?
-  -> Implement SqlBridge against your existing schema; use bulkCreate to import.
-```
-
-## Writing a custom adapter
-
-A custom adapter is any object that implements the three (or four) store
-interfaces. The most ergonomic path is the **SQL bridge**:
-
-```typescript
-import { authCreateSqlStores } from '@gentleduck/auth/adapters/sql'
-
-const stores = authCreateSqlStores({
-  bridge: myDrizzleBridge,    // your SqlBridge.IBridge implementation
-})
-
-export const auth = new AuthEngine({
-  stores: {
-    identities: stores.identities,
-    sessions: stores.sessions,
-    credentials: stores.credentials,
-  },
-})
-```
-
-See the [SQL bridge guide](/duck-auth/adapters/sql) for the bridge
-interface and the Drizzle reference implementations.
+- A missing row rejects with its not-found code, such as `AUTH_IDENTITY_NOT_FOUND`; it never answers `null`.
+- A stale `expectedVersion` rejects with `AUTH_STALE_WRITE`, and a taken email, username or login with its own code.
+- Extend `AdapterStore` from `@gentleduck/auth/adapters` and call through `run`: it maps what your driver throws onto the codes you declare, and anything else to `AUTH_ADAPTER_FAILED`.
+- Give it a `withClient(tx)` answering the same stores on a transaction handle, and it can join `withTransaction`.

@@ -1,172 +1,118 @@
 ---
-title: Redis adapter bundle
-description: Production session store + idempotency cache + DPoP nonce store + sliding-window limiter + cross-process events. Works against ioredis, @upstash/redis, or an in-tree AuthFakeRedis.
+title: Redis and Valkey
+description: Sessions, the limiter, the event bus and the single-use stores on Redis or Valkey, the pieces a fleet of instances must share
 section: Adapters
 ---
+Redis holds what every instance must see at once: sessions, rate-limit buckets, events, and the stores that burn a value once. Identities and credentials stay in [SQL](/duck-auth/adapters/drizzle).
 
-## What it bundles
+There are two entries for the same stores, differing only in the client they take:
 
-`@gentleduck/auth/adapters/redis` is a **bundle** of stores - each one
-can be wired independently. There is no single "Redis adapter" class;
-you pick the stores you need:
-
-| Class | Replaces |
+| Entry | Client |
 | --- | --- |
-| `AuthRedisSessionStore` | `AuthMemoryAdapter.sessions` |
-| `AuthRedisIdempotencyStore` | The default in-memory `idempotency` cache. |
-| `AuthRedisDPoPNonceStore` | `MemoryDPoPNonceStore`. |
-| `AuthRedisLimiter` | `AuthMemoryLimiter`. |
-| `AuthRedisEvents` | `AuthInMemoryEvents`. |
-| `AuthFakeRedis` | A test-only in-memory `AuthRedisLike.IClient`. |
+| `adapters/redis` | An `@upstash/redis`-shaped client, or `fakeRedis()` from `@gentleduck/auth/test`. |
+| `adapters/valkey` | ioredis or iovalkey, for Redis or Valkey. |
 
-Identities, credentials, and orgs **do not** belong in Redis - use the
-SQL bridge for durable rows and Redis for the volatile state that needs
-cross-process coordination.
+## Setup
 
-## Setup with ioredis
+With ioredis:
 
-```typescript
+```ts
+import { drizzlePgAdapter } from '@gentleduck/auth/adapters/drizzle/pg'
+import { valkeyEvents, valkeySessionImpl } from '@gentleduck/auth/adapters/valkey'
+import { createAuth } from '@gentleduck/auth/core'
+import { valkeyLimiter } from '@gentleduck/auth/limiters/valkey'
+import { passwords } from '@gentleduck/auth/providers/passwords'
 import Redis from 'ioredis'
-import {
-  AuthRedisDPoPNonceStore,
-  AuthRedisEvents,
-  AuthRedisIdempotencyStore,
-  AuthRedisLimiter,
-  AuthRedisSessionStore,
-} from '@gentleduck/auth/adapters/redis'
-import { authCreateSqlStores } from '@gentleduck/auth/adapters/sql'
 
-const redis = new Redis(process.env.REDIS_URL!)
-const sql = authCreateSqlStores({ bridge: myDrizzleBridge })
+const redis = new Redis(process.env.REDIS_URL ?? '')
+const sql = drizzlePgAdapter(process.env.DATABASE_URL ?? '')
 
-export const auth = new AuthEngine({
-  stores: {
-    identities: sql.identities,
-    credentials: sql.credentials,
-    sessions: new AuthRedisSessionStore(redis, { keyPrefix: 'sess:', ttl: 7 * 24 * 60 * 60 }),
-    orgs: sql.orgs,
-  },
-  limiter: new AuthRedisLimiter(redis, { keyPrefix: 'ratelimit:' }),
-  events: new AuthRedisEvents(redis, { channel: 'auth-events' }),
+const auth = createAuth({
+  baseUrl: 'https://app.example.com',
+  stores: { identities: sql.identities, credentials: sql.credentials, sessions: valkeySessionImpl({ redis }) },
+  limiter: valkeyLimiter({ redis }),
+  events: valkeyEvents({ cmd: redis, sub: new Redis(process.env.REDIS_URL ?? '') }),
+  providers: [passwords()],
+  strict: false,
+})
+
+auth.events.on('lockout', alertOps)
+auth.strict({ env: 'production' })
+```
+
+`sub` must be a connection of its own: a subscribed connection can run no other command. [Production hardening](/duck-auth/advanced/security) explains the `strict` order.
+
+With a mixed bag of stores, [`withTransaction`](/duck-auth/adapters#transactions) is not available.
+
+## What goes where
+
+| Store | `adapters/redis` | `adapters/valkey` | Option |
+| --- | --- | --- | --- |
+| Sessions | `session({ redis })` | `valkeySessionImpl({ redis })` | `stores.sessions` |
+| Limiter | `redisLimiter({ redis })` from `limiters/redis` | `valkeyLimiter({ redis })` from `limiters/valkey` | `limiter` |
+| Events | `redisEvents({ redis })` | `valkeyEvents({ cmd, sub })` | `events` |
+| OAuth `state` and DPoP `jti` | `redisDPoPNonceStore({ redis })` | `valkeyDPoPNonceStore({ redis })` | `nonceStore` on the provider or transport |
+| Passkey challenges | `redisPasskeyChallengeStore({ redis })` from `providers/passkey` | the same, over `valkeyAdapter(redis)` | `challengeStore` on the passkey provider |
+
+`valkeyAdapter(client)` turns an ioredis or iovalkey client into the shape `adapters/redis` takes, so any `redis*` store works with it.
+
+`strict({ env: 'production' })` refuses the in-process version of every row above, since each one lets a second instance miss what the first did: a limiter budget granted once per instance, a revocation another instance never hears, an OAuth callback or a passkey assertion that replays on a neighbour.
+
+## Options
+
+| Store | Option | Default |
+| --- | --- | --- |
+| Sessions | `prefix` | `'auth'` |
+| | `maxTtlSec`, a ceiling on every key's TTL | 30 days |
+| | `gcLeaseSec`, how long one instance holds the expiry sweep | 5 minutes |
+| Limiter | `max` attempts per window | 10 |
+| | `windowMs` | 15 minutes |
+| | `prefix` | `'auth:rl'` |
+| Events | `prefix`; each event is published on `<prefix>:<event>` | `'auth:events'` |
+| Nonces | `prefix` | `'auth:dpop:jti'` |
+| Passkey challenges | `prefix` | `'auth:passkey:challenge'` |
+
+Session updates are a compare-and-swap in Lua, so give the client `eval`. Without it, two concurrent writes to one session can lose the first.
+
+## Idempotency
+
+`redisIdempotency` and `valkeyIdempotency` from `@gentleduck/auth/core/idempotency` replay a response for a repeated `Idempotency-Key`. The engine holds none; your route calls it:
+
+```ts
+import { createHash } from 'node:crypto'
+import { valkeyIdempotency } from '@gentleduck/auth/core/idempotency'
+
+const idempotency = valkeyIdempotency({ redis })
+
+app.post('/payments', async (req, res) => {
+  const key = req.get(idempotency.headerName)
+  if (!key || key.length > 256) return res.status(400).json({ error: 'idempotency-key-required' })
+  const fingerprint = createHash('sha256').update(`POST /payments ${JSON.stringify(req.body)}`).digest('hex')
+  const response = await idempotency.handle(
+    key,
+    {},
+    async () => ({ status: 201, body: await charge(req.body), createdAt: new Date() }),
+    { identityId: req.user?.id, fingerprint },
+  )
+  res.status(response.status).json(response.body)
 })
 ```
 
-## Setup with @upstash/redis (edge runtimes)
+- A missing key, or one over 256 characters, runs the executor uncached, so a route that must not repeat refuses it first.
+- The executor runs once per key, and a repeat within `ttlMs` (a day by default) answers the cached response.
+- A thrown error or a 5xx caches nothing, so the client's retry runs for real.
+- A repeat arriving while the first is still running waits up to `pollTimeoutMs` (5s) for it, then answers 409.
+- Pass `fingerprint`, a hash of the method, path and body, and a key reused for a different request answers 422.
+- Pass `identityId`, or every anonymous caller shares one bucket and the key alone authorises the replay.
 
-```typescript
-import { Redis as UpstashRedis } from '@upstash/redis'
+## Testing
 
-const upstash = new UpstashRedis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-})
+`fakeRedis()` from `@gentleduck/auth/test` is an in-memory client for the `adapters/redis` stores:
 
-const auth = new AuthEngine({
-  // ...
-  stores: { sessions: new AuthRedisSessionStore(upstash) },
-})
+```ts
+import { session } from '@gentleduck/auth/adapters/redis'
+import { fakeRedis } from '@gentleduck/auth/test'
+
+const redis = fakeRedis()
+const sessions = session({ redis })
 ```
-
-`AuthRedisLike.IClient` is the abstraction - any Redis client that exposes
-`get`, `set`, `del`, `incr`, `expire`, `pttl`, `keys`, `multi`,
-`subscribe`/`publish` works.
-
-## AuthRedisSessionStore
-
-```typescript
-new AuthRedisSessionStore(client, {
-  keyPrefix: 'sess:',       // default
-  ttl: 7 * 24 * 60 * 60,    // default 7 days, in seconds
-})
-```
-
-Stores serialised `Session` objects under `keyPrefix + sessionIdHash`
-with TTL. Revocation = `DEL`. Lookup = `GET` + JSON parse.
-
-The session id is **hashed at rest** - even a Redis dump does not yield
-usable bearer tokens.
-
-## AuthRedisLimiter
-
-```typescript
-new AuthRedisLimiter(client, {
-  keyPrefix: 'ratelimit:',  // default
-  slideWindow: true,        // sliding-window algorithm
-})
-```
-
-Sliding-window rate limiter. Per-bucket atomic via `MULTI` + `INCR` +
-`EXPIRE`. Used by every provider's `limiterKeyPrefix` to enforce
-per-email / per-IP / per-key buckets.
-
-## AuthRedisIdempotencyStore
-
-```typescript
-new AuthRedisIdempotencyStore(client, {
-  keyPrefix: 'idempotency:',  // default
-  ttl: 24 * 60 * 60,          // default 24 hours
-})
-```
-
-Stores the result of an idempotent request keyed by the
-`Idempotency-Key` header. Subsequent requests with the same key return
-the cached result without re-executing.
-
-## AuthRedisDPoPNonceStore
-
-```typescript
-new AuthRedisDPoPNonceStore(client, {
-  ttlMs: 10 * 60 * 1000,    // default 10 minutes
-})
-```
-
-JTI replay guard for DPoP proofs. Every accepted DPoP `jti` is recorded
-with TTL; duplicates return `AUTH/DPOP_INVALID`.
-
-## AuthRedisEvents
-
-```typescript
-new AuthRedisEvents(client, {
-  channel: 'auth-events',   // default
-})
-```
-
-Pub/Sub-backed event bus. Publishes serialised events to the channel;
-every subscribed replica replays them through the same `on()` API.
-
-Use cases:
-- Cache invalidation across replicas on `password.changed`.
-- Cross-replica presence ("how many sessions does this identity have
-  active right now?").
-- Streaming to an audit log SaaS without a queueing layer.
-
-## AuthFakeRedis (for tests)
-
-```typescript
-import { AuthFakeRedis } from '@gentleduck/auth/adapters/redis'
-
-const redis = new AuthFakeRedis()
-const limiter = new AuthRedisLimiter(redis)
-
-// AuthFakeRedis implements the same AuthRedisLike.IClient interface as ioredis,
-// but stores in-process. No Docker, no `redis-server`, no port to bind.
-```
-
-Useful when you want to exercise the same code paths in tests without
-spinning up Redis.
-
-## What goes in Redis vs SQL
-
-| Data | Backing |
-| --- | --- |
-| Identities (rows that survive process restarts) | SQL |
-| Credentials (password hashes, passkey rows, API keys) | SQL |
-| Sessions (volatile, sliding TTL) | Redis (or SQL for single-replica deployments) |
-| Idempotency cache | Redis |
-| DPoP nonces | Redis |
-| Rate-limiter counters | Redis |
-| Cross-replica events | Redis Pub/Sub |
-| Orgs and memberships | SQL |
-
-The split is not arbitrary: Redis is for **volatile, write-heavy, TTL'd**
-data; SQL is for **durable, queryable, transactional** data.

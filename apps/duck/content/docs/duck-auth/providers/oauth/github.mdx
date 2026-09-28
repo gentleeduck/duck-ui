@@ -1,135 +1,29 @@
 ---
-title: GitHub OAuth
-description: GitHub Sign-in with PKCE-S256 and signed state. Default scopes read:user + user:email.
+title: GitHub
+description: Sign in with GitHub, reading the account's primary verified address rather than its public one
 section: Providers
 ---
+1. Create an OAuth App under **Settings > Developer settings > OAuth Apps**.
+2. Set **Authorization callback URL** to `https://app.example.com/auth/providers/oauth:github/callback`.
+3. Copy the client id and generate a client secret.
 
-## Setup
+```ts
+import { github } from '@gentleduck/auth/providers/oauth/github'
 
-1. Go to **Settings -> Developer settings -> OAuth Apps** in your GitHub
-   account or organization.
-2. Click **New OAuth App**.
-3. Set **Authorization callback URL** to
-   `https://app.example.com/auth/github/callback`.
-4. Copy the client ID and client secret.
-
-```typescript
-import { authGithub } from '@gentleduck/auth/providers/oauth/github'
-
-export const auth = new AuthEngine({
-  // ...
-  providers: [
-    authGithub({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-      redirectUri: 'https://app.example.com/auth/github/callback',
-      stateSigningSecret: process.env.OAUTH_STATE_SECRET!,
-      scopes: ['read:user', 'user:email'],  // default
-      onSignIn: async ({ profile }) => {
-        const primaryEmail = profile.emails.find((e) => e.primary)?.email
-
-        let identity = await auth.identities.findByProviderSub({
-          providerId: 'github',
-          sub: String(profile.id),
-        })
-        if (!identity && primaryEmail) {
-          identity = await auth.identities.findByEmail(primaryEmail)
-        }
-        if (!identity) {
-          identity = await auth.identities.create({
-            email: primaryEmail ?? `${profile.login}@users.noreply.github.com`,
-            emailVerified: !!primaryEmail,
-            profile: {
-              displayName: profile.name ?? profile.login,
-              avatarUrl: profile.avatar_url,
-              githubLogin: profile.login,
-            },
-          })
-        }
-        await auth.identities.linkProvider(identity.id, {
-          providerId: 'github',
-          sub: String(profile.id),
-          email: primaryEmail,
-        })
-        return { identityId: identity.id }
-      },
-    }),
-  ],
+github({
+  clientId: process.env.GITHUB_CLIENT_ID ?? '',
+  clientSecret: process.env.GITHUB_CLIENT_SECRET ?? '',
+  redirectUri: 'https://app.example.com/auth/providers/oauth:github/callback',
+  stateSigningSecret: process.env.OAUTH_STATE_SECRET ?? '',
+  nonceStore,
+  profileToIdentityProfile: (p) => (p.email ? { email: p.email, username: `github:${p.sub}`, name: p.name } : null),
 })
 ```
 
-## Callback route
+The provider id is `oauth:github`, and the default scopes are `read:user user:email`.
 
-Same shape as every other OAuth provider:
+- `sub` is the numeric account id as a string, which survives a username change.
+- `email` is the primary verified address from `/user/emails`, marked verified. When the token cannot read it, the provider falls back to the public profile address, unverified, which many accounts leave empty.
+- Without `user:email` in `scopes`, no address is ever marked verified.
 
-```typescript
-// Express
-app.get('/auth/github/callback', authMountSignIn(auth))
-
-// Next.js - app/auth/github/callback/route.ts
-export const GET = authNextSignIn(auth)
-```
-
-## What the profile contains
-
-GitHub's `/user` endpoint returns:
-
-```typescript
-{
-  id: 12345,                            // numeric, stable
-  login: 'ada',                         // username
-  name: 'Ada Lovelace',
-  email: 'ada@example.com',            // may be null if user hides it
-  avatar_url: 'https://avatars.githubusercontent.com/u/12345?v=4',
-  bio: '...',
-  company: '...',
-  location: '...',
-  // ... and many more
-}
-```
-
-The provider also pulls the user's emails (with `user:email` scope)
-from `/user/emails` so you get the primary verified email even if
-they've hidden it from the public profile.
-
-## Restricting by org
-
-For internal apps where only members of your GitHub org should sign in:
-
-```typescript
-onSignIn: async ({ profile }) => {
-  const orgs = await fetch('https://api.github.com/user/orgs', {
-    headers: {
-      Authorization: `Bearer ${profile._accessToken}`,
-      'User-Agent': 'example-app',
-    },
-  }).then((r) => r.json())
-
-  if (!orgs.some((o) => o.login === 'example-org')) {
-    throw new AuthError('AUTH/PROVIDER_FAILED', {
-      reason: 'not-in-org',
-    })
-  }
-
-  // Add read:org to scopes so /user/orgs returns full list, not just public.
-  // ...
-}
-```
-
-If you need this often, scope the provider with `read:org` and call
-the API once per sign-in.
-
-## GitHub App vs OAuth App
-
-duck-auth uses the OAuth App flow. If you have a GitHub App (which
-supports finer-grained permissions), you can still use the standard
-OAuth provider - the OAuth handshake is the same. You just lose the
-App-specific webhook integration.
-
-## Common errors
-
-| Error from GitHub | duck-auth code | Cause |
-| --- | --- | --- |
-| `redirect_uri_mismatch` | `AUTH/PROVIDER_FAILED` | Callback URL doesn't match. |
-| `bad_verification_code` | `AUTH/PROVIDER_FAILED` | Code expired (10 minutes) or already used. |
-| `access_denied` | `AUTH/PROVIDER_FAILED` | User clicked **Cancel** on the consent screen. |
+The routes, the options every provider shares and account linking are on the [OAuth](/duck-auth/providers/oauth) page.

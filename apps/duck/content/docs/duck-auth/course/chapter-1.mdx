@@ -1,0 +1,145 @@
+---
+title: "Chapter 1: your first sign-in"
+description: Build an engine over the memory adapter, create an account, sign in with a password, read the session back and sign out
+section: Course
+order: 1
+---
+DuckNotes starts with one question: who is making this request? This chapter builds the smallest engine that can answer it, signs Ada in, and takes the answer apart.
+
+## Learning goals
+
+- Build an `AuthEngine` with `createAuth` from a store, a transport and a provider.
+- Create an identity and give it a password.
+- Sign in with `auth.flows.signIn` and read the session back with `resolveSession`.
+- Catch an `AuthError` and read its code.
+
+## The moving parts
+
+<MermaidDiagram chart={`flowchart LR
+    R["request carrying a cookie"] --> T["transport: finds the sid"]
+    T --> E["AuthEngine"]
+    P["provider: password"] --> E
+    E --> S["stores: identities, credentials, sessions"]
+    E --> A["session + identity"]`} />
+
+The engine holds no data of its own. A **store** keeps identities, credentials and sessions; a **transport** decides how the session id travels; a **provider** is one way to prove who you are. Swapping any of them later leaves the rest of the code alone.
+
+## Step by step
+
+<Steps>
+
+<Step>Build the engine</Step>
+
+```ts title="src/auth.ts"
+import { MemoryAdapter } from '@gentleduck/auth/adapters/memory'
+import { createAuth } from '@gentleduck/auth/core'
+import { cookieTransport } from '@gentleduck/auth/core/transport'
+import { passwords } from '@gentleduck/auth/providers/passwords'
+
+export const auth = createAuth({
+  baseUrl: 'http://localhost:3000',
+  stores: new MemoryAdapter(),
+  transport: cookieTransport({ name: 'sid', secure: false }),
+  providers: [passwords()],
+})
+```
+
+- `MemoryAdapter` holds all three stores in maps, so a restart forgets everything. Chapter 8 replaces it with Postgres.
+- `cookieTransport({ name: 'sid', secure: false })` puts the session id in a cookie that works over plain http. The default name, `__Host-duck-sid`, needs https.
+- `passwords()` hashes with Argon2id through the `@node-rs/argon2` peer.
+- `baseUrl` is where the app lives. Links the engine mails start from it.
+
+<Step>Sign in</Step>
+
+```ts title="src/main.ts"
+import { AuthError } from '@gentleduck/auth/core'
+import { auth } from './auth'
+
+const ada = await auth.identities.create({ profile: { username: 'ada', email: 'ada@example.com' } })
+await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials)
+
+const { sid, session } = await auth.flows.signIn({
+  providerId: 'password',
+  input: { email: 'ada@example.com', password: 'correct-horse-battery' },
+})
+console.log('signed in at AAL', session?.aal)
+// signed in at AAL 1
+
+const request = { headers: new Headers({ cookie: `sid=${sid}` }) }
+const resolved = await auth.resolveSession(request).orNull()
+console.log('resolved', resolved?.identity?.profile.username)
+// resolved ada
+
+try {
+  await auth.flows.signIn({ providerId: 'password', input: { email: 'ada@example.com', password: 'wrong-password' } })
+} catch (err) {
+  if (err instanceof AuthError) console.log('refused', err.code)
+  // refused AUTH_INVALID_CREDENTIALS
+}
+
+await auth.flows.signOut(sid)
+console.log('after sign-out', await auth.resolveSession(request).orNull())
+// after sign-out null
+```
+
+<Step>Run it</Step>
+
+```bash
+npx tsx src/main.ts
+```
+
+</Steps>
+
+## What just happened
+
+<MermaidDiagram chart={`sequenceDiagram
+    participant M as main.ts
+    participant F as auth.flows
+    participant P as password provider
+    participant S as sessions
+    M->>F: signIn with email and password
+    F->>P: complete
+    P-->>F: Ada, factor password
+    F->>S: mint a session
+    S-->>F: row stored under the hash of the sid
+    F-->>M: sid, session, intents`} />
+
+1. **An identity is the person.** `identities.create` stores a profile holding at least `username` and `email`. The password is not on it: `passwords.set` stores a hash as a separate credential.
+2. **The provider checks the password.** It finds Ada by email, case-folded and trimmed, and verifies the hash. A wrong password and an unknown email both throw `AUTH_INVALID_CREDENTIALS`, and both run the hasher, so neither the answer nor its timing says which.
+3. **The session is minted.** `sid` is a random id for the caller; the store keeps only its SHA-256 as the row id. `session.aal` is 1 because one factor was presented.
+4. **`intents` are for a server.** They say "set the `sid` cookie and the `duck-csrf` cookie". With no server yet, this chapter drops them; chapter 4 applies them.
+5. **`resolveSession` reads it back.** The transport finds `sid` in the `cookie` header, the engine hashes it, loads the row and its identity.
+6. **`signOut` revokes the row.** The same cookie now reads as no session.
+
+## Answers
+
+`resolveSession` answers an `Answer`: awaited directly, a missing or dead session throws. `.orNull()` turns only "not found" codes into `null` and still throws a store that is down, so an outage never reads as a signed-out user.
+
+```ts
+await auth.resolveSession({ headers: new Headers() }) // throws AUTH_SESSION_REVOKED
+await auth.resolveSession({ headers: new Headers() }).orNull() // null
+```
+
+Every error the engine throws is an `AuthError` with a `code`, an HTTP `status` and `meta`. Branch on the code; the [error reference](/duck-auth/core/errors) lists them.
+
+## Try it
+
+1. Sign in as `ghost@example.com`, which does not exist, and confirm the code is the same as for a wrong password.
+2. Print `session.expiresAt` and `session.absoluteExpiresAt`: 7 and 30 days out. Chapter 3 changes them.
+3. Replace `passwords()` with `passwords({ hasher: scryptHasher() })`, imported from the same module, and uninstall `@node-rs/argon2`. Sign-in still works on Node's built-in scrypt.
+
+## Where we are
+
+```
+ducknotes/
+  src/
+    auth.ts   - the engine
+    main.ts   - the script you run
+```
+
+## See also
+
+- [Core](/duck-auth/core): every `createAuth` option and facet.
+- [Password](/duck-auth/providers/password): the strength policy and the hashers.
+- [Transports](/duck-auth/core/transports): cookie, bearer, JWT.
+- [Chapter 2: accounts](/duck-auth/course/chapter-2)

@@ -1,228 +1,85 @@
 ---
 title: React client
-description: <AuthProvider>, authUseSession, authUseSignIn, authUseSignOut, authUseBeginProvider. React 16.8+.
+description: The Provider, the session and mutation hooks, and the Storybook decorator
 section: Client
 ---
-
-## Provider
-
 ```tsx
-import { AuthProvider } from '@gentleduck/auth/client/react'
+import { Provider } from '@gentleduck/auth/client/react'
 
 export function App({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthProvider baseUrl="/auth">
-      {children}
-    </AuthProvider>
-  )
+  return <Provider baseUrl="/auth">{children}</Provider>
 }
 ```
 
-Props:
+`Provider` takes the [vanilla client's options](/duck-auth/client/vanilla), or a built one as `client`. It reads the session on mount; `noInitialFetch` skips that read and starts as a guest.
 
-| Prop | Purpose |
-| --- | --- |
-| `baseUrl` | Default `/auth`. |
-| `client` | Pre-built vanilla client (advanced - for sharing across React + non-React). |
-| `noInitialFetch` | Skip the `GET /auth/session` call on mount. Useful for SSR where you already have the initial state. |
-| `initialState` | Hydrate from a server-rendered snapshot. Pair with `noInitialFetch: true`. |
-| `fetch` | Override the fetch implementation. |
-
-## `authUseSession`
+## The session
 
 ```tsx
-import { authUseSession } from '@gentleduck/auth/client/react'
+import { useSession } from '@gentleduck/auth/client/react'
+
+type Profile = { username: string; email: string; displayName?: string }
 
 function Header() {
-  const { data, status } = authUseSession()
-
-  if (status === 'loading') return <Skeleton />
-  if (status === 'guest') return <SignInButton />
-  return <UserMenu identity={data.identity} />
+  const { data, status } = useSession<Profile>()
+  if (status === 'loading') return null
+  if (status === 'guest') return <a href="/sign-in">Sign in</a>
+  return <span>{data.identity?.profile.displayName ?? data.identity?.profile.email}</span>
 }
 ```
 
-Returns:
+`status` is `loading` until the first read lands, then `authed` or `guest`. `refresh()` reads it again.
 
-```typescript
-type UseSessionResult<Profile> =
-  | { status: 'loading'; data: null }
-  | { status: 'guest'; data: null }
-  | { status: 'authed'; data: { session, identity: { profile: Profile, ... } } }
-```
-
-Use the discriminated union to drive your render branches - `data` is
-typed correctly in each arm.
-
-Generic over `Profile`:
+## Signing in and out
 
 ```tsx
-type Profile = { displayName: string; avatarUrl?: string }
-
-const { data, status } = authUseSession<Profile>()
-// data?.identity.profile.displayName  <- typed
-```
-
-## `authUseSignIn`
-
-```tsx
-import { authUseSignIn } from '@gentleduck/auth/client/react'
+import { useSignIn } from '@gentleduck/auth/client/react'
+import { type FormEvent, useState } from 'react'
 
 function SignInForm() {
-  const signIn = authUseSignIn()
+  const signIn = useSignIn()
+  const [error, setError] = useState<string | null>(null)
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const res = await signIn.mutate({
+      providerId: 'password',
+      input: { email: form.get('email'), password: form.get('password') },
+    })
+    setError(res.ok ? null : res.error.code)
+  }
 
   return (
-    <form
-      onSubmit={async (event) => {
-        event.preventDefault()
-        const formData = new FormData(event.currentTarget)
-        try {
-          await signIn.mutateAsync({
-            providerId: 'password',
-            input: {
-              email: formData.get('email') as string,
-              password: formData.get('password') as string,
-            },
-          })
-        } catch {
-          // error is also on signIn.error
-        }
-      }}>
+    <form onSubmit={submit}>
       <input name="email" type="email" required />
       <input name="password" type="password" required />
-      <button type="submit" disabled={signIn.isLoading}>
-        {signIn.isLoading ? 'Signing in...' : 'Sign in'}
-      </button>
-      {signIn.error && <p>{signIn.error.code}</p>}
+      <button type="submit" disabled={signIn.loading}>Sign in</button>
+      {error === 'AUTH_INVALID_CREDENTIALS' && <p>Wrong email or password</p>}
     </form>
   )
 }
 ```
 
-API:
+Every mutation hook answers `{ mutate, loading, error }`. `mutate` resolves to the call's [envelope](/duck-auth/client#what-a-call-answers), so a refusal is `res.ok === false`, not a throw; `error` holds only a thrown error. On success the session updates everywhere `useSession` is read.
 
-| Field | Description |
+| Hook | `mutate` takes |
 | --- | --- |
-| `mutate(args)` | Fire-and-forget version. Errors go on `signIn.error`. |
-| `mutateAsync(args)` | Returns the result or throws. |
-| `isLoading` | True while the request is in flight. |
-| `error` | The `AuthError` from the last failure (cleared on next call). |
-| `data` | The `{ session, identity }` from the last success. |
-| `reset()` | Clear `error` and `data`. |
+| `useSignIn()` | `{ providerId, input }` |
+| `useSignOut()` | nothing |
+| `useBeginProvider()` | `{ id, input }`: `mutate({ id: 'oauth:google' })` sends the page to Google, `mutate({ id: 'magic-link', input: { email } })` sends the link. |
+| `useSignUp({ path })` | Your registration route's body. No adapter mounts one. |
 
-## `authUseSignOut`
+`useAuthClient()` is the client itself, for a call no hook covers.
 
-```tsx
-import { authUseSignOut } from '@gentleduck/auth/client/react'
+## Storybook
 
-function SignOutButton() {
-  const signOut = authUseSignOut()
-  return (
-    <button onClick={() => signOut.mutate()} disabled={signOut.isLoading}>
-      Sign out
-    </button>
-  )
-}
-```
-
-## `authUseBeginProvider`
-
-```tsx
-import { authUseBeginProvider } from '@gentleduck/auth/client/react'
-
-function GoogleSignIn() {
-  const begin = authUseBeginProvider()
-  return (
-    <button onClick={() => begin.mutate({ providerId: 'google', input: {} })}>
-      Sign in with Google
-    </button>
-  )
-}
-
-function MagicLinkRequest() {
-  const begin = authUseBeginProvider()
-  return (
-    <form
-      onSubmit={async (e) => {
-        e.preventDefault()
-        await begin.mutateAsync({
-          providerId: 'magic-link',
-          input: { email: e.currentTarget.email.value, channel: 'email' },
-        })
-      }}>
-      <input name="email" type="email" required />
-      <button>Email me a link</button>
-    </form>
-  )
-}
-```
-
-## SSR (Next.js)
-
-```tsx title="app/providers.tsx"
-'use client'
-
-import { AuthProvider } from '@gentleduck/auth/client/react'
-
-export function Providers({
-  children,
-  initialState,
-}: {
-  children: React.ReactNode
-  initialState: any
-}) {
-  return (
-    <AuthProvider baseUrl="/api/auth" noInitialFetch initialState={initialState}>
-      {children}
-    </AuthProvider>
-  )
-}
-```
-
-```tsx title="app/layout.tsx"
-import { headers } from 'next/headers'
-import { auth } from '~/lib/auth'
-import { Providers } from './providers'
-
-export default async function RootLayout({ children }) {
-  const ctx = await auth.resolveSession({ headers: new Headers(headers()) })
-  const initialState = ctx
-    ? { session: ctx.session, identity: ctx.identity }
-    : null
-
-  return (
-    <html>
-      <body>
-        <Providers initialState={initialState}>{children}</Providers>
-      </body>
-    </html>
-  )
-}
-```
-
-Now the first paint is already authenticated - no flash of guest UI.
-
-## Storybook decorator
-
-```tsx
+```ts title=".storybook/preview.ts"
 import { authWithStorybook } from '@gentleduck/auth/client/react/storybook'
 
-export const MyStory = {
-  decorators: [authWithStorybook({ baseUrl: '/auth' })],
-  render: () => <SignInButton />,
-}
+export const decorators = [
+  authWithStorybook({ identity: { id: 'demo', profile: { username: 'demo', email: 'demo@example.com' } } }),
+]
 ```
 
-`withAuth` wraps the story in an `<AuthProvider>` backed by a mock
-client, so your auth-aware components render without a real server.
-
-## Errors
-
-The `error` field on `authUseSignIn` / `authUseSignOut` / `authUseBeginProvider` is
-a typed `AuthError`. Branch on `error.code`:
-
-```tsx
-{signIn.error?.code === 'AUTH/INVALID_CREDENTIALS' && <p>Wrong email or password</p>}
-{signIn.error?.code === 'AUTH/MFA_REQUIRED' && <MfaForm />}
-{signIn.error?.code === 'AUTH/RATE_LIMITED' && <p>Too many attempts; try again in a minute.</p>}
-```
+Each story renders against a mock client that answers that identity; leave it out for a guest. A story's `parameters.auth` overrides it, and `parameters: { auth: { live: true } }` swaps in a real client against `baseUrl`, `http://localhost:8787/auth` by default. `authCreateMockClient(state)` is the mock alone.

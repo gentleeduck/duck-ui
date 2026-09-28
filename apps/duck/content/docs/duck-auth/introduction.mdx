@@ -1,134 +1,100 @@
 ---
 title: Introduction
-description: Faceted, framework-agnostic, transport-pluggable authentication for modern TypeScript apps.
+description: duck-auth is framework-agnostic authentication for TypeScript, built around one engine and pluggable stores, transports and providers
 section: Getting Started
 ---
+duck-auth (`@gentleduck/auth`) proves who a caller is. It signs people in with passwords, magic links, OAuth, passkeys and SAML, lifts sessions to a second factor with TOTP or WebAuthn, and signs machines in with API keys and client credentials. It runs in your process, stores its rows in your database, and mounts on the framework you already use.
 
-## What is duck-auth?
+## What duck-auth is
 
-duck-auth is an authentication library built around a single faceted root,
-`AuthEngine`. Every concern - sessions, identities, passwords, providers,
-MFA, flows, API keys, machine-to-machine, organizations, idempotency,
-hijack policy, anomaly detection - is a typed facet you wire once at
-boot and pass into the runtime.
+An authentication engine. You build one `AuthEngine` at boot from a store, a transport and a list of providers, and then call it:
 
-It is **framework-agnostic** (Express, Hono, Next.js, Fastify, Koa, Elysia,
-NestJS, gRPC, vanilla Web Fetch), **transport-pluggable** (Cookie, Bearer,
-JWT, Composite, with optional DPoP binding), and **batteries-included**
-(magic-link, passkeys, six OAuth providers, SAML, password hashing,
-TOTP MFA, WebAuthn-MFA, channels for SMTP/Resend/SES/Twilio/WebPush,
-adapters for Memory/Redis/SQL).
+```ts
+const resolved = await auth.resolveSession({ headers }).orNull()
+if (!resolved?.identity) throw new AuthError('AUTH_UNAUTHENTICATED')
+```
 
-Pairs with [`@gentleduck/iam`](/duck-iam) for authorization. Authentication
-proves who the caller is; authorization decides what they may do. They
-are kept as two libraries on purpose - apps wire a small `projectToSubject`
-function to bridge identity and session into the iam `Subject` shape.
+duck-auth is not authorization. It answers "who is this?", never "may they do this?". Pair it with [duck-iam](/duck-iam/introduction) for that half; the [iam bridge guide](/duck-auth/guides/iam-bridge) wires the two together.
 
-## Why duck-auth?
+duck-auth sends no mail. Every token it mints (a magic link, a reset link, a verification link) goes to one `deliver` function you write, so the mailer is whatever your app already uses. See [Delivery](/duck-auth/core/delivery).
 
-Every TypeScript auth library forces one of three trade-offs:
+## Feature map
 
-- **Framework lock-in** - NextAuth, Auth.js: only one runtime, one shape.
-- **Hosted control plane** - Clerk, WorkOS, Stytch: per-MAU pricing, vendor lock.
-- **DIY on Lucia + passport + your own glue** - you own every edge case.
-
-duck-auth is the third option, unified: framework-agnostic core,
-batteries-included adapters, **no hosted plane**. You wire it into your
-router with one adapter import.
-
-## Key features
-
-| Feature | Description |
+| Area | What ships |
 | --- | --- |
-| 14-facet root | `AuthEngine` exposes sessions, identities, passwords, providers, mfa, flows, apiKeys, m2m, orgs, plugins, operations, idempotency, hijack, anomaly. |
-| Framework-agnostic | Express, Hono, Next.js (app router), Fastify, Koa, Elysia, NestJS, gRPC, and a generic Web-Fetch executor. |
-| Pluggable transports | `CookieTransport`, `BearerTransport`, `JwtTransport` (HS256/ES256/RS256/EdDSA), `CompositeTransport`, plus `DPoPVerifier` for RFC 9449 sender-constrained tokens. |
-| Provider library | Password, magic-link, six OAuth (Google, GitHub, LinkedIn, Microsoft, Discord, Apple), WebAuthn passkeys (discoverable + username), API keys, SAML. |
-| Storage adapters | Memory (dev/test), Redis (session/idempotency/limiter/events/DPoP nonce), SQL bridge with bundled Drizzle examples for pg / mysql / sqlite. |
-| Channels | Console, SMTP, Resend, AWS SES, Twilio, WebPush, plus Test and Noop. |
-| Strict mode | `AuthEngine.strict({ env: 'production' })` rejects dev-only footguns at boot: insecure cookies, AuthNoopLimiter, IamMemoryAdapter, missing lockout listeners, weak JWT keys, missing compliance presets. |
-| Compliance presets | `gdpr`, `hipaa`, `soc2`, `fips` - strictest preset wins. Each enforces hashing, dataAtRest, channel, and anomaly minimums. |
-| Anomaly detection | Impossible-travel and device-fingerprint detectors, plus an aggregator that emits `allow` / `deny` / `step-up`. |
-| Observability | OpenTelemetry instrumentation, `AuthWebhookDeliverer` with HMAC-signed outbound delivery, OpenAPI 3.1 generator, OIDC discovery, JWKS rotation. |
-| CLI | `duck-auth init`, `doctor`, `keys generate`, `keys rotate`, `migrate`, `emit-openapi`. |
+| Engine | `createAuth()` builds an `AuthEngine` with `sessions`, `identities`, `flows`, `providers`, `hijack`, `anomaly` and `plugins` facets, plus `passwords`, `mfa`, `passkeys`, `apiKeys` and `orgs` once their provider or store is registered. |
+| Providers | Passwords (scrypt or argon2id), magic link, TOTP and backup codes, WebAuthn MFA, passkeys, API keys, SAML, and OAuth for Google, GitHub, Microsoft, Apple, LinkedIn and Discord. |
+| Transports | Cookie, bearer and JWT, a composite of them, and DPoP proof-of-possession. |
+| Stores | In-memory for tests, Drizzle for Postgres, MySQL and SQLite, and Redis or Valkey for sessions, events and single-use tokens. |
+| Limiters | In-memory, Redis and Valkey; every flow spends against one. |
+| Servers | Express, Hono, Next.js, Fastify, Koa, Elysia, NestJS, gRPC, and a generic Web Fetch layer. |
+| Clients | Vanilla, React, Vue, Svelte and Solid. |
+| Hardening | CSRF, `strict()` production checks, compliance presets, hijack and anomaly detection, captcha verifiers, field encryption at rest, audit stamping. |
 
 ## Architecture
 
-<MermaidDiagram chart={`flowchart TB
-    subgraph App["Your application"]
-        direction TB
-        SERVER["Server (Express / Hono / Next.js / Fastify / Koa / Elysia / Nest / gRPC)"]
-        CLIENT["Client (Vanilla / React / Vue / Svelte / Solid)"]
+<MermaidDiagram chart={`flowchart TD
+    subgraph app["Your application"]
+        SRV["Framework adapter: express, hono, next ..."]
+        CLI["Client binding: react, vue, vanilla ..."]
     end
 
-    subgraph Root["AuthEngine"]
-        direction TB
-        ROOT["AuthEngine config"]
-        ROOT --> FACETS["14 facets: sessions / identities / passwords / providers / mfa / flows / apiKeys / m2m / orgs / plugins / operations / idempotency / hijack / anomaly"]
+    subgraph eng["AuthEngine"]
+        FL["flows: sign in, step-up, reset, verify, sign-up"]
+        PR["providers: password, magic link, oauth, passkey ..."]
+        SE["sessions + transport"]
+        ID["identities"]
     end
 
-    subgraph Transports["Transports"]
-        direction TB
-        COOKIE["CookieTransport"]
-        BEARER["BearerTransport"]
-        JWT["JwtTransport + JWKS"]
-        DPOP["DPoPVerifier (RFC 9449)"]
+    subgraph ops["Your infrastructure"]
+        ST["Stores: drizzle, redis, valkey, memory"]
+        LI["Limiter"]
+        DE["deliver: your mailer"]
     end
 
-    subgraph Providers["Providers"]
-        direction TB
-        PWD["password"]
-        MAGIC["magic-link"]
-        OAUTH["6 OAuth (PKCE + state)"]
-        PASSKEY["passkey (WebAuthn)"]
-        APIKEY["api-key"]
-        SAML["SAML"]
-    end
+    CLI --> SRV
+    SRV --> FL
+    FL --> PR
+    FL --> SE
+    FL --> ID
+    SE --> ST
+    ID --> ST
+    FL --> LI
+    FL --> DE`} />
 
-    subgraph Adapters["Storage adapters"]
-        direction TB
-        MEM["AuthMemoryAdapter"]
-        REDIS["Redis stores"]
-        SQL["SqlBridge (Drizzle pg/mysql/sqlite)"]
-    end
+A framework adapter turns a request into a call on `auth.flows` and turns the answer back into a response. The answer is a list of intents (set this cookie, redirect there, send this JSON), so the engine never touches a framework's response object.
 
-    SERVER --> Root
-    CLIENT --> SERVER
-    Root --> Transports
-    Root --> Providers
-    Root --> Adapters`} />
+## Quick example
 
-`AuthEngine` is the runtime entry point. You construct it once at boot,
-pass the transport, stores, and providers you want, and hand the
-resulting instance to the framework adapter that mounts the routes.
+```ts
+import { MemoryAdapter } from '@gentleduck/auth/adapters/memory'
+import { createAuth } from '@gentleduck/auth/core'
+import { cookieTransport } from '@gentleduck/auth/core/transport'
+import { passwords } from '@gentleduck/auth/providers/passwords'
 
-## Status
+const auth = createAuth({
+  baseUrl: 'http://localhost:3000',
+  stores: new MemoryAdapter(),
+  transport: cookieTransport({ name: 'sid', secure: false }),
+  providers: [passwords()],
+})
 
-Pre-1.0. v0.1 covers approximately 98% of the v1.0 MUST surface. Per-component
-status is tracked in [`STATUS.md`](https://github.com/gentleeduck/gentleduck/blob/master/packages/duck-auth/STATUS.md);
-the architectural rationale lives in [`DESIGN.md`](https://github.com/gentleeduck/gentleduck/blob/master/packages/duck-auth/DESIGN.md).
+const ada = await auth.identities.create({ profile: { email: 'ada@example.com', name: 'Ada', username: 'ada' } })
+await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials)
 
-| Surface | Status |
-| --- | --- |
-| Core (14 facets) | shipped |
-| Transports (cookie, bearer, jwt, composite, DPoP) | shipped |
-| Adapters (memory, redis, sql bridge + Drizzle examples) | shipped |
-| Providers (password, magic-link, 6 OAuth, passkey, api-key, saml) | shipped |
-| Channels (console, smtp, resend, ses, twilio, webpush) | shipped |
-| Servers (express, hono, next, fastify, koa, elysia, nestjs, grpc, generic) | shipped |
-| Clients (vanilla, react, vue, svelte, solid) | shipped |
-| CLI (init / doctor / keys / migrate / emit-openapi) | shipped |
-| OpenAPI generator + OIDC discovery + OpenTelemetry + i18n | shipped |
-| `authCreateTest()` test helper + Storybook decorator | shipped |
-| WebAuthn-MFA factor | shipped |
-| KMS-envelope DataAtRest (`AuthAwsKmsProvider` reference) | shipped |
-| JwtTransport (HS256 / ES256 / RS256 / EdDSA + live JWKS rotation) | shipped |
-| Native iOS / Android SDKs | community-maintained |
+const { sid } = await auth.flows.signIn({
+  providerId: 'password',
+  input: { email: 'ada@example.com', password: 'correct-horse-battery' },
+})
+
+const resolved = await auth.resolveSession({ headers: new Headers({ cookie: `sid=${sid}` }) }).orNull()
+resolved?.identity?.profile.email // 'ada@example.com'
+```
 
 ## Next steps
 
-- [Installation ->](/duck-auth/installation) - install the package, scaffold via the CLI, and run the 60-second quickstart.
-- [Core concepts ->](/duck-auth/core) - read about `AuthEngine`, facets, and the request lifecycle.
-- [Providers ->](/duck-auth/providers) - wire password, magic-link, OAuth, passkey, API-key, or SAML.
-- [Adapters ->](/duck-auth/adapters) - Memory, Redis, SQL (Drizzle examples for pg / mysql / sqlite).
-- [Security ->](/duck-auth/advanced/security) - production hardening, `strict()`, compliance presets, threat model.
+- [Installation](/duck-auth/installation): install the package and the peers your stack needs.
+- [Quick start](/duck-auth/guides): a password sign-in behind Express in one file.
+- [Course](/duck-auth/course): build a full app across eight chapters.
+- [Core](/duck-auth/core): the engine, its facets and its config.
+- [Production hardening](/duck-auth/advanced/security): what `strict()` refuses in production, and the order to build the engine in.

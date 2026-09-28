@@ -1,153 +1,27 @@
 ---
-title: Google OAuth
-description: Google Sign-in with PKCE-S256, signed state, OIDC nonce. Default scopes openid + email + profile.
+title: Google
+description: Sign in with Google over OpenID Connect, with the address marked verified when Google says it is
 section: Providers
 ---
+1. Create an OAuth client of type **Web application** in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+2. Add `https://app.example.com/auth/providers/oauth:google/callback` under **Authorized redirect URIs**.
+3. Copy the client id and secret.
 
-## Setup
+```ts
+import { google } from '@gentleduck/auth/providers/oauth/google'
 
-1. Create an OAuth client in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
-2. Add your callback URL to **Authorized redirect URIs**:
-   `https://app.example.com/auth/google/callback`.
-3. Copy the client ID and client secret.
-
-```typescript
-import { authGoogle } from '@gentleduck/auth/providers/oauth/google'
-
-export const auth = new AuthEngine({
-  // ...
-  providers: [
-    authGoogle({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      redirectUri: 'https://app.example.com/auth/google/callback',
-      stateSigningSecret: process.env.OAUTH_STATE_SECRET!,
-      scopes: ['openid', 'email', 'profile'],  // default
-      onSignIn: async ({ profile, tenantId }) => {
-        let identity = await auth.identities.findByProviderSub({
-          providerId: 'google',
-          sub: profile.sub,
-        })
-        if (!identity) {
-          identity = await auth.identities.create({
-            email: profile.email,
-            emailVerified: profile.email_verified,
-            profile: {
-              displayName: profile.name,
-              avatarUrl: profile.picture,
-              locale: profile.locale,
-            },
-          })
-          await auth.identities.linkProvider(identity.id, {
-            providerId: 'google',
-            sub: profile.sub,
-            email: profile.email,
-          })
-        }
-        return { identityId: identity.id }
-      },
-    }),
-  ],
+google({
+  clientId: process.env.GOOGLE_CLIENT_ID ?? '',
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+  redirectUri: 'https://app.example.com/auth/providers/oauth:google/callback',
+  stateSigningSecret: process.env.OAUTH_STATE_SECRET ?? '',
+  nonceStore,
+  profileToIdentityProfile: (p) => (p.email ? { email: p.email, username: `google:${p.sub}`, name: p.name } : null),
 })
 ```
 
-## Callback route
+The provider id is `oauth:google`, and the default scopes are `openid email profile`.
 
-```typescript title="Express"
-import { authMountSignIn } from '@gentleduck/auth/server/express'
+The profile comes from Google's userinfo endpoint: `sub`, `email`, `name` and `picture` as `avatarUrl`. `emailVerified` is set only when Google answers `email_verified: true`, which makes `onFederationConflict: 'link-if-verified'` usable here.
 
-app.get('/auth/google/callback', authMountSignIn(auth))
-```
-
-```typescript title="Next.js"
-// app/auth/google/callback/route.ts
-import { authNextSignIn } from '@gentleduck/auth/server/next'
-export const GET = authNextSignIn(auth)
-```
-
-## Triggering sign-in
-
-```typescript
-// React
-const begin = authUseBeginProvider()
-<button onClick={() => begin.mutate({ providerId: 'google', input: {} })}>
-  Sign in with Google
-</button>
-
-// Vanilla
-await client.beginProvider('google', {})
-```
-
-The `begin` response includes a redirect intent; the framework adapter
-issues a 302 to Google's authorize URL.
-
-## What the profile contains
-
-Google's userinfo endpoint returns the standard OIDC claims:
-
-```typescript
-{
-  sub: '110248495824...',     // stable identity ID
-  email: 'ada@example.com',
-  email_verified: true,
-  name: 'Ada Lovelace',
-  given_name: 'Ada',
-  family_name: 'Lovelace',
-  picture: 'https://lh3.googleusercontent.com/...',
-  locale: 'en-US',
-  hd?: 'example.com',          // hosted domain (only for Google Workspace)
-}
-```
-
-For **Google Workspace** (G Suite) deployments, the `hd` claim is your
-hosted domain. Use it to restrict sign-ins to your company:
-
-```typescript
-onSignIn: async ({ profile }) => {
-  if (profile.hd !== 'example.com') {
-    throw new AuthError('AUTH/PROVIDER_FAILED', {
-      reason: 'unauthorized-domain',
-    })
-  }
-  // ...
-}
-```
-
-## Multiple Google projects
-
-If you have a separate Google project for staging vs production, use
-two providers with different `providerId`s:
-
-```typescript
-authGoogle({ providerId: 'google-prod', clientId: ..., clientSecret: ... }),
-authGoogle({ providerId: 'google-staging', clientId: ..., clientSecret: ... }),
-```
-
-The runtime keys them separately; the client picks via
-`beginProvider('google-prod', {})`.
-
-## Refresh tokens
-
-Google issues refresh tokens only when `access_type: offline` and
-`prompt: consent` are set. duck-auth requests these by default for
-OIDC providers - the refresh token is stored in the credential row
-and rotated on every use (RFC 6749 section 10.4).
-
-If you don't need refresh tokens (you only need a one-shot sign-in),
-override the begin call:
-
-```typescript
-authGoogle({
-  // ...
-  extraAuthParams: { access_type: 'online' },
-})
-```
-
-## Common errors
-
-| Error from Google | duck-auth code | Cause |
-| --- | --- | --- |
-| `redirect_uri_mismatch` | `AUTH/PROVIDER_FAILED` | The `redirectUri` doesn't match the one in the Google Cloud Console. |
-| `invalid_client` | `AUTH/PROVIDER_FAILED` | Wrong client secret. |
-| `invalid_grant` | `AUTH/PROVIDER_FAILED` | Code was reused or expired (you re-clicked the callback URL). |
-| `consent_required` | `AUTH/PROVIDER_FAILED` | User needs to re-consent - happens after scope changes. |
+The routes, the options every provider shares and account linking are on the [OAuth](/duck-auth/providers/oauth) page.

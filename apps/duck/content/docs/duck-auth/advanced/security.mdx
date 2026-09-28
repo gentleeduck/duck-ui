@@ -1,204 +1,53 @@
 ---
 title: Production hardening
-description: Every gate AuthEngine.strict() enforces, plus the threat model and the OWASP Top 10 mapping.
+description: A production engine, the order it has to be built in, and everything strict() refuses in production
 section: Advanced
 ---
-
-## `AuthEngine.strict()`
-
-`strict()` is the boot-time validator. Call it after construction; it
-runs synchronously, no I/O.
-
-```typescript
-auth.strict({ env: 'development' })  // warns
-auth.strict({ env: 'production' })   // throws AUTH/MISCONFIGURED
-```
-
-It is a hard error to omit this call in production - there is no way to
-guess your intent without it, and every production deploy of duck-auth
-should pin the configuration through this gate.
-
-## The gates
-
-In **production** mode, `strict` rejects:
-
-### Transport gates
-
-- `CookieTransport.secure: false` - cookies must be sent only over HTTPS.
-- `CookieTransport.sameSite: 'none'` without `secure: true`.
-- `JwtTransport` with a single key (no rotation overlap possible).
-- `JwtTransport` HS256 secret shorter than 32 bytes.
-- `JwtTransport.ttlMs > 24 hours` (refresh-token rotation is the right
-  mechanism for long-lived access).
-
-### Storage gates
-
-- `AuthMemoryAdapter` (the dev/test in-process adapter).
-- `AuthMemoryLimiter` (or no limiter at all).
-- A `AuthSession.IStore` that is not durable across process restarts.
-- An `events.IBus` that doesn't fan out across replicas, **unless**
-  you've explicitly opted out of multi-replica.
-
-### Observability gates
-
-- No listener attached to the `lockout` event. At minimum you should be
-  paging on or auditing every lockout.
-- No `AuthWebhookDeliverer` configured under SOC2 / HIPAA presets.
-
-### Compliance gates
-
-- HIPAA / FIPS without `AuthArgon2idHasher`.
-- FIPS with `HS256` or `RS256` JWTs.
-- HIPAA / FIPS without `dataAtRest` encryption.
-- HIPAA without an audit-hooked channel.
-- FIPS without `mfa.enforced: true`.
-
-### Provider gates
-
-- A configured `baseUrl` that doesn't match any registered provider's
-  `redirectUri` host (`https://app.example.com` baseUrl + a
-  `https://localhost` Google redirect would catch this).
-- An OAuth provider with `stateSigningSecret` shorter than 32 bytes.
-
-## The threat model
-
-duck-auth's [`THREAT-MODEL.md`](https://github.com/gentleeduck/gentleduck/blob/master/packages/duck-auth/THREAT-MODEL.md)
-is a STRIDE-mapped enumeration of every threat the library mitigates
-and every threat the host application must own. Highlights:
-
-| Threat | Mitigation |
-| --- | --- |
-| Session fixation | 7-row rotation matrix; every privilege change routes through `sessions.rotateOrCreate()`. |
-| Username enumeration | Constant-time verify path; identical error code + timing for "wrong email" and "wrong password". |
-| Credential stuffing | Per-email + per-IP rate limiters; bundled top-10k common-password rejection. |
-| Token theft | `__Host-` cookie prefix; HttpOnly; SameSite=Lax; tokens hashed at rest. |
-| Sender swap | DPoP (RFC 9449) for sender-constrained tokens. |
-| CSRF | Double-submit `__Host-duck-csrf` cookie + `X-CSRF-Token` header; constant-time compare. |
-| OAuth code interception | PKCE-S256 always, even for confidential clients. |
-| OAuth state forgery | HMAC-signed `state` parameter with 10-minute expiry. |
-| OIDC nonce replay | One-time nonce check on every `complete()`. |
-| Refresh-token theft | Family-id reuse detection - single reuse revokes the whole family. |
-| JWT alg confusion | `alg` pinned per `kid`; never inferred from the JWT header. |
-| Session-fixation on MFA | `rotateOrCreate` after every MFA pass; AAL upgrade requires new session id. |
-| Password leak via logs | `AuthError.toJSON()` strips 13 sensitive meta keys on every serialise. |
-| Cross-tenant read | Every store method takes `tenantId`; cross-tenant requests return `null`. |
-| Timing attacks (passwords, magic-links, API keys) | Constant-time compare via `crypto.timingSafeEqual` for every credential verify. |
-| Webhook spoofing | HMAC-SHA256 signature on every outbound webhook body; constant-time verify. |
-| Lockout DoS | Limiter buckets are per-email **and** per-IP; an attacker can't lock out a victim by spraying their email. |
-| OIDC auth-code injection | Mandatory S256 PKCE for public clients at `/authorize`; verifier compared constant-time at `/token`. |
-| OIDC code substitution across clients | Codes are bound to the issuing `client_id`; `/token` rejects mismatches. |
-| OIDC refresh-token theft | Family-id rotation: each refresh use rotates; reuse triggers family revoke. |
-| SAML XML injection in SP metadata | `escapeXml` on every user-supplied field; tested by `saml-metadata-xsd-shape.test.ts > XML injection defense`. |
-| SAML signature wrapping | Signature validation delegated to `@node-saml/node-saml`; no bespoke XML parsing in the wrapper. |
-
-## Static-analysis safety net
-
-The duck-auth source tree runs **12 grep-style assertions at test time**
-that enforce security invariants Python-style linters can't catch.
-Source: [`src/__tests__/static-analysis.test.ts`](https://github.com/gentleeduck/gentleduck/blob/master/packages/duck-auth/src/__tests__/static-analysis.test.ts).
-Examples:
-
-- No `Math.random()` in `core/`, `providers/`, `oidc/`, `transport/`. Allowed
-  elsewhere only when used for non-cryptographic instance IDs.
-- No `===` comparison on field names matching `tokenHash` / `secretHash` /
-  `clientSecret` / `codeChallenge` / `code_verifier` / `verifier` in security paths.
-- No `console.log` in security paths (`console.error` for caught throws is OK).
-- OIDC OP code generation uses `randomToken`, never `Date.now` or `Math.random`.
-- OAuth state and nonce paths free of `Math.random`.
-- `CookieTransport` defaults assert `HttpOnly`, `Secure`, `SameSite`.
-- `JwtTransport` verify path pins `alg` against the registered verify key
-  (defense vs RFC 8725 section 3.1 alg-confusion attacks).
-
-If a refactor introduces one of the above patterns, this suite fails at
-PR time before the change can reach main.
-
-## Dependency audit
-
-`bun audit` is run before every release and the result is checked in at
-[`AUDIT-RESULTS.md`](https://github.com/gentleeduck/gentleduck/blob/master/packages/duck-auth/AUDIT-RESULTS.md).
-Current advisories live entirely in dev / build / example tooling
-(`vite`, `postcss`, `esbuild`, `storybook`, `uuid`, `qs`, `jsonpath-plus`).
-None affect the runtime path of `@gentleduck/auth`. Re-run locally with:
-
-```bash
-bun audit
-```
-
-## OWASP Top 10 mapping
-
-| OWASP | How duck-auth addresses it |
-| --- | --- |
-| A01 - Broken Access Control | Not duck-auth's job (use [`@gentleduck/iam`](/duck-iam)). duck-auth proves *who* you are; iam enforces *what* you may do. |
-| A02 - Cryptographic Failures | Scrypt / Argon2id; AES-GCM dataAtRest; KMS-envelope for FIPS; alg-pinned JWT. |
-| A03 - Injection | All stores are typed; SQL bridge uses parameterised queries; profile size-bounded to prevent payload abuse. |
-| A04 - Insecure Design | `strict()` enforces secure-by-default config. Compliance presets are first-class. |
-| A05 - Security Misconfiguration | `strict()` catches every known mis-config at boot. |
-| A06 - Vulnerable and Outdated Components | Lazy-loaded peer deps; you only pay for what you wire. |
-| A07 - Identification and Authentication Failures | The entire library. |
-| A08 - Software and Data Integrity Failures | Webhook HMAC; JWT alg pinning; signed OAuth state. |
-| A09 - Logging and Monitoring Failures | Event bus emits every lifecycle event; OTel instrumentation ships; `strict` mandates lockout listener. |
-| A10 - Server-Side Request Forgery | Channel implementations validate destination URLs; OAuth callback hosts checked against `baseUrl`. |
-
-## Recommended production posture
-
-```typescript
+```ts
+import { drizzlePgAdapter } from '@gentleduck/auth/adapters/drizzle/pg'
+import { valkeyEvents, valkeySessionImpl } from '@gentleduck/auth/adapters/valkey'
+import { createAuth } from '@gentleduck/auth/core'
+import { valkeyLimiter } from '@gentleduck/auth/limiters/valkey'
+import { passwords } from '@gentleduck/auth/providers/passwords'
 import Redis from 'ioredis'
-import {
-  AuthArgon2idHasher,
-  ARGON2ID_COMPLIANCE,
-  AuthEngine,
-  authCsrfGuard,
-  hipaa,
-  authImpossibleTravelDetector,
-  AuthWebhookDeliverer,
-} from '@gentleduck/auth/core'
-import { JwtTransport } from '@gentleduck/auth/core/transport'
-import {
-  AuthRedisDPoPNonceStore,
-  AuthRedisEvents,
-  AuthRedisLimiter,
-  AuthRedisSessionStore,
-} from '@gentleduck/auth/adapters/redis'
-import { authCreateSqlStores } from '@gentleduck/auth/adapters/sql'
-import { createDrizzlePgBridge } from '@gentleduck/auth/adapters/drizzle/pg'
 
-const redis = new Redis(process.env.REDIS_URL!)
-const drizzleBridge = createDrizzlePgBridge(db, schema)
-const sql = authCreateSqlStores({ bridge: drizzleBridge })
+const redis = new Redis(process.env.REDIS_URL ?? '')
+const sql = drizzlePgAdapter(process.env.DATABASE_URL ?? '')
 
-export const auth = new AuthEngine({
-  ...hipaa({
-    stores: {
-      identities: sql.identities,
-      credentials: sql.credentials,
-      sessions: new AuthRedisSessionStore(redis),
-    },
-    events: new AuthRedisEvents(redis),
-    channels: { email: new AuthSesChannel({ ... }) },
-  }),
-  baseUrl: 'https://api.example.com',
-  transport: new JwtTransport({
-    signKey: { kid: process.env.JWT_KID!, key: process.env.JWT_KEY! },
-    verifyKeys: [
-      { kid: process.env.JWT_KID!, key: process.env.JWT_KEY! },
-      { kid: process.env.JWT_KID_PREV!, key: process.env.JWT_KEY_PREV! },
-    ],
-    issuer: 'https://api.example.com',
-    ttlMs: 15 * 60 * 1000,
-    refresh: { cookieName: '__Host-duck-refresh', ttlMs: 30 * 24 * 60 * 60 * 1000 },
-  }),
-  limiter: new AuthRedisLimiter(redis),
-  passwords: { hasher: new AuthArgon2idHasher(ARGON2ID_COMPLIANCE) },
+export const auth = createAuth({
+  baseUrl: 'https://app.example.com',
+  stores: { identities: sql.identities, credentials: sql.credentials, sessions: valkeySessionImpl({ redis }) },
+  limiter: valkeyLimiter({ redis }),
+  events: valkeyEvents({ cmd: redis, sub: new Redis(process.env.REDIS_URL ?? '') }),
+  providers: [passwords()],
+  strict: false,
 })
 
-auth.anomaly.register(authImpossibleTravelDetector({ ... }))
-auth.events.on('lockout', alertOpsTeam)
-
-const webhook = new AuthWebhookDeliverer({
-  url: 'https://audit.example.com/auth',
-  secret: process.env.WEBHOOK_SECRET!,
-})
-auth.events.onAny((type, event) => webhook.deliver({ type, ...event }))
-
-auth.strict({ env: 'production' })   // throws if any gate fails
+auth.events.on('lockout', (event) => alertOps(event))
+auth.strict({ env: 'production' })
 ```
+
+`createAuth` runs `strict()` as it returns, for the env named by `strict` or else `NODE_ENV`, falling back to `development`. Production requires a `lockout` listener, which cannot exist before `createAuth` returns, so a production engine opts out there and calls `strict()` once it is subscribed.
+
+Outside production, `strict()` checks only the [compliance preset](/duck-auth/core/compliance), if one is set. A failure throws one `AUTH_MISCONFIGURED` whose `meta.detail` lists every problem.
+
+## What production refuses
+
+| Area | Refused |
+| --- | --- |
+| Limiter | None, `NoopLimiter`, or the in-process `MemoryLimiter`. |
+| Stores | A memory store in any `stores` slot. |
+| Events | No bus, or the in-process one. |
+| Captcha | The null verifier, which passes everything, or a siteverify endpoint over `http`. |
+| Transport | A cookie transport with `secure: false`, or a JWT transport signing HS256 with a key under 32 bytes. A composite's parts are checked one by one. |
+| OAuth | A `stateSigningSecret` under 32 bytes, or `allowStateReplay: true`. |
+| Passkey | The in-process challenge store. |
+| Magic link | No `deliver`, so no link could be sent. |
+| Passwords | A hasher below its own defaults: scrypt `N` under 2^14, `r` under 8 or `keylen` under 32; Argon2id `memoryCost` under 19456, `timeCost` under 2 or `hashLength` under 32. |
+| Engine | A `baseUrl` that is not `https`, no provider, or no `lockout` listener. |
+
+A store, transport, provider or hasher of your own publishes none of the markers these checks read, so it is not judged.
+
+The in-process pieces are refused because a second instance cannot see them: a limiter budget is granted once per instance, and a revocation, OAuth `state` or passkey challenge used on one instance stays live on the others. [Redis and Valkey](/duck-auth/adapters/redis) has the shared versions.
+
+Reporting, scope and a deployment checklist are in [SECURITY.md](https://github.com/gentleeduck/duck-iam/blob/main/packages/duck-auth/SECURITY.md).

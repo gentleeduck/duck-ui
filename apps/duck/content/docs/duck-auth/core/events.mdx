@@ -1,137 +1,76 @@
 ---
 title: Events
-description: AuthInMemoryEvents, AuthRedisEvents, the typed event taxonomy, and AuthWebhookDeliverer for signed outbound delivery.
+description: The typed event bus, every event duck-auth emits and its payload, the audit envelope, and fanning events out across a fleet with Redis
 section: Core
 ---
+Every lifecycle change is published on `auth.events`: sign-ins, rotations, lockouts, MFA changes, impersonation. Subscribe for audit logs, alerts, cache busting, or [webhooks](/duck-auth/advanced/webhooks).
 
-## The events bus
+## Subscribing
 
-duck-auth emits every lifecycle event (identity created, session rotated,
-MFA enrolled, anomaly signalled, lockout fired) through a single
-`AuthEvents.IBus`. The default is `AuthInMemoryEvents`; production deployments
-swap to `AuthRedisEvents` for cross-process fan-out.
-
-```typescript
-import { AuthInMemoryEvents } from '@gentleduck/auth/core'
-
-export const auth = new AuthEngine({
-  events: new AuthInMemoryEvents(),
+```ts
+const off = auth.events.on('lockout', async ({ identityId, until }) => {
+  await pager.notify(`identity ${identityId} locked until ${new Date(until).toISOString()}`)
 })
 
-const unsubscribe = auth.events.on('session.rotated', (event) => {
-  audit.log('session_rotated', event)
-})
-
-// later
-unsubscribe()
+off() // unsubscribe
 ```
 
-The handler is **awaited** if it returns a promise - the runtime fans out
-synchronously to give observers a chance to flush before the request
-returns. Throwing handlers do not break the originating call; the error
-is routed to the `onError` sink (if configured) and the bus moves on.
+Payloads are typed per event name. Handlers run one after another; a handler that throws is logged and the rest still run, so a broken listener never fails the sign-in that emitted.
 
-## AuthRedisEvents (production)
+`strict({ env: 'production' })` refuses an engine with no `lockout` listener, since a lockout nobody hears is a brute force nobody sees.
 
-```typescript
-import { AuthRedisEvents } from '@gentleduck/auth/adapters/redis'
-import Redis from 'ioredis'
+## The events
 
-const redis = new Redis(process.env.REDIS_URL!)
+| Event | Payload | Emitted when |
+| --- | --- | --- |
+| `session.created` | `session`, `identity` | A session was minted. |
+| `session.rotated` | `session`, `previousSessionId?` | A session was replaced through rotation. |
+| `session.revoked` | `sessionId`, `identityId` | A session was deleted by request, cascade or rotation. |
+| `session.expired` | `reason`, `sessionId?`, `identityId?`, `count?` | A session aged out: `'sliding'`, `'absolute'`, `'impersonation'` or `'gc'`. |
+| `signin.success` | `identity`, `factors` | A sign-in issued its session. |
+| `signin.failed` | `providerId`, `reason`, `ip?` | A sign-in, link or delivery failed. `reason` is for logs only. |
+| `signup.completed` | `identity` | An identity was created. |
+| `lockout` | `identityId`, `until` | The limiter refused an identity's attempt; `until` is epoch ms. |
+| `mfa.enrolled`, `mfa.removed` | `identityId`, `method` | A second factor was added or removed. |
+| `identity.linked` | `identityId`, `providerId` | A provider login was attached. |
+| `identity.unlinked` | `identityId`, `providerId`, `allowedLockout` | A provider login was removed. |
+| `identity.erased` | `identityId`, `reason` | An identity was erased for good. |
+| `identity.impersonated` | `realIdentityId`, `targetIdentityId`, `reason`, `iamDecisionId?` | An impersonation began. |
+| `identity.impersonation.ended` | `sessionId`, `realIdentityId`, `targetIdentityId`, `endedBy` | It ended: `'release'`, `'revoke'` or `'expiry'`. |
+| `recovery.password.requested` | `identityId` | A reset link was sent. |
+| `recovery.password.completed` | `identityId` | A password was reset through its link. |
+| `recovery.mfa.escalated` | `identityId`, `credentialId` | A backup code stood in for the second factor. |
+| `suspicious` | `signal`, `score`, `meta`, `identityId?` | Hijack or anomaly detection flagged a request. |
+| `org.member.added`, `org.roles.set` | `orgId`, `identityId`, `roles` | A member joined an org, or their roles changed. |
+| `org.member.removed` | `orgId`, `identityId` | A member left an org. |
+| `authz.revoked` | `identityId`, `at` | Published by your authorization side; duck-auth only listens. |
 
-export const auth = new AuthEngine({
-  events: new AuthRedisEvents(redis, { channel: 'auth-events' }),
-})
-```
+`session.expired` is kept apart from `session.revoked` so an audit trail can tell "nobody did this" from "someone revoked this".
 
-`AuthRedisEvents` publishes on a Pub/Sub channel and replays through the
-same `on()` API. Every replica receives every event - useful for cache
-invalidation and presence tracking.
+## The audit envelope
 
-## The event taxonomy
+Most payloads carry an optional `audit` field, filled in by the engine:
 
-### Identity events
+- `actorId`: who performed the action, from the ambient actor (`withActor(id, fn)` or the server adapters' actor wrappers). It differs from the payload's `identityId` when an operator acts on someone else's account.
+- `actingAs`: set while the session is an impersonation, naming the real operator.
 
-| Event | Payload |
-| --- | --- |
-| `identity.created` | `{ identityId, email, tenantId? }` |
-| `identity.updated` | `{ identityId, changes }` |
-| `identity.deleted` | `{ identityId, soft: boolean }` |
-| `identity.restored` | `{ identityId }` |
-| `identity.erased` | `{ identityId, reason }` |
-| `identity.linked` | `{ identityId, providerId, sub }` |
-| `identity.unlinked` | `{ identityId, providerId }` |
-| `identity.merged` | `{ primaryId, absorbId, conflictPolicy }` |
+A payload that already carries `audit` is left alone. `runWithAuditEnvelope(envelope, fn)` from `@gentleduck/auth/core/events` sets one for everything emitted inside `fn`.
 
-### Session events
+## Across a fleet
 
-| Event | Payload |
-| --- | --- |
-| `session.created` | `{ sessionId, identityId, aal, amr }` |
-| `session.rotated` | `{ sessionId, previousSessionId, reason }` |
-| `session.revoked` | `{ sessionId, reason }` |
-| `session.impersonate-start` | `{ sessionId, actorId, subjectId }` |
-| `session.impersonate-release` | `{ sessionId, actorId, subjectId, durationMs }` |
+The default bus is in-process: a `lockout` raised on one instance is heard only there. With more than one instance, publish through Redis:
 
-### Credential events
+```ts
+import { redisEvents } from '@gentleduck/auth/adapters/redis'
 
-| Event | Payload |
-| --- | --- |
-| `password.changed` | `{ identityId, byActorId? }` |
-| `password.reset` | `{ identityId, tokenId }` |
-| `mfa.enrolled` | `{ identityId, factor: 'totp' \| 'backup-codes' \| 'webauthn' }` |
-| `mfa.verified` | `{ identityId, factor }` |
-| `mfa.removed` | `{ identityId, factor }` |
-
-### Sign-up state machine
-
-| Event | Payload |
-| --- | --- |
-| `signup.started` | `{ stateId, email }` |
-| `signup.advanced` | `{ stateId, fromStep, toStep }` |
-| `signup.completed` | `{ stateId, identityId }` |
-
-### Security / operational
-
-| Event | Payload |
-| --- | --- |
-| `anomaly` | `{ identityId, signals: AnomalySignal[], decision }` |
-| `lockout` | `{ identityId? \| ip?, reason, until }` |
-
-The `lockout` event is the one `strict()` will complain about if no
-listener is attached in production - at minimum, you should be paging on
-or auditing every lockout.
-
-## AuthWebhookDeliverer
-
-For outbound integrations (audit log SaaS, CRM, downstream services),
-ship every event over signed HTTPS:
-
-```typescript
-import { AuthWebhookDeliverer } from '@gentleduck/auth/core'
-
-const deliverer = new AuthWebhookDeliverer({
-  url: 'https://example.com/auth-events',
-  secret: process.env.WEBHOOK_SECRET!,
-})
-
-auth.events.on('session.rotated', (event) => {
-  deliverer.deliver({ type: 'session.rotated', ...event })
+createAuth({
+  // ...
+  events: redisEvents({ redis, prefix: 'auth:events' }),
 })
 ```
 
-The body is HMAC-SHA256 signed; the signature rides on an
-`X-Duck-Auth-Signature` header. On the receiving side:
+- `redis` is an `@upstash/redis`-shaped client with `publish` and `subscribe`. For ioredis or iovalkey, `valkeyEvents({ cmd, sub })` from `@gentleduck/auth/adapters/valkey` takes a command connection and a dedicated subscriber one.
+- Each event goes to the channel `${prefix}:${event}`. Local handlers run straight off the emit, and every other instance runs its own when the message arrives, with `Date` fields revived.
+- A failed publish is logged, not thrown, so Redis being down never fails a sign-in.
 
-```typescript
-import { authVerifyWebhookSignature } from '@gentleduck/auth/core'
-
-const raw = await req.text()
-const sig = req.headers.get('x-duck-auth-signature')!
-const ok = authVerifyWebhookSignature(raw, sig, process.env.WEBHOOK_SECRET!)
-if (!ok) return new Response('bad signature', { status: 401 })
-```
-
-Comparisons are constant-time. The deliverer ships with a dead-letter
-sink - failed POSTs are buffered and retried with exponential backoff
-before being dropped to an `events.deadletter` event for inspection.
+`strict({ env: 'production' })` refuses the in-process bus.

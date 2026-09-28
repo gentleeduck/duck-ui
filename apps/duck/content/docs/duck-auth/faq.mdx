@@ -1,173 +1,38 @@
 ---
 title: FAQ
-description: Answers to the questions every team asks before adopting duck-auth.
+description: Short answers to the questions asked before adopting duck-auth, each pointing at the page that covers it
 section: Getting Started
 ---
+## Where does it run?
 
-## Should I pick duck-auth?
+In your own process, against your own database, on Node 22 or newer or Bun; see [requirements](/duck-auth/installation#requirements). [Comparison](/duck-auth/comparison) sets it beside hosted services and other libraries.
 
-If you have a TypeScript backend that needs to support more than one
-runtime / framework, want batteries included without per-MAU pricing,
-and can run the auth runtime yourself - yes. If you're 100% Next.js,
-NextAuth is also fine. If you don't want to run anything, Clerk /
-WorkOS / Stytch are the right pick.
+## What should a production deploy do?
 
-See the [Comparison](/duck-auth/comparison) page for details.
+- Call `auth.strict({ env: 'production' })` at boot. It throws `AUTH_MISCONFIGURED` listing every setting that is unsafe in production.
+- Apply the [compliance preset](/duck-auth/core/compliance) your scope needs.
+- Read [Security](/duck-auth/advanced/security).
 
-## Is it production-ready?
+## Can I bring users from another system?
 
-The 0.1 surface covers ~98% of the v1.0 MUST features and 617 tests
-pass. Several teams run it in production. You should:
+`auth.identities.bulkCreate` imports the people, matching existing ones by email; see [Identities](/duck-auth/core/identities#bulk-and-export). Password hashes come across as they are: a hasher that verifies both formats moves each one to yours at its owner's next sign-in; see [Passwords](/duck-auth/providers/password#bringing-hashes-from-another-system).
 
-1. Pin a version (no `^0.1.0` ranges pre-1.0).
-2. Run `auth.strict({ env: 'production' })` at boot.
-3. Apply a compliance preset that matches your scope.
-4. Audit the [`SECURITY.md`](https://github.com/gentleeduck/gentleduck/blob/master/packages/duck-auth/SECURITY.md)
-   document.
-5. Wire OpenTelemetry and a webhook deliverer for audit log fan-out.
+## Can several apps share users?
 
-## What about cost?
+Engines built over the same stores share identities, credentials and sessions. To share one sign-in across subdomains, give the [cookie transport](/duck-auth/core/transports/cookie) a `domain`.
 
-duck-auth itself is MIT-licensed and free. Your costs are:
+## Can I write my own provider or store?
 
-- Whatever you spend on Redis (~$50-100/mo for production).
-- Your Postgres / MySQL / SQLite (whatever you'd run anyway).
-- Your email / SMS provider (Resend / SES / Twilio).
+Yes: see [providers](/duck-auth/providers#writing-your-own) and [adapters](/duck-auth/adapters#writing-your-own).
 
-Compared to Clerk at $25/mo + $0.02 per MAU after 5k, duck-auth wins
-above ~6k MAUs and *significantly* wins above 50k.
+## Does it decide what a user may do?
 
-## Can I migrate from NextAuth / Better-Auth / Clerk?
+No. duck-auth answers who the caller is; [duck-iam](/duck-iam/introduction) decides what they may do, and [Bridging to duck-iam](/duck-auth/guides/iam-bridge) wires the two together.
 
-Yes. The migration path is:
+## Does it support machine-to-machine auth?
 
-1. Export your users from the old system (most have an export endpoint).
-2. Use `auth.identities.bulkCreate` with pre-hashed passwords - duck-auth
-   does **not** re-hash, so bcrypt / Argon2 / PBKDF2 hashes import
-   verbatim.
-3. Combine with `passwords.autoRehash: true`, and the next sign-in
-   silently upgrades each hash to your chosen format.
-4. Wire your OAuth providers with the same `redirectUri`s.
-5. Once verified, point your DNS / load balancer at the new service.
-
-No big-bang migration; old hashes coexist with new hashes for as long
-as you need.
-
-## Can I share users across multiple apps?
-
-Yes. Two patterns:
-
-1. **Same store, multiple AuthRoots**: each app constructs its own
-   `AuthEngine` against the shared Postgres + Redis. Identities are
-   shared; sessions are app-specific.
-2. **One AuthEngine, many domains**: deploy a single auth service at
-   `auth.example.com` and use `CookieTransport` with `domain: '.example.com'`
-   so the cookie is shared across `app1.example.com`, `app2.example.com`.
-
-For OIDC-based federation between services, use `JwtTransport` and
-expose your `/.well-known/openid-configuration` - downstream apps
-verify JWTs locally.
-
-## Can I have my own provider?
-
-Yes. Implement `AuthProvider.IProvider`:
-
-```typescript
-const myProvider: AuthProvider.IProvider<IBegin, IComplete> = {
-  id: 'my-provider',
-  async begin(input, ctx) { /* ... */ },
-  async complete(input, ctx) { /* ... */ },
-}
-
-auth.providers.use(myProvider)
-```
-
-See [Writing a custom provider ->](/duck-auth/providers#writing-a-custom-provider).
-
-## Can I have my own adapter?
-
-Yes. Implement `SqlBridge.IBridge` and pass it to `authCreateSqlStores`:
-
-```typescript
-const stores = authCreateSqlStores({ bridge: myBridge })
-```
-
-Or implement the four store interfaces directly. Run the [compliance
-suite](/duck-auth/adapters#the-compliance-suite) against your
-implementation.
-
-## Can I run on serverless / edge?
-
-Yes, with caveats:
-
-- **Vercel Edge / Cloudflare Workers**: use `JwtTransport` (no DB
-  hits per request) and `AuthArgon2idHasher` (Node's `crypto.scrypt` isn't
-  on Workers).
-- **AWS Lambda**: works as-is. Cold-start cost is ~300ms for the first
-  request after a deploy - pin a warmer if that matters.
-- **Cloudflare Workers with cookies**: works, but keep one auth instance
-  per worker and share via durable-object if you need cross-replica
-  state.
-
-## How fast is it?
-
-A signin endpoint with `AuthScryptHasher` defaults is ~30ms per call
-(20ms hash + 5ms DB + 5ms cookie issue). With Argon2id at OWASP
-defaults, ~80ms. JWT verify (no DB hit) is <1ms.
-
-The bottleneck is **always** the hasher - that's by design. Don't lower
-the cost; raise the budget.
-
-## Does it support row-level security?
-
-duck-auth doesn't enforce RLS - that's [duck-iam](/duck-iam)'s job.
-The recommended pattern is to project the auth-side identity into an
-iam-side subject and run the iam engine against the row's attributes:
-
-```typescript
-const subject = projectToSubject(ctx.identity, ctx.session)
-const allowed = iam.can({ subject, action: 'read', resource: { type: 'post', attributes: post } })
-```
-
-See [Bridging to duck-iam ->](/duck-auth/guides/iam-bridge).
-
-## What about WebAuthn / passkeys on iOS / Android?
-
-duck-auth's passkey provider uses WebAuthn - which Safari (iOS), Chrome
-(Android), and every desktop browser supports. For native iOS / Android
-apps, integrate via the OS-level Credential Manager APIs and POST the
-attestation/assertion JSON to your duck-auth callback.
-
-A reference client SDK for iOS is on the v1.1 roadmap.
-
-## Does it support OAuth2 client-credentials (M2M)?
-
-Yes. Register the `m2m` facet and use it on top of `apiKeys`:
-
-```typescript
-const cred = await auth.m2m.createClient({
-  name: 'CI deployment bot',
-  scopes: ['deploy:write'],
-})
-
-// CI exchanges:
-POST /auth/m2m/token
-Content-Type: application/x-www-form-urlencoded
-
-grant_type=client_credentials&client_id=...&client_secret=...&scope=deploy:write
-
-// -> 200 { access_token, token_type, expires_in, scope }
-```
-
-The runtime issues a short-lived JWT for the M2M flow.
-
-## What's the relationship with @gentleduck/iam?
-
-duck-auth answers **"who is this caller?"**; duck-iam answers **"what
-may they do?"** Two libraries, one bridge function. See the
-[bridging guide](/duck-auth/guides/iam-bridge).
+Yes: API keys, and an OAuth2 client-credentials exchange on top of them. See [API keys](/duck-auth/providers/api-key#client-credentials).
 
 ## How do I report a security issue?
 
-Email `security@gentleduck.dev` (PGP key on [the SECURITY.md](https://github.com/gentleeduck/gentleduck/blob/master/packages/duck-auth/SECURITY.md)).
-Do **not** open a public GitHub issue.
+Email `security@gentleduck.org`, not a public issue. The policy is in [SECURITY.md](https://github.com/gentleeduck/duck-iam/blob/main/packages/duck-auth/SECURITY.md).

@@ -1,97 +1,21 @@
 ---
-title: Memory adapter
-description: In-memory Maps for identities, sessions, credentials, and orgs. Dev/test only - strict() rejects it in production.
+title: Memory
+description: Every store in process memory, for tests and local runs
 section: Adapters
 ---
+```ts
+import { MemoryAdapter } from '@gentleduck/auth/adapters/memory'
 
-## When to use
-
-`AuthMemoryAdapter` is the dev/test adapter. It holds every store in
-in-process `Map<string, T>` instances. Use it for:
-
-- Local development (no database setup required).
-- Unit / integration tests (`authCreateTest` uses it under the hood).
-- Storybook decorators.
-- Demos and examples.
-
-`AuthEngine.strict({ env: 'production' })` rejects `AuthMemoryAdapter`
-unconditionally.
-
-## Setup
-
-```typescript
-import { AuthMemoryAdapter } from '@gentleduck/auth/adapters/memory'
-
-const adapter = new AuthMemoryAdapter()
-
-export const auth = new AuthEngine({
-  stores: {
-    identities: adapter.identities,
-    sessions: adapter.sessions,
-    credentials: adapter.credentials,
-    orgs: adapter.orgs,    // optional
-  },
-})
+const stores = new MemoryAdapter()
+createAuth({ /* ... */ stores })
 ```
 
-## Typed generics
+It holds identities, credentials, sessions and orgs in `Map`s and keeps the same contract as the SQL adapters, tenancy and uniqueness included, so a test against it exercises the engine as production runs it.
 
-The adapter is parameterised by `Profile` and `OrgMeta` - they propagate
-through to your `AuthEngine`:
+- Nothing survives a restart, and nothing is shared between processes. `strict({ env: 'production' })` refuses it.
+- It has no `withClient`, so `withTransaction` refuses it.
+- `seedOrg(row)` plants an org, since the orgs store only reads.
+- `raw` hands a test the `Map`s themselves, to plant a row no store call would write.
+- A fresh `new MemoryAdapter()` per test is a clean database.
 
-```typescript
-type Profile = { displayName: string }
-type OrgMeta = { plan: 'team' | 'enterprise' }
-
-const adapter = new AuthMemoryAdapter<Profile, OrgMeta>()
-```
-
-## Resetting state
-
-For tests, recreate the adapter to wipe state:
-
-```typescript
-beforeEach(() => {
-  const adapter = new AuthMemoryAdapter()
-  auth = new AuthEngine({ stores: adapter, /* ... */ })
-})
-```
-
-Or, if you want to keep `auth` and just wipe stores between tests, the
-underlying Maps are accessible:
-
-```typescript
-adapter.identities.clear()  // exposed for tests; do not use in app code
-```
-
-## What it provides
-
-The adapter bundles four stores:
-
-| Store | Backing |
-| --- | --- |
-| `adapter.identities` | `Map<id, Identity>` - typed by `Profile`. Implements every `AuthIdentity.IStore` method including soft-delete grace, provider linking, merge, erase. |
-| `adapter.sessions` | `Map<sessionIdHash, Session>` - instant revocation, TTL-respecting reads. |
-| `adapter.credentials` | `Map<id, Credential>` - keyed by id; hashed-secret lookup via secondary index. |
-| `adapter.orgs` | `Map<id, Org>` - typed by `OrgMeta`. Memberships via secondary index. |
-
-## Multi-tenant
-
-Like every adapter, `AuthMemoryAdapter` is multi-tenant. Every method
-that takes a `tenantId` filters by it. Cross-tenant reads return `null`,
-never throw, never leak.
-
-## Performance characteristics
-
-`Map.get()` is O(1). Per-call cost is dominated by hashing (SHA-256) and
-profile cloning. Suitable for thousands of identities per process; if
-you push to tens of thousands, switch to SQL.
-
-## Caveats
-
-- **No persistence**: every process restart wipes everything.
-- **No fan-out**: one process per replica; sessions don't cross.
-- **No cron jobs**: there's nothing to vacuum expired sessions other
-  than the next call's lazy expiry check. Use `AuthMemoryLimiter` likewise.
-
-For production: switch to `adapters/sql` + `adapters/redis`.
+`createTest()` from `@gentleduck/auth/test` builds an engine over it for you; see [Testing](/duck-auth/advanced/testing).

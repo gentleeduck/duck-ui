@@ -1,165 +1,76 @@
 ---
 title: Bridging to duck-iam
-description: Authentication proves who the caller is; duck-iam decides what they may do. Wire the two with a 15-line projectToSubject function.
+description: The identity id as the duck-iam subject, the session's AAL and tenant as its environment and scope, and a default role on sign-up
 section: Guides
 ---
+duck-auth answers who the caller is; [duck-iam](/duck-iam/introduction) decides what they may do. The session carries what the check needs:
 
-## Why two libraries?
+| duck-iam | From the session |
+| --- | --- |
+| Subject id | `session.identityId` |
+| Environment | `{ aal: session.aal }`, and anything else a rule reads |
+| Scope | `session.tenantId`, when your tenants are duck-iam scopes |
 
-duck-auth answers **"who is this caller?"** It owns identities,
-credentials, sessions, MFA, and providers. duck-iam answers **"what
-may this caller do?"** It owns roles, policies, and the evaluation
-engine.
+## Checking a route
 
-Keeping them separate is intentional:
+```ts
+import { toHeaders } from '@gentleduck/auth/server/express'
 
-- You can swap auth providers (NextAuth -> duck-auth) without touching
-  authorization.
-- You can swap authorization engines (Casbin -> duck-iam) without
-  touching auth.
-- The auth library doesn't need to know your domain's permission
-  model; the iam library doesn't need to know your sign-in flows.
+app.delete('/api/posts/:id', async (req, res) => {
+  const resolved = await auth.resolveSession({ headers: toHeaders(req.headers) }).orNull()
+  const identityId = resolved?.session.identityId
+  if (!resolved || !identityId) return res.status(401).end()
 
-The two libraries are stitched together by a small `projectToSubject`
-function you write in your app.
+  const post = await getPost(req.params.id)
+  const allowed = await iam.can(
+    identityId,
+    'delete',
+    { type: 'post', id: post.id, attributes: { ownerId: post.ownerId } },
+    { aal: resolved.session.aal },
+    resolved.session.tenantId ?? undefined,
+  )
+  if (!allowed) return res.status(403).end()
 
-## The bridge
-
-```typescript title="src/lib/projectToSubject.ts"
-import type { AuthIdentity, AuthSession } from '@gentleduck/auth/core'
-import type { AccessControl } from '@gentleduck/iam'
-
-// Your typed AccessConfig - same one you defined for the iam engine.
-type Profile = {
-  displayName: string
-  externalGroups?: string[]
-}
-
-export function projectToSubject(
-  identity: Identity<Profile>,
-  session: Session,
-): AccessControl.ISubject<typeof access> {
-  return {
-    id: identity.id,
-    tenantId: identity.tenantId,
-    roles: identity.profile.externalGroups?.map((g) => `group:${g}`) ?? [],
-    attributes: {
-      email: identity.email,
-      emailVerified: identity.emailVerified,
-      aal: session.aal,
-      amr: session.amr,
-      kind: session.kind,           // 'user' | 'apikey'
-      displayName: identity.profile.displayName,
-    },
-  }
-}
-```
-
-The function takes the auth-side `Identity` + `Session` and projects
-them into the iam-side `Subject`. Once you have that, the rest of your
-handlers look identical:
-
-```typescript
-import { AuthError } from '@gentleduck/auth/core'
-import { auth } from '~/lib/auth'
-import { iam } from '~/lib/iam'
-import { projectToSubject } from '~/lib/projectToSubject'
-
-app.post('/api/posts/:id/delete', async (req, res, next) => {
-  try {
-    const ctx = await auth.resolveSession(req)
-    if (!ctx) throw new AuthError('AUTH/UNAUTHENTICATED')
-
-    const subject = projectToSubject(ctx.identity, ctx.session)
-    const post = await getPost(req.params.id)
-
-    if (!iam.can({ subject, action: 'delete', resource: { type: 'post', attributes: post } })) {
-      return res.status(403).json({ code: 'FORBIDDEN' })
-    }
-
-    await deletePost(req.params.id)
-    res.status(204).end()
-  } catch (err) {
-    next(err)
-  }
+  await deletePost(post.id)
+  res.status(204).end()
 })
 ```
 
-## Where to put the bridge
+duck-iam's [Express guard](/duck-iam/integrations/server/express) runs the same check as middleware: its `getUserId`, `getEnvironment` and `getScope` read what your own middleware resolved.
 
-For a typical app, `projectToSubject` lives in `src/lib/projectToSubject.ts`
-and is imported wherever you call `iam.can()`.
+## Requiring a second factor
 
-If your app has many resource types and the projection logic gets
-complicated, factor it into multiple functions:
+A rule reads the AAL from the environment. Write it so a check without one is denied:
 
-```typescript
-export function baseSubject(identity, session) { /* common attributes */ }
+```ts
+import { definePolicy } from '@gentleduck/iam/core'
 
-export function subjectForPosts(identity, session, post) {
-  const base = baseSubject(identity, session)
-  return { ...base, attributes: { ...base.attributes, isOwner: post.ownerId === identity.id } }
-}
-
-export function subjectForOrgs(identity, session, org) { /* ... */ }
+const stepUp = definePolicy('step-up')
+  .algorithm('first-match')
+  .rule('delete-at-aal2', (r) => r.allow().on('delete').of('*').when((w) => w.env('aal', 'gte', 2)))
+  .rule('delete-otherwise', (r) => r.deny().on('delete').of('*'))
+  .rule('the-rest', (r) => r.allow().on('*').of('*'))
+  .build()
 ```
 
-Each call site picks the projection it needs.
+A deny when `aal` is below 2 reads the same but fails open: a check that leaves out the environment has no `aal`, so the rule never matches. Roles still decide the rest; `the-rest` only stops this policy from denying it.
 
-## Step-up gated by iam
+When a delete is denied at AAL 1, [`checkStepUp`](/duck-auth/guides/mfa#asking-for-the-second-factor) names the factors to ask for, and the client retries once the session is stepped up.
 
-You can also use iam to drive **step-up** decisions:
+## A role on sign-up
 
-```typescript
-const subject = projectToSubject(identity, session)
-const decision = iam.explain({
-  subject,
-  action: 'delete',
-  resource: { type: 'post', attributes: post },
+```ts
+auth.events.on('signup.completed', async ({ identity }) => {
+  await iam.admin.assignRole(identity.id, 'viewer')
 })
-
-if (decision.requiresStepUp) {
-  throw new AuthError('AUTH/STEP_UP_REQUIRED')
-}
-if (!decision.allow) {
-  return res.status(403).end()
-}
 ```
 
-`requiresStepUp` is a custom attribute you can add to your iam policies
-- "deny unless AAL is aal2 and session is fresh." The iam evaluator
-returns the reason, and your handler turns it into the auth-side
-step-up flow. Clean separation.
+`signup.completed` fires for every identity created, and creation waits for the listener. A listener that throws is logged, not raised, so the identity then exists without the role.
 
-## Multi-tenant: identity.tenantId is iam.tenantId
+## Tenants as scopes
 
-Both libraries are multi-tenant. The convention is to use the same
-`tenantId` value in both:
-
-```typescript
-const identity = await auth.identities.findById(id, { tenantId: 'org-123' })
-// -> identity.tenantId === 'org-123'
-
-const subject = projectToSubject(identity, session)
-// -> subject.tenantId === 'org-123'
-
-iam.can({ subject, action, resource, scope: 'org-123' })
-// -> policy lookup is scoped to 'org-123'
+```ts
+await iam.admin.assignRole(identityId, 'admin', 'acme')
 ```
 
-A subject can be `admin` in org-1 and `viewer` in org-2 - iam's scoped
-role assignments handle that natively.
-
-## When to skip iam
-
-For simple apps (one role per user, no per-resource conditions, no
-multi-tenancy), iam may be overkill. You can drive permissions
-directly off `identity.profile.role` or `session.aal`:
-
-```typescript
-if (session.aal !== 'aal2') throw new AuthError('AUTH/AAL_INSUFFICIENT')
-if (identity.profile.role !== 'admin') return res.status(403).end()
-```
-
-This works fine until you need conditions ("editors can only delete
-their own posts"). At that point, switch to duck-iam.
+The grant applies only to a check scoped to `acme`, so an admin in one tenant is not one in another. A session signed in without a tenant has `tenantId: null` and reaches only unscoped grants; see [multi-tenancy](/duck-auth/advanced/multi-tenancy).

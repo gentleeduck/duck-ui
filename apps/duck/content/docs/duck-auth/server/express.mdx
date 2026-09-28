@@ -1,107 +1,72 @@
 ---
-title: Express adapter
-description: Express 4+ middleware. Each mount returns an Express RequestHandler.
+title: Express
+description: Mounting the auth routes on Express 4 or 5, guarding your own routes, and binding the actor
 section: Server
 ---
-
-## Mount
-
-```typescript
-import express from 'express'
+```ts
 import {
-  authMountProviderBegin,
-  authMountSession,
-  authMountSignIn,
-  authMountSignOut,
+  expressActorContext,
+  expressCsrf,
+  mountProviderBegin,
+  mountProviderCallback,
+  mountSession,
+  mountSignIn,
+  mountSignOut,
 } from '@gentleduck/auth/server/express'
-import { auth } from './lib/auth'
+import express from 'express'
 
 const app = express()
-app.use(express.json())                  // duck-auth expects JSON bodies
+app.set('trust proxy', 1)
 
-app.post('/auth/signin', authMountSignIn(auth))
-app.post('/auth/signout', authMountSignOut(auth))
-app.get('/auth/session', authMountSession(auth))
-
-// Provider begin: redirect to OAuth IdP, send a magic link, etc.
-app.post('/auth/providers/:providerId/begin', (req, res, next) => {
-  return authMountProviderBegin(auth, req.params.providerId)(req, res, next)
-})
-
-// OAuth callback: re-use the sign-in handler with the providerId pre-set.
-app.get('/auth/google/callback', authMountSignIn(auth))
-app.get('/auth/github/callback', authMountSignIn(auth))
-
-app.listen(3000)
+app.post('/auth/signin', express.json(), mountSignIn(auth))
+app.post('/auth/signout', mountSignOut(auth))
+app.get('/auth/session', mountSession(auth))
+app.post('/auth/providers/:id/begin', express.json(), mountProviderBegin(auth))
+app.get('/auth/providers/:id/callback', mountProviderCallback(auth))
+app.post('/auth/providers/:id/callback', express.urlencoded({ extended: false }), mountProviderCallback(auth))
 ```
 
-## In a route
+- `express.json()` goes on the routes that read a body.
+- `trust proxy` decides which IP `req.ip` answers, and so what the session records. Set it to the number of proxies in front of you.
+- The callback answers the session cookies and an empty 200. To land the browser on a page, write the callback yourself, as on the [OAuth page](/duck-auth/providers/oauth#the-routes).
 
-```typescript
-import { AuthError } from '@gentleduck/auth/core'
+## Your own routes
 
-app.get('/api/me', async (req, res, next) => {
-  try {
-    const ctx = await auth.resolveSession(req)
-    if (!ctx) throw new AuthError('AUTH/UNAUTHENTICATED')
+```ts
+import { toHeaders } from '@gentleduck/auth/server/express'
 
-    res.json({ identity: ctx.identity, aal: ctx.session.aal })
-  } catch (err) {
-    next(err)
-  }
-})
+app.use('/api', expressCsrf(auth), expressActorContext(auth))
 
-// Centralised error handler.
-app.use((err, req, res, next) => {
-  if (err instanceof AuthError) {
-    res.status(err.status).json(err.toJSON())
+app.get('/api/me', async (req, res) => {
+  const resolved = await auth.resolveSession({ headers: toHeaders(req.headers) }).orNull()
+  if (!resolved) {
+    res.status(401).end()
     return
   }
-  next(err)
+  res.json(resolved.identity)
 })
 ```
 
-## Apply intents manually
+- `expressCsrf` answers the 403 itself, so it does not depend on your error handler.
+- `expressActorContext` passes a refusal to `next(err)`. Its `AuthError` carries `status` and `toJSON()` for your error handler.
 
-For custom routes where you need to drive the runtime by hand:
+## Calling a flow yourself
 
-```typescript
-import { authApplyIntents } from '@gentleduck/auth/server/express'
+`applyIntents(intents, res)` writes a flow's answer, cookies included, onto the response. `expressCaller(req)` is the IP and User-Agent to stamp on the session:
 
-app.post('/auth/custom', async (req, res, next) => {
+```ts
+import { applyIntents, expressCaller } from '@gentleduck/auth/server/express'
+
+app.post('/auth/magic-link/redeem', express.json(), expressCsrf(auth), async (req, res, next) => {
   try {
-    const intents = await auth.flows.signIn({
-      providerId: 'password',
-      input: req.body,
+    const { intents } = await auth.flows.signIn({
+      providerId: 'magic-link',
+      input: { token: String(req.body.token ?? '') },
+      ...expressCaller(req),
     })
-    authApplyIntents(intents, res)
+    applyIntents(intents, res)
   } catch (err) {
     next(err)
   }
 })
 ```
-
-`authApplyIntents` mutates `res` - it sets cookies via `res.cookie(...)`,
-writes the JSON body, sets status and headers. Equivalent to what the
-shipped mount helpers do internally.
-
-## CSRF guard
-
-```typescript
-import { authCsrfGuard } from '@gentleduck/auth/core'
-
-app.use(async (req, res, next) => {
-  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
-    try {
-      await authCsrfGuard(auth, req)
-    } catch (err) {
-      next(err)
-      return
-    }
-  }
-  next()
-})
-```
-
-The guard is a no-op for non-cookie transports - if your request came
-in as a Bearer or JWT, the call returns silently.

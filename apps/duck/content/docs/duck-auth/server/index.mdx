@@ -1,101 +1,55 @@
 ---
 title: Server adapters
-description: Mount duck-auth on Express, Hono, Next.js, Fastify, Koa, Elysia, NestJS, gRPC, or any Web-Fetch runtime.
+description: The routes every framework adapter serves, what each handler checks, and the helpers for your own routes, such as the CSRF guard, the actor scope and the caller fingerprint
 section: Server
 ---
+Each adapter turns the engine's flows into handlers for one framework. None imports its framework: each is typed against the few methods it calls.
 
-## What mounts where
+## The routes
 
-Every server adapter exposes the same four routes:
-
-| Route | Handler |
+| Route | Does |
 | --- | --- |
-| `POST /<prefix>/signin` | `authMountSignIn(auth)` - completes provider sign-in. |
-| `POST /<prefix>/signout` | `authMountSignOut(auth)` - revokes the current session. |
-| `GET /<prefix>/session` | `authMountSession(auth)` - returns the current session + identity. |
-| `POST /<prefix>/providers/:providerId/begin` | `authMountProviderBegin(auth, providerId)` - initiates a flow (OAuth redirect, magic-link send). |
+| `POST /auth/signin` | Signs in with a `{ providerId, input }` body. |
+| `POST /auth/signout` | Revokes the session the request carries. |
+| `GET /auth/session` | Answers `{ session, identity }`, both `null` when signed out. |
+| `POST /auth/providers/:id/begin` | Starts a provider's flow: the OAuth redirect, the magic-link email, the passkey challenge. |
+| `GET` and `POST /auth/providers/:id/callback` | Where an OAuth IdP sends the browser back. |
 
-The actual Express / Hono / Next functions are named consistently:
-`authMountSignIn` / `authHonoSignIn` / `authNextSignIn` etc. - they all return a
-handler appropriate to the framework.
+These are the paths the [client](/duck-auth/client) calls under its `baseUrl`, `/auth` by default. Mount only what you use; a password-only app needs the first three.
 
-## Shipped adapters
+## Adapters
 
-| Adapter | Import | Notes |
-| --- | --- | --- |
-| [Express](/duck-auth/server/express) | `@gentleduck/auth/server/express` | Express 4+. Use `express.json()` upstream. |
-| [Hono](/duck-auth/server/hono) | `@gentleduck/auth/server/hono` | Hono 4+. Works on Bun, Node, Cloudflare Workers, Deno. |
-| [Next.js](/duck-auth/server/next) | `@gentleduck/auth/server/next` | App router. Catch-all `[...auth]/route.ts`. |
-| Fastify | `@gentleduck/auth/server/fastify` | Fastify 4+. As a plugin. |
-| Koa | `@gentleduck/auth/server/koa` | Koa 2+. As middleware. |
-| Elysia | `@gentleduck/auth/server/elysia` | Elysia (Bun). As handlers. |
-| NestJS | `@gentleduck/auth/server/nestjs` | Guard + module + controller pair. |
-| gRPC | `@gentleduck/auth/server/grpc` | Interceptor for `@grpc/grpc-js`. |
-| Generic | `@gentleduck/auth/server/generic` | `(request: Request) -> Promise<Response>` for any Web-Fetch runtime. |
+| Framework | Import | Mount everything | Your routes: CSRF | Actor scope |
+| --- | --- | --- | --- | --- |
+| [Express](/duck-auth/server/express) | `server/express` | | `expressCsrf` | `expressActorContext` |
+| [Fastify](/duck-auth/server/fastify) | `server/fastify` | `registerFastify` | `fastifyCsrf` | `fastifyWithActor` |
+| [Hono](/duck-auth/server/hono) | `server/hono` | `mountHono` | `honoCsrf` | `honoActorContext` |
+| [Koa](/duck-auth/server/koa) | `server/koa` | | `koaCsrf` | `koaActorContext` |
+| [Elysia](/duck-auth/server/elysia) | `server/elysia` | | `elysiaCsrf` | `elysiaWithActor` |
+| [Next.js](/duck-auth/server/next) | `server/next` | `mountNext` | `withNextCsrf` | `nextWithActor` |
+| [NestJS](/duck-auth/server/nestjs) | `server/nestjs` | | `makeCsrfGuard`, `makeGuard` | `nestActorContext` |
+| [gRPC](/duck-auth/server/grpc) | `server/grpc` | | | `withGrpc` |
+| [Any Fetch runtime](/duck-auth/server/generic) | `server/generic` | | | |
 
-## The intent executor
+Every import is under `@gentleduck/auth/`.
 
-Every adapter is a thin wrapper around the same core executor:
+## What every handler does
 
-```typescript
-import { authExecuteIntents } from '@gentleduck/auth/server/generic'
+- Checks CSRF on each POST, answering 403 `AUTH_CSRF` on a failure. A cross-site `Sec-Fetch-Site` is refused, and once a session exists, the `x-csrf-token` header must match its [CSRF cookie](/duck-auth/core/transports/cookie#the-csrf-cookie). A bearer request with no cookie skips the token.
+- Stamps the session with the caller's User-Agent and the IP the framework resolved, never a forwarded header. Set your framework's proxy trust so that IP is the client's.
+- Answers `Cache-Control: no-store`.
+- Answers an `AuthError` as `{ ok: false, error: { code, status, detail? } }` at its status. Anything else is a 500 with the cause logged and withheld.
+- Refuses a redirect to anything but a same-origin path or an http(s) URL.
 
-const intents = await auth.flows.signIn({ providerId, input })
-const response = authExecuteIntents(intents)
-// -> web standard Response object with the right cookies / redirects / body
-```
+The OAuth callback is the exception to CSRF: Apple posts it from its own page, and the signed `state` bound to the pre-auth cookie is the proof instead. It drives only `oauth` providers, so it signs nobody in any other way.
 
-The intent executor handles:
-- `startSession` / `rotateSession` -> `Set-Cookie` and / or `Authorization` header.
-- `revokeSession` -> `Set-Cookie: ...; Max-Age=0`.
-- `redirect` -> `Location` header + 302/303.
-- `json` -> `application/json` body + status.
-- `setCookie` / `header` -> raw additions.
+## Your own routes
 
-You can implement an adapter for an unsupported framework by calling
-`authExecuteIntents()` and mapping the resulting `Response` to your
-runtime's primitives.
+For a route you write:
 
-## Path prefix
+- **Read the session** with `auth.resolveSession({ headers })`. `.orNull()` answers `null` when there is none, and still throws when the store is down.
+- **Guard it against CSRF** with the adapter's CSRF helper, on every state-changing route a cookie session reaches.
+- **Pass the caller** to a flow you call yourself, with the adapter's caller helper: `expressCaller(req)`, `honoCaller(c)`, and so on.
+- **Bind the actor** with the adapter's actor scope, so writes downstream record who made them in `created_by` and `updated_by`. Give it `getCaller`, and it also runs [hijack detection](/duck-auth/core/sessions#hijack-detection) and the [anomaly detectors](/duck-auth/core/anomaly) on every request.
 
-The mount helpers don't care about path - you mount at any prefix:
-
-```typescript
-// Express
-app.post('/auth/signin', authMountSignIn(auth))
-app.post('/auth/signout', authMountSignOut(auth))
-app.get('/auth/session', authMountSession(auth))
-app.post('/auth/providers/:providerId/begin', authMountProviderBegin(auth, req.params.providerId))
-
-// Or:
-app.post('/api/v1/auth/signin', authMountSignIn(auth))
-```
-
-The OpenAPI generator uses the `prefix` config (default `/auth`) to
-emit the right paths in the spec:
-
-```typescript
-import { authBuildOpenApiSpec } from '@gentleduck/auth/openapi'
-
-const spec = authBuildOpenApiSpec({
-  baseUrl: 'https://api.example.com',
-  prefix: '/api/v1/auth',
-})
-```
-
-## Resolving the session in handlers
-
-Most handlers will call `auth.resolveSession(req)` to gate access:
-
-```typescript
-import { AuthError } from '@gentleduck/auth/core'
-
-app.get('/api/me', async (req, res) => {
-  const ctx = await auth.resolveSession(req)
-  if (!ctx) throw new AuthError('AUTH/UNAUTHENTICATED')
-  res.json(ctx.identity)
-})
-```
-
-For Next.js (server components / route handlers), the API is the same
-- `auth.resolveSession(request)` works on a `Request` or a Next `NextRequest`.
+The actor scope authorises nothing: it binds nobody for a request with no session, and refusing that is your guard's job.

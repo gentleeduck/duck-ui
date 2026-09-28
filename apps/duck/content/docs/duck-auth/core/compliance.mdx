@@ -1,139 +1,52 @@
 ---
 title: Compliance presets
-description: gdpr, hipaa, soc2, fips - apply a regulatory profile in one call. Strictest preset wins.
+description: The gdpr, hipaa, soc2 and fips presets, what each one raises, and how strict() holds a deployment to them
 section: Core
 ---
+A preset is a floor. `createAuth({ compliance })` shortens the session lifetimes to it, and `strict()` refuses to run until the deployment shows it meets the rest. It certifies nothing; it catches configuration that contradicts the regime you named.
 
-## What the presets do
+```ts
+const auth = createAuth({
+  // ...
+  compliance: 'hipaa', // or a list, such as ['gdpr', 'soc2']
+  providers: [passwords({ compliance: 'hipaa' }), mfaProvider({ compliance: 'hipaa' })],
+  strict: false, // checked below, once the listeners exist
+})
 
-duck-auth ships four compliance presets that wire a coherent set of
-configuration overrides for the named regulatory scope:
-
-- Replace `AuthScryptHasher` with `AuthArgon2idHasher` (HIPAA / FIPS).
-- Force `dataAtRest` encryption on identities and credentials.
-- Register `authImpossibleTravelDetector` + `deviceFingerprintDetector`.
-- Tighten password policy (minLength 14+).
-- Set `anomaly.onDetectorError` to `step-up` (SOC2) or `deny` (FIPS).
-- Cap `session.absoluteTtlMs` (HIPAA: 30 days; FIPS: 7 days).
-- Require a non-memory limiter, non-memory adapter, secure cookie.
-
-## Usage
-
-Apply one preset to a `stores` / `events` / `channels` triple:
-
-```typescript
-import { authApplyCompliancePreset } from '@gentleduck/auth/core'
-
-const config = authApplyCompliancePreset(
-  {
-    baseUrl: process.env.APP_URL!,
-    stores: { /* ... */ },
-    events: new AuthRedisEvents(redis),
-    channels: { email: new AuthSesChannel({ ... }) },
-    transport: new AuthCookieTransport({ name: 'duck-sid', secure: true }),
-  },
-  'hipaa',
-)
-
-export const auth = new AuthEngine({
-  ...config,
-  // your own overrides go after
+auth.events.on('lockout', alertOnLockout)
+auth.strict({
+  env: 'production',
+  compliance: { auditLogRetained7y: true, baaCompliantChannel: true, dataAtRest: true, mailerChannel: true },
 })
 ```
 
-`authApplyCompliancePreset(base, preset)` returns an `AuthEngineTypes.IConfig` shape.
-Add your own keys after to override.
+- A list composes by taking the stricter value of every field.
+- The checks run in every env, not only production, and one error lists every gap.
+- `strict: false` defers them: `createAuth` runs `strict()` as it returns, before you have subscribed anything, and it has no way to take your attestations.
 
-## Available presets
+## What each preset sets
 
-| Preset | Scope | Required peers |
-| --- | --- | --- |
-| `gdpr` | EU privacy. Soft-delete grace + erase + exportAll mandatory. | none |
-| `soc2` | SOC2 Type II. Anomaly detectors + audit-log webhook + absolute TTL cap. | `@opentelemetry/api` (recommended) |
-| `hipaa` | US healthcare. Argon2 + AES-GCM dataAtRest + signed-audit + absolute TTL 30 days. | `@node-rs/argon2` |
-| `fips` | FIPS 140-2/3. Argon2 + KMS-envelope dataAtRest + ES256/EdDSA only + absolute TTL 7 days + no HS256. | `@node-rs/argon2` + a `Kms.IProvider` |
+| | gdpr | hipaa | soc2 | fips |
+| --- | --- | --- | --- | --- |
+| Sliding session | 7 days | 1 hour | 7 days | 4 hours |
+| Absolute session | 30 days | 8 hours | 30 days | 12 hours |
+| Password minimum | 8 | 12 | 8 | 14 |
+| API key bytes | 32 | 32 | 32 | 48 |
+| Needs `mfaProvider()` | no | yes | no | yes |
+| Checks | `dataAtRest`, `mailerChannel`, `exportAvailable`, `softDeleteEnabled` | `dataAtRest`, `mailerChannel`, `baaCompliantChannel`, `auditLogRetained7y` | `lockoutListener`, `limiterRequired`, `auditLogRetained7y` | `dataAtRest`, `mailerChannel`, `fipsValidatedHasher`, `webauthnAttestationDirect` |
 
-## Strictest preset wins
+The session lifetimes only ever shorten what you set. The password, backup-code and API key floors belong to the providers, so pass the same preset to `passwords({ compliance })`, `mfaProvider({ compliance })` and `apiKeyProvider({ compliance })`; `createAuth` cannot reach providers that are already built.
 
-You can layer presets - the last one is dominant where they conflict:
+hipaa and fips refuse an engine with no mfa provider. Sign-in still answers AAL 1; demanding the second factor is your `checkStepUp`, as in [step-up](/duck-auth/core/flows#step-up).
 
-```typescript
-import { authApplyCompliancePreset } from '@gentleduck/auth/core'
+## The checks
 
-// Apply both: HIPAA wins on overlapping keys (Argon2 vs scrypt)
-const layered = authApplyCompliancePreset(
-  authApplyCompliancePreset(base, 'gdpr'),
-  'hipaa',
-)
-```
+| Check | Answered by |
+| --- | --- |
+| `limiterRequired` | The engine: a limiter you supplied that is neither the noop nor an in-process one. |
+| `lockoutListener` | The engine: a `lockout` listener is subscribed when `strict()` runs. |
+| `webauthnAttestationDirect` | The engine, when a passkey provider is registered. Otherwise you. |
+| `fipsValidatedHasher` | The engine, from a shipped password hasher. A hasher of your own: you. |
+| `dataAtRest`, `mailerChannel`, `baaCompliantChannel`, `auditLogRetained7y`, `exportAvailable`, `softDeleteEnabled` | You, in `strict({ compliance })`. |
 
-For ergonomic clarity, prefer applying the strictest preset directly
-rather than stacking.
-
-## What each preset enforces
-
-### `gdpr`
-
-- `identities.softDeleteGracePeriodMs >= 7 days`.
-- `auth.identities.exportAll` available (always - but the preset wires
-  an audit event on every call).
-- `auth.identities.erase` available, with audit metadata preserved
-  post-erasure.
-- Logs scrubbed of email, IP, and PII via `events.middleware`.
-
-### `soc2`
-
-- All `gdpr` requirements.
-- `authImpossibleTravelDetector` + `deviceFingerprintDetector` registered.
-- `anomaly.onDetectorError: 'step-up'`.
-- `AuthWebhookDeliverer` wired to ship every audit event to an external sink.
-- `session.absoluteTtlMs: 30 days` cap.
-- `OtelInstrumentation` recommended (a warning fires at boot if absent).
-
-### `hipaa`
-
-- All `soc2` requirements.
-- `passwords.hasher: AuthArgon2idHasher(ARGON2ID_COMPLIANCE)`.
-- `passwords.minLength: 14`.
-- `dataAtRest: AuthAesGcmDataAtRest` with a `KeyProvider` (you supply).
-- `channel` must implement an audit hook (HIPAA logs every message).
-- `session.absoluteTtlMs: 30 days` cap (already set by SOC2 layer).
-- `mfa.enforced: true` - at least one MFA factor required per identity.
-
-### `fips`
-
-- All `hipaa` requirements.
-- `passwords.hasher: AuthArgon2idHasher(ARGON2ID_COMPLIANCE)`.
-- `JwtTransport.algorithms`: `ES256` / `EdDSA` only. HS256 / RS256 rejected.
-- `dataAtRest: AuthKmsEnvelopeDataAtRest` - local key material disallowed.
-- `anomaly.onDetectorError: 'deny'`.
-- `session.absoluteTtlMs: 7 days` cap.
-- `passwords.minLength: 16`.
-
-## Strict mode + presets
-
-`AuthEngine.strict({ env: 'production' })` cross-checks the preset:
-
-```typescript
-new AuthEngine({
-  ...hipaa({ ... }),
-  passwords: { hasher: new AuthScryptHasher() },  // <- overrides Argon2 - strict() will fail
-})
-// throws AUTH/MISCONFIGURED: { gate: 'compliance', preset: 'hipaa', expected: 'AuthArgon2idHasher' }
-```
-
-The preset is the source of truth; manual overrides that violate it are
-caught at boot.
-
-## Auditing your config
-
-Use `auth.compliance.report()` to print the active preset, the
-effective config, and any drift:
-
-```typescript
-console.log(auth.compliance.report())
-// -> { preset: 'hipaa', overrides: [], gates: [...passed], drift: [...] }
-```
-
-Useful for compliance attestation reviews - you can include the report
-in your SOC2 audit package.
+What the engine sees overrides what you attest, so `limiterRequired: true` over a `MemoryLimiter` still fails. A check nobody answers fails.

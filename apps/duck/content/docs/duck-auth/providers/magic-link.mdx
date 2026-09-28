@@ -1,145 +1,59 @@
 ---
-title: Magic-link provider
-description: Passwordless sign-in over email, SMS, or WebPush. Hashed-at-rest tokens, single-use, configurable TTL.
+title: Magic link
+description: Passwordless sign-in by a single-use link mailed through your own deliver function
 section: Providers
 ---
-
-## Setup
-
-```typescript
+```ts
+import { orNull } from '@gentleduck/auth/core'
 import { magicLink } from '@gentleduck/auth/providers/magic-link'
-import { AuthResendChannel } from '@gentleduck/auth/channels/resend'
 
-export const auth = new AuthEngine({
+const auth = createAuth({
   // ...
+  deliver,
   providers: [
-    magicLink({
-      channels: {
-        email: new AuthResendChannel({
-          apiKey: process.env.RESEND_API_KEY!,
-          from: 'no-reply@example.com',
-        }),
-      },
-      findIdentityByEmail: async (email, tenantId) => {
-        return auth.identities.findByEmail(email, tenantId)
-      },
-      autoCreateIdentity: false,      // set true for "sign-in OR sign-up" flows
-      autoCreateProfile: (email) => ({ displayName: email.split('@')[0] }),
-      ttlMs: 10 * 60 * 1000,          // default 10 minutes
-      limiterKeyPrefix: 'magic-link:request:',
-      callbackPath: '/auth/magic-link/callback',
-    }),
+    (_engine, send) =>
+      magicLink({ deliver: send, findIdentityByEmail: (email) => orNull(stores.identities.find({ email })) }),
   ],
 })
 ```
 
-## How it works
+Registered as a thunk, the provider receives the `deliver` you passed to `createAuth`. See [Delivery](/duck-auth/core/delivery) for writing one.
 
-1. **Client requests a link**:
-   ```typescript
-   await client.beginProvider('magic-link', { email, channel: 'email' })
-   ```
-2. The provider:
-   - Resolves identity by email (or auto-creates if `autoCreateIdentity`).
-   - Trips the per-email rate limiter.
-   - Mints a 32-byte random token (base64url).
-   - Hashes the token (SHA-256) and writes only the hash to the
-     credentials store with TTL.
-   - Dispatches via the channel: the user receives an email containing
-     a URL like `https://app.example.com/auth/magic-link/callback?token=<plaintext>`.
-3. **User clicks the link** - the URL hits your `callbackPath` and you
-   call `complete`:
-   ```typescript
-   await client.signIn({
-     providerId: 'magic-link',
-     input: { token },
-   })
-   ```
-4. The provider:
-   - Hashes the supplied token and looks up the row.
-   - Validates `expiresAt > now` and `revokedAt == null`.
-   - Marks the row revoked (single-use).
-   - Emits `startSession` at `aal: 'aal1'`, `amr: ['magic-link']`.
+## Sending the link
 
-## Multi-channel
-
-Pass `email`, `sms`, and `webpush` channels; the client picks one:
-
-```typescript
-magicLink({
-  channels: {
-    email: new AuthResendChannel({ ... }),
-    sms: new AuthTwilioChannel({ ... }),
-    webpush: new AuthWebPushChannel({ ... }),
-  },
-  // ...
-})
-
-// Client:
-await client.beginProvider('magic-link', { email, channel: 'sms' })
+```ts
+await auth.flows.beginProvider('magic-link', { email: 'ada@example.com' })
 ```
 
-The `channel` parameter selects which transport to use; the provider
-calls `channels[channel].send(...)` with a templated payload.
+From the browser, `client.beginProvider('magic-link', { email })` posts the same thing to your begin route.
 
-## Auto-creating identities
+- The answer is `{ ok: true }` whether or not the address belongs to anyone, and both cases do the same store work, so neither the body nor the timing tells them apart. An unknown address sends nothing.
+- The email is trimmed and case-folded, and each request spends one from the limiter under `magic-link:request:<email>`.
+- `deliver` receives `kind: 'magic-link'` with `vars.url`, `https://app.example.com/auth/magic-link/callback?token=...`, and `vars.ttlMin`. The request does not wait for it.
+- A newer link replaces the older one, which stops working.
 
-`autoCreateIdentity: true` turns the magic-link into a "sign-in **or**
-sign-up" flow:
+## Redeeming it
 
-```typescript
-magicLink({
-  autoCreateIdentity: true,
-  autoCreateProfile: (email) => ({ displayName: email.split('@')[0] }),
-})
+```ts
+const token = new URL(location.href).searchParams.get('token') ?? ''
+await client.signIn({ providerId: 'magic-link', input: { token } })
 ```
 
-When a request comes in for an email that doesn't exist, the provider:
-1. Creates the identity with `emailVerified: false`.
-2. Dispatches the magic link.
-3. On `complete`, marks the email verified (because the user proved
-   reachability by clicking the link).
+Make `callbackPath` a page that signs in when the person clicks a button, not on load: mail scanners open links to check them, and would spend the token first.
 
-This is the recommended sign-up flow for B2C SaaS - one round trip, no
-password to remember.
+- A link works once, and throws `AUTH_RECOVERY_TOKEN_INVALID` after that, or `AUTH_RECOVERY_TOKEN_EXPIRED` past its lifetime.
+- It is refused if the account's email has changed since it was sent.
+- The session is AAL 1 with a `magic-link` factor.
+- Redeeming it proves the address, so the identity is marked `emailVerified`. If it was not before, whatever else was attached to the account is removed first: its linked providers, its credentials, its other sessions. Until then, anyone could have signed up with that address.
 
-## Channel payload
+## Options
 
-The channel receives a templated payload with the variables:
-
-```typescript
-{
-  templateId: 'magic-link',
-  identity: { id: 'identity-id' },
-  tenant: { tenantId: 'org-id' },
-  vars: {
-    email: 'ada@example.com',
-    url: 'https://app.example.com/auth/magic-link/callback?token=...',
-    expiresAt: '2026-05-27T12:34:56Z',
-    appName: 'Example',  // pulled from i18n catalog or your config
-  },
-}
-```
-
-Templating is your channel's responsibility - duck-auth hands over the
-variables; you decide whether to use Handlebars, MJML, or a SaaS
-template engine.
-
-## Token lifecycle
-
-- **TTL**: configurable via `ttlMs` (default 10 minutes). Shorter is
-  better - 5 minutes is fine for most users.
-- **Single use**: the row is marked `revokedAt = now` on `complete`.
-  Re-clicking an old link returns `AUTH/RECOVERY_TOKEN_INVALID`.
-- **Hashed at rest**: only the SHA-256 of the token is stored. A
-  database leak does not yield usable links.
-- **Constant-time lookup**: the hashed token is the primary key, so
-  there is no timing channel.
-
-## Errors
-
-| Code | When |
-| --- | --- |
-| `AUTH/RATE_LIMITED` | Limiter tripped (per-email bucket). |
-| `AUTH/RECOVERY_TOKEN_INVALID` | Token unknown or already revoked. |
-| `AUTH/RECOVERY_TOKEN_EXPIRED` | Token past `expiresAt`. |
+| Option | Default | Effect |
+| --- | --- | --- |
+| `deliver` | none | Sends the link. Without it, `begin` throws `AUTH_MISCONFIGURED`, and `strict()` refuses the provider in production. |
+| `findIdentityByEmail` | required | Finds the account for an address. Answer `null` for none. |
+| `autoCreateIdentity` | `false` | Creates an account for an unknown address, so the link doubles as sign-up. |
+| `autoCreateProfile` | none | The profile for that account. Required for `autoCreateIdentity` to create anything. |
+| `ttlMs` | 10 minutes | How long a link lives. |
+| `callbackPath` | `/auth/magic-link/callback` | Where the link lands, on `baseUrl`. Must be a same-origin path. |
+| `limiterKeyPrefix` | `'magic-link:request:'` | The limiter bucket prefix. |

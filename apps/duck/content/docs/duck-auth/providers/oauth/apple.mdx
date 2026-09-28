@@ -1,116 +1,32 @@
 ---
-title: Apple OAuth
-description: Sign in with Apple. OIDC-compliant. iOS apps require this if you ship any other social sign-in.
+title: Apple
+description: Sign in with Apple, its per-request client secret, the form-posted callback, and the name Apple sends once
 section: Providers
 ---
+1. In [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/identifiers/list), create a **Services ID** with **Sign in with Apple** enabled. Its identifier is your client id.
+2. Configure it with your domain and the return URL `https://app.example.com/auth/providers/oauth:apple/callback`.
+3. Under **Keys**, create a key with **Sign in with Apple** enabled and download the `AuthKey_<keyId>.p8`. Note the key id and your team id.
 
-## Setup
+```ts
+import { apple } from '@gentleduck/auth/providers/oauth/apple'
 
-1. Sign in at [developer.apple.com](https://developer.apple.com/account)
-   with a paid Apple Developer account.
-2. Create an **App ID** under **Certificates, Identifiers & Profiles**.
-3. Enable **Sign in with Apple** for the App ID.
-4. Create a **Services ID** for your web app. Note the identifier
-   (this is your `clientId`).
-5. Add your **Domains & Subdomains** and **Return URLs**:
-   `https://app.example.com/auth/apple/callback`.
-6. Create a **Sign in with Apple key** (a .p8 file). Note the key id
-   and your team id.
-
-```typescript
-import { authApple } from '@gentleduck/auth/providers/oauth/apple'
-import { readFileSync } from 'node:fs'
-
-export const auth = new AuthEngine({
-  // ...
-  providers: [
-    authApple({
-      clientId: 'com.example.app',                            // Services ID
-      teamId: process.env.APPLE_TEAM_ID!,                     // 10-character team id
-      keyId: process.env.APPLE_KEY_ID!,                       // 10-character key id
-      privateKey: readFileSync('./AuthKey_KEYID.p8', 'utf-8'), // .p8 file contents
-      redirectUri: 'https://app.example.com/auth/apple/callback',
-      stateSigningSecret: process.env.OAUTH_STATE_SECRET!,
-      scopes: ['name', 'email'],
-      onSignIn: async ({ profile }) => {
-        let identity = await auth.identities.findByProviderSub({
-          providerId: 'apple',
-          sub: profile.sub,
-        })
-        if (!identity) {
-          identity = await auth.identities.create({
-            email: profile.email,
-            emailVerified: true,
-            profile: {
-              displayName: profile.name ?? profile.email.split('@')[0],
-            },
-          })
-          await auth.identities.linkProvider(identity.id, {
-            providerId: 'apple',
-            sub: profile.sub,
-          })
-        }
-        return { identityId: identity.id }
-      },
-    }),
-  ],
+apple({
+  clientId: 'com.example.app.web',
+  teamId: process.env.APPLE_TEAM_ID ?? '',
+  keyId: process.env.APPLE_KEY_ID ?? '',
+  privateKey: process.env.APPLE_PRIVATE_KEY ?? '', // the .p8 contents
+  redirectUri: 'https://app.example.com/auth/providers/oauth:apple/callback',
+  stateSigningSecret: process.env.OAUTH_STATE_SECRET ?? '',
+  nonceStore,
+  profileToIdentityProfile: (p) => (p.email ? { email: p.email, username: `apple:${p.sub}`, name: p.name } : null),
 })
 ```
 
-## How Apple is different
+The provider id is `oauth:apple`, and the default scopes are `name email`.
 
-- **No userinfo endpoint.** All claims arrive in the `id_token` (JWT).
-  duck-auth verifies the JWT against Apple's JWKS (`https://appleid.apple.com/auth/keys`)
-  and reads the claims directly.
-- **Name is only sent on first sign-in.** Apple includes `given_name` /
-  `family_name` only when the user first authorizes your app. On
-  subsequent sign-ins, those fields are missing. Persist them on first
-  sign-in.
-- **Private relay emails.** Users can choose to hide their real email
-  behind a relay address like `xxxx@privaterelay.appleid.com`. Mail
-  sent to it is forwarded; the relay maps to the user's real account.
-  You can never see the real email.
-- **`form_post` callback.** Apple POSTs the callback as
-  `application/x-www-form-urlencoded`, not GET. Your callback route
-  needs to accept POST:
+- There is no `clientSecret`. Each token exchange signs a fresh ES256 client secret from the key, valid for 30 minutes. `generateClientSecret` is exported if you need one elsewhere.
+- Apple posts the callback as a form, so it needs the POST callback route on the [OAuth](/duck-auth/providers/oauth#the-routes) page, and a `secure` state cookie: the cookie goes out `SameSite=None`, and a non-secure one throws `AUTH_MISCONFIGURED`. Test over https.
+- The profile is read from the id_token. `emailVerified` is set when it says `email_verified` is `true` or `"true"`. A user who hides their address signs in with an `@privaterelay.appleid.com` one.
+- Apple sends the name only on the first authorization. Store it from `profileToIdentityProfile`, since no later sign-in carries it.
 
-```typescript
-// Express
-app.post('/auth/apple/callback', authMountSignIn(auth))
-
-// Next.js
-// app/auth/apple/callback/route.ts
-export const POST = authNextSignIn(auth)
-```
-
-## Required: ASCII Apple JS button
-
-Apple's HIG requires a specific button style. duck-auth doesn't ship
-UI; use Apple's official [JS SDK](https://developer.apple.com/sign-in-with-apple/get-started/)
-to render the button, or follow the [HIG asset bundle](https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple).
-
-## What the id_token contains
-
-```typescript
-{
-  iss: 'https://appleid.apple.com',
-  aud: 'com.example.app',
-  exp: 1716800900,
-  iat: 1716800000,
-  sub: 'A1B2C3D4-...',          // stable user id; opaque
-  email: 'ada@example.com',     // or relay address
-  email_verified: 'true',       // strings, not booleans
-  is_private_email: 'false',    // 'true' if relay
-  // First sign-in only:
-  given_name: 'Ada',
-  family_name: 'Lovelace',
-}
-```
-
-## Common errors
-
-| Error | duck-auth code | Cause |
-| --- | --- | --- |
-| `invalid_client` | `AUTH/PROVIDER_FAILED` | Services ID, team ID, or key ID wrong. |
-| `invalid_grant` | `AUTH/PROVIDER_FAILED` | Code reused or expired. |
-| `unauthorized_client` | `AUTH/PROVIDER_FAILED` | The Services ID isn't enabled for Sign in with Apple. |
+The options every provider shares and account linking are on the [OAuth](/duck-auth/providers/oauth) page.

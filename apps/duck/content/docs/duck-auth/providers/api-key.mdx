@@ -1,152 +1,79 @@
 ---
-title: API key provider
-description: Long-lived bearer keys for integrations, CLI tools, and machine-to-machine. Plaintext shown once, hashed at rest, scope-checked at verify.
+title: API key
+description: Long-lived keys for scripts and services, hashed at rest, scoped, rotated, and exchanged for short-lived tokens
 section: Providers
 ---
+```ts
+import { apiKeyProvider, authApiKey } from '@gentleduck/auth/providers/api-key'
 
-## Setup
-
-```typescript
-import { apiKey } from '@gentleduck/auth/providers/api-key'
-
-export const auth = new AuthEngine({
+const auth = createAuth({
   // ...
-  apiKeys: {
-    prefix: 'ak_live_',    // user-visible token prefix
-    randomBytes: 32,       // 256-bit secret per key
-  },
-  providers: [
-    apiKey({
-      apiKeys: auth.apiKeys,  // the shared facet
-      limiterKeyPrefix: 'signin:api-key:',
-      requireScopes: ['api:read'],  // optional default scope check
-    }),
-  ],
+  providers: [apiKeyProvider(), (engine) => authApiKey({ apiKeys: engine.apiKeys })],
 })
 ```
 
-## Creating keys
+`apiKeyProvider()` gives you `auth.apiKeys`, which creates and checks keys. `authApiKey` is the sign-in provider over it; leave it out if keys are only checked per request.
 
-```typescript
-const { token, key } = await auth.apiKeys.create({
-  identityId: ctx.identity.id,
-  name: 'CI deployment key',
-  scopes: ['ci:write', 'logs:read'],
-  expiresAt: new Date('2027-12-31'),
-})
+## Creating a key
 
-// `token` is shown to the user ONCE. After this point, only the hash is stored.
-// -> 'ak_live_01HJX7B2T9XKAZQP1G...'
-
-console.log('Share this token securely:', token)
-console.log('Key id (safe to log):', key.id)
+```ts
+const { key, plaintext } = await auth.apiKeys.create(identityId, { name: 'CI', scopes: ['deploy'] })
 ```
 
-The plaintext token follows the format:
+`plaintext` is `ak_live_` and 43 random characters. It is answered this once and stored only as a hash, so show it to the user now. `key` is the record without it. Pass `expiresAt`, in epoch ms, for a key that expires.
 
-```
-ak_live_<43-character base64url secret>
+Scopes are your own strings, up to 64 per key, in the OAuth scope grammar: no spaces, quotes or backslashes.
+
+## Checking a key
+
+```ts
+const token = req.headers.authorization?.replace(/^Bearer /, '') ?? ''
+const { identityId, scopes } = await auth.apiKeys.verify(token)
+auth.apiKeys.requireScopes(scopes, ['deploy'])
 ```
 
-The store records:
-- `id` - primary key, safe to log.
-- `prefix` - the visible prefix (`ak_live_`), for at-a-glance triage.
-- `hash` - SHA-256 of the secret part, hashed at rest.
-- `last4` - last 4 characters of the visible token, for UI.
-- `scopes` - granted scopes.
-- `identityId`, `tenantId`, `name`, `expiresAt`, `revokedAt`.
+- An unknown key throws `AUTH_APIKEY_INVALID`; a revoked or expired one `AUTH_APIKEY_REVOKED`. A key whose owner was deleted is unknown.
+- `requireScopes` throws `AUTH_APIKEY_SCOPE_INSUFFICIENT` with the `missing` scopes, never the ones the key holds.
 
 ## Signing in with a key
 
-```typescript
-// Vanilla client:
-await client.signIn({
-  providerId: 'api-key',
-  input: { token: 'ak_live_01HJX...' },
-})
-// -> 200 { session, identity }   (session.kind: 'apikey')
+`auth.flows.signIn({ providerId: 'api-key', input: { token } })` opens a session of kind `apikey` at AAL 1, rate-limited per key. Pass `requireScopes` to `authApiKey` to refuse any key without them.
 
-// Or with curl:
-curl -X POST https://api.example.com/auth/signin \
-  -H 'Content-Type: application/json' \
-  -d '{"providerId":"api-key","input":{"token":"ak_live_..."}}'
+## Listing, rotating, revoking
+
+```ts
+await auth.apiKeys.list(identityId)
+const next = await auth.apiKeys.rotate(key.id)
+await auth.apiKeys.revoke(key.id)
+await auth.apiKeys.revokeAll(identityId)
 ```
 
-The verify path:
-1. Slice off the prefix; SHA-256-hash the secret part.
-2. Lookup by hash.
-3. Check `revokedAt == null` and `expiresAt > now`.
-4. Check `requireScopes` (if configured) is a subset of `scopes`.
-5. Mint a session with `kind: 'apikey'` so downstream code can branch.
+`rotate` revokes the key and answers a new one with the same name, scopes and expiry. Revoking, rotating or revoking all also ends every `apikey` session of that identity.
 
-Sessions issued via API keys are typically **stateless bearer** (no
-rotation, no MFA, no step-up) - they represent a long-lived machine
-identity, not a user.
+## Client credentials
 
-## Listing keys
+`m2m` implements the OAuth 2.0 `client_credentials` grant: a service trades its key for a short-lived JWT. The key's `id` is the client id and its plaintext the secret.
 
-```typescript
-const keys = await auth.apiKeys.list({ identityId })
-// -> [{ id, name, prefix, last4, scopes, expiresAt, revokedAt, lastUsedAt }, ...]
-```
+```ts
+import { m2m } from '@gentleduck/auth/core'
+import { jwtTransport } from '@gentleduck/auth/core/transport'
 
-The list never contains plaintext - only the metadata. Show `last4` in
-UIs so users can identify which key is which without seeing the secret.
+const tokens = m2m(auth.apiKeys, auth.sessions, jwtTransport(jwtOptions), limiter, { ttlMs: 60 * 60 * 1000, scopeMode: 'intersect' })
 
-## Revoking and rotating
-
-```typescript
-// Revoke (instant, irreversible):
-await auth.apiKeys.revoke({ keyId })
-
-// Rotate (mint a new key, revoke the old one in the same transaction):
-const { token, key } = await auth.apiKeys.rotate({ keyId })
-// User pastes the new token; the old one is dead immediately.
-```
-
-## Scope enforcement
-
-In handlers, check scopes against the resolved session:
-
-```typescript
-import { AuthError } from '@gentleduck/auth/core'
-
-app.post('/api/logs', async (req, res) => {
-  const ctx = await auth.resolveSession(req)
-  if (!ctx) throw new AuthError('AUTH/UNAUTHENTICATED')
-
-  if (ctx.session.kind === 'apikey') {
-    await auth.apiKeys.requireScopes(ctx.session.apiKeyId, ['logs:write'])
-    // -> throws AUTH/APIKEY_SCOPE_INSUFFICIENT if missing
-  }
-
-  // Proceed.
+app.post('/oauth/token', express.urlencoded({ extended: false }), async (req, res) => {
+  res.json(await tokens.exchange({ clientId: req.body.client_id, clientSecret: req.body.client_secret, scope: req.body.scope }))
 })
 ```
 
-For browser-issued sessions (`kind: 'user'`), `requireScopes` is a no-op
-- scopes only apply to API-key sessions.
+- `scopeMode: 'intersect'` grants the requested scopes the key holds; `'strict'` refuses a request naming one it lacks. No `scope` grants all of them.
+- The token lives the shorter of `ttlMs` and the JWT transport's own `ttlMs`, and revoking the key does not end one already issued.
 
-## Token prefix per environment
+## Options
 
-A common pattern is two prefixes for dev vs prod:
-
-```typescript
-new AuthEngine({
-  apiKeys: {
-    prefix: process.env.NODE_ENV === 'production' ? 'ak_live_' : 'ak_test_',
-  },
-})
-```
-
-Bots and tooling can refuse to accept `ak_test_` keys in production
-contexts, catching env mix-ups before they reach the database.
-
-## Errors
-
-| Code | When |
-| --- | --- |
-| `AUTH/APIKEY_INVALID` | Token unknown, malformed, or missing prefix. |
-| `AUTH/APIKEY_REVOKED` | Token found but revoked. |
-| `AUTH/APIKEY_SCOPE_INSUFFICIENT` | Token valid but missing a required scope. |
-| `AUTH/RATE_LIMITED` | Per-key bucket tripped. |
+| | Option | Default | Effect |
+| --- | --- | --- | --- |
+| `apiKeyProvider` | `prefix` | `'ak_live_'` | Starts every key, and must start any key presented. |
+| | `randomBytes` | 32 | Entropy per key, at least 16. |
+| | `compliance` | none | Raises `randomBytes` to the preset's floor: 48 for fips. |
+| `authApiKey` | `requireScopes` | none | Scopes every key signing in must hold. |
+| | `limiterKeyPrefix` | `'signin:api-key:'` | The limiter bucket prefix. |

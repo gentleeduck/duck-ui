@@ -1,0 +1,166 @@
+---
+title: "Chapter 7: a second factor"
+description: Enroll TOTP with backup codes, refuse a sensitive route until the session steps up, and step up with a code or a backup code
+section: Course
+order: 7
+---
+Anyone who learns Ada's password is Ada. This chapter adds a code from an authenticator app, required where losing the account would hurt: deleting her notes.
+
+## Learning goals
+
+- Enroll TOTP and show the backup codes once.
+- Refuse a route until the session is at AAL 2, and was proven recently.
+- Step a session up with a code or a backup code.
+
+## Stepping up
+
+<MermaidDiagram chart={`sequenceDiagram
+    participant B as Browser
+    participant X as DuckNotes
+    B->>X: DELETE /api/notes, session at AAL 1
+    X-->>B: 403 AUTH_STEP_UP_REQUIRED
+    B->>X: POST /api/step-up with a code
+    X-->>B: new sid at AAL 2
+    B->>X: DELETE /api/notes
+    X-->>B: 204`} />
+
+## Step by step
+
+<Steps>
+
+<Step>Register the MFA provider</Step>
+
+```ts title="src/auth.ts"
+import { mfaProvider } from '@gentleduck/auth/providers/mfa'
+
+export const auth = createAuth({
+  // ...
+  providers: [
+    passwords(),
+    mfaProvider({ issuer: 'DuckNotes' }),
+    // the magic link and GitHub, as in chapter 6
+  ],
+})
+```
+
+`issuer` is the name the authenticator app lists the account under.
+
+<Step>Enrollment, step-up, and a guarded route</Step>
+
+Add to `src/server.ts`, after the notes routes:
+
+```ts title="src/server.ts"
+app.post('/api/mfa/totp', async (_req, res) => {
+  const { uri } = await auth.mfa.beginTotpEnrollment(res.locals.identity.id, res.locals.identity.profile.email)
+  res.json({ uri })
+})
+
+app.post('/api/mfa/totp/confirm', async (req, res) => {
+  const confirmed = await auth.mfa.confirmTotpEnrollment(res.locals.identity.id, String(req.body.code))
+  if (!confirmed.ok) return res.status(400).json({ code: 'AUTH_INVALID_CREDENTIALS' })
+  res.json({ backupCodes: confirmed.backupCodes })
+})
+
+app.post('/api/step-up', async (req, res) => {
+  const { intents } = await auth.flows.completeStepUp({
+    currentSid: auth.transport.extract({ headers: toHeaders(req.headers) }) ?? '',
+    method: req.body.method === 'backup-code' ? 'backup-code' : 'totp',
+    code: String(req.body.code),
+    ...expressCaller(req),
+  })
+  applyIntents(intents, res)
+})
+
+app.delete('/api/notes', async (_req, res) => {
+  const need = await auth.flows.checkStepUp(res.locals.session, { methods: ['totp', 'backup-code'], freshness: 5 * 60_000 })
+  if (!need.satisfied) return res.status(403).json({ code: 'AUTH_STEP_UP_REQUIRED', methods: need.methods })
+  notes.delete(res.locals.identity.id)
+  res.status(204).end()
+})
+```
+
+<Step>A stand-in for the authenticator app</Step>
+
+```ts title="src/code.ts"
+import { totpAt } from '@gentleduck/auth/providers/mfa'
+
+console.log(totpAt(process.argv[2] ?? '', Math.floor(Date.now() / 30_000)))
+```
+
+It prints the current code for a secret, as the app would. A real page renders the enrollment `uri` as a QR code for the app to scan.
+
+<Step>Drive it with curl</Step>
+
+Restart the server, sign up and sign in as in chapter 4, then start enrolling:
+
+```bash
+csrf() { awk '$6 == "duck-csrf" { print $7 }' jar; }
+
+curl -s -b jar localhost:3000/api/mfa/totp -X POST -H "x-csrf-token: $(csrf)"
+# {"uri":"otpauth://totp/DuckNotes%3Aada%40example.com?secret=YE2AT4YF...&issuer=DuckNotes&..."}
+```
+
+Confirm with the current code for that secret. The answer holds the backup codes:
+
+```bash
+curl -s -b jar localhost:3000/api/mfa/totp/confirm -H 'content-type: application/json' \
+  -H "x-csrf-token: $(csrf)" -d "{\"code\":\"$(npx tsx src/code.ts <secret>)\"}"
+# {"backupCodes":["33zh6-627z6","u7hpa-e8tnj",...]}
+```
+
+Deleting the notes is refused, because the session is still the password's:
+
+```bash
+curl -s -b jar localhost:3000/api/notes -X DELETE -H "x-csrf-token: $(csrf)"
+# {"code":"AUTH_STEP_UP_REQUIRED","methods":["totp","backup-code"]}
+```
+
+Wait for the code to change, step up with the new one, and delete again:
+
+```bash
+curl -s -b jar -c jar localhost:3000/api/step-up -H 'content-type: application/json' \
+  -H "x-csrf-token: $(csrf)" -d "{\"method\":\"totp\",\"code\":\"$(npx tsx src/code.ts <secret>)\"}"
+
+curl -s -o /dev/null -w '%{http_code}\n' -b jar localhost:3000/api/notes -X DELETE -H "x-csrf-token: $(csrf)"
+# 204
+```
+
+</Steps>
+
+## What just happened
+
+1. **Enrolling stored the secret unconfirmed.** `beginTotpEnrollment` answered the `otpauth://` URI, but the secret is not a factor until a code proves the app holds it.
+2. **Confirming minted ten backup codes.** They are stored hashed, so that answer is the only time they can be shown. Each stands in for a code once, for someone who lost the phone.
+3. **Sign-in did not change.** The password still answers a session at AAL 1. `checkStepUp` is where the second factor is required: AAL 2 by default, and with `freshness`, a factor presented in the last five minutes.
+4. **The confirming code could not step up.** Every code works once, so the step-up waited for the next.
+5. **Stepping up rotated the session.** `completeStepUp` checked the code and minted a new sid at AAL 2, which `applyIntents` set along with a new `duck-csrf`. The old sid still works at AAL 1, so another tab is not signed out.
+
+## Try it
+
+1. Step up with the code `000000`. The answer is 401 `AUTH_INVALID_CREDENTIALS`, and the session stays at AAL 1.
+2. Step up with a backup code (`"method":"backup-code"`), then with the same one again. The second is refused.
+3. Start enrolling again. It is refused with `AUTH_MFA_REQUIRED`: replacing a factor means removing it first with `auth.mfa.removeTotp`, behind the same `checkStepUp`.
+4. Set `freshness` to `10_000`, step up, and wait ten seconds before deleting. The answer is 403 again, because the factor is no longer fresh.
+
+## Where we are
+
+```
+ducknotes/
+  public/
+    index.html
+    magic-link.html
+  src/
+    mailer.ts
+    auth.ts       - now with the MFA provider
+    server.ts     - plus enrollment, step-up and a guarded delete
+    code.ts       - the authenticator app's stand-in
+    page.ts
+    magic-link.ts
+```
+
+## See also
+
+- [Adding MFA](/duck-auth/guides/mfa): removing a factor, WebAuthn as a factor, remembered devices.
+- [Sessions](/duck-auth/core/sessions#rotation): what a step-up keeps of the old session.
+- [Flows](/duck-auth/core/flows): `checkStepUp` and `completeStepUp` in full.
+- [Chapter 8: production](/duck-auth/course/chapter-8)

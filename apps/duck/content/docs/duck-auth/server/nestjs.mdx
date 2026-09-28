@@ -1,95 +1,106 @@
 ---
-title: NestJS adapter
-description: NestJS guard + module + controller. Decorator-driven session resolution.
+title: NestJS
+description: The auth controller, the guard and param decorators for your own routes, the actor middleware, and gating sign-in on your own rules
 section: Server
 ---
+The handlers take Nest's Express request and response, so this needs `@nestjs/platform-express`.
 
-## Setup
+```ts title="auth.controller.ts"
+import { Controller, Get, Post, Req, Res } from '@nestjs/common'
+import {
+  type NestAdapter,
+  nestProviderBegin,
+  nestProviderCallback,
+  nestSession,
+  nestSignIn,
+  nestSignOut,
+} from '@gentleduck/auth/server/nestjs'
+import { auth } from './auth'
 
-```typescript title="auth.module.ts"
-import { Module } from '@nestjs/common'
-import { AuthRootModule } from '@gentleduck/auth/server/nestjs'
-import { auth } from './lib/auth'
+@Controller('auth')
+export class AuthController {
+  @Post('signin')
+  signIn(@Req() req: NestAdapter.Request, @Res() res: NestAdapter.Response) {
+    return nestSignIn(auth)(req, res)
+  }
 
-@Module({
-  imports: [AuthRootModule.forRoot({ auth })],
+  @Post('signout')
+  signOut(@Req() req: NestAdapter.Request, @Res() res: NestAdapter.Response) {
+    return nestSignOut(auth)(req, res)
+  }
+
+  @Get('session')
+  session(@Req() req: NestAdapter.Request, @Res() res: NestAdapter.Response) {
+    return nestSession(auth)(req, res)
+  }
+
+  @Post('providers/:id/begin')
+  begin(@Req() req: NestAdapter.Request, @Res() res: NestAdapter.Response) {
+    return nestProviderBegin(auth)(req, res)
+  }
+
+  @Get('providers/:id/callback')
+  callback(@Req() req: NestAdapter.Request, @Res() res: NestAdapter.Response) {
+    return nestProviderCallback(auth)(req, res)
+  }
+
+  @Post('providers/:id/callback')
+  formCallback(@Req() req: NestAdapter.Request, @Res() res: NestAdapter.Response) {
+    return nestProviderCallback(auth)(req, res)
+  }
+}
+```
+
+- Apple returns the browser with a form POST, so the callback is mounted for both GET and POST. Nest parses the form body by default.
+
+- The IP the session records is `req.ip`, so set Express's `trust proxy` through `app.set('trust proxy', 1)` on the Nest app.
+- The callback answers the session cookies and an empty 200. To land the browser on a page, write the callback yourself, as on the [OAuth page](/duck-auth/providers/oauth#the-routes).
+
+## Gating sign-in
+
+`nestSignIn(auth, { onAuthenticated })` runs your check once the credentials verify, before the response is written. Answer a denial and the new session is revoked, so the client never sees it:
+
+```ts
+nestSignIn(auth, {
+  onAuthenticated: async ({ session }) =>
+    session && (await isSuspended(session.identityId))
+      ? { code: 'ACCOUNT_SUSPENDED', status: 403, detail: 'contact support' }
+      : undefined,
 })
-export class AuthModule {}
 ```
 
-This registers the controller at `/auth/*` and exposes a guard plus
-decorators.
+It runs after the password is checked, so a denial tells nothing to someone who does not know it.
 
-## Guard a route
+## Your own routes
 
-```typescript title="account.controller.ts"
-import { Controller, Get } from '@nestjs/common'
-import { AuthGuard, CurrentIdentity } from '@gentleduck/auth/server/nestjs'
-import type { AuthIdentity } from '@gentleduck/auth/core'
+```ts
+import { Controller, type MiddlewareConsumer, Module, type NestModule, Post, UseGuards } from '@nestjs/common'
+import type { Identities } from '@gentleduck/auth/core'
+import { CurrentIdentity, makeGuard, nestActorContext } from '@gentleduck/auth/server/nestjs'
 
-@Controller('account')
-@UseGuards(AuthGuard)
-export class AccountController {
-  @Get()
-  async me(@CurrentIdentity() identity: Identity) {
-    return identity
-  }
-}
-```
-
-`AuthGuard` calls `auth.resolveSession()` on the incoming request; if
-no session, the guard throws `UnauthorizedException` (HTTP 401).
-
-`@CurrentIdentity()` injects the resolved identity into the handler.
-Add `@CurrentSession()` to get the session as well.
-
-## AAL gate
-
-```typescript
-import { RequireAal } from '@gentleduck/auth/server/nestjs'
-
-@Controller('admin')
-@UseGuards(AuthGuard)
-export class AdminController {
-  @Post('delete')
-  @RequireAal('aal2')                  // throws AUTH/AAL_INSUFFICIENT otherwise
-  async delete() { /* ... */ }
-}
-```
-
-For freshness checks (sensitive irreversible action), pair with
-`@RequireFreshness({ withinMs: 5 * 60 * 1000 })`.
-
-## Custom error mapping
-
-```typescript title="auth.filter.ts"
-import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common'
-import { AuthError } from '@gentleduck/auth/core'
-
-@Catch(AuthError)
-export class AuthErrorFilter implements ExceptionFilter {
-  catch(err: AuthError, host: ArgumentsHost) {
-    const ctx = host.switchToHttp()
-    const reply = ctx.getResponse()
-    reply.status(err.status).json(err.toJSON())
-  }
-}
-```
-
-Register it globally:
-
-```typescript
-app.useGlobalFilters(new AuthErrorFilter())
-```
-
-## CSRF
-
-For state-mutating routes, install `CsrfGuard` upstream of `AuthGuard`:
-
-```typescript
 @Controller('api')
-@UseGuards(CsrfGuard, AuthGuard)
-export class ApiController { /* ... */ }
+@UseGuards(makeGuard(auth))
+class ProfileController {
+  @Post('profile')
+  update(@CurrentIdentity() identity: Identities.Me | null) {
+    return updateProfile(identity)
+  }
+}
+
+@Module({ controllers: [AuthController, ProfileController] })
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(nestActorContext(auth)).forRoutes('*')
+  }
+}
 ```
 
-`CsrfGuard` is a no-op for bearer/JWT routes (no cookies, no CSRF).
+| Piece | Does |
+| --- | --- |
+| `makeGuard(auth)` | Refuses a request with no session with `AUTH_UNAUTHENTICATED`, and checks CSRF. `{ required: false }` lets anonymous requests through; `{ csrf: false }` skips the check. |
+| `makeCsrfGuard(auth)` | The CSRF check alone. |
+| `@CurrentIdentity()`, `@CurrentSession()` | What the guard or the middleware resolved. |
+| `nestActorContext(auth)` | Binds the actor for everything downstream. The guard reuses the session it resolved, so the pair reads it once. |
+| `NestExceptionFilter` | Answers an `AuthError` at its status: `app.useGlobalFilters(new NestExceptionFilter())`. |
+
+`nestCaller(req)` is the IP and User-Agent to pass to a flow you call yourself.

@@ -1,101 +1,42 @@
 ---
 title: Svelte client
-description: Svelte 4+ store. Single readable store, single signIn / signOut helpers.
+description: createAuthStore, a readable session store with the sign-in and sign-out calls
 section: Client
 ---
+```ts title="src/lib/auth.ts"
+import { createAuthStore } from '@gentleduck/auth/client/svelte'
 
-## Setup
-
-```typescript title="src/lib/auth.ts"
-import { authCreateStore } from '@gentleduck/auth/client/svelte'
-
-export const auth = authCreateStore({
-  baseUrl: '/auth',
-})
-
-// auth.session - readable Svelte store of the current session state.
-// auth.signIn / auth.signOut / auth.beginProvider - methods.
+export const auth = createAuthStore({ baseUrl: '/auth' })
 ```
 
-## Usage
+It takes the [vanilla client's options](/duck-auth/client/vanilla), or a built one as `client`, and reads the session straight away; `noInitialFetch` skips that read and starts as a guest. `state` is a readable store of `{ session, identity, status }`, and needs no Svelte import to build.
 
-```svelte
+```svelte title="src/routes/+page.svelte"
 <script lang="ts">
   import { auth } from '$lib/auth'
 
+  const state = auth.state
   let email = ''
   let password = ''
-  let loading = false
   let error: string | null = null
 
   async function submit() {
-    loading = true
-    error = null
-    try {
-      await auth.signIn({
-        providerId: 'password',
-        input: { email, password },
-      })
-    } catch (err: any) {
-      error = err.code
-    } finally {
-      loading = false
-    }
+    const res = await auth.signIn({ providerId: 'password', input: { email, password } })
+    error = res.ok ? null : res.error.code
   }
 </script>
 
-{#if $auth.session === undefined}
-  <p>Loading...</p>
-{:else if $auth.session === null}
+{#if $state.status === 'authed'}
+  {$state.identity?.profile.email}
+  <button on:click={() => auth.signOut()}>Sign out</button>
+{:else if $state.status === 'guest'}
   <form on:submit|preventDefault={submit}>
     <input bind:value={email} type="email" required />
     <input bind:value={password} type="password" required />
-    <button disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
-    {#if error}<p style="color:red">{error}</p>{/if}
+    <button>Sign in</button>
+    {#if error === 'AUTH_INVALID_CREDENTIALS'}<p>Wrong email or password</p>{/if}
   </form>
-{:else}
-  <p>Hi, {$auth.session.identity.profile.displayName}</p>
-  <button on:click={() => auth.signOut()}>Sign out</button>
 {/if}
 ```
 
-`$auth.session` is the reactive accessor - Svelte subscribes
-automatically when you reference `$store` in the template.
-
-## SvelteKit (SSR)
-
-```typescript title="src/hooks.server.ts"
-import { auth as authServer } from '$lib/server/auth'
-
-export const handle = async ({ event, resolve }) => {
-  const ctx = await authServer.resolveSession(event.request)
-  event.locals.session = ctx
-  return resolve(event)
-}
-```
-
-```typescript title="src/routes/+layout.server.ts"
-import type { LayoutServerLoad } from './$types'
-
-export const load: LayoutServerLoad = ({ locals }) => {
-  return {
-    initialAuthState: locals.session
-      ? { session: locals.session.session, identity: locals.session.identity }
-      : null,
-  }
-}
-```
-
-```typescript title="src/lib/auth.ts (client)"
-import { authCreateStore } from '@gentleduck/auth/client/svelte'
-
-export function makeAuth(initialState: any) {
-  return authCreateStore({
-    baseUrl: '/auth',
-    noInitialFetch: true,
-    initialState,
-  })
-}
-```
-
-Pass `data.initialAuthState` into `makeAuth()` from your root `+layout.svelte`.
+`signIn`, `signOut` and `refresh` answer the call's [envelope](/duck-auth/client#what-a-call-answers). `auth.client` is the client itself, for `beginProvider` and `signUp`.

@@ -1,170 +1,101 @@
 ---
 title: Installation
-description: Install duck-auth, scaffold a starter, and run the 60-second quickstart with the Memory adapter.
+description: Install @gentleduck/auth, pick the subpaths your stack needs with their peer dependencies, and sign a first user in
 section: Getting Started
 ---
+`@gentleduck/auth` is one package with 53 export paths. The engine and its types come from `core`; every store, limiter, provider, server adapter and client binding lives behind its own subpath, so you only bundle what you import.
 
-## Prerequisites
+## Requirements
 
-- Node.js 18+.
-- TypeScript 5.0+. duck-auth uses const type parameters and the `satisfies` operator.
-- npm, bun, pnpm, or yarn.
+| Requirement | Version | Why |
+| --- | --- | --- |
+| Node.js | 22 or newer | Declared in `engines`. Bun runs it too. |
+| TypeScript | 5.0 or newer | `createAuth()` uses const type parameters. |
+| Module resolution | `bundler` or `nodenext` | Subpaths are declared through the `exports` map only. |
 
-## Install duck-auth
+The package has one runtime dependency, `@gentleduck/error`, which `AuthError` extends.
 
-The core engine and every batteries-included primitive (transports, providers,
-adapters, channels, server adapters, clients) ship in one package. Optional
-features (Argon2, passkeys, Redis, SMTP, SAML, OpenTelemetry) are
-peer-dependencies that load **only when wired**, so the bundle stays small.
+## Install
+
+<PackageManagerTabs bun="bun add @gentleduck/auth" npm="npm i @gentleduck/auth" pnpm="pnpm add @gentleduck/auth" yarn="yarn add @gentleduck/auth" />
+
+That covers the engine, the memory store and limiter, the cookie, bearer, JWT and DPoP transports, passwords with scrypt, magic links, TOTP, API keys, OAuth, every server adapter but NestJS, and the vanilla and Svelte clients.
+
+## Optional peer dependencies
+
+Every peer is optional. Install one only when you import the subpath that needs it.
+
+| Peer | Needed by |
+| --- | --- |
+| `drizzle-orm` | `adapters/drizzle/{pg,mysql,sqlite}` |
+| `pg`, `mysql2` or `better-sqlite3` | The driver for the Drizzle dialect you pick. |
+| `@node-rs/argon2` | `passwords()`, whose default hasher is Argon2id. Loaded on first hash; `passwords({ hasher: scryptHasher() })` needs no peer. |
+| `@simplewebauthn/server` | `providers/passkey`, and WebAuthn MFA in `providers/mfa`. Loaded on first ceremony. |
+| `@aws-sdk/client-kms` | `authAwsKmsProvider` in `core/dataAtRest`. Loaded on first use. |
+| `@nestjs/common` | `server/nestjs` |
+| `react`, `vue` or `solid-js` | `client/react`, `client/vue`, `client/solid` |
+
+Two integrations take a client you build rather than a peer:
+
+- **Redis and Valkey** stores accept any client with the `RedisLike.Client` shape. `@upstash/redis` fits as is; wrap `ioredis` or `iovalkey` with `valkeyAdapter` from `adapters/valkey`. See [Redis](/duck-auth/adapters/redis).
+- **SAML** takes a built `@node-saml/node-saml` instance. See [SAML](/duck-auth/providers/saml).
+
+## Your first sign-in
 
 <Steps>
 
-<Step>Install the package</Step>
+<Step>Build the engine</Step>
 
-```bash
-# npm
-npm install @gentleduck/auth
+`createAuth()` needs a public `baseUrl` and a store for identities, sessions and credentials. `MemoryAdapter` provides all three in process, which is right for tests and a first run.
 
-# bun
-bun add @gentleduck/auth
+```ts title="src/auth.ts"
+import { MemoryAdapter } from '@gentleduck/auth/adapters/memory'
+import { createAuth } from '@gentleduck/auth/core'
+import { cookieTransport } from '@gentleduck/auth/core/transport'
+import { passwords } from '@gentleduck/auth/providers/passwords'
 
-# pnpm
-pnpm add @gentleduck/auth
-
-# yarn
-yarn add @gentleduck/auth
-```
-
-<Step>Pick your optional peers</Step>
-
-Install only what you wire:
-
-| Peer | When you need it |
-| --- | --- |
-| `@node-rs/argon2` | Argon2id password hashing (HIPAA / FIPS presets require it). |
-| `@simplewebauthn/server` | Passkey provider (discoverable + username flows). |
-| `ioredis` or `@upstash/redis` | Redis-backed session / idempotency / limiter / events / DPoP nonce stores. |
-| `nodemailer` (or compatible) | SMTP channel. |
-| `@aws-sdk/client-ses` | AWS SES channel. |
-| `twilio` | Twilio SMS channel. |
-| `web-push` | WebPush channel. |
-| `@opentelemetry/api` | OpenTelemetry instrumentation. |
-| `@node-saml/node-saml` | SAML provider. |
-
-<Step>60-second quickstart (Memory adapter)</Step>
-
-```typescript title="src/lib/auth.ts"
-import { AuthEngine, AuthInMemoryEvents, AuthScryptHasher } from '@gentleduck/auth/core'
-import { CookieTransport } from '@gentleduck/auth/core/transport'
-import { AuthMemoryAdapter } from '@gentleduck/auth/adapters/memory'
-import { AuthMemoryLimiter } from '@gentleduck/auth/limiters/memory'
-
-const adapter = new AuthMemoryAdapter()
-
-export const auth = new AuthEngine({
+export const auth = createAuth({
   baseUrl: 'http://localhost:3000',
-  transport: new CookieTransport({ secure: false, name: 'duck-sid' }),
-  stores: {
-    identities: adapter.identities,
-    sessions: adapter.sessions,
-    credentials: adapter.credentials,
-  },
-  events: new AuthInMemoryEvents(),
-  limiter: new AuthMemoryLimiter({ max: 5, windowMs: 60_000 }),
-  passwords: { hasher: new AuthScryptHasher() },
+  stores: new MemoryAdapter(),
+  transport: cookieTransport({ name: 'sid', secure: false }),
+  providers: [passwords()],
 })
 ```
 
-<Step>Mount on your framework</Step>
+`secure: false` lets the cookie travel over plain http on localhost. `createAuth()` runs `strict()` for the current `NODE_ENV`, and under `production` it refuses an insecure cookie, the memory store and the memory limiter; see [Production hardening](/duck-auth/advanced/security).
 
-```typescript title="src/server.ts (Express)"
-import express from 'express'
-import { authMountSignIn, authMountSignOut, authMountSession } from '@gentleduck/auth/server/express'
-import { auth } from './lib/auth'
+<Step>Create an account</Step>
 
-const app = express()
-app.use(express.json())
-
-app.post('/auth/signin', authMountSignIn(auth))
-app.post('/auth/signout', authMountSignOut(auth))
-app.get('/auth/session', authMountSession(auth))
-
-app.listen(3000)
+```ts
+const ada = await auth.identities.create({ profile: { email: 'ada@example.com', name: 'Ada', username: 'ada' } })
+await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials)
 ```
 
-<Step>Validate at boot</Step>
+<Step>Sign in</Step>
 
-```typescript
-auth.strict({ env: 'development' })  // dev: only warns
-auth.strict({ env: 'production' })   // prod: throws on insecure config
+`flows.signIn` runs the provider, opens a session and answers the intents a server adapter turns into a response. `sid` is the plaintext session id the cookie carries.
+
+```ts
+const { sid, intents } = await auth.flows.signIn({
+  providerId: 'password',
+  input: { email: 'ada@example.com', password: 'correct-horse-battery' },
+})
+intents.map((i) => i.type) // ['setCookie', 'setCookie']: the session, and its CSRF companion
 ```
+
+<Step>Read the session back</Step>
+
+```ts
+const resolved = await auth.resolveSession({ headers: new Headers({ cookie: `sid=${sid}` }) }).orNull()
+resolved?.identity?.id === ada.id // true
+```
+
+`orNull()` answers `null` for a request with no session or a revoked one, and still throws anything else.
 
 </Steps>
 
-## Scaffold via the CLI
-
-If you prefer a scaffolded starter, the CLI emits a complete `auth.ts`
-plus a `.env` template.
-
-```bash
-# Quickstart: Memory adapter, AuthScryptHasher, CookieTransport
-bunx @gentleduck/auth init src/lib
-
-# Production: Redis adapter, Argon2id, JwtTransport with rotated keys
-bunx @gentleduck/auth init src/lib --production
-```
-
-Then run the doctor at boot to catch misconfigurations:
-
-```bash
-bunx @gentleduck/auth doctor
-```
-
-## Mint signing keys
-
-If you use `JwtTransport`, you need a current signer plus at least one
-retired verify key for in-flight rotation.
-
-```bash
-# Symmetric HS256 (simplest, single secret)
-bunx @gentleduck/auth keys generate hs256
-
-# Asymmetric ES256 (for DPoP, public JWKS endpoint, or multi-tenant)
-bunx @gentleduck/auth keys generate ec256
-
-# Rotate: emits new secret + the snippet to keep the prior kid on verifyKeys
-bunx @gentleduck/auth keys rotate hs256
-```
-
-See [Transports -> JWT](/duck-auth/core/transports/jwt) for the full
-rotation lifecycle.
-
-## Emit SQL migrations
-
-If you use the SQL bridge (`@gentleduck/auth/adapters/sql`), the CLI emits
-ready-to-run DDL for the three core tables (identities, credentials,
-sessions):
-
-```bash
-bunx @gentleduck/auth migrate pg      # PostgreSQL
-bunx @gentleduck/auth migrate mysql   # MySQL
-bunx @gentleduck/auth migrate sqlite  # SQLite
-```
-
-The DDL matches the bundled Drizzle reference schemas in
-`@gentleduck/auth/adapters/drizzle/{pg,mysql,sqlite}`.
-
-## Emit OpenAPI
-
-Once you have wired providers, the CLI can introspect your `auth.ts` and
-emit an OpenAPI 3.1 spec for the mounted routes:
-
-```bash
-bunx @gentleduck/auth emit-openapi > openapi.yaml
-```
-
 ## Next steps
 
-- [Core overview ->](/duck-auth/core) - the `AuthEngine` config and 14 facets.
-- [Quickstart guide ->](/duck-auth/guides) - wire password + magic-link end-to-end.
-- [Production checklist ->](/duck-auth/advanced/security) - the gates that `strict()` enforces.
+- [Quick start](/duck-auth/guides): the same engine behind Express, with sign-up and sign-out.
+- [Adapters](/duck-auth/adapters): swap `MemoryAdapter` for Postgres, MySQL or SQLite.
+- [Server adapters](/duck-auth/server): mount the handlers on your framework.

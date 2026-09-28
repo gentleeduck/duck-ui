@@ -1,172 +1,96 @@
 ---
-title: Passkey provider
-description: WebAuthn passkeys, discoverable and username flows. The strongest factor duck-auth ships.
+title: Passkey
+description: Signing in with a passkey, registering one, the challenge store, and when a passkey counts as two factors
 section: Providers
 ---
+Passkeys need the `@simplewebauthn/server` peer, loaded on first use.
 
-## Setup
+```ts
+import { orNull } from '@gentleduck/auth/core'
+import { type Passkey, passkey, redisPasskeyChallengeStore } from '@gentleduck/auth/providers/passkey'
 
-Passkeys require the `@simplewebauthn/server` peer dependency:
-
-```bash
-bun add @simplewebauthn/server
-```
-
-```typescript
-import {
-  passkeyDiscoverable,
-  passkeyUsername,
-} from '@gentleduck/auth/providers/passkey'
-
-export const auth = new AuthEngine({
-  // ...
-  providers: [
-    passkeyDiscoverable({
-      rpName: 'Example App',
-      rpID: 'app.example.com',           // your hostname, no scheme, no path
-      expectedOrigins: 'https://app.example.com',
-      userVerification: 'preferred',     // | 'required' | 'discouraged'
-    }),
-    // Or, for the username-first flow:
-    passkeyUsername({
-      rpName: 'Example App',
-      rpID: 'app.example.com',
-      expectedOrigins: 'https://app.example.com',
-      findIdentityByEmail: async (email, tenantId) =>
-        auth.identities.findByEmail(email, tenantId),
-    }),
-  ],
-})
-```
-
-## Two flows
-
-duck-auth ships two passkey flows:
-
-### Discoverable (resident keys)
-
-The browser shows an OS-level passkey picker without prompting for an
-email or username. The user picks a credential and signs.
-
-```typescript
-// Begin: no email needed
-await client.beginProvider('passkey', { sessionId: '...' })
-// -> response includes attestation options; client calls navigator.credentials.get(...)
-
-// Complete: send the assertion back
-await client.signIn({
-  providerId: 'passkey',
-  input: { response: assertionResponseJSON, sessionId: '...' },
-})
-```
-
-The identity is derived from the credential id stored at registration.
-
-### Username flow
-
-The user enters their email first; the browser shows only their
-registered credentials.
-
-```typescript
-// Begin: include the email
-await client.beginProvider('passkey', { email, sessionId: '...' })
-// -> response includes assertion options with allowCredentials[] for that identity
-
-// Complete:
-await client.signIn({
-  providerId: 'passkey',
-  input: { response: assertionResponseJSON, sessionId: '...', email },
-})
-```
-
-Use the username flow when:
-- You need to mix passkey with email-based fallbacks.
-- You don't want users without registered passkeys to see an empty picker.
-- You're targeting a corporate environment where users are expected to
-  type their email.
-
-## Registration (enrolment)
-
-```typescript
-// 1. Begin registration - call when the user opts in.
-const challenge = await auth.mfa.passkey.beginRegistration({
-  identityId: ctx.identity.id,
-  authenticatorSelection: {
-    residentKey: 'preferred',
-    userVerification: 'preferred',
-  },
-})
-
-// 2. Browser:
-const credential = await navigator.credentials.create({
-  publicKey: challenge.options,
-})
-
-// 3. Finish registration.
-await auth.mfa.passkey.completeRegistration({
-  identityId: ctx.identity.id,
-  response: credential,
-})
-// -> credential persisted to credentials store.
-```
-
-## Challenge store
-
-By default, passkey challenges live in `MemoryPasskeyChallengeStore`.
-For multi-replica deployments, swap to a Redis-backed store:
-
-```typescript
-import { RedisPasskeyChallengeStore } from '@gentleduck/auth/adapters/redis'
-
-passkeyDiscoverable({
-  challengeStore: new RedisPasskeyChallengeStore(redis, { ttlMs: 5 * 60 * 1000 }),
-  challengeTtlMs: 5 * 60 * 1000,
-})
-```
-
-## Multiple origins
-
-If your app serves from several domains (`example.com` and `app.example.com`),
-pass an array to `expectedOrigins`:
-
-```typescript
-passkeyDiscoverable({
+const passkeyOptions: Passkey.Options = {
+  rpName: 'Example',
   rpID: 'example.com',
-  expectedOrigins: [
-    'https://example.com',
-    'https://app.example.com',
-  ],
+  expectedOrigins: 'https://app.example.com',
+  findIdentityByEmail: (email) => orNull(stores.identities.find({ email })),
+  challengeStore: redisPasskeyChallengeStore({ redis }),
+}
+
+const auth = createAuth({
+  // ...
+  providers: [passkey(passkeyOptions)],
 })
 ```
 
-`rpID` is the most-suffixed hostname that covers all origins.
+`rpID` is the domain a passkey is bound to, which every origin in `expectedOrigins` must be on. A passkey made for one `rpID` never works on another.
 
-## userVerification
+## Registering a passkey
 
-| Value | Meaning |
-| --- | --- |
-| `'required'` | Authenticator must verify the user (biometric / PIN). The strongest factor. |
-| `'preferred'` | Verify if the authenticator supports it; accept without otherwise. **Default.** |
-| `'discouraged'` | Do not verify. Use for low-risk "remember me" credentials. |
+Registration is two calls from a signed-in session, with the browser in between. Keep the options in one object: registration and sign-in must agree on the relying party.
 
-`'preferred'` is the default and the right pick for most apps -
-defaults gracefully on platform authenticators that always verify
-(Touch ID, Windows Hello), accepts hardware keys that don't.
+```ts
+import { beginPasskeyRegistration, completePasskeyRegistration } from '@gentleduck/auth/providers/passkey'
 
-## Why passkeys?
+const optionsJSON = await beginPasskeyRegistration(passkeyOptions, {
+  identityId: identity.id,
+  userName: identity.profile.email,
+  sessionId: session.id,
+  credentialStore: auth.cfg.stores.credentials,
+  tenant: {},
+})
+// Browser: const response = await startRegistration({ optionsJSON }) from @simplewebauthn/browser
+await completePasskeyRegistration(passkeyOptions, {
+  identityId: identity.id,
+  sessionId: session.id,
+  response,
+  credentialStore: auth.cfg.stores.credentials,
+  tenant: {},
+})
+```
 
-- **Phishing-resistant**: the credential is bound to the origin
-  (`rpID`). A fake site can't trick the authenticator into signing.
-- **Server compromise survives**: even if the credentials database
-  leaks, the attacker only has public keys.
-- **No password to remember**: the user picks the key on their device.
-- **Strong second factor without an extra app**: a platform passkey
-  replaces TOTP for users who have one.
+The browser refuses to register an authenticator the account already has. Registration offers Ed25519, ES256 and RS256 only, and refuses a credential id another account holds.
 
-## Errors
+## Signing in
 
-| Code | When |
-| --- | --- |
-| `AUTH/INVALID_CREDENTIALS` | Assertion verified cryptographically but did not match any credential. |
-| `AUTH/PASSKEY_MISMATCH` | Same as above; alternative code for client-side dispatch. |
-| `AUTH/RATE_LIMITED` | Per-IP and per-credential limit tripped. |
+```ts
+import { type PublicKeyCredentialRequestOptionsJSON, startAuthentication } from '@simplewebauthn/browser'
+
+const sessionId = crypto.randomUUID()
+const begun = await client.beginProvider('passkey', { sessionId })
+if (begun.ok) {
+  const response = await startAuthentication({ optionsJSON: begun.data as PublicKeyCredentialRequestOptionsJSON })
+  await client.signIn({ providerId: 'passkey', input: { response, sessionId } })
+}
+```
+
+`sessionId` is any id the two calls share; the challenge is kept under it. Pass `email` to both to narrow the browser's picker to that account's passkeys; without one, the browser offers every passkey it has for the site.
+
+- The session is AAL 2 when the authenticator verified the user with a PIN or biometric, and AAL 1 when it only saw them present.
+- A signature counter that goes backwards means a cloned authenticator: the sign-in is refused and `suspicious` is emitted.
+- Every refusal at `signIn` throws `AUTH_PASSKEY_MISMATCH`: an unknown, expired or revoked passkey, a spent or missing challenge, a failed signature.
+
+## Managing passkeys
+
+```ts
+const store = auth.cfg.stores.credentials
+await auth.passkeys.list(identityId, store)
+await auth.passkeys.revoke(identityId, credentialId, store)
+await auth.passkeys.revokeAll(identityId, store)
+```
+
+`revoke` refuses a credential that is not a passkey of that identity. A revoked authenticator can be registered again.
+
+## Options
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `rpName` | required | Shown in the browser's prompt. |
+| `rpID` | required | The domain passkeys are bound to. |
+| `expectedOrigins` | required | The origins a response may come from. |
+| `findIdentityByEmail` | required | Finds the account for an `email` hint. |
+| `challengeStore` | in memory | Where challenges wait. One process only: `strict()` refuses it in production, so use `redisPasskeyChallengeStore({ redis })`. |
+| `challengeTtlMs` | 5 minutes | How long a ceremony may take. |
+| `userVerification` | `'preferred'` | `'required'` refuses an authenticator that did not verify the user. |
+| `attestationType` | `'none'` | `'direct'` asks the authenticator to prove its make; the fips preset requires it. |
+| `limiterKeyPrefix` | `'passkey:begin:'` | The limiter bucket for `begin`, per email or per `sessionId`. |

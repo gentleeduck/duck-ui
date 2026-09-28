@@ -1,97 +1,61 @@
 ---
-title: Hono adapter
-description: Hono 4+ handlers. Runs on Bun, Node, Cloudflare Workers, Deno, and Vercel Edge.
+title: Hono
+description: Mounting every auth route on Hono in one call, including magic link, passkey and MFA, and guarding your own routes
 section: Server
 ---
-
-## Mount
-
-```typescript
-import { Hono } from 'hono'
-import {
-  authHonoProviderBegin,
-  authHonoSession,
-  authHonoSignIn,
-  authHonoSignOut,
-} from '@gentleduck/auth/server/hono'
-import { auth } from './lib/auth'
+```ts
+import { mountHono } from '@gentleduck/auth/server/hono'
+import { type Context, Hono } from 'hono'
+import { getConnInfo } from 'hono/bun'
 
 const app = new Hono()
-
-app.post('/auth/signin', authHonoSignIn(auth))
-app.post('/auth/signout', authHonoSignOut(auth))
-app.get('/auth/session', authHonoSession(auth))
-app.post('/auth/providers/:providerId/begin', (c) =>
-  authHonoProviderBegin(auth, c.req.param('providerId'))(c)
-)
-
-// OAuth callbacks reuse the sign-in handler.
-app.get('/auth/google/callback', authHonoSignIn(auth))
-app.get('/auth/github/callback', authHonoSignIn(auth))
+mountHono<Context>(app, auth, { ip: (c) => getConnInfo(c).remote.address })
 
 export default app
 ```
 
-## Resolving sessions in handlers
+Hono resolves no client IP, so `ip` is how the session learns one. Use the `getConnInfo` for your runtime, or read the header your proxy sets if you trust it. Without `ip`, sessions record none.
 
-```typescript
-import { AuthError } from '@gentleduck/auth/core'
+## Routes
+
+`mountHono` mounts the [shared routes](/duck-auth/server#the-routes) under `/auth` (`prefix` moves them), and these groups, each dropped by naming it in `skip`:
+
+| Group | Routes |
+| --- | --- |
+| `oauth` | `GET`, `POST /auth/providers/:id/callback` |
+| `magic-link` | `GET /auth/magic-link/verify?token=` |
+| `passkey` | `POST /auth/passkey/begin`, `POST /auth/passkey/complete` |
+| `totp` | `POST /auth/mfa/totp/begin`, `confirm`, `verify` and `remove`, and `POST /auth/mfa/backup-codes/regenerate` |
+
+```ts
+mountHono(app, auth, { prefix: '/api/auth', skip: ['passkey', 'totp'] })
+```
+
+- The magic-link provider's links point to `/auth/magic-link/callback` by default. Pass `callbackPath: '/auth/magic-link/verify'` to [`magicLink`](/duck-auth/providers/magic-link) so they land on this route.
+- The MFA routes act on the signed-in identity. Removing TOTP and regenerating backup codes need a session at AAL 2, and answer `AUTH_STEP_UP_REQUIRED` otherwise. See [MFA](/duck-auth/guides/mfa).
+- The OAuth callback answers the session cookies and an empty 200. To land the browser on a page, skip `oauth` and write the callback yourself, as on the [OAuth page](/duck-auth/providers/oauth#the-routes).
+- CORS is yours to mount, with `hono/cors`.
+
+## Your own routes
+
+```ts
+import { honoActorContext, honoCsrf } from '@gentleduck/auth/server/hono'
+
+app.use('/api/*', honoCsrf(auth), honoActorContext(auth))
 
 app.get('/api/me', async (c) => {
-  const ctx = await auth.resolveSession(c.req.raw)
-  if (!ctx) throw new AuthError('AUTH/UNAUTHENTICATED')
-  return c.json(ctx.identity)
+  const resolved = await auth.resolveSession({ headers: c.req.raw.headers }).orNull()
+  if (!resolved) return c.json({ error: 'unauthenticated' }, 401)
+  return c.json(resolved.identity)
 })
 ```
 
-`c.req.raw` is the underlying Web-Fetch `Request` - duck-auth speaks
-that natively, so no adapter glue is needed.
+`honoActorContext` answers a refusal itself, since Hono's default error handler turns any throw into a 500. `honoCaller({ ip, req: c.req })` is the IP and User-Agent to pass to a flow you call yourself.
 
-## Cloudflare Workers / edge
+For a layout `mountHono` does not fit, mount the single-route handlers `honoSignIn`, `honoSignOut`, `honoSession` and `honoProviderBegin` over `toHonoAdapterCtx`:
 
-Hono on Cloudflare Workers is well-supported, but there are two gotchas
-for duck-auth:
+```ts
+import { honoSignIn, toHonoAdapterCtx } from '@gentleduck/auth/server/hono'
 
-1. **No Node built-ins**: `AuthScryptHasher` uses `node:crypto`. On Workers,
-   either use `AuthArgon2idHasher` (peer dep), or use a custom WebCrypto-based
-   hasher.
-2. **No `process.env`**: read secrets from `c.env` instead:
-
-```typescript
-import { createAuth } from '~/lib/createAuth'
-
-const app = new Hono<{ Bindings: { JWT_SECRET: string; DATABASE_URL: string } }>()
-
-app.use('*', async (c, next) => {
-  c.set('auth', createAuth({
-    jwtSecret: c.env.JWT_SECRET,
-    databaseUrl: c.env.DATABASE_URL,
-  }))
-  await next()
-})
-
-app.post('/auth/signin', async (c) => {
-  return authHonoSignIn(c.get('auth'))(c)
-})
-```
-
-The `auth` instance is built per-request from the bindings; create it
-once per worker if you can amortise the cost.
-
-## Error handling
-
-```typescript
-import { HTTPException } from 'hono/http-exception'
-import { AuthError } from '@gentleduck/auth/core'
-
-app.onError((err, c) => {
-  if (err instanceof AuthError) {
-    return c.json(err.toJSON(), err.status)
-  }
-  if (err instanceof HTTPException) {
-    return err.getResponse()
-  }
-  console.error(err)
-  return c.json({ error: 'internal' }, 500)
-})
+app.post('/login', (c) => honoSignIn(auth)(toHonoAdapterCtx(c)))
 ```

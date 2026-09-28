@@ -1,0 +1,211 @@
+---
+title: "Chapter 6: more ways in"
+description: Add passwordless sign-in by mailed link and sign-in with GitHub, write the OAuth callback route, and see when an OAuth account links to an existing one
+section: Course
+order: 6
+---
+A password is one way in. This chapter adds two more: a link mailed to the address, and GitHub. Both end in the same kind of session, so nothing downstream changes.
+
+## Learning goals
+
+- Register a provider that needs the engine's `deliver`.
+- Redeem a magic link from a page the person clicks through.
+- Configure GitHub and write the OAuth callback route.
+- Know when an OAuth sign-in links to an existing account.
+
+## The OAuth round trip
+
+<MermaidDiagram chart={`sequenceDiagram
+    participant B as Browser
+    participant X as DuckNotes
+    participant G as GitHub
+    B->>X: POST /auth/providers/oauth:github/begin
+    X-->>B: url to GitHub, pre-auth cookie duck-oauth
+    B->>G: authorize
+    G-->>B: redirect to the callback with code and state
+    B->>X: GET /auth/providers/oauth:github/callback
+    X->>G: exchange the code, read the profile
+    X-->>B: session cookies, redirect to /`} />
+
+## Step by step
+
+<Steps>
+
+<Step>Register both providers</Step>
+
+Create an OAuth App on GitHub under **Settings > Developer settings > OAuth Apps**, with the callback URL `http://localhost:3000/auth/providers/oauth:github/callback`. Put its id and secret in `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, and 32 random bytes (`openssl rand -base64 32`) in `OAUTH_STATE_SECRET`.
+
+```ts title="src/auth.ts"
+import { MemoryAdapter } from '@gentleduck/auth/adapters/memory'
+import { createAuth, orNull } from '@gentleduck/auth/core'
+import { cookieTransport, memoryDPoPNonceStore } from '@gentleduck/auth/core/transport'
+import { magicLink } from '@gentleduck/auth/providers/magic-link'
+import { github } from '@gentleduck/auth/providers/oauth/github'
+import { passwords } from '@gentleduck/auth/providers/passwords'
+import { deliver } from './mailer'
+
+const stores = new MemoryAdapter()
+
+export const auth = createAuth({
+  baseUrl: 'http://localhost:3000',
+  deliver,
+  stores,
+  transport: cookieTransport({ name: 'sid', secure: false }),
+  providers: [
+    passwords(),
+    (_engine, send) =>
+      magicLink({
+        callbackPath: '/magic-link',
+        deliver: send,
+        findIdentityByEmail: (email) => orNull(stores.identities.find({ email })),
+      }),
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID ?? '',
+      clientSecret: process.env.GITHUB_CLIENT_SECRET ?? '',
+      redirectUri: 'http://localhost:3000/auth/providers/oauth:github/callback',
+      stateSigningSecret: process.env.OAUTH_STATE_SECRET ?? '',
+      stateCookie: { name: 'duck-oauth', secure: false },
+      nonceStore: memoryDPoPNonceStore(),
+      profileToIdentityProfile: (p) => (p.email ? { email: p.email, username: `github:${p.sub}` } : null),
+      onFederationConflict: 'link-if-verified',
+    }),
+  ],
+})
+```
+
+- The magic-link provider is a **thunk**: the engine calls it with its own `deliver`, so both kinds of mail go through one mailer.
+- `stateCookie` gets a plain name and `secure: false` for http, as the session cookie did in chapter 1.
+- `nonceStore` burns each `state` once, so a callback URL copied from history cannot sign in again. The memory store serves one process; chapter 8 moves it to Valkey.
+- `profileToIdentityProfile` builds the profile for someone GitHub sends who has no account yet.
+
+<Step>The callback route</Step>
+
+In `src/server.ts`, import `AuthError` from `@gentleduck/auth/core`, `applyIntents` and `expressCaller` from `@gentleduck/auth/server/express`, and `oauthCallback` beside `errorToHttp`. Change the static line to serve `.html` pages without the extension, and add the callback next to the mounted routes:
+
+```ts title="src/server.ts"
+app.use(express.static('public', { extensions: ['html'] }))
+
+app.get('/auth/providers/:id/callback', async (req, res) => {
+  try {
+    const request = { cookie: req.headers.cookie, method: req.method, url: req.url }
+    const intents = await oauthCallback(auth, req.params.id, request, expressCaller(req))
+    applyIntents([...intents, { type: 'redirect', url: '/' }], res)
+  } catch (err) {
+    res.redirect(`/?error=${err instanceof AuthError ? err.code : 'AUTH_PROVIDER_FAILED'}`)
+  }
+})
+```
+
+<Step>The page</Step>
+
+Add a form to `public/index.html`, after the sign-in form:
+
+```html title="public/index.html"
+<form id="magic-link" hidden>
+  <input name="email" type="email" placeholder="Email me a link" required />
+  <button>Send link</button>
+  <button id="github" type="button">Sign in with GitHub</button>
+</form>
+```
+
+In `src/page.ts`, look the two elements up beside the others and add them to the guard:
+
+```ts title="src/page.ts"
+const linkForm = document.querySelector<HTMLFormElement>('#magic-link')
+const github = document.querySelector('#github')
+if (!status || !list || !signInForm || !noteForm || !signOut || !linkForm || !github) {
+  throw new Error('DuckNotes markup is missing')
+}
+```
+
+hide the form with the sign-in one inside `onChange`:
+
+```ts title="src/page.ts"
+  linkForm.hidden = Boolean(identity)
+```
+
+and wire them at the end:
+
+```ts title="src/page.ts"
+linkForm.addEventListener('submit', async (event) => {
+  event.preventDefault()
+  await client.beginProvider('magic-link', { email: new FormData(linkForm).get('email') })
+  status.textContent = 'Check your email'
+})
+
+github.addEventListener('click', () => client.beginProvider('oauth:github'))
+```
+
+<Step>The page the link opens</Step>
+
+```html title="public/magic-link.html"
+<!doctype html>
+<meta charset="utf-8" />
+<title>DuckNotes</title>
+<button>Finish signing in</button>
+<script type="module" src="/magic-link.js"></script>
+```
+
+```ts title="src/magic-link.ts"
+import { createAuthClient } from '@gentleduck/auth/client/vanilla'
+
+const client = createAuthClient({ baseUrl: '/auth', csrfCookieName: 'duck-csrf' })
+const token = new URLSearchParams(location.search).get('token') ?? ''
+
+document.querySelector('button')?.addEventListener('click', async () => {
+  const res = await client.signIn({ providerId: 'magic-link', input: { token } })
+  if (res.ok) location.assign('/')
+  else document.body.append(res.error.code)
+})
+```
+
+```bash
+npx esbuild src/page.ts src/magic-link.ts --bundle --format=esm --outdir=public
+npx tsx src/server.ts
+```
+
+</Steps>
+
+## What just happened
+
+1. **Sending a link answered the same for anyone.** `beginProvider('magic-link')` answers `{ ok: true }` whether or not the address has an account, and the server printed a link to `/magic-link?token=...` only for Ada.
+2. **The link signs in on a click, not on load.** Mail scanners open links to check them; a page that signed in on load would spend the token before the person got there.
+3. **Redeeming the link proved the address.** Ada's identity is now `emailVerified`. If it was not before, the link also removed everything else on the account, her password included: until that moment, anyone could have signed up with her address and set it.
+4. **GitHub's begin answered a URL, not a redirect.** The client asks for JSON, so the begin route answers `{ url }` and the client sends the page there, carrying the `duck-oauth` cookie that binds the flow to this browser.
+5. **The callback found Ada's account.** GitHub said her primary address is verified, and so had duck-auth, so `'link-if-verified'` linked GitHub to the existing identity. The session's factor is `oauth`.
+
+## Who an OAuth sign-in becomes
+
+| Situation | Result |
+| --- | --- |
+| This GitHub account is already linked | That identity signs in. |
+| An account owns the email, and both sides verified it | Linked, with `'link-if-verified'`. |
+| An account owns the email, and either side did not verify it | Refused with `AUTH_PROVIDER_FAILED`. The default `'reject'` refuses every such case. |
+| No account owns the email | `profileToIdentityProfile` creates one, with `emailVerified: false`. |
+
+## Try it
+
+1. Sign up a new account with a password and, without verifying it, sign in with GitHub under the same address. The callback redirects to `/?error=AUTH_PROVIDER_FAILED`.
+2. Click the same magic link twice. The second click shows `AUTH_RECOVERY_TOKEN_INVALID`.
+3. Request two links in a row and use the first. A newer link replaces the older one.
+
+## Where we are
+
+```
+ducknotes/
+  public/
+    index.html      - now with the link form and the GitHub button
+    magic-link.html - where the link lands
+  src/
+    auth.ts         - password, magic link, GitHub
+    server.ts       - plus the OAuth callback
+    page.ts
+    magic-link.ts
+```
+
+## See also
+
+- [Magic link](/duck-auth/providers/magic-link): every option, and sign-up by link.
+- [OAuth](/duck-auth/providers/oauth): the shared options, linking, and any other IdP.
+- [GitHub](/duck-auth/providers/oauth/github): what the preset reads.
+- [Chapter 7: a second factor](/duck-auth/course/chapter-7)

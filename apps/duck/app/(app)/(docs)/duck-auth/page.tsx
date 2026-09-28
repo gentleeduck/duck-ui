@@ -1,6 +1,6 @@
 import { Badge } from '@gentleduck/registry-ui/badge'
 import { Button } from '@gentleduck/registry-ui/button'
-import { Cookie, Fingerprint, KeyRound, Mail, ShieldCheck, Webhook } from 'lucide-react'
+import { Cookie, Database, Fingerprint, KeyRound, Mail, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { codeToHtml } from 'shiki'
 import { CopyButton } from '~/components/copy-button'
@@ -18,9 +18,9 @@ const description =
 const features = [
   {
     icon: ShieldCheck,
-    title: '14-facet AuthEngine',
+    title: 'One AuthEngine',
     description:
-      'One typed root exposes sessions, identities, passwords, providers, MFA, flows, API keys, M2M, orgs, idempotency, hijack policy, and anomaly detection.',
+      'One typed root exposes sessions, identities, flows, providers, hijack policy and anomaly detection, plus passwords, MFA, passkeys, API keys and orgs once registered.',
     bg: 'bg-emerald-500/10',
     color: 'text-emerald-500',
   },
@@ -28,7 +28,7 @@ const features = [
     icon: Cookie,
     title: 'Cookie + Bearer + JWT',
     description:
-      'Pluggable transports: HttpOnly __Host- cookies, opaque bearer tokens, stateless JWT with live JWKS rotation, all bindable to a client public key via DPoP (RFC 9449).',
+      'Pluggable transports: HttpOnly __Host- cookies, opaque bearer tokens, stateless JWT with key rotation, all bindable to a client public key via DPoP (RFC 9449).',
     bg: 'bg-blue-500/10',
     color: 'text-blue-500',
   },
@@ -42,9 +42,9 @@ const features = [
   },
   {
     icon: Mail,
-    title: 'Channels included',
+    title: 'Your mailer',
     description:
-      'Console, SMTP, Resend, AWS SES, Twilio SMS, and Web Push channels for magic-link delivery, password-reset, MFA codes, and verification emails.',
+      'Magic links, password resets and verification links go to one deliver function you write, so mail goes out through whatever your app already uses.',
     bg: 'bg-pink-500/10',
     color: 'text-pink-500',
   },
@@ -52,15 +52,15 @@ const features = [
     icon: Fingerprint,
     title: 'Production posture',
     description:
-      'AuthEngine.strict() rejects insecure config at boot — no NoopLimiter, no MemoryAdapter, no insecure cookies. Compliance presets for GDPR / SOC2 / HIPAA / FIPS.',
+      'strict() rejects insecure config at boot — no in-memory limiter, store or event bus, no insecure cookies. Compliance presets for GDPR / SOC2 / HIPAA / FIPS.',
     bg: 'bg-orange-500/10',
     color: 'text-orange-500',
   },
   {
-    icon: Webhook,
-    title: 'OpenAPI + OTel + OIDC',
+    icon: Database,
+    title: 'Your database',
     description:
-      'Emit an OpenAPI 3.1 spec from the CLI. Expose JWKS + .well-known/openid-configuration. OpenTelemetry instrumentation with redacted PII attributes.',
+      'Drizzle tables for Postgres, MySQL and SQLite beside your own, and Redis or Valkey for limiters, events and single-use tokens.',
     bg: 'bg-sky-500/10',
     color: 'text-sky-500',
   },
@@ -68,9 +68,6 @@ const features = [
 
 const INSTALL_CODE = `# Install
 bun add @gentleduck/auth
-
-# Scaffold
-bunx @gentleduck/auth init src/lib --production
 
 # Wire on Express
 import { mountSignIn } from '@gentleduck/auth/server/express'
@@ -116,15 +113,15 @@ export default async function DuckAuthPage() {
           <div className="mb-10 text-center">
             <div className="mb-3 flex items-center justify-center gap-2">
               <Badge variant="secondary" className="text-xs">
-                Pre-1.0 · ~98% v1.0 surface
+                Framework-agnostic
               </Badge>
             </div>
             <h2 className="mb-3 font-semibold text-2xl leading-tight tracking-tight sm:text-3xl">
               Authentication that doesn’t lock you into a framework.
             </h2>
             <p className="mx-auto max-w-lg text-base text-muted-foreground leading-relaxed">
-              One root, fourteen facets, every transport. Wire it into Express, Hono, Next.js, Fastify, Koa, Elysia,
-              NestJS, gRPC, or any Web-Fetch runtime — one adapter import.
+              One engine, every transport. Wire it into Express, Hono, Next.js, Fastify, Koa, Elysia, NestJS, gRPC, or
+              any Web-Fetch runtime — one adapter import.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -147,7 +144,7 @@ export default async function DuckAuthPage() {
         <div>
           <div className="mb-8 flex flex-col items-center gap-1 text-center">
             <h2 className="font-semibold text-xl leading-tight tracking-tight">Install</h2>
-            <p className="text-muted-foreground text-sm">Scaffold a starter, or wire AuthEngine by hand.</p>
+            <p className="text-muted-foreground text-sm">Install the package, then mount a route.</p>
           </div>
           <div className="relative mx-auto max-w-2xl">
             <CopyButton value={INSTALL_CODE} variant="ghost" className="absolute top-3 right-3" />

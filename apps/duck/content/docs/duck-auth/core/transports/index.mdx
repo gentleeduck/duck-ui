@@ -1,87 +1,35 @@
 ---
 title: Transports
-description: How sessions ride on the request - Cookie, Bearer, JWT, Composite, and DPoP binding.
+description: How a session travels between client and server, and how to choose between the cookie, bearer, JWT and composite transports
 section: Core
 ---
+A transport decides how the session id reaches the client and comes back. It reads the credential off a request (`extract`), writes it onto a response (`issue`, as intents), and clears it (`revoke`). The engine holds one, `createAuth({ transport })`, and defaults to a cookie.
 
-## What is a transport?
+| Transport | Carries | Revocation | Use it for |
+| --- | --- | --- | --- |
+| [Cookie](/duck-auth/core/transports/cookie) | The sid in an HttpOnly cookie, plus a CSRF cookie | Immediate | Browser apps on your own domain. The default. |
+| [Bearer](/duck-auth/core/transports/bearer) | The sid in `Authorization: Bearer` | Immediate | Native and mobile apps, CLIs, scripts. |
+| [JWT](/duck-auth/core/transports/jwt) | A signed token the server verifies without a store read | When the token expires | Services that must not hit the session store per request. |
+| [Composite](/duck-auth/core/transports/composite) | Several of the above at once | Per member | One backend serving a browser and a native app. |
 
-A transport is the bridge between the in-memory `Session` and the wire.
-It owns three operations:
+[DPoP](/duck-auth/core/transports/dpop) is not a transport: it verifies proof-of-possession headers for a resource server that binds its tokens to a client key.
 
-```typescript
-interface AuthTransport.ITransport {
-  extract(req: { headers: Headers }): Promise<{ kind: 'session-id' | 'jwt'; value: string } | null>
-  issue(session: Session, intents: Intent[]): Intent[]
-  revoke(): Intent[]
+## How a request resolves
+
+`auth.resolveSession({ headers })` asks the transport for the credential. When the transport can verify it on its own, as JWT does, that answer is used; otherwise the sid is hashed and looked up in the session store. A request without a credential reads as no session.
+
+## Writing your own
+
+A transport is any object with `extract`, `issue` and `revoke`, and optionally `verify` for self-contained tokens:
+
+```ts
+import type { Transport } from '@gentleduck/auth/core/transport'
+
+const headerTransport: Transport.ITransport = {
+  extract: (req) => req.headers.get('x-session-id'),
+  issue: (sid, session) => [{ type: 'json', status: 200, body: { sid, expiresAt: session.expiresAt } }],
+  revoke: () => [{ type: 'json', status: 200, body: { revoked: true } }],
 }
 ```
 
-You wire exactly one transport into `AuthEngine.config.transport` - or a
-`CompositeTransport` that tries several in order.
-
-## The four shipped transports
-
-| Transport | What it does | When to pick it |
-| --- | --- | --- |
-| [`CookieTransport`](/duck-auth/core/transports/cookie) | Session id in an HttpOnly cookie. | First-party web apps. Always the safest first choice. |
-| [`BearerTransport`](/duck-auth/core/transports/bearer) | Opaque token in `Authorization: Bearer`. | Mobile / native / server-to-server. |
-| [`JwtTransport`](/duck-auth/core/transports/jwt) | Stateless JWT + opaque refresh cookie. | High-throughput APIs, microservices, OIDC issuer. |
-| [`CompositeTransport`](/duck-auth/core/transports/composite) | Try several transports in order. | Mixed web + API workloads on one origin. |
-
-Optionally bind any transport to a client public key with the
-[DPoP verifier](/duck-auth/core/transports/dpop) (RFC 9449) for
-sender-constrained tokens.
-
-## Quick comparison
-
-|  | Cookie | Bearer | JWT |
-| --- | --- | --- | --- |
-| Stateful (requires session store lookup)? | yes yes | yes yes | no no |
-| Survives XSS? | yes HttpOnly | (warning) depends on client storage | (warning) depends on client storage |
-| Survives CSRF? | yes with `__Host-` + double-submit | yes no cookies, no CSRF | yes no cookies |
-| Browser refresh keeps you signed in? | yes yes | yes if client persists | yes if refresh cookie set |
-| Token revocation? | instant (delete row) | instant (delete row) | only at refresh (until JWT exp) |
-| Issuing cost | one row write | one row write | two row writes + JWT sign |
-| Per-request cost | one row lookup | one row lookup | signature verify only |
-| Use case | first-party web | mobile / SPA cross-origin | microservices |
-
-## Picking a transport
-
-Decision tree:
-
-```
-Is this a first-party web app on a single origin?
-  -> Cookie
-
-Is this a mobile or native client?
-  -> Bearer (store the token in the OS keychain)
-
-Is this a microservice fleet that needs to verify tokens locally without a session store hit?
-  -> JWT  (add DPoP for sender-constrained binding)
-
-Is this an API that also serves a first-party web app on the same origin?
-  -> Composite { primary: Cookie, fallback: [Bearer] }
-```
-
-## Anatomy of an `Intent`
-
-When a provider sign-in succeeds, the runtime emits `Intent[]`. The
-transport translates intents into wire commands:
-
-```typescript
-type Intent =
-  | { kind: 'startSession'; session: Session }   // mint a session, return the cookie / token
-  | { kind: 'rotateSession'; session: Session }  // change the carrier - fixation defence
-  | { kind: 'revokeSession'; sessionId: string }
-  | { kind: 'redirect'; url: string; status?: 302 | 303 }  // OAuth provider hop
-  | { kind: 'json'; status: number; body: unknown }
-  | { kind: 'setCookie'; cookie: SetCookieDirective }
-  | { kind: 'header'; name: string; value: string }
-```
-
-The framework adapter (`server/express`, `server/hono`, ...) walks the
-intents in order and converts them into native `Response` calls.
-
-You almost never need to construct intents by hand - providers,
-`flows`, and the `sessions` facet do it for you.
+`issue` answers intents rather than touching a response, so the same transport works under every [server adapter](/duck-auth/server).

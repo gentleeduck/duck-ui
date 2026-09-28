@@ -1,0 +1,101 @@
+---
+title: Build an app with duck-auth
+description: An eight-chapter course that builds the sign-in for one notes app, from a first password check to a production deployment
+section: Course
+---
+This course builds the authentication for **DuckNotes**, a small notes app, one chapter at a time. Every chapter adds to the same source tree, and every snippet runs as shown against `@gentleduck/auth`.
+
+## What you build
+
+<MermaidDiagram chart={`flowchart LR
+    B["Browser: sign-in form, notes page"] --> X["Express server"]
+    X --> E["AuthEngine"]
+    E --> ST["Stores: identities, credentials, sessions"]
+    E --> M["deliver: your mailer"]
+    X --> N["Notes API"]`} />
+
+By the end, people sign up, verify their address, sign in with a password, a mailed link or GitHub, add a TOTP second factor, and must step up before a destructive action. It all runs on Postgres and Valkey behind a `strict()` production check.
+
+## The roadmap
+
+<MermaidDiagram chart={`flowchart LR
+    subgraph CORE["Part 1 - the engine"]
+        direction LR
+        C1["1. First sign-in"] --> C2["2. Accounts"]
+        C2 --> C3["3. Sessions"]
+    end
+    subgraph SHIP["Part 2 - the app"]
+        direction LR
+        C4["4. HTTP"] --> C5["5. The browser"]
+        C5 --> C6["6. More ways in"]
+        C6 --> C7["7. A second factor"]
+        C7 --> C8["8. Production"]
+    end
+    CORE --> SHIP`} />
+
+Part 1 drives the engine from a script, so every answer is printed. Part 2 puts it behind HTTP and a browser, then hardens it.
+
+## Course map
+
+| Chapter | Topic | What you learn |
+| --- | --- | --- |
+| [1](/duck-auth/course/chapter-1) | Your first sign-in | `createAuth`, identities, passwords, `signIn`, `resolveSession`, `AuthError` |
+| [2](/duck-auth/course/chapter-2) | Accounts | `deliver`, email verification, password reset, events |
+| [3](/duck-auth/course/chapter-3) | Sessions | The row, deadlines, rotation, devices, hijack detection |
+| [4](/duck-auth/course/chapter-4) | Behind HTTP | The Express handlers, your own routes, CSRF, `errorToHttp` |
+| [5](/duck-auth/course/chapter-5) | In the browser | The vanilla client, envelopes, the CSRF cookie, React |
+| [6](/duck-auth/course/chapter-6) | More ways in | Magic links, GitHub OAuth, account linking |
+| [7](/duck-auth/course/chapter-7) | A second factor | TOTP enrollment, backup codes, step-up to AAL 2 |
+| [8](/duck-auth/course/chapter-8) | Production | Postgres, Valkey, `strict()`, tests |
+
+## Prerequisites
+
+- TypeScript and `async`/`await`.
+- Node.js 22 or newer, or Bun.
+- No database until chapter 8, which uses Postgres and Valkey.
+
+## Setup
+
+<Steps>
+
+<Step>Create the project</Step>
+
+```bash
+mkdir ducknotes && cd ducknotes
+npm init -y
+npm pkg set type=module
+mkdir src
+```
+
+<Step>Install duck-auth</Step>
+
+<PackageManagerTabs bun="bun add @gentleduck/auth @node-rs/argon2" npm="npm i @gentleduck/auth @node-rs/argon2" pnpm="pnpm add @gentleduck/auth @node-rs/argon2" yarn="yarn add @gentleduck/auth @node-rs/argon2" />
+
+`@node-rs/argon2` is the password hasher's peer. Everything else is installed by the chapter that needs it.
+
+<Step>Add a runner</Step>
+
+```bash
+npm i -D tsx
+npx tsx src/main.ts
+```
+
+<Step>Start</Step>
+
+Go to [Chapter 1: your first sign-in](/duck-auth/course/chapter-1).
+
+</Steps>
+
+## How the chapters are written
+
+Each chapter has **learning goals**, a **diagram** of what it introduces, the **code**, **what just happened** inside the engine, and a **try it** exercise. New concepts link to their reference page.
+
+<Callout tone="info" title="Version">
+The code is verified against `@gentleduck/auth` 5.13.0. Import paths come from the package `exports` map: `@gentleduck/auth/core`, `@gentleduck/auth/adapters/memory`, `@gentleduck/auth/server/express` and so on.
+</Callout>
+
+## See also
+
+- [Introduction](/duck-auth/introduction): the same ground as reference.
+- [Quick start](/duck-auth/guides): one Express file, without the tour.
+- [Concepts](/duck-auth/concepts): the terms the course uses.

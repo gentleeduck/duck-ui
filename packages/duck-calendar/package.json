@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@gentleduck/calendar",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Headless, framework-agnostic calendar engine with date adapter pattern.",
   "type": "module",
   "module": "./dist/index.js",

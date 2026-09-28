@@ -172,6 +172,7 @@
         "@types/node": "catalog:",
         "@types/react": "catalog:react19",
         "@types/react-dom": "catalog:react19",
+        "date-fns": "^4.1.0",
         "dayjs": "^1.11.13",
         "jsdom": "catalog:",
         "luxon": "^3.6.1",

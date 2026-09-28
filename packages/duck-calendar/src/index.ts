@@ -1,13 +1,10 @@
-// Adapter
+// Adapter; the date-fns, dayjs and luxon adapters live at `@gentleduck/calendar/adapter/<library>`
 export type { Adapter } from './adapter'
 export {
   clearFormatterCache,
-  DateFnsAdapter,
-  DayjsAdapter,
   getCachedFormatter,
   HebrewAdapter,
   IslamicAdapter,
-  LuxonAdapter,
   NativeAdapter,
   PersianAdapter,
 } from './adapter'

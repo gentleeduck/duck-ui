@@ -139,8 +139,8 @@ The value passed to an operator is `cond.value ?? null` after `$`-resolution; th
 | `gt` `gte` `lt` `lte` | number       | number          | numeric comparison                                                        | false                               | either side not a number: false; `NaN` on either side: false                          |
 | `in`           | scalar or scalar[]  | array           | scalar field is in list; array field shares at least one scalar with list | `[..., null]` matches, else false   | value not an array: false; object field: false                                         |
 | `nin`          | scalar or scalar[]  | array           | negation of `in`                                                          | true unless list contains `null`    | value not an array: **true**; object field: true                                       |
-| `contains`     | array or string     | scalar / string | array includes scalar value, or string includes substring                 | false                               | array field with non-scalar value: false; number field: false                          |
-| `not_contains` | array or string     | scalar / string | negation of `contains`                                                    | **true**                            | any shape `contains` cannot handle returns true                                        |
+| `contains`     | array only          | scalar          | field is an array and includes the scalar value                           | false                               | array-only: a string field is **not** searched for a substring, despite the operator's name; non-scalar value: false |
+| `not_contains` | array, or null/undefined | scalar     | field is missing, or field is an array that does not include the value    | true (missing field only)           | a **present non-array field (string, number, object) is false, not true** - only a missing field or a non-matching array satisfies it |
 | `starts_with`  | string              | string          | `field.startsWith(value)`                                                 | false                               | non-string on either side: false; empty value: true for any string field               |
 | `ends_with`    | string              | string          | `field.endsWith(value)`                                                   | false                               | same as `starts_with`                                                                  |
 | `matches`      | string              | string          | regex test                                                                | false                               | see the ReDoS section below                                                            |
@@ -153,8 +153,8 @@ The value passed to an operator is `cond.value ?? null` after `$`-resolution; th
 
 `toEpoch` passes numbers through unchanged and runs `Date.parse` on strings, so `environment.now` (a millisecond epoch injected by the engine) compares correctly with an ISO string value. Both sides must be finite; an `Infinity` or `NaN` epoch is a false, not an error.
 
-<Callout tone="warning" title="Negative operators default to true">
-`nin` and `not_contains` return `true` whenever the shapes do not line up (non-array value, object field, missing field). Never gate an allow rule on a negative operator alone; pair it with `exists` in the same `all` group so a missing attribute cannot satisfy the rule.
+<Callout tone="warning" title="Negative operators default to true only on a missing field">
+`nin` returns `true` whenever the shapes do not line up (non-array `value`, non-scalar field, missing field). `not_contains` is narrower: it returns `true` for a missing field or a non-matching array, but **false** for a present non-array field (a string or a number), since `contains` never does substring matching and a field it cannot search is not treated as "not containing" anything. Never gate an allow rule on a negative operator alone; pair it with `exists` in the same `all` group so a missing attribute cannot satisfy the rule.
 </Callout>
 
 ### `matches` and ReDoS protection
@@ -164,7 +164,7 @@ The value passed to an operator is `cond.value ?? null` after `$`-resolution; th
 - Field or value not a string: `false`.
 - Pattern longer than `MAX_REGEX_LENGTH` (128): `false`.
 - Pattern that fails to compile, or that contains a nested quantifier such as `(a+)+` (`NESTED_QUANTIFIER_RE`): `false`. Invalid patterns are cached as `null` so they are not recompiled per request.
-- Input longer than `MAX_REGEX_INPUT_LENGTH` (2048): throws `RegexInputTooLargeError` (`name: 'RegexInputTooLargeError'`, `tag: 'duck-iam/regex-input-too-large'`, `field`, `length`). `evalCondition` rethrows it with the offending field name; the evaluator catches it per policy, skips that policy, and reports through `onPolicyError`. Throwing rather than returning `false` is deliberate: a `deny` rule guarded by `matches` must not flip to allow on oversized input.
+- Input longer than `MAX_REGEX_INPUT_LENGTH` (2048): throws the coded `IamError` `IAM_CONDITION_REGEX_INPUT_TOO_LARGE` (`meta: { field, length }`). The evaluator catches it per policy, skips that policy, and reports through `onPolicyError`. Throwing rather than returning `false` is deliberate: a `deny` rule guarded by `matches` must not flip to allow on oversized input.
 - A `$`-sourced pattern is refused before anything else runs.
 
 Compiled patterns live in an LRU of `REGEX_CACHE_MAX` (256) entries. Each engine instance owns its own regex cache (`iamCreateEvalCaches()`), and the process-wide one is cleared by `iamFlushSharedCaches()` from `@gentleduck/iam/core/engine`. (The underlying `clearRegexCache` is internal; `core/conditions` does not re-export it.)

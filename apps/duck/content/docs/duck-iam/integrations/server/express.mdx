@@ -1,6 +1,6 @@
 ---
 title: Express
-description: The Express middleware, per-route guard, and admin router: signatures, extraction defaults, and error mapping for Express 4 and 5
+description: The Express middleware, per-route guard, and admin router, with signatures, extraction defaults, and error mapping for Express 4 and 5
 section: Integrations
 ---
 `@gentleduck/iam/server/express` exposes two request gates and one admin router. It declares no runtime dependency on Express: every function is typed against a minimal `req` / `res` / `next` shape, so it works with Express 4, Express 5, and any router that implements `.get`, `.put`, `.post`, and `.delete`. The shared extraction and audit behaviour lives in [generic helpers](/duck-iam/integrations/server/generic); this page documents only what Express adds.
@@ -296,7 +296,7 @@ Mutations write `req.method` and `req.path ?? req.url ?? ''` into the audit even
 The last four are the shared `IamAdminAudit.IOptions`; their exact semantics, the event shape, and the CSRF predicate are documented once on the [generic helpers page](/duck-iam/integrations/server/generic).
 
 <Callout tone="warning" title="authorize is mandatory">
-`iamAdminRouter` throws at construction when `opts.authorize` is not a function: `[@gentleduck/iam] iamAdminRouter requires an authorize callback. Mounting admin endpoints unauthenticated is never safe.` The router writes policies, roles, and assignments straight to the adapter, so there is no useful unauthenticated mode.
+`iamAdminRouter` throws at construction when `opts.authorize` is not a function: the coded `IamError` `IAM_SERVER_ADMIN_AUTHORIZE_REQUIRED` (`meta: { framework: 'express', fn: 'iamAdminRouter' }`). The router writes policies, roles, and assignments straight to the adapter, so there is no useful unauthenticated mode.
 </Callout>
 
 <Callout tone="warning" title="CSRF check is on by default">

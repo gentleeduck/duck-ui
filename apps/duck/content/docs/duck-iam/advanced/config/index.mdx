@@ -57,7 +57,7 @@ The return value is a plain object literal: four readonly arrays and eight metho
     RUN --> R3["validateRoles(roles)"]
     RUN --> R4["validatePolicy(input)"]`} />
 
-`actions` and `resources` are passed straight through from the input. `scopes` and `roles` fall back to `[]` when you omit them. The four builder methods each construct a fresh builder instance per call; `checks` is an identity function; `validatePolicy` forwards to the standalone validator unchanged, and `validateRoles` forwards the declared `actions` / `resources` / `scopes` along with the roles, so it additionally flags a grant naming vocabulary this config never declared.
+`actions` and `resources` are passed straight through from the input. `scopes` and `roles` fall back to `[]` when you omit them. The four builder methods each construct a fresh builder instance per call; `checks` is an identity function; both `validatePolicy` and `validateRoles` forward the declared `actions` / `resources` / `scopes` (plus `roles`, for `validatePolicy`) to the standalone validator, so each additionally flags a rule, target, or grant naming vocabulary this config never declared - the bare, non-`createIam` exports of both skip that pass entirely.
 
 ## Reading order
 

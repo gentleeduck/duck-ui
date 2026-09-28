@@ -1,4 +1,4 @@
-duck-iam ships its types inside per-module namespaces and its runtime values as flat names. This page is the map for 5.9.0: every exported namespace, its members, and the flat runtime exports, one line each, with the import path each comes from. Use it as the type-import contract when you write adapters, wrappers, or your own tooling on top of the engine.
+duck-iam ships its types inside per-module namespaces and its runtime values as flat names. This page is the map for 5.10.0: every exported namespace, its members, and the flat runtime exports, one line each, with the import path each comes from. Use it as the type-import contract when you write adapters, wrappers, or your own tooling on top of the engine.
 
 ## Naming convention
 
@@ -198,6 +198,46 @@ The root entry re-exports everything in `@gentleduck/iam/core`, so `AccessContro
 | `IamValidate.IIssue` | interface | `type` (`'error' \| 'warning'`), `code`, `message`, optional `roleId`, optional `path` |
 | `IamValidate.IResult` | interface | `valid` (false only when an error-level issue exists) and `issues` |
 
+### `IamError`
+
+`import type { IamError } from '@gentleduck/iam'` - the coded-error vocabulary every throw in the package uses instead of a raw `Error`.
+
+| Namespaced name | Kind | One line |
+|---|---|---|
+| `IamError.Code` | type | Union of every key in the `IAM_ERRORS` registry |
+| `IamError.Meta<C>` | type | The metadata shape a given `Code` carries |
+| `IamError.Error` | type | Discriminated union over every `{ code, ...meta }` pair |
+| `IamError.Args<C>` | type | The argument tuple `throwIamError`/`rethrowIamError` take for a given `Code` |
+| `IamError.Bare` / `IamError.Faults` / `IamError.HasRequired<T>` | type | Supporting shapes from the shared `ErrorKit` machinery |
+
+### `Batch`
+
+`import type { Batch } from '@gentleduck/iam'` - per-row results for `engine.admin`'s batch writes (`assignRoles`, `revokeRoles`, and similar).
+
+| Namespaced name | Kind | One line |
+|---|---|---|
+| `Batch.Outcome<TRow, T>` | type | One row's result: `{ row, ok: true, value }`; outcomes are in input order, and a failure throws rather than reporting `ok: false` |
+| `Batch.Change` | type | `{ changed?: boolean }` - present only when the driver can say whether the row accounted for a write |
+| `Batch.Result<TRow, T>` | type | `{ outcomes, applied }` for a whole batch call |
+
+### `Pending`
+
+`import type { Pending } from '@gentleduck/iam'` - cache invalidations and mutation events a [transaction-bound engine](/duck-iam/advanced/engine/methods#withtransaction) holds until the caller's transaction commits.
+
+| Namespaced name | Kind | One line |
+|---|---|---|
+| `Pending.Invalidation<TRole>` | type | One buffered invalidation: `subject`, `policies`, or `roles` |
+| `Pending.ICacheSink<TRole>` / `Pending.IMutationSink<TRole, TScope>` | interface | Structural shapes a buffering sink implements in place of a real engine |
+| `Pending.Effects<TRole, TScope>` | interface | `size`, `mutationSize`, `flush()`, `discard()`, `peek()`, `peekMutations()` - the object `engine.withTransaction(client).pending` returns |
+
+### `Bound`
+
+`import type { Bound } from '@gentleduck/iam'` - the transaction-bound view `engine.withTransaction(client)` returns. See [engine methods](/duck-iam/advanced/engine/methods).
+
+| Namespaced name | Kind | One line |
+|---|---|---|
+| `Bound.IamEngine<TAction, TResource, TRole, TScope, TMode>` | interface | `admin`, `engine`, `pending`, plus the read methods (`can`, `check`, `authorize`, `explain`, `permissions`, `getEffectiveRoles`) bound to the transaction |
+
 ## Integration namespaces
 
 Each integration subpath publishes its own option-bag namespace. All are type-only.
@@ -275,13 +315,15 @@ Everything below is exported under its own name, not through a namespace.
 | `IamLRUCache` / `iamLRUCache` | class / function | TTL LRU used for policies, roles, and subjects |
 | `iamBuildPermissionKey` | function | Builds a permission-map key, escaping `:` and `\` per segment |
 | `iamSplitPermissionKey` / `iamParsePermissionKey` | function | Split a key into unescaped segments; parse one into `{ scope, action, resource, resourceId }`, or `null` if it is not a key |
-| `IamConditionGroupError` | class | A condition group named none of `all` / `any` / `none`, or nested past the depth cap |
-| `IamOperandTypeError` | class | An operator was handed an operand of the wrong class |
-| `IamPatternRefusedError` | class | A `matches` pattern failed the length or ReDoS heuristic |
-| `IamRegexInputTooLargeError` | class | The string under test exceeded `IAM_MAX_REGEX_INPUT_LENGTH` |
-| `IamUserSourcedPatternError` | class | A `matches` pattern resolved from a `$`-reference, which is refused |
+| `throwIamError` / `rethrowIamError` | function | Throw (or wrap and rethrow) a coded `IamError.Error` by `IamError.Code` |
+| `fail` | function | Builds a `KitError` for a `Code` without throwing it, for a caller that returns or wraps it manually |
+| `asIamError` / `hasIamErrorCode` / `metaOf` | function | Narrow an unknown catch value to an `IamError.Error`; test its code; read its metadata |
+| `throwIamValidationFailed` | function | Throws the coded validation-failure error carrying an `IamValidate.IResult` |
+| `IAM_ERRORS` | const | The registry every `IamError.Code` is a key of - status, message template, and metadata shape per code |
 
 `iamEvaluate`, `iamEvaluateFast`, `iamEvaluatePolicy`, and `iamEvaluatePolicyFast` are thin wrappers that refuse `defaultEffect: 'allow'` unless you also pass `allowFailOpen: true`, the same gate `IamEngine`'s constructor applies. The raw `evaluate` / `evaluateFast` / `evaluatePolicy` / `evaluatePolicyFast` are deliberately not re-exported from any entry point - exporting them put an ungated fail-open evaluation one import away from the package root.
+
+The condition engine no longer throws its own error classes - a malformed condition group, a type-mismatched operand, a refused `matches` pattern, an oversized regex input, and a `$`-sourced pattern each throw the coded `IamError` with one of `IAM_CONDITION_GROUP_INVALID`, `IAM_CONDITION_OPERAND_TYPE`, `IAM_CONDITION_PATTERN_REFUSED`, `IAM_CONDITION_REGEX_INPUT_TOO_LARGE`, or `IAM_CONDITION_USER_SOURCED_PATTERN`. Catch with `hasIamErrorCode(err, '<code>')` and read the detail off `metaOf(err, '<code>')`, not off the message.
 
 ### From `@gentleduck/iam/core/validate`
 

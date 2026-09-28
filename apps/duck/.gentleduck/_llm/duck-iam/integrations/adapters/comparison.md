@@ -33,7 +33,7 @@ Three of the six exist on Drizzle alone, because only its schema carries `starts
 
 Notes on the sharp bits:
 
-* **A missing optional method costs correctness nowhere.** `updateAssignmentScope`, `assignRoleMany` and `revokeRoleMany` are optimisations the engine falls back for - revoke-then-assign, and a per-row loop - and `runEngineCapabilityCompliance` pins the behaviour behind them on all six adapters regardless of what the table says. The exception is `withClient`: without it `engine.withTransaction` throws rather than writing outside your transaction, so only Drizzle and Prisma can join one.
+* **A missing optional method costs correctness nowhere.** `updateAssignmentScope`, `assignRoleMany` and `revokeRoleMany` are optimisations the engine falls back for - revoke-then-assign, and a per-row loop - and `runEngineCapabilityCompliance` pins the behaviour behind them on all six adapters regardless of what the table says. The exception is `withClient`: without it `engine.withTransaction` throws the coded `IAM_ENGINE_ADAPTER_NOT_TRANSACTIONAL` rather than writing outside your transaction, so only Drizzle and Prisma can join one.
 * **`IAssignOptions` is refused, not dropped.** Only Drizzle stores `startsAt` / `expiresAt` / `attributes`. The other five throw and name the option rather than accepting the grant and discarding the expiry, which used to make a break-glass grant permanent while the batch API still reported `applied: 1`.
 * **Memory and Prisma have no `onPolicyError` hook.** Memory validates its seed through the same guards its write path uses; Prisma has no options object to wire a handler into, so its dropped-row reports go to `console.warn`.
 
@@ -130,10 +130,12 @@ backend-atomic merge in a custom adapter.
 
 What happens if I pass a non-object to setSubjectAttributes?
 
-Every adapter rejects it with the same message,
-<code className="rounded bg-muted px-2 py-1">attributes for "\<id>" must be a plain object (got string)</code>,
-before writing anything. Existing attributes are left untouched. Without this guard a string would spread into
-per-character attribute keys.
+Every adapter rejects it through the same shared guard, `IAM_ATTRIBUTES_INVALID`
+(<code className="rounded bg-muted px-2 py-1">meta: {'{'} adapter, subjectId, reason: 'not-object', got {'}'}</code>),
+before writing anything. A bag carrying a `__proto__` own key is refused the same way, with
+<code className="rounded bg-muted px-2 py-1">reason: 'forbidden-key'</code> - that key cannot survive a JSON
+round trip intact. Existing attributes are left untouched in both cases. Without this guard a string would
+spread into per-character attribute keys.
 
 How are duplicate role assignments handled?
 

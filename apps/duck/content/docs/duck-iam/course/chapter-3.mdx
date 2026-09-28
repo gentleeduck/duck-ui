@@ -262,11 +262,11 @@ The numeric, string, and array operators refuse to coerce. `gt` on a string fiel
 The four bolded `true`s are the whole risk surface for a missing attribute. `allow when subject.attributes.tier neq 'banned'` grants to a subject with no `tier` at all. Pair a negated operator with an `exists` guard: `w.exists('subject.attributes.tier').attr('tier', 'neq', 'banned')`.
 
 <Callout tone="warning" title="A wrong-typed value throws, it does not miss">
-`in`, `nin`, `subset_of` and `superset_of` require an array of scalars as the `value`; the comparison operators require a number; `matches` requires a literal string. Anything else - including a `$`-reference that resolved to nothing - throws `IamOperandTypeError` before the operator runs. That is deliberate: a `false` retires a deny rule, and inside a `none` group it turns into a grant, so anything the evaluator cannot answer throws and the caller decides the vote.
+`in`, `nin`, `subset_of` and `superset_of` require an array of scalars as the `value`; the comparison operators require a number; `matches` requires a literal string. Anything else - including a `$`-reference that resolved to nothing - throws the coded `IamError` `IAM_CONDITION_OPERAND_TYPE` (`meta: { field, operator, detail }`) before the operator runs. That is deliberate: a `false` retires a deny rule, and inside a `none` group it turns into a grant, so anything the evaluator cannot answer throws and the caller decides the vote.
 </Callout>
 
 <Callout tone="warning" title="matches refuses rather than misses">
-Every refusal here is a thrown, tagged error, all exported from the package root: a pattern over 128 characters or one the ReDoS detector rejects (`(a+)+`, `(a|aa)+`, `a{1,2000}`) throws `IamPatternRefusedError`; a field longer than 2048 characters throws `IamRegexInputTooLargeError`; a `value` that is a `$`-path throws `IamUserSourcedPatternError`, because a subject-supplied regex is never compiled. A throw makes the *policy* indeterminate, not absent: the engine fires `onPolicyError` and casts a deny if that policy carries any deny rule, otherwise its `defaultEffect` vote. Compiled patterns are cached in a 256-entry LRU.
+Every refusal here throws the coded `IamError`, never a dedicated error class - catch with `hasIamErrorCode(err, '<code>')` and read `metaOf(err, '<code>')`, not `err.name`: a pattern over 128 characters or one the ReDoS detector rejects (`(a+)+`, `(a|aa)+`, `a{1,2000}`) throws `IAM_CONDITION_PATTERN_REFUSED`; a field longer than 2048 characters throws `IAM_CONDITION_REGEX_INPUT_TOO_LARGE`; a `value` that is a `$`-path throws `IAM_CONDITION_USER_SOURCED_PATTERN`, because a subject-supplied regex is never compiled. A throw makes the *policy* indeterminate, not absent: the engine fires `onPolicyError` and casts a deny if that policy carries any deny rule, otherwise its `defaultEffect` vote. Compiled patterns are cached in a 256-entry LRU.
 </Callout>
 
 ### `$`-variables
@@ -342,7 +342,7 @@ const notArchived = when().resourceAttr('status', 'eq', 'archived').buildNone()
 .when((w) => w.or((o) => o.role('admin').and((a) => a.role('editor').isOwner())))
 ```
 
-Groups nest up to `MAX_CONDITION_DEPTH`, which is 10; the comparison is `>=`, so a tree exactly ten groups deep evaluates and eleven throws `IamConditionGroupError`. It throws rather than answering `false` for the reason above - a `false` inside a `none` group is a grant. `validateRoles` and `validatePolicy` enforce the same bound at authoring time, so a policy that builds cannot hit it at runtime.
+Groups nest up to `MAX_CONDITION_DEPTH`, which is 10; the comparison is `>=`, so a tree exactly ten groups deep evaluates and eleven throws the coded `IamError` `IAM_CONDITION_GROUP_INVALID` (`meta: { reason: 'depth', detail }`). It throws rather than answering `false` for the reason above - a `false` inside a `none` group is a grant. `validateRoles` and `validatePolicy` enforce the same bound at authoring time, so a policy that builds cannot hit it at runtime.
 
 ## The RuleBuilder API
 

@@ -52,7 +52,7 @@ const access = await IamAccessClient.fromServer('/api/me/permissions', {
 `fromServer` issues one `fetch`, parses the JSON body as a permission map, and returns a populated client. Its behaviour is precise:
 
 * `Content-Type: application/json` is set **before** your `init.headers` are spread in, so you can override it. The rest of `init` (method, signal, credentials) is spread in ahead of the header merge and passes through untouched.
-* A non-2xx response throws ``Error(`Failed to fetch permissions: ${res.status}`)``. The body is *not* read on failure, so a 500 returning HTML does not produce a JSON parse error on top of the real one.
+* A non-2xx response throws the coded `IamError` `IAM_CLIENT_PERMISSIONS_FETCH_FAILED` (`meta: { status }`). The body is *not* read on failure, so a 500 returning HTML does not produce a JSON parse error on top of the real one.
 * There is no retry, no timeout, and no caching. Pass an `AbortSignal` through `init` if you need either.
 
 `fromServer` rejects rather than returning an empty client. An unhandled rejection during boot leaves your app with no client at all, which is worse than a locked-down one. Catch it and fall back to `new IamAccessClient()` if a denied-everything UI is the behaviour you want.

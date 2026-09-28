@@ -203,7 +203,7 @@ if (!result.valid) {
 | Inheritance forms a cycle | `CIRCULAR_INHERIT` | **warning** - `valid` stays `true` |
 | Inheritance chain exceeds `MAX_INHERITANCE_DEPTH` (32) | `INHERITANCE_TOO_DEEP` | error |
 | A role has neither permissions nor `inherits` | `EMPTY_ROLE` | warning |
-| A grant names an action, resource or scope outside the declared vocabulary | `UNREACHABLE_TARGET` | error - only from `access.validateRoles`, never the bare export |
+| A grant names an action, resource or scope outside the declared vocabulary | `UNREACHABLE_TARGET` | error - only from `access.validateRoles`, never the bare `validateRoles` export. `access.validatePolicy` reports the same code for rules and `targets` |
 
 `'*'` is never reported as undeclared, and an axis the config left empty is skipped entirely rather than rejecting everything on it.
 
@@ -230,6 +230,8 @@ if (!result.valid) {
 ```
 
 It checks the required fields (`id`, `name`, `algorithm`, `rules`), that `algorithm` is one of the four combining algorithms, that every rule has a valid `effect`, non-empty `actions` and `resources`, and a well-formed condition group, that every operator is in `VALID_OPERATORS`, that every `field` resolves to an allowed root, and that no `matches` pattern trips the catastrophic-regex heuristic. Structural size caps come from `POLICY_LIMITS`. The full code list is on [validation](/duck-iam/advanced/validation).
+
+Unlike the bare `validatePolicy` export, `access.validatePolicy` is also handed the config's declared vocabulary, so it additionally flags a rule action/resource, or a `targets.actions` / `targets.resources` / `targets.roles` entry, naming a value this config never declared - the same `UNREACHABLE_TARGET` check `access.validateRoles` runs on grants, applied here to rules and targets. Role matching is by exact equality; action and resource matching goes through the engine's own pattern matchers, so a declared prefix or wildcard pattern is cleared on exactly the values it would match at runtime.
 
 ## Gotchas
 

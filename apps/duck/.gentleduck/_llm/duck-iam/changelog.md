@@ -1,38 +1,1807 @@
 This page mirrors the package changelog shipped inside `@gentleduck/iam` at
 `packages/duck-iam/CHANGELOG.md`. That file is the source of truth; this page is
-kept in sync with it by hand. Entries run newest first, from 5.7.0 down to the
+kept in sync with it by hand. Entries run newest first, from 5.10.0 down to the
 first published release. Names in each entry are the names that were current in
 that release: the `Iam*` / `IAM_*` export prefixes only exist from 5.0.0 onward,
 so a 2.x entry naming `FileAdapter` refers to what is called `IamFileAdapter` today.
 
-## Unreleased
+## 5.10.0
+
+### Minor Changes
+
+* bde674e: Authorization-correctness audit: behaviour fixes and the documentation defects
+  that were hiding them.
+
+  ### The permission map allowed what `can()` denied
+
+  `permissions()` evaluated every check against a resource with no attributes,
+  while keying the answer by `resourceId`. A caller reads that key as an answer
+  about that instance, but a rule conditioned on `resource.attributes.*` could not
+  fire, so a deny written that way was invisible: `read:post:42` came back `true`
+  for the very row `can()` refuses.
+
+  `IamClient.IPermissionCheck` now takes an optional `attributes`, and each check
+  is evaluated against the attributes it carries. A check that omits them is
+  unchanged, and still answers about an instance that has none — now stated in the
+  reference instead of being inferred from the key.
+
+  The route guards had the same hole, and it was not structural. NestJS's
+  `iamNestAccessGuard` already accepted a `getResourceAttributes`; the express and
+  Hono `iamAccessMiddleware`s already took attributes synchronously through
+  `getResource`. The rest could not be told at all. Express and Hono's `iamGuard`,
+  `withIamAccess` and `createIamNextMiddleware` now take the same
+  `getResourceAttributes` option Nest has; `checkIamAccess` and the checker
+  `createIamSubjectCan` returns take the attributes as an argument. Supplying them
+  costs a load the guard exists to skip, so it stays opt-in: omit the callback and
+  the guard remains the coarse gate on type, id and scope, with the
+  attribute-dependent rule re-checked by `can()` once the row is in hand. All
+  eight surfaces are now pinned against one policy so they cannot drift apart.
+
+  ### A dot in the resource type retired a `:*` deny
+
+  `resources: ['posts:*']` is documented to cover everything under `posts:`, and
+  it did — until the resource type contained a dot anywhere. The three evaluators
+  each switched to a dot-only matcher whenever either side contained a `.`, and
+  that matcher ignores `':*'` entirely. So a deny rule covering `posts:comment`
+  silently stopped covering `posts:comment.reply`: adding a dot to a resource
+  type removed it from every colon-wildcard rule in the policy set.
+
+  The policy-target level never switched, so the policy was still selected while
+  its own rule missed — the inconsistency that made it invisible.
+
+  All three evaluators (interpreter, compiled table, `explain()`) now use the
+  documented matcher, which reads the separator from the *pattern* and treats one
+  in the request as data. `.*` subtree matching, bare-literal behaviour and the
+  "a `:` pattern never matches a `.` type" rule are unchanged and pinned.
+  `matchesResourceHierarchical` stays exported as the strict dot-only variant and
+  is documented as no longer used by the engine.
+
+  ### A route guard named the wrong row, or none
+
+  The guards that read the resource id read one path param, `id`, and could not be
+  told otherwise. On a nested route that names a different row: `/orgs/:id/posts/:postId`
+  guarded as a `post` sends the **org's** id as `resource.id`, so a rule denying a
+  particular post, or comparing `resource.id` against what the subject owns, was
+  answered about the wrong instance. Express and Hono's `iamGuard` and
+  `withIamAccess` now take the `getResourceId` option Nest already had; the default
+  is unchanged.
+
+  `createIamNextMiddleware` had no id at all. It matches a path prefix and knows
+  the rule's resource type, so a rule reading `resource.id` could not fire and the
+  request passed — the same fail-open shape as an attribute rule with no
+  attributes. It now takes `getResourceId` too, with no default, because only the
+  rule's own path shape says which segment is the id.
+
+  The resolved id is also handed to `getResourceAttributes` on every guard, so a
+  loader can fetch the row the check is actually about rather than re-deriving it.
+
+  ### A Server Component check ignored the environment
+
+  `checkIamAccess` and `getIamPermissions` passed `undefined` where every other
+  integration passes a request-derived environment, and neither accepted one. A
+  policy keyed on `environment.ip`, `environment.userAgent` or a custom key read
+  as a non-match, so a deny that fired in Next middleware was inert in a Server
+  Component asking the same question. Both now take an `environment` argument and
+  forward it.
+
+  ### A wedged database hung every admin call forever
+
+  `adapterTimeoutMs` is documented as a per-adapter-call timeout and was wired
+  only into the decision path. Against an adapter that never answers, `can()`
+  returned `false` as designed while every `engine.admin` call — including
+  `admin.listPolicies()`, the *same adapter method* `can()` bounds — never
+  settled. An admin route or dashboard hit a wedged database and hung, with no
+  error, no audit event, and nothing to say whether the write had landed.
+
+  All seventeen admin operations now run under the same timeout and reject with
+  the call named. Reads pass the abort signal through, so an adapter that honours
+  it cancels the query. Writes take no signal, so the timeout frees the caller
+  while the write runs on: a rejection means "not confirmed" rather than "not
+  applied", and every admin write is idempotent by id. The transaction-bound
+  admin stays unbounded on purpose — aborting mid-transaction leaves the
+  transaction for the caller to roll back — and that exclusion is now pinned by a
+  test rather than left to be rediscovered.
+
+  ### An admin write over HTTP was recorded as nobody's
+
+  The admin routers authenticate a caller and hand it to their own audit hook.
+  They never handed it to `engine.admin`, so the engine's `onMutation` fired with
+  no actor and the SQL adapters wrote `created_by` / `updated_by` as null for
+  every request-driven write — the columns the drizzle and prisma schemas ship for
+  exactly this. An operator who wired `onMutation` instead of `onAdminMutation`
+  had no attribution at all, and nothing said so.
+
+  All four routers now forward a string `authorize` answer to `engine.admin`. An
+  object answer — a claims object, the documented common case — still names no one
+  to the engine, because its actor is a string and picking a field would be a
+  guess; the new `getMutationActor` option picks it. A value that names no one,
+  blank or non-string, is discarded rather than written.
+
+  `admin.import` had the same defect one layer down: it stamped its mutation
+  events with the actor it was given and passed nothing to `adapter.savePolicy` /
+  `saveRole`. It was the only admin write in the package that did. Fixed, and
+  every engine-side write is now pinned against a recording adapter so a new one
+  cannot be added without provenance.
+
+  ### `preload({ validator: true })` never ran the validator
+
+  The flag loaded the lazy validate chunk and then dropped it on the floor: the
+  module was imported, `validatePolicy` and `validateRole` were never called, and
+  `preload()` resolved. Since `engine.admin` is the only thing that validates —
+  all six adapters call the same write gate, the read path validates nothing — a
+  row that entered storage another way (a migration, a seed script, a restore, a
+  direct SQL insert, another service writing the same table) was loaded and
+  evaluated exactly as stored, and nothing in the package could tell an operator.
+
+  Which matters because the two failure modes differ. A condition the evaluator
+  refuses is Indeterminate and the policy denies: loud, fail-closed, visible on
+  the first request. A row that merely never matches — an action carrying a
+  trailing newline from a CSV import, an unreachable resource pattern — just
+  misses, so a **deny** in that shape silently never fires and the request is
+  allowed.
+
+  `preload({ validator: true })` now reads the roles too and validates every
+  stored policy and role, throwing once with the exact number of offending rows
+  and up to ten named with their reason. Only `type: 'error'` issues fail the
+  boot; a `BROAD_ALLOW` warning does not. Without the flag `preload()` reads no
+  roles and runs no validator, so the cost stays opt-in.
+
+  ### A route guard could not name the tenant it was deciding in
+
+  The access request has four dimensions — action, resource type, row, scope —
+  and the scope was the one no guard could derive from the request. `iamGuard`
+  (express and hono), `withIamAccess` and `createIamNextMiddleware` took only a
+  fixed `scope` fixed at mount time, so on the canonical multi-tenant route,
+  `/orgs/:orgId/posts/:postId`, every check ran with `scope: undefined` even
+  though the tenant was in the path. Only the nest guard could already read one
+  per request.
+
+  Running unscoped is not neutral in either direction. A scoped assignment —
+  `assignRole('u1', 'editor', { scope: 'org-1' })` — only enriches the subject
+  when the request carries a matching scope, so the grant did not apply and the
+  guard denied a caller who genuinely held the role. A rule conditioned on
+  `scope` is the opposite: the field resolves to `null`, the condition does not
+  match, and a **deny** in that shape silently never fired.
+
+  All four now take `getScope`, matching the extractor the two
+  `iamAccessMiddleware` surfaces already had and the shape nest already used. A
+  fixed `scope` still wins where both are given, so existing mounts keep their
+  meaning, and the resolved scope is handed to `getResourceAttributes` so an
+  attribute loader can read the row from the right tenant.
+
+  ### A fail-closed deny told the observers nothing
+
+  `afterEvaluate`, `onDeny` and `onMetrics` fired for every verdict the evaluator
+  produced — and for none of the verdicts the engine produced without reaching
+  it. A malformed `subjectId` was refused silently, with no hook at all. An
+  adapter that would not answer fired `onError` and then denied, unobserved.
+  `permissions()` returned an all-`false` map on a batch load failure after one
+  `onError`, and a `false` per check that threw with only a metric.
+
+  These are exactly the denials worth watching. During an adapter outage the
+  engine refuses every request while `iamCreateMetricsAggregator().snapshot()`
+  held `total` and `deny` flat — an authorization failure that reads on a
+  dashboard as a traffic drop rather than a deny spike, and a security log fed by
+  `onDeny` that records nothing for the whole window.
+
+  Every verdict now reaches the observers. `decision.failure` names the path:
+  `'input'` for a malformed subject id, `'resolution'` for a subject or policy
+  load that threw, `'evaluation'` for a throw mid-check. `permissions()` emits one
+  per map entry, because there is one verdict per map entry, and
+  `{ telemetry: false }` still reports the deny while skipping the metric, as it
+  already did on the evaluated path. A malformed id does not also fire `onError`:
+  it is input, not a fault.
+
+  ### A mistyped `scopeCombine` widened the role set
+
+  `policyCombine` has a boot-time guard because both evaluators branch on one
+  literal and fall through to the most permissive option for anything else. The
+  two scope settings have the identical shape and had no guard at all.
+
+  `scopeCombine` is the sharper of the two, because its fall-through is the
+  *wider* branch. A subject holding `admin` at `org-1` and `viewer` at
+  `org-1.team-a`, checked at `org-1.team-a` under `scopeMode: 'hierarchical'`,
+  resolves to `['viewer']` with `'override'` and to `['admin', 'viewer']` with
+  anything that is not that exact string — so `'overide'` in a config file
+  silently handed the caller every ancestor scope's roles, and `can('delete')`
+  flipped from `false` to `true`. `scopeMode` falls through to `'flat'`, which is
+  narrower, but it still means a hierarchical deployment quietly stops honouring
+  descendant scopes.
+
+  Both are now refused at construction with the same message shape as
+  `policyCombine`, so a bad value is a failed start rather than a quiet change of
+  meaning.
+
+  ### A mistyped `mode` turned every deny into an allow
+
+  `IConfig.mode` was assigned with a bare `?? 'production'` and never checked,
+  while every site that reads it compares `this._mode === 'production'`. So
+  `'prodution'` did not fail, and did not run production either — it selected
+  development behaviour at all nine sites at once.
+
+  The worst of those is `check()`. In development it answers an `IDecision`
+  object instead of a bare boolean, and that object is truthy even when it
+  denies, so `if (await engine.check(...))` admitted every denial. TypeScript
+  could not catch it: `TMode` is a type argument that `mode` does not have to
+  agree with, so the call site still read as `boolean`. `explain()` also became
+  callable, exposing policy ids, rule ids and condition values in what the
+  operator believed was production, and the existing
+  `mode: 'production'` + `policyCombine: 'first-applicable'` guard was bypassed,
+  because the typo is not the string that check compares against.
+
+  `mode` is now refused at construction with the same message shape as
+  `policyCombine`, which also closes the `first-applicable` bypass.
+
+  ### `constructor` and `toString` were usable as condition operators
+
+  `evalCondition` dispatched with a bare `ops[cond.operator]` and then checked
+  `typeof op !== 'function'`. `ops` is an object literal, so every
+  `Object.prototype` member is a function on it and passed that check.
+  `constructor` returned a boxed object and `toString` returned the string
+  `"[object Undefined]"` — both truthy — so the condition reported as satisfied
+  without ever comparing anything.
+
+  A rule carrying one fired unconditionally: an allow rule granted, and a deny
+  rule guarded by `none` was retired. It happened in both modes, because the fast
+  path's `conditionMayThrow` had already classified these names correctly — it
+  uses `Object.hasOwn` — and handed the policy to the interpreter, which is where
+  the truthy answer came from.
+
+  The write-path validator refuses these names, so only a row that reached
+  storage another way — a seed, a migration, a direct write — could carry one.
+  That is the same gap `preload({ validator: true })` exists to close.
+
+  Dispatch is now own-property only in `evalCondition`, in the interpreter's
+  combining-algorithm lookup, and in the public `iamEvaluateOperator`, which
+  previously let a policy linter report such a condition as satisfied.
+
+  ### A mistyped `deny` was outvoted by its own policy's allow
+
+  `IRule.effect` is typed `'allow' | 'deny'`, and every branch that reads it tests
+  both names positively. An earlier fix made an unrecognised effect vote for
+  neither side, which is fail-closed for a policy whose *only* rule carries it —
+  nothing matches, so `defaultEffect` answers — and that is the shape that was
+  tested.
+
+  Give that deny a sibling allow in the same policy and it inverts. Measured, one
+  `deny-overrides` policy with an unconditional allow and a second rule spelled
+  `'DENY'`: `can()` answered **true**, against `false` for `'deny'`. The compiled
+  table agreed, by a different route: its flat model reads a non-allow effect as a
+  deny, so the cell became DYNAMIC, and the DYNAMIC cell asks the combiners, which
+  read it as neither.
+
+  An unrecognised effect is now Indeterminate rather than an abstention, which is
+  the same rule already applied to an unanswerable condition and an unknown
+  combining algorithm. `policyHasDenyRule` counts anything that is not `'allow'`,
+  so the Indeterminate denies instead of casting `defaultEffect`, and the policy
+  is reported through `onPolicyError` naming the offending rule.
+
+  The write path refuses these rows, so only a seed, a migration or a direct write
+  can carry one.
+
+  ### A deny with a broken priority was outranked by every allow
+
+  `first-match` and `highest-priority` rank matched rules by `rule.priority`.
+  `rulePriority` read a priority that was not a finite number — `NaN`, `null`,
+  `'urgent'`, or absent — as `0`. That is a real rank, the lowest meaningful one,
+  so the rule stayed in the ranking and lost to any allow above it.
+
+  Measured, a `highest-priority` policy holding an unconditional allow at priority
+  5 and a deny carrying `'urgent'`, `-Infinity` or no priority at all: `can()`
+  answered **true** in both evaluators, against `false` for the same deny at
+  priority 9. Reading it as `-Infinity` loses the same way.
+
+  A priority the engine cannot rank is now Indeterminate, matching the rule
+  already applied to an unanswerable condition, an unknown combining algorithm and
+  an unrecognised effect. Both evaluators refuse it at policy level, after the
+  NotApplicable tests they already share, so they refuse exactly the same
+  requests; the compiled table's flat model never reads `priority`, so such a
+  policy is forced out of it. `deny-overrides` and `allow-overrides` do not rank,
+  and are unaffected.
+
+  The write path refuses these rows, so only a seed, a migration or a direct write
+  can carry one.
+
+  ### Production allowed what development denied for a rule with no conditions object
+
+  `IRule.conditions` is required, and `evalConditionGroup` refuses anything that
+  is not a condition group. The fast path's `conditionMayThrow` classifier
+  disagreed: it read a node that is not an object — `undefined`, `null`, a string,
+  a number — as a leaf that cannot throw. So `idx.mayThrow` stayed false, the fast
+  path scanned the policy itself instead of handing it to the interpreter, and
+  `allow-overrides` returned on its first unconditional allow without ever
+  reaching the broken rule.
+
+  Measured, an `allow-overrides` policy with an unconditional allow and a deny
+  whose `conditions` was absent, `null` or a string, made residual by a `*`
+  resource: `can()` answered **false** in development and **true** in production.
+  The same shape nested one level down (`{ all: [null] }`) behaved the same way.
+
+  A non-object node is now a throw site at every depth, so the fast path delegates
+  and both modes refuse identically.
+
+  `evalConditionGroup` also reports it properly. `'all' in group` raises a bare
+  `TypeError` on a non-object, which is Indeterminate to a caller but arrives
+  without a duck-iam message — and it fired before the branch written to describe
+  a non-object could run, so that branch was unreachable. The non-object test now
+  runs first and throws `IamConditionGroupError('unknown-keys')` naming what it
+  saw.
+
+  The write path refuses these rows, so only a seed, a migration or a direct write
+  can carry one.
+
+  ### `explain()` disagreed with the decision it was explaining
+
+  `explain()` reaches its verdict through its own combiner switch and its own
+  target matching, which makes it a third evaluator — and nothing compared it to
+  a verdict. Adding that comparison to the 6000-catalog differential found five
+  disagreements.
+
+  Reported **allow** where `can()` denied: an unrecognised `rule.effect` (the
+  combiner matches `'deny'` and `'allow'` positively, so a mistyped one voted for
+  neither) and a non-finite `rule.priority` (never checked at all). An unknown
+  combining algorithm fell off the end of the switch and raised
+  `Cannot destructure property 'effect'` out of `explain()` itself, so the
+  diagnostic crashed on exactly the input it exists to explain.
+
+  Reported **deny** where `can()` allowed: a throwing condition on a rule that
+  does not target the request poisoned the whole policy, though `ruleApplies`
+  never evaluates such a rule's conditions; and a throwing permission inside the
+  allow-only RBAC union was not allowed to abstain, though the decision path lets
+  it.
+
+  The policy-level refusals now come from one place and run behind the same
+  rule-target test the two evaluators share. `explain()` answers `defaultEffect`
+  directly when no rule matched, so the combining algorithm is never consulted
+  where it has no arm, and the hand-copied policy target matcher is gone in
+  favour of `policyApplies`. A non-object condition group is reported by name in
+  the trace rather than as a bare `TypeError`.
+
+  ### A role grant retired an explicit deny under `first-applicable`
+
+  `policyCombine: 'first-applicable'` stops at the first policy that is not
+  NotApplicable, so whichever policy comes first is the decision. `loadAllPolicies`
+  handed over the synthetic `__rbac__` policy first — a policy the operator never
+  wrote, generated from the role definitions.
+
+  It is applicable to any action/resource pair *any* role grants, so it decided
+  both ways it should not have. A subject holding a role that grants
+  `delete` on `post` got that allow and never reached the ABAC policy denying a
+  locked post: granting a role widened access past an explicit deny. A subject
+  holding no such role got the RBAC policy's `defaultEffect` deny and never
+  reached an ABAC policy that would have allowed.
+
+  The generated policy now goes last, in `evaluate` and in `explain`'s
+  `decideFinal` through one shared helper, so the trace and the decision cannot
+  name different policies. `'and'` and `'allow-overrides'` fold every applicable
+  vote and are unchanged. The order of the stored policies themselves is still the
+  adapter's row order, as it is for rule order, and no adapter orders
+  `listPolicies`.
+
+  ### A mistyped action in a policy rule was reported for roles and not for policies
+
+  `createIam` constrains `engine.check` to the declared action and resource
+  unions, so anything a rule names outside them can never be requested.
+  `createIam(...).validateRoles` has always reported that for a grant —
+  `UNREACHABLE_TARGET`, an error. `createIam(...).validatePolicy` did not pass the
+  vocabulary through at all, so the same typo in a policy rule returned
+  `valid: true`.
+
+  The direction that matters is the deny. A policy that allows `'*'` on `post`
+  and means to deny `delete`, written `actions: ['delet']`, answers `can('delete',
+  'post')` with `true`; spelled correctly it answers `false`. Nothing reported it.
+
+  `validatePolicy` now takes the same optional declared surface and checks
+  `rule.actions`, `rule.resources`, `targets.actions`, `targets.resources` and
+  `targets.roles`. Patterns are cleared through the engine's own `matchesAction`
+  and `matchesResource`, so a prefix is accepted on exactly the values it would
+  match at runtime and the action axis's lack of a dot form is honoured. The bare
+  `validatePolicy` export is unchanged, as the bare `validateRoles` is.
+
+  ### A role grant the engine honours was reported as unreachable
+
+  The vocabulary pass `createIam(...).validateRoles` runs matched a grant against
+  the declared list with `includes`, so only a literal or `'*'` could clear it.
+  `validateRoles` takes the **unconstrained** `IRole` on purpose — it exists for
+  rows read from a store, a config file or an admin form — and the engine honours
+  a prefix pattern in a role permission: `{ action: 'post:*', resource: 'org.*' }`
+  grants `post:create` on `org.team` and nothing else.
+
+  That grant came back `valid: false` with two `UNREACHABLE_TARGET` errors, which
+  `PolicyBuilder`-style callers and admin UIs read as a refusal. Each axis is now
+  cleared by the matcher the engine actually uses — `matchesAction`,
+  `matchesResource`, `matchesScope` — so `'post:*'` and `'org.*'` pass, while
+  `'admin.*'` on the action axis is still reported (there is no dot form there)
+  and `'org-1.*'` as a scope is still reported (scopes match exactly).
+
+  ### A non-string entry in `policy.targets` retired the policy, or the whole engine
+
+  `validatePolicy` type-checked every entry of `rule.actions` and `rule.resources`
+  — string, no control characters — and checked `targets.actions`,
+  `targets.resources` and `targets.roles` only for `Array.isArray`. Not one entry
+  inside them was looked at, and the vocabulary pass skipped a list that was not
+  already all strings, so a malformed target was the one corner nothing read.
+
+  Both outcomes are reachable from a policy the validator called `valid: true`:
+
+  * **A target the roles axis cannot match retires the policy's denies.**
+    `targets.roles` is compared with `includes`, so a number — or a role id
+    carrying a stray control character — matches no subject. The policy becomes
+    NotApplicable for everyone and the deny inside it never runs. Measured with a
+    policy that allows `'*'` and denies a locked resource: with
+    `targets: { roles: ['editor'] }` the locked request answers `false`; with
+    `roles: [42]` it answers `true`.
+  * **A target on the action or resource axis takes the process down.**
+    `matchesAction` calls `.endsWith` on the pattern, so a number throws while the
+    compiled table is being built. The engine fails closed and warns, but every
+    request in that process is denied until the row is removed.
+
+  Entries are now checked the way rule entries always were, per axis and per
+  index, so the write path refuses the row: `savePolicy` reports
+  `targets.roles[0] must be a string`. Rows already in a store are not
+  re-validated, so the runtime behaviour above is pinned by tests rather than
+  changed.
+
+  ### The published policy schema refused four shapes the validator accepted
+
+  `POLICY_JSON_SCHEMA` is published so operators can gate policies in an admin UI
+  or in CI, and its contract is one-directional: anything it rejects,
+  `validatePolicy` rejects too, so a policy the runtime accepts always validates
+  there. Four shapes broke that, all of them fields `IPolicy` and `IRule` already
+  type:
+
+  | Shape                                   | `validatePolicy` | schema   |
+  | --------------------------------------- | ---------------- | -------- |
+  | `description` on a policy, not a string | accepted         | rejected |
+  | `description` on a rule, not a string   | accepted         | rejected |
+  | `metadata` on a rule, not an object     | accepted         | rejected |
+  | `targets: null`                         | accepted         | rejected |
+
+  `description` and `metadata` were listed in the known-key sets and type-checked
+  nowhere; `targets: null` was explicitly skipped. The validator now checks all
+  four, which is the side that was wrong — no adapter produces any of them (both
+  drizzle and prisma drop a null column rather than passing it on), and `explain()`
+  renders a rule `description` into the trace it hands an operator.
+
+  **Behaviour change:** `savePolicy`, `admin.import()` and `PolicyBuilder.build()`
+  now refuse a policy carrying `targets: null` or a non-string `description`.
+  TypeScript callers cannot write any of these shapes; plain-JS and JSON callers
+  that did were writing a policy the published schema already rejected.
+
+  ### The fuzzer pinning that contract tested it on 147 policies out of 4000
+
+  The randomised half of `schema-validator-agreement.test.ts` generated each slot
+  independently from its own pool, so almost every policy was invalid for some
+  unrelated reason and never reached the implication under test — `validatePolicy`
+  accepted 147 of 4000. `targets` was not in the generator at all (one constant,
+  `{ actions: ['read'] }`), and `description`, `metadata` and `priority` were
+  constants too, which is why the four shapes above survived 4000 passes a round.
+
+  Its non-vacuity guard asked a *different*, simpler generator whether it produced
+  accepted policies, so the number it reported said nothing about the generator
+  being pinned.
+
+  The generator now builds a valid policy and perturbs one slot (sometimes two)
+  from a pool covering every optional field, and the guard runs on that same
+  generator: 1417 of 4000 accepted, against a floor of 1000. Reverting any of the
+  four fixes above now fails it; before the rewrite, reverting the `rule.metadata`
+  fix did not.
+
+  ### Vue's access state shared the permission map the caller still held
+
+  `createAccessState(map)` put the caller's object straight into its `ref`, and
+  `update(next)` assigned `next` itself. React's `AccessProvider` and the vanilla
+  `IamAccessClient` both copy the map in and both say why in a comment;
+  `createIamPermissionChecker` shares it deliberately and documents that. Vue was
+  the one surface that shared it silently — and it shared in both directions,
+  since the `Ref` also hands the stored object back through `permissions.value`.
+
+  So on Vue, and only on Vue, `map['delete:post'] = true` after construction made
+  `can('delete', 'post')` start answering `true`, with no reactivity triggered:
+  `ref()` sees an assignment to `.value`, not an edit inside the object it holds.
+  The same write through `state.permissions.value` did the same thing. The map is
+  client-side and the server re-checks, so this is a UI-correctness and
+  cross-binding-consistency bug rather than a bypass — a gate rendered from a map
+  somebody else could edit.
+
+  `createAccessState` now stores `Object.freeze({ ...map })`, in the constructor
+  and in `update`, which closes both directions: the copy defends the map you
+  handed in, the freeze defends the one you read back.
+
+  The reference doc's ownership matrix was wrong in two more cells while it was
+  there: it said a write into the map React's `AccessProvider` hands back changes
+  `can()`, but that snapshot has been frozen all along. All four surfaces are now
+  pinned by one table-shaped test rather than by prose.
+
+  ### A Next route handler's own error was reported as an authorization failure
+
+  `withIamAccess` wrapped the route handler in the same `try` as the permission
+  check, so anything the route threw came back through the adapter's `onError` —
+  documented as *"handles thrown errors during evaluation"* — and the client got
+  the IAM layer's 500 `{error:'Internal server error'}` instead of whatever the
+  route meant to answer. Next's own error handling never saw it.
+
+  Only half the time, which is the part worth knowing. The call was spelled
+  `return handler(req, ctx)`, with no `await`, and an unawaited `return` inside a
+  `try` still routes a *synchronous* throw to the `catch` while letting a
+  rejection past. So the same route error behaved differently depending on
+  whether the route was declared `async`.
+
+  Hono had this fixed a round earlier, and it was written up then as hono being
+  "the only one of the five". That was wrong: the check behind it looked for an
+  *awaited* downstream call inside the try, and `withIamAccess` was not awaiting.
+
+  `handler(req, ctx)` now sits outside the try, as `await next()` does in hono.
+  `cross-adapter.test.ts` runs the assertion against both spellings, and a new
+  express control in the HTTP e2e boots a real express app to show why the one
+  adapter still calling its downstream inside the try is unaffected: express
+  dispatches each layer inside a try of its own and turns the throw into
+  `next(err)` before it could unwind.
+
+  ### A malformed role grant in the file store turned a deny into an allow
+
+  The file adapter's assignment parser dropped a malformed `{role, scope?}`
+  entry, reported it through `onPolicyError`, and answered the read with the
+  grants that did parse. Losing a grant reads like *less* authority, so this
+  looked safe. It is not: a policy's `targets.roles` names the subject's
+  **grants**, and `policyApplies` drops a policy whose targets no longer
+  intersect the subject's roles. A deny policy targeting `banned` stops applying
+  the moment the `banned` grant cannot be read, and the allow that the same file
+  grants through another role carries the decision.
+
+  Measured through the engine, with an `allow-all-read` policy and a
+  `deny-banned` policy targeting `targets.roles: ['banned']`: a subject holding
+  `reader` + `banned` is denied; the same subject whose `banned` entry is
+  `{role: 'banned', scope: 5}` — a number where a string belongs — is **allowed**.
+  Same for `{role: 42}`, for a bare string entry, and for a row that is not an
+  array at all.
+
+  The same file already fails closed for a corrupt *attributes* row, for the same
+  stated reason, so the fix is that design applied to assignments: the row moves
+  into `corruptAssignments`, `getSubjectRoles` and `getSubjectScopedRoles` throw,
+  and `assignRole` / `revokeRole` / `updateAssignmentScope` refuse — an
+  incremental edit would write back a row with the unreadable entry silently
+  gone.
+
+  The second half was worse than the read. `_serializableState` wrote the
+  *parsed* assignments back, so the next flush of any kind — an unrelated grant
+  for another subject — erased the malformed entry from disk permanently, and the
+  store then looked clean. The raw row is now written back verbatim, as the
+  corrupt attributes row already was, so the file still holds what an operator
+  has to repair. `deleteRole` cannot sweep a row it refuses to read, and now
+  reports each one it skipped rather than implying the role is gone.
+
+  ### The HTTP adapter answered a subject read with the half of the list that parsed
+
+  The same defect as the file store above, at the adapter where the payload is
+  remote and least trusted. `parseHttpSubjectRoles` skipped any element that was
+  not a non-empty string and `parseHttpSubjectScopedRoles` skipped any element
+  whose `role` or `scope` was not one, both silently, and both returned the rest.
+  A test pinned that as correct on the premise that "roles are allow-only" — the
+  premise the file-store finding had already disproved.
+
+  Measured through the engine over a fake server, with a `deny delete:post`
+  policy at `targets.roles: ['contractor']` and a subject holding `editor` +
+  `contractor`: the well-formed list denies, and the same list with the
+  `contractor` entry arriving as `{role: 'contractor', scope: 'org-1'}` — the one
+  server mistake the endpoint contract explicitly warns about — **allows**, with
+  nothing reported. Same for `null`, `42` and `''` in that position. A payload
+  where *every* element is malformed already failed closed, because a subject with
+  no roles has no allow either; only the partial list flipped the verdict, which
+  is why it survived.
+
+  `adapters-runtime.md` had documented the throwing behaviour as the contract for
+  both methods for as long as the drop existed. The parsers now match it: the
+  element that will not parse fails the read, naming its index and its type but
+  never its value. A row carrying no `scope` on `/scoped-roles` throws too — the
+  two endpoints are disjoint by contract, so that row is the server mixing them
+  up rather than a global grant. A malformed *catalog* row from `GET /roles` is
+  still dropped and reported, because a policy left targeting it is now reported
+  in its own right; a dropped grant has no such witness.
+
+  ### A subject's grant of a role nothing defines lost every role it inherited
+
+  The grant-side half of the target check above, and the case that one could not
+  see. `resolveEffectiveRoles` deliberately keeps a directly assigned role id that
+  no stored role defines, so the id still matches an ABAC rule naming it and the
+  grant looks intact. But there is no row to read `inherits` from, so every role
+  that id conferred is silently absent — and a deny targeting one of *those*
+  retires.
+
+  Measured through the engine with a `deny delete:post` policy at
+  `targets.roles: ['contractor']` and a subject holding `staff` + `editor`, where
+  `staff inherits contractor`: with the `staff` row present the subject is denied;
+  with the `staff` row missing from the catalogue the subject is **allowed**, and
+  nothing is reported — the policy's own target, `contractor`, is stored and
+  healthy, so the target check stays quiet. A subject holding `contractor`
+  directly is still denied, and one holding only `editor` is still allowed, which
+  is what makes the middle row a finding rather than an engine that denies.
+
+  Four adapters drop a malformed role row rather than refusing it, on the reasoning
+  that role permissions are allow-only and a role nobody can resolve grants
+  nothing. The first half is true and the second does not follow: the drop is
+  tolerable only because something reports the grants left pointing at nothing.
+  Now something does, de-duplicated per role id — the absent definition is what
+  needs repairing and every holder shares it. Both grant paths report, global and
+  scoped. It changes no verdict.
+
+  The premise had been written into five comments and a test-file header across
+  the adapters; those now say what is actually true.
+
+  ### A misspelled action or resource target retired a policy in silence
+
+  The third carrier of the same defect. `targets.actions` and `targets.resources`
+  are matched against the request, so an entry naming an operation the policy's
+  own rules never mention admits nothing and the policy is skipped for every
+  request — the same retired deny as a `targets.roles` entry naming no stored
+  role, which is already reported.
+
+  Measured with a `deny delete:post` rule: `targets: {actions: ['delte']}` allows,
+  `{resources: ['psot']}` allows, and both are silent, while the identical typo in
+  `targets.roles` is reported. Spelled correctly, or with no targets at all, the
+  deny fires.
+
+  No catalogue is needed to see it. The engine is never handed the declared
+  vocabulary — that lives on `createIam` and reaches only its `validatePolicy`,
+  which callers invoke or do not — but a policy's own rules are the vocabulary
+  that matters: if no pattern in any rule could match a request the targets admit,
+  the policy cannot fire whatever the catalogue says. Pattern intersection follows
+  the matchers, so `*` intersects anything and a prefix form keeps its separator,
+  leaving `post:*` and `post.*` disjoint exactly as `matchesResource` treats them.
+  One live rule among dead ones keeps the policy reachable and quiet.
+
+  ### A condition reading a misspelled path silently stopped its deny from firing
+
+  One level below the targets: a rule's condition `field`. `resolve` answers
+  `null` for a path whose root is not `subject`, `resource` or `environment`, and
+  for one carrying a prototype key at any segment — on every request, for every
+  input. The rule then never matches, and the deny never fires.
+
+  Measured with a deny given a companion allow in the same policy, so the verdict
+  distinguishes a deny that fired from one that did not:
+  `subject.attributes.banned` denies, `resource.attributes.sensitive` denies, the
+  same subject unbanned is allowed — and `user.banned`,
+  `Subject.attributes.banned`, `subject.__proto__.banned` are all **allowed**,
+  with nothing reported.
+
+  The oracle already existed. `isResolvablePath` is exported for the validator and
+  kept in parity with `resolve` by its own test; it had no caller on the load
+  path, because `validatePolicy` is something users invoke and the engine does
+  not. The engine now runs it over every rule's conditions when policies load,
+  reporting once per policy, rule and path.
+
+  Deliberately not reported: a path that is merely *absent*, such as
+  `subject.attributes.bannd`. Its root is legal and its shape resolvable — whether
+  the key exists is a fact about the request, and attributes are open-ended. Also
+  not reported: a `$`-prefixed value operand, which `evalCondition` already
+  reports and answers Indeterminate rather than false.
+
+  ### A rule its own policy's targets excluded could never fire, and the policy looked fine
+
+  The mirror of the dead-target check above. Reporting only when *no* rule matches
+  the targets left the harder case: the policy is reachable, one rule inside it is
+  not. The policy fires, so nothing looks wrong — and the deny in the excluded
+  rule is gone, better hidden than one in a policy that never applies.
+
+  Measured with an allow and a deny in the same policy under
+  `targets: {actions: ['delete']}`: the deny spelled `delete` denies, the deny
+  spelled `delte` **allows**, and nothing was reported either way, because the
+  allow rule kept the policy reachable. Same by resource.
+
+  Each excluded rule is now reported on its own, once per policy, rule and
+  dimension. A policy whose rules are all excluded is still reported once at the
+  policy level rather than once per rule. A wildcard target admits everything, and
+  a policy with no targets has nothing to judge its rules against, so both stay
+  quiet.
+
+  **The test that had to change.** The dead-target work had pinned "one live rule
+  among dead ones keeps the policy reachable" with `reported: []`. That was the
+  conservative choice at the time and this round measured it wrong: the policy is
+  reachable, and the dead rule still needs naming. It now asserts the policy-level
+  silence *and* the new per-rule report.
+
+  ### A `0` that switches off a timeout or a cap now says so
+
+  `adapterTimeoutMs`, `hookTimeoutMs` and `maxConcurrentSubjectLoads` all read `0`
+  as "off", and each one turned off is a fail-closed mechanism. With a timeout, an
+  adapter that stops answering makes `can()` deny; with `0` the check hangs
+  instead, and never returns. A hook whose promise never settles does the same to
+  the evaluation. An unbounded subject loader never sheds a cache-miss burst.
+
+  The non-finite guard beside them cannot catch this - `0` is legal and
+  documented. What makes it worth reporting is that `Number('')` is `0`, so an
+  environment variable that is set but empty lands on the off switch, while an
+  unset one gives `NaN` and is refused outright.
+
+  Each now warns once per process at construction, naming what stops happening.
+  Nothing changes for the defaults or for any real value.
+
+  ### The Express middleware no longer answers for errors that are not its own
+
+  Hono and Next both call the downstream handler outside their `try`, each with a
+  comment saying why: a route's own error belongs to the framework, not to the
+  authorization guard. Express called `next()` inside it.
+
+  Express 4 invokes the next middleware synchronously, so a route that threw
+  synchronously came back out of `next()`, was caught by the authorization
+  middleware and was answered by its `onError` - a fixed 500 that pre-empts the
+  app's own error-handling middleware and reports a route failure as an
+  authorization failure. Both `iamAccessMiddleware` and `iamGuard` were affected.
+
+  Both now let a route error past. Evaluation errors, a throwing `getUserId` and
+  every other failure the guard is responsible for still reach `onError`
+  unchanged, and a denial still answers 403 without calling `next()`.
+
+  ### `mode: 'development'` now announces itself, like the other fail-open setting
+
+  `defaultEffect: 'allow'` has always warned unconditionally at construction, so
+  that a log search for fail-open configurations finds it. Development mode is the
+  other one, and the sharper of the two: under fail-open a deny still answers
+  `false`, but in development `check()` and `authorize()` answer an `IDecision`,
+  and an object is truthy even when `allowed` is `false`. `if (await
+  engine.check(...))` therefore allows every request, denies included. It warned
+  nothing.
+
+  The constructor now warns once per process, naming that consequence rather than
+  just the mode, and pointing at `.allowed` and at `can()`, which stays a boolean
+  in both modes. Worth knowing because `policyCombine: 'first-applicable'` is
+  refused in production, so choosing that combine chooses this mode with it.
+
+  ### `setInvalidator` no longer leaves an engine attached in one direction only
+
+  The invalidator was stored before `subscribe` returned, so a `subscribe` that
+  threw left an engine that publishes its own revocations and applies nobody
+  else's: stale for the life of the process, fleet-wide, with `healthCheck()`
+  reporting nothing about it. It is now stored only after `subscribe` returns, the
+  engine is left fully detached, and the error reaches the caller.
+
+  `dispose()` detaches the invalidator as well as releasing the subscription, for
+  the same reason - an engine that has stopped receiving but still broadcasts is
+  the worse half of the pair to keep.
+
+  Two things `subscribe` can hand back are now reported instead of absorbed. A
+  return value that is not a function means the subscription can never be
+  released, so nothing callable is stored and a warning says so. A teardown that
+  throws is still caught - it must not mask the reason for shutting down - but is
+  warned about, because the subscription may still be delivering into an engine
+  that was already released.
+
+  ### An invalidation the engine cannot apply now drops the caches instead of being ignored
+
+  Events arrive from a transport the operator writes, so the engine now
+  shape-checks what it receives rather than trusting the handler parameter's type:
+  `kind` must be one of the four, a `subject` event must carry a non-empty string
+  `subjectId`, and a `roles` event may carry a non-empty string `roleId` or none.
+
+  Anything that fails that check is applied as `{kind:'all'}` - every local cache
+  and the compiled table dropped - and warned about once per distinct reason.
+  Before, an unrecognised `kind` was silently ignored, so a newer peer's event
+  during a rolling deploy left older instances serving the answer that peer had
+  just said was stale; and an event that was not an object threw out of the
+  handler, which on an EventEmitter transport is an uncaught exception. A value
+  that cannot even be inspected, such as a throwing getter or a revoked proxy, is
+  now a reason rather than a throw.
+
+  Note the trade: a transport that delivers malformed messages repeatedly will now
+  drop the caches repeatedly where before it did nothing. The warning names the
+  reason. There is no fleet amplification - every applied branch is local only.
+
+  The shipped redis invalidator already validated each decoded event and never
+  reached this path.
+
+  ### An invalidator whose `publish` fails can no longer take the process down
+
+  `IInvalidator.publish` is operator-supplied code, is allowed to return a
+  promise, and runs on the revocation path. The engine called it as a bare
+  `void publish(...)`, so a rejection was unhandled - fatal under Node's default
+  `--unhandled-rejections=throw` - and a synchronous throw came back out of
+  `admin.revokeRole` as a failure, for a revoke that had already landed and
+  already cleared the local caches.
+
+  Both are now caught, as every other advisory callback in the engine already was,
+  and reported as one `console.warn` naming the event kind and stating that this
+  instance is up to date while other instances keep their caches until their own
+  TTL expires. No verdict changes, and the local caches are cleared before the
+  publish either way, so a transport failure degrades to per-instance TTL
+  staleness rather than to a local one.
+
+  The shipped redis invalidator already absorbed and reported its own publish
+  failures, so it never reached this path.
+
+  ### A write that timed out no longer leaves the old answer cached
+
+  `adapterTimeoutMs` bounds how long the caller waits, not how long the store
+  takes, and an admin write takes `IActorOptions`, which carries no abort signal.
+  So a write that times out may well land a moment later. Until now the
+  invalidation that follows the write was skipped in that case, and the engine
+  kept serving the old answer for a full cache TTL: `revokeRole` could time out,
+  the row could be deleted in the store, and `can()` would still return `true`.
+
+  Every single-row admin write — `savePolicy`, `deletePolicy`, `saveRole`,
+  `deleteRole`, `assignRole`, `revokeRole` and both paths of
+  `updateAssignmentScope` — now invalidates whether the call resolves or throws.
+  Dropping a cache entry for a write that did not land costs one re-read; keeping
+  one for a write that did land is a revocation that never took effect. The batch
+  methods already worked this way.
+
+  `hooks.onMutation` is deliberately unchanged: it still fires only after a write
+  resolves, because an audit seam that records writes which may not have happened
+  is worse than one that misses a write whose outcome was never learned.
+
+  ### A rule that no request can reach is now reported
+
+  A rule can be unreachable for reasons wholly inside itself, and until now
+  nothing said so. An empty `actions` or `resources` list matches nothing. An
+  empty `any` group is false for every request - while an empty `all`, an empty
+  `none` and `{}` are all true, so the one spelling that reads like "no
+  conditions" is the one that retires the rule. `in` against an empty list can
+  hold for no value. And a `none` group holding an item true for every request is
+  false for every request.
+
+  In each case a deny written that way never fires and the policy around it looks
+  healthy. The engine now reports each unreachable rule once through
+  `hooks.onPolicyError`, or one `console.warn` when no hook is installed. No
+  verdict changes.
+
+  Only falsity that reaches the rule is reported: the walk descends `all` chains
+  and stops under `any`, where a false item is a dead disjunct, and under `none`,
+  where a false item helps the rule apply. `subset_of` and `superset_of` against
+  an empty list are left alone because an empty array field satisfies them - a
+  fact about the request, not the policy.
+
+  `validatePolicy` already rejected the empty lists, but nothing on the load path
+  calls it, so a seeded row or a migration carried them straight past; the two
+  condition shapes were unguarded even at write time. Relatedly, a rule with an
+  empty list inside a policy that has `targets` was previously reported as one
+  the policy's targets exclude. That was a misdiagnosis - the rule is dead
+  whatever the targets say - and it now reports the rule's own list instead.
+
+  ### A deny written against `scope` does not follow the hierarchy its grant does
+
+  Reported and documented, not changed — the behaviour is each operator doing
+  exactly what it says.
+
+  In `'hierarchical'` mode a grant at `org-1` reaches `org-1.team-a`, because
+  `rolesToPolicy` emits `any: [eq 'org-1', starts_with 'org-1.']` for it. A rule
+  an operator writes gets no such help: `scope` is an ordinary field and there is
+  no `scope_under` operator, so each obvious spelling of "this scope and below" is
+  wrong in a different direction, and two fail *open*.
+
+  Measured with an allow and a deny in one policy, subject granted at `org-1`:
+  `eq 'org-1'` denies the parent and **allows** `org-1.team-a`; `starts_with
+  'org-1.'` denies the child and **allows** the parent itself; bare `starts_with
+  'org-1'` denies both but also reaches `org-10`, a different organisation. Only
+  the two-arm form is right, and it is the one the package already generates
+  internally.
+
+  `core-rbac.md` now states this where the generated condition is shown, with the
+  table of all four spellings, and `scope-deny-follows-no-hierarchy.test.ts` pins
+  them in both modes so it cannot drift. Whether to add a `scope_under` operator
+  is a public-surface decision and is on the open-findings ledger.
+
+  ### A recreated role id handed its permissions to everyone who inherited the old one
+
+  `deleteRole` removes the role and, on every adapter, the grants that named it —
+  with the reason written into the compliance suite: *"an orphan grant would be
+  held again if a role were recreated under the same id."* An `inherits` edge is
+  the other place a role id is written down, and nothing swept it. `iam_roles`
+  stores `inherits` as a JSON array, so the SQL foreign key that cascades the
+  grants cannot reach it either.
+
+  Measured on the memory and file stores: `u1` holds `reader` and `staff`, and
+  `staff` has `inherits: ['ghost']` where `ghost` grants `write:post`.
+  `deleteRole('ghost')` correctly takes the write away, but `staff.inherits` still
+  reads `['ghost']`. An operator then recreates `ghost` for something unrelated,
+  granting `delete:post` — and `u1` can delete, a permission nobody granted them.
+  `resolveEffectiveRoles` walks the surviving edge into the new role.
+
+  The interim protection was `resolveEffectiveRoles` dropping an inherited id no
+  role defines, which stops the *phantom-allow* half. It reads in one direction
+  only: a role id in `subject.roles` is also a selector — `policy.targets.roles`
+  matches it — so cutting the id retires the deny that was targeting it. Measured
+  on the same store: a subject reaching `banned` through `staff inherits banned`
+  is denied while `banned` is defined and **allowed** once its row is not. Both
+  directions escalate, so the state must not arise in the first place.
+
+  `deleteRole` now strips the edges as well as the grants, on all six adapters
+  (the HTTP adapter's reference server included), and the compliance suite pins
+  both the edge sweep and the end-to-end escalation, so a new adapter cannot miss
+  it.
+
+  ### The one write path the scope guard did not cover
+
+  `iamAssertAssignableScope` is the adapter-boundary guard that refuses two scope
+  values: `''`, because the redis adapter spells "no scope" as `''` and would
+  store it as a global grant, and `'*'` on a grant, because a scoped assignment is
+  matched *literally* — a `'*'` row answers only a request whose own scope is the
+  string `"*"`.
+
+  `assignRole` and `revokeRole` called it. So did drizzle's `assignRoleMany` and
+  `revokeRoleMany`. `updateAssignmentScope` — the third method that takes a scope
+  to write, and the only one that takes two — called it on neither end, on all
+  four adapters that implement it. Its own doc comment listed the two methods it
+  covered, which is why it read as complete.
+
+  Measured on memory, file, prisma and drizzle:
+  `updateAssignmentScope('u1', 'editor', 'org-1', '')` and the same with `'*'`
+  both returned `true` and left the subject holding `editor` under a scope no
+  request can name. The operator is told the grant moved; it is dead.
+
+  Both ends are now guarded — the `from` as a lookup, so a legacy `'*'` row can
+  still be moved off, the `to` as a grant — and two compliance clauses hold every
+  adapter to it.
+
+  ### The subject entry outlived the role snapshot it was resolved against
+
+  `IamLRUCache.set` takes a `notAfter` so a derived entry expires with its input,
+  and three call sites use it: the RBAC policy expires with the role snapshot, the
+  merged policies with the older of their two inputs, and the compiled table
+  stamps itself with the read time of its oldest input rather than `Date.now()`.
+
+  The subject entry is the fourth derived value and was not capped that way. It
+  holds `resolveEffectiveRoles(assigned, snapshot)` and, for scoped grants, roles
+  resolved through `inherits` against the same snapshot, so both halves are only
+  as fresh as the role graph they were resolved against. The one cap it did take,
+  the optional `getSubjectGrantBoundary`, describes the subject's *assignment*
+  rows and says nothing about the role graph.
+
+  Because each subject is written at its own moment, one resolved late in the
+  snapshot's life bought a full fresh TTL past it. Measured at the default
+  `cacheTTL: 60`, with the `staff -> admin` inherits edge removed at the store by
+  another writer: a subject resolved at t=50s still held `delete:post` at t=61s,
+  after the engine had re-read the role graph without that edge and was already
+  answering deny for every subject resolved since; it converged only at t=110s.
+  The exposure is up to one whole `cacheTTL` beyond the point the engine itself
+  knows the role changed, and it needs no adapter feature to reach - any engine
+  whose roles are written by something other than its own `admin` facet is in it.
+
+  The entry is now capped at `min(grantBoundary, roleCache.expiresAt('all'))`,
+  which costs nothing when the snapshot is fresh because the two are then the same
+  instant.
+
+  ### A policy targeting a role nothing defines was skipped in silence
+
+  `policyApplies` matches `targets.roles` by equality against the request's
+  effective roles and against nothing else; there is no catalogue lookup. An entry
+  naming a role no stored row defines therefore matches no subject, and the whole
+  policy is skipped on every request. A typo is enough.
+
+  For a deny policy that is a deny that never fires, which is the one outcome this
+  engine otherwise refuses to be quiet about - a policy that cannot be read throws
+  rather than being dropped, a condition that cannot be answered is Indeterminate
+  rather than `false`, a policy that throws still votes deny. Measured with every
+  diagnostic hook attached: a `deny delete:post` policy targeted at `contarctor`
+  instead of `contractor` let the subject delete, in both modes, with
+  `onPolicyError` and `onError` silent.
+
+  The second way in is `deleteRole`. It sweeps the grants and the `inherits` edges
+  that named the role, but it cannot sweep this carrier, and the asymmetry is not
+  an oversight: `targets.roles: []` means *unconstrained*, so stripping the last
+  entry would widen the policy from one role to every subject rather than narrow
+  it to none. There is nothing safe to rewrite and nothing to decide at evaluation
+  time, since the state is indistinguishable from a policy written before its
+  role.
+
+  So the engine reports it instead: one `onPolicyError` per `(policyId, roleId)`
+  for the engine's lifetime, or one `console.warn` when no hook is installed. Both
+  evaluator paths carry the check - the compiled-table build and the interpreter's
+  `loadAllPolicies` - because either can be the only one that runs, and the
+  de-duplication is what keeps development mode, where both run, from reporting
+  twice. It costs no extra adapter read and changes no verdict.
+
+## 5.9.0
+
+### Minor Changes
+
+* 8a2f514: Close three fail-open gaps and finish the invalidator log redaction.
+
+  **`RuleBuilder.build()` refuses a builder that was never configured.** The
+  defaults are the broadest possible grant — `allow` on `['*'] x ['*']` with
+  `{all:[]}` conditions, which evaluates true — so `.rule('x', (r) => { ...forgot... })`
+  silently pushed an unconditional allow-everything rule into the policy.
+  `PolicyBuilder.rule()` had claimed for some time that `build()` already refused
+  this; it did not. The validator does detect the shape (`BROAD_ALLOW`) but emits
+  it as `type:'warning'`, and `build()` keeps only `type:'error'`, so the verdict
+  was computed and discarded with no console output and no return channel.
+
+  The refusal is deliberately narrower than promoting `BROAD_ALLOW` to an error:
+  it targets *silence*, not breadth. A deliberate broad grant still builds — say
+  `.allow()` — and `validatePolicy` still accepts stored policies carrying one, so
+  existing policy data is unaffected. `desc()`, `priority()` and `meta()` annotate
+  a rule rather than shaping it and do not count as configuring it; `forScope('*')`
+  does count, because it is an explicit statement about scope even though it
+  narrows nothing.
+
+  **BREAKING:** `defineRule(id).build()` and `new RuleBuilder(id).build()` now
+  throw unless at least one of `allow`, `deny`, `on`, `of`, `forScope`, `when` or
+  `whenAny` was called.
+
+  **The `allowFailOpen` gate now covers every public evaluator entry point.**
+  `evaluate.public.ts` gated `iamEvaluate` / `iamEvaluateFast` and asserted its
+  wrappers were "the only route to the evaluator from outside the package". They
+  were not: the barrel re-exported the raw single-policy `evaluatePolicy` /
+  `evaluatePolicyFast` straight from `./evaluate`, and both reached the package
+  root, so `iamEvaluatePolicy(policy, req, 'allow')` answered `allowed: true` with
+  no opt-in and no warning. All four are now gated and pinned together by one test,
+  because a half-gated boundary is what made the original claim false.
+
+  **BREAKING:** `iamEvaluatePolicy` / `iamEvaluatePolicyFast` throw on
+  `defaultEffect: 'allow'` unless the new trailing `allowFailOpen` argument is
+  `true`, matching `iamEvaluate` and `IamEngine`.
+
+  **`explain()` and `can()` agree on condition groups again.** `evalConditionGroup`
+  distinguishes `{}` ("no conditions", unconditionally true) from a group carrying
+  unrecognised keys (false, so a typo cannot turn a conditional allow into an
+  unconditional one). `traceGroup`'s fallback collapsed both to `false`, so
+  `explain()` reported a denial for a rule `can()` allowed. The fallback now
+  delegates to `evalConditionGroup` rather than reimplementing it — this is the
+  third time a hand-copy of the decision logic has drifted from it.
+
+  **The Redis invalidator no longer logs raw tenant-bearing channels.** The earlier
+  redaction covered the two drop-warning sites only; `reportSubscribeFailure` and
+  the unsubscribe rejection handler still logged `JSON.stringify(channel)`, so a
+  NOAUTH, a wrong ACL or a reconnect window wrote the tenant id to stderr. Reaching
+  it needs no PUBLISH rights at all — a broker hiccup is enough.
+
+  **The untouched-builder refusal now gates on what the rule became, not on which
+  methods were called.** Three shapes still built the exact allow-everything rule
+  it was added to refuse. The one that matters is `.forScope(...tenantIds)` with a
+  runtime-empty array: `forScope` set the flag before discovering it had no scope
+  to apply, so a rule meant to be tenant-restricted built global and passed the
+  guard. `forScope` now throws when called with no scopes at all - a restriction
+  that names nothing can only be a call-site bug, and `'*'` is how "every scope"
+  is said out loud. `.when(w => w)` was the same shape: an empty `all` group is
+  `.every` over nothing, which is `true`, so it matches every request; an empty
+  callback no longer counts as configuring the grant. `.whenAny(w => w)` is left
+  alone deliberately - `.some` over nothing is `false`, so an empty `any` group
+  matches nothing and fails closed.
+
+  **BREAKING:** `.forScope()` with no arguments throws.
+
+  **A `$`-sourced `matches` operand is refused at validate time.** `evalCondition`
+  returns `false` for one without looking at the request - correctly, since a
+  caller-supplied pattern is a ReDoS vector - which makes the condition false for
+  every request that will ever arrive. `validate.libs.ts` skipped these with the
+  comment "Non-string / $-resolved values are caught elsewhere"; nothing caught
+  them. A `deny`-when-`matches` rule written against a request attribute validated
+  clean, stored clean, and never fired. New code `ERR_REGEX_USER_SOURCED`, an
+  error, matching the two sibling pattern checks beside it. The three literal
+  cases (uncompilable, over-long, catastrophic) were already errors and are
+  unaffected.
+
+  **`explain()` no longer throws where `can()` denies.** `evaluate` absorbs a rule
+  that throws as Indeterminate - the policy votes deny if it carries any deny
+  rule, else casts `defaultEffect` - while `explainEvaluation` had no `try` at
+  all. On an unknown operator, `conditions: {all: null}` or a non-array group it
+  raised out of the caller: a diagnostic failing on precisely the input it exists
+  to explain, which is also the shape a hand-edited store row produces. The
+  failure is now recorded on the rule trace as `conditionError` and the policy
+  casts the same Indeterminate vote, reusing decision's own `policyHasDenyRule`
+  rather than reading the rule list a second time. This is the fourth drift
+  between these two paths and the third caused by a hand-copy.
+
+  `Explain.IRuleTrace` gains an optional `conditionError`.
+
+  **A dangling inherited role id no longer becomes a phantom role.**
+  `resolveEffectiveRoles` added a role id to the effective set *before* looking it
+  up, so an id reached through `inherits` that no role defines landed in
+  `subject.roles` carrying no permissions - and a hand-written ABAC rule testing
+  `subject.roles contains 'ghost'` fired on it. The route in is ordinary: delete a
+  role while another still names it in `inherits`. `deleteRole` cascades the
+  *assignments* on every adapter, so the direct grant goes; the inherited id did
+  not. `validateRoles` already calls this state `DANGLING_INHERIT` with
+  `type: 'error'`, so dropping it is not a new opinion about the data. Directly
+  assigned ids are kept whether or not the catalog defines them - that is a row an
+  operator wrote, not one derived from one.
+
+  **BREAKING:** `getEffectiveRoles` and `subject.roles` no longer contain
+  inherited role IDs that no stored role defines.
+
+  **Prisma translates `P2003` into the shared unknown-role refusal.** An unknown
+  role produced ``Foreign key constraint failed on the field: `roleId` `` off the
+  driver - naming a column of a schema the operator may not have written, in a
+  string nothing can branch on - while four adapters raised one shared sentence.
+  The driver error is preserved as `cause`. The compliance suite gained the clause
+  that would have caught it, plus one requiring the refusal not to echo the
+  caller-supplied role id back into an operator log.
+
+  **BREAKING:** `runAdapterCompliance` takes a third `IComplianceOptions`
+  parameter. `delegatesRoleExistence: true` waives the *wording* of the
+  unknown-role refusal (not the refusal) for an adapter that delegates role
+  existence to a remote server - the HTTP adapter.
+
+  **Nest denies a handler whose `@IamAuthorize` metadata is unreadable.** The
+  guard read the metadata and treated anything falsy as "no decorator present",
+  so a handler decorated with metadata that did not survive serialisation - or
+  that arrived as `null`, `0` or `''` - was allowed through with no authorization
+  call at all. Presence and readability are now separate questions: no decorator
+  still allows, unreadable metadata routes to `onError` and denies.
+
+  **`iamOptionalStringField` refuses an explicit `null`.** It treated `null` as
+  "absent", so `{"scope": null}` on an admin route meant *unscoped* - a global
+  grant - where the caller had written something that reads like "no value". Omit
+  the field to mean unset.
+
+  **BREAKING:** an admin request body carrying an explicit `null` for an optional
+  string field is now a 400 instead of being silently read as absent.
+  `IamValidationError` gained `statusCode = 400`, which is the property Nest's
+  base exception filter duck-types.
+
+  **The admin audit trail records a refusal as a refusal.** `iamWithAdminAudit`
+  set `success: true` whenever the handler returned normally, and a handler that
+  returns a 400/403 response object returns normally - so a rejected mutation was
+  written to the audit log as a successful one. `savePolicy` / `saveRole` also
+  record the target id now, via the new `iamAuditIdOf`.
+
+  **The Redis invalidator reports dropped inbound messages.** A `secret` present
+  on some nodes and not others makes every peer invalidation drop in both
+  directions for the whole rollout; caches never converge and the failure is stale
+  *allow*. The only report was a `console.warn` coalesced to one line per minute.
+  New `onMessageDropped(reason, channel, suppressed)` hook. Separately, the
+  coalescing latch was keyed on the channel alone, so attacker-driven inbound
+  drops and publish failures shared one 60s budget - one junk message a minute
+  suppressed the publish-failure warning for a concurrent broker outage. The two
+  kinds now have separate keys.
+
+  **Derived caches inherit their inputs' expiry.** `IamLRUCache` gained
+  `expiresAt(key)`, and the RBAC-policy, merged-policy and compiled-table caches
+  now cap their own entries at the oldest input's expiry rather than restarting
+  the TTL clock. A policy-only invalidation used to re-age the role snapshot,
+  which was measured serving a stale allow for 118s under a 60s TTL.
+
+  **`IamSubjectsPanel` carries the devtools guard itself.** `package.json` exports
+  every panel individually under `./dt`, and the subjects panel - the only one
+  that writes, calling `assignRole` / `revokeRole` / `setAttributes` - had no
+  `isDevtoolsAllowed` anywhere in its path when imported directly.
+
+  **The admin read routes run the same authorization phase as the writes.**
+  Express, hono and next gated `GET /policies` and `GET /roles` on `authorize`
+  alone while nest ran the CSRF check too, so an operator whose `csrfCheck`
+  carried any part of an authorization decision had it enforced on reads on one
+  of four adapters, undocumented. All four now run `iamRunAdminAuthz`. This is
+  not a new refusal for API clients: `iamDefaultCsrfCheck` returns `true` when
+  there is no `Sec-Fetch-Site` header at all, which is every non-browser caller.
+
+  **Nest answers a failed admin mutation the way the other three do.** It threw
+  the handler's own error untouched, so an internal message reached the client -
+  in one of this package's own tests, a fake SQL string naming a password column.
+  Express, hono and next all answer a fixed `Internal server error`. Nest now
+  throws that, with the original attached as `cause` so a logger loses nothing,
+  and `includeErrorMessage` governs the audit string only, as it does elsewhere.
+  `IamNest.IAdminOptions` gained `onUnauthorized`, `onForbidden` and `onError`,
+  which the other three adapters already had.
+
+  **BREAKING:** a Nest admin handler that throws now surfaces
+  `Internal server error` (500) rather than the original error. Read `cause` for
+  the original. A validation failure surfaces as 400, as on the other adapters.
+
+  **One malformed admin request now gets one answer on all four adapters.**
+  `POST /subjects/:id/roles` with `{"roleId": ""}` was a 400 on hono, which
+  hand-rolled its checks inline, and a 500 on express, next and nest, whose shared
+  validators threw a bare `Error` that every generic `catch` routes to `onError` -
+  paging an operator for a client's typo and telling the client to retry something
+  that will never succeed. `{"roleId": "   "}` was a *write* on all four: the
+  checks read `length === 0`, so a blank id became a real grant on a role that
+  renders as nothing at all in an admin UI, while `iamIsNameableActor` next to
+  them had required `.trim().length > 0` all along. And hono capped ids at 128
+  characters where the other three applied no cap and let the engine's 1024
+  decide.
+
+  `iamRequireStringField`, `iamOptionalStringField` and `iamRequirePathParam` now
+  refuse a blank value and cap at `IAM_MAX_ADMIN_FIELD_LENGTH` (1024, the engine's
+  own cap, so the edge refuses exactly what the engine would), and they throw
+  `IamValidationError` so all four adapters answer 400 through the branch they
+  already had. Hono uses them instead of its inline copy.
+
+  **BREAKING:** `IamValidationError.kind` gained `'request'`, alongside `'policy'`
+  and `'role'`. A whitespace-only `roleId`, `scope` or `:id` is now a 400 instead
+  of a grant, and a bad admin field is a 400 instead of a 500 on express, next and
+  nest.
+
+  **A body that is not JSON is a 400 on hono and next.** Both call `req.json()`
+  inside the audited handler, so a truncated upload - or a form post carrying a
+  JSON content-type - raised a `SyntaxError` out of the handler into the generic
+  `catch`, which answered 500 and handed the parse error to `onError` as though
+  the package had broken. Express and nest never saw it, because their hosts parse
+  the body first. New `iamReadJsonBody` wraps the framework's own parser; the
+  refusal deliberately does not repeat the parser's message, which quotes the
+  offending bytes into an operator's log.
+
+  **Test-suite gaps closed alongside the fixes above** (no runtime behaviour
+  change): the e2e tier now runs in CI - nineteen files and roughly seven hundred
+  tests previously executed in no workflow at all, because `bun run test` excludes
+  `**/*.e2e.test.ts` and nothing invoked `test:e2e`. The HTTP e2e sweep gained a
+  sixth listener that opts into proxy trust, because every `environment.ip`
+  assertion in that file compared five integrations that all report `undefined`,
+  and deleting the IP derivation outright left the section green. The two verdict
+  suites now name the verdict they expect rather than only requiring the two
+  engines to match. And the fast/slow evaluator delegation for throwable policies
+  is pinned directly: deleting it leaves the 6000-iteration property oracle green,
+  because on any iteration with a throwable policy the "fast path" *is* the
+  interpreter.
+
+  **And the tier that CI now runs was quietly smaller than it looked.** Five e2e
+  files decided whether to run by shelling out to `docker info` with a
+  five-second budget of their own, rather than using the shared thirty-second
+  probe. On a machine already running the e2e stack the daemon takes longer than
+  that, so the copies answered "docker is down": the redis adapter suite dropped
+  twenty-four cases and the invalidation failure-modes suite dropped ten, in a
+  run that reported `609 passed | 26 skipped` and exit 0. Their own reachability
+  guards read the same wrong answer and agreed the skip was expected. All five
+  now call the shared probe, which is memoised so the gate and the guard cannot
+  reach different verdicts - and the guards no longer consult it at all under
+  `CI`, where the workflow provisions the backends before vitest starts and
+  "absent" is a broken runner rather than a reason to be quiet. The two
+  invalidation suites had no guard at all; the comment above one of them said
+  "fail loudly, not silently" next to a gate that could only do the opposite.
+  With the probe fixed the same command collects **706** tests and skips none.
+
+  Three harness bugs surfaced by that: `assertE2eReachable` awaited a
+  thirty-second probe inside a case with vitest's five-second default, so it
+  failed as a timeout on exactly the busy daemon it was written for
+  (`scope-prod-parity` red on that line with its eleven cases passing beside it);
+  `whilePaused` returned as soon as `docker unpause` did, without waiting for
+  Postgres to serve again the way `whileStopped` already did, so the recovery
+  case read a fail-closed deny as a failure to recover; and the shared compliance
+  matrix registers ~100 cases with no explicit timeout, which is right against
+  the in-memory fake and wrong against a container sharing the machine with every
+  other suite - one round trip took 5.88s and was reported as a failure.
+
+  **A denylist with an operand typo admitted everyone, and validation was not in
+  front of it.** `nin` returns `true` when its operand is not an array, so
+  `allow if tier nin 'banned'` - the author meant `['banned']` - satisfies the
+  guard for every subject it was written to exclude. The operand-type matrix in
+  the validator refuses that, and the package's own test said the verdict was
+  "unreachable only because the validator refuses the operand first". It is not:
+  `validatePolicy` runs on `admin.savePolicy` and `admin.import`, while
+  `loadPolicies` does not validate at all. Measured end to end, with no database
+  and nothing hand-edited - a policy seeded through the documented
+  `IamMemoryAdapter` constructor let a banned subject through `engine.can`. The
+  same door is an operator's `INSERT`, a seed script, a migration, or a row
+  written by a version that predates the rule.
+
+  The evaluator now applies the matrix itself and throws `IamOperandTypeError`
+  rather than answering, which `evaluate` absorbs the way it already absorbs an
+  unknown operator - Indeterminate, reported through `onPolicyError`, never
+  `false`, because answering `false` retires a deny rule just as quietly. The
+  table moved to `conditions/conditions.libs` beside the operators it describes
+  and the validator imports it, so the write-time check and the read-time check
+  cannot drift. Because `condVal` is the *resolved* operand, this also covers
+  what the validator cannot see: a `$`-prefixed reference is skipped there, since
+  its type is unknowable at authoring time, and lands here as whatever the
+  request actually carried. **BREAKING** for anyone whose store holds a policy
+  the validator would have refused: that policy now denies, loudly, instead of
+  granting.
+
+  **The devtools production guard stood in front of one panel out of five.**
+  `isDevtoolsAllowed` is default-block and well argued - it blocks unless both
+  `NODE_ENV` and the engine's own mode give a positive development signal - and
+  its docblock says it exists so "the policy/role/subject **readers** cannot leak
+  into raw-browser bundles (CWE-200 / CWE-489)". Two of those three readers never
+  called it. `package.json` publishes `./dt` and `src/dt/index.ts` exports every
+  panel individually, so importing one directly is a supported thing to
+  do, and through that route `IamPoliciesPanel` renders the entire policy corpus
+  from `engine.admin.listPolicies()`, `IamRolesPanel` the whole role catalog, and
+  `IamDecisionInspector` answers `engine.explain()` for any subject, action and
+  resource typed into it - each blocked through `IamDevtools` and wide open
+  through its own export. `IamSubjectsPanel` had already been given the guard for
+  exactly this reason; the reasoning was never carried to its siblings.
+
+  All four panels that are handed an engine now call the guard themselves, as
+  `IamSubjectsPanel` does. `IamFlowPanel` and `IamTraceTree` are untouched: they
+  take a recorder and a result and never reach an engine. The "only panel that
+  writes" framing is also retired - `IamMetricsPanel`'s Reset button calls
+  `engine.stats.reset()`. Guarding is now enforced by a source sweep as well as
+  by render tests, so a panel added later that reaches for the engine fails until
+  it carries the guard.
+
+  **The devtools could not render outside this monorepo at all.** `./dt` is a
+  published export, and `@gentleduck/registry-ui` and `@gentleduck/libs` were
+  *optional* peer dependencies - but six devtools modules imported them
+  unconditionally, so `import '@gentleduck/iam/dt'` threw `ERR_MODULE_NOT_FOUND`
+  for any consumer who had installed the package and not those two. The modules
+  that did resolve still rendered wrong: their Tailwind utility classes only name
+  real CSS if the consumer's Tailwind is configured to scan this package's
+  `dist`, and the `iam-dt-*` rules read `var(--card)`, `var(--border)` and
+  `var(--foreground)` out of the host theme with no fallback. None of this is
+  visible from inside the monorepo, where both peers are installed and Tailwind
+  does scan the source, which is why it survived.
+
+  The devtools now own their appearance outright. `lib/styles.ts` carries the
+  whole visual layer - every colour an `--iam-dt-*` token it defines itself,
+  every component a class it ships - injected as a single `<style>` tag, with a
+  scoped reset so a host's `button {}` cannot reach inside. There are two
+  themes: `data-iam-dt-theme` pins one and the new `theme` prop sets it,
+  defaulting to `'auto'`, which follows `prefers-color-scheme`. Tokens are
+  declared only on the outermost `.iam-dt`, because each panel carries the class
+  (each is exported individually and may be its own root) and a nested block
+  would re-derive the theme and overrule an explicit one. The action, resource,
+  allow and deny colours were hardcoded hex tuned against a dark ground and sat
+  at roughly 2:1 on a white one; both palettes now come from a set with worked-out
+  contrast in each direction. `@gentleduck/registry-ui` and `@gentleduck/libs`
+  are gone from `peerDependencies`, `peerDependenciesMeta` and `devDependencies`,
+  along with a `@gentleduck/variants` entry that was listed as an optional peer
+  without ever being declared or imported.
+
+  Two things that were broken rather than merely coupled: a panel imported
+  directly injected no stylesheet at all, since only the two shells called
+  `ensureStylesInjected` - every panel now does, through `useIamDevtoolsStyles`.
+  And the accessibility of the overlay: the tab strip is a real `tablist` with
+  arrow-key navigation (previously six buttons, five of them unreachable from the
+  keyboard once the strip claimed the role), Escape closes the panel and returns
+  focus to the launcher, opening moves focus into it, the resize edge is a
+  focusable `separator` that responds to arrow keys, Home and End, `Section` and
+  the JSON tree report `aria-expanded`/`aria-controls`, `Field` associates its
+  label with its control, filter pills report `aria-pressed`, alerts announce,
+  icons are hidden from assistive technology, and every animation stops under
+  `prefers-reduced-motion`.
+
+  Regression tests in `dt/__tests__/dt-selfcontained.test.tsx`: a source sweep
+  that fails on any import of the two optional peers, a sweep of the stylesheet
+  for any `var()` it does not define itself, a check that the token blocks stay
+  root-scoped, a cross-check that every `iam-dt-*` class the components emit has
+  a rule in the sheet that ships with them, and a render of each panel on its own
+  asserting it is its own themed root. Each has a positive control, because an
+  empty sweep satisfies every one of them.
+
+* 5f38486: Add a second devtools build, `@gentleduck/iam/dt/v2`, written on duck-ui.
+
+  `./dt` and `./dt/v2` are two implementations of the same six panels with
+  deliberately opposite dependency contracts, published side by side so a
+  consumer picks the trade rather than inheriting it:
+
+  |            | `./dt`                                                  | `./dt/v2`                                                                    |
+  | ---------- | ------------------------------------------------------- | ---------------------------------------------------------------------------- |
+  | Styling    | own stylesheet, `iam-dt-*` classes, `--iam-dt-*` tokens | duck-ui components on the host's Tailwind theme                              |
+  | Peers      | none                                                    | `@gentleduck/registry-ui`, `@gentleduck/libs`, `lucide-react` (all optional) |
+  | Looks like | itself, everywhere                                      | whatever the host app looks like                                             |
+
+  `./dt` is unchanged and stays self-contained — that is the point of keeping it.
+  Reach for `./dt/v2` when the host already runs duck-ui and Tailwind v4 and you
+  want the devtool to inherit its theme; it needs one line in the host stylesheet
+  so Tailwind scans the shipped panels:
+
+  ```css
+  @source "../node_modules/@gentleduck/iam/dist/dt/v2";
+  ```
+
+  v2 is a rebuild, not a re-skin. It is assembled from duck-ui's own components
+  rather than lookalikes — `Alert`, `Avatar`, `Badge`, `Button`, `ButtonGroup`,
+  `Card`, `Empty`, `Field`, `Input`, `InputGroup`, `Item`, `Kbd`, `Label`,
+  `Progress`, `ScrollArea`, `Separator`, `Skeleton`, `Switch`, `Table`, `Tabs`,
+  `Textarea` and `Tooltip` — because a `div` with a border is a card only the
+  devtool knows about, while a `Card` is one the host's theme can reach. The Flow
+  log is a real data table, cache and allow rates are real `Progress` bars, the
+  verdict filters are real `Switch`es, and every toolbar button carries a
+  `Tooltip`. A contract test names that component set and fails if v2 stops using
+  one of them or hand-rolls a `<table>` or progress bar instead.
+
+  What is deliberately not duck-ui: a new tone system (`lib/tone.ts`) keeps the
+  five decision colours on a fixed palette while the chrome floats with the host;
+  tabs get arrow-key roving focus, because `TabsTrigger` does roving `tabIndex`
+  and no key handling; sections are hand-rolled disclosures inside a `Card`,
+  because `Collapsible` drives its open state through a DOM attribute and renders
+  closed on the server; and the dockable shell's resize edge is a real
+  window-splitter separator — pointer drag plus arrow/Home/End,
+  `aria-valuemin`/`max`/`now`, Escape to close and focus returned to the
+  launcher — which `Separator` (an `<hr>`) cannot be.
+
+  Every v2 panel calls `isDevtoolsAllowed(engine)` itself, because each is
+  exported individually; a source sweep in the v2 tests fails any future panel
+  that reads `engine.` without the guard. A contract test asserts the split from
+  both sides: v2 really imports duck-ui, is really outside `./dt`'s
+  self-containment sweep, and carries none of v1's styling layer.
+
+* 555fa09: Refuse `'*'` as the scope of a role *assignment*.
+
+  `'*'` is this package's spelling of "every scope" on the scope a role or a
+  permission **declares** — `IPermission.scope` is typed `TScope | '*'`, and
+  `matchesScope`, `scopeCovers` and `effectiveScopeOf` all read it as global. It
+  means nothing of the kind on a scoped **assignment**: `enrichSubjectWithScopedRoles`
+  compares the stored scope literally, so `assignRole(u, r, '*')` stored a row that
+  matched no request, while the write resolved and `admin.assignRoles` reported
+  `applied: 1`. `getEffectiveRoles` returned `[]`.
+
+  That is the same silent success `iamAssertNoAssignOptions` refuses for a dropped
+  `expiresAt` and `iamAssertRoleExists` refuses for an unknown role id, and
+  `assignRole`'s own contract already says a grant `resolveSubject` will drop must
+  throw rather than read back as success. `undefined` is how a global assignment is
+  spelled.
+
+  Lookups stay open: `revokeRole`, `revokeRoles`, the `fromScope` end of
+  `updateAssignmentScope` and redis's member encoder all accept `'*'`, so rows
+  written before this change can still be revoked or moved off. They were dead
+  before it and are dead after it; nothing that worked stops working.
+
+  The check also runs in `admin`'s pre-pass, not only in the adapters. The adapter
+  guard fires inside `assignRoles`' write loop, which would leave the batch
+  half-applied — the failure the pre-pass is documented to prevent.
+
+* 70a90b4: Make `IamMemoryAdapter`'s constructor agree with its own write methods.
+
+  A seeded assignment naming a role the init does not declare is now refused, with
+  the same message `assignRole` throws. It was accepted, `getSubjectRoles`
+  returned the id, and a hand-written ABAC rule keyed on `subject.roles` fired on
+  it — an allow from a role that does not exist. `resolveEffectiveRoles` drops a
+  dangling `inherits` id, but a directly assigned role is not that case.
+
+  `getSubjectAttributes` returns a copy rather than the live internal bag, and the
+  attributes seed copies in. Editing what a read handed back used to rewrite the
+  store, with no validation and nothing to invalidate a cache from. The other five
+  adapters already rebuild the bag through `iamNarrowAttributes`.
+
+  This adapter is documented "tests + prototypes only", so neither is a production
+  grant path. Seeds that declare the roles they assign are unaffected.
+
+  Report the adapter-compliance suite's optional-method skips honestly. Nineteen
+  tests in `runAdapterCompliance` bowed out with a bare `return` when the adapter
+  under test does not implement an optional method, reporting as passed; across
+  the tier that was 59 green ticks asserting nothing. They now report as skipped,
+  and a new support matrix asserts which adapters implement which optional
+  methods, so dropping one turns a test red instead of turning five silent.
+
+* ebc38e8: Close the two process-global latches, and give React's `usePermissions` the
+  `refetch` Vue's has always had.
+
+  **React's `usePermissions` could not reach its own stale-map reset.** The effect
+  deliberately empties `permissions` and clears `error` before each load, for the
+  sign-out and account-switch cases where the previous subject's grants must not
+  stay on screen. The only trigger was a change to `deps` — which defaults to `[]`
+  and was undocumented — so `usePermissions(() => fetchFor(user.id))`, the obvious
+  call, loaded once and then answered `can()` from the first subject's map
+  indefinitely. Vue's docblock claimed the two hooks were "the same shape"; they
+  were not. React's now returns `refetch`, and carries the monotonic run id Vue
+  uses, which is required once `refetch` exists: two loads can be in flight with no
+  deps change and therefore no effect teardown between them, and a slow earlier one
+  would otherwise land on top of a fast later one. A rejection is normalised to an
+  `Error` rather than declared to be one.
+
+  **`IamAccessClient` guarded its map on the way out and not on the way in.** The
+  `permissions` getter has always returned a copy, because `Readonly<…>` erases at
+  runtime and an in-place edit would otherwise grant a permission without going
+  through `update()`/`merge()` — and so without notifying a subscriber. The
+  constructor and `update()` stored the caller's reference, which is the identical
+  hazard unguarded. Both copy now; listeners still receive the caller's own object.
+
+  **The unsigned-invalidator warning is latched per channel, not per process.**
+  `tenantId` exists so one process builds one invalidator per tenant, and a single
+  process-wide boolean meant the second and every later unsigned invalidator
+  constructed in silence — while the one warning that did fire named no channel, so
+  an operator who fixed "the" unsigned invalidator had no way to learn the other
+  forty were still unsigned. The channel is now named in the message, with its
+  tenant segment redacted the way every other line on that path is.
+
+  **The broken-error-hook report is latched per hook, not per process.** One
+  engine's transiently broken `onPolicyError` permanently silenced a different
+  engine's — a different tenant's — hook failure for the life of the process, and a
+  hook failure is how an operator learns that policy evaluation is throwing at all.
+  `safeErrorReport` now takes the hook and its arguments instead of a
+  `() => hook?.(…)` thunk, which gives the latch something stable to key on, keeps
+  the `Error` normalisation in one place instead of six, and stops allocating an
+  `Error` per throwing policy per request when no hook is wired at all.
+
+* e15213c: Bind the `matches` operator to the operand-type guard it was exempt from.
+
+  `evalCondition` throws `IamOperandTypeError` for an operand whose type the
+  operator cannot compare against, so the condition reads as Indeterminate rather
+  than as "not met" — `false` is the permissive answer for a deny rule, and
+  `loadPolicies` does not validate, so a seeded or migrated row reaches the
+  evaluator exactly as authored. `OPERAND_TYPES` is shared with `validate.libs`
+  precisely so write-time and read-time cannot drift.
+
+  For `matches` they had. The operator was dispatched before the guard ran, so a
+  non-string or absent `value` fell into `evalMatchesOp`, failed that function's
+  own `typeof v !== 'string'` test, and answered `false`. A seeded
+  `deny`-when-`matches` rule therefore never denied, and under
+  `defaultEffect: 'allow'` the request was allowed outright. The dispatch now sits
+  below the guard. The refusals `matches` already had — a `$`-sourced pattern, an
+  uncompilable one — are unchanged.
+
+  Also: `IamLRUCache.entries()` used `>` where `get()` uses `>=`, so at an entry's
+  own expiry millisecond the iterator yielded a value `get()` refuses. The one
+  caller evicts rather than serves, so nothing was wrong yet; the signature
+  promises non-expired entries and now keeps that promise.
+
+  And `explain()` reported ALLOW on a request naming the reserved refusal token.
+  `authorize()` and `permissions()` each refuse that token before consulting any
+  policy - a `'*'` rule matches a sentinel string, so without the refusal the
+  ordinary wildcard admin grant allows exactly the requests the adapters mint the
+  token for. `explain()` ran the combine instead and reported what the policies
+  said, telling an operator investigating a refusal that it was allowed.
+  `explainEvaluation` now applies the same predicate, keeps the policy traces, and
+  carries the same `failure: 'input'` tag.
+
+## 5.8.1
+
+### Minor Changes
+
+* ff6f112: Close five ways the policy builder could emit something other than what the author wrote.
+
+  **A condition callback that returns a group is no longer discarded.**
+  `RuleBuilder.when()`, `RuleBuilder.whenAny()`, `RoleBuilder.grantWhen()` and
+  `PolicyBuilder.rule()` used the builder they passed in and ignored the callback's
+  return value. The reusable-group idiom returns one, so
+  `.when(() => sharedOwnerOrAdmin())` authored to `{ all: [] }` - and `all` of
+  nothing is true, making the rule fire unconditionally: an allow rule granted to
+  everybody, a deny rule denied everybody. The returned builder is now honoured. A
+  callback that both chains onto its argument *and* returns a different builder
+  throws, because there is no answer to which group was meant.
+
+  **Built condition groups no longer alias the builder's array.** `buildAll()`,
+  `buildAny()` and `buildNone()` snapshot. Reusing a `When` after building used to
+  reach back into rules that were already finished.
+
+  **`When.roles()`, `When.scopes()` and `When.resourceType()` refuse zero
+  arguments.** They emitted a membership test against an empty list, which can
+  never match - on a deny rule that removes the guard. Pass at least one value, or
+  `.in(field, list)` when the list is computed and may legitimately be empty.
+
+  **The builders emit absent optional keys, not keys holding `undefined`.**
+  `description`, `targets` and `version` on policies, `description`/`metadata` on
+  rules, `description`/`inherits`/`scope`/`metadata` on roles. A key holding
+  `undefined` survived in the memory, file and http stores and disappeared through
+  every JSON- or `jsonb`-backed one, so the same authored policy read back unequal
+  depending on where it had been. `version` in particular is now left out when
+  unset: the `version: 1` default belongs to the store, and a builder that
+  pre-empted it made "never set" indistinguishable from "set to 1".
+
+  **Breaking:** `when()`'s type parameters were reordered to
+  `when<TAction, TResource, TRole, TScope, TContext, TActiveResource>` so they name
+  the slots they fill. They previously ran `TAction, TResource, TScope, TRole`,
+  which let a scope be passed to `.role()` and a role to `.scope()`. Only callers
+  who pass all four explicitly are affected; inference is unchanged.
+
+* 3de4298: Make the HTTP boundary's refusals actually refuse.
+
+  **A wildcard rule turned every unmappable request back into an allow.** The
+  framework adapters map an HTTP request to an `(action, resource)` pair, and some
+  requests cannot be mapped: an unmapped method, or a path this layer and the
+  router downstream would read differently. Both were expressed by handing the
+  engine a sentinel *string* - `IAM_UNKNOWN_ACTION`, `IAM_UNKNOWN_RESOURCE` -
+  documented as matching no policy and therefore denying. `'*'` matches every
+  string, sentinels included, so any deployment with a wildcard rule
+  (`.on('*').of('*')`, the ordinary shape of an admin role) allowed them. The
+  traversal guard that refuses to resolve `/posts/../admin/secret` handed the
+  engine `type: 'unknown'`, an admin was allowed, and express, hono, next and nest
+  then routed the raw target elsewhere - authorized as one resource, served as
+  another.
+
+  A string cannot carry a denial, so the denial moved into the engine: the token
+  is reserved, and both `authorize()` and `permissions()` refuse it before
+  consulting any policy. `permissions()` needed it separately because it does not
+  route through `authorize()`. The refusal reports `failure: 'input'` and fires
+  `onDeny` like any other denial. Reserving the token means a resource type or
+  action genuinely named `'unknown'` can no longer be granted; both constants have
+  always been documented as sentinels that deny.
+
+  **A literal backslash was not treated as ambiguous, though `%5C` was.** The
+  WHATWG URL parser rewrites `\` to `/` in a special-scheme URL before resolving
+  dot segments, so `new URL('http://x/posts\..\admin').pathname` is `/admin`:
+  `iamPathIsAmbiguous` read the type as `posts\..\admin` while anything parsing
+  the target through `URL` read `/admin`. The encoded form was already refused;
+  the plain character - the easier one to send - was not.
+
+  **The default CSRF check allowed cross-site requests on a capital letter.**
+  `iamDefaultCsrfCheck` read exactly one spelling of `Sec-Fetch-Site` out of a
+  header Record. Node lowercases what it parses, but the predicate is exported and
+  documented as taking any request-like object, and not finding the header is
+  indistinguishable from "no header was sent" - which it treats as a non-browser
+  caller and allows. The lookup is now case-insensitive across all three supported
+  header shapes, and reads own properties only.
+
+  **A throwing `csrfCheck` escaped the admin gate.** `iamRunAdminAuthz` caught a
+  throwing `authorize` and reported `phase: 'error'`, but let a throwing
+  `csrfCheck` propagate, so whether the request was refused depended on the
+  framework adapter's outer catch. A predicate that cannot answer has not said
+  yes: it is now `phase: 'forbidden'`, and `authorize` is not called.
+
+  **The admin audit could not name who made a mutation.** The gate passed any
+  truthy `actor` straight into the audit event, and the documented shape -
+  `authorize: (req) => req.user?.role === 'admin'` - returns a boolean. So the
+  mutation was authorized and the audit trail recorded `true` as the person who
+  made it, which attributes it to nobody. A truthy answer still authorizes, as it
+  always did; a value that names no one is now recorded as no one (`actor:
+  undefined`), with a one-time notice explaining how to make mutations
+  attributable. New `iamIsNameableActor` export.
+
+  `iamDefaultCsrfCheck`'s five `as` casts were replaced with runtime type
+  predicates while fixing it.
+
+* 8c131a4: Grant writes now record who made them, `engine.admin` emits a typed mutation event for every write, and `mode` defaults to `'production'`.
+
+  **Actor provenance.** `IAssignOptions` gains `actor?: string`, and `revokeRole` / `revokeRoles` gain a matching `IRevokeOptions`. `savePolicy`, `saveRole` and `setSubjectAttributes` take a new `IActorOptions`. Every table in the drizzle and Prisma schemas has declared `created_by` / `updated_by` for as long as it has existed and nothing ever filled them - eight columns per dialect promising a provenance the API could not produce. They are written now: `created_by` on the row a call inserts, `updated_by` on the row it overwrites, so an edit records its editor without rewriting the original author. Both are written by spread rather than as an explicit null, so a table that predates the columns is untouched unless the caller names an actor.
+
+  `actor` is deliberately outside the `ASSIGN_OPTION_FIELDS` allow-list that `iamAssertNoAssignOptions` guards. Dropping `expiresAt` changes what the store answers; dropping `actor` does not, because the event carries it regardless.
+
+  **Mutation events.** Wire `hooks.onMutation` to receive a closed discriminated union - `role.assigned`, `role.revoked`, `role.scope-changed`, `role.saved`, `role.deleted`, `policy.saved`, `policy.deleted`, `attributes.set` - each carrying `at`, the optional `actor`, and the subject/role/scope the write touched.
+
+  The library owns the event and the actor and ships no history table: retention, redaction and GDPR erasure are compliance decisions the consuming application must own. There is no way to register your own events on this bus; the union stays closed so a `switch` on `type` stays exhaustive across versions.
+
+  Two details worth knowing: `attributes.set` carries key names and never values, because attribute bags routinely hold personal data and the event is likely headed for a durable log. And under `withTransaction`, events buffer alongside invalidations and are emitted only on `flush()` - a rolled-back grant leaves no history.
+
+  **Breaking:**
+
+  * **`mode` now defaults to `'production'`.** A consumer who never set it was running a production authorization engine that allocated a rich `Decision` on every call. Three consequences: `can()` / `check()` return `boolean` rather than `IDecision` unless you opt in; `policyCombine: 'first-applicable'` now throws at construction, since the production fast path cannot represent it; and devtools, which refuses a production engine, is now off unless you set `mode: 'development'`.
+  * **Explicit type arguments need a fifth.** TypeScript uses a type parameter's default rather than inferring it when the argument list is partial, so `new IamEngine<Action, Resource, Role, Scope>({ ..., mode: 'development' })` no longer typechecks. Write `new IamEngine<Action, Resource, Role, Scope, 'development'>(...)`, or drop the explicit arguments and let all five infer.
+  * **`afterEvaluate` and `onDeny` now fire in production too.** They were documented and implemented as development-only, which put the audit and alerting hooks in the mode nobody runs in production. The production decision is verdict-only - `allowed`, `effect`, `duration`, `timestamp`, and a `reason` that says so - because the compiled table erases policy identity at compile time and that erasure is the optimisation. `policy` and `rule` are absent rather than fabricated. Nothing is allocated unless one of the two hooks is wired.
+  * **`maxConcurrentSubjectLoads` defaults to `512`** instead of `0` (unbounded). Only distinct, never-before-cached subjects count toward it, so reaching 512 means a cold-start herd rather than normal traffic. Shedding denies legitimate requests, so the bound is deliberately generous; set `0` to restore unbounded explicitly.
+
+  **Also:**
+
+  * `IamEngine.setInvalidator(invalidator | null)` attaches, replaces or detaches an invalidator after construction, for callers whose Redis client is built after their engine. It unsubscribes the previous one first and validates the shape, so a malformed object fails loudly instead of surfacing later as invalidations that never arrive. `IConfig.invalidator` still works and now routes through it.
+  * `iamScopeAncestors` and `iamScopeCovers` are exported. Callers doing scope-aware rank or reach calculations had to reimplement the walk, and any reimplementation drifts from the relation the engine matches with.
+  * The drizzle adapter warns once per process, at construction, when `ops.isNull` or `ops.or` is missing. Both omissions are correct but silently slow - without `or`, `revokeRoleMany` degrades to one `DELETE` per row; without `isNull`, `updateAssignmentScope` falls back to revoke + assign, two writes with a window where the grant does not exist. Neither can be derived: `eq(col, null)` is not `IS NULL`, and there is no way to synthesise an `OR` builder from `eq` and `and`.
+
+  **Production and development now agree on two cases where they did not.** Both were found by running the same catalog through a production engine and a development engine and comparing verdicts; both had production granting access development refused, on identical data, with no malformed catalog anywhere.
+
+  * **A throwing role permission no longer voids unrelated grants.** `rolesToPolicy` folds every role permission into one generated `__rbac__` policy, and the interpreter caught a throwing condition at whole-policy scope - so one rotten permission denied a subject an unconditional grant held through a different role, while the compiled table answered allow from the grant mask before it ever reached the bad condition. A rule that throws inside that generated union now abstains and is reported through `onPolicyError`, matching the table. This is safe only there: `rolesToPolicy` emits `effect: 'allow'` and nothing else, so a skipped rule in an allow-only union can cost a subject a grant but can never suppress a denial. An authored policy still fails closed at whole-policy scope, because its vote may have been a deny.
+  * **Role permission conditions get the same nesting budget in both modes.** `rolesToPolicy` nests a permission's condition group one level inside the generated rule, so the interpreter reached it at depth 1 while the compiled table, which stores the group raw, started it at 0. Authors got ten usable levels in production and nine in development: at exactly `MAX_CONDITION_DEPTH` the table allowed and the interpreter denied, while depths on either side agreed. `validateRole` already validated at depth 1, so the table was the outlier; it now starts there too, via the new exported `IAM_RBAC_CONDITION_DEPTH`.
+
+  **Schema fixes.** The three drizzle schemas are three hand-written files describing one logical schema and nothing compared them, so they had drifted:
+
+  * MySQL's `iam_roles.inherits` was `NOT NULL` with no default, while Postgres and SQLite default it to `[]`. The same insert succeeded on two dialects and failed on the third.
+  * `ch_iam_roles_scope_not_blank` and `ch_iam_assignments_scope_not_blank` existed only on Postgres, so a whitespace-only scope was storable on MySQL and SQLite and rejected on Postgres.
+  * MySQL lacked `idx_iam_assignments_subject_scope`, leaving the scoped-subject lookup - the hot read - to a subject scan plus a filter. It is added unfiltered there, MySQL having no partial indexes.
+
+  A new `schema-parity.test.ts` compares columns, insert-required columns, indexes, CHECKs and foreign keys across all three dialects, with an explicit allow-list for the handful of entries a dialect genuinely owns alone (Postgres GIN indexes, SQLite's algorithm CHECK standing in for the others' enum type). It also pins `src/test/pg-e2e-schema.sql` - self-described as a hand-kept mirror, with nothing keeping it honest - against the Postgres schema module.
+
+  The Prisma reference schema gains the provenance columns, `updated_at` on assignments, `created_at` on subject attributes, and the `role` / `(subject, scope)` indexes the drizzle schemas already had. Its header now spells out what Prisma cannot express - CHECK constraints, partial indexes - and, importantly, that `@@unique([subjectId, roleId, scope])` does not prevent a duplicate *unscoped* grant, because SQL unique indexes do not collapse NULLs. The adapter closes that hole with a read-then-write; the comment exists so nobody "simplifies" it back to a bare `create`.
+
+  **Breaking: a role must exist before it can be granted.** `assignRole` (and `assignRoles`) now throws when no role is stored under the given id, on every adapter. This was already true on drizzle and Prisma, whose schemas carry the assignments-to-roles foreign key, and silently accepted on memory, file, redis and HTTP: the row landed, `getSubjectRoles` returned the id, and `resolveSubject` dropped it again because no definition resolves — so a typo'd role id reported success and granted nothing. Provisioning code that assigns before saving the role must now save first. The drizzle adapter also translates the driver's foreign-key error into that same refusal, keeping the original as `cause`; before, an operator saw `Failed query: <sql>` with the constraint reachable only on `.cause`.
+
+  **Breaking: the unique indexes on policy and role `name` are gone.** `uq_iam_policies_name` and `uq_iam_roles_name_scope` existed only on the drizzle Postgres schema. Nothing in this package resolves a policy or role by name — `id` is the key everywhere — so they protected a field no code reads while making a write the adapter contract mandates impossible on Postgres alone. Existing databases keep them until you drop them; nothing in the library depends on either behaviour.
+
+  **Breaking: `iamExtractEnvironment` no longer guesses the client IP.** It reported one from `req.ip`, `x-forwarded-for` or `x-real-ip`, which meant five HTTP integrations gave five different answers for the same request, and — with nothing in front of the app — let a client set `X-Forwarded-For` and satisfy an IP-conditioned policy. `environment.ip` is now `undefined` unless the app opts in: pass `{ trustProxy: true }` as the second argument, or supply the environment yourself through the integration's `getEnvironment`. Hono's `trustCloudflareHeaders` is that opt-in there. The normalisation is unchanged behind the flag.
+
+  **Breaking: deleting a role now revokes the grants that named it.** `deleteRole` is a cascade on every adapter, matching what `fk_iam_assignments_role ON DELETE CASCADE` already did on drizzle and Prisma: the same call left `getSubjectRoles` returning the deleted role on memory, file, redis and HTTP and `[]` on the SQL adapters. The orphan was not inert — `resolveSubject` ignored it, but recreating a role under the reused id handed it back to everyone who once held it, with no operator granting anything, and `assignRole` now refuses to create the very row `deleteRole` was leaving behind. The redis adapter reaches the assignment sets with a `KEYS` sweep on that one admin-rate call; a client that does not expose `keys` gets the role deleted and a report through `onPolicyError` saying the grants were not. An HTTP server is expected to cascade on `DELETE /roles/:id` — see the reference server in `http-compliance.test.ts`.
+
+* 70a9e4d: A malformed admin request body now answers 400 instead of 500.
+
+  `engine.admin.savePolicy` and `saveRole` validate before they write, and signalled
+  a rejection with a bare `Error`. Every HTTP integration catches whatever a handler
+  throws and routes it to `onError`, which answers 500 — so a body the validator
+  refused, which is the client's mistake, was reported as the server's. The write
+  was correctly refused either way, so this was never a way past validation; but a
+  500 tells a caller to retry a request that can never succeed, and hides a client
+  bug behind an apparent outage.
+
+  Rejections are now `IamValidationError`, carrying `kind` (`'policy' | 'role'`),
+  the validator's `issues`, and `status: 400`. It extends `Error`, so existing
+  `instanceof Error` checks and the exact message text still hold.
+
+  * **express, hono and next** answer `400 { error: 'Invalid policy', issues: [...] }`
+    and no longer route the failure through `onError`.
+  * **Nest** hands errors to its own exception filter, which only maps
+    `HttpException`, and this package does not depend on `@nestjs/common`. Read
+    `status` in a filter of your own:
+
+  ```ts
+  if (iamIsValidationError(err))
+    throw new BadRequestException({
+      error: `Invalid ${err.kind}`,
+      issues: err.issues,
+    });
+  ```
+
+  A genuine server fault is still a 500, and the `onAdminMutation` audit event
+  still fires with `success: false` either way.
+
+* 3de4298: The Prisma adapter no longer invents keys a stored role does not have.
+
+  `toRole` mapped an absent or null `inherits` column to `inherits: []`, so a role
+  read back through Prisma was not the role the other adapters returned for the
+  same row — a caller distinguishing "inherits nothing" from "does not declare
+  inheritance" saw the two collapse, and only on this adapter. Absent columns now
+  produce absent keys, matching the memory, Drizzle and Postgres adapters.
+
+  If you relied on `role.inherits` always being an array, read it as
+  `role.inherits ?? []`.
+
+* Both engine modes now evaluate through the compiled table.
+
+  `mode: 'production'` used the compiled table and `mode: 'development'` used the interpreter, so a disagreement between the two was invisible until it reached production - and it reached production as an *allow* against a development run that denied. That single shape accounted for five separate defects in the round-3 audit.
+
+  The table now produces the verdict in both modes. Development additionally runs the interpreter, because the table cannot explain itself: `CONST_ALLOW`/`CONST_DENY` cells are one `kind` byte and `allow` is a raw bitmask, so policy identity is erased at compile time. The interpreter supplies `reason`/`policy`/`rule`, the table supplies the verdict, and a disagreement is printed and thrown - a development-time failure instead of a production-only allow. `check()` returns the same `IDecision` it always did.
+
+  Development is roughly 2.4x slower than production as a result. That is the trade: the second evaluator is what makes a divergence visible, and it does not run in production.
+
+* More roles than the 32-bit grant mask can address now falls back to the interpreter instead of denying every request.
+
+  `compileTable()` throws past 32 roles because role N and role N+32 would otherwise silently share a mask bit. That throw used to reach `authorize()`'s catch, so the whole deployment answered deny with no message unless an `onError` hook happened to be wired - a total authorization outage caused by a capacity limit of one representation.
+
+  The engine now catches that error specifically, warns once, and runs the interpreter, which has no such limit. `preload()` resolves instead of throwing and `healthCheck()` keeps `ok: true` while reporting `compiledTable: { available: false, reason: 'role-limit-exceeded', roleCount, limit }` - correct answers, no fast path, and an operator who can see which.
+
+  Every other compile failure still throws and still denies; a malformed policy is a bug, and answering it with a slower correct path would hide it.
 
 ### Patch Changes
 
-Two fixes where a rule that was correct in development silently stopped applying in
-production.
+* A policy the compiler cannot lower is now named.
 
-* **`first-match` and `highest-priority` now break priority ties by source order in both
-  modes.** Both algorithms resolve equal priorities by the order rules are declared. The
-  development interpreter walks `policy.rules` directly and honoured that, but the
-  production path walks the rule index, which buckets literal-resource rules separately
-  from wildcard-resource ones and scanned the literal bucket first. A `deny read '*'`
-  declared before an `allow read 'post'` at the same priority therefore denied in
-  development and allowed in production. `Evaluate.IIndexedRule` now carries each rule's
-  index in `policy.rules`, and the fast path compares it whenever priorities are equal.
-  `deny-overrides` and `allow-overrides` were never affected - they are order independent.
-  See [combining algorithms](/duck-iam/core/policies/combining-algorithms).
-* **The condition-nesting bound is now the same comparison in the validator and the
-  evaluator.** `evalConditionGroup` refuses a group at `depth >= MAX_CONDITION_DEPTH` and
-  fails closed, while `validateConditionGroup` only errored past the cap. A group sitting
-  exactly on the boundary validated cleanly and then never matched. On an allow rule that
-  failed closed; on a deny rule the deny silently stopped firing. Both now reject at
-  `>=`, so anything the evaluator refuses is reported as `LIMIT_EXCEEDED` up front.
-  See [validation](/duck-iam/advanced/validation).
+  The compiler walks `policy.rules` and each rule's `actions`/`resources` directly, so a policy missing one of them threw from wherever the walk touched it first - `policy.rules is not iterable`, with no indication which of a tenant's policies was broken. The interpreter had always isolated a rotten policy and reported its id through `onPolicyError`, so moving both modes onto the table would have traded a precise diagnostic for an anonymous one. The shape check now runs before the walk, names the policy and the rule, and is forwarded to `onPolicyError` before the error is rethrown. The deny is unchanged.
 
-The `evaluate` versus `evaluateFast` property oracle covered the tie shape in principle
-but drew priorities from twenty values, making collisions too rare to catch it. It now
-draws from four.
+* e47efb9: Time-boxed grants stop granting when they expire, not up to a `cacheTTL` later.
+
+  **The subject cache now respects the grant's own window.** `IamLRUCache` gave every entry the engine's full `cacheTTL` (60s by default) with nothing tying it to the bounds the drizzle adapter filters on, so a grant with `expiresAt` kept answering *allow* for up to a minute after it ended, and a grant with a future `startsAt` kept answering *deny* for up to a minute after it opened. A 30-second break-glass grant was live for sixty. `IamLRUCache.set` takes an optional `notAfter`, caps the entry at the earlier of the two, stores nothing when the bound has already passed, and expires on `>=` so it agrees with the adapter's exclusive upper bound.
+
+  **New optional adapter method: `getSubjectGrantBoundary(subjectId, opts?)`.** Returns the earliest *future* `startsAt` or `expiresAt` among the subject's grants, or `null` when none has a bound. The engine asks for it alongside the reads it describes — no extra round trip — and caps the cache entry there. It is implemented by the drizzle adapter, the only one that stores the bounds; the other five omit it and continue to refuse the options outright. Custom adapters need no change, and gain the shortened cache by implementing it. A failure in the method costs caching only: the subject is not cached, the answer still comes from the store, and a warning names the method and subject.
+
+  **`assignRole` refuses a window that can never be active.** `startsAt >= expiresAt` is an empty interval — the grant is stored and never live, while the call resolves and `engine.admin.assignRoles` reports `ok: true, applied: 1`. An `Invalid Date` in either field was passed to the driver rather than refused. Both are now rejected at the adapter boundary, on `assignRole` and on every row of `assignRoleMany`; the error names the fields and never the instants. The shipped pg/mysql/sqlite schemas already carried `ch_iam_assignments_starts_before_expires`, but the adapter can be pointed at a caller's own table, where the code is the only guard.
+
+* Three fixes from the audit re-verification sweep.
+
+  An error-reporting hook that throws no longer unwinds the evaluation it was
+  reporting on. `onPolicyError` and `onRuleError` were called raw from inside the
+  catch that implements the Indeterminate contract, so a hook whose metrics
+  backend was down took the deny vote with it.
+
+  The Redis invalidator's drop warning no longer prints the tenant id. The channel
+  carries it, the warning is written on a path any holder of PUBLISH rights can
+  drive, and stderr is the stream that gets shipped to shared aggregators; the
+  tenant segment is now a stable digest instead.
+
+  `explain()` and `can()` agree at the leaf. The trace evaluated conditions
+  through the raw operator table, which skips the refusal of `matches` against a
+  `$`-sourced operand, so a trace could report a condition as satisfied that the
+  engine had refused - showing an operator the opposite of the decision they were
+  debugging. Leaf verdicts now come from the decision path itself.
+
+## 5.8.0
+
+### Minor Changes
+
+* 7202aa1: **Breaking:** scoped permission keys are now prefixed with `@`.
+
+  `iamBuildPermissionKey` previously emitted `scope:action:resource[:resourceId]`, which is ambiguous with the unscoped `action:resource:resourceId` form - a three-segment key could not be parsed back without knowing which shape produced it, so a scope could be read as a resource id and vice versa. Scoped keys now carry an explicit `@` marker:
+
+  * `org-1:manage:billing` becomes `@org-1:manage:billing`
+  * `org-1:update:post:post-42` becomes `@org-1:update:post:post-42`
+
+  Unscoped keys are unchanged. A literal leading `@` in a segment is escaped as `\@`, and `iamSplitPermissionKey` understands the escape. The new `iamParsePermissionKey` returns `{ scope, action, resource, resourceId }` or `null`, so consumers no longer have to split keys by hand.
+
+  Anything that hardcodes a scoped key string - client-side permission maps, cached `can()` results keyed by string, fixtures - needs the `@` added.
+
+### Patch Changes
+
+* 2e5f5dc: Fix `resolveSubject` mistagging a role reached through cross-scope inheritance with the source assignment's scope instead of the role's own declared scope. A role assigned at one scope that `.inherits()` a role defined at another scope (e.g. a company-level role inheriting a marketplace-level role) had the inherited role silently invisible at the scope it actually belongs to - `enrichSubjectWithScopedRoles` filtered it out because it carried the wrong scope tag, so a policy check at the inherited-into scope only ever saw whatever lower-privilege role was directly assigned there, if any.
+
+  Each role visited during the inheritance walk is now tagged with its own `IRole.scope`, falling back to the assignment row's scope only when the role declares none of its own - a no-op for roles with no cross-scope inheritance.
+
+* 5c96bd5: Fix two places where a rule that was correct in development silently stopped applying in production.
+
+  **`first-match` / `highest-priority` disagreed between the two evaluation paths on a priority tie.** Both algorithms resolve equal priorities by source order. The interpreter walks `policy.rules` directly and honoured that, but `evaluatePolicyFast` walks the rule index, which buckets literal-resource rules separately from wildcard-resource ones and visits the literal bucket first. A `deny read '*'` declared before an `allow read 'post'` at the same priority therefore denied under `mode: 'development'` and allowed under `mode: 'production'` - the deny disappeared exactly where it mattered most. `Evaluate.IIndexedRule` now carries the rule's index in `policy.rules`, and both tie-break sites in the fast path compare it, so bucket order no longer leaks into the decision. `deny-overrides` and `allow-overrides` were never affected; they are order independent.
+
+  The `evaluate == evaluateFast` property oracle covered this shape in principle but drew priorities from 20 values, making ties too rare to hit it. It now draws from 4, so collisions are the common case.
+
+  **The condition-nesting limit was off by one between the validator and the evaluator.** `evalConditionGroup` refuses a group at `depth >= MAX_CONDITION_DEPTH` and fails closed, while `validateConditionGroup` only errored at `depth > MAX_CONDITION_DEPTH`. A group nested exactly at the boundary therefore validated cleanly and then never matched. On an allow rule that merely failed closed, but a deny rule at that depth passed validation and silently stopped denying. Both comparisons are now `>=`, so anything the evaluator will refuse is reported as `LIMIT_EXCEEDED` up front.
+
+* ec678af: Evaluation errors are now Indeterminate and fail closed instead of being silently skipped.
+
+  A condition that threw - an unknown operator, a malformed `all`/`any`/`none` group, a regex rejected for being unsafe - was caught and treated as "policy does not apply", which quietly retired the deny rule that condition was guarding. An error inside a policy or compiled cell that carries a deny rule now vetoes the request. Allow-only policies and RBAC role permissions still skip, since an error there cannot grant anything.
+
+  Also in this release:
+
+  * `matches` uses a real catastrophic-backtracking detector instead of a naive nested-quantifier regex, and checks the compiled-pattern cache before running it.
+  * Unknown condition operators and non-array condition groups throw a prefixed error rather than a raw `TypeError`.
+  * HTTP method-to-action and pathname normalisation reject `//admin` and `/%61dmin` style bypasses; unknown methods and unresolvable resources map to explicit `IAM_UNKNOWN_ACTION` / `IAM_UNKNOWN_RESOURCE` instead of a permissive default.
+  * User-Agent is capped at 2048 characters before it reaches the environment attributes.
+  * The file adapter writes atomically via tmp-file + rename and serialises concurrent flushes; the redis adapter rejects an empty scope; the drizzle adapter rejects non-finite assignment bounds.
+  * `preload()` builds the compiled table in production so a compile error surfaces at startup, and `healthCheck()` awaits it.
+  * `pathCache` is no longer exported from `src/core/resolve`.
+
+* 7a1ce88: `IamEngine.withTransaction(client)` binds reads and writes to a transaction you own, and `admin` gained batch forms that report per-row outcomes.
+
+  The client is opaque to the library and handed straight back to your adapter. Writes go through `.admin`, the same interface as `engine.admin`, so there is one write surface rather than two. Reads on the bound view run against caches created for that transaction alone: an empty cache always misses through to the transaction-bound adapter, which is what makes a read-after-write inside the transaction correct, and the shared engine keeps answering from its own warm caches, which the transaction never pollutes.
+
+  Cache invalidations - including the `config.invalidator` fleet broadcast - buffer in `pending`, de-duplicated, and fire on `flush()`. A rolled-back grant therefore never evicts another node's cache for a write that did not happen. The bound view drops the invalidator rather than reusing the parent's, so a facade built per transaction cannot leak a subscription; buffered entries broadcast through the parent engine on flush.
+
+  Also in this release:
+
+  * `admin` gained `assignRoles`, `revokeRoles`, `moveRoleScopes` and `invalidateSubjects`. Every row is validated before any is written, so a malformed row aborts the batch instead of half-applying it, and each affected subject is invalidated once however many rows named it.
+  * Each outcome carries the `row` it answers rather than an id derived from it. A role assignment is identified by a `(subject, role, scope)` triple of free-form strings, and every encoding of three of those into one key is either ambiguous or unreadable - joining them with a space collided whenever an id contained one, and nothing rejects a space in a subject id. Outcomes stay in input order, so matching by index is exact too.
+  * Both role writes are idempotent, so every row is `ok` - granting a role a subject already holds is success, matching the single-row method. Outcomes carry `changed` for the finer answer: `true` when the row accounts for a write the statement made, `false` when it was already in the requested state, and absent where the adapter could not say. It is read off a `RETURNING` clause on the write itself, so it costs no extra round trip; MySQL, which has no `RETURNING`, and adapters that loop the `void`-returning single-row methods leave it off rather than guess.
+  * Every write is credited to exactly one row, the first that accounts for it. Listing the same triple twice reports `true` then `false` rather than both rows claiming a write the database made once, and revoking a role unscoped alongside a scoped row it already covers credits the wildcard. Neither batch is rejected.
+  * The drizzle adapter collapses the writes into one `INSERT` and one `DELETE`. The `DELETE` needs `or` in the adapter's `ops` and revokes row by row without it.
+  * The adapter contract gained an optional `withClient`. An adapter that cannot join a transaction makes `withTransaction` throw rather than silently leaving those writes outside it.
 
 ## 5.7.0
 

@@ -130,7 +130,7 @@ team lead\x00us west -> { role: 'team lead', scope: 'us west' }
 Set semantics do the deduplication, which is what makes `assignRole` idempotent: adding the same `(role, scope)` twice is one `SADD` that returns 0 the second time.
 
 <Callout tone="warning" title="Role and scope must not contain a NUL byte">
-  `assignRole` throws when either string contains `0x00`, because it is the separator: a crafted role id could inject one and be decoded as a different `(role, scope)` pair; a privilege drift, not just a parse error. Role ids are validated against control characters at `saveRole` too, so the adapter refuses to store a role `assignRole` would then refuse to grant. Every other byte, spaces included, is safe.
+  `assignRole` throws `IAM_REDIS_ASSIGNMENT_ENCODING_INVALID` (`meta: { field: 'role' | 'scope' }`) when either string contains `0x00`, because it is the separator: a crafted role id could inject one and be decoded as a different `(role, scope)` pair; a privilege drift, not just a parse error. Role ids are validated against control characters at `saveRole` too, so the adapter refuses to store a role `assignRole` would then refuse to grant. Every other byte, spaces included, is safe.
 </Callout>
 
 ### `deleteRole` and the sweep
@@ -252,19 +252,19 @@ await tenant2.getPolicy('p1') // null
 
 `listPolicies`, `getPolicy`, `listRoles`, and `getRole` parse each stored blob and then run it through `parsePolicyRow` / `parseRoleRow` from `@gentleduck/iam/core/validate`. Every failure is reported through `onPolicyError` with `{ adapter: 'redis', rowId }` and the joined validator issues, but what happens next depends on which table it came from.
 
-A bad **role** row is dropped and the rest of the hash is returned, because role permissions are allow-only: losing one can only cost a subject a grant. A bad **policy** row makes the read **throw**, and the engine denies until it is repaired, because a dropped policy may be the one that says NO. `getPolicy` on a corrupt row throws rather than returning `null`: `null` is the answer for a row that is not there, and a corrupt row must not be able to impersonate a deleted one.
+A bad **role** row is dropped and the rest of the hash is returned, because role permissions are allow-only: losing one can only cost a subject a grant. A bad **policy** row makes the read **throw** `IAM_UNREADABLE_POLICY` (`meta: { adapter: 'redis', policyId, detail }`), and the engine denies until it is repaired, because a dropped policy may be the one that says NO. `getPolicy` on a corrupt row throws rather than returning `null`: `null` is the answer for a row that is not there, and a corrupt row must not be able to impersonate a deleted one.
 
 A `__proto__` key inside a stored bag is refused rather than read past, and a row stored under the id `__proto__` is returned rather than dropped, verified against a real server, because that is where a client's own `out[field] = value` materialisation would invoke the inherited setter.
 
 Subject attributes are the deliberate exception.
 
 <Callout tone="warning" title="SEC-058: a corrupt attribute blob throws, it does not return `{}`">
-  `getSubjectAttributes` throws `[@gentleduck/iam:redis] corrupted attributes for "<id>" (JSON parse failed)` or `… (not a JSON object)` when the stored string will not parse or parses to a non-object. Returning `{}` would silently strip every ABAC condition and flip decisions with no operator signal. The engine routes the throw through `onError`, fails closed with a deny, and records it on `onMetrics`. A missing key is still an ordinary `{}`. Since 2.1.0.
+  `getSubjectAttributes` throws `IAM_ATTRIBUTES_CORRUPT` (`meta: { adapter: 'redis', subjectId, reason: 'parse-failed' | 'not-object' }`) when the stored string will not parse or parses to a non-object - including a stored `__proto__`-keyed object, which `iamNarrowAttributes` also refuses. Returning `{}` would silently strip every ABAC condition and flip decisions with no operator signal. The engine routes the throw through `onError`, fails closed with a deny, and records it on `onMetrics`. A missing key is still an ordinary `{}`. Since 2.1.0.
 </Callout>
 
 `setSubjectAttributes` is the one path that tolerates a failing read: it catches, reports through `onPolicyError`, and merges onto `{}` so an operator can always overwrite a broken key. The catch is **not** narrowed to the corrupt-blob case, though. When the `GET` fails transiently and the `SET` then succeeds, the stored bag is replaced by the patch alone and every key the patch does not name is gone. Pass an `onPolicyError` and treat a report from here as a write that may have truncated the bag, not as a logged curiosity.
 
-It also guards its own argument: a non-object `attrs` throws `[@gentleduck/iam:redis] attributes for "<id>" must be a plain object (got string)` rather than spreading a string into per-character keys.
+It also guards its own argument: a non-object `attrs`, or one carrying a `__proto__` own key, throws `IAM_ATTRIBUTES_INVALID` (`meta: { adapter: 'redis', subjectId, reason: 'not-object' | 'forbidden-key', got? }`) rather than spreading a string into per-character keys.
 
 ## Pairing with the engine cache
 

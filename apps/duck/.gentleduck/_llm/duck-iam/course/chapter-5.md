@@ -110,13 +110,13 @@ async function main() {
   const doc = { type: 'document', id: 'doc-1', attributes: { ownerId: 'bob' } }
 
   console.log(await engine.can('bob', 'update', doc, undefined, 'acme.design'))
-  // true  -- bob is editor in acme.design
+  // true: bob is editor in acme.design
 
   console.log(await engine.can('bob', 'update', doc, undefined, 'acme.eng'))
-  // false -- bob is only viewer there
+  // false: bob is only viewer there
 
   console.log(await engine.can('bob', 'update', doc))
-  // false -- no scope, so only bob's global role (viewer) applies
+  // false: no scope, so only bob's global role (viewer) applies
 }
 
 main()
@@ -139,9 +139,9 @@ export const engine = new IamEngine({
 
 ```ts title="src/main.ts"
 console.log(await engine.can('carol', 'delete', doc, undefined, 'acme.design'))
-// true  -- the acme grant covers acme.design under hierarchical mode
+// true: the acme grant covers acme.design under hierarchical mode
 console.log(await engine.can('carol', 'delete', doc, undefined, 'globex.ops'))
-// false -- different subtree
+// false: different subtree
 ```
 
 A scope with no dot degrades to an exact match, so turning `hierarchical` on is safe even for apps that never nest scopes.
@@ -291,8 +291,8 @@ const trace = await engine.explain('bob', 'update',
   undefined,
   'acme.design',
 )
-console.log(trace.subject.roles)               // ['viewer']  -- before the merge
-console.log(trace.subject.scopedRolesApplied)  // ['editor']  -- what the scope added
+console.log(trace.subject.roles)               // ['viewer']: before the merge
+console.log(trace.subject.scopedRolesApplied)  // ['editor']: what the scope added
 console.log(trace.request.scope)               // 'acme.design'
 console.log(trace.summary)
 ```

@@ -165,7 +165,7 @@ export const DELETE = withIamAccess(engine, 'delete', 'post', handler, {
 ```
 
 <Callout tone="warning" title="GetUserId is required and identity never comes from headers">
-`withIamAccess` throws at construction when `opts.getUserId` is omitted: `[@gentleduck/iam:next] opts.getUserId is required - deriving identity from request headers is unsafe. Wire it from your auth middleware (cookie session, JWT, etc.).` Before 2.1.0 the default trusted the `x-user-id` request header, which any unauthenticated client can forge with `curl -H 'X-User-Id: admin'`. The test `throws at construction when getUserId is omitted` pins the current behaviour. Derive the subject from NextAuth `auth()`, Clerk, a verified JWT, or your own cookie session.
+`withIamAccess` throws at construction when `opts.getUserId` is omitted: the coded `IamError` `IAM_SERVER_GET_USER_ID_REQUIRED` (`meta: { framework: 'next' }`) - deriving identity from request headers is unsafe. Before 2.1.0 the default trusted the `x-user-id` request header, which any unauthenticated client can forge with `curl -H 'X-User-Id: admin'`. The test `throws at construction when getUserId is omitted` pins the current behaviour. Derive the subject from NextAuth `auth()`, Clerk, a verified JWT, or your own cookie session.
 </Callout>
 
 ### Handler errors are not yours
@@ -459,7 +459,7 @@ export const DELETE = h.revokeRole
 The last four are the shared `IamAdminAudit.IOptions`; their exact semantics, the event shape, and the CSRF predicate are documented once on the [generic helpers page](/duck-iam/integrations/server/generic).
 
 <Callout tone="warning" title="authorize is mandatory">
-`createIamAdminHandlers` throws at construction when `opts.authorize` is not a function: `[@gentleduck/iam] createIamAdminHandlers requires an authorize callback.` These handlers write policies, roles, and assignments straight to the adapter, so there is no useful unauthenticated mode.
+`createIamAdminHandlers` throws at construction when `opts.authorize` is not a function: the coded `IamError` `IAM_SERVER_ADMIN_AUTHORIZE_REQUIRED` (`meta: { framework: 'next', fn: 'createIamAdminHandlers' }`). These handlers write policies, roles, and assignments straight to the adapter, so there is no useful unauthenticated mode.
 </Callout>
 
 <Callout tone="warning" title="CSRF check is on by default">

@@ -91,7 +91,7 @@ Rows marked "docs" are read from the other project's documentation rather than t
 | Measured here | Yes | Yes | Yes | No | No | Yes |
 | License | MIT | Apache 2.0 | MIT | Apache 2.0 | Apache 2.0 | MIT |
 
-The duck-iam column is read from the 5.9.0 source and `package.json`. Competitor dependency counts and licenses come from each project's own published metadata, checked 2026-03-30, and go stale when they release. For the numbers behind the "measured here" row, see [benchmarks](/duck-iam/benchmarks).
+The duck-iam column is read from the 5.10.0 source and `package.json`. Competitor dependency counts and licenses come from each project's own published metadata, checked 2026-03-30, and go stale when they release. For the numbers behind the "measured here" row, see [benchmarks](/duck-iam/benchmarks).
 
 Two smaller libraries appear in the benchmark suite without a column here, because their surface is too narrow for the axes above. `easy-rbac` is roughly 2 KB and needs no configuration beyond a hierarchical role object: a good fit when hierarchical RBAC is the entire requirement, and it benchmarks faster than duck-iam's own `iamEvaluateFast()`. `@rbac/rbac` is around 4 KB, allows role updates at runtime, and ships Express, NestJS, and Fastify middleware. Neither supports attribute conditions, so neither appears in the ABAC scenarios. Both size figures are bundlephobia numbers checked 2026-03-30.
 

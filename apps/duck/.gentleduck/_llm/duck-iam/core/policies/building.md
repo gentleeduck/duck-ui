@@ -152,13 +152,15 @@ A bare literal never matches sub-resources - to cover a subtree you must write t
 
 `PolicyBuilder.build()` runs `validatePolicy()` on the finished object and throws when any error-level issue is present (since 2.2.0). Warnings never throw. The flow:
 
-The thrown message names the policy id and every failing code, path, and message:
+`build()` throws the coded `IamError` `IAM_VALIDATION_FAILED` (`meta: { kind: 'policy' | 'role' | 'rule' | 'request', issues: string[] }`); every builder's `.build()` shares this one throw path (`throwIamValidationFailed` in `core/errors/errors.validation.ts`). Each entry in `meta.issues` is one failing issue formatted as `` `${code}${path ? ` at "${path}"` : ''}: ${message}` ``:
 
 ```text
-[@gentleduck/iam:builder] PolicyBuilder.build("p") rejected by validator - UNREACHABLE_TARGET at "targets": Target admits "delete" but no allow rule covers it, so every request matching it is denied by this policy. Add a rule that allows it, or narrow the target.
+UNREACHABLE_TARGET at "targets": Target admits "delete" but no allow rule covers it, so every request matching it is denied by this policy. Add a rule that allows it, or narrow the target.
 
-[@gentleduck/iam:builder] PolicyBuilder.build("p") rejected by validator - ERR_REGEX_CATASTROPHIC at "rules[0].conditions.all[0].value": Condition "matches" pattern rejected: nested quantifier (e.g. `(a+)+`) - catastrophic backtracking risk
+ERR_REGEX_CATASTROPHIC at "rules[0].conditions.all[0].value": Condition "matches" pattern rejected: nested quantifier (e.g. `(a+)+`) - catastrophic backtracking risk
 ```
+
+The `IamError`'s own `.message` is just the bare code `IAM_VALIDATION_FAILED` - read `meta.kind` and `meta.issues` for the detail, never the message.
 
 Errors a builder-built policy can hit:
 
@@ -251,8 +253,8 @@ All three factories and the classes `PolicyBuilder`, `RuleBuilder`, `When` are e
 
 ## Gotchas
 
-* `build()` throws, so a policy barrel that fails validation fails at import time. That is intentional: the message carries the policy id and the fix.
-* All three builders validate at `build()`. `RoleBuilder`'s message omits the validator text (`CODE at "path"` only). See [defining roles](/duck-iam/core/roles/definition).
+* `build()` throws, so a policy barrel that fails validation fails at import time. That is intentional, but the policy's own `id` is not part of `IAM_VALIDATION_FAILED`'s `meta` - only `kind` and the formatted `issues` list are. The caller already knows which policy failed, since they called `build()` on it.
+* All three builders (`PolicyBuilder`, `RuleBuilder`, `RoleBuilder`) validate at `build()` and throw through the identical `IAM_VALIDATION_FAILED` path (`throwIamValidationFailed`) with the identical `${code} at "path": message` formatting - there is no longer a format difference between them. See [defining roles](/duck-iam/core/roles/definition).
 * `target()` replaces the whole targets object; there is no merge across calls.
 * A `when()` that added no conditions does not count as configuring a rule, so `defineRule('x').when((w) => w).build()` is refused. `defineRule('x').allow().when((w) => w).build()` is accepted and is the same object as `defineRule('x').allow().build()` - a redundant spelling, not a hazard.
 

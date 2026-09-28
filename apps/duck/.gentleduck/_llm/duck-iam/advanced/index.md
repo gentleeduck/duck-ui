@@ -1,0 +1,26 @@
+The advanced section covers everything you reach for once the basic shape from the [quick start](/duck-iam/guides) is in place: making `createIam()` fully type-safe, understanding what the engine does internally, debugging a specific decision, and validating policies and roles before they load.
+
+## Which page do I need
+
+| Page | Covers |
+| --- | --- |
+| [Config overview](/duck-iam/advanced/config) | `createIam()`'s typed-config surface: generics, context, `$`-paths, typed vs. untyped. |
+| [Config methods](/duck-iam/advanced/config/methods) | Every method on the object `createIam()` returns, with a runnable example each. |
+| [Engine overview](/duck-iam/advanced/engine) | `IamEngine` - subject resolution, policy loading, evaluation, caching. |
+| [Engine methods](/duck-iam/advanced/engine/methods) | Every public method on `IamEngine`: signatures, return shapes, thrown errors. |
+| [Caching and invalidation](/duck-iam/advanced/engine/caching) | The five LRU caches, single-flight coalescing, invalidation triggers and order. |
+| [Compiled table](/duck-iam/advanced/engine/compiled) | How production mode compiles roles and policies into typed lookup arrays. |
+| [Hooks](/duck-iam/advanced/engine/hooks) | The six engine hooks, firing order, and what happens when one throws. |
+| [Modes](/duck-iam/advanced/engine/modes) | What `mode: 'development' \| 'production'` actually changes. |
+| [Admin API](/duck-iam/advanced/engine/admin) | Runtime CRUD for policies, roles, assignments, and attributes. |
+| [Explain traces](/duck-iam/advanced/explain) | `engine.explain()`'s full, non-short-circuiting decision trace. |
+| [Devtools panel](/duck-iam/advanced/devtools) | The in-app React panel, its six panels, and the production guard. |
+| [Validation](/duck-iam/advanced/validation) | `validatePolicy`, `validateRoles`, and every issue code. |
+| [JSON schema](/duck-iam/advanced/json-schema) | `POLICY_JSON_SCHEMA`, the hand-authored Draft 2020-12 schema for a policy. |
+| [Utilities](/duck-iam/advanced/utilities) | Exported matchers, resolvers, condition primitives, caches, and key helpers. |
+
+## See also
+
+* [Core concepts](/duck-iam/core) - the model these pages build on: subjects, roles, policies, decisions.
+* [Production hardening](/duck-iam/guides/production) - the pre-flight checklist that draws on several of these pages.
+* [Troubleshooting](/duck-iam/guides/troubleshooting) - symptom-first, for when you don't yet know which advanced page you need.

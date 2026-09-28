@@ -188,24 +188,28 @@ For Redis, use `WATCH`/`MULTI`/`EXEC` or a Lua script.
 
 ### Argument validation
 
-Every admin method validates before doing anything. All messages are prefixed `[@gentleduck/iam:engine]`.
+Every admin method validates before doing anything. Every guard throws a coded `IamError` - the `.message` is just the bare code, and the detail lives on `.meta`.
 
-| Guard | Applies to | Message |
+| Guard | Applies to | Code and meta |
 | --- | --- | --- |
-| Non-empty string | `id`, `subjectId`, `roleId` | `<name> must be a non-empty string (got <typeof>)` |
-| 1024-character cap | the same | `<name> exceeds 1024-char cap (got length <n>)` |
+| Non-empty string | `id`, `subjectId`, `roleId` | `IAM_ENGINE_PARAM_INVALID` (`meta: { name, reason: 'empty', got }`) |
+| 1024-character cap | the same | `IAM_ENGINE_PARAM_INVALID` (`meta: { name, reason: 'too-long', length }`) |
 | Optional non-empty string | `scope`, `fromScope`, `toScope` | as above, skipped when `undefined` |
-| Plain object | `attrs` | `attributes must be a plain object (got <typeof>)` |
-| At most 256 own keys | `attrs` | `attributes must have <=256 keys (got <n>)` |
-| Nesting depth at most 16 | `attrs` | `attributes nesting depth <d> exceeds cap (16)` |
-| Schema validity | `policy`, `role` | `<policy\|role> rejected by validator - <CODE> at "<path>"; ...` |
+| Plain object | `attrs` | `IAM_ENGINE_ATTRIBUTES_PARAM_INVALID` (`meta: { reason: 'not-object', got }`) |
+| At most 256 own keys | `attrs` | `IAM_ENGINE_ATTRIBUTES_PARAM_INVALID` (`meta: { reason: 'too-many-keys', count }`) |
+| Nesting depth at most 16 | `attrs` | `IAM_ENGINE_ATTRIBUTES_PARAM_INVALID` (`meta: { reason: 'too-deep', depth }`) |
+| Schema validity | `policy`, `role` | `IAM_VALIDATION_FAILED` (`meta: { kind, issues }`) |
 
 The 1024-character cap exists because these values become URL segments on the HTTP adapter, key components on Redis, and column values on SQL. The 256-key and depth-16 attribute caps bound what a hostile caller can push into a JSON column and what the dot-path resolver has to walk.
 
-A rejected `subjectId` is reported by its `typeof`, never by its content, so a
-hostile value cannot ride into your logs through the error path. The one place
-a value is interpolated - the snapshot `schemaVersion` - truncates strings at
-64 characters and reports arrays and objects by shape only.
+A rejected `subjectId` is reported by its `typeof` on `meta.got`, never by its content, so a
+hostile value cannot ride into your logs through the error path. The schema-validity guard goes
+further: it strips every issue's own `message` text to `''` before it reaches `meta.issues`,
+because a validator message can echo the caller's submitted value (an invalid enum choice, for
+example) - the builders' equivalent guards keep the message, since they validate
+developer-authored config, not a live request body. The one place a value is interpolated -
+the snapshot `schemaVersion` - truncates strings at 64 characters and reports arrays and
+objects by shape only.
 
 ### export
 
@@ -256,11 +260,7 @@ const result = await prodEngine.admin.import(JSON.parse(readFileSync('iam-snapsh
 
 The **whole snapshot is validated before the adapter is touched**: `schemaVersion`, then that `policies` and `roles` are arrays, then every policy and every role through the validator. Interleaving meant an invalid row halfway through left the store half-applied - and in `'replace'` mode the deletions had already landed, so deny policies could be gone with nothing written back in their place.
 
-`schemaVersion` must be exactly `1`. Anything else throws before a single write:
-
-```
-[@gentleduck/iam:engine] unsupported snapshot schemaVersion string 'v2'; expected 1
-```
+`schemaVersion` must be exactly `1`. Anything else throws before a single write: the coded `IamError` `IAM_ENGINE_SNAPSHOT_VERSION_UNSUPPORTED` (`meta: { got }`, `got` formatted through the same 64-char-truncating, shape-only interpolation described above - e.g. `got: "string 'v2'"`). A `policies`/`roles` field that is not an array throws `IAM_ENGINE_SNAPSHOT_FIELD_INVALID` (`meta: { field }`) instead.
 
 The counts are snapshot sizes and delete counts, not diffs: `policiesAdded` is `snapshot.policies.length` regardless of how many were already identical.
 
@@ -286,12 +286,7 @@ app.use(
 )
 ```
 
-Omitting it throws at boot:
-
-```
-[@gentleduck/iam] iamAdminRouter requires an `authorize` callback.
-Mounting admin endpoints unauthenticated is never safe.
-```
+Omitting it throws at boot: the coded `IamError` `IAM_SERVER_ADMIN_AUTHORIZE_REQUIRED` (`meta: { framework: 'express', fn: 'iamAdminRouter' }` - `framework`/`fn` vary by binding).
 
 The same secure-by-default contract holds for `iamBindAdminRouter` (Hono), `createIamAdminHandlers` (Next.js) and `createIamAdminOperations` (NestJS). All four also apply a default `Sec-Fetch-Site` CSRF check on mutating routes; pass `csrfCheck: false` to opt out, or your own predicate to replace it.
 

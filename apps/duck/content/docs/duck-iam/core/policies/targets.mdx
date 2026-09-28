@@ -112,10 +112,10 @@ The only difference from rule resources is that a dotted request resource does n
 
 When targets match (or are absent), at least one rule has a matching action/resource shape, but no rule's conditions hold, the combining algorithm returns `defaultEffect` and the policy **does** vote. With the default `defaultEffect: 'deny'` and `policyCombine: 'and'`, that vote is a deny.
 
-This is why a target can widen what a policy refuses: adding a resource to `target({ resources })` without an allow rule that covers it denies every caller for that resource. Since 5.4.0, `PolicyBuilder.build()` rejects that shape with `UNREACHABLE_TARGET` (an error; it was a warning in 5.3.0):
+This is why a target can widen what a policy refuses: adding a resource to `target({ resources })` without an allow rule that covers it denies every caller for that resource. Since 5.4.0, `PolicyBuilder.build()` rejects that shape with `UNREACHABLE_TARGET` (an error; it was a warning in 5.3.0), surfaced through the coded `IamError` `IAM_VALIDATION_FAILED` (`meta: { kind: 'policy', issues: string[] }`):
 
 ```text
-[@gentleduck/iam:builder] PolicyBuilder.build("p") rejected by validator - UNREACHABLE_TARGET at "targets": Target admits "delete" but no allow rule covers it, so every request matching it is denied by this policy. Add a rule that allows it, or narrow the target.
+UNREACHABLE_TARGET at "targets": Target admits "delete" but no allow rule covers it, so every request matching it is denied by this policy. Add a rule that allows it, or narrow the target.
 ```
 
 The check fires only when the policy has at least one allow rule; a purely restrictive (deny-only) policy is exempt because denying everything it targets is the point. Only dimensions the target names are checked - an omitted dimension is unconstrained, so a target naming only `impersonate` is satisfied by an allow rule on `.of('users')`. Targets with more than 1000 action x resource pairs skip the check with a warning.

@@ -35,7 +35,7 @@ Every option that matters in production, with its real default.
 | `scopeCombine` | `'union'` | `'override'` | `'union'` | How multiple matching ancestor levels combine. Ignored under `'flat'` |
 | `hooks` | `IHooks` | `{}` | `beforeEvaluate`, `afterEvaluate`, `onDeny`, `onError`, `onPolicyError`, `onMetrics`, `onMutation` |
 
-`maxPolicies`, `maxRoles`, `adapterTimeoutMs`, and `maxConcurrentSubjectLoads` are all range-checked at construction and throw a `RangeError` on a non-finite or out-of-range value - a `NaN` limit would otherwise silently disable the bound, because `NaN > x` is always false. Full option reference: [engine configuration](/duck-iam/advanced/config).
+`maxPolicies`, `maxRoles`, `adapterTimeoutMs`, `hookTimeoutMs`, and `maxConcurrentSubjectLoads` are all range-checked at construction and throw the coded `IamError` `IAM_ENGINE_INVALID_CONFIG` on a non-finite or out-of-range value - a `NaN` limit would otherwise silently disable the bound, because `NaN > x` is always false. Full option reference: [engine configuration](/duck-iam/advanced/config).
 
 ## Set `mode: 'production'`
 
@@ -48,7 +48,7 @@ const engine = access.createEngine({ adapter, mode: 'production' })
 What changes in production mode:
 
 * `check()` and `authorize()` return `boolean` instead of `IDecision`.
-* `explain()` throws `explain() is not available in production mode`.
+* `explain()` throws the coded `IAM_ENGINE_EXPLAIN_UNAVAILABLE`.
 * `afterEvaluate` and `onDeny` never fire - they receive a `IDecision` that is never built. `onError`, `onPolicyError`, and `onMetrics` still fire.
 * `policyCombine: 'first-applicable'` is refused at construction; the fast path cannot represent it.
 
@@ -138,7 +138,7 @@ Where the subject ID comes from when you pair with duck-auth: [auth bridge](/duc
 
 ## Admin router hardening
 
-Every admin router refuses to mount without an `authorize` callback - `iamAdminRouter`, `iamBindAdminRouter`, `createIamAdminHandlers`, and `createIamAdminOperations` all throw at construction, for example ``[@gentleduck/iam] createIamAdminHandlers requires an `authorize` callback.`` A stub that returns `true` defeats the point; wire it to your real admin check.
+Every admin router refuses to mount without an `authorize` callback - `iamAdminRouter`, `iamBindAdminRouter`, `createIamAdminHandlers`, and `createIamAdminOperations` all throw `IAM_SERVER_ADMIN_AUTHORIZE_REQUIRED` at construction (`meta: { framework, fn }`, e.g. `{ framework: 'next', fn: 'createIamAdminHandlers' }`). A stub that returns `true` defeats the point; wire it to your real admin check.
 
 Admin mutation endpoints also run a `Sec-Fetch-Site` check by default. Browsers populate that header automatically; cross-site form posts are rejected with 403 while same-site and same-origin requests pass. Non-browser callers send no header and pass - they must be gated by bearer tokens or mTLS.
 
@@ -200,8 +200,8 @@ const engine = new IamEngine({
 | Hook | Fires | Use it for |
 |---|---|---|
 | `beforeEvaluate` | before evaluation, may rewrite the request | Enrichment; pin `environment.now` for replay |
-| `afterEvaluate` | after every evaluation, **development mode only** | Debug tracing. Skip in production mode - it never fires there |
-| `onDeny` | on every deny, **development mode only** | Audit log. Required for SOC 2 / ISO 27001 |
+| `afterEvaluate` | after every evaluation, both modes | Debug tracing. In production mode the decision is a synthesised verdict-only `IDecision` - no `policy`/`rule` |
+| `onDeny` | on every deny, both modes | Audit log. Required for SOC 2 / ISO 27001 - fires in production too, just without policy/rule identity |
 | `onError` | adapter failures, timeouts, condition-tree throws | Page on rate. Every one of these is a denied request |
 | `onPolicyError` | one malformed policy row | Page on rate. The only signal a stored row is rotten |
 | `onMetrics` | once per evaluation, both modes | Latency and outcome telemetry |
@@ -209,10 +209,13 @@ const engine = new IamEngine({
 
 A hook that throws cannot change a decision. `afterEvaluate` and `onDeny` run outside the evaluation `try` block, and every hook call is individually wrapped, so an operator bug is routed to `console.error` rather than rewriting an allow into a deny. Signatures: [hooks](/duck-iam/advanced/engine/hooks).
 
-`onDeny` receives an `IDecision` that production mode never allocates, so it
-never fires there. Build the audit trail from `onMetrics` - the event carries
-`subjectId`, `action`, `resource`, `allowed`, `durationMs`, `mode`, and
-`failOpen` - or run the audited surface in development mode deliberately.
+`onDeny` and `afterEvaluate` both fire in production mode - the engine synthesises a verdict-only
+`IDecision` (`allowed`, `effect`, `reason`, `duration`, `timestamp`; no `policy`, `rule`, or
+`failure`) rather than skipping the hook. The request itself (`subjectId`, `action`, `resource`,
+`scope`) is still the real one passed to the hook alongside it, so `onDeny` alone is enough for an
+audit trail - it just cannot name which policy or rule denied. Add `onMetrics` if you also want
+`durationMs`/`mode`/`failOpen` on the same event, or run the audited surface in development mode
+deliberately if policy/rule attribution is required.
 
 ## Adapter timeout and HTTP adapter tuning
 
@@ -292,7 +295,7 @@ app.get('/metrics', (_, res) => res.json(metrics.snapshot()))
 // -> { total, allow, deny, failOpen, p50, p95, p99, max, samples }
 ```
 
-`sampleSize` must be a positive integer and defaults to `1000`; anything else throws `[@gentleduck/iam:metrics] sampleSize must be a positive integer`. The buffer is a fixed-size `Float64Array` ring - memory does not grow with traffic, and percentiles are computed over the most recent `sampleSize` durations. Push the snapshot into your Prometheus or OTel pipeline at your scrape interval.
+`sampleSize` must be a positive integer and defaults to `1000`; anything else throws `IAM_METRICS_SAMPLE_SIZE_INVALID` (`meta: { got }`). The buffer is a fixed-size `Float64Array` ring - memory does not grow with traffic, and percentiles are computed over the most recent `sampleSize` durations. Push the snapshot into your Prometheus or OTel pipeline at your scrape interval.
 
 `failOpen` counts allow verdicts that fired solely because the `defaultEffect: 'allow'` fallback matched with no applicable policy. Chart it to detect silent policy-set breakage - a broken adapter, a mass deletion, rules dropped by a ReDoS guard - that the boolean verdict alone hides. Under `defaultEffect: 'deny'` it stays at zero. Detail: [metrics aggregator](/duck-iam/integrations/observability/metrics).
 

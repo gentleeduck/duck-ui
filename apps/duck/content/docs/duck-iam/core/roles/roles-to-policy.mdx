@@ -249,14 +249,14 @@ Rules are emitted per role **and** per inherited permission, so a chain of N rol
 - Flattening at conversion time means no inheritance walk per request - each role's effective set is directly checkable.
 - The cost is paid on policy load, which is cached, not per evaluation.
 
-For very large role tables watch policy-load time, and know where the compiled table stops helping: `IAM_MAX_COMPILED_ROLES` is 32, because a role's bit position in the grant mask is `1 << index` and JS bitwise operators wrap the shift amount mod 32, so role 32 would alias role 0's bit. Past 32 roles `compileTable` throws `IamRoleLimitExceededError`, the engine catches that error specifically, warns once, and both modes fall back to the interpreter for every subsequent request. Verdicts are unchanged; throughput is not. `healthCheck()` reports it:
+For very large role tables watch policy-load time, and know where the compiled table stops helping: `IAM_MAX_COMPILED_ROLES` is 32, because a role's bit position in the grant mask is `1 << index` and JS bitwise operators wrap the shift amount mod 32, so role 32 would alias role 0's bit. Past 32 roles `compileTable` throws the coded `IamError` `IAM_ROLE_LIMIT_EXCEEDED` (`meta: { roleCount, limit }`), the engine catches that error specifically, warns once, and both modes fall back to the interpreter for every subsequent request. Verdicts are unchanged; throughput is not. `healthCheck()` reports it:
 
 ```ts
 const health = await engine.healthCheck()
 health.compiledTable // { available: false, reason: 'role-limit-exceeded', roleCount: 41, limit: 32 }
 ```
 
-The flag is latched for the life of the engine instance: deleting roles back under 32 and invalidating every cache does not restore the compiled table. Construct a new engine. See [benchmarks](/duck-iam/benchmarks).
+The flag is latched only until the next role invalidation: `admin.saveRole()`/`deleteRole()` (and a broadcast role invalidation from another instance) clear it along with the role cache, so deleting roles back under 32 and letting that invalidation land restores the compiled table on the next request - no new engine needed. A `cacheTTL` expiry alone does not clear the latch, since it does not invalidate roles. See [benchmarks](/duck-iam/benchmarks).
 
 ## See also
 

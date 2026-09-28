@@ -349,7 +349,7 @@ Both halves of the parse are covered: a JSON column that will not parse, and one
 Subject attributes are the deliberate exception.
 
 <Callout tone="warning" title="SEC-058: a corrupt attribute blob throws, it does not return `{}`">
-  `getSubjectAttributes` throws `[@gentleduck/iam:drizzle] corrupted attributes for "<id>" (JSON parse failed)` or `… (not a JSON object)` when the stored `data` will not parse or is not a plain object. Returning `{}` would silently strip every ABAC condition and flip decisions without any operator signal. The engine routes the throw through `onError`, fails closed with a deny, and records it on `onMetrics`. Since 2.1.0.
+  `getSubjectAttributes` throws `IAM_ATTRIBUTES_CORRUPT` (`meta: { adapter: 'drizzle', subjectId, reason: 'parse-failed' | 'not-object' }`) when the stored `data` will not parse or is not a plain object. Returning `{}` would silently strip every ABAC condition and flip decisions without any operator signal. The engine routes the throw through `onError`, fails closed with a deny, and records it on `onMetrics`. Since 2.1.0.
 </Callout>
 
 `setSubjectAttributes` is the one path that recovers instead: it catches a corrupt read, reports it, and merges onto `{}` so an operator can always overwrite a broken row rather than being locked out of fixing it.

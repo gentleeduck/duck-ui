@@ -298,6 +298,7 @@ interface IDecision {
   readonly duration: number
   readonly timestamp: number
   readonly applicable?: boolean
+  readonly failure?: 'input' | 'resolution' | 'evaluation'
 }
 ```
 
@@ -311,6 +312,7 @@ interface IDecision {
 | `duration` | `number` | yes | Evaluation time in milliseconds, from `performance.now()`. |
 | `timestamp` | `number` | yes | `Date.now()` at the moment the decision was made. |
 | `applicable` | `boolean` | no | `false` marks a NotApplicable per-policy decision. Omitted (never `true`) for applicable ones. |
+| `failure` | `'input' \| 'resolution' \| 'evaluation'` | no | Set only when the deny came from the engine failing rather than a policy saying no - malformed input, a subject the adapter could not resolve, or a throwing evaluation - so a caller can tell a 503 from a 403. Production mode returns a bare boolean and cannot carry this; use `onError` there instead. |
 
 `evaluatePolicy()` still fills `allowed` on a NotApplicable result, from `defaultEffect`, so the object stays a well-formed `IDecision`. It is not a verdict. Check `applicable === false` first. The cross-policy combiner does exactly that and skips such decisions; if you call `evaluatePolicy()` yourself, you must too.
 
@@ -339,6 +341,17 @@ type OpFn = (field: IamPrimitives.AttributeValue, value: IamPrimitives.Attribute
 
 The signature every operator implementation satisfies. Exposed so custom tooling can type an operator table.
 
+### `AccessControl.PolicyErrorHandler`
+
+```ts
+type PolicyErrorHandler<TAction extends string = string, TResource extends string = string> = (
+  err: Error,
+  policy: IPolicy<TAction, TResource>,
+) => void
+```
+
+The shape of the second argument a throwing policy is routed to - but the shape differs by call site, and an inline arrow written for one silently compiles against the others. `iamEvaluate`/`iamEvaluateFast` pass this type, the whole `IPolicy` object; `IamEngineTypes.IHooks.onPolicyError` passes just the policy **id** as a string; an adapter's row-error handler passes `IamAdapter.RowErrorHandler`'s `{ adapter, rowId }`. The throwing policy is always treated as Indeterminate, never NotApplicable, so a malformed deny rule is not silently skipped.
+
 ## API reference
 
 Every type on this page, in one list. All are re-exported from `@gentleduck/iam` and `@gentleduck/iam/core`.
@@ -347,7 +360,7 @@ Every type on this page, in one list. All are re-exported from `@gentleduck/iam`
 | --- | --- |
 | `IamPrimitives` | `Scalar`, `AttributeValue`, `Attributes` |
 | `IamRequest` | `IScopedRole`, `ISubject`, `IResource`, `IEnvironment`, `IAccessRequest` |
-| `AccessControl` | `Effect`, `Operator`, `ICondition`, `IConditionAll`, `IConditionAny`, `IConditionNone`, `IConditionGroup`, `IRule`, `CombiningAlgorithm`, `PolicyCombine`, `IPolicy`, `IPermission`, `IRole`, `IDecision`, `Mode`, `ModeResult`, `ModePermissionMap`, `OpFn` |
+| `AccessControl` | `Effect`, `Operator`, `ICondition`, `IConditionAll`, `IConditionAny`, `IConditionNone`, `IConditionGroup`, `IRule`, `CombiningAlgorithm`, `PolicyCombine`, `IPolicy`, `IPermission`, `IRole`, `IDecision`, `Mode`, `ModeResult`, `ModePermissionMap`, `OpFn`, `PolicyErrorHandler` |
 
 The generic parameters (`TAction`, `TResource`, `TRole`, `TScope`) all default to `string`. Supplying literal unions is what makes the builder and the `$`-path helpers type-safe; see [type-safe roles](/duck-iam/core/roles/type-safe) and [typed context](/duck-iam/advanced/config/context).
 

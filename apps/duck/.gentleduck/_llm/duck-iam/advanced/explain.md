@@ -34,8 +34,8 @@ async explain(
 
 | Guard | Behaviour |
 |---|---|
-| `mode: 'production'` | Throws `Error('explain() is not available in production mode')` |
-| `subjectId` not a string, empty, or over 1024 chars | Throws `[@gentleduck/iam:engine] explain(): subjectId must be a non-empty string <=1024 chars` |
+| `mode: 'production'` | Throws the coded `IamError` `IAM_ENGINE_EXPLAIN_UNAVAILABLE` |
+| `subjectId` not a string, empty, or over 1024 chars | Throws the coded `IamError` `IAM_ENGINE_PARAM_INVALID` (`meta: { name: 'explain(): subjectId', reason: 'empty' \| 'too-long', got?, length? }`) |
 
 The explain module is loaded with a dynamic `import('../explain')` *after* the mode check,
 so a production bundle never pulls in the explain chunk at all.
@@ -60,7 +60,7 @@ The **policy traces are kept**, deliberately. Seeing which wildcard rule would h
 is the whole reason to open `explain()` on a refused request; what must not happen is the
 summary disagreeing with the engine. Until recently it did: `explain()` ran the combine over
 the traces and reported whatever the policies said, so a subject holding the ordinary
-`.on('*').of('*')` admin grant was explained as ALLOWED on a request the engine denies —
+`.on('*').of('*')` admin grant was explained as ALLOWED on a request the engine denies:
 on exactly the requests the framework adapters mint the token for, an unmappable HTTP method
 and a path the traversal guard refused to resolve.
 
@@ -82,11 +82,13 @@ Three things in that graph are easy to miss:
 * `tracePolicy` runs for **every** policy, including ones whose targets do not match. A
   non-matching policy still produces an `IPolicyTrace`, with `targetMatch: false`, an empty
   `rules` array, and `result` set to the engine's `defaultEffect`.
-* `traceGroup` is depth-capped at `MAX_TRACE_DEPTH = 10`, and past it it **throws**
-  `IamConditionGroupError` rather than returning `false`. `traceRule` catches that, records
-  the message on the rule trace's `conditionError` field, and leaves `conditions` as an
-  empty failing `all` group. `tracePolicy` then casts the Indeterminate vote the decision
-  path casts — see [when a condition cannot be traced](#when-a-condition-cannot-be-traced).
+* `traceGroup` is depth-capped at `MAX_TRACE_DEPTH = 10`, and past it it **throws** the coded
+  `IamError` `IAM_CONDITION_GROUP_INVALID` rather than returning `false`. `traceRule` catches
+  that, records its message - the bare code, since an `IamError`'s `message` is just its
+  `code` and the detail lives on `meta` - on the rule trace's `conditionError` field, and
+  leaves `conditions` as an empty failing `all` group. `tracePolicy` then casts the
+  Indeterminate vote the decision path casts; see
+  [when a condition cannot be traced](#when-a-condition-cannot-be-traced).
 * `applyCombiner` reproduces the per-policy combining algorithm; `decideFinal` then applies
   the cross-policy `policyCombine` strategy. They are two separate steps and both appear in
   the output: the per-policy result on each `IPolicyTrace`, the final one on `decision`.
@@ -120,7 +122,7 @@ export function explainEvaluation(
 Returns an `Explain.IResult`. Throws nothing of its own; a malformed policy will surface as
 whatever the underlying matcher throws.
 
-`tracePolicy` and `traceRule` are internal — `@gentleduck/iam/core/explain` exports exactly
+`tracePolicy` and `traceRule` are internal: `@gentleduck/iam/core/explain` exports exactly
 `explainEvaluation`, `iamEscapeHtml` and the `Explain` type namespace. To trace one policy,
 call `explainEvaluation` with a single-element array.
 
@@ -270,7 +272,7 @@ failed on `actionMatch` still shows you what its conditions would have done.
 A condition can be unanswerable rather than false: a group nested past `MAX_TRACE_DEPTH`, an
 operand of the wrong type, a `matches` pattern read from request data, a pattern that will
 not compile. `traceRule` catches the throw, puts the message on `conditionError`, and sets
-`conditions` to an empty failing `all` group — so `matched` reads `false` on that rule.
+`conditions` to an empty failing `all` group, so `matched` reads `false` on that rule.
 
 Do not read that as "the rule did not apply". `tracePolicy` checks for any rule carrying a
 `conditionError` **before** running the combiner, and casts the Indeterminate vote instead:
@@ -586,8 +588,8 @@ operator-controlled; subject ids often come from a request path. Run it through
 
 ## Cross-policy combine in the trace
 
-`decideFinal` skips every trace whose `targetMatch` is `false` — a non-applicable policy
-contributes nothing in any mode — and then applies the engine's `policyCombine`:
+`decideFinal` skips every trace whose `targetMatch` is `false` (a non-applicable policy
+contributes nothing in any mode) and then applies the engine's `policyCombine`:
 
 | `policyCombine` | Rule |
 |---|---|
@@ -659,7 +661,7 @@ Output for the trace above:
 ### The request was denied and I do not know why
 
 Print `trace.summary` first. If it says `no matching rules` for every policy, the subject
-holds no role granting the action — check `trace.subject.roles`. If a specific policy
+holds no role granting the action: check `trace.subject.roles`. If a specific policy
 denies, open that policy's `decidingRuleId` and read its rule trace.
 
 ### The request was allowed and should not have been
@@ -705,13 +707,13 @@ means the dot-path does not resolve: either the root is wrong (only `subject`, `
 * **`result` on a non-applicable policy is not a verdict.** When `targetMatch` is `false`,
   `result` mirrors the engine's `defaultEffect`. Branch on `targetMatch`.
 * **Every policy is traced, so cost scales with the whole policy set**, not with the first
-  match. This is deliberate — a trace that stopped early would not show you the rules you
+  match. This is deliberate: a trace that stopped early would not show you the rules you
   are trying to debug.
 * **`expected` is post-resolution.** A `$`-reference is already resolved in the trace. If
   you need the literal, read the policy, not the trace.
 * **Depth 10 is Indeterminate, not false.** A condition tree nested deeper than
   `MAX_TRACE_DEPTH` sets `conditionError` on the rule and makes the whole *policy* vote
-  Indeterminate — deny if it holds any deny rule, otherwise the default effect. The rule's
+  Indeterminate: deny if it holds any deny rule, otherwise the default effect. The rule's
   own `matched: false` is not the story; read `conditionError`.
 * **A trace can disagree with a single policy's `result`.** The reserved refusal token
   forces `decision.effect: 'deny'` while leaving the policy traces intact. Check
@@ -726,8 +728,8 @@ means the dot-path does not resolve: either the root is wrong (only `subject`, `
 
 ## See also
 
-* [Devtools panel](/duck-iam/advanced/devtools) — renders this exact trace as a tree.
-* [Validation](/duck-iam/advanced/validation) — catch the config mistakes a trace exposes.
-* [Engine modes](/duck-iam/advanced/engine/modes) — why `explain()` is development-only.
-* [Evaluation pipeline](/duck-iam/core/evaluation) — the non-tracing path.
-* [Utility helpers](/duck-iam/advanced/utilities) — `resolve`, `iamEvaluateOperator`, and the matchers the tracer calls.
+* [Devtools panel](/duck-iam/advanced/devtools): renders this exact trace as a tree.
+* [Validation](/duck-iam/advanced/validation): catch the config mistakes a trace exposes.
+* [Engine modes](/duck-iam/advanced/engine/modes): why `explain()` is development-only.
+* [Evaluation pipeline](/duck-iam/core/evaluation): the non-tracing path.
+* [Utility helpers](/duck-iam/advanced/utilities): `resolve`, `iamEvaluateOperator`, and the matchers the tracer calls.

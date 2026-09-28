@@ -173,7 +173,8 @@ A request from a subject holding only `editor` produces `mask = 1 << 1`, that is
 
 `allow` is a `Uint32Array`, and JavaScript's bitwise operators coerce to 32-bit integers and wrap shift amounts modulo 32: `1 << 32` is `1 << 0`. A 33rd role would silently alias role 0's bit and hand role 0's grants to anyone holding only role 33.
 
-`compileTable` throws `IamRoleLimitExceededError` rather than risk that.
+`compileTable` throws the coded `IamError` `IAM_ROLE_LIMIT_EXCEEDED`
+(`meta: { roleCount, limit }`) rather than risk that.
 
 <Callout tone="info" title="Over 32 roles is a throughput cliff, not a denial">
   The engine catches that error specifically, sets a latch, emits one
@@ -400,7 +401,14 @@ Every invalidation - `invalidate`, `invalidatePolicies`, `invalidateRoles`, or a
 
 Rebuilds are single-flighted per generation. Concurrent cold callers share one build; a caller arriving after a later invalidation never receives the older generation's in-flight promise, and a build that finishes after its generation was superseded still returns its table to its own awaiters but does not commit it to the field - an invalidation that landed mid-build must win. `engine.preload()` warms the table alongside the merged policy cache, in both modes.
 
-A compile failure that is not the role limit denies every request until it is fixed. `IamPolicyCompileError` - raised by the pre-pass that checks `rules`, `actions` and `resources` really are arrays, which is exactly the claim that does not survive a policy arriving from a database row - is forwarded to `onPolicyError` with its `policyId` and rethrown. Anything else gets one `console.error` saying every request will be denied until this is fixed, and is rethrown. The role-limit path deliberately emits neither: that message would send an operator hunting an outage that is not happening.
+A compile failure that is not the role limit denies every request until it is fixed. The
+coded `IamError` `IAM_POLICY_COMPILE_FAILED` (`meta: { policyId, detail }`) - raised by the
+pre-pass that checks `rules`, `actions` and `resources` really are arrays, which is exactly
+the claim that does not survive a policy arriving from a database row - is forwarded to
+`onPolicyError` with its `policyId` and rethrown. Anything else gets one `console.error`
+saying every request will be denied until this is fixed, and is rethrown. The role-limit
+path deliberately emits neither: that message would send an operator hunting an outage that
+is not happening.
 
 ## Gotchas
 

@@ -77,7 +77,7 @@ const invalidator = createIamRedisInvalidator({
 })
 ```
 
-`IConfig.invalidator` is constructor-only, and engines are commonly built at module import time - before any replica-specific Redis client exists. `engine.setInvalidator(invalidator)` attaches one later, and `setInvalidator(null)` detaches; both validate the argument and throw a `TypeError` on anything that is not `null` or an object with `publish` and `subscribe` functions. Replacing unsubscribes the previous one first, so an engine holds at most one subscription however many times it is called. The constructor field routes through the same method.
+`IConfig.invalidator` is constructor-only, and engines are commonly built at module import time - before any replica-specific Redis client exists. `engine.setInvalidator(invalidator)` attaches one later, and `setInvalidator(null)` detaches; both validate the argument and throw the coded `IamError` `IAM_ENGINE_INVALIDATOR_SHAPE_INVALID` on anything that is not `null` or an object with `publish` and `subscribe` functions. Replacing unsubscribes the previous one first, so an engine holds at most one subscription however many times it is called. The constructor field routes through the same method.
 
 Without `secret`, envelopes are unsigned and accepted from anyone holding PUBLISH rights on the channel - a shared Redis instance becomes a fleet-wide cache-wipe primitive. With `secret`, every envelope is HMAC-SHA256 signed and unverifiable envelopes are dropped. A `console.warn` fires at construction when no secret is set, latched per full channel name so one process running one invalidator per tenant reports each unsigned channel rather than only the first.
 
@@ -108,11 +108,7 @@ createIamRedisInvalidator({
 })
 ```
 
-`tenantId` is shape-validated against `/^[A-Za-z0-9_-]{1,64}$/`. A slug containing a space, a `*`, or an empty string throws at construction:
-
-```
-[@gentleduck/iam:invalidator:redis] tenantId must match /^[A-Za-z0-9_-]{1,64}$/ (got "wild*card")
-```
+`tenantId` is shape-validated against `/^[A-Za-z0-9_-]{1,64}$/`. A slug containing a space, a `*`, or an empty string throws `IAM_REDIS_INVALIDATOR_TENANT_ID_INVALID` (`meta: { got: 'wild*card' }`) at construction.
 
 The validation exists because tenant slugs are frequently attacker-influenced. An unvalidated slug could inject pub/sub glob characters or whitespace and cause a subscriber to match channels it was never meant to see. `redis-invalidator.test.ts` pins both halves: `tenantId: 'acme'` produces `duck-iam:invalidate:tenant:acme` on both the subscribe and publish paths, and `'with space'`, `'wild*card'`, and `''` all throw.
 
@@ -261,6 +257,8 @@ Drop warns are rate-limited per channel to one every 60 seconds. The first drop 
 ```
 
 The window replaced a one-shot latch that an attacker could burn on a benign first drop and then flood behind. The rate-limit state lives at module scope and is keyed by **kind plus channel**, so two invalidators on the same channel in one process share one window - but inbound drops and publish failures do not. Keying on the channel alone meant one junk message a minute claimed the window and coalesced away the publish-failure warning for a broker outage happening at the same time: the report an operator needs most, suppressed by traffic anyone with PUBLISH rights can generate.
+
+Every console warning that names a channel runs it through a redactor first: a plain channel logs unchanged, but a `tenantId`-derived channel (`...:tenant:<slug>`) has the slug replaced with an 8-character SHA-256 digest of itself before it reaches any log line. The tenant slug never appears in cleartext in a warning, even though it does appear in the pub/sub channel name itself.
 
 ## Publish failures
 

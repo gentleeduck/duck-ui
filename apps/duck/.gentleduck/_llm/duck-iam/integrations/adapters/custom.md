@@ -70,7 +70,7 @@ export namespace IamAdapter {
     extends IPolicyStore<TAction, TResource, TRole>,
       IRoleStore<TAction, TResource, TRole, TScope>,
       ISubjectStore<TRole, TScope> {
-    /** Re-bind to a driver handle, typically a transaction. Absent means `engine.withTransaction` throws. */
+    /** Re-bind to a driver handle, typically a transaction. Absent means `engine.withTransaction` throws `IAM_ENGINE_ADAPTER_NOT_TRANSACTIONAL`. */
     withClient?(client: unknown): IAdapter<TAction, TResource, TRole, TScope>
   }
 }
@@ -98,7 +98,7 @@ export namespace IamAdapter {
 | `assignRoleMany?(rows)` | optional | `number[]` or `null` | One set-based write. Return the indices into `rows` of the grants actually written, or `null` when your driver cannot say which were new. Indices, not rows, so two rows asking for the same write stay distinguishable. | Refuse the whole batch on one bad row; half-applied is worse. |
 | `revokeRoleMany?(rows)` | optional | `number[]` or `null` | The same for revokes. A row with no `scope` revokes the role in every scope. | As above. |
 | `getSubjectGrantBoundary?(subjectId, opts?)` | optional | `number` or `null` | Earliest **future** `startsAt` / `expiresAt` across the subject's grants, epoch ms, so the engine caps its cache entry there instead of serving a lapsed grant for a full TTL. `null` when nothing is time-boxed. | Backend failure. |
-| `withClient?(client)` | optional | `IAdapter` | Re-make this adapter against an opaque driver handle, keeping every other config field. Return a **new** adapter; a `return this` still commits inside a rolled-back transaction. Absent means `engine.withTransaction` throws. | — |
+| `withClient?(client)` | optional | `IAdapter` | Re-make this adapter against an opaque driver handle, keeping every other config field. Return a **new** adapter; a `return this` still commits inside a rolled-back transaction. Absent means `engine.withTransaction` throws `IAM_ENGINE_ADAPTER_NOT_TRANSACTIONAL`. | — |
 | `getSubjectAttributes(subjectId, opts?)` | yes | `Attributes` | `{}` for an unknown subject. Return a fresh object, the engine may hold on to it. | Backend failure, or a corrupt stored blob (built-ins throw rather than return `{}` so a bad row does not silently widen access). |
 | `setSubjectAttributes(subjectId, attrs)` | yes | `void` | **Merge**, do not replace: keys absent from `attrs` survive, keys present are overwritten. A `null` value clears that key from the policy's point of view. | Backend failure. |
 
@@ -350,7 +350,7 @@ The HTTP adapter's compliance test is worth reading if you are building a remote
 
 ## Checklist
 
-**Implement the thirteen required methods** and decide which of the six optional ones you want. `getSubjectScopedRoles` if you use scoped roles at all; `updateAssignmentScope` only if a single-write move is cheaper than revoke + assign in your store; `withClient` if your backend has a transaction handle worth joining, since without it `engine.withTransaction` throws.
+**Implement the thirteen required methods** and decide which of the six optional ones you want. `getSubjectScopedRoles` if you use scoped roles at all; `updateAssignmentScope` only if a single-write move is cheaper than revoke + assign in your store; `withClient` if your backend has a transaction handle worth joining, since without it `engine.withTransaction` throws `IAM_ENGINE_ADAPTER_NOT_TRANSACTIONAL`.
 
 **Make writes idempotent.** `savePolicy` / `saveRole` upsert on `id`; `assignRole` tolerates duplicates; `deletePolicy` / `deleteRole` / `revokeRole` resolve on unknown ids.
 

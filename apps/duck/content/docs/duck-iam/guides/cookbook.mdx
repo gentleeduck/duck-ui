@@ -376,7 +376,7 @@ const engine = access.createEngine({
 })
 ```
 
-`onDeny(request, decision)` takes two arguments - the request and the `AccessControl.IDecision`, which carries `policy`, `rule`, `reason`, `duration`, and `timestamp`. It fires **only in development mode**, because production mode never allocates a decision. For an audit trail in production mode, use `onMetrics`, whose event carries `subjectId`, `action`, `resource`, `allowed`, `durationMs`, `mode`, and `failOpen`. See [hooks](/duck-iam/advanced/engine/hooks).
+`onDeny(request, decision)` takes two arguments - the request and the `AccessControl.IDecision`. In development mode `decision` carries `policy`, `rule`, `reason`, `duration`, and `timestamp`; in production mode `onDeny` still fires, but the engine synthesises a verdict-only decision instead (`allowed`, `effect`, `reason`, `duration`, `timestamp` - no `policy` or `rule`), so `onDeny` alone still gives you an audit trail, just without policy/rule attribution. Add `onMetrics` if you also want `durationMs`/`mode`/`failOpen` on the same event. See [hooks](/duck-iam/advanced/engine/hooks).
 
 ## One permission map for a whole page
 
@@ -389,10 +389,10 @@ const checks = access.checks([
 ])
 
 const permissions = await engine.permissions('user-alice', checks)
-// { 'create:post': true, 'update:post:post-1': true, ..., 'org-1:manage:billing': false }
+// { 'create:post': true, 'update:post:post-1': true, ..., '@org-1:manage:billing': false }
 ```
 
-`permissions()` loads the adapter data once and evaluates every check against it. Keys are built by `iamBuildPermissionKey(action, resource, resourceId?, scope?)` as `[scope:]action:resource[:resourceId]`, with `:` and `\` backslash-escaped per segment - do not build the key by hand. Batches over 1024 checks throw. Pass `{ telemetry: false }` as the fourth argument to skip per-check `onMetrics` on hot UI gates, worth roughly 2x throughput.
+`permissions()` loads the adapter data once and evaluates every check against it. Keys are built by `iamBuildPermissionKey(action, resource, resourceId?, scope?)` as `action:resource[:resourceId]`, or `@scope:action:resource[:resourceId]` when a scope is passed - the leading `@` is what keeps a scoped key unambiguous, so it is never dropped - with `:` and `\` backslash-escaped per segment - do not build the key by hand. See [PermissionMap reference](/duck-iam/integrations/client/permission-map) for the full escaping rules. Batches over 1024 checks throw. Pass `{ telemetry: false }` as the fourth argument to skip per-check `onMetrics` on hot UI gates, worth roughly 2x throughput.
 
 `access.checks([...])` is a typed pass-through: it constrains the tuples to your declared actions, resources, and scopes without changing the value.
 

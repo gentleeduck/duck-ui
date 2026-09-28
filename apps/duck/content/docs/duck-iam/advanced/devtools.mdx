@@ -350,7 +350,7 @@ export function iamCreateFlowRecorder(options?: IamIFlowRecorderOptions): IamIFl
 
 | Option | Type | Default | Meaning |
 |---|---|---|---|
-| `bufferSize` | `number` | `250` | Ring size. New entries go to the front; the oldest are dropped. Must be a positive integer: `0`, `-1`, `1.5`, `NaN` and `Infinity` all throw `RangeError` at construction, because unchecked they make the trim comparison always false and the "ring" grows without bound for the life of the process. |
+| `bufferSize` | `number` | `250` | Ring size. New entries go to the front; the oldest are dropped. Must be a positive integer: `0`, `-1`, `1.5`, `NaN` and `Infinity` all throw the coded `IamError` `IAM_DT_FLOW_BUFFER_SIZE_INVALID` (`meta: { got }`) at construction, because unchecked they make the trim comparison always false and the "ring" grows without bound for the life of the process. |
 
 `IamIFlowEntry` fields: `id` (monotonic from 1), `ts` (`Date.now()` unless you pass one),
 `subjectId`, `action`, `resource`, `resourceId?`, `scope?`, `allowed`, `durationMs?`,
@@ -387,8 +387,10 @@ const engine = new IamEngine({
 })
 ```
 
-`afterEvaluate` fires in `development` mode only, which lines up exactly with when the panel
-can render. A listener that throws is caught and logged with
+`afterEvaluate` fires in both modes whenever it is wired - it is not gated to `development`
+the way `explain()` is. Wiring the flow recorder in a production engine works and records
+real traffic; the panel simply will not render there to read it. A listener that throws is
+caught and logged with
 `[@gentleduck/iam:dt:flow] listener threw - continuing`, so one broken subscriber cannot
 break the recorder.
 

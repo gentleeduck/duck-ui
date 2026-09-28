@@ -66,7 +66,7 @@ Start with [Chapter 1: your first permission check](/duck-iam/course/chapter-1).
 
 Every chapter has the same five parts: **learning goals**, a **diagram** of the mechanism it introduces, the **code**, a **what just happened** walkthrough of what the engine did, and a **try it** exercise. Each new concept links to its reference page, so you can leave the course at any point and keep reading.
 
-All code is verified against `@gentleduck/iam` 5.9.0. Import paths come from the package `exports` map: `@gentleduck/iam`, `@gentleduck/iam/core/validate`, `@gentleduck/iam/adapters/memory`, and so on.
+All code is verified against `@gentleduck/iam` 5.10.0. Import paths come from the package `exports` map: `@gentleduck/iam`, `@gentleduck/iam/core/validate`, `@gentleduck/iam/adapters/memory`, and so on.
 
 ## See also
 

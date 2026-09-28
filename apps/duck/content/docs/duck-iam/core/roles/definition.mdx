@@ -183,13 +183,13 @@ Both emit the literal strings `'read'`, `'create'`, `'update'`, `'delete'`, so t
 build(): AccessControl.IRole<TAction, TResource, TRole, TScope>
 ```
 
-Assembles the role and runs `validateRole()` on it before returning (since 2.2.0), so a structurally broken role fails where it was written rather than inside an adapter write. On failure it throws:
+Assembles the role and runs `validateRole()` on it before returning (since 2.2.0), so a structurally broken role fails where it was written rather than inside an adapter write. On failure it throws the coded `IamError` `IAM_VALIDATION_FAILED` (`meta: { kind: 'role', issues: string[] }`), the same throw path every builder's `.build()` shares (`throwIamValidationFailed`). Each entry of `meta.issues` is one failing issue formatted as `` `${code} at "${path}": ${message}` ``:
 
 ```txt
-[@gentleduck/iam:builder] RoleBuilder.build(): role rejected by validator - MISSING_FIELD at "id"
+MISSING_FIELD at "id": Role must have a non-empty string "id"
 ```
 
-The message lists every error-level issue as `CODE at "path"`, joined by `; `. It names neither the role id nor the issue text, so read the id off the object you passed. `validateRole()` reads `id`, `scope`, `permissions` and `inherits`:
+`meta.issues` does not carry the role's own `id`, so read it off the object you passed. `validateRole()` reads `id`, `scope`, `permissions` and `inherits`:
 
 | Code | Raised when |
 | --- | --- |
@@ -204,7 +204,7 @@ Cross-role problems - duplicate IDs, dangling `inherits`, cycles, chains deeper 
     B["build()"] --> ASM["assemble id, name, description, permissions, inherits, scope, metadata"]
     ASM --> V["validateRole(role)"]
     V -- "valid" --> OUT["return AccessControl.IRole"]
-    V -- "error issues" --> THROW["throw: role rejected by validator - CODE at path"]
+    V -- "error issues" --> THROW["throwIamError IAM_VALIDATION_FAILED, meta: kind 'role', issues"]
     OUT --> SET{"Saving a whole role set?"}
     SET -- "yes" --> VR["validateRoles(roles): DUPLICATE_ROLE_ID, DANGLING_INHERIT, CIRCULAR_INHERIT, EMPTY_ROLE, INHERITANCE_TOO_DEEP"]
     SET -- "no" --> SAVE["engine.admin.saveRole(role)"]

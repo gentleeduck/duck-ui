@@ -10,7 +10,7 @@ before evaluation, or a hand-rolled pipeline.
 | Matchers, `resolve`, path-cache controls | `@gentleduck/iam` or `@gentleduck/iam/core` | unprefixed |
 | Condition primitives | `@gentleduck/iam` or `@gentleduck/iam/core` | **`iam` / `IAM_` prefixed** |
 | `iamEscapeHtml` | `@gentleduck/iam`, `@gentleduck/iam/core`, or `@gentleduck/iam/core/explain` | prefixed |
-| `IamLRUCache`, key helpers | `@gentleduck/iam` (root only — not in `/core`) | prefixed |
+| `IamLRUCache`, key helpers | `@gentleduck/iam` (root only, not in `/core`) | prefixed |
 | Row parsers | `@gentleduck/iam/core/validate` only | unprefixed |
 
 ```ts
@@ -25,8 +25,8 @@ import {
 } from '@gentleduck/iam'
 ```
 
-`core/conditions` exports its internals under short names — `evalCondition`, `resolveValue`,
-`isCondition` — but the barrel renames every one of them before it reaches the package
+`core/conditions` exports its internals under short names (`evalCondition`, `resolveValue`,
+`isCondition`), but the barrel renames every one of them before it reaches the package
 root, because those are names a consumer's own code plausibly uses. The prefix is the house
 convention for exactly that collision.
 
@@ -55,7 +55,7 @@ reference is handing them the ability to retire a deny rule.
 | `ops` | `ops.eq = () => false` retires every `eq` deny rule, in both evaluation modes | `iamEvaluateOperator` |
 | `regexCache` | Seat a permissive `RegExp` under a pattern a deny rule relies on | `iamClearRegexCache()` |
 | `pathCache` | Seat a bogus segment list under a path a deny rule resolves | `clearPathCache()` |
-| `ALLOWED_ROOTS` | Typed `ReadonlySet`, erases to a live `Set` — `.delete('subject')` makes every `subject.*` path unresolvable, and `pathCache` memoises that so it sticks | — |
+| `ALLOWED_ROOTS` | Typed `ReadonlySet`, erases to a live `Set`; `.delete('subject')` makes every `subject.*` path unresolvable, and `pathCache` memoises that so it sticks | — |
 
 Neither is frozen at runtime, so withholding them from the barrel is the only thing keeping
 them internal. The raw `evaluatePolicy` / `evaluatePolicyFast` are withheld for a different
@@ -69,7 +69,7 @@ primitives sit under them.
 
 `matchesScope` is the one that is not part of rule matching: it gates whether an RBAC
 permission applies in a given tenant scope. The dot test in the middle is exactly what
-`traceRule` and the evaluator do — the pattern *or* the request resource type having a dot
+`traceRule` and the evaluator do: the pattern *or* the request resource type having a dot
 is enough to switch to the hierarchical matcher.
 
 ## Pattern matchers
@@ -146,7 +146,7 @@ function matchesScope(
 ): boolean
 ```
 
-An **absent** pattern (`undefined` or `null`) or `'*'` matches any scope — that is a global
+An **absent** pattern (`undefined` or `null`) or `'*'` matches any scope: that is a global
 permission. Otherwise the request must carry a scope, and it must match exactly.
 
 The checks are explicit, not truthiness: `''` is a scope *value*, not a missing one.
@@ -229,7 +229,7 @@ that caps the cache near 2 MB. Multi-tenant deployments should pass a per-engine
 through the `caches` argument so one tenant's path churn cannot evict another's, and can
 call `clearPathCache()` to flush the shared one periodically.
 
-The map itself (`pathCache`) and the root set (`ALLOWED_ROOTS`) are not exported — see
+The map itself (`pathCache`) and the root set (`ALLOWED_ROOTS`) are not exported: see
 [what is deliberately not exported](#what-is-deliberately-not-exported). `ALLOWED_ROOTS` is
 nevertheless the same set `isResolvablePath` in the validator consults, and the two share
 `BLOCKED_SEGMENTS` as well, which is what keeps the `UNRESOLVABLE_FIELD` warning honest
@@ -247,7 +247,7 @@ function iamEvaluateOperator(
 ): boolean
 ```
 
-A thin wrapper over the internal operator table. It applies the operator directly — no
+A thin wrapper over the internal operator table. It applies the operator directly: no
 `$`-resolution, no operand-type guard, and none of `iamEvalCondition`'s refusal of a
 user-sourced `matches` pattern.
 
@@ -278,9 +278,10 @@ There are nineteen operators: `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `in`, `nin`
 
 Two behaviours matter when calling the primitive directly. The numeric comparisons (`gt`,
 `gte`, `lt`, `lte`) require both operands to be `number` and return `false` otherwise. And
-`matches` **throws** `IamRegexInputTooLargeError` when the input string exceeds
-`IAM_MAX_REGEX_INPUT_LENGTH` (2048) rather than returning `false`, so a deny-on-`matches`
-rule cannot be flipped by an oversized input.
+`matches` **throws** the coded `IamError` `IAM_CONDITION_REGEX_INPUT_TOO_LARGE`
+(`meta: { field, length }`) when the input string exceeds `IAM_MAX_REGEX_INPUT_LENGTH` (2048)
+rather than returning `false`, so a deny-on-`matches` rule cannot be flipped by an oversized
+input.
 
 `iamEvaluateOperator` is the only handle on the operator table. The table itself is not
 exported, because assigning to one of its entries retires every rule using that operator in
@@ -323,9 +324,10 @@ iamResolveConditionValue(request, 42)                              // 42
 ```
 
 A `$`-reference that resolves to `null` is not the same as a literal `null` operand.
-`iamEvalCondition` throws `IamOperandTypeError` on the former, because `resolve` answers
+`iamEvalCondition` throws the coded `IamError` `IAM_CONDITION_OPERAND_TYPE`
+(`meta: { field, operator, detail }`) on the former, because `resolve` answers
 `null` for "unresolvable path", "attribute absent" and "explicitly null" alike, and `eq` is
-a bare `===` — so `subject.attributes.tenant eq $resource.attributes.tenant` compared
+a bare `===`, so `subject.attributes.tenant eq $resource.attributes.tenant` compared
 `null === null` and allowed a request carrying neither attribute. A literal `value: null`
 is an author explicitly testing for null and still works.
 
@@ -343,7 +345,8 @@ function iamIsUserSourcedValue(value: IamPrimitives.AttributeValue): boolean
 `matches` condition whose right-hand side is `$`-resolved: a user-controlled attribute must
 never become a compiled regex.
 
-Such a leaf **throws** `IamUserSourcedPatternError` — it does not evaluate to `false`.
+Such a leaf **throws** the coded `IamError` `IAM_CONDITION_USER_SOURCED_PATTERN`
+(`meta: { field, value }`); it does not evaluate to `false`.
 Answering `false` reads as "condition not met", and the rule holding it is as likely to be a
 deny as an allow: a `deny when email matches $resource.attributes.bannedPattern` rule never
 fired and the banned subject came back ALLOWED, with nothing reported to `onPolicyError`.
@@ -394,9 +397,9 @@ the operand-type table, then dispatches. `iamEvalConditionGroup` walks `all` / `
 | `{ all: [...] }` | every item true |
 | `{ any: [...] }` | at least one item true |
 | `{ none: [...] }` | no item true |
-| `{}` (literally no keys) | `true` — no conditions means unconditional |
-| `depth >= IAM_MAX_CONDITION_DEPTH` | **throws** `IamConditionGroupError('depth', …)` |
-| any other key set (a typo'd `all`, a hand-edited row) | **throws** `IamConditionGroupError('unknown-keys', …)` |
+| `{}` (literally no keys) | `true`: no conditions means unconditional |
+| `depth >= IAM_MAX_CONDITION_DEPTH` | **throws** `IAM_CONDITION_GROUP_INVALID` (`meta: { reason: 'depth', detail }`) |
+| any other key set (a typo'd `all`, a hand-edited row) | **throws** `IAM_CONDITION_GROUP_INVALID` (`meta: { reason: 'unknown-keys', detail }`) |
 
 Both failure paths throw. Reading an uninterpretable group as "no conditions" turns a
 conditional allow into an unconditional one; answering `false` retires a deny just as
@@ -404,11 +407,14 @@ silently, and that one was measured through `engine.can`. Neither verdict is hon
 group nobody can interpret, so the group refuses and the engine fails closed on
 Indeterminate.
 
-The same applies one level down: `iamEvalCondition` throws `IamUserSourcedPatternError` for
-a `$`-sourced `matches` pattern, `IamOperandTypeError` for an operand of the wrong type or
-a `$`-reference that resolved to nothing, and `IamPatternRefusedError` for a pattern that
-will not compile. Every one of those classes is exported from the root barrel so a `catch`
-site can route it through `onPolicyError` rather than comparing `err.name` strings.
+The same applies one level down: `iamEvalCondition` throws the coded `IamError`
+`IAM_CONDITION_USER_SOURCED_PATTERN` for a `$`-sourced `matches` pattern,
+`IAM_CONDITION_OPERAND_TYPE` for an operand of the wrong type or a `$`-reference that
+resolved to nothing, and `IAM_CONDITION_PATTERN_REFUSED` for a pattern that will not compile.
+None of these are exported error classes - they are `IamError.Code` registry entries. Catch
+with `hasIamErrorCode(err, '<code>')` and route through `onPolicyError`, reading the detail
+off `metaOf(err, '<code>')` rather than comparing `err.name` or `err.message` strings (the
+message is just the bare code).
 
 The one exception is a rule inside the synthetic `'__rbac__'` policy, where a throw abstains
 instead of failing the policy closed. That is safe only there, because `rolesToPolicy`
@@ -428,8 +434,8 @@ const IAM_MAX_CONDITION_DEPTH: number     // 10
 ```
 
 `iamGetCachedRegex` compiles a `matches` pattern once and stores it in an LRU keyed by the
-pattern string; a hit re-inserts the entry to refresh recency. It returns `null` — rather
-than a compiled regex — for any pattern `iamDetectCatastrophicRegex` rejects and for any
+pattern string; a hit re-inserts the entry to refresh recency. It returns `null` (rather
+than a compiled regex) for any pattern `iamDetectCatastrophicRegex` rejects and for any
 pattern that does not compile, so a hostile pattern that reached the runtime past the
 validator never becomes a `RegExp`. Eviction is least-recently-used, bounded at
 `IAM_REGEX_CACHE_MAX`, so pattern churn from one tenant cannot grow memory without bound.
@@ -487,7 +493,7 @@ subject caches. `iamLRUCache` is the factory form for callers who prefer functio
 
 | Member | Behaviour |
 |---|---|
-| `constructor` | Throws `RangeError` when `maxSize` is not finite or below 1, or when `ttlMs` is not finite or negative. |
+| `constructor` | Throws the coded `IamError` `IAM_CACHE_CONFIG_INVALID` (`meta: { field, got, constraint }`) when `maxSize` is not finite or below 1, or when `ttlMs` is not finite or negative. |
 | `get` | Refreshes recency on a hit. A miss or an expired entry returns `undefined` and increments `misses`; an expired entry is also deleted. |
 | `set` | Deletes then re-inserts, so it refreshes both recency and TTL. Evicts the oldest entry at capacity. |
 | `clear` | Drops entries but keeps the hit/miss counters. |
@@ -531,7 +537,7 @@ only one that may start with an unescaped `@`, which is what makes the arity una
 
 Within each segment a literal `\` becomes `\\`, a literal `:` becomes `\:`, and a leading
 `@` is escaped too, so a resource id containing a colon cannot forge an extra segment.
-`iamSplitPermissionKey` reverses that, honouring only those escape sequences — an
+`iamSplitPermissionKey` reverses that, honouring only those escape sequences: an
 attacker-crafted `\x` stays `\x` rather than becoming `x`. `iamParsePermissionKey` goes
 further and returns the named fields, or `null` for a string that is not a well-formed key,
 so a hand-built one is rejected rather than guessed at.
@@ -553,7 +559,7 @@ iamParsePermissionKey('@tenant_a:write:doc:a\\:42')
 The presence check is `!== undefined`, not truthiness.
 `iamBuildPermissionKey('read', 'doc', undefined, '')` produces `'@:read:doc'`, a key
 distinct from the unscoped `'read:doc'`. Passing an empty scope where you meant "no scope"
-silently produces a key nothing will ever match — the same trap as `scope: ''` on a role,
+silently produces a key nothing will ever match: the same trap as `scope: ''` on a role,
 which the validator refuses outright.
 
 See [permission maps](/duck-iam/integrations/client/permission-map) for how these keys reach
@@ -596,7 +602,7 @@ A malformed **policy** row is reported and then **throws** `iamUnreadablePolicy`
 row denies every request until it is repaired. A malformed **role** row is reported and
 dropped. The reason is which direction each can fail in: `rolesToPolicy` emits `allow` and
 nothing else, so a lost role can only cost a subject a grant, while a lost policy may have
-been the rule saying no — and under `policyCombine: 'and'` even an allow-only policy votes
+been the rule saying no, and under `policyCombine: 'and'` even an allow-only policy votes
 deny when none of its rules match. There is no subset of policies an adapter can safely drop
 without knowing the combine mode, which it does not.
 
@@ -624,7 +630,7 @@ See [custom adapters](/duck-iam/integrations/adapters/custom) for the full inter
   missing". Downstream operators like `exists` treat the two identically.
 * **`iamEvaluateOperator` skips every guard.** Only `iamEvalCondition` refuses a
   `$`-resolved regex and applies the operand-type table. If you build a custom pipeline on
-  the raw operator, check `iamIsUserSourcedValue` and the operand type yourself — a wrongly
+  the raw operator, check `iamIsUserSourcedValue` and the operand type yourself: a wrongly
   typed operand made `nin` short-circuit to `true`, so an "allow unless denylisted" rule
   admitted everyone.
 * **The process-wide caches are shared and not exported.** In a multi-tenant process, pass
@@ -633,15 +639,15 @@ See [custom adapters](/duck-iam/integrations/adapters/custom) for the full inter
 * **`IamLRUCache.clear()` keeps stats; `resetStats()` keeps entries.** They are deliberately
   independent.
 * **Engine-supplied policies are deep-frozen.** The synthetic RBAC policy the engine caches
-  is recursively `Object.freeze`d — the policy, its `rules` array, each rule, each rule's
+  is recursively `Object.freeze`d: the policy, its `rules` array, each rule, each rule's
   `actions` and `resources` arrays, and the whole condition tree. `evaluate`, `evaluateFast`,
   and `explain` all read the same reference, so mutating one would corrupt every later
   request. In strict mode the write throws; build your own copy instead.
 
 ## See also
 
-* [Explain traces](/duck-iam/advanced/explain) — the tracer that calls every function on this page.
-* [Validation](/duck-iam/advanced/validation) — `parsePolicyRow`, the limits, and the ReDoS screen.
-* [Rule matching](/duck-iam/core/rule-matching) — the matchers in the context of a full rule.
-* [Condition operators](/duck-iam/core/policies/conditions) — per-operator semantics and edge cases.
-* [Engine caching](/duck-iam/advanced/engine/caching) — where `IamLRUCache` is wired in.
+* [Explain traces](/duck-iam/advanced/explain): the tracer that calls every function on this page.
+* [Validation](/duck-iam/advanced/validation): `parsePolicyRow`, the limits, and the ReDoS screen.
+* [Rule matching](/duck-iam/core/rule-matching): the matchers in the context of a full rule.
+* [Condition operators](/duck-iam/core/policies/conditions): per-operator semantics and edge cases.
+* [Engine caching](/duck-iam/advanced/engine/caching): where `IamLRUCache` is wired in.

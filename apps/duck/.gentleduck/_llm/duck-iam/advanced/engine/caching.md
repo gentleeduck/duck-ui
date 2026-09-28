@@ -14,7 +14,7 @@ Each is an `IamLRUCache` - a `Map` with insertion-order LRU eviction and a per-e
 
 A sixth, the compiled table, is a plain field rather than an LRU, stamped `_derivedBuiltAt + cacheTTL`.
 
-The `min(...)` column is the invariant three separate bugs converged on: **a derived cache is never fresher than its oldest input.** `IamLRUCache.set` takes an optional `notAfter` that only ever *shortens* an entry — a non-finite value is ignored, and a value already in the past stores nothing at all. The compiled table computes the same bound itself, stamping the moment its oldest input was read rather than `Date.now()`. Without that, the two clocks separate whenever something nulls the table without clearing the role cache, which is exactly what `savePolicy`, `deletePolicy` and an inbound `{kind: 'policies'}` event all do: measured at `cacheTTL: 60`, a revoke written at t=1s still answered allow at t=111s.
+The `min(...)` column is the invariant three separate bugs converged on: **a derived cache is never fresher than its oldest input.** `IamLRUCache.set` takes an optional `notAfter` that only ever *shortens* an entry: a non-finite value is ignored, and a value already in the past stores nothing at all. The compiled table computes the same bound itself, stamping the moment its oldest input was read rather than `Date.now()`. Without that, the two clocks separate whenever something nulls the table without clearing the role cache, which is exactly what `savePolicy`, `deletePolicy` and an inbound `{kind: 'policies'}` event all do: measured at `cacheTTL: 60`, a revoke written at t=1s still answered allow at t=111s.
 
 `cacheTTL` is in **seconds** and is multiplied by 1000 when the caches are constructed. Only the subject cache is sized by `maxCacheSize`; the other four hold one whole collection each, so a single slot is enough and a save overwrites the entry under the same key.
 
@@ -24,7 +24,7 @@ The `min(...)` column is the invariant three separate bugs converged on: **a der
 * `get` on a live entry re-inserts it to refresh LRU position, which is why the subject cache dominates the cost profile of a fully warm check.
 * `clear()` drops entries but **does not** reset the hit/miss counters. Only `engine.stats.reset()` does that.
 * `cacheTTL: 0` is **not** a clean "off" switch. Every entry is expired the instant it is written *and* the compiled table is rebuilt on every request, so each check re-reads `listRoles` and `listPolicies` and re-runs `compileTable`. Correct, and very slow. Tests only.
-* `expiresAt(key)` reads a live entry's expiry without touching LRU order or the hit/miss counters — that is bookkeeping about an entry, not a read of it, and counting it would make the stats lie.
+* `expiresAt(key)` reads a live entry's expiry without touching LRU order or the hit/miss counters; that is bookkeeping about an entry, not a read of it, and counting it would make the stats lie.
 * `entries()` and `get()` agree at the expiry millisecond: both use `>=`, so a grant is inactive at the exact millisecond it expires. Under `>` the iterator yielded an entry the reader could not then fetch.
 
 ### State that is not an LRU cache
@@ -195,7 +195,7 @@ const invalidator: IamEngineTypes.IInvalidator = {
 
 `publish` may return `void` or a promise; the engine calls it fire-and-forget. `subscribe` must return a teardown function, which `engine.dispose()` invokes.
 
-`IConfig.invalidator` is constructor-only, but engines are commonly built at module import time, before any replica-specific client exists. `engine.setInvalidator(invalidator | null)` attaches one later: it validates that `publish` and `subscribe` are callable and throws `TypeError` otherwise, tears down the previous subscription first and unconditionally so at most one is ever attached, and takes `null` to detach. The constructor routes `config.invalidator` through the same setter.
+`IConfig.invalidator` is constructor-only, but engines are commonly built at module import time, before any replica-specific client exists. `engine.setInvalidator(invalidator | null)` attaches one later: it validates that `publish` and `subscribe` are callable and throws the coded `IamError` `IAM_ENGINE_INVALIDATOR_SHAPE_INVALID` otherwise, tears down the previous subscription first and unconditionally so at most one is ever attached, and takes `null` to detach. The constructor routes `config.invalidator` through the same setter.
 
 The event union is four members, discriminated on `kind`:
 

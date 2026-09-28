@@ -128,10 +128,11 @@ Omitting `scope` revokes the role across **all** scopes, not just the unscoped a
 
 ```ts
 await engine.admin.assignRole('u1', 'admin', '*')
-// Error: [@gentleduck/iam:engine] scope must not be "*"; a scoped assignment is
-// matched literally, so this grant would be stored and answer only a request
-// whose own scope is the string "*". Omit the scope for a global assignment.
+// throws the coded IamError IAM_SCOPE_INVALID
+// meta: { adapter: 'engine', reason: 'wildcard-on-grant' }
 ```
+
+`''` is refused the same way, with `meta.reason: 'empty'`.
 
 **Omitting the scope is how the contract spells global.** Write `assignRole('u1', 'admin')`.
 

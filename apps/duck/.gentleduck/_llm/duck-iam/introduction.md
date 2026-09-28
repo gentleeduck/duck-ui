@@ -1,4 +1,4 @@
-duck-iam (`@gentleduck/iam`, version 5.9.0) decides what an authenticated subject may do. It runs role-based and attribute-based access control through one evaluation pipeline, loads its catalog from a pluggable adapter, and ships server middleware and client permission maps for the common frameworks.
+duck-iam (`@gentleduck/iam`, version 5.10.0) decides what an authenticated subject may do. It runs role-based and attribute-based access control through one evaluation pipeline, loads its catalog from a pluggable adapter, and ships server middleware and client permission maps for the common frameworks.
 
 ## What duck-iam is
 
@@ -18,13 +18,13 @@ RBAC is simple and rigid: it cannot express "editors may update only their own p
 
 duck-iam does both, and does not keep two code paths. Roles are compiled into a synthetic policy by `rolesToPolicy()`, so a role grant and an attribute policy hit the same evaluator, the same condition operators, and the same combining algorithms. There is no second set of semantics to reason about.
 
-* **Role inheritance** — `admin` inherits `editor` inherits `viewer`; permissions cascade. Depth is capped by `MAX_INHERITANCE_DEPTH` (32) and cycles are cut by a shallowest-depth memo, so a bad role graph cannot hang a check.
-* **Policies with conditions** — allow `delete` on `post` when `resource.attributes.ownerId` equals `$subject.id`.
-* **Four in-policy combining algorithms** — `deny-overrides`, `allow-overrides`, `first-match`, `highest-priority`.
-* **Three cross-policy combine modes** — `and` (default), `allow-overrides`, `first-applicable`.
-* **19 condition operators** — `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `in`, `nin`, `contains`, `not_contains`, `starts_with`, `ends_with`, `matches`, `exists`, `not_exists`, `subset_of`, `superset_of`, `before`, `after`.
-* **Scoped roles** — one subject can be `admin` in `org-1` and `viewer` in `org-2`.
-* **Explain traces** — `engine.explain()` returns which policies were considered, which rules matched, and which conditions passed or failed, with actual versus expected values.
+* **Role inheritance**: `admin` inherits `editor` inherits `viewer`; permissions cascade. Depth is capped by `MAX_INHERITANCE_DEPTH` (32) and cycles are cut by a shallowest-depth memo, so a bad role graph cannot hang a check.
+* **Policies with conditions**: allow `delete` on `post` when `resource.attributes.ownerId` equals `$subject.id`.
+* **Four in-policy combining algorithms**: `deny-overrides`, `allow-overrides`, `first-match`, `highest-priority`.
+* **Three cross-policy combine modes**: `and` (default), `allow-overrides`, `first-applicable`.
+* **19 condition operators**: `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `in`, `nin`, `contains`, `not_contains`, `starts_with`, `ends_with`, `matches`, `exists`, `not_exists`, `subset_of`, `superset_of`, `before`, `after`.
+* **Scoped roles**: one subject can be `admin` in `org-1` and `viewer` in `org-2`.
+* **Explain traces**: `engine.explain()` returns which policies were considered, which rules matched, and which conditions passed or failed, with actual versus expected values.
 
 ## Feature map
 
@@ -57,7 +57,7 @@ The engine sits between your request handlers and your policy storage. Everythin
 
 ## How a check flows
 
-A call to `engine.can()` walks five layers: entry validation, catalog load, subject preparation, evaluation, and reporting. It fails closed at every one of them — an adapter timeout, a subject-resolution failure, or a throwing hook resolves to deny, never to allow.
+A call to `engine.can()` walks five layers: entry validation, catalog load, subject preparation, evaluation, and reporting. It fails closed at every one of them; an adapter timeout, a subject-resolution failure, or a throwing hook resolves to deny, never to allow.
 
 1. **Resolve subject.** Load assigned roles, scoped roles, and attributes; close roles over `inherits`.
 2. **Enrich scoped roles.** When the request carries a scope, merge the roles assigned in that scope.
@@ -113,6 +113,7 @@ Adapters, server middleware, and clients live behind subpath imports; the root b
 | Core | [Policies](/duck-iam/core/policies) | Building policies, rules, targets, conditions, nesting, algorithms, `$`-variables. |
 | Core | [Roles](/duck-iam/core/roles) | Defining roles, inheritance, type-safe roles, scoped roles, conditional permissions, `rolesToPolicy`. |
 | Guides | [Quick start](/duck-iam/guides) | End to end: roles, policies, middleware, client hooks. |
+| Guides | [Real-world examples](/duck-iam/guides/examples) | Four framework backends, one shared Postgres database, real auth. |
 | Guides | [Production hardening](/duck-iam/guides/production) | TTL trade-offs, multi-node invalidation, fail-closed defaults, SLO targets. |
 | Guides | [Pairing with duck-auth](/duck-iam/guides/auth-bridge) | Projecting an authenticated session onto a duck-iam subject. |
 | Guides | [Cookbook](/duck-iam/guides/cookbook) | Owner-only access, public versus private, time-bound grants, MFA gates. |
@@ -131,7 +132,7 @@ Adapters, server middleware, and clients live behind subpath imports; the root b
 | Integrations | [Metrics aggregator](/duck-iam/integrations/observability/metrics) | p50, p95, p99 over `onMetrics` events. |
 | Integrations | [Redis invalidator](/duck-iam/integrations/invalidators/redis) | Cross-instance cache invalidation over pub/sub. |
 | Benchmarks | [Benchmarks](/duck-iam/benchmarks) | Measured numbers, the methodology behind them, and where the time goes. |
-| Changelog | [Changelog](/duck-iam/changelog) | Every release from 1.0.0 to 5.9.0. |
+| Changelog | [Changelog](/duck-iam/changelog) | Every release from 1.0.0 to 5.10.0. |
 
 ## Gotchas
 
@@ -140,15 +141,15 @@ Adapters, server middleware, and clients live behind subpath imports; the root b
 * `engine.explain()` throws in production mode. That is deliberate: the tracer is a lazily imported chunk that production bundles never load.
 * The root barrel `@gentleduck/iam` exports the core surface only. Adapters, server middleware, clients, invalidators, metrics, and the devtools live behind subpaths, and importing the barrel pulls roughly 41 KB gzipped where subpath imports land at 15 to 25 KB.
 * `defaultEffect: 'allow'` throws at construction unless you also pass `allowFailOpen: true`, and even then logs a startup warning. Failing open is opt-in and loud on purpose.
-* The compiled table addresses roles with a 32-bit grant mask, so a catalog over 32 roles cannot be compiled. Nothing denies and nothing throws to the caller: the engine warns once, drops to the interpreter for every subsequent request in both modes, and reports it on `healthCheck().compiledTable`. Verdicts are unchanged; the O(1) lookup is not. The flag is latched for the life of the engine — deleting roles back under 32 does not restore the table, only a new engine does.
+* The compiled table addresses roles with a 32-bit grant mask, so a catalog over 32 roles cannot be compiled. Nothing denies and nothing throws to the caller: the engine warns once, drops to the interpreter for every subsequent request in both modes, and reports it on `healthCheck().compiledTable`. Verdicts are unchanged; the O(1) lookup is not. The flag is latched only until the next role invalidation - `admin.saveRole()`/`deleteRole()`, locally or broadcast from another instance - clears it along with the role cache, so deleting roles back under 32 and letting that invalidation land restores the table on the next request; no new engine is required. A bare `cacheTTL` expiry does not clear it, since it does not invalidate roles.
 
 ## See also
 
-* [Installation](/duck-iam/installation) — every export path and its peer dependencies.
-* [Core concepts](/duck-iam/core) — the model in depth.
-* [Quick start](/duck-iam/guides) — the end-to-end walkthrough.
-* [How it compares](/duck-iam/comparison) — the honest trade-offs against other engines.
-* [@gentleduck/auth](/duck-auth/introduction) — the identity half. duck-auth proves who the caller is; duck-iam decides what they may do.
+* [Installation](/duck-iam/installation): every export path and its peer dependencies.
+* [Core concepts](/duck-iam/core): the model in depth.
+* [Quick start](/duck-iam/guides): the end-to-end walkthrough.
+* [How it compares](/duck-iam/comparison): the honest trade-offs against other engines.
+* [@gentleduck/auth](/duck-auth/introduction): the identity half. duck-auth proves who the caller is; duck-iam decides what they may do.
 
 ## Quick FAQ
 

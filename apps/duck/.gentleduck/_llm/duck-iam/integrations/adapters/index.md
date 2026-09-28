@@ -57,7 +57,7 @@ Omitting an optional method costs correctness nowhere - each one is either an op
 * **`updateAssignmentScope` absent, or present and returning `false`** - `engine.admin.updateAssignmentScope(...)` falls back to `revokeRole` + `assignRole`. Same end state, but you lose row identity (`id`, `createdAt`) and atomicity, and there is a window where the subject holds neither.
 * **`assignRoleMany` / `revokeRoleMany` absent** - the engine loops per row instead of issuing one statement.
 * **`getSubjectGrantBoundary` absent** - the engine caches the subject for the full `cacheTTL` instead of capping the entry at the next grant transition.
-* **`withClient` absent** - `engine.withTransaction(tx)` **throws**, rather than silently writing outside the caller's transaction.
+* **`withClient` absent** - `engine.withTransaction(tx)` **throws** the coded `IAM_ENGINE_ADAPTER_NOT_TRANSACTIONAL`, rather than silently writing outside the caller's transaction.
 
 Which adapter implements what is declared once, in `src/adapters/__compliance__/optional-support.ts`, and checked against the real prototypes by `optional-method-matrix.test.ts` - so a method that disappears turns a row red instead of turning asserting tests into skipped ones. [Choosing an adapter](/duck-iam/integrations/adapters/comparison) reproduces the table.
 
@@ -65,9 +65,16 @@ Which adapter implements what is declared once, in `src/adapters/__compliance__/
 
 The engine treats any rejection from an adapter as a hard failure and routes it through its fail-closed path (`onError`, then the configured `defaultEffect`). These throws are expected, and the last two come from the engine rather than from the adapter:
 
-| Situation | Who throws | Message shape |
+| Situation | Who throws | `IamError` code (`meta`) |
 |---|---|---|
-| Backend unreachable, permission denied, disk error | the adapter | whatever your driver throws, ideally wrapped with `[@gentleduck/iam:
+| Backend unreachable, permission denied, disk error | the adapter | driver-specific (e.g. `IAM_FILE_READ_FAILED`, `IAM_FILE_MKDIR_FAILED` on the file adapter); the built-ins wrap the driver error as `.cause` rather than in the message |
+| `attrs` is not a plain object, or carries a `__proto__` own key, in `setSubjectAttributes` | the adapter, before writing | `IAM_ATTRIBUTES_INVALID` (`meta: { adapter, subjectId, reason: 'not-object' \| 'forbidden-key', got? }`) |
+| A stored attributes blob is corrupt | the adapter, on read | `IAM_ATTRIBUTES_CORRUPT` (`meta: { adapter, subjectId, reason: 'parse-failed' \| 'not-object' }`) - same shared code on every backend, `meta.adapter` distinguishes them |
+| A stored **policy** row will not parse | the adapter, on read, after reporting it | `IAM_UNREADABLE_POLICY` (`meta: { adapter, policyId, detail }`) - a dropped policy may be the one that denies |
+| `assignRole` names a role the store does not hold | the adapter, before writing | `IAM_ROLE_NOT_FOUND` (`meta: { adapter }` - deliberately no role id, it reaches operator logs) |
+| `assignRole` is given an option the adapter cannot store | the adapter, before writing | `IAM_ASSIGN_OPTIONS_UNSUPPORTED` (`meta: { adapter, fields: string[] }`) |
+| `engine.withTransaction(tx)` on an adapter with no `withClient` | the **engine** | `IAM_ENGINE_ADAPTER_NOT_TRANSACTIONAL` - refuses rather than silently writing outside your transaction |
+| The read exceeded `adapterTimeoutMs` | the **engine**, not the adapter | still a plain `Error`, not a coded `IamError`: `` `[@gentleduck/iam:engine] 
 
 Both the subject LRU (`maxCacheSize`, default `1000` entries) and the policy/role caches expire after `cacheTTL` seconds (default `60`; `0` disables caching entirely and makes every call hit the adapter). Writes through `engine.admin` invalidate the matching cache immediately, so an adapter never has to publish anything itself - unless you run more than one process, in which case wire the [Redis invalidator](/duck-iam/integrations/invalidators/redis).
 

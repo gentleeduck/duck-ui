@@ -161,7 +161,7 @@ Returns a `IamMemoryAdapter` with the default `string` generics. Reach for the c
 
 ## Behaviour
 
-The adapter implements the thirteen required methods plus two of the six optional ones - `getSubjectScopedRoles` and `updateAssignmentScope`. It has no `withClient`, so `engine.withTransaction` throws against it. Specifics worth knowing:
+The adapter implements the thirteen required methods plus two of the six optional ones - `getSubjectScopedRoles` and `updateAssignmentScope`. It has no `withClient`, so `engine.withTransaction` throws the coded `IAM_ENGINE_ADAPTER_NOT_TRANSACTIONAL` against it. Specifics worth knowing:
 
 | Behaviour | Detail |
 |---|---|
@@ -172,7 +172,7 @@ The adapter implements the thirteen required methods plus two of the six optiona
 | `revokeRole` on an unknown subject | Resolves without doing anything. |
 | `updateAssignmentScope` | Returns `false` when no `(role, fromScope)` entry exists. When the target scope is already granted it drops the source entry instead of creating a duplicate, and returns `true`. |
 | Attribute merge | `setSubjectAttributes` spreads the patch over the existing bag. Keys absent from the patch survive; set a key to `null` to clear it. |
-| Attribute shape guard | A non-plain-object `attrs` rejects with `[@gentleduck/iam:memory] attributes for "<id>" must be a plain object (got <type>)` and leaves stored attributes untouched. An empty object is a legal no-op write. |
+| Attribute shape guard | A non-plain-object `attrs`, or one carrying a `__proto__` own key, rejects with `IAM_ATTRIBUTES_INVALID` (`meta: { adapter: 'memory', subjectId, reason: 'not-object' \| 'forbidden-key', got? }`) and leaves stored attributes untouched. An empty object is a legal no-op write. |
 | `getSubjectAttributes` on an unknown subject | Returns `{}`. |
 | `savePolicy` / `saveRole` | Upsert on `id`. |
 | `deletePolicy` / `deleteRole` | Idempotent; an unknown id resolves. `deleteRole` also removes every grant naming the role. |

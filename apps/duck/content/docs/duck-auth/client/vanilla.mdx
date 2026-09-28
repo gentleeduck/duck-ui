@@ -1,173 +1,59 @@
 ---
 title: Vanilla client
-description: Framework-agnostic authCreateClient. Promise-based signIn / signOut / getSession + onChange subscription.
+description: createAuthClient, the framework-free client every other client wraps
 section: Client
 ---
+```ts
+import { createAuthClient } from '@gentleduck/auth/client/vanilla'
 
-## Constructor
+type Profile = { username: string; email: string; displayName?: string }
 
-```typescript
-import { authCreateClient } from '@gentleduck/auth/client/vanilla'
-
-const client = authCreateClient({
-  baseUrl: '/auth',              // default
-  fetch: globalThis.fetch,       // override for SSR / Node tests
-  headers: { 'X-App': 'web' },   // sent on every call
-  notifyImmediately: true,       // emit current state on .onChange()
-})
+export const client = createAuthClient<Profile>({ baseUrl: '/auth' })
 ```
 
-The result implements `VanillaClient.IClient<Profile>`. All methods are
-async; errors throw `AuthError`.
+| Option | Default | Does |
+| --- | --- | --- |
+| `baseUrl` | `/auth` | Where the server mounted the routes. |
+| `fetch` | `globalThis.fetch` | The fetch to call through, for a test stub or a retry wrapper. |
+| `headers` | none | Sent with every request, such as a tenant header. |
+| `csrfCookieName` | `__Host-duck-csrf` | The cookie the CSRF token is read from. `duck-csrf` on http; see [matching the server](/duck-auth/client#matching-the-server). |
+| `csrfHeaderName` | `x-csrf-token` | The header the token is sent on. |
+| `notifyImmediately` | `true` | Whether `onChange` replays the current state to a new listener. |
 
 ## Methods
 
-### `signIn(opts)`
+Each answers an [envelope](/duck-auth/client#what-a-call-answers).
 
-Run a provider's complete step:
+| Method | Calls | Answers |
+| --- | --- | --- |
+| `signIn({ providerId, input })` | `POST /signin`, then `GET /session` | The new session and identity. |
+| `signOut()` | `POST /signout` | `data: null`. The local state clears even when the server refuses. |
+| `getSession()`, `refresh()` | `GET /session` | `{ session, identity }`, both `null` for a guest. |
+| `beginProvider(id, input)` | `POST /providers/:id/begin` | What the provider's begin answers. An OAuth or SAML begin answers `{ url }`, and the page goes there. |
+| `signUp(input, { path })` | `POST {path}`, under `baseUrl`, `/signup` by default | Your route's body. No adapter mounts a sign-up route; point `path` at yours. |
+| `onChange(listener)` | | Returns an unsubscribe. |
 
-```typescript
-const { ok, session, identity } = await client.signIn({
-  providerId: 'password',
-  input: { email, password },
-  path: '/signin',  // optional; defaults to `${baseUrl}/signin`
+```ts
+const off = client.onChange(({ identity }) => {
+  document.body.dataset.authed = identity ? 'true' : 'false'
 })
+await client.getSession()
 ```
 
-On success: returns `{ ok: true, session, identity, body }` and updates
-the internal session state.
+The listener runs after each session read, sign-in and sign-out. Before the first read the client holds no state, so a new listener hears nothing until one lands.
 
-On failure: throws an `AuthError`. The `code` field is what the
-UI should branch on.
+## Provider flows
 
-### `signOut()`
+```ts
+// Emails a sign-in link.
+await client.beginProvider('magic-link', { email })
 
-```typescript
-await client.signOut()
+// Sends the page to Google.
+await client.beginProvider('oauth:google')
 ```
 
-Issues `POST /auth/signout`, clears the local session state, fires
-`onChange()` with `null`.
+A passkey sign-in takes the options `begin` answers and signs in with the browser's response; the [passkey page](/duck-auth/providers/passkey) has the whole exchange.
 
-### `getSession()`
+## On the server
 
-```typescript
-const { session, identity } = await client.getSession()
-```
-
-Issues `GET /auth/session`. Used internally on `AuthClient` construction
-to hydrate the initial state.
-
-### `beginProvider(id, input?)`
-
-For OAuth: kicks off the redirect.
-For magic-link: triggers the email/SMS dispatch.
-
-```typescript
-// OAuth
-await client.beginProvider('google', {})
-// -> browser navigates to Google
-
-// Magic-link
-await client.beginProvider('magic-link', { email, channel: 'email' })
-// -> 200 { sent: true }
-```
-
-### `refresh()`
-
-Re-fetches the session without ceremony - useful after a server-side
-mutation that you know changed the session shape:
-
-```typescript
-await mutateProfile(...)
-await client.refresh()
-```
-
-### `onChange(cb)`
-
-Subscribe to session-state changes:
-
-```typescript
-const unsubscribe = client.onChange((state) => {
-  if (state === null) {
-    console.log('signed out')
-  } else {
-    console.log('signed in as', state.identity.profile.displayName)
-  }
-})
-
-// later:
-unsubscribe()
-```
-
-The callback fires:
-- Immediately on subscription (if `notifyImmediately: true`).
-- On every successful `signIn` / `signOut` / `refresh`.
-- On `storage` events from another tab (cross-tab sync).
-
-## State shape
-
-```typescript
-type State<Profile> =
-  | null
-  | {
-      session: { id, expiresAt, aal, amr, kind, ... }
-      identity: { id, email, profile: Profile, ... }
-    }
-```
-
-## Constructing a Profile-typed client
-
-```typescript
-import { authCreateClient } from '@gentleduck/auth/client/vanilla'
-
-type Profile = { displayName: string; avatarUrl?: string }
-
-export const client = authCreateClient<Profile>()
-// client.signIn -> Profile is inferred
-// client.onChange((state) => state?.identity.profile.displayName)
-```
-
-## Using in a SPA
-
-```typescript
-// auth.ts
-export const client = authCreateClient()
-
-// app.tsx
-client.onChange((state) => {
-  document.body.dataset.authed = state ? 'true' : 'false'
-})
-
-document.querySelector('#signin').addEventListener('click', async () => {
-  await client.signIn({
-    providerId: 'password',
-    input: { email: emailInput.value, password: passwordInput.value },
-  })
-})
-
-document.querySelector('#signout').addEventListener('click', () => client.signOut())
-```
-
-## Server-side rendering
-
-For SSR, pass a custom `fetch` that forwards cookies from the incoming
-request:
-
-```typescript
-const ssrClient = authCreateClient({
-  baseUrl: 'http://localhost:3000/auth',
-  fetch: async (url, init) => {
-    return fetch(url, {
-      ...init,
-      headers: { ...init?.headers, cookie: req.headers.cookie ?? '' },
-    })
-  },
-})
-
-const initialState = await ssrClient.getSession()
-```
-
-The initial state ships down to the client in the HTML, and the
-client-side `authCreateClient` rehydrates from it without an extra
-round trip.
+A server reads the session from the engine, not through this client: `auth.resolveSession(req)`, as the [Next.js page](/duck-auth/server/next#reading-the-session) does.

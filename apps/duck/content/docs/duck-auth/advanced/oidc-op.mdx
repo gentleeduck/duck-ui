@@ -1,143 +1,71 @@
 ---
-title: OIDC OP (provider)
-description: Full OAuth2/OIDC provider with /authorize, /token, /userinfo, /introspect, /revoke, and RFC 7591 dynamic client registration.
+title: OIDC provider
+description: Running an OAuth 2 and OpenID provider on the engine, with S256 PKCE, rotating refresh tokens, userinfo, introspection, revocation and dynamic registration
 section: Advanced
 ---
+`@gentleduck/auth/oidc/op` lets other apps sign in through your engine. It mounts no routes: each method takes the parsed request and answers what to send.
 
-## What this is
+It supports the authorization code flow with S256 PKCE, refresh tokens, ID tokens, userinfo, introspection (RFC 7662), revocation (RFC 7009) and dynamic client registration (RFC 7591). The code flow is the only one.
 
-`@gentleduck/auth/oidc/op` is a full OAuth2/OIDC Provider. It is
-intentionally minimal in spec coverage but complete in modern flow
-support: **authorization code with mandatory S256 PKCE**, **rotated
-refresh tokens with reuse detection**, OIDC ID tokens, bearer-protected
-userinfo, RFC 7662 introspection, RFC 7009 revocation, and RFC 7591
-dynamic client registration.
+```ts
+import { createOidcOP } from '@gentleduck/auth/oidc/op'
 
-Out of scope: implicit/hybrid flows (deprecated by OAuth 2.1), JAR/PAR
-request objects, pairwise subject identifiers, claims request parameter,
-distributed claims, RP-initiated logout.
-
-## Quick start
-
-```typescript
-import { authCreateOidcOP, AuthMemoryClientStore } from '@gentleduck/auth/oidc/op'
-
-const op = authCreateOidcOP({
-  auth,                     // AuthEngine instance from createAuth(...)
-  config: {
-    issuer: 'https://auth.example.com',
-    supportedScopes: ['openid', 'profile', 'email', 'offline_access'],
-  },
-  signIdToken: (payload) => mySigner.signJwt(payload),
-  // Memory stores by default; pass Drizzle stores below for production.
+const op = createOidcOP({
+  auth,
+  config: { issuer: 'https://auth.example.com', supportedScopes: ['openid', 'profile', 'email', 'offline_access'] },
+  signIdToken: (claims) => signJwt(claims),
 })
 
-await op.registerClient({
+const { client_secret } = await op.registerClient({
   client_id: 'web-app',
   redirect_uris: ['https://app.example.com/callback'],
   token_endpoint_auth_method: 'client_secret_basic',
 })
 ```
 
-## Endpoints
+`client_secret` is generated when you pass none, and returned only here; it is stored hashed. A client registered without a secret or an auth method is public, and must use PKCE.
 
-Wire each method onto your HTTP framework of choice. Each takes the
-parsed request shape and returns the response object; you serialise.
+## Routes
 
-```typescript
-// GET /authorize
-const result = await op.authorize(parsedQuery, { headers: req.headers })
+| Route | Call | Answers |
+| --- | --- | --- |
+| `GET /authorize` | `op.authorize(query, { headers })` | `redirect`, `login_required`, `consent_required` or `error`, by `kind` |
+| Your consent form | `op.completeConsent({ client_id, identity, redirect_uri, scope, sid, tenant_id, ... })` | The same, usually `redirect` with the code |
+| `POST /token` | `op.token(body, headers)` | The tokens, or `{ error }` |
+| `GET /userinfo` | `op.userinfo(headers)` | The claims, or `{ error }` |
+| `POST /introspect` | `op.introspect(body, headers)` | `{ active, ... }` |
+| `POST /revoke` | `op.revoke(body, headers)` | Nothing |
+| `POST /register` | `op.register(body, headers)` | `{ status, body }` |
 
-if (result.kind === 'redirect')         res.redirect(302, result.url)
-if (result.kind === 'login_required')   showLoginPage()
-if (result.kind === 'consent_required') showConsentPage(result.client, result.scope)
-if (result.kind === 'error')            handleOAuthError(result)
+`headers` is a Fetch `Headers`. `authorize` finds the signed-in person through the engine's transport, so `login_required` means sending them to your sign-in page and back.
 
-// POST /consent (called after the user clicks Allow)
-const completed = await op.completeConsent({
-  client_id, identity, redirect_uri, scope, state, nonce,
-  code_challenge, code_challenge_method, sid, tenant_id: null,
-})
+A code lives 10 minutes and works once. Access and ID tokens live an hour and refresh tokens 30 days; `config` changes each. A refresh token rotates on every use, and presenting a spent one revokes its whole family. Tokens are stored as SHA-256 hashes.
 
-// POST /token
-const tokens = await op.token(parsedBody, req.headers)
+## Stores
 
-// GET /userinfo
-const claims = await op.userinfo(req.headers)
+The defaults are in memory. For production, pass the Drizzle stores for your dialect, from `oidc/op/drizzle/pg`, `mysql` or `sqlite`:
 
-// POST /introspect (RFC 7662; basic auth required)
-const introspect = await op.introspect(parsedBody, req.headers)
+```ts
+import { authCreateDrizzlePgOidcOpStores, authGcDrizzlePgOidcOp } from '@gentleduck/auth/oidc/op/drizzle/pg'
 
-// POST /revoke (RFC 7009)
-await op.revoke(parsedBody, req.headers)
+const op = createOidcOP({ auth, config, signIdToken, stores: authCreateDrizzlePgOidcOpStores(db) })
 
-// POST /register (RFC 7591; opt-in via dcr config)
-const reg = await op.register(parsedBody, req.headers)
+await authGcDrizzlePgOidcOp(db) // on a schedule; removes expired codes and tokens
 ```
 
-## Production stores
+## Dynamic registration
 
-The default memory stores are for dev. Production deployments wire a
-Drizzle adapter:
+Off by default. Turn it on with a token that `POST /register` must carry as `Authorization: Bearer`:
 
-```typescript
-import { authCreateDrizzlePgOidcOpStores } from '@gentleduck/auth/oidc/op/drizzle/pg'
-
-const op = authCreateOidcOP({
+```ts
+const op = createOidcOP({
   auth,
-  config: { issuer, supportedScopes },
+  config,
   signIdToken,
-  stores: authCreateDrizzlePgOidcOpStores(db),
+  dcr: { enabled: true, initialAccessToken: process.env.OIDC_DCR_TOKEN, maxRedirectUris: 20 },
 })
 ```
 
-SQLite and MySQL variants ship under the matching subpaths. All three
-share the same row contract; switching engines is a one-import change.
+Without `initialAccessToken` anyone can register a client, so keep that behind a private network. Advertise the endpoint with `registrationEndpoint` in the [discovery document](/duck-auth/advanced/oidc).
 
-## Security defaults
-
-| Knob | Default | Why |
-|---|---|---|
-| PKCE method | S256 only | `plain` is rejected at `/authorize`. |
-| PKCE for public clients | Required | A public client (no secret) without PKCE is rejected. |
-| Client secret compare | Constant-time sha256 | Plain secret bytes never touched after registration. |
-| Refresh token rotation | On every use | Old refresh becomes a tripwire. |
-| Refresh reuse detection | Family revoke | Replaying a consumed refresh kills the whole family. |
-| Code TTL | 10 minutes | Codes are single-use; expired codes return `invalid_grant`. |
-| Access token | Opaque, sha256-hashed at rest | Stored under hash; plaintext only at issue time. |
-| ID token | Caller-supplied signer | You wire HS256/ES256/RS256/EdDSA via `signIdToken`. |
-
-## Dynamic client registration (RFC 7591)
-
-DCR is disabled by default. Enable it explicitly with a bearer gate so
-random Internet traffic cannot mint clients:
-
-```typescript
-const op = authCreateOidcOP({
-  auth,
-  config: { issuer, supportedScopes },
-  signIdToken,
-  dcr: {
-    enabled: true,
-    initialAccessToken: process.env.OIDC_DCR_TOKEN,
-    maxRedirectUris: 20,
-  },
-})
-```
-
-Expose the registration endpoint and advertise it in discovery:
-
-```typescript
-const discovery = authBuildOidcDiscovery({
-  issuer,
-  registrationEndpoint: `${issuer}/auth/oauth/register`,
-})
-```
-
-## Consent UI
-
-The OP returns `kind: 'consent_required'` from `authorize()` whenever the
-user has not yet granted the requested scopes. The host renders a consent
-screen (any framework) and POSTs back to a route that calls
-`op.completeConsent(...)`. A full working example lives at
-`examples/oidc-op/server.ts`.
+A working provider with a consent page is in [`examples/oidc-op`](https://github.com/gentleeduck/duck-iam/tree/main/examples/oidc-op).

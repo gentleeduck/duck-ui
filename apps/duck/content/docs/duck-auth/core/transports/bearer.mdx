@@ -1,122 +1,26 @@
 ---
 title: BearerTransport
-description: Opaque session token in the Authorization header. For mobile, native, and SPA workloads.
+description: The session id in the Authorization header, answered in the response body, for native apps, mobile clients and scripts
 section: Core
 ---
+The session id travels as `Authorization: Bearer <sid>`. Sign-in answers it in the JSON body, and the client stores and sends it.
 
-## When to use
+```ts
+import { bearerTransport } from '@gentleduck/auth/core/transport'
 
-`BearerTransport` is the right pick when:
-
-- You are serving a **mobile or native client** that stores the token in
-  the OS keychain.
-- You are a **cross-origin SPA** (e.g. a `*.app.com` frontend talking to
-  `api.app.com`) and want to avoid the cookie cross-site complexity.
-- You expose a **machine-to-machine API** where credentials are exchanged
-  for an opaque token via client-credentials.
-
-There are no cookies, so no CSRF defence is needed on the server.
-
-## Constructor
-
-```typescript
-import { BearerTransport } from '@gentleduck/auth/core/transport'
-
-new BearerTransport({
-  header: 'authorization',  // default
-  scheme: 'Bearer',         // default
+createAuth({
+  // ...
+  transport: bearerTransport(),
 })
 ```
 
-The token rides on every request as:
+A sign-in answers `{ token, expiresAt }`; sign-out answers `{ revoked: true }` and the client forgets the token. The session is still a row in the store, so revoking it takes effect on the next request.
 
-```
-Authorization: Bearer 01HJX7B2T9XKAZQP1G...
-```
+| Option | Default |
+| --- | --- |
+| `header` | `authorization` |
+| `scheme` | `Bearer` |
 
-## Wire format
+The token is refused, reading as no session, when the scheme does not match, the header joins several values with commas, or the token is over 4 KB.
 
-The token is a 256-bit random value (base64url-encoded). At rest, the
-session store records a **hash** of the token - even a database leak
-does not yield usable bearer tokens.
-
-The token is returned to the client **once**, in the JSON intent on
-issue:
-
-```typescript
-const intents = await auth.flows.signIn({
-  providerId: 'password',
-  input: { email, password },
-})
-
-// One of the intents is a JSON body containing the bearer token:
-// { kind: 'json', status: 200, body: { session: { token: '01HJX7B2T9...' }, identity: {...} } }
-```
-
-The client persists the token. Subsequent requests carry it on the
-`Authorization` header until sign-out or expiry.
-
-## Sign-out
-
-```typescript
-import { authMountSignOut } from '@gentleduck/auth/server/express'
-
-app.post('/auth/signout', authMountSignOut(auth))
-```
-
-The handler reads the `Authorization` header, revokes the session row,
-and the next request will see `AUTH/SESSION_REVOKED`.
-
-## Mobile client pattern
-
-iOS / Android: store the bearer token in the OS-managed credential store
-(Keychain / Keystore). **Never** in user defaults / shared preferences
-or in plain disk files.
-
-```swift
-// iOS - store
-KeychainAccess.set(token, forKey: "duck-auth-session")
-
-// iOS - read
-let token = KeychainAccess.get("duck-auth-session")
-request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-```
-
-## SPA pattern
-
-If your SPA serves from a different origin than your API and you want
-to avoid CORS-credential complexity:
-
-```typescript
-// In the SPA
-const { session } = await client.signIn({ email, password })
-localStorage.setItem('duck-sid', session.token)   // <- see warning below
-
-// Or, better, in-memory + service worker:
-const inMemoryToken = session.token  // SW intercepts fetch and adds header
-```
-
-(warning) `localStorage` is readable by any script on the page; an XSS gives an
-attacker the bearer token. Prefer in-memory plus a service worker, or
-move to a same-origin cookie deployment with `CookieTransport`.
-
-## Combining with DPoP
-
-`BearerTransport` plus `DPoPVerifier` produces **sender-constrained**
-tokens - the bearer is bound to a client public key, and a stolen token
-is useless without the matching private key:
-
-```typescript
-import { BearerTransport, DPoPVerifier } from '@gentleduck/auth/core/transport'
-
-const transport = new BearerTransport({})
-const dpop = new DPoPVerifier({
-  publicKey: clientPublicKey,
-  expectedAudience: 'https://api.example.com',
-})
-
-// On request handlers:
-await dpop.verify(jwt, req.headers.get('dpop')!)
-```
-
-See [DPoP ->](/duck-auth/core/transports/dpop).
+Bearer requests carry no ambient credential a third-party page could ride, so the CSRF check exempts a request that has a bearer header and no session cookie.

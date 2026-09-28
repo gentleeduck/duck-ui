@@ -1,159 +1,112 @@
 ---
-title: Core overview
-description: AuthEngine is the single faceted root. Sessions, identities, passwords, providers, MFA, flows, API keys, M2M, orgs, idempotency, hijack policy, anomaly - all on one instance.
+title: Core
+description: The AuthEngine, what createAuth takes, the facets it exposes, and the request-scoped calls every server adapter makes
 section: Core
 ---
+Everything in duck-auth hangs off one `AuthEngine`. You build it once at boot and share it; it holds no per-request state.
 
-## What is `AuthEngine`?
+## Building the engine
 
-`AuthEngine` is the runtime entry point for duck-auth. You instantiate it once
-at boot, wire it with the transport, stores, and providers you want, and
-hand the instance to your framework adapter.
+`createAuth()` is the entry point. It validates the config, builds the engine, and runs `strict()` for the environment.
 
-```typescript
-import { AuthEngine } from '@gentleduck/auth/core'
+```ts
+import { MemoryAdapter } from '@gentleduck/auth/adapters/memory'
+import { createAuth } from '@gentleduck/auth/core'
+import { cookieTransport } from '@gentleduck/auth/core/transport'
+import { passwords } from '@gentleduck/auth/providers/passwords'
 
-export const auth = new AuthEngine({ /* config */ })
-```
-
-Every concern is exposed as a typed **facet** on the instance. There is no
-hidden global, no module-level state, no implicit singleton.
-
-## The 14 facets
-
-| Facet | What it owns |
-| --- | --- |
-| `sessions` | Create / rotate / revoke / resolve sessions. The fixation-defence rotation matrix (DESIGN section 37) routes every privilege change through `rotateOrCreate()`. |
-| `identities` | CRUD + linking + merge + GDPR (soft-delete, restore, erase, exportAll, bulkCreate). Typed `Profile` generic. |
-| `passwords` | Hash / verify / `needsRehash` against the configured `AuthHasher.IHasher`. Auto-rehash on successful sign-in if hasher params drift. |
-| `providers` | Registry and dispatcher for every sign-in method. `auth.providers.use(...)` registers; the flows facet dispatches. |
-| `mfa` | TOTP (RFC 6238), backup codes (constant-time compare), WebAuthn-MFA factor enrolment. |
-| `flows` | High-level flows: `signIn`, `signOut`, `signUp` state machine, password reset, email change, impersonate. |
-| `apiKeys` | Create (plaintext shown **once**), list, revoke, rotate, verify, `requireScopes`. |
-| `m2m` | OAuth2 client-credentials on top of `apiKeys`. Adds a sign-in path when registered. |
-| `orgs` | Multi-org membership with typed `OrgMeta`. `null` if `stores.orgs` is omitted. |
-| `plugins` | Plugin registry - `use(plugin)`, `installed`, `facets`, `dispose`. |
-| `operations` | Maintenance mode + read-only mode toggles. Causes `AUTH/MAINTENANCE` / `AUTH/READONLY_MODE`. |
-| `idempotency` | Request-dedupe cache (24h TTL default). Keyed by header `idempotency-key`. |
-| `hijack` | IP/UA drift policy - `ignore` / `rotate` / `mfa` / `revoke`. Triggers `lockout` event. |
-| `anomaly` | Detector registry. Aggregates detector signals into `allow` / `deny` / `step-up`. |
-
-## Constructor at a glance
-
-```typescript
-import { AuthEngine, AuthInMemoryEvents, AuthScryptHasher } from '@gentleduck/auth/core'
-import { CookieTransport } from '@gentleduck/auth/core/transport'
-import { AuthMemoryAdapter } from '@gentleduck/auth/adapters/memory'
-import { AuthMemoryLimiter } from '@gentleduck/auth/limiters/memory'
-
-const adapter = new AuthMemoryAdapter()
-
-export const auth = new AuthEngine({
-  baseUrl: 'http://localhost:3000',
-  transport: new CookieTransport({ secure: false }),
-  stores: {
-    identities: adapter.identities,
-    sessions: adapter.sessions,
-    credentials: adapter.credentials,
-    // orgs is optional - pass adapter.orgs to enable the orgs facet
-  },
-  events: new AuthInMemoryEvents(),
-  limiter: new AuthMemoryLimiter({ max: 5, windowMs: 60_000 }),
-  passwords: { hasher: new AuthScryptHasher() },
+export const auth = createAuth({
+  baseUrl: 'https://app.example.com',
+  stores: new MemoryAdapter(),
+  transport: cookieTransport(),
+  providers: [passwords()],
 })
 ```
 
-| Config key | Purpose |
+| Key | Default | What it does |
+| --- | --- | --- |
+| `baseUrl` | required | The public origin every link, redirect and callback is built against. Must be absolute http(s); a trailing slash is dropped. |
+| `stores` | required | `identities`, `sessions` and `credentials`, plus an optional `orgs`. An adapter provides all of them; see [Adapters](/duck-auth/adapters). |
+| `transport` | a secure `duck-sid` cookie | How the session travels. See [Transports](/duck-auth/core/transports). |
+| `providers` | none | Providers, or thunks `(engine, deliver) => provider`. A falsy entry is skipped, so `cond && provider()` works. |
+| `limiter` | `MemoryLimiter` | What every flow spends attempts against. See [Adapters](/duck-auth/adapters#limiters). |
+| `deliver` | none | Your mailer. See [Delivery](/duck-auth/core/delivery). |
+| `events` | an in-process bus | Where lifecycle events go. See [Events](/duck-auth/core/events). |
+| `session` | 7 days idle, 30 days absolute | `ttlMs`, `absoluteTtlMs`, `freshnessMs`, `maxSessionsPerIdentity`. See [Sessions](/duck-auth/core/sessions). |
+| `identities` | 16 KiB profile cap | `softDeleteGracePeriodMs`, `profileMaxBytes`. |
+| `hijack`, `anomaly` | detection off | See [Sessions](/duck-auth/core/sessions#hijack-detection) and [Anomaly detection](/duck-auth/core/anomaly). |
+| `captcha` | refuses every token | See [Captcha](/duck-auth/core/captcha). |
+| `resolveActor` | none | Who `created_by` and `updated_by` name when no `withActor` scope is open. |
+| `strict` | `NODE_ENV`, else `'development'` | Which environment's checks run at the end of construction; `false` skips them. |
+
+An unknown key throws `AUTH_MISCONFIGURED` rather than being ignored, so `sessions` for `session` fails loudly.
+
+`new AuthEngine(cfg)` builds the same engine without the key check, the transport default and the `strict()` call.
+
+## Facets
+
+| Facet | What it holds |
 | --- | --- |
-| `baseUrl` | Issuer for JWTs, OIDC discovery, signed redirect callbacks. |
-| `transport` | The session carrier (`CookieTransport` / `BearerTransport` / `JwtTransport` / `CompositeTransport`). |
-| `stores` | `identities`, `sessions`, `credentials`, optionally `orgs`. Implements the per-table store interfaces. |
-| `limiter` | Rate-limiter. Use `AuthMemoryLimiter` in dev; Redis-backed in production. `strict()` rejects `AuthNoopLimiter` in production. |
-| `session` | Per-session TTLs: `ttlMs` (default 7d), `absoluteTtlMs` (default 30d), `freshnessMs` (default 5m). |
-| `identities` | `softDeleteGracePeriodMs` (default 7d), `profileMaxBytes` (default 16 KiB). |
-| `passwords` | `hasher` plus optional `minLength` / `maxLength` / `rejectCommon`. |
-| `providers` | Array of `AuthProvider.IProvider` instances to register at boot. |
-| `events` | `AuthEvents.IBus`. Default is `AuthInMemoryEvents` - swap to `AuthRedisEvents` or a custom bus for fan-out. |
-| `mfa` | `issuer`, `backupCodeCount`, `backupCodeLen`. |
-| `apiKeys` | `prefix` (e.g. `ak_live_`), `randomBytes`. |
-| `hijack` | Detection sensitivity + reaction (`ignore`/`rotate`/`mfa`/`revoke`). |
-| `i18n` | Locale + message catalogs. |
+| `auth.flows` | The multi-step operations: sign-in, sign-out, step-up, password reset, email verification, sign-up, account deletion, impersonation, linking. See [Flows](/duck-auth/core/flows). |
+| `auth.sessions` | Create, rotate, revoke and list sessions. See [Sessions](/duck-auth/core/sessions). |
+| `auth.identities` | Accounts: create, update, link, soft-delete, erase, export. See [Identities](/duck-auth/core/identities). |
+| `auth.providers` | The registry: `list()`, `has(id)`, `get(id)`. |
+| `auth.passwords` | Strength checks and password writes. Needs `passwords()`. |
+| `auth.mfa` | TOTP, backup codes, WebAuthn MFA, remembered devices. Needs `mfaProvider()`. |
+| `auth.passkeys` | Passkey registration. Needs `passkey()`. |
+| `auth.apiKeys` | Create, rotate and revoke API keys. Needs `apiKeyProvider()`. |
+| `auth.orgs` | Organizations and memberships. Needs an `orgs` store. |
+| `auth.hijack`, `auth.anomaly` | Session drift and risk scoring. |
+| `auth.transport`, `auth.events`, `auth.limiter`, `auth.captcha` | What the config supplied, or the defaults. |
+| `auth.plugins` | Plugins installed with `auth.use()`. |
 
-## The request lifecycle
+A provider-backed getter throws `AUTH_PROVIDER_NOT_REGISTERED`, naming the factory to add, when its provider is missing.
 
-<MermaidDiagram chart={`flowchart LR
-    R["Incoming request"] --> T["transport.extract()"]
-    T --> S["Session lookup or JWT verify"]
-    S --> I["Identity resolved"]
-    I --> A["anomaly.evaluate (if detectors wired)"]
-    A -->|"allow"| H["Your handler"]
-    A -->|"step-up"| MFA["AUTH/STEP_UP_REQUIRED"]
-    A -->|"deny"| D["AUTH/LOCKED"]`} />
+## Resolving the caller
 
-```typescript
-const ctx = await auth.resolveSession(req, {
-  expectedTenantId: 'org-123',          // optional cross-tenant guard
-  requestSnapshot: { ip, userAgent },   // optional, drives anomaly detectors
-})
+`resolveSession` reads the transport, looks the session up and loads its identity. It answers an [`Answer`](/duck-auth/core/errors#answers):
 
-if (!ctx) {
-  return new Response('Unauthorized', { status: 401 })
-}
-
-// ctx.session, ctx.identity, ctx.anomaly?  <- all typed
+```ts
+const resolved = await auth.resolveSession({ headers }).orNull()
+if (!resolved?.identity) throw new AuthError('AUTH_UNAUTHENTICATED')
+resolved.session.aal // 1, or 2 after a second factor
 ```
 
-If `anomaly` detectors are wired and `requestSnapshot` is provided,
-`ctx.anomaly.decision` is one of `allow` / `deny` / `step-up`.
+- `orNull()` answers `null` when the request carries no session or one that was revoked or expired.
+- It still throws `AUTH_SESSION_IDENTITY_ERASED` when the session outlived its identity.
+- `identity` is `null` for a guest session.
+- Pass `{ expectedTenantId }` to refuse a session from another tenant, and `{ requestSnapshot }` to run the [anomaly detectors](/duck-auth/core/anomaly).
+
+Reading a session slides its idle deadline once less than half of it is left, never past the absolute one.
+
+## Transactions
+
+`auth.withTransaction(tx)` returns a view whose stores run on your driver's transaction handle and whose events wait in `pending` until you publish them:
+
+```ts
+await db.transaction(async (tx) => {
+  const bound = auth.withTransaction(tx)
+  const ada = await bound.identities.create({ profile: { email: 'ada@example.com', username: 'ada' } })
+  await bound.passwords.set(ada.id, 'correct-horse-battery', bound.stores.credentials)
+  return bound.pending
+}).then((pending) => pending.flush())
+```
+
+It throws `AUTH_MISCONFIGURED` when a store cannot join a transaction (the memory adapter, or a hand-mixed store bag).
+
+## Plugins
+
+A plugin bundles providers, event listeners, an install hook and a facet under one id:
+
+```ts
+await auth.use({
+  id: 'audit',
+  events: { 'signin.success': (p) => console.log('signed in', p.identity.id) },
+})
+```
+
+Installing is all or nothing: a failure part-way unwinds what landed.
 
 ## Strict mode
 
-`AuthEngine.strict()` is a boot-time validator. Call it after construction
-to catch misconfigurations early.
-
-```typescript
-auth.strict({ env: 'development' })  // warns only
-auth.strict({ env: 'production' })   // throws AUTH/MISCONFIGURED
-```
-
-In **production**, `strict` rejects:
-
-- `CookieTransport.secure: false`
-- `AuthMemoryAdapter` (the in-memory dev store)
-- `AuthMemoryLimiter` (the in-memory dev limiter) or no limiter at all
-- No listeners attached to the `lockout` event
-- Insecure JWT keys (short HS256 secret, missing kid)
-- Compliance preset violations (HIPAA/FIPS require Argon2 + dataAtRest)
-- A registered provider with no callback URL when `baseUrl` is set
-
-See [Production hardening](/duck-auth/advanced/security) for the full
-list of gates.
-
-## Typed generics
-
-`AuthEngine<Profile, Tenant, OrgMeta>` is parameterised by three shapes:
-
-```typescript
-type Profile = { displayName: string; avatarUrl?: string }
-type Tenant = { region: 'eu' | 'us'; tier: 'free' | 'pro' }
-type OrgMeta = { plan: 'team' | 'enterprise' }
-
-export const auth = new AuthEngine<Profile, Tenant, OrgMeta>({
-  /* config */
-})
-```
-
-The generics propagate everywhere: `auth.identities.findById(id)` returns
-`Identity<Profile>`, `auth.orgs.list(identityId)` returns
-`Membership<OrgMeta>[]`, and provider hooks see `Profile` on every payload.
-
-## Where each facet lives
-
-- [Sessions ->](/duck-auth/core/sessions) - the 7-row rotation matrix.
-- [Identities ->](/duck-auth/core/identities) - CRUD, linking, GDPR.
-- [Passwords ->](/duck-auth/core/passwords) - `AuthScryptHasher`, `AuthArgon2idHasher`.
-- [Transports ->](/duck-auth/core/transports) - Cookie, Bearer, JWT, Composite, DPoP.
-- [Events ->](/duck-auth/core/events) - `AuthInMemoryEvents`, `AuthRedisEvents`, `AuthWebhookDeliverer`.
-- [Anomaly ->](/duck-auth/core/anomaly) - detectors and the step-up decision.
-- [Compliance ->](/duck-auth/core/compliance) - `gdpr`, `hipaa`, `soc2`, `fips`.
-- [Errors ->](/duck-auth/core/errors) - every `AUTH/*` code and its status.
+`auth.strict({ env })` throws `AUTH_MISCONFIGURED`, listing every problem at once, when a production engine is holding something that only works in development: a memory store or limiter, an in-process event bus, an insecure cookie, a weak signing key, no `lockout` listener. `createAuth` calls it as it returns, before any listener can exist, so a production engine passes `strict: false` and calls `auth.strict({ env: 'production' })` once its `lockout` listener is subscribed. See [Production hardening](/duck-auth/advanced/security).

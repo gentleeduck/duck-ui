@@ -1,92 +1,27 @@
 ---
-title: LinkedIn OAuth
-description: LinkedIn Sign-in with OIDC.
+title: LinkedIn
+description: Sign in with LinkedIn over OpenID Connect
 section: Providers
 ---
+1. Create an app in the [LinkedIn Developer Portal](https://www.linkedin.com/developers/apps) and add the **Sign In with LinkedIn using OpenID Connect** product.
+2. Under **Auth**, add `https://app.example.com/auth/providers/oauth:linkedin/callback` as an authorized redirect URL.
+3. Copy the client id and secret.
 
-## Setup
+```ts
+import { linkedin } from '@gentleduck/auth/providers/oauth/linkedin'
 
-1. Go to the [LinkedIn Developers portal](https://www.linkedin.com/developers/apps).
-2. Create an app and enable the **Sign In with LinkedIn using OpenID Connect** product.
-3. Under **Auth**, add the redirect URL:
-   `https://app.example.com/auth/linkedin/callback`.
-4. Copy the client ID and client secret.
-
-```typescript
-import { authLinkedin } from '@gentleduck/auth/providers/oauth/linkedin'
-
-export const auth = new AuthEngine({
-  // ...
-  providers: [
-    authLinkedin({
-      clientId: process.env.LINKEDIN_CLIENT_ID!,
-      clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
-      redirectUri: 'https://app.example.com/auth/linkedin/callback',
-      stateSigningSecret: process.env.OAUTH_STATE_SECRET!,
-      scopes: ['openid', 'profile', 'email'],
-      onSignIn: async ({ profile }) => {
-        let identity = await auth.identities.findByProviderSub({
-          providerId: 'linkedin',
-          sub: profile.sub,
-        })
-        if (!identity) {
-          identity = await auth.identities.create({
-            email: profile.email,
-            emailVerified: profile.email_verified,
-            profile: {
-              displayName: profile.name,
-              avatarUrl: profile.picture,
-            },
-          })
-          await auth.identities.linkProvider(identity.id, {
-            providerId: 'linkedin',
-            sub: profile.sub,
-          })
-        }
-        return { identityId: identity.id }
-      },
-    }),
-  ],
+linkedin({
+  clientId: process.env.LINKEDIN_CLIENT_ID ?? '',
+  clientSecret: process.env.LINKEDIN_CLIENT_SECRET ?? '',
+  redirectUri: 'https://app.example.com/auth/providers/oauth:linkedin/callback',
+  stateSigningSecret: process.env.OAUTH_STATE_SECRET ?? '',
+  nonceStore,
+  profileToIdentityProfile: (p) => (p.email ? { email: p.email, username: `linkedin:${p.sub}`, name: p.name } : null),
 })
 ```
 
-## What the profile contains
+The provider id is `oauth:linkedin`, and the default scopes are `openid profile email`.
 
-LinkedIn's OIDC userinfo:
+The profile comes from LinkedIn's userinfo endpoint: `sub`, `email`, `name` and `picture`. `emailVerified` is set only when LinkedIn answers `email_verified: true`.
 
-```typescript
-{
-  sub: 'a1b2c3d4',                    // LinkedIn person URN
-  email: 'ada@example.com',
-  email_verified: true,
-  name: 'Ada Lovelace',
-  given_name: 'Ada',
-  family_name: 'Lovelace',
-  picture: 'https://media.licdn.com/dms/image/...',
-  locale: { country: 'US', language: 'en' },
-}
-```
-
-LinkedIn requires a verified email for OIDC, so `email_verified` is
-always `true`.
-
-## Older API: Sign in with LinkedIn (v2)
-
-If you're on the legacy v2 API (`r_liteprofile` + `r_emailaddress`
-scopes), use the generic `oauthProvider` directly:
-
-```typescript
-import { oauthProvider } from '@gentleduck/auth/providers/oauth'
-
-oauthProvider({
-  providerId: 'linkedin-v2',
-  authorizationEndpoint: 'https://www.linkedin.com/oauth/v2/authorization',
-  tokenEndpoint: 'https://www.linkedin.com/oauth/v2/accessToken',
-  userInfoEndpoint: 'https://api.linkedin.com/v2/me',
-  scopes: ['r_liteprofile', 'r_emailaddress'],
-  // Separate /v2/emailAddress call needed for the primary email - wire in onSignIn.
-})
-```
-
-The OIDC product (the new default) is strictly simpler - migrate when
-you can.
+The routes, the options every provider shares and account linking are on the [OAuth](/duck-auth/providers/oauth) page.

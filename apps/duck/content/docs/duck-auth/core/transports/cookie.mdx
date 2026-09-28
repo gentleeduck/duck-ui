@@ -1,111 +1,44 @@
 ---
 title: CookieTransport
-description: Session id in an HttpOnly, __Host-prefixed, SameSite=Lax cookie. The safe first-party default.
+description: The session id in an HttpOnly, __Host- prefixed cookie with a CSRF companion cookie, the default for browser apps
 section: Core
 ---
+The default transport. The session id rides in an HttpOnly cookie the page's JavaScript cannot read, and a second, readable cookie carries the CSRF token.
 
-## When to use
+```ts
+import { cookieTransport } from '@gentleduck/auth/core/transport'
 
-For any **first-party web app** served from a single origin (your auth
-endpoint and your app share a hostname). `CookieTransport` ships every
-defence-in-depth bit out of the box:
-
-- `__Host-` prefix (no `domain`, no `path` other than `/`, `secure` mandatory).
-- `HttpOnly` (JavaScript cannot read or modify the cookie).
-- `SameSite=Lax` (no cross-site POST gives the cookie up).
-- Constant-time session lookup with a hashed-at-rest session id.
-- Double-submit CSRF defence wired through `authCsrfGuard`.
-
-## Constructor
-
-```typescript
-import { CookieTransport } from '@gentleduck/auth/core/transport'
-
-new CookieTransport({
-  name: '__Host-duck-sid',     // default; falls back to 'duck-sid' if `domain` is set
-  secure: true,                 // default; required for __Host- prefix
-  sameSite: 'lax',              // default; or 'strict' / 'none'
-  path: '/',                    // default; required for __Host- prefix
-  domain: undefined,            // omit for __Host- prefix
-  maxAgeSec: 7 * 24 * 60 * 60,  // default 7 days
+createAuth({
+  // ...
+  transport: cookieTransport(),
 })
 ```
 
-In **development**, `secure: false` is allowed - but only `strict({ env: 'development' })`
-will accept it. Production calls to `strict({ env: 'production' })` throw
-`AUTH/MISCONFIGURED` if `secure` is not `true`.
+Without a `transport`, `createAuth` uses `cookieTransport({ name: 'duck-sid' })`: the same cookie under a name without the `__Host-` prefix.
 
-## Wire format
+| Option | Default | Notes |
+| --- | --- | --- |
+| `name` | `__Host-duck-sid`, or `duck-sid` with a `domain` | The `__Host-` prefix makes browsers insist on Secure, `Path=/` and no Domain. |
+| `secure` | `true` | Set `false` only for plain-http local development; `strict()` refuses it in production. |
+| `sameSite` | `'lax'` | `'none'` requires `secure`. |
+| `path` | `/` | The `__Host-` prefix requires `/`. |
+| `domain` | none | Shares the cookie across subdomains; forbidden with a `__Host-` name. |
+| `maxAgeSec` | the session's absolute deadline | Ends the cookie earlier than the session. |
 
-The cookie value is the **session id**, not the session itself.
-duck-auth always stores the canonical session in the configured
-`sessions` store; the cookie is just the key.
+A contradiction, such as a `__Host-` name with a `domain`, throws `AUTH_MISCONFIGURED` at construction.
 
-```
-Set-Cookie: __Host-duck-sid=01HJX7B2T9...; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=604800
-```
+## The CSRF cookie
 
-The id is a 256-bit random value (base64url-encoded), generated with
-`crypto.randomBytes(32)`. At rest, the store records a **hash** of the
-id - even a database leak does not yield usable session tokens.
+Every sign-in also sets `__Host-duck-csrf` (or `duck-csrf` when the settings rule out the prefix) with the session's CSRF token. It is not HttpOnly: the client reads it and echoes it in the `x-csrf-token` header on every state-changing request. The server adapters check it; a mismatch answers 403 `AUTH_CSRF`. The duck-auth clients do this for you.
 
-## CSRF defence
+`transport.csrfCookieName` answers the name in use, for a client configured by hand.
 
-Cookies ride along on cross-site POST/PUT/DELETE, so every state-mutating
-endpoint must call `authCsrfGuard`:
+## Local development
 
-```typescript
-import { authCsrfGuard, authIssueCsrfToken } from '@gentleduck/auth/core'
+Browsers drop a Secure cookie over plain http on anything but `localhost`, and a `__Host-` name requires Secure. For http development pass a plain name:
 
-// Issue: on session start, set a non-HttpOnly companion cookie.
-const intents = await auth.flows.signIn({ providerId: 'password', input })
-intents.push({ kind: 'setCookie', cookie: {
-  name: '__Host-duck-csrf',
-  value: authIssueCsrfToken(),
-  path: '/',
-  secure: true,
-  sameSite: 'lax',
-  httpOnly: false,  // <- intentionally readable by the client SPA
-}})
-
-// Verify: on every state-mutating request.
-await authCsrfGuard(auth, req)  // throws AUTH/CSRF on mismatch
+```ts
+cookieTransport({ name: 'sid', secure: false })
 ```
 
-The CSRF token is double-submit: the client reads `__Host-duck-csrf`
-from the cookie and echoes it back as `X-CSRF-Token` on every mutating
-request. `authCsrfGuard` constant-time-compares them.
-
-GET/HEAD/OPTIONS are exempt, as are Bearer/JWT routes (no cookies, no
-CSRF).
-
-## Sign-out
-
-```typescript
-import { authMountSignOut } from '@gentleduck/auth/server/express'
-
-app.post('/auth/signout', authMountSignOut(auth))
-```
-
-The transport emits a `Set-Cookie` with `Max-Age=0` to clear the cookie
-and revokes the underlying session row in the store. Even if the cookie
-is replayed, the session id no longer resolves to anything.
-
-## Custom name + domain (sub-domain cookies)
-
-If you serve auth from `auth.example.com` and the app from `app.example.com`,
-the `__Host-` prefix won't work (it forbids `domain`). Drop the prefix
-and set `domain` explicitly:
-
-```typescript
-new CookieTransport({
-  name: 'duck-sid',
-  secure: true,
-  sameSite: 'lax',
-  path: '/',
-  domain: '.example.com',     // shared across subdomains
-})
-```
-
-Be aware: dropping `__Host-` weakens some defences (cookie can be
-overwritten by a less-secure subdomain). Prefer same-origin if you can.
+The CSRF cookie follows, becoming `duck-csrf`.

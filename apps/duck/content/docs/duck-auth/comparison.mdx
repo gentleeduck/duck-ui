@@ -1,134 +1,31 @@
 ---
 title: How duck-auth compares
-description: Honest tradeoffs versus NextAuth/Auth.js, Clerk, WorkOS, Lucia, and Better-Auth. What we picked, what we deliberately don't do.
+description: What duck-auth is, what it deliberately leaves out, and when a hosted service or a smaller library fits better
 section: Getting Started
 ---
+Auth for a TypeScript backend comes three ways: a hosted service that runs it for you (Clerk, WorkOS, Stytch), a framework's own solution (Auth.js), or a library you run yourself. duck-auth is a library you run yourself, in your process and against your database, with the providers, transports and stores already written.
 
-## The space
+## What it ships
 
-The TypeScript auth space has three archetypes:
+| Area | In the package |
+| --- | --- |
+| Sign-in | Passwords, magic links, OAuth (Apple, Discord, GitHub, Google, LinkedIn, Microsoft, or any other through `providers/oauth/core`), passkeys, API keys, SAML. |
+| Second factors | TOTP, backup codes, WebAuthn; step-up to AAL 2 and remembered devices. |
+| Sessions | Cookie, bearer and JWT transports (HS256, ES256, RS256, EdDSA, with key rotation and a JWKS), DPoP, hijack and anomaly detection, impersonation. |
+| Storage | Drizzle on Postgres, MySQL and SQLite; Redis and Valkey for sessions, limits and events; an in-memory adapter for tests. |
+| Servers | Express, Fastify, Hono, Koa, Elysia, Next.js, NestJS, gRPC, and any fetch runtime. |
+| Clients | Vanilla, React, Vue, Svelte, Solid. |
+| Operations | Multi-tenancy, organisations, signed webhooks, encryption at rest, GDPR, HIPAA, SOC 2 and FIPS presets, and a `strict()` gate that refuses a production engine built with development pieces. |
 
-1. **Framework-locked** - NextAuth / Auth.js. Tightly tied to Next.js
-   (with adapters for others, but the heart is Next).
-2. **Hosted control plane** - Clerk, WorkOS, Stytch. You don't run
-   the auth runtime; their service does. Per-MAU pricing.
-3. **DIY toolkit** - Lucia, Better-Auth, custom passport stacks. You
-   own the runtime; the library gives you primitives.
+## What it leaves out
 
-duck-auth is the third type. The pitch: a *complete* DIY toolkit with
-batteries included - Lucia's freedom plus Clerk's coverage minus the
-hosted plane.
+- **Hosting.** There is no service and no dashboard; you run it and own the data.
+- **UI.** The clients hold session state and call the server. The forms are yours.
+- **Authorization.** It says who the caller is, never what they may do. That is [duck-iam](/duck-iam/introduction); see [Bridging to duck-iam](/duck-auth/guides/iam-bridge).
+- **SMS codes.** There is no SMS second factor; SIM swaps make it a weak one. Your [`deliver`](/duck-auth/core/delivery) function can still send links by SMS.
 
-## Quick table
+## Choosing
 
-| | duck-auth | NextAuth / Auth.js | Clerk | Lucia | Better-Auth |
-| --- | --- | --- | --- | --- | --- |
-| **Framework** | Any (Express / Hono / Next / Fastify / Koa / Elysia / NestJS / gRPC / Web Fetch) | Mostly Next.js | Any (via SDK) | Any | Any |
-| **Hosted plane** | No | No | Yes | No | No |
-| **Pricing** | OSS (MIT) | OSS (ISC) | $25/mo + $0.02 per MAU after 5k | OSS (MIT) | OSS (MIT) |
-| **Sign-in providers** | Password + magic-link + 6 OAuth + passkey + API key + SAML | OAuth + email (limited social passkey) | OAuth + email + SMS + passkey + SAML | DIY | OAuth + email + passkey + magic-link |
-| **JWT support** | HS256/ES256/RS256/EdDSA + JWKS rotation + DPoP (RFC 9449) | No (cookie-only by default) | Yes | No | Yes |
-| **OIDC issuer** | Yes (discovery doc + JWKS endpoint) | No | No | No | No |
-| **SAML** | Yes (with `@node-saml/node-saml`) | Yes (Auth.js Pro) | Yes | No | No |
-| **MFA factors** | TOTP + backup codes + WebAuthn-MFA | No (community plugins) | TOTP + SMS + backup codes + passkey | DIY | TOTP |
-| **Multi-tenant orgs** | Yes (built-in `orgs` facet) | No | Yes | DIY | DIY |
-| **Compliance presets** | GDPR / SOC2 / HIPAA / FIPS | None | SOC2 (managed) | None | None |
-| **`strict()` boot gate** | Yes | No | N/A (hosted) | No | No |
-| **Audit log** | Built-in event bus + `AuthWebhookDeliverer` | None | Built-in | DIY | None |
-| **OpenAPI spec** | Generated from runtime | No | Yes | No | No |
-| **OpenTelemetry** | Built-in (`@gentleduck/auth/telemetry/otel`) | None | None | None | None |
-| **CLI** | `init` / `doctor` / `keys` / `migrate` / `emit-openapi` | None | Limited | None | None |
-| **License** | MIT | ISC | Proprietary | MIT | MIT |
-
-## What duck-auth is *not*
-
-Honest list of what we deliberately don't ship:
-
-- **No hosted plane.** Every other big-name auth service has one. We
-  don't. If you want a hosted dashboard, billing, organizational
-  invitations as a service, use Clerk / WorkOS / Stytch.
-- **No "magic" Next.js integration.** Next is one server adapter
-  among nine. duck-auth doesn't auto-generate route handlers, doesn't
-  read `app/auth.config.ts`, doesn't hijack middleware. You mount
-  what you want.
-- **No built-in admin UI.** The shape of an admin UI (user search,
-  ban, impersonate, audit log viewer) is too app-specific. We give
-  you the facets (`identities`, `sessions`, `apiKeys`, `operations`,
-  `hijack`); you compose the UI.
-- **No authorization engine.** That's [`@gentleduck/iam`](/duck-iam).
-  Keeping them separate is intentional - see
-  [the bridging guide](/duck-auth/guides/iam-bridge).
-- **No SMS as a primary factor.** SMS is shipped as a magic-link
-  channel and an MFA channel, but we treat it as low-assurance
-  because SIM-swap fraud is rampant. Prefer passkeys or TOTP.
-
-## Why duck-auth over NextAuth?
-
-Pick duck-auth if:
-
-- You serve more than just Next.js apps (Express / Hono / mobile API / etc).
-- You need MFA out of the box (NextAuth doesn't ship it).
-- You need an OIDC issuer (NextAuth can't be one).
-- You need JWT + JWKS + DPoP (NextAuth is cookie-only by default).
-- You want compliance presets (HIPAA / FIPS).
-- You want a `strict()` boot gate that catches misconfigurations.
-
-Pick NextAuth if:
-
-- You're 100% Next.js and want zero ceremony.
-- You're already in the Auth.js ecosystem (Vercel, etc).
-
-## Why duck-auth over Clerk?
-
-Pick duck-auth if:
-
-- You can't tolerate the per-MAU pricing at scale (Clerk gets
-  expensive past 50k MAUs).
-- You need on-premise / air-gapped / HIPAA-residency control over
-  your auth data.
-- You want to own session revocation, MFA enrolment, audit logs.
-- You're allergic to vendor lock-in.
-
-Pick Clerk if:
-
-- You want zero ops burden - let someone else run the auth runtime.
-- You need the polished pre-built UI components.
-- You're under 5k MAUs and want the free tier.
-
-## Why duck-auth over Lucia?
-
-Pick duck-auth if:
-
-- You want *batteries included* - magic-link, OAuth, passkeys, API
-  keys, channels, OpenAPI, OIDC, OTel - without writing every piece.
-- You want compliance presets.
-- You want a `strict()` boot gate.
-
-Pick Lucia if:
-
-- You want absolute minimal surface area and prefer to write every
-  provider, channel, and audit hook yourself.
-- You enjoy assembling the toolkit and want full control.
-
-## Why duck-auth over Better-Auth?
-
-Pick duck-auth if:
-
-- You need SAML, M2M / client-credentials, or the full OIDC issuer.
-- You need 14 typed facets exposed on a single root (vs. flat config).
-- You need an OpenAPI spec generated from the runtime.
-- You need OpenTelemetry instrumentation out of the box.
-
-Pick Better-Auth if:
-
-- You like its plugin-driven config style.
-- You're already deep in the Better-Auth ecosystem.
-
-## A note on maturity
-
-duck-auth is pre-1.0. The surface is ~98% of v1.0 (see
-[`STATUS.md`](https://github.com/gentleeduck/gentleduck/blob/master/packages/duck-auth/STATUS.md)),
-617 tests pass, but it's younger than NextAuth and Clerk. Expect
-sharp edges; pin a version. Production users should run
-`AuthEngine.strict({ env: 'production' })` and follow the
-[security guide](/duck-auth/advanced/security).
+- Pick a hosted service to run nothing and to get prebuilt sign-in screens, at the price of per-user billing and your users living in someone else's database.
+- Pick a smaller library to write the providers and flows yourself.
+- Pick duck-auth to own the runtime and the data without writing the providers, flows and stores.

@@ -1,156 +1,48 @@
 ---
-title: Orgs (multi-tenancy)
-description: Typed organization memberships per identity. Pairs with duck-iam's scoped roles for B2B SaaS apps.
+title: Organizations
+description: Org memberships and org-scoped roles through auth.orgs, over an org store you implement on your own tables
 section: Core
 ---
+`auth.orgs` tracks which identities belong to which organizations, and the roles each holds there. The orgs themselves are yours: duck-auth reads them, and never creates, renames or deletes one.
 
-## When to use
+## The store
 
-For B2B SaaS where one identity belongs to **multiple organizations**
-with potentially different roles per org. The classic case: a
-freelance designer is `admin` of their own company workspace and
-`viewer` of three client workspaces.
+Pass an `orgs` store next to the others: `stores: { ...drizzlePgAdapter(db), orgs: orgStore }`. `MemoryAdapter` ships one for tests, with `seedOrg(row)` to plant an org. In production you implement `Org.Store` from `@gentleduck/auth/core` over your own tables:
 
-duck-auth doesn't enforce per-org permissions on its own - that's
-[duck-iam's job](/duck-iam/core/roles/scoped). The `orgs` facet
-owns the membership data; iam reads it to scope role assignments.
-
-## Setup
-
-The orgs facet is **optional**. Wire `stores.orgs` to enable:
-
-```typescript
-import { AuthMemoryAdapter } from '@gentleduck/auth/adapters/memory'
-
-type OrgMeta = { plan: 'team' | 'enterprise' }
-
-const adapter = new AuthMemoryAdapter<Profile, OrgMeta>()
-
-export const auth = new AuthEngine<Profile, never, OrgMeta>({
-  // ...
-  stores: {
-    identities: adapter.identities,
-    sessions: adapter.sessions,
-    credentials: adapter.credentials,
-    orgs: adapter.orgs,             // <- enables the facet
-  },
-})
-
-// auth.orgs is now non-null and typed by OrgMeta.
-```
-
-If `stores.orgs` is omitted, `auth.orgs` is `null`. Single-tenant apps
-skip this facet entirely.
-
-## CRUD
-
-```typescript
-// Create an org
-const org = await auth.orgs.create({
-  name: 'Contoso',
-  tenantId: 'tenant-1',
-  meta: { plan: 'enterprise' },
-})
-
-// Add a member
-await auth.orgs.addMember({
-  orgId: org.id,
-  identityId: 'identity-1',
-  role: 'admin',
-})
-
-// List an identity's memberships
-const memberships = await auth.orgs.listForIdentity('identity-1')
-// -> [{ orgId, identityId, role, joinedAt }, ...]
-
-// Update a member's role
-await auth.orgs.updateMemberRole({ orgId, identityId, role: 'viewer' })
-
-// Remove a member
-await auth.orgs.removeMember({ orgId, identityId })
-```
-
-The membership row has the shape `{ orgId, identityId, role, joinedAt,
-metadata? }`. The `role` is opaque to duck-auth; it's interpreted by
-your iam policies.
-
-## Invitation flow
-
-For "invite by email" workflows:
-
-```typescript
-// 1. Owner invites a new member
-const invite = await auth.orgs.createInvitation({
-  orgId: org.id,
-  inviterIdentityId: ctx.identity.id,
-  email: 'newperson@example.com',
-  role: 'editor',
-  expiresIn: 7 * 24 * 60 * 60 * 1000,  // 7 days
-})
-// -> { token, expiresAt }
-// -> channel sends an email containing the link
-
-// 2. Invitee clicks the link, signs in if necessary, then:
-await auth.orgs.acceptInvitation({
-  token,
-  identityId: ctx.identity.id,
-})
-// -> adds the membership row, marks invite consumed
-```
-
-The invitation token is hashed at rest and single-use. If the invitee
-doesn't have an identity yet, redirect them through sign-up first;
-once they have an identity, retry the accept.
-
-## Membership-based session resolution
-
-To enforce "session must belong to a member of this org," pass
-`expectedTenantId` to `resolveSession`:
-
-```typescript
-const ctx = await auth.resolveSession(req, {
-  expectedTenantId: org.tenantId,
-})
-
-if (!ctx) return res.status(401).end()
-
-const memberships = await auth.orgs.listForIdentity(ctx.identity.id)
-const orgMembership = memberships.find((m) => m.orgId === org.id)
-if (!orgMembership) return res.status(403).end()
-
-// The session is for an identity that is a member of this org.
-```
-
-Or, more concisely, project into a subject for duck-iam:
-
-```typescript
-const subject = projectToSubject(ctx.identity, ctx.session, { memberships })
-const allowed = iam.can({ subject, action, resource, scope: `org:${org.id}` })
-```
-
-## Soft-delete
-
-Like identities, orgs support soft-delete with a configurable grace
-window:
-
-```typescript
-await auth.orgs.softDelete(orgId)
-// Org hidden from listings; memberships preserved for the grace period.
-await auth.orgs.restore(orgId)
-await auth.orgs.erase(orgId)
-// Hard-delete; all memberships removed; emit org.erased.
-```
-
-## Events emitted
-
-| Event | Payload |
+| Method | Must |
 | --- | --- |
-| `org.created` | `{ orgId, name, tenantId }` |
-| `org.updated` | `{ orgId, changes }` |
-| `org.deleted` | `{ orgId, soft: boolean }` |
-| `org.member-added` | `{ orgId, identityId, role }` |
-| `org.member-removed` | `{ orgId, identityId }` |
-| `org.member-role-changed` | `{ orgId, identityId, fromRole, toRole }` |
-| `org.invitation-created` | `{ orgId, inviterIdentityId, email, role }` |
-| `org.invitation-accepted` | `{ orgId, identityId, role }` |
-| `org.invitation-revoked` | `{ orgId, email }` |
+| `getOrg(id, ctx)` | Answer the org, or throw `AUTH_ORG_NOT_FOUND`. |
+| `listOrgsForIdentity(identityId, ctx)` | Answer the orgs the identity is a live member of. |
+| `listMembers(orgId, ctx)` | Answer the org's memberships. |
+| `addMember(membership, ctx)` | Insert it, stamping `joinedAt`. |
+| `removeMember(orgId, identityId, ctx)` | Set `leftAt`, or throw `AUTH_MEMBERSHIP_NOT_FOUND`. |
+| `setRoles(orgId, identityId, roles, ctx)` | Replace the roles, or throw `AUTH_MEMBERSHIP_NOT_FOUND`. |
+
+Every row carries a `tenantId` (`null` when global), and the facet refuses a row from a tenant other than the one asked for with `AUTH_TENANT_SCOPE_VIOLATION`. Without an `orgs` store, `auth.orgs` throws `AUTH_PROVIDER_NOT_REGISTERED`.
+
+## Memberships
+
+```ts
+await auth.orgs.addMember({ orgId: 'acme', identityId: ada.id, roles: ['admin'] }, {})
+
+const membership = await auth.orgs.resolveMembership('acme', ada.id, {}).orNull()
+membership?.roles // ['admin']
+
+await auth.orgs.setRoles('acme', ada.id, ['member'], {})
+await auth.orgs.removeMember('acme', ada.id, {})
+
+await auth.orgs.listForIdentity(ada.id, {}) // the orgs ada belongs to
+await auth.orgs.listMembers('acme', {}) // live memberships only
+```
+
+- The last argument is the tenant context: `{}` for a single-tenant app, `{ tenantId }` otherwise.
+- `addMember` refuses a live member with `AUTH_ALREADY_EXISTS`. Someone who left can be added again.
+- `removeMember` marks the membership `leftAt` rather than deleting it; a left member stops appearing everywhere.
+- Roles are deduplicated, empty or overlong entries are dropped, and at most 64 are kept.
+- `resolveMembership`, `removeMember` and `setRoles` throw `AUTH_MEMBERSHIP_NOT_FOUND` for a non-member, which `.orNull()` reads as `null`.
+
+Each write emits `org.member.added`, `org.member.removed` or `org.roles.set`.
+
+## Roles and authorization
+
+Org roles are labels duck-auth stores; it never decides what they allow. To enforce them, hand the membership to your authorization layer. With duck-iam, see the [IAM bridge](/duck-auth/guides/iam-bridge).

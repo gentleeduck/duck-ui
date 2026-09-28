@@ -1,84 +1,35 @@
 ---
-title: gRPC adapter
-description: Server interceptor for @grpc/grpc-js. Resolves the session from per-call metadata, raises typed AUTH/* errors.
+title: gRPC
+description: Authenticating @grpc/grpc-js unary calls from their metadata, and service-to-service tokens
 section: Server
 ---
+`withGrpc` wraps a unary handler. It reads the token from the call's `authorization` metadata, resolves the session through the engine's transport, and puts it on the call:
 
-## When to use
+```ts
+import { withGrpc } from '@gentleduck/auth/server/grpc'
 
-duck-auth's gRPC adapter is for **service-to-service** authentication -
-typically with `JwtTransport` + `Bearer` style tokens in gRPC metadata
-(`authorization: Bearer <jwt>`). For browser-facing endpoints, prefer
-the HTTP adapters.
-
-## Setup
-
-```typescript
-import * as grpc from '@grpc/grpc-js'
-import { authInterceptor } from '@gentleduck/auth/server/grpc'
-import { auth } from './lib/auth'
-
-const server = new grpc.Server({
-  interceptors: [authInterceptor(auth)],
+server.addService(GreeterService, {
+  sayHello: withGrpc<HelloRequest, HelloReply>(auth, (call, callback) => {
+    callback(null, { message: `Hello, ${call.identity?.profile.email}` })
+  }),
 })
 ```
 
-The interceptor:
+- A call with no session is answered `UNAUTHENTICATED` without running the handler. `{ required: false }` runs it with `call.session` unset.
+- An `AuthError` is answered with its code as the message, at the gRPC status its HTTP status maps to: 401 `UNAUTHENTICATED`, 403 `PERMISSION_DENIED`, 429 `RESOURCE_EXHAUSTED`. `httpStatusToGrpc` is that mapping.
+- `headerName` reads another metadata key. A `cookie` entry is read too, for grpc-web bridges that forward one.
+- The handler runs inside the actor scope. Pass `getCaller` to also run hijack and anomaly checks; `grpcCaller(call)` answers the User-Agent, and a peer address is yours to add.
 
-1. Reads `authorization` from `call.metadata`.
-2. Calls `auth.resolveSession({ headers })` to validate.
-3. Attaches `call.session` and `call.identity` for handlers to read.
-4. Raises a typed gRPC `Status` for `AUTH/*` errors:
-   - `UNAUTHENTICATED` (16) for `AUTH/UNAUTHENTICATED`
-   - `PERMISSION_DENIED` (7) for `AUTH/AAL_INSUFFICIENT`
-   - `RESOURCE_EXHAUSTED` (8) for `AUTH/RATE_LIMITED`
-   - `FAILED_PRECONDITION` (9) for `AUTH/MAINTENANCE`, `AUTH/READONLY_MODE`
+## Service-to-service
 
-## In a handler
+The engine's transport decides what the token is, so a gRPC service usually runs on the [JWT transport](/duck-auth/core/transports/jwt). A calling service trades an API key for a token through [client credentials](/duck-auth/providers/api-key#client-credentials), built on the engine's own transport so the engine can verify what it signs, and sends it:
 
-```typescript
-import type { ServerUnaryCall, sendUnaryData } from '@grpc/grpc-js'
+```ts
+import { Metadata } from '@grpc/grpc-js'
 
-const Greeter = {
-  SayHello: async (call: ServerUnaryCall<HelloRequest, HelloReply>, cb: sendUnaryData<HelloReply>) => {
-    // The interceptor already resolved the session; if it returned an error,
-    // this handler isn't called.
-    const reply = new HelloReply()
-    reply.setMessage(`Hello, ${call.identity.profile.displayName}`)
-    cb(null, reply)
-  },
-}
-
-server.addService(GreeterService, Greeter)
+const metadata = new Metadata()
+metadata.add('authorization', `Bearer ${accessToken}`)
+client.sayHello({ name: 'Ada' }, metadata, (err, reply) => {})
 ```
 
-## Service-to-service with M2M
-
-For machine-to-machine, wire `apiKey` or `m2m` providers and have
-clients authenticate via client-credentials:
-
-```typescript
-// Client side:
-const client = new GreeterClient('api.example.com:443', credentials.createSsl(), {})
-const metadata = new grpc.Metadata()
-metadata.add('authorization', `Bearer ${process.env.MY_SERVICE_TOKEN}`)
-client.sayHello(request, metadata, callback)
-```
-
-The metadata token can be:
-- A short-lived JWT minted by your own M2M flow.
-- A long-lived API key (`ak_live_...`).
-- An OAuth2 client-credentials token from your IdP.
-
-duck-auth resolves all three through the same `resolveSession`.
-
-## TLS / mTLS
-
-duck-auth's gRPC interceptor doesn't touch TLS - configure that at the
-gRPC server level (`grpc.ServerCredentials.createSsl(...)`). For mTLS,
-the client cert is available on `call.getPeer()` but duck-auth doesn't
-verify it; that's the gRPC layer's job.
-
-A common pattern is: mTLS at the transport layer (network-level trust),
-plus duck-auth bearer tokens at the application layer (audit trail,
-scope checks, revocation).
+TLS, and mutual TLS, are configured on the gRPC server; `withGrpc` does not look at them.

@@ -1,179 +1,68 @@
 ---
 title: JwtTransport
-description: Stateless JWT access token + opaque refresh cookie. HS256, ES256, RS256, EdDSA with live JWKS rotation and refresh-token family reuse detection.
+description: A signed access token verified without a store read, with an optional refresh cookie, key rotation and a JWKS document
 section: Core
 ---
+The session is signed into a JWT. Requests carry it as `Authorization: Bearer <jwt>`, and `resolveSession` verifies it with no session-store read.
 
-## When to use
+```ts
+import { jwtTransport } from '@gentleduck/auth/core/transport'
 
-`JwtTransport` issues a **stateless JWT** as the access token - every
-request verifies the signature locally and reconstructs the session
-without a store lookup. It is the right pick for:
+const secret = process.env.JWT_SECRET ?? '' // an empty key throws at construction
 
-- **High-throughput APIs** that cannot afford a session store hit per request.
-- **Microservice fleets** where every service verifies independently.
-- **OIDC issuer** posture (your service looks like an OIDC OP to downstream RPs).
-
-JWT comes with **two** important caveats:
-
-1. **You cannot revoke a JWT early.** A revoked session is honoured by the
-   refresh-token cookie, but the access token continues to verify until
-   its `exp`. Keep `ttlMs` short (5-15 minutes) and rely on refresh.
-2. **You need at least two verify keys in production** so that a single
-   key compromise can be rotated out without an audit-required restart.
-
-## Constructor
-
-```typescript
-import { JwtTransport } from '@gentleduck/auth/core/transport'
-
-new JwtTransport({
-  signKey: {
-    kid: 'kid-2026-05',
-    key: process.env.JWT_HS256_SECRET!,  // 32+ bytes; mint with `duck-auth keys generate hs256`
-  },
-  verifyKeys: [
-    { kid: 'kid-2026-05', key: process.env.JWT_HS256_SECRET! },
-    { kid: 'kid-2026-04', key: process.env.JWT_HS256_PREV! },  // retired but still in-flight
-  ],
-  issuer: 'https://api.example.com',
-  audience: 'duck-app',
-  ttlMs: 15 * 60 * 1000,    // 15 minutes
-  refresh: {
-    cookieName: '__Host-duck-refresh',
-    ttlMs: 30 * 24 * 60 * 60 * 1000,  // 30 days
-  },
+const jwt = jwtTransport({
+  signKey: { kid: '2026-09', key: secret },
+  verifyKeys: [{ kid: '2026-09', key: secret }],
+  issuer: 'https://app.example.com',
+  refresh: {},
 })
+
+createAuth({ /* ... */ transport: jwt })
 ```
 
-## Wire format
+A sign-in answers `{ access_token, expires_in, token_type: 'Bearer' }`, and with `refresh` set, a refresh cookie.
 
-The JWT rides on `Authorization: Bearer <jwt>`. The refresh token rides
-on the configured cookie (HttpOnly, Secure, SameSite=Strict).
+## Revocation
 
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsImtpZCI6...
-Cookie: __Host-duck-refresh=01HJX7B2T9XK...
-```
+The token is checked by signature alone, so **revoking the session does not revoke a token already issued**: it keeps working until `exp`. Keep `ttlMs` short (15 minutes by default) and put the long-lived state in the refresh cookie, which a revoke does end. Use the [cookie](/duck-auth/core/transports/cookie) or [bearer](/duck-auth/core/transports/bearer) transport where sign-out must be immediate.
 
-The JWT body carries the canonical session claims:
+## Options
 
-```json
-{
-  "sub": "identity-id",
-  "sid": "session-id",
-  "iss": "https://api.example.com",
-  "aud": "duck-app",
-  "iat": 1716800000,
-  "exp": 1716800900,
-  "aal": "aal2",
-  "amr": ["pwd", "totp"],
-  "tenant": "org-123"
-}
-```
+| Option | Default | Notes |
+| --- | --- | --- |
+| `signKey` | required | `{ kid, alg?, key }`. `key` is the secret for HS256, a PEM private key otherwise. |
+| `verifyKeys` | required | Every key a token may be signed with, `signKey` included, each `{ kid, alg?, key, notAfter? }`. |
+| `issuer` | required | Written as `iss` and required on verify. |
+| `audience` | none | Written as `aud` and required on verify when set. |
+| `ttlMs` | 15 minutes | Never past the session's own deadlines. |
+| `freshnessMs` | 5 minutes | How long after sign-in the rebuilt session counts as fresh. |
+| `clockSkewSec` | 0 | Leeway on `exp` for servers whose clocks disagree. |
+| `refresh` | off | `{ cookieName?, ttlMs?, sameSite? }`; cookie `__Host-duck-refresh`, 7 days, `'strict'`. |
 
-## Algorithm support
+`alg` is `HS256` (the default), `ES256`, `RS256` or `EdDSA`, and a token is refused unless its header names the alg pinned to its `kid`. `strict()` refuses an HS256 secret under 32 bytes in production.
 
-| Alg | Symmetric? | Key shape | When to pick |
-| --- | --- | --- | --- |
-| `HS256` | yes | 32+ byte secret | Single service or trusted-fleet. |
-| `ES256` | no | EC P-256 keypair | OIDC issuer, multi-tenant, DPoP. |
-| `RS256` | no | RSA 2048+ keypair | OIDC issuer where consumers expect RS256. |
-| `EdDSA` | no | Ed25519 keypair | New deployments - fastest verify. |
+The token carries the session's `ip` and `userAgent` for hijack detection. Anyone holding it can read them.
 
-duck-auth pins `alg` per `kid` to defend against
-**algorithm-confusion attacks** (where an attacker tries to verify an
-RS256 token using its public key as an HS256 secret).
+## Refreshing
 
-## Key rotation
+The refresh cookie holds the plaintext session id. Your refresh route reads it, checks the session is still live, and mints a new access token without rotating:
 
-The rotation lifecycle is two-step:
+```ts
+import { JwtTransport, parseCookie } from '@gentleduck/auth/core/transport'
 
-```bash
-# 1. Mint the new signer
-bunx @gentleduck/auth keys rotate hs256
-# -> prints new secret + the snippet to keep the prior kid on verifyKeys
+const sid = parseCookie(request.headers.get('cookie') ?? '', '__Host-duck-refresh')
+if (!sid) throw new AuthError('AUTH_UNAUTHENTICATED')
+const session = await auth.sessions.getBySid(sid).orNull()
+if (!session) throw new AuthError('AUTH_UNAUTHENTICATED')
+const intents = JwtTransport.mintFresh(jwt, sid, session)
 ```
 
-Apply the snippet:
+## Rotating keys
 
-```typescript
-new JwtTransport({
-  signKey: { kid: 'kid-2026-06', key: process.env.JWT_HS256_NEW! },  // current
-  verifyKeys: [
-    { kid: 'kid-2026-06', key: process.env.JWT_HS256_NEW! },
-    { kid: 'kid-2026-05', key: process.env.JWT_HS256_PREV! },        // retired but in-flight
-  ],
-})
+```ts
+jwt.rotateSignKey({ signKey: { kid: '2026-10', key: next } })
+// once every token signed with the old key has expired:
+jwt.retireVerifyKey('2026-09')
 ```
 
-After the longest expected `exp` has passed (the JWT `ttlMs`), remove
-the retired kid:
-
-```typescript
-verifyKeys: [
-  { kid: 'kid-2026-06', key: process.env.JWT_HS256_NEW! },
-  // kid-2026-05 removed
-],
-```
-
-Live rotation without downtime: existing JWTs continue to verify
-against the retired kid; new JWTs are signed with the current kid.
-
-## Refresh tokens
-
-The refresh token is an **opaque cookie**, not a JWT. duck-auth tracks
-it in the session store and rotates it on every use (RFC 6749 section 10.4
-recommendation).
-
-If the same refresh token is presented twice - once by the legit client,
-once by an attacker who scraped it - duck-auth detects the **family
-reuse** and revokes every refresh token descended from the same root.
-The error code is `AUTH/OAUTH_REUSE_DETECTED`.
-
-```typescript
-// On refresh:
-POST /auth/refresh
-Cookie: __Host-duck-refresh=...
-
-// Response:
-Set-Cookie: __Host-duck-refresh=<rotated>; ...
-Authorization: Bearer <new jwt>
-```
-
-## JWKS endpoint
-
-For `ES256` / `RS256` / `EdDSA`, expose the public keys at a JWKS endpoint
-so downstream services (or OIDC clients) can verify:
-
-```typescript
-import { buildJwksHandler } from '@gentleduck/auth/oidc'
-
-const jwks = buildJwksHandler(transport)
-
-app.get('/.well-known/jwks.json', (req, res) => {
-  jwks(req).then((r) => res.json(r))
-})
-```
-
-Pair with [OIDC discovery](/duck-auth/advanced/oidc) for the full
-`/.well-known/openid-configuration` document.
-
-## Combining with DPoP
-
-JWT plus DPoP turns the bearer JWT into a **sender-constrained** token.
-The JWT body carries a `cnf.jkt` claim - the thumbprint of the client's
-public key - and the DPoP proof in the `DPoP` header binds the request
-to that key:
-
-```typescript
-import { JwtTransport, DPoPVerifier } from '@gentleduck/auth/core/transport'
-
-const transport = new JwtTransport({ ... })
-const dpop = new DPoPVerifier({ ... })
-
-// Issue: cnf.jkt is added automatically if DPoPVerifier is wired.
-// Verify: dpop.verify() rejects mismatched thumbprints.
-```
-
-See [DPoP ->](/duck-auth/core/transports/dpop).
+Tokens signed with the old key keep verifying until it is retired. For ES256, RS256 and EdDSA pass the public half as `verifyKey`, and serve `jwt.jwks()` at `/.well-known/jwks.json` so other services can verify; HS256 secrets never appear in it.

@@ -1,167 +1,118 @@
 ---
 title: Errors
-description: Every AUTH/* error code, the HTTP status it maps to, and the wire-safe meta redaction policy.
+description: The AuthError class, the Answer readers that turn a missing row into null, how an error reaches the wire, and every code with its status
 section: Core
 ---
+duck-auth throws one class, `AuthError`. Each carries a `code`, the HTTP `status` that code maps to, and a typed `meta`.
 
-## `AuthError`
+## AuthError
 
-Every typed error duck-auth raises is an `AuthError`:
-
-```typescript
+```ts
 import { AuthError } from '@gentleduck/auth/core'
 
-throw new AuthError('AUTH/INVALID_CREDENTIALS', {
-  email,
-}, {
-  providerId: 'password',
-  flow: 'signin',
-})
-```
-
-- `code` - one of the 38 closed-set codes below. The UI branches on the
-  code, **not** the HTTP status - codes are stable, statuses are HTTP
-  conventions.
-- `meta` - caller-supplied context. Goes through a denylist of 13 sensitive
-  keys on `toJSON()`, so `meta.password`, `meta.token`, `meta.secret`,
-  `meta.accessToken`, etc. are stripped before wire emission.
-- `origin` - provider and flow that triggered the error. Goes to logs and
-  observability spans, **never to the wire**.
-
-## The error taxonomy
-
-### Session / auth state
-
-| Code | Status | Meaning |
-| --- | --- | --- |
-| `AUTH/UNAUTHENTICATED` | 401 | No valid session in the request. |
-| `AUTH/SESSION_EXPIRED` | 401 | Session token decodes but past `expiresAt`. |
-| `AUTH/SESSION_REVOKED` | 401 | Session was revoked (sign-out, password change, hijack policy). |
-| `AUTH/AAL_INSUFFICIENT` | 403 | The action requires a higher Authentication Assurance Level than the session has. |
-| `AUTH/STEP_UP_REQUIRED` | 403 | Action requires a fresh re-auth within `freshnessMs`. |
-| `AUTH/MFA_REQUIRED` | 403 | Session has not enrolled or passed the required MFA factor. |
-
-### Credentials
-
-| Code | Status | Meaning |
-| --- | --- | --- |
-| `AUTH/INVALID_CREDENTIALS` | 401 | Wrong password, wrong magic-link, wrong passkey. **Same code, same timing** for all four - defeats username enumeration. |
-| `AUTH/PASSKEY_MISMATCH` | 401 | Passkey assertion was valid cryptographically but did not match any credential. |
-| `AUTH/EMAIL_NOT_VERIFIED` | 403 | Action requires a verified email; user has not completed verification. |
-
-### Rate-limit / lockout
-
-| Code | Status | Meaning |
-| --- | --- | --- |
-| `AUTH/RATE_LIMITED` | 429 | Per-user or per-IP limiter tripped. |
-| `AUTH/LOCKED` | 423 | Identity locked by hijack policy or admin. |
-| `AUTH/QUOTA_EXCEEDED` | 429 | Out of magic-link, recovery, or API-key quota. |
-
-### Providers
-
-| Code | Status | Meaning |
-| --- | --- | --- |
-| `AUTH/PROVIDER_FAILED` | 502 | Upstream IdP returned a non-2xx (Google rejected the code, Apple JWKS unreachable, etc.). |
-| `AUTH/OAUTH_REUSE_DETECTED` | 401 | Refresh-token reuse - RFC 6749 section 10.4 - entire family revoked. |
-| `AUTH/OAUTH_STATE_MISMATCH` | 401 | Signed `state` value didn't verify or was too old. |
-| `AUTH/OAUTH_NONCE_REPLAY` | 401 | OIDC `nonce` claim already seen. |
-
-### CSRF / DPoP / JWT
-
-| Code | Status | Meaning |
-| --- | --- | --- |
-| `AUTH/CSRF` | 403 | CSRF guard failed (cookie/header mismatch or missing). |
-| `AUTH/DPOP_INVALID` | 401 | DPoP proof rejected: bad signature, wrong jti, replay, or thumbprint mismatch. |
-| `AUTH/JWT_INVALID` | 401 | JWT failed signature, exp, nbf, aud, or iss check. |
-| `AUTH/JWT_KEY_UNKNOWN` | 401 | JWT `kid` does not match any verify key (post-rotation drift). |
-
-### Sign-up / recovery
-
-| Code | Status | Meaning |
-| --- | --- | --- |
-| `AUTH/SIGNUP_INCOMPLETE` | 409 | Sign-up state machine is awaiting another step. |
-| `AUTH/SIGNUP_TOKEN_INVALID` | 401 | Sign-up token wrong, expired, or already consumed. |
-| `AUTH/RECOVERY_TOKEN_INVALID` | 401 | Password-reset token wrong or revoked. |
-| `AUTH/RECOVERY_TOKEN_EXPIRED` | 401 | Reset token past its TTL. |
-| `AUTH/RECOVERY_REQUIRES_MFA` | 403 | Recovery flow needs MFA before allowing reset (high-assurance accounts). |
-
-### Identities
-
-| Code | Status | Meaning |
-| --- | --- | --- |
-| `AUTH/STALE_WRITE` | 409 | Optimistic-concurrency check failed. Re-read and retry. |
-| `AUTH/GRACE_EXPIRED` | 410 | Soft-delete grace period expired; identity is gone. |
-| `AUTH/EMAIL_TAKEN` | 409 | Email collides with another identity. |
-| `AUTH/EMAIL_CHANGE_PENDING` | 409 | Already a pending email-change for this identity. |
-
-### Impersonation
-
-| Code | Status | Meaning |
-| --- | --- | --- |
-| `AUTH/IMPERSONATE_FORBIDDEN` | 403 | Impersonator lacks the required role/scope. |
-| `AUTH/IMPERSONATE_REQUIRES_IAM` | 500 | Impersonation guard requires an iam check but `auth.iam` is unset. |
-| `AUTH/IMPERSONATE_EXPIRED` | 401 | Impersonation session is past its absolute TTL. |
-
-### API keys / M2M
-
-| Code | Status | Meaning |
-| --- | --- | --- |
-| `AUTH/APIKEY_INVALID` | 401 | API key not found or shape mismatch. |
-| `AUTH/APIKEY_REVOKED` | 401 | Key found but revoked. |
-| `AUTH/APIKEY_SCOPE_INSUFFICIENT` | 403 | Key valid but missing required scopes. |
-
-### Runtime modes
-
-| Code | Status | Meaning |
-| --- | --- | --- |
-| `AUTH/MAINTENANCE` | 503 | `operations.enterMaintenance()` is active. |
-| `AUTH/READONLY_MODE` | 503 | `operations.enterReadonly()` is active; writes blocked. |
-
-### Boot / configuration
-
-| Code | Status | Meaning |
-| --- | --- | --- |
-| `AUTH/MISCONFIGURED` | 500 | Raised by `AuthEngine.strict()` when a production gate fails (AuthNoopLimiter, IamMemoryAdapter, etc.). |
-
-## Wire-safe serialisation
-
-```typescript
-const err = new AuthError('AUTH/INVALID_CREDENTIALS', {
-  email: 'ada@example.com',
-  password: 'plaintext!',       // <- will be stripped
-  attemptCount: 3,
-})
-
-err.toJSON()
-// -> { code: 'AUTH/INVALID_CREDENTIALS', status: 401, meta: { email: 'ada@example.com', attemptCount: 3 } }
-```
-
-The denylist applies to: `password`, `passwordHash`, `secret`, `token`,
-`accessToken`, `refreshToken`, `code`, `apiKey`, `privateKey`, `clientSecret`,
-`webhookSecret`, `stateSigningSecret`, `jwt`. These keys are removed from
-`meta` before serialisation regardless of context - even in development.
-
-## Mapping codes to UI
-
-The recommended pattern is to switch on `code`, not status:
-
-```typescript
-const handle = (err: AuthError) => {
-  switch (err.code) {
-    case 'AUTH/INVALID_CREDENTIALS':
-      return { title: 'Invalid email or password', tone: 'error' as const }
-    case 'AUTH/MFA_REQUIRED':
-      return { title: 'Enter your authenticator code', tone: 'info' as const, action: 'show-mfa' }
-    case 'AUTH/STEP_UP_REQUIRED':
-      return { title: 'Confirm it's you', tone: 'info' as const, action: 'reauth' }
-    case 'AUTH/RATE_LIMITED':
-      return { title: 'Too many attempts. Try again in a minute.', tone: 'warning' as const }
-    case 'AUTH/EMAIL_NOT_VERIFIED':
-      return { title: 'Please verify your email first', tone: 'info' as const, action: 'resend-verify' }
-    case 'AUTH/EMAIL_TAKEN':
-      return { title: 'That email is already in use', tone: 'error' as const }
-    default:
-      return { title: 'Authentication failed', tone: 'error' as const }
+try {
+  await auth.flows.signIn({ providerId: 'password', input })
+} catch (err) {
+  if (err instanceof AuthError && err.code === 'AUTH_RATE_LIMITED') {
+    err.status // 429
+    err.meta.retryAfter // seconds, typed from the code
   }
+  throw err
 }
 ```
+
+`err.message` is the bare code. Anything a code needs to say rides on `meta`, typed per code, so `toThrow(/detail/)` in a test never matches; assert on `err.meta` instead.
+
+`asAuthError(err, fallbackCode)` from `@gentleduck/auth/core/errors` passes an `AuthError` through and wraps anything else under the fallback, with the original on `cause`.
+
+## Answers
+
+Calls that look something up answer an `Answer`: a promise that throws when awaited, with readers that take the failure as a value.
+
+```ts
+const identity = await auth.identities.getByEmail(email) // throws AUTH_IDENTITY_NOT_FOUND
+const maybe = await auth.identities.getByEmail(email).orNull() // null when there is no row
+const named = await auth.identities.getByEmail(email).orDefault(guest) // guest when there is no row
+const { data, error } = await auth.identities.getByEmail(email).wrap() // never throws
+```
+
+`orNull` and `orDefault` absorb only the codes that mean "no row", and rethrow everything else, so a database that is down never reads as a free email address:
+
+`AUTH_CREDENTIAL_NOT_FOUND`, `AUTH_IDEMPOTENCY_MISS`, `AUTH_IDENTITY_NOT_FOUND`, `AUTH_IMPERSONATE_WINDOW_CLOSED`, `AUTH_JWT_INVALID`, `AUTH_JWT_KEY_UNKNOWN`, `AUTH_MEMBERSHIP_NOT_FOUND`, `AUTH_ORG_NOT_FOUND`, `AUTH_SESSION_EXPIRED`, `AUTH_SESSION_REVOKED`.
+
+The set is exported as `ABSENT`. A few codes stay out of it on purpose: `AUTH_SESSION_IDENTITY_ERASED`, `AUTH_ANOMALY_DENIED` and `AUTH_TENANT_SCOPE_VIOLATION` are refusals or integrity failures, and must not quietly become an anonymous request.
+
+`orNull(promise)` does the same for a plain promise, such as a store call:
+
+```ts
+import { orNull } from '@gentleduck/auth/core'
+
+const findIdentityByEmail = (email: string) => orNull(stores.identities.find({ email }))
+```
+
+## On the wire
+
+`errorToHttp(err)` from `@gentleduck/auth/server/generic` is what every server adapter answers with:
+
+```ts
+errorToHttp(new AuthError('AUTH_RATE_LIMITED', { retryAfter: 30 }))
+// { status: 429, body: { ok: false, error: { code: 'AUTH_RATE_LIMITED', status: 429, retryAfter: 30 } } }
+```
+
+- An `AuthError` answers its status, with its meta spread into `error`. Meta keys that look like secrets are scrubbed.
+- Anything else answers 500 with `detail: 'internal error'`, and is logged rather than described.
+- The clients pass this body through untouched, so `result.error.code` in the browser is the server's code.
+
+## Codes
+
+| Code | Status | Raised when |
+| --- | --- | --- |
+| `AUTH_UNAUTHENTICATED` | 401 | No session where one is required, or its identity is gone. |
+| `AUTH_SESSION_EXPIRED` | 401 | The idle or absolute deadline passed. `meta.expiredAt`. |
+| `AUTH_SESSION_REVOKED` | 401 | No session, or one that was revoked. `meta.reason`. |
+| `AUTH_SESSION_IDENTITY_ERASED` | 401 | A live session whose identity was erased. |
+| `AUTH_STEP_UP_REQUIRED` | 401 | A stronger or fresher session is needed. `meta.challenge`. |
+| `AUTH_ANOMALY_DENIED` | 403 | The anomaly score crossed the deny threshold. `meta.score`. |
+| `AUTH_MFA_REQUIRED` | 401 | The operation needs an MFA method enrolled or confirmed. `meta.methods`. |
+| `AUTH_INVALID_CREDENTIALS` | 401 | A wrong password, code or token, or a password too weak to set. |
+| `AUTH_PASSKEY_MISMATCH` | 401 | A passkey or WebAuthn registration or assertion that does not verify. |
+| `AUTH_RATE_LIMITED` | 429 | The limiter refused the attempt. `meta.retryAfter` in seconds. |
+| `AUTH_PROVIDER_FAILED` | 400 | An unknown provider id, or a provider refusing its input. `meta.providerId`. |
+| `AUTH_PROVIDER_UNSUPPORTED` | 400 | The provider exists but does not sign anyone in this way. |
+| `AUTH_PROVIDER_NOT_REGISTERED` | 500 | A facet was used without its provider, such as `auth.mfa` with no `mfaProvider()`. |
+| `AUTH_PROVIDER_TAKEN` | 409 | Another identity already holds that provider login. |
+| `AUTH_OAUTH_STATE_MISMATCH` | 400 | The OAuth callback's state does not match the one issued. |
+| `AUTH_OAUTH_NONCE_REPLAY` | 400 | An OpenID nonce was presented twice. |
+| `AUTH_CSRF` | 403 | The CSRF check failed. |
+| `AUTH_DPOP_INVALID` | 401 | A DPoP proof failed. `meta.reason`. |
+| `AUTH_JWT_INVALID` | 401 | A JWT session token does not verify. `meta.reason`. |
+| `AUTH_JWT_KEY_UNKNOWN` | 401 | A JWT names a key id the transport does not hold. `meta.kid`. |
+| `AUTH_SIGNUP_INCOMPLETE` | 409 | A staged sign-up has stages left. `meta.missing`. |
+| `AUTH_SIGNUP_TOKEN_INVALID` | 400 | A sign-up flow token is unknown, spent or expired. |
+| `AUTH_RECOVERY_TOKEN_INVALID` | 400 | A reset, verification or deletion token is unknown or spent. |
+| `AUTH_RECOVERY_TOKEN_EXPIRED` | 410 | That token's TTL passed. |
+| `AUTH_RECOVERY_REQUIRES_MFA` | 401 | A reset for an MFA account needs a stepped-up session. `meta.methods`. |
+| `AUTH_STALE_WRITE` | 409 | An optimistic-concurrency write lost the race. |
+| `AUTH_GRACE_EXPIRED` | 410 | A restore after the soft-delete window. |
+| `AUTH_EMAIL_TAKEN` | 409 | The email belongs to another identity. |
+| `AUTH_USERNAME_TAKEN` | 409 | The username belongs to another identity. |
+| `AUTH_ALREADY_EXISTS` | 409 | A store refused a duplicate row. |
+| `AUTH_IMPERSONATE_FORBIDDEN` | 403 | `authorize` refused, or the impersonation request was invalid. `meta.reason`. |
+| `AUTH_IMPERSONATE_EXPIRED` | 401 | `releaseImpersonation` on a session that is not impersonating. |
+| `AUTH_IMPERSONATE_WINDOW_CLOSED` | 401 | An impersonation session past its window. `meta.closedAt`. |
+| `AUTH_APIKEY_INVALID` | 401 | An API key that does not verify. |
+| `AUTH_APIKEY_REVOKED` | 401 | A revoked API key. |
+| `AUTH_APIKEY_SCOPE_INSUFFICIENT` | 403 | The key lacks a required scope. `meta.required`, `meta.missing`. |
+| `AUTH_IDENTITY_NOT_FOUND` | 404 | No such identity, or a soft-deleted one. |
+| `AUTH_CREDENTIAL_NOT_FOUND` | 404 | No such credential row. |
+| `AUTH_ORG_NOT_FOUND` | 404 | No such organization. |
+| `AUTH_MEMBERSHIP_NOT_FOUND` | 404 | No such membership. |
+| `AUTH_IDEMPOTENCY_MISS` | 404 | No stored answer for that idempotency key. |
+| `AUTH_TENANT_SCOPE_VIOLATION` | 500 | A store answered a row from another tenant. |
+| `AUTH_INVALID_PARAMETERS` | 400 | A value a parser or store refused. |
+| `AUTH_NOT_ENOUGH_PARAMETERS` | 500 | A store call missing what it needs. |
+| `AUTH_MISCONFIGURED` | 500 | A config problem, found at boot or on first use. `meta.detail`. |
+| `AUTH_ADAPTER_FAILED` | 500 | The store's driver failed; the driver error is on `cause`. |
+| `AUTH_ADAPTER_UNAVAILABLE` | 503 | The store could not be reached. |
+
+The registry is exported as `AUTH_ERRORS` from `@gentleduck/auth/core/errors`, keyed by code.

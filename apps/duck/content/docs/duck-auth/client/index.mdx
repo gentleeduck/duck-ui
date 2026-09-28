@@ -1,101 +1,38 @@
 ---
 title: Client libraries
-description: Vanilla authCreateClient + React AuthProvider + hooks. Vue, Svelte, and Solid clients are also shipped.
+description: The browser clients for the auth routes, what every call answers, and the settings each needs to match the server
 section: Client
 ---
+The clients call the routes a [server adapter](/duck-auth/server) mounts: sign-in, sign-out, the session and a provider's begin. Every framework client wraps the vanilla one.
 
-## What the clients give you
-
-The duck-auth client libraries wrap the JSON sign-in / sign-out / session
-routes so your UI doesn't have to know the wire shape. They:
-
-- Track session state with `loading` / `authed` / `guest` semantics.
-- Provide a `signIn(providerId, input)` that handles the right HTTP
-  method and surfaces typed errors.
-- Re-render reactive views (React `authUseSession`, Vue `authUseSession`,
-  Svelte stores, Solid signals) when the session changes.
-- Subscribe to `session.rotated` / `session.revoked` so a sign-out in
-  one tab signs you out in every tab.
-
-## Shipped clients
-
-| Client | Import | Notes |
+| Client | Import | Gives you |
 | --- | --- | --- |
-| [Vanilla](/duck-auth/client/vanilla) | `@gentleduck/auth/client/vanilla` | Framework-agnostic. Zero dependencies. |
-| [React](/duck-auth/client/react) | `@gentleduck/auth/client/react` | `<AuthProvider>` + `authUseSession` + `authUseSignIn` + `authUseBeginProvider`. |
-| Vue | `@gentleduck/auth/client/vue` | `createAuth()` + `authUseSession`. |
-| Svelte | `@gentleduck/auth/client/svelte` | `authCreateStore()` reactive store. |
-| Solid | `@gentleduck/auth/client/solid` | `createAuthSignal()`. |
+| [Vanilla](/duck-auth/client/vanilla) | `@gentleduck/auth/client/vanilla` | `createAuthClient` |
+| [React](/duck-auth/client/react) | `@gentleduck/auth/client/react` | `Provider`, `useSession`, `useSignIn`, `useSignUp`, `useSignOut`, `useBeginProvider` |
+| [Vue](/duck-auth/client/vue) | `@gentleduck/auth/client/vue` | `createAuthVuePlugin`, `useAuthSession`, `useAuthSignIn`, `useAuthSignOut` |
+| [Svelte](/duck-auth/client/svelte) | `@gentleduck/auth/client/svelte` | `createAuthStore` |
+| [Solid](/duck-auth/client/solid) | `@gentleduck/auth/client/solid` | `Provider`, `authUseSession`, `authUseSignIn`, `authUseSignOut` |
 
-## Anatomy of a sign-in
+## What a call answers
 
-Every client wraps the same HTTP shape:
+No method throws. Each answers an envelope:
 
-```
-POST /auth/signin
-Content-Type: application/json
+```ts
+const res = await client.signIn({ providerId: 'password', input: { email, password } })
 
-{ "providerId": "password", "input": { "email": "...", "password": "..." } }
-```
-
-The server responds with:
-
-```
-HTTP/1.1 200 OK
-Set-Cookie: __Host-duck-sid=...; ...
-Content-Type: application/json
-
-{ "session": {...}, "identity": {...} }
+if (res.ok) showAccount(res.data.identity)
+else if (res.error.code === 'AUTH_INVALID_CREDENTIALS') showError('Wrong email or password')
 ```
 
-The client persists the response, kicks off a `getSession()` refresh,
-and notifies subscribers.
+- Success is `{ ok: true, code, data }`. `signIn` answers the session the new cookie carries, as `getSession` does.
+- Failure is `{ ok: false, error }`, the error as the server wrote it: its `code`, `status`, and any detail that code carries. Branch on the code; the [error reference](/duck-auth/core/errors) lists them.
+- A request that never reached the server answers `AUTH_NETWORK_ERROR`; a server that answered something other than an envelope, `AUTH_HTTP_ERROR` with its status.
 
-## Type safety
+Dates come back as `Date`s. For a `/session` call made with your own `fetch`, `reviveSessionResult` does the same.
 
-Every client is generic over `Profile`:
+## Matching the server
 
-```typescript
-type Profile = { displayName: string; avatarUrl?: string }
-
-// Vanilla
-const client = authCreateClient<Profile>()
-
-// React - pass through authUseSession's generic
-const { data } = authUseSession<Profile>()
-// data.identity.profile is typed as Profile
-```
-
-For a fully end-to-end type-safe stack, share the `Profile` type
-between your `AuthEngine` config (server) and your client setup (browser)
-through your monorepo's shared types package.
-
-## Cross-tab session sync
-
-The clients listen for `storage` events on `localStorage` (vanilla / React)
-and `BroadcastChannel` messages (Vue / Svelte / Solid) so that a
-sign-out in one tab propagates to every open tab in the same browser.
-
-The mechanism is opt-in but on by default - pass `notifyImmediately:
-false` if you don't want it.
-
-## Error handling
-
-All clients raise the typed `AuthError` (or a wire-equivalent
-`{ code, status, meta }` object on the React `authUseSignIn().error` field).
-Branch on `error.code`, not on HTTP status - codes are stable across
-versions.
-
-```typescript
-const signIn = authUseSignIn()
-
-await signIn.mutateAsync({ providerId: 'password', input: { email, password } })
-
-if (signIn.error) {
-  switch (signIn.error.code) {
-    case 'AUTH/INVALID_CREDENTIALS': toast('Wrong email or password'); break
-    case 'AUTH/MFA_REQUIRED': showMfaForm(); break
-    case 'AUTH/RATE_LIMITED': toast('Slow down - try again in a minute'); break
-  }
-}
-```
+- `baseUrl` is where the routes are mounted, `/auth` by default. Mounted at `/api/auth`, pass `baseUrl: '/api/auth'`.
+- Requests send cookies, so a client on another origin needs the server to allow credentialed CORS from it.
+- Every write sends the CSRF token from the companion cookie. That cookie is `__Host-duck-csrf` only when the session cookie is `Secure`, on `Path=/` and has no `Domain`; otherwise it is `duck-csrf`, as on http during development, and the client needs `csrfCookieName: 'duck-csrf'`. The transport's `csrfCookieName` answers which one it sets.
+- The session is typed by your profile: `createAuthClient<Profile>()`, `useSession<Profile>()`.

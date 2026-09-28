@@ -1,176 +1,54 @@
 ---
 title: Multi-tenancy
-description: authWithTenant + authCurrentTenant - AsyncLocalStorage-backed tenant scope that flows through every facet, store, and event without threading AuthTenantContext by hand.
+description: Which records carry a tenant, signing in and resolving sessions under one, and the routes a multi-tenant app writes itself
 section: Advanced
 ---
+One engine serves every tenant. Identities are global: one person, one row, one email across all of them. What carries a tenant is what they hold in it:
 
-duck-auth threads a `AuthTenantContext` through every facet, store, and
-event so a multi-tenant app can reuse the same `AuthEngine` across
-tenants without leaking state between them. The two ways to scope a
-call are:
+- **Credentials.** A password, TOTP secret, passkey or API key belongs to the tenant it was created under.
+- **Sessions.** A session records the tenant it was signed in to.
 
-1. **Explicit** - pass `AuthTenantContext` as the last arg on every store
-   and facet call.
-2. **Ambient** - wrap a request in `authWithTenant(tenantId, fn)`; every
-   nested call sees `authCurrentTenant()` resolve to the same value.
+## Signing in to a tenant
 
-Ambient is usually right for HTTP / job runners; explicit is right
-for cross-tenant admin flows where one call legitimately spans
-several tenants.
+```ts
+await auth.passwords.set(ada.id, password, auth.cfg.stores.credentials, { tenantId: 'acme' })
 
-```typescript
-import { authWithTenant, authCurrentTenant, authResolveTenant } from '@gentleduck/auth/core'
+const { sid, session } = await auth.flows.signIn({ providerId: 'password', input: { email, password }, tenantId: 'acme' })
+// session.tenantId === 'acme'
 ```
 
-## `authWithTenant`
+A sign-in under `globex` does not find acme's password and answers `AUTH_INVALID_CREDENTIALS`.
 
-Wrap a function (sync or async) so every awaitable inside it
-observes the supplied `tenantId`:
+## Resolving under a tenant
 
-```typescript
-import { authWithTenant } from '@gentleduck/auth/core'
-
-app.use((req, _res, next) => {
-  const tenantId = extractTenantFromSubdomain(req.hostname)
-  authWithTenant(tenantId, () => next())
-})
+```ts
+const resolved = await auth.resolveSession(req, { expectedTenantId: 'acme' }).orNull()
 ```
 
-Pass `undefined` to enter the global / no-tenant scope explicitly -
-useful in tests and CLI tools where the lack of a tenant should be
-audit-visible rather than implicit.
+A session from another tenant resolves as absent. The [CSRF guards](/duck-auth/server#your-own-routes) take the same option: `csrfGuard(auth, req, { expectedTenantId })`, `expressCsrf(auth, { expectedTenantId })`.
 
-```typescript
-// Daily job runner
-for (const tenant of tenants) {
-  await authWithTenant(tenant.id, () => runDailyJobsFor(tenant))
-}
+## Leaving the tenant out
+
+A call without a tenant is unscoped, not scoped to "no tenant":
+
+- A sign-in without `tenantId` finds a credential in any tenant, and its session records none.
+- A resolve without `expectedTenantId` accepts a session from any tenant.
+- `auth.sessions.listForIdentity(id)` lists the person's sessions in every tenant. Pass `{ tenantId }` to list one.
+
+So the mounted [server routes](/duck-auth/server), which pass no tenant, serve a single-tenant app. A multi-tenant app writes its sign-in route and its guards itself, with the tenant from the host or path; [Fetch runtimes](/duck-auth/server/generic) has a sign-in route to start from.
+
+## The ambient tenant
+
+`withTenant(tenantId, fn)` binds a tenant for everything `fn` awaits, `currentTenant()` reads it, and `resolveTenant(explicit)` answers the explicit one when given and the bound one otherwise. They are for your own code. No engine call reads the bound tenant, so each still needs its `tenantId` passed.
+
+```ts
+import { resolveTenant, withTenant } from '@gentleduck/auth/core'
+
+app.use((req, _res, next) => withTenant(req.hostname.split('.')[0], next))
+
+// In a handler below it:
+const { tenantId } = resolveTenant()
+await auth.flows.signIn({ providerId: 'password', input, tenantId })
 ```
 
-Every facet call inside the closure (`auth.identities.create`,
-`auth.sessions.list`, `auth.flows.signIn`, etc.) resolves the
-ambient tenant before reaching the store - no manual threading
-required.
-
-## `authCurrentTenant`
-
-Read the active scope. Returns `undefined` when no `authWithTenant`
-wrapper is active, otherwise the `AuthTenantContext` bound by the
-nearest wrapper.
-
-```typescript
-import { authCurrentTenant } from '@gentleduck/auth/core'
-
-function logWithTenant(message: string) {
-  const ctx = authCurrentTenant()
-  logger.info({ tenantId: ctx?.tenantId, message })
-}
-```
-
-Library code should prefer `authResolveTenant` (below) which also
-considers a caller-supplied explicit `AuthTenantContext`.
-
-## `authResolveTenant`
-
-Pick the effective `AuthTenantContext` for a single call. Explicit
-caller-supplied context wins over the ALS ambient - so
-`authWithTenant` is a default, not a fence. Callers can still scope a
-single call across a different tenant on purpose.
-
-```typescript
-import { authResolveTenant } from '@gentleduck/auth/core'
-
-async function readIdentityForAdmin(id: string, explicit?: AuthTenantContext) {
-  const ctx = authResolveTenant(explicit)
-  return store.identities.findById(id, ctx)
-}
-```
-
-Adapters use this pattern: they accept an explicit `AuthTenantContext` on
-the public surface but fall back to the ALS ambient when none is
-passed. The user-supplied stores triple plugged into `AuthEngine.stores`
-must do the same to stay compatible with the ambient flow.
-
-## Storage layer wiring
-
-Stores must accept a `AuthTenantContext` last-arg on every method that
-returns rows. The shipping memory / redis / SQL adapters do this
-already:
-
-```typescript
-findById(id: string, tenantId: string | undefined): Promise<Identity | null>
-```
-
-A null/undefined `tenantId` selects "global identities" - rows whose
-`tenant_id` column is `NULL`. A non-null value selects rows for that
-tenant **plus** the globals (so an embedded service account row that
-sits at the root scope works inside any tenant). Adapters that want
-strict isolation (no global fallback) can implement the contract
-themselves; see [adapter custom guide](/duck-auth/adapters/#bringing-your-own).
-
-## Patterns
-
-### Subdomain-keyed tenants
-
-```typescript
-import { authWithTenant } from '@gentleduck/auth/core'
-import { auth } from './auth'
-
-app.use((req, res, next) => {
-  const tenantId = req.hostname.split('.')[0] // 'acme' from 'acme.app.example'
-  authWithTenant(tenantId, () => next())
-})
-
-// All routes downstream see auth.sessions.create() etc. scoped to `acme`
-```
-
-### Header-keyed tenants
-
-```typescript
-app.use((req, _res, next) => {
-  const tenantId = req.headers['x-tenant-id'] as string | undefined
-  authWithTenant(tenantId, () => next())
-})
-```
-
-### JWT-claim tenant (no middleware)
-
-When a JWT already carries the tenant claim, push it into the ALS
-right after `resolveSession`:
-
-```typescript
-const resolved = await auth.resolveSession({ headers: req.headers })
-await authWithTenant(resolved?.session.tenantId, () => handler(req, res))
-```
-
-### Cross-tenant admin call
-
-When an admin route legitimately needs to query a different tenant,
-pass an explicit `AuthTenantContext` and bypass the ambient:
-
-```typescript
-app.get('/admin/audit', async (req, res) => {
-  await authWithTenant('superadmin', async () => {
-    // Inside the admin scope, but we want to read tenant-A's identities:
-    const identity = await auth.identities.findById(req.query.id, { tenantId: 'tenant-a' })
-    res.json(identity)
-  })
-})
-```
-
-`authResolveTenant({ tenantId: 'tenant-a' })` resolves to `tenant-a`
-regardless of the surrounding ALS scope.
-
-## Strict-mode boot check
-
-`strict({ env: 'production' })` does not enforce multi-tenancy by
-itself - it's a single-vs-multi mode decision your app makes. When a
-preset adds tenancy enforcement (some compliance configs do), the
-check verifies that every facet call resolves a non-null
-`AuthTenantContext` so a request that bypassed the ambient is rejected
-rather than silently leaking globals.
-
-## See also
-
-- [Orgs facet](/duck-auth/core/orgs) - the higher-level org / membership / role-scope facet on top of the tenant primitive.
-- [Sessions](/duck-auth/core/sessions) - sessions carry `tenantId` in the row so cross-tenant resolve is impossible by construction.
+Organisations inside a tenant, with members and roles, are the [orgs facet](/duck-auth/core/orgs).

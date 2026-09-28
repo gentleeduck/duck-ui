@@ -1,118 +1,61 @@
 ---
 title: Solid client
-description: SolidJS provider + hooks - authUseSession, authUseSignIn, authUseSignOut. Built on createSignal so updates are fine-grained.
+description: The Solid Provider and the session and sign-in primitives
 section: Client
 ---
+```tsx
+import { Provider } from '@gentleduck/auth/client/solid'
 
-## Setup
-
-```typescript title="src/index.tsx"
-import { render } from 'solid-js/web'
-import { AuthProvider } from '@gentleduck/auth/client/solid'
-import App from './App'
-
-render(
-  () => (
-    <AuthProvider baseUrl="/auth">
-      <App />
-    </AuthProvider>
-  ),
-  document.getElementById('root')!,
-)
+export function App() {
+  return (
+    <Provider baseUrl="/auth">
+      <Account />
+    </Provider>
+  )
+}
 ```
 
-`AuthProvider` accepts the same options as `authCreateClient` plus an optional
-`client` prop if you want to share an existing vanilla client.
-
-## `authUseSession`
+`Provider` takes the [vanilla client's options](/duck-auth/client/vanilla), or a built one as `client`. It reads the session on mount; `noInitialFetch` skips that read and starts as a guest.
 
 ```tsx
-import { authUseSession } from '@gentleduck/auth/client/solid'
+import { authUseSession, authUseSignIn, authUseSignOut } from '@gentleduck/auth/client/solid'
+import { createSignal, Match, Switch } from 'solid-js'
 
-function App() {
+function Account() {
   const { data, status } = authUseSession()
-
-  return (
-    <>
-      {status() === 'loading' && <div>Loading...</div>}
-      {status() === 'guest' && <SignInForm />}
-      {status() === 'authed' && (
-        <div>Hi, {data().identity?.profile?.displayName}</div>
-      )}
-    </>
-  )
-}
-```
-
-`data` and `status` are signals (call them to read). Updates are reactive and
-fine-grained so only the components that read them re-render.
-
-## `authUseSignIn` / `authUseSignOut`
-
-```tsx
-import { authUseSignIn } from '@gentleduck/auth/client/solid'
-import { createSignal } from 'solid-js'
-
-function SignInForm() {
   const signIn = authUseSignIn()
-  const [email, setEmail] = createSignal('')
-  const [password, setPassword] = createSignal('')
+  const signOut = authUseSignOut()
+  const [error, setError] = createSignal<string | null>(null)
+
+  async function submit(event: SubmitEvent & { currentTarget: HTMLFormElement }) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const res = await signIn.mutate({
+      providerId: 'password',
+      input: { email: form.get('email'), password: form.get('password') },
+    })
+    setError(res.ok ? null : res.error.code)
+  }
 
   return (
-    <form
-      onSubmit={async (e) => {
-        e.preventDefault()
-        await signIn.mutate({
-          providerId: 'password',
-          input: { email: email(), password: password() },
-        })
-      }}
-    >
-      <input type="email" value={email()} onInput={(e) => setEmail(e.currentTarget.value)} required />
-      <input type="password" value={password()} onInput={(e) => setPassword(e.currentTarget.value)} required />
-      <button disabled={signIn.loading()}>
-        {signIn.loading() ? 'Signing in...' : 'Sign in'}
-      </button>
-      {signIn.error() && <p class="text-red-500">{(signIn.error() as { code: string }).code}</p>}
-    </form>
+    <Switch>
+      <Match when={status() === 'authed'}>
+        {data().identity?.profile.email}
+        <button type="button" onClick={() => signOut.mutate()}>Sign out</button>
+      </Match>
+      <Match when={status() === 'guest'}>
+        <form onSubmit={submit}>
+          <input name="email" type="email" required />
+          <input name="password" type="password" required />
+          <button type="submit" disabled={signIn.loading()}>Sign in</button>
+          {error() === 'AUTH_INVALID_CREDENTIALS' && <p>Wrong email or password</p>}
+        </form>
+      </Match>
+    </Switch>
   )
 }
 ```
 
-The `mutate` / `loading` / `error` shape mirrors React's `useMutation`. `loading`
-and `error` are signals - read them as `loading()` and `error()`.
-
-## SSR
-
-`AuthProvider` accepts `noInitialFetch` so the server render does not call
-`/session`. Pass server-resolved state via `initialState`:
-
-```tsx
-<AuthProvider
-  baseUrl="/auth"
-  noInitialFetch
-  initialState={serverSession}
->
-  <App />
-</AuthProvider>
-```
-
-## Errors
-
-The error signal carries the raw thrown value. Match on `.code` for typed
-discrimination:
-
-```tsx
-{signIn.error() && (() => {
-  const e = signIn.error() as { code: string }
-  if (e.code === 'AUTH/INVALID_CREDENTIALS') return <p>Wrong email or password</p>
-  if (e.code === 'AUTH/MFA_REQUIRED') return <MfaPrompt />
-  return <p>Something went wrong: {e.code}</p>
-})()}
-```
-
-## Reactivity across tabs
-
-The Solid client subscribes to `BroadcastChannel` updates from the vanilla
-client. Signing in or out in one tab updates the `authUseSession` signal in every
-other tab automatically.
+- `authUseSession()` answers `data` and `status` as signals, and `refresh()`.
+- `authUseSignIn()` and `authUseSignOut()` answer `{ mutate, loading, error }`, the last two as signals. `mutate` resolves to the call's [envelope](/duck-auth/client#what-a-call-answers); `error` holds only a thrown error.
+- `authUseClient()` is the client itself: `beginProvider` and `signUp` are called on it.

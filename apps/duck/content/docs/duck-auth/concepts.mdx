@@ -1,257 +1,44 @@
 ---
-title: Concepts & glossary
-description: The vocabulary - AAL, AMR, transport, provider, channel, facet, freshness, step-up - all defined in one place.
+title: Concepts
+description: The terms the rest of the docs use, from identity and session to AAL, step-up and tenant, each with the page that covers it
 section: Getting Started
 ---
+## The pieces
 
-## The vocabulary
-
-Authentication has more jargon than most domains. This page is the glossary -
-every term used elsewhere in the docs, with a one-paragraph definition
-and a pointer to the deep-dive.
-
-## Core terms
-
-### `AuthEngine`
-
-The single runtime entry point. You construct it once at boot with all
-config (transport, stores, providers, channels, presets) and pass it to
-every framework adapter, server handler, and client mount.
-
-See [Core overview ->](/duck-auth/core).
-
-### Facet
-
-A typed sub-object on `AuthEngine` exposing a single concern (sessions,
-identities, passwords, providers, MFA, flows, API keys, M2M, orgs,
-plugins, operations, idempotency, hijack, anomaly). All 14 facets are
-described in [Core overview](/duck-auth/core).
-
-### Identity
-
-A long-lived "who" record. Identified by an email or provider-sub.
-Carries a typed `Profile` (your domain's per-user data) plus metadata
-(`emailVerified`, `tenantId`, `createdAt`, `deletedAt`). Identities
-outlive sessions.
-
-See [Identities ->](/duck-auth/core/identities).
-
-### Session
-
-A short-lived "this caller, right now" record. Created by sign-in,
-rotated on privilege change, revoked on sign-out. Carries `aal`,
-`amr`, `lastReauthAt`, `expiresAt`. Sessions ride on a [Transport](/duck-auth/core/transports).
-
-See [Sessions ->](/duck-auth/core/sessions).
-
-### Credential
-
-The hashed material that proves a sign-in factor - a password hash, a
-passkey public key, a magic-link token hash, an API-key hash, a TOTP
-secret. Stored in the `credentials` store, keyed by `identityId` plus
-a typed `kind`.
-
-### Provider
-
-An object that knows how to sign someone in. Implements a two-step
-`begin`/`complete` interface. duck-auth ships password, magic-link,
-six OAuth providers, passkeys, API keys, and SAML.
-
-See [Providers ->](/duck-auth/providers).
-
-### Channel
-
-An outbound message transport - SMTP, Resend, SES, Twilio, WebPush,
-or Console. Channels deliver magic links, password resets,
-verification emails, and MFA codes.
-
-See [Channels ->](/duck-auth/channels).
-
-### Transport
-
-The bridge between in-memory `Session` and the wire. Cookie, Bearer,
-JWT, or Composite. Optionally bound to a client public key via DPoP.
-
-See [Transports ->](/duck-auth/core/transports).
-
-### Adapter
-
-A bundle of storage backends - `AuthIdentity.IStore`, `AuthSession.IStore`,
-`AuthCredential.IStore`, optionally `AuthOrg.IStore`. duck-auth ships
-`AuthMemoryAdapter`, the Redis bundle, and a SQL bridge with Drizzle
-references.
-
-See [Adapters ->](/duck-auth/adapters).
-
-## Assurance terms
-
-### AAL (Authentication Assurance Level)
-
-NIST 800-63B vocabulary. duck-auth uses three levels:
-
-| AAL | Meaning |
+| Term | What it is |
 | --- | --- |
-| `aal1` | One factor (password, magic-link, OAuth without MFA enforcement). |
-| `aal2` | Two factors, with at least one "something you have" (passkey, TOTP, FIDO key). |
-| `aal3` | Two factors, both hardware-backed. Currently equivalent to `aal2` in duck-auth. |
+| Engine | The `AuthEngine` that `createAuth()` builds once at boot. Everything else hangs off it. See [Core](/duck-auth/core). |
+| Facet | One concern of the engine: `auth.sessions`, `auth.identities`, `auth.flows`, `auth.mfa` and so on. See [facets](/duck-auth/core#facets). |
+| Identity | A person: a `profile` holding at least `username` and `email`, the providers linked to it, and whether the address was proven. See [Identities](/duck-auth/core/identities). |
+| Session | One signed-in caller: who, which tenant, its `kind` (`guest`, `user` or `apikey`), its AAL, the factors presented and when, and an idle and an absolute deadline. The store keeps a hash of the sid, never the sid. See [Sessions](/duck-auth/core/sessions). |
+| Credential | What proves a factor: a password hash, a passkey's public key, a TOTP secret, an API key hash, a one-time token. |
+| Provider | A way to sign in: passwords, magic links, OAuth, passkeys, API keys, SAML. See [Providers](/duck-auth/providers). |
+| Transport | How the sid travels: a cookie, a bearer header, a JWT, or several at once. See [Transports](/duck-auth/core/transports). |
+| Store | Where identities, sessions and credentials live. An adapter supplies all three. See [Adapters](/duck-auth/adapters). |
+| Flow | An operation spanning several facets: sign-in, step-up, password reset, sign-up. See [Flows](/duck-auth/core/flows). |
+| Event | What the engine emits as things happen, such as `signin.success` or `lockout`. See [Events](/duck-auth/core/events). |
+| Delivery | Your mailer: the `deliver` function the engine hands a link or code to send. See [Delivery](/duck-auth/core/delivery). |
 
-Use `aal2` as the gate for sensitive actions (account deletion, payment
-config, admin operations).
+## Assurance
 
-### AMR (Authentication Methods References)
+| Term | What it is |
+| --- | --- |
+| AAL | `session.aal`. 1 after one factor; 2 after a second one, or a passkey that verified the user, or a SAML assertion naming an MFA context. Nothing mints 3. |
+| Fresh | `session.fresh`: a factor was presented within `session.freshnessMs`, 5 minutes by default. |
+| Step-up | Asking a signed-in person for another factor before a sensitive action, which rotates the session to AAL 2. See [Adding MFA](/duck-auth/guides/mfa). |
+| Hijack | A request whose IP or user agent differs from the session's. Each can be ignored, rotate the session, ask for a step-up, or revoke it. See [hijack detection](/duck-auth/core/sessions#hijack-detection). |
+| Anomaly | Detectors scoring a sign-in or request, such as impossible travel. See [Anomaly detection](/duck-auth/core/anomaly). |
 
-RFC 8176. An array of method tags carried on every session, recording
-which factors were verified to mint it: `['pwd']`, `['pwd', 'totp']`,
-`['passkey']`, `['oauth_google']`. Useful for audit and for policies
-that gate on specific factor sequences.
+## Tenancy
 
-### Freshness
+| Term | What it is |
+| --- | --- |
+| Tenant | A string on credentials and sessions. Identities have none: one person can hold credentials in several tenants. See [Multi-tenancy](/duck-auth/advanced/multi-tenancy). |
+| Org | An organisation with members and roles, inside a tenant. See [Orgs](/duck-auth/core/orgs). |
 
-The time since the session's most recent factor verify. Sensitive
-actions require a fresh session - duck-auth raises
-`AUTH/STEP_UP_REQUIRED` when `Date.now() - session.lastReauthAt >
-config.session.freshnessMs`. Default freshness window is 5 minutes.
+## Errors
 
-### Step-up
-
-The action of asking the user to re-prove one or more factors mid-session.
-A step-up does not sign the user out - it bumps `lastReauthAt`
-(possibly `aal`) and lets them continue.
-
-See [Adding MFA ->](/duck-auth/guides/mfa).
-
-### Hijack policy
-
-A policy that reacts to IP/UA drift on an existing session. Options:
-`ignore` (do nothing), `rotate` (rotate the session id), `mfa` (force
-step-up), `revoke` (kill the session). The `hijack` event fires when
-the policy triggers.
-
-### Anomaly signal
-
-A score from a detector indicating "something unusual is happening."
-Detectors include impossible-travel and device-fingerprint. The
-aggregator sums signals into a `decision` of `allow` / `step-up` /
-`deny`.
-
-See [Anomaly detection ->](/duck-auth/core/anomaly).
-
-## Token / wire terms
-
-### PKCE (Proof Key for Code Exchange)
-
-RFC 7636. An OAuth defence against authorization-code interception. The
-client picks a `code_verifier`, sends `code_challenge` (S256 hash of
-the verifier) on `/authorize`, and the original verifier on `/token`.
-Even if an attacker intercepts the code, they can't redeem it.
-
-duck-auth uses PKCE-S256 on **every** OAuth flow, regardless of client
-type.
-
-### `state`
-
-The OAuth CSRF defence. A short-lived token round-tripped through the
-IdP. duck-auth signs `state` with HMAC-SHA256, embeds the PKCE verifier
-+ a nonce + an expiry, and verifies on callback. Tampered or stale
-states raise `AUTH/OAUTH_STATE_MISMATCH`.
-
-### `nonce`
-
-OIDC's replay defence. A random value attached to the authorize URL
-and verified in the returned `id_token`. Re-use raises
-`AUTH/OAUTH_NONCE_REPLAY`.
-
-### Refresh-token family
-
-OAuth refresh tokens form a chain - each refresh issues a new
-refresh + access pair, linked to the prior root. duck-auth tracks the
-family-id; presenting the same refresh token twice (legitimate client
-plus an attacker) revokes the entire family. RFC 6749 section 10.4.
-
-### DPoP
-
-RFC 9449. A `DPoP` header carrying a signed proof that the client holds
-a private key. The access token's `cnf.jkt` claim names the public-key
-thumbprint. A stolen token is useless without the matching private
-key.
-
-See [DPoP ->](/duck-auth/core/transports/dpop).
-
-### JWKS
-
-JSON Web Key Set. A document at `/.well-known/jwks.json` listing the
-public verify keys for a JWT issuer. Downstream services use it to
-verify your JWTs locally.
-
-See [OIDC discovery ->](/duck-auth/advanced/oidc).
-
-## Compliance terms
-
-### GDPR / SOC2 / HIPAA / FIPS
-
-duck-auth ships compliance presets for each. The presets wire
-opinionated overrides (hasher choice, dataAtRest policy, audit log
-delivery, anomaly thresholds, MFA enforcement).
-
-See [Compliance presets ->](/duck-auth/core/compliance).
-
-### `dataAtRest`
-
-Field-level encryption for sensitive credentials and profile data.
-duck-auth ships `AuthAesGcmDataAtRest` (local key) and
-`AuthKmsEnvelopeDataAtRest` (AWS KMS or your own KMS).
-
-### `strict()`
-
-The boot-time validator. Called as `auth.strict({ env: 'production' })`,
-it rejects insecure configuration (`IamMemoryAdapter` in production,
-`AuthNoopLimiter`, `secure: false` cookies, etc.) before the first
-request.
-
-See [Production hardening ->](/duck-auth/advanced/security).
-
-## Multi-tenant terms
-
-### Tenant
-
-A logical isolation boundary - typically an organisation in a B2B
-SaaS, but can be a region, a deployment, or a customer environment.
-Every store method takes a `tenantId`. Cross-tenant reads return
-`null`.
-
-### Org
-
-A multi-tenant membership grouping inside a tenant. Backed by the
-`orgs` facet (optional). Useful when one identity is a member of
-multiple orgs with different roles in each. Pairs with
-[duck-iam scoped roles ->](/duck-iam/core/roles/scoped).
-
-## Error terms
-
-### `AuthError`
-
-The typed error class. Carries `code` (closed set of `AUTH/*`
-strings), `status` (HTTP), and `meta` (denylist-redacted on
-`toJSON()`).
-
-See [Errors ->](/duck-auth/core/errors).
-
-### `AUTH/STEP_UP_REQUIRED`
-
-A 403 returned by sensitive routes when the session needs a freshness
-re-auth or an AAL upgrade. The client catches this and shows the MFA
-prompt; on success, retries the original call.
-
-## Pluralism reminders
-
-Throughout the docs:
-
-- **Provider** != **Channel**. A provider takes input from the user
-  (password, OAuth code, passkey assertion). A channel pushes a message
-  out (email, SMS, WebPush).
-- **Identity** != **Session**. An identity outlives many sessions.
-  Killing a session does not delete the identity.
-- **Transport** != **Adapter**. A transport carries one session on the
-  wire. An adapter stores many sessions in a database.
-- **AAL** != **AMR**. AAL is a level (1, 2, 3). AMR is an array of method
-  tags.
+| Term | What it is |
+| --- | --- |
+| `AuthError` | What the engine throws: a `code` such as `AUTH_INVALID_CREDENTIALS`, an HTTP `status`, and `meta`. See [Errors](/duck-auth/core/errors). |
+| Answer | What a lookup returns: `.orNull()` turns "not found" into `null` and still throws anything else. See [answers](/duck-auth/core/errors#answers). |

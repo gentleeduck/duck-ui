@@ -1,134 +1,51 @@
 ---
 title: Vue client
-description: Vue 3 composables - authUseSession, authUseSignIn, authUseSignOut. Reactive across components and across browser tabs.
+description: The Vue 3 plugin and the session and sign-in composables
 section: Client
 ---
-
-## Setup
-
-```typescript title="src/main.ts"
+```ts title="src/main.ts"
+import { createAuthVuePlugin } from '@gentleduck/auth/client/vue'
 import { createApp } from 'vue'
-import { createAuth } from '@gentleduck/auth/client/vue'
 import App from './App.vue'
 
-const auth = createAuth({
-  baseUrl: '/auth',
-})
-
-createApp(App).use(auth).mount('#app')
+createApp(App).use(createAuthVuePlugin({ baseUrl: '/auth' })).mount('#app')
 ```
 
-## `authUseSession`
+The plugin takes the [vanilla client's options](/duck-auth/client/vanilla), or a built one as `client`. It reads the session on install; `noInitialFetch` skips that read and starts as a guest.
 
-```vue
+```vue title="src/components/SignIn.vue"
 <script setup lang="ts">
-import { authUseSession } from '@gentleduck/auth/client/vue'
+import { useAuthSession, useAuthSignIn, useAuthSignOut } from '@gentleduck/auth/client/vue'
+import { ref } from 'vue'
 
-const { data, status } = authUseSession()
-</script>
-
-<template>
-  <div v-if="status === 'loading'">Loading...</div>
-  <div v-else-if="status === 'guest'">
-    <SignInForm />
-  </div>
-  <div v-else>
-    Hi, {{ data.identity.profile.displayName }}
-    <SignOutButton />
-  </div>
-</template>
-```
-
-`authUseSession()` returns a `Ref` (under the hood, it's a composable
-backed by `ref()` + the vanilla client's `onChange` subscription).
-Use it in `<template>` directly.
-
-## `authUseSignIn` / `authUseSignOut`
-
-```vue
-<script setup lang="ts">
-import { authUseSignIn, authUseSignOut } from '@gentleduck/auth/client/vue'
-
-const signIn = authUseSignIn()
-const signOut = authUseSignOut()
-
+const { data, status } = useAuthSession()
+const signIn = useAuthSignIn()
+const signOut = useAuthSignOut()
 const email = ref('')
 const password = ref('')
+const error = ref<string | null>(null)
 
 async function submit() {
-  await signIn.mutateAsync({
-    providerId: 'password',
-    input: { email: email.value, password: password.value },
-  })
+  const res = await signIn.mutate({ providerId: 'password', input: { email: email.value, password: password.value } })
+  error.value = res.ok ? null : res.error.code
 }
 </script>
 
 <template>
-  <form @submit.prevent="submit">
+  <p v-if="status === 'loading'">Loading</p>
+  <div v-else-if="status === 'authed'">
+    {{ data.identity?.profile.email }}
+    <button @click="signOut.mutate()">Sign out</button>
+  </div>
+  <form v-else @submit.prevent="submit">
     <input v-model="email" type="email" required />
     <input v-model="password" type="password" required />
-    <button :disabled="signIn.isLoading.value">
-      {{ signIn.isLoading.value ? 'Signing in...' : 'Sign in' }}
-    </button>
-    <p v-if="signIn.error.value" class="text-red-500">
-      {{ signIn.error.value.code }}
-    </p>
+    <button :disabled="signIn.loading.value">Sign in</button>
+    <p v-if="error === 'AUTH_INVALID_CREDENTIALS'">Wrong email or password</p>
   </form>
 </template>
 ```
 
-The `mutate` / `mutateAsync` / `isLoading` / `error` shape is the same
-as React's. The values are `ref`s; unwrap with `.value` outside of
-templates.
-
-## SSR (Nuxt)
-
-```typescript title="plugins/auth.ts"
-import { defineNuxtPlugin } from '#app'
-import { createAuth } from '@gentleduck/auth/client/vue'
-
-export default defineNuxtPlugin((nuxtApp) => {
-  const auth = createAuth({
-    baseUrl: '/api/auth',
-    noInitialFetch: !!nuxtApp.payload.serverRendered,
-  })
-  nuxtApp.vueApp.use(auth)
-})
-```
-
-For hydration, set `noInitialFetch: true` on the server side and pass
-the initial state via Nuxt payload:
-
-```typescript
-// server middleware
-const ctx = await auth.resolveSession(req)
-nuxtApp.payload.authInitialState = ctx ? { session: ctx.session, identity: ctx.identity } : null
-
-// plugin
-createAuth({
-  noInitialFetch: true,
-  initialState: nuxtApp.payload.authInitialState,
-})
-```
-
-## Errors
-
-```vue
-<script setup>
-const signIn = authUseSignIn()
-</script>
-
-<template>
-  <template v-if="signIn.error.value">
-    <p v-if="signIn.error.value.code === 'AUTH/INVALID_CREDENTIALS'">
-      Wrong email or password
-    </p>
-    <p v-else-if="signIn.error.value.code === 'AUTH/MFA_REQUIRED'">
-      <MfaPrompt />
-    </p>
-    <p v-else>
-      Something went wrong: {{ signIn.error.value.code }}
-    </p>
-  </template>
-</template>
-```
+- `useAuthSession()` answers `data` and `status` as refs, and `refresh()`.
+- `useAuthSignIn()` and `useAuthSignOut()` answer `{ mutate, loading, error }`. `mutate` resolves to the call's [envelope](/duck-auth/client#what-a-call-answers); `error` holds only a thrown error.
+- `useAuthClient()` is the client itself: `beginProvider` and `signUp` are called on it.

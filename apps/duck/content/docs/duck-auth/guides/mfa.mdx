@@ -1,186 +1,128 @@
 ---
 title: Adding MFA
-description: TOTP, backup codes, WebAuthn-MFA. Enrolment, verify, step-up.
+description: Enrolling TOTP with backup codes, asking for the second factor before a sensitive action, WebAuthn as a factor, and remembered devices
 section: Guides
 ---
+Register the MFA provider beside the others:
 
-## Enrol TOTP
+```ts
+import { mfaProvider } from '@gentleduck/auth/providers/mfa'
 
-```typescript
-import QRCode from 'qrcode'
-
-// 1. Generate a TOTP secret tied to the identity.
-const enrolment = await auth.mfa.totp.beginEnrolment({
-  identityId: ctx.identity.id,
-  issuer: 'Example App',
-  accountName: ctx.identity.email,
-})
-
-// 2. Show the QR code to the user.
-const qrCodeDataUrl = await QRCode.toDataURL(enrolment.otpauthUrl)
-return res.send(`<img src="${qrCodeDataUrl}" />`)
-```
-
-`enrolment.otpauthUrl` is an `otpauth://` URI that Authy / Google
-Authenticator / 1Password understand.
-
-```typescript
-// 3. User enters the 6-digit code from their authenticator.
-await auth.mfa.totp.completeEnrolment({
-  identityId: ctx.identity.id,
-  code: '123456',
-})
-// -> credential persisted; emits 'mfa.enrolled' { factor: 'totp' }
-```
-
-The user is now enrolled in TOTP. Subsequent sign-ins require the code.
-
-## Verify on sign-in
-
-When TOTP is enrolled, `flows.signIn` returns `AUTH/MFA_REQUIRED` after
-the first factor passes:
-
-```typescript
-try {
-  await auth.flows.signIn({ providerId: 'password', input })
-} catch (err) {
-  if (err.code === 'AUTH/MFA_REQUIRED') {
-    // Show the MFA prompt; user enters the code.
-    const code = await promptUserForTotpCode()
-    await auth.mfa.totp.verify({ identityId: err.meta.identityId, code })
-    // verify() throws AUTH/INVALID_CREDENTIALS on a wrong code.
-    // On success, it triggers session rotation to AAL2.
-  }
-}
-```
-
-The client-side flow is exactly the same shape - the `authUseSignIn` hook
-exposes `error.code` and `error.meta`, and you re-call with the code.
-
-## Backup codes
-
-When TOTP is enrolled, also mint a set of backup codes for recovery:
-
-```typescript
-const codes = await auth.mfa.backupCodes.generate({
-  identityId: ctx.identity.id,
-  count: 10,    // default
-  length: 10,   // default
-})
-
-// Show codes ONCE - they are hashed at rest after this point.
-res.json({ codes })
-```
-
-The user records them somewhere safe. To verify:
-
-```typescript
-await auth.mfa.backupCodes.verify({
-  identityId,
-  code: '12ab-34cd',  // user-supplied
-})
-// Each code is single-use - verify() marks it consumed.
-// Throws AUTH/INVALID_CREDENTIALS on wrong / consumed codes.
-```
-
-## WebAuthn-MFA (passkey as second factor)
-
-Same shape as the passkey provider, but used as a factor inside a flow
-already authenticated by another method:
-
-```typescript
-// Enrol
-const challenge = await auth.mfa.passkey.beginRegistration({
-  identityId: ctx.identity.id,
-  authenticatorSelection: { userVerification: 'required' },
-})
-
-// Browser: navigator.credentials.create(challenge.options)
-const credential = await /* ... */
-
-await auth.mfa.passkey.completeRegistration({
-  identityId: ctx.identity.id,
-  response: credential,
-})
-
-// Verify
-const verifyChallenge = await auth.mfa.passkey.beginVerification({
-  identityId: ctx.identity.id,
-})
-// Browser: navigator.credentials.get(verifyChallenge.options)
-const assertion = await /* ... */
-
-await auth.mfa.passkey.completeVerification({
-  identityId: ctx.identity.id,
-  response: assertion,
+const auth = createAuth({
+  // ...
+  providers: [passwords(), mfaProvider({ issuer: 'Example' })],
 })
 ```
 
-WebAuthn-MFA is **strictly stronger** than TOTP - it's phishing-resistant
-and the credential is bound to the origin. For high-security apps,
-prefer it.
+`issuer` is the name an authenticator app lists the account under. `backupCodeCount` and `backupCodeLen` default to 10.
 
-## Step-up
+A second factor does not change sign-in: the password still answers a session at AAL 1. What changes is that your sensitive routes can ask for more, and step the session up to AAL 2 when the factor checks out.
 
-For high-risk actions, require a **fresh** MFA verify within the
-configured `freshnessMs`:
+## Enrolling TOTP
 
-```typescript
-import { AuthError } from '@gentleduck/auth/core'
+```ts
+const { uri } = await auth.mfa.beginTotpEnrollment(identity.id, identity.profile.email)
+// Render uri as a QR code; the person scans it and types the first code back.
+
+const confirmed = await auth.mfa.confirmTotpEnrollment(identity.id, code)
+if (confirmed.ok) showOnce(confirmed.backupCodes)
+```
+
+- A wrong first code answers `{ ok: false }` and leaves the enrollment pending, so the person can try again.
+- Confirming emits `mfa.enrolled` and mints the backup codes. They are hashed at rest, so this is the only time they can be shown.
+- Enrolling again while a confirmed factor exists is refused with `AUTH_MFA_REQUIRED`. Replacing one means removing it first, behind a step-up.
+
+These calls act on whatever identity they are given; your route decides who may make them. On Hono, `mountHono` mounts them for the signed-in identity; see [Hono](/duck-auth/server/hono).
+
+## Asking for the second factor
+
+```ts
+import { applyIntents, expressCaller, expressCsrf, toHeaders } from '@gentleduck/auth/server/express'
+import { errorToHttp } from '@gentleduck/auth/server/generic'
+
+app.use('/api', expressCsrf(auth), express.json())
 
 app.post('/api/account/delete', async (req, res) => {
-  const ctx = await auth.resolveSession(req)
-  if (!ctx) throw new AuthError('AUTH/UNAUTHENTICATED')
+  const resolved = await auth.resolveSession({ headers: toHeaders(req.headers) }).orNull()
+  if (!resolved) return res.status(401).end()
 
-  if (ctx.session.aal !== 'aal2') {
-    throw new AuthError('AUTH/AAL_INSUFFICIENT')
+  const need = await auth.flows.checkStepUp(resolved.session, { methods: ['totp', 'backup-code'], freshness: 5 * 60_000 })
+  if (!need.satisfied) return res.status(403).json({ code: 'AUTH_STEP_UP_REQUIRED', methods: need.methods })
+
+  await deleteAccount(resolved.session.identityId)
+  res.status(204).end()
+})
+
+app.post('/api/step-up', async (req, res) => {
+  const sid = auth.transport.extract({ headers: toHeaders(req.headers) })
+  if (!sid) return res.status(401).end()
+  try {
+    const { intents } = await auth.flows.completeStepUp({ currentSid: sid, method: req.body.method, code: req.body.code, ...expressCaller(req) })
+    applyIntents(intents, res)
+  } catch (err) {
+    const { status, body } = errorToHttp(err)
+    res.status(status).json(body)
   }
-
-  const freshnessMs = 5 * 60 * 1000
-  if (Date.now() - ctx.session.lastReauthAt > freshnessMs) {
-    throw new AuthError('AUTH/STEP_UP_REQUIRED')
-  }
-
-  // Proceed with the irreversible action.
 })
 ```
 
-The client catches `AUTH/STEP_UP_REQUIRED`, runs the MFA verify flow,
-then retries the original request.
+- `checkStepUp` asks for AAL 2 by default. `freshness` also asks that the last factor be recent; `need.reason` is `mfa-required` or `fresh-required`.
+- `completeStepUp` checks the code against the session's own tenant, is rate limited per identity, and rotates to an AAL 2 session. `applyIntents` sets its cookie; the client then retries the action.
+- A wrong code throws `AUTH_INVALID_CREDENTIALS`. Every code works once: the one that confirmed enrollment, or passed a step-up, is refused along with any older one, so the person waits for the next. A backup code is spent by the step-up it passes; `auth.mfa.remainingBackupCodes(id)` says how many are left.
 
-## Enforce MFA
+[Compliance presets](/duck-auth/core/compliance) that require MFA refuse an engine without the provider, but sign-in still answers AAL 1: requiring the factor is this check.
 
-HIPAA and FIPS compliance presets set `mfa.enforced: true` automatically.
-For manual control:
+## Removing a factor
 
-```typescript
-new AuthEngine({
-  mfa: {
-    enforced: true,    // every identity must enrol before signing in
-    factors: ['totp', 'passkey'],   // allowed enrolment options
-    backupCodeCount: 10,
-    backupCodeLen: 10,
-  },
+```ts
+await auth.mfa.removeTotp(identityId)
+const codes = await auth.mfa.regenerateBackupCodes(identityId)
+```
+
+`removeTotp` also revokes every remembered device and emits `mfa.removed`. `regenerateBackupCodes` revokes the old codes. Put both behind `checkStepUp`, or someone holding only the password can remove the factor that was meant to stop them.
+
+## WebAuthn as a factor
+
+A security key or platform authenticator can be the second factor instead of TOTP. It takes the same relying-party settings as [passkeys](/duck-auth/providers/passkey), and a challenge store shared by each ceremony's two calls:
+
+```ts
+import { redisPasskeyChallengeStore } from '@gentleduck/auth/providers/passkey'
+
+const webauthn = {
+  rpID: 'example.com',
+  expectedOrigins: 'https://example.com',
+  challengeStore: redisPasskeyChallengeStore({ redis }),
+  challengeKey: session.id,
+}
+
+// Enrolling
+const creation = await auth.mfa.beginWebauthnMfaEnrollment(identityId, { ...webauthn, rpName: 'Example', userName: email })
+await auth.mfa.confirmWebauthnMfaEnrollment(identityId, { ...webauthn, response: registrationResponse })
+
+// Stepping up
+const request = await auth.mfa.beginWebauthnMfaVerify(identityId, webauthn)
+await auth.flows.completeStepUp({ currentSid: sid, method: 'webauthn', webauthn: { ...webauthn, response: authenticationResponse } })
+```
+
+The browser side is `startRegistration` and `startAuthentication` from `@simplewebauthn/browser`, given the options each `begin` answers.
+
+TOTP enrollment is refused while a WebAuthn factor exists, but a WebAuthn enrollment adds a key beside whatever the account has, which is how a backup key is added. Once the account has any factor, put this enrollment behind `checkStepUp`, or a password alone can add a key and step up with it.
+
+## Remembered devices
+
+`rememberMeFacet` issues a long-lived token for a "trust this device" checkbox. Nothing in the engine reads it: your sign-in decides what a remembered device skips.
+
+```ts
+import { createHash, randomBytes } from 'node:crypto'
+import { rememberMeFacet } from '@gentleduck/auth/core'
+
+const devices = rememberMeFacet(auth.cfg.stores.credentials, {
+  authRandomToken: (bytes) => randomBytes(bytes).toString('base64url'),
+  authSha256: (value) => createHash('sha256').update(value).digest('hex'),
 })
+
+const { token } = await devices.issue(identityId, { metadata: { label: 'MacBook' } })
+const trusted = await devices.verify(token).orNull()
 ```
 
-When `enforced: true`, sign-in throws `AUTH/MFA_REQUIRED` for any
-identity that has no MFA factor - the user must enrol before they can
-finish the flow.
-
-## Reseeding TOTP
-
-If a user loses their device, the recovery path is:
-
-1. Verify a backup code.
-2. Remove the TOTP factor.
-3. Re-enrol.
-
-```typescript
-await auth.mfa.backupCodes.verify({ identityId, code: backupCode })
-await auth.mfa.totp.remove({ identityId })
-const enrolment = await auth.mfa.totp.beginEnrolment({ ... })
-```
-
-The flow ends with the user back to a verified TOTP. Backup codes are
-single-use so the recovery path itself is rate-limited.
+A token lasts 90 days and is stored hashed. `list`, `revoke` and `revokeAll` manage them; a password reset and removing a factor revoke them all.

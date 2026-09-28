@@ -1,162 +1,141 @@
 ---
 title: Flows
-description: High-level flows - signIn, signOut, signUp state machine, password reset, email change, impersonate.
+description: Sign-in and sign-out, step-up, password reset, email verification, account deletion with undo, staged sign-up, impersonation, and provider linking
 section: Core
 ---
+`auth.flows` runs the multi-step operations. Each one composes providers, sessions and identities, and answers the `intents` your server adapter applies to the response: cookies to set or clear, a redirect, a JSON body.
 
-## What flows give you
+## Signing in and out
 
-The `auth.flows` facet sits above providers, sessions, identities, and
-channels - it composes them into the multi-step journeys your app
-actually runs.
+```ts
+const { session, sid, intents } = await auth.flows.signIn({
+  providerId: 'password',
+  input: { email: 'ada@example.com', password: 'correct-horse-battery' },
+  previousSid, // the sid the request arrived with, if any; it is revoked
+  ip,
+  userAgent,
+})
 
-```typescript
-await auth.flows.signIn({ providerId: 'password', input: { email, password } })
-await auth.flows.signOut(ctx)
-await auth.flows.beginPasswordReset({ email })
-await auth.flows.completePasswordReset({ token, newPassword })
-await auth.flows.beginEmailChange({ identityId, newEmail })
-await auth.flows.completeEmailChange({ token })
-await auth.flows.impersonate({ actorId, subjectId, reason })
-await auth.flows.releaseImpersonation(ctx)
+const { intents: cleared } = await auth.flows.signOut(sid)
 ```
 
-Each method returns `Intent[]` so the framework adapter can issue the
-right wire effects (cookies, redirects, JSON).
+- `signIn` hands `input` to the provider's `complete`, mints the session through [rotation](/duck-auth/core/sessions#rotation), and emits `signin.success`.
+- `session` is `null` and `sid` empty when the provider answered with something other than a session, such as an OAuth redirect.
+- An unknown `providerId` throws `AUTH_PROVIDER_FAILED`.
+- `signOut` revokes the session, ignores one already gone, and answers the intents that clear the transport.
 
-## Sign-up state machine
+`auth.flows.beginProvider(id, input)` runs a provider's first leg: the magic-link mail, the OAuth redirect, the passkey challenge.
 
-For sign-ups that require multiple steps (collect email -> send
-verification -> user clicks link -> choose password -> MFA enrolment),
-use the state machine API:
+## Step-up
 
-```typescript
-const state = await auth.flows.signUp.start({ email })
-// -> { stateId, nextStep: 'verify-email' }
+Enrolling a second factor does not change sign-in, which still answers an AAL 1 session. A privileged route asks for more with `checkStepUp`:
 
-// User clicks the verification link
-const stepped = await auth.flows.signUp.advance({
-  stateId: state.stateId,
-  step: 'verify-email',
-  input: { token },
-})
-// -> { nextStep: 'choose-password' }
+```ts
+const need = await auth.flows.checkStepUp(session, { aal: 2, methods: ['totp'], freshness: 5 * 60_000 })
+if (!need.satisfied) {
+  // need.reason: 'mfa-required' | 'fresh-required'; need.methods: what would satisfy it
+}
 
-// User chooses a password
-await auth.flows.signUp.advance({
-  stateId: state.stateId,
-  step: 'choose-password',
-  input: { password },
-})
-// -> { nextStep: 'enrol-mfa' | 'complete' }
-
-// MFA enrolment (if required by your config)
-await auth.flows.signUp.advance({
-  stateId: state.stateId,
-  step: 'enrol-mfa',
-  input: { factor: 'totp', code },
-})
-// -> { nextStep: 'complete', identityId }
+const stepped = await auth.flows.completeStepUp({ currentSid: sid, method: 'totp', code, ip, userAgent })
+stepped.session.aal // 2
 ```
 
-The state lives in your `credentials` store (with TTL), so a user can
-abandon the sign-up at any step and pick up where they left off when
-they click the verification link again.
+`completeStepUp` takes `'totp'`, `'backup-code'`, or `'webauthn'` with a `webauthn` response, is rate limited per identity, and rotates to an AAL 2 session. A wrong code throws `AUTH_INVALID_CREDENTIALS`. See [Adding MFA](/duck-auth/guides/mfa).
 
 ## Password reset
 
-```typescript
-// Step 1: user enters their email on /forgot
-await auth.flows.beginPasswordReset({ email })
-// Always returns successfully - existence not leaked.
-// Internally: if the email exists, send a single-use token via the
-// configured email channel.
-
-// Step 2: user clicks the link and enters a new password
-await auth.flows.completePasswordReset({
-  token,
-  newPassword,
+```ts
+await auth.flows.requestPasswordReset({
+  input: { email },
+  findIdentityByEmail: (email) => orNull(auth.identities.getByEmail(email)),
 })
-// -> throws AUTH/RECOVERY_TOKEN_INVALID, AUTH/RECOVERY_TOKEN_EXPIRED,
-//   or AUTH/RECOVERY_REQUIRES_MFA if MFA is enrolled.
-// -> on success: rotates the password, revokes every session, mints a
-//   fresh session for the user.
+
+await auth.flows.completePasswordReset({ token, newPassword })
 ```
 
-For high-assurance identities (MFA enrolled), the reset path itself
-requires MFA - preventing email-only account takeover.
+- The request answers `{ ok: true }` whether or not the address exists, and mails a `password-reset` link through [Delivery](/duck-auth/core/delivery) when it does.
+- Completing it spends the token, revokes every session of the account, then sets the password. A bad token throws `AUTH_RECOVERY_TOKEN_INVALID`, an old one `AUTH_RECOVERY_TOKEN_EXPIRED`.
+- When the account has TOTP or WebAuthn MFA, a mailed link alone is not enough: it throws `AUTH_RECOVERY_REQUIRES_MFA` with the `methods`, until the call carries `currentSid` of a fresh AAL 2 session of the same account. That session is rotated rather than revoked, and its replacement comes back in `intents`.
 
-## Email change
+## Email verification
 
-```typescript
-// Step 1: user requests email change
-await auth.flows.beginEmailChange({
-  identityId,
-  newEmail,
-})
-// -> sends a confirmation link to both old and new email.
-
-// Step 2: user clicks the link in the new email inbox
-await auth.flows.completeEmailChange({
-  token,
-})
-// -> updates the identity's email, revokes other sessions, optionally
-//   sends a "your email changed" notice to the old address.
+```ts
+await auth.flows.requestEmailVerification({ identityId: identity.id })
+const { identity: verified } = await auth.flows.completeEmailVerification({ token })
+verified.emailVerified // true
 ```
 
-The two-step flow (confirm via new inbox) is required - otherwise an
-attacker who already has a session could swap the email to a domain
-they control and lock the legitimate owner out.
+The request is rate limited per identity and does nothing for an address already verified, answering the same either way.
+
+## Account deletion
+
+Deletion is confirmed by mail, lands as a soft delete, and can be undone inside the grace window:
+
+```ts
+await auth.flows.requestAccountDeletion({ identityId: identity.id, reason: 'user asked' })
+
+const deleted = await auth.flows.completeAccountDeletion({ token, sendUndoLink: true })
+// deleted.restorableUntil, deleted.cancellationToken
+
+await auth.flows.cancelAccountDeletion({ token: deleted.cancellationToken })
+```
+
+- `completeAccountDeletion` soft-deletes the identity and revokes its sessions. With `sendUndoLink` it mails an `account-deletion-cancel` link; without it, deliver `cancellationToken` yourself or drop it to turn undo off.
+- `cancelAccountDeletion` takes either the undo token (the user's route) or `{ identityId, authorize }` (an operator's). Both or neither throws `AUTH_MISCONFIGURED`.
+- Once the window closes, `identities.gc()` erases the row.
+
+## Staged sign-up
+
+For a sign-up that spans several screens, `beginSignUp` creates an unverified identity and answers a flow token the client keeps:
+
+```ts
+const { flowToken } = await auth.flows.beginSignUp({
+  email: 'lin@example.com',
+  required: ['email-verified', 'terms-accepted'], // the default
+})
+
+await auth.flows.advanceSignUp({ flowToken, stage: 'email-verified' })
+await auth.flows.advanceSignUp({ flowToken, stage: 'terms-accepted', profilePatch: { username: 'lin' } })
+
+const { session, intents } = await auth.flows.completeSignUp({ flowToken })
+```
+
+- Stages are `email-collected`, `email-verified`, `profile-completed`, `mfa-enrolled`, `terms-accepted` and `completed`. Your code proves each one before advancing it; `advanceSignUp` records it.
+- `completeSignUp` throws `AUTH_SIGNUP_INCOMPLETE` with the `missing` stages, otherwise merges the collected profile and signs the user in.
+- The flow expires 30 minutes after its last step and 24 hours after it began. A dead or spent token throws `AUTH_SIGNUP_TOKEN_INVALID`. `getSignUpFlow(flowToken)` reads the flow, and `.orNull()` answers `null` for a dead one.
+- `profilePatch` cannot change the email the flow began with.
 
 ## Impersonation
 
-For admin / support workflows where one identity needs to act as
-another:
+Support staff can act as a user through a separate, audited session:
 
-```typescript
-// Start impersonation
-const intents = await auth.flows.impersonate({
-  actorId: ctx.identity.id,           // the admin
-  subjectId: 'identity-to-impersonate',
-  reason: 'support-ticket-12345',
-  durationMs: 30 * 60 * 1000,         // 30 minutes
+```ts
+const acting = await auth.flows.impersonate({
+  realSid: operatorSid,
+  targetIdentityId: user.id,
+  reason: 'ticket 4412',
+  authorize: async (operator, targetId) => canImpersonate(operator.identityId, targetId),
+})
+acting.session.actingAs // { realIdentityId, reason, startedAt, expiresAt }
+
+const back = await auth.flows.releaseImpersonation(acting.sid)
+```
+
+- `authorize` is mandatory and decides; with [duck-iam](/duck-auth/guides/iam-bridge) it wraps `engine.authorize()`. Never pass `async () => true`.
+- The session lives at most an hour, emits `identity.impersonated`, and cannot impersonate again or target the operator.
+- `releaseImpersonation` ends it and mints the operator a session of their own, or answers `session: null` when the operator's account went away meanwhile.
+
+## Linking a provider
+
+```ts
+await auth.flows.linkProvider({
+  identityId: identity.id,
+  providerId: 'oauth:github',
+  providerSub,
+  authorize: async ({ identity }) => identity.id === signedInIdentityId,
 })
 
-// The runtime mints a special session with:
-// - session.actorId = the admin's id (audit trail)
-// - session.subjectId = the impersonated user
-// - session.kind = 'impersonate'
-// - session.aal capped at the admin's original AAL
-
-// Release impersonation
-await auth.flows.releaseImpersonation(ctx)
-// -> revokes the impersonation session, restores actor's prior session.
+await auth.flows.unlinkProvider({ identityId: identity.id, providerId: 'oauth:github' })
 ```
 
-Impersonation events emit:
-
-```
-session.impersonate-start  { actorId, subjectId, reason }
-session.impersonate-release { actorId, subjectId, durationMs }
-```
-
-Wire these to your audit log - every impersonation should be visible
-in the audit trail.
-
-The admin's iam permission to impersonate is **not** duck-auth's
-concern; gate it with [`auth.iam`](https://github.com/gentleeduck/gentleduck/blob/master/packages/duck-auth/DESIGN.md#impersonate)
-or via your application's own role check before calling `flows.impersonate`.
-
-## Errors
-
-| Code | When |
-| --- | --- |
-| `AUTH/SIGNUP_INCOMPLETE` | `flows.signUp.advance` called for a state past its terminal step. |
-| `AUTH/SIGNUP_TOKEN_INVALID` | Verification link token is unknown or consumed. |
-| `AUTH/RECOVERY_TOKEN_INVALID` | Reset token unknown or revoked. |
-| `AUTH/RECOVERY_TOKEN_EXPIRED` | Reset token past TTL (default 1 hour). |
-| `AUTH/RECOVERY_REQUIRES_MFA` | Identity has MFA enrolled; reset requires MFA verify. |
-| `AUTH/EMAIL_TAKEN` | `beginEmailChange` target already belongs to another identity. |
-| `AUTH/EMAIL_CHANGE_PENDING` | `beginEmailChange` while a prior request is still active. |
-| `AUTH/IMPERSONATE_FORBIDDEN` | Caller lacks the actor permission. |
-| `AUTH/IMPERSONATE_EXPIRED` | Impersonation session past its absolute TTL. |
+A link is a permanent way to sign in, so `authorize` must answer `false` unless `providerSub` came from a token exchange your own code performed. `unlinkProvider` refuses the last way in unless `allowLockout` is set, which is for deletion and admin overrides.

@@ -1,0 +1,147 @@
+---
+title: "Chapter 2: accounts"
+description: Give the engine a mailer, verify an email address, reset a forgotten password, and listen to what the engine reports
+section: Course
+order: 2
+---
+An account needs more than a password: a proven address, a way back in when the password is forgotten, and a record of what happened. All three go out by mail, and duck-auth sends no mail itself.
+
+## Learning goals
+
+- Write the `deliver` function every link goes through.
+- Verify an email address with a mailed token.
+- Reset a password without revealing which addresses have accounts.
+- Subscribe to engine events.
+
+## Where the links go
+
+<MermaidDiagram chart={`flowchart LR
+    F["auth.flows.request..."] --> T["mint a single-use token"]
+    T --> D["deliver: kind, identity, vars.url"]
+    D --> MAIL["your mailer"]
+    MAIL --> U["the person clicks"]
+    U --> C["auth.flows.complete... with the token"]`} />
+
+The engine mints the token, builds `baseUrl + callbackPath + '?token=...'`, and hands it to `deliver`. What happens next is your mailer's business.
+
+## Step by step
+
+<Steps>
+
+<Step>A mailer that records instead of sending</Step>
+
+```ts title="src/mailer.ts"
+import type { Deliver } from '@gentleduck/auth/core'
+
+export const outbox: { to: string; kind: string; url: string }[] = []
+
+export const deliver: Deliver = async ({ kind, identity, vars }) => {
+  outbox.push({ to: identity.profile.email, kind, url: vars.url })
+}
+```
+
+`kind` says which message this is, `identity` is the recipient's whole row, and `vars.url` is the finished link. A real one calls your mail provider here.
+
+<Step>Hand it to the engine, and listen</Step>
+
+```ts title="src/auth.ts"
+import { MemoryAdapter } from '@gentleduck/auth/adapters/memory'
+import { createAuth } from '@gentleduck/auth/core'
+import { cookieTransport } from '@gentleduck/auth/core/transport'
+import { passwords } from '@gentleduck/auth/providers/passwords'
+import { deliver } from './mailer'
+
+export const auth = createAuth({
+  baseUrl: 'http://localhost:3000',
+  deliver,
+  stores: new MemoryAdapter(),
+  transport: cookieTransport({ name: 'sid', secure: false }),
+  providers: [passwords()],
+})
+
+auth.events.on('signup.completed', ({ identity }) => console.log('welcome', identity.profile.username))
+auth.events.on('signin.failed', ({ reason }) => console.log('sign-in failed:', reason))
+```
+
+<Step>Verify, sign in, forget, reset</Step>
+
+```ts title="src/main.ts"
+import { orNull } from '@gentleduck/auth/core'
+import { auth } from './auth'
+import { outbox } from './mailer'
+
+const lastToken = () => new URL(outbox.at(-1)?.url ?? '').searchParams.get('token') ?? ''
+
+const ada = await auth.identities.create({ profile: { username: 'ada', email: 'ada@example.com' } })
+// welcome ada
+await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials)
+
+await auth.flows.requestEmailVerification({ identityId: ada.id })
+const { identity } = await auth.flows.completeEmailVerification({ token: lastToken() })
+console.log('verified', identity.emailVerified)
+// verified true
+
+const input = { email: 'ada@example.com', password: 'correct-horse-battery' }
+const { sid } = await auth.flows.signIn({ providerId: 'password', input })
+
+const findIdentityByEmail = (email: string) => orNull(auth.identities.getByEmail(email))
+console.log(await auth.flows.requestPasswordReset({ input: { email: 'ada@example.com' }, findIdentityByEmail }))
+// { ok: true }
+console.log(await auth.flows.requestPasswordReset({ input: { email: 'nobody@example.com' }, findIdentityByEmail }))
+// { ok: true }
+
+await new Promise((resolve) => setTimeout(resolve, 10))
+console.log(outbox.map((message) => message.kind))
+// [ 'email-verification', 'password-reset' ]
+
+await auth.flows.completePasswordReset({ token: lastToken(), newPassword: 'staple-battery-horse' })
+console.log('old session', await auth.resolveSession({ headers: new Headers({ cookie: `sid=${sid}` }) }).orNull())
+// old session null
+
+await auth.flows.signIn({ providerId: 'password', input }).catch(() => {})
+// sign-in failed: invalid-credentials
+```
+
+</Steps>
+
+## What just happened
+
+1. **Creating Ada emitted `signup.completed`.** Listeners run after the write; a listener that throws is logged, never raised into the flow.
+2. **Verification was a round trip.** `requestEmailVerification` minted a token, stored its hash, and called `deliver` with `kind: 'email-verification'`. `completeEmailVerification` spent the token and set `emailVerified`. A token works once.
+3. **Both reset requests answered `{ ok: true }`.** The one for a stranger sent nothing, but did the same store work, so neither the answer nor its timing tells an attacker which addresses have accounts. That is also why the request does not wait for `deliver`, and why the script pauses before reading the outbox.
+4. **Completing the reset revoked every session.** Whoever had the old password may have signed in with it, so Ada's session from before is gone.
+5. **The old password failed.** The flow threw `AUTH_INVALID_CREDENTIALS`, and `signin.failed` reported it. Its `reason` is for your logs, never for the person signing in.
+
+## The messages
+
+| `kind` | Sent by | Link lands on | Lives |
+| --- | --- | --- | --- |
+| `email-verification` | `flows.requestEmailVerification` | `/auth/verify-email` | 30 min |
+| `password-reset` | `flows.requestPasswordReset` | `/auth/reset-password` | 30 min |
+| `magic-link` | the magic-link provider (chapter 6) | `/auth/magic-link/callback` | 10 min |
+| `account-deletion` | `flows.requestAccountDeletion` | `/auth/delete-account` | 30 min |
+
+Each flow takes `callbackPath` and `ttlMs` to change the defaults. The path is where your page lives; that page reads `token` from the URL and calls the matching `complete` flow.
+
+## Try it
+
+1. Call `completeEmailVerification` twice with the same token. The second throws `AUTH_RECOVERY_TOKEN_INVALID`.
+2. Make `deliver` throw. `requestEmailVerification` still resolves, and `signin.failed` fires with `reason: 'deliver threw'`: a mailer outage is reported, not raised.
+3. Subscribe to `recovery.password.completed` and log the `identityId`. That is the event an audit log wants.
+
+## Where we are
+
+```
+ducknotes/
+  src/
+    mailer.ts - deliver, recording to an outbox
+    auth.ts   - the engine, now with deliver and listeners
+    main.ts
+```
+
+## See also
+
+- [Delivery](/duck-auth/core/delivery): every message kind and its `vars`.
+- [Flows](/duck-auth/core/flows): verification, reset and account deletion.
+- [Events](/duck-auth/core/events): every event and its payload.
+- [Chapter 3: sessions](/duck-auth/course/chapter-3)

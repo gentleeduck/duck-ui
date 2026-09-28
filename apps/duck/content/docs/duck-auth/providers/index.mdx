@@ -1,176 +1,72 @@
 ---
 title: Providers
-description: Password, magic-link, six OAuth providers, WebAuthn passkeys, API keys, and SAML. Every provider is an instance of AuthProvider.IProvider.
+description: The shipped sign-in providers and facets, how a provider plugs into a sign-in, and writing your own
 section: Providers
 ---
+A provider is one way to prove who someone is. Register the ones you use in `providers`, and each is reachable by its id through `auth.flows.signIn`.
 
-## What is a provider?
+```ts
+import { passwords } from '@gentleduck/auth/providers/passwords'
+import { google } from '@gentleduck/auth/providers/oauth/google'
+import { mfaProvider } from '@gentleduck/auth/providers/mfa'
 
-A provider is a typed sign-in method. Every provider implements the same
-two-step interface:
-
-```typescript
-interface AuthProvider.IProvider<Begin, Complete, Profile> {
-  id: string
-  begin(input: Begin, ctx: ProviderContext): Promise<Intent[]>
-  complete(input: Complete, ctx: ProviderContext): Promise<Intent[]>
-}
-```
-
-- `begin` - start the flow. May redirect (OAuth), send a message
-  (magic-link), or be a no-op (password, api-key).
-- `complete` - verify the result. Returns `Intent[]` - usually a
-  `startSession` intent followed by a `redirect`.
-
-You register providers on `AuthEngine`:
-
-```typescript
-import { password } from '@gentleduck/auth/providers/password'
-import { authGoogle } from '@gentleduck/auth/providers/oauth/google'
-
-export const auth = new AuthEngine({
+const auth = createAuth({
   // ...
-  providers: [
-    password({ ... }),
-    authGoogle({ ... }),
-  ],
-})
-
-// or after construction:
-auth.providers.use(magicLink({ ... }))
-```
-
-## The shipped providers
-
-| Provider | Import | When to pick |
-| --- | --- | --- |
-| [Password](/duck-auth/providers/password) | `@gentleduck/auth/providers/password` | Default. Email + password. |
-| [Magic link](/duck-auth/providers/magic-link) | `@gentleduck/auth/providers/magic-link` | Passwordless. Email, SMS, or WebPush. |
-| [Google OAuth](/duck-auth/providers/oauth/google) | `@gentleduck/auth/providers/oauth/google` | Consumer SaaS. |
-| [GitHub OAuth](/duck-auth/providers/oauth/github) | `@gentleduck/auth/providers/oauth/github` | Developer tooling. |
-| [LinkedIn OAuth](/duck-auth/providers/oauth/linkedin) | `@gentleduck/auth/providers/oauth/linkedin` | B2B / professional. |
-| [Microsoft OAuth](/duck-auth/providers/oauth/microsoft) | `@gentleduck/auth/providers/oauth/microsoft` | Enterprise. Entra ID. |
-| [Discord OAuth](/duck-auth/providers/oauth/discord) | `@gentleduck/auth/providers/oauth/discord` | Communities. |
-| [Apple OAuth](/duck-auth/providers/oauth/apple) | `@gentleduck/auth/providers/oauth/apple` | iOS apps. |
-| [Passkey](/duck-auth/providers/passkey) | `@gentleduck/auth/providers/passkey` | Strongest factor. WebAuthn. |
-| [API key](/duck-auth/providers/api-key) | `@gentleduck/auth/providers/api-key` | Long-lived bearer tokens for integrations. |
-| [SAML](/duck-auth/providers/saml) | `@gentleduck/auth/providers/saml` | Enterprise SSO. IdP-initiated. |
-
-## The provider context
-
-Every `begin` and `complete` call receives a `ProviderContext`:
-
-```typescript
-interface ProviderContext {
-  auth: AuthEngine
-  req: { headers: Headers; method: string; url: string }
-  tenantId?: string
-  events: AuthEvents.IBus
-  limiter: AuthLimiter.ILimiter
-  i18n?: I18n.IResolver
-  trace?: { spanId: string; traceId: string }
-}
-```
-
-Use `ctx.auth.identities` to look up identities, `ctx.auth.sessions` to
-mint sessions, and `ctx.events.emit(...)` to broadcast custom audit events.
-
-## Common features across providers
-
-### Rate limiting
-
-Every provider takes a `limiterKeyPrefix`:
-
-```typescript
-password({
-  limiterKeyPrefix: 'signin:password:',  // default
-  // ...
+  providers: [passwords(), google(googleOptions), mfaProvider()],
 })
 ```
 
-Combined with the configured `limiter`, this bucket trips
-`AUTH/RATE_LIMITED` after the threshold and emits a `lockout` event.
+A falsy entry is skipped, so `process.env.GOOGLE_CLIENT_ID && google({ ... })` registers it only when configured.
 
-### `onSignIn` hook
+## What ships
 
-For OAuth, SAML, and other federated providers, `onSignIn` is the
-extension point that lets you provision identities just-in-time:
+| Provider | Import | Id | Facet |
+| --- | --- | --- | --- |
+| [Password](/duck-auth/providers/password) | `providers/passwords` | `password` | `auth.passwords` |
+| [Magic link](/duck-auth/providers/magic-link) | `providers/magic-link` | `magic-link` | |
+| [OAuth](/duck-auth/providers/oauth): Google, GitHub, Microsoft, Apple, LinkedIn, Discord | `providers/oauth/<name>` | `oauth:<name>` | |
+| [Passkey](/duck-auth/providers/passkey) | `providers/passkey` | `passkey` | `auth.passkeys` |
+| [API key](/duck-auth/providers/api-key) | `providers/api-key` | `api-key` | `auth.apiKeys` |
+| [SAML](/duck-auth/providers/saml) | `providers/saml` | `saml` | |
+| [MFA](/duck-auth/guides/mfa) | `providers/mfa` | | `auth.mfa` |
 
-```typescript
-authGoogle({
-  // ...
-  onSignIn: async ({ profile, tenantId }) => {
-    let identity = await auth.identities.findByProviderSub({
-      providerId: 'google',
-      sub: profile.sub,
-    })
-    if (!identity) {
-      identity = await auth.identities.create({
-        email: profile.email,
-        emailVerified: profile.email_verified,
-        profile: { displayName: profile.name, avatarUrl: profile.picture },
-      })
-      await auth.identities.linkProvider(identity.id, {
-        providerId: 'google',
-        sub: profile.sub,
-      })
-    }
-    return { identityId: identity.id }
+Every import is under `@gentleduck/auth/`. MFA signs nobody in; it adds TOTP, backup codes and WebAuthn as second factors for [step-up](/duck-auth/core/flows#step-up). Using a facet whose provider is not registered throws `AUTH_PROVIDER_NOT_REGISTERED`.
+
+## How a sign-in runs
+
+A provider has two steps:
+
+- `begin` starts a flow that needs one: OAuth answers a redirect, magic link sends the email. Call it with `auth.flows.beginProvider(id, input)`. Password and API key have nothing to begin.
+- `complete` checks the proof. Through `auth.flows.signIn({ providerId, input })`, a success opens the session and answers the transport's intents.
+
+Each answers intents, such as `redirect`, `setCookie` or `json`, which the [server adapters](/duck-auth/server) turn into a response.
+
+## Writing your own
+
+A provider is `{ id, kind, begin, complete }`. `complete` answers a `startSession` intent naming the identity, the factors presented and the AAL:
+
+```ts
+import { AuthError, orNull, type Provider } from '@gentleduck/auth/core'
+
+const ldap: Provider.Me<unknown, { username: string; password: string }> = {
+  id: 'ldap',
+  kind: 'ldap',
+  async begin() {
+    return []
   },
-})
-```
-
-Always returns `{ identityId: string }` - the runtime then mints the
-session and emits the intents.
-
-### Profile mapping
-
-`profileToIdentityProfile` lets you control how the IdP profile maps to
-your typed `Profile` generic:
-
-```typescript
-authGoogle({
-  // ...
-  profileToIdentityProfile: (profile) => ({
-    displayName: profile.name,
-    avatarUrl: profile.picture,
-    locale: profile.locale,
-  }),
-})
-```
-
-## Writing a custom provider
-
-Implement `AuthProvider.IProvider`:
-
-```typescript
-import type { AuthProvider } from '@gentleduck/auth/core'
-
-interface IBeginInput { email: string }
-interface ICompleteInput { token: string }
-
-export function myProvider<Profile>(opts: {
-  findIdentityByEmail: (email: string) => Promise<{ id: string } | null>
-}): AuthProvider.IProvider<IBeginInput, ICompleteInput, Profile> {
-  return {
-    id: 'my-provider',
-    async begin({ email }, ctx) {
-      const identity = await opts.findIdentityByEmail(email)
-      if (!identity) return [{ kind: 'json', status: 404, body: { error: 'not found' } }]
-      // mint and dispatch a token...
-      return [{ kind: 'json', status: 200, body: { sent: true } }]
-    },
-    async complete({ token }, ctx) {
-      // verify the token...
-      const session = await ctx.auth.sessions.create({ identityId, aal: 'aal1', amr: ['custom'] })
-      return [{ kind: 'startSession', session }]
-    },
-  }
+  async complete(ctx, { username, password }) {
+    const limited = await ctx.limiter.consume(`signin:ldap:${username}`)
+    if (!limited.ok) {
+      throw new AuthError('AUTH_RATE_LIMITED', { retryAfter: Math.ceil((limited.resetAt.getTime() - Date.now()) / 1000) })
+    }
+    if (!(await directory.bind(username, password))) throw new AuthError('AUTH_INVALID_CREDENTIALS')
+    const identity = await orNull(ctx.stores.identities.find({ email: `${username}@corp.example` }))
+    if (!identity) throw new AuthError('AUTH_INVALID_CREDENTIALS')
+    return [{ type: 'startSession', identityId: identity.id, factors: [{ method: 'password', completedAt: new Date() }], aal: 1 }]
+  },
 }
+
+createAuth({ /* ... */ providers: [ldap] })
 ```
 
-Register the same way:
-
-```typescript
-auth.providers.use(myProvider({ findIdentityByEmail: ... }))
-```
+`ctx` carries the stores, the tenant, the limiter, the event bus and crypto helpers. Rate-limit whatever an attacker can guess, and throw the same error for a wrong secret and an unknown account. A provider answering `requireMfa` instead refuses the sign-in with `AUTH_STEP_UP_REQUIRED`.

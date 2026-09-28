@@ -1,122 +1,66 @@
 ---
 title: Data at rest
-description: Field-level encryption for sensitive Identity.profile values - AES-256-GCM (local key) or KMS envelope (AWS / Vault / your own).
+description: Encrypting sensitive profile fields before they reach the database, with a local AES-256-GCM key ring or KMS envelope encryption
 section: Core
 ---
+`@gentleduck/auth/core/dataAtRest` encrypts one field at a time, for values such as a national id or a date of birth that should never sit in the database in plaintext. Nothing in the engine or the stores calls it: you encrypt before writing the profile and decrypt after reading it.
 
-duck-auth ships two `AuthDataAtRest.IAdapter` implementations so sensitive
-fields on `Identity.profile` (SSN, DOB, phone, full name, etc.) never
-land in the database in plaintext. Both are wire-compatible: the same
-record can be re-encrypted under a different adapter without a
-migration as long as the ciphertext format markers stay distinct.
+```ts
+import { authAesGcmDataAtRest } from '@gentleduck/auth/core/dataAtRest'
 
-## `AuthAesGcmDataAtRest`
-
-Local-key AES-256-GCM with deterministic per-record DEK derivation
-(`DEK = sha256(masterKey || identityId || field)`). Every encrypt
-samples a fresh 12-byte IV, so the GCM birthday bound is ~2^48
-encryptions per (identity, field) pair.
-
-```typescript
-import { AuthAesGcmDataAtRest } from '@gentleduck/auth/core/dataAtRest'
-
-const dataAtRest = new AuthAesGcmDataAtRest({
+const dataAtRest = authAesGcmDataAtRest({
   kid: 'k1',
-  masterKey: Buffer.from(process.env.DUCK_AUTH_MASTER_KEY_K1!, 'base64'),
-  previousKeys: [
-    { kid: 'k0', masterKey: Buffer.from(process.env.DUCK_AUTH_MASTER_KEY_K0!, 'base64') },
-  ],
+  masterKey: Buffer.from(process.env.PROFILE_KEY_K1 ?? '', 'base64'),
+})
+
+const ssn = await dataAtRest.encrypt('123-45-6789', { identityId: ada.id, field: 'ssn' })
+const updated = await auth.identities.updateProfile(ada.id, { ssn }, ada.version)
+
+const plain = await dataAtRest.decrypt(updated.profile.ssn, { identityId: ada.id, field: 'ssn' })
+```
+
+The context is part of the key: a ciphertext decrypts only under the `identityId`, `field` and optional `tag` it was written with, so one copied onto another row or field fails with `AUTH_INVALID_PARAMETERS`. Use `tag` for a tenant or a row revision.
+
+Both encryptors refuse a plaintext over 1 MiB.
+
+## AES-256-GCM with your own key
+
+`authAesGcmDataAtRest({ kid, masterKey, previousKeys? })` derives a key per identity and field from a 32-byte master key, and writes `aes-256-gcm.v3$<kid>$...`.
+
+- `masterKey` must be at least 32 bytes, and `kid` a non-empty string without `$`; both are checked at construction.
+- To rotate, make the new key current and move the old one to `previousKeys`. Old ciphertexts still decrypt, and `needsReEncrypt(cipher)` answers `true` for them until you re-encrypt.
+
+```ts
+const dataAtRest = authAesGcmDataAtRest({
+  kid: 'k2',
+  masterKey: process.env.PROFILE_KEY_K2 ?? '',
+  previousKeys: [{ kid: 'k1', masterKey: process.env.PROFILE_KEY_K1 ?? '' }],
 })
 ```
 
-The `previousKeys` ring keeps old kid'd ciphertexts decryptable during
-rotation. Wire `dataAtRest` into your AuthEngine or via the bridge your
-adapter exposes - duck-auth itself only requires the interface.
+## KMS envelope
 
-### Plaintext cap
+`authKmsEnvelopeDataAtRest({ kms })` asks the KMS for a fresh data key per value, encrypts locally with it, and stores the wrapped key beside the ciphertext. The master key never leaves the KMS, and the identity and field travel as the KMS encryption context, so the KMS itself refuses to unwrap a key for a different row.
 
-Each `encrypt()` rejects plaintexts longer than 1 MiB to prevent a
-hostile caller driving multi-GB encrypt cycles + base64 expansion via
-this surface.
+```ts
+import { KMSClient } from '@aws-sdk/client-kms'
+import { authAwsKmsProvider, authKmsEnvelopeDataAtRest } from '@gentleduck/auth/core/dataAtRest'
 
-## `AuthKmsEnvelopeDataAtRest`
-
-Envelope encryption against any `Kms.IProvider`. A fresh per-record
-DEK is requested from the KMS, the plaintext is encrypted locally
-with AES-256-GCM, and both the wrapped DEK and the ciphertext are
-stored together. `decrypt` unwraps the DEK via the KMS and runs the
-AES-GCM inverse locally.
-
-```typescript
-import { AuthKmsEnvelopeDataAtRest } from '@gentleduck/auth/core/dataAtRest'
-import { AuthAwsKmsProvider } from '@gentleduck/auth/core/dataAtRest'
-
-const dataAtRest = new AuthKmsEnvelopeDataAtRest({
-  kms: new AuthAwsKmsProvider({
-    keyId: 'alias/duck-auth-data-at-rest',
-    client: new KmsClient({ region: 'us-east-1' }),
-  }),
+const dataAtRest = authKmsEnvelopeDataAtRest({
+  kms: authAwsKmsProvider({ keyId: 'alias/profile-fields', client: new KMSClient({ region: 'us-east-1' }) }),
 })
 ```
 
-### Ciphertext layout
+`@aws-sdk/client-kms` is an optional peer, loaded on first use. For another KMS, implement `Kms.Provider`:
 
-```
-kms-env$v1$<keyId>$<wrappedB64u>$<ivB64u>$<tagB64u>$<ctB64u>
-```
+| Member | Does |
+| --- | --- |
+| `id` | Names the provider in logs. |
+| `generateDataKey(context)` | Answers `{ plaintext, ciphertext, keyId }`: a 32-byte key and its wrapped form. |
+| `decryptDataKey(wrapped, context)` | Unwraps it, refusing a context other than the one it was generated under. |
 
-The `keyId` is informational - `decryptDataKey` is what actually
-resolves the DEK (and most KMSes can do that across rotations).
+The KMS rotates its own keys, so `needsReEncrypt` always answers `false` here.
 
-### Encryption context (AAD)
+## Compliance
 
-The encryption context passed to the KMS includes `{identityId,
-field}`, so the KMS itself enforces that a wrapped DEK can only be
-unwrapped for the same record it was generated for. This is the **AAD
-pin** that protects against ciphertext relocation attacks across rows.
-
-## `AuthAwsKmsProvider`
-
-Reference `Kms.IProvider` for AWS KMS. Lazy-loads `@aws-sdk/client-kms`
-so the AWS SDK stays an OPTIONAL peerDep - the rest of duck-auth never
-pulls it in.
-
-```typescript
-import { KmsClient } from '@aws-sdk/client-kms'
-import { AuthAwsKmsProvider } from '@gentleduck/auth/core/dataAtRest'
-
-const provider = new AuthAwsKmsProvider({
-  keyId: 'alias/duck-auth-data-at-rest',
-  client: new KmsClient({ region: 'us-east-1' }),
-})
-```
-
-For unit tests, pass a mock `IKmsLike` via `cfg.client`.
-
-## Bring your own KMS
-
-Implement the `Kms.IProvider` contract:
-
-```typescript
-import type { Kms } from '@gentleduck/auth/core/dataAtRest'
-
-class GcpKmsProvider implements Kms.IProvider {
-  readonly id = 'gcp-kms'
-  async generateDataKey(ctx: Kms.IEncryptionContext): Promise<Kms.IDataKey> {
-    // gcloud.kms.encrypt(masterKey) -> returns plaintext DEK + wrapped DEK
-  }
-  async decryptDataKey(wrapped: Uint8Array, ctx: Kms.IEncryptionContext): Promise<Uint8Array> {
-    // gcloud.kms.decrypt(wrapped) -> returns plaintext DEK
-  }
-}
-```
-
-Wrap it in `AuthKmsEnvelopeDataAtRest` and ship. The same recipe works for
-Vault Transit, Azure Key Vault, or in-house HSMs.
-
-## Compliance presets
-
-HIPAA, SOC2, and FIPS presets in `strict({ env: 'production' })`
-require a non-null `dataAtRest` on the AuthEngine. FIPS further requires
-KMS-envelope (refuses local AES-GCM); see
-[Production hardening](/duck-auth/advanced/security#compliance-presets).
+The gdpr, hipaa and fips [presets](/duck-auth/core/compliance) require `dataAtRest`. The engine cannot see whether you encrypt anything, so you attest it in `strict({ compliance: { dataAtRest: true } })`.

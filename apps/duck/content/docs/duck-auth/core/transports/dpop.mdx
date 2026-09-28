@@ -1,160 +1,30 @@
 ---
-title: DPoP - sender-constrained tokens
-description: RFC 9449. Bind every JWT or bearer to a client public key so a stolen token is useless without the private key.
+title: DPoP
+description: Verifying RFC 9449 proof-of-possession headers, so a token stolen from a client is useless without that client's private key
 section: Core
 ---
+DPoP binds a token to a key pair the client holds. Each request carries a `DPoP` header: a short JWT, signed with the client's private key, naming the method and URL. `DPoPVerifier` checks one.
 
-## What is DPoP?
+It is a building block for your own resource server, not a transport: the built-in transports do not bind their tokens to a key. Your token issuer puts the key's thumbprint in the token as `cnf.jkt` (`bindPayloadToDPoP(payload, jkt)` does that), and each request's proof must match it.
 
-**DPoP** (Demonstration of Proof-of-Possession, RFC 9449) binds an access
-token to a **client public key**. Every request carries:
+```ts
+import { dPoPVerifier } from '@gentleduck/auth/core/transport'
+import { redisDPoPNonceStore } from '@gentleduck/auth/adapters/redis'
 
-1. The access token (JWT or opaque bearer).
-2. A `DPoP` header containing a signed proof that the client holds the
-   matching private key.
+const dpop = dPoPVerifier({ nonceStore: redisDPoPNonceStore({ redis }) })
 
-A stolen token is useless without the private key. DPoP is the closest
-thing to mTLS for browser SPAs and mobile apps.
-
-## When to use
-
-- **High-risk APIs** (banking, healthcare, admin consoles) where token
-  theft is a credible threat.
-- **OIDC RP** posture where downstream services need cryptographic
-  binding.
-- Any deployment where you want a **stronger guarantee** than `secure`
-  cookies provide.
-
-## Constructor
-
-```typescript
-import {
-  authComputeJwkThumbprint,
-  DPoPVerifier,
-  MemoryDPoPNonceStore,
-} from '@gentleduck/auth/core/transport'
-
-const verifier = new DPoPVerifier({
-  publicKey: clientJwk,                        // the client's published JWK
-  expectedAudience: 'https://api.example.com',  // aud claim to verify
-  nonces: new MemoryDPoPNonceStore({ ttlMs: 10 * 60 * 1000 }),
-})
+const { jkt } = await dpop.verify(request.headers.get('dpop') ?? '', { method: request.method, url: request.url }, accessToken)
+if (jkt !== token.cnf.jkt) throw new AuthError('AUTH_DPOP_INVALID', { reason: 'key mismatch' })
 ```
 
-For production, swap to `AuthRedisDPoPNonceStore` so jti replay detection
-spans replicas.
+`verify` checks the signature, that the proof's key fits its algorithm, the method and URL, the age of the proof, the `ath` hash of the access token when one is passed, and that its `jti` was not seen before. Any failure throws `AUTH_DPOP_INVALID`.
 
-## Verifying a request
-
-```typescript
-import { AuthError } from '@gentleduck/auth/core'
-
-app.get('/api/secret', async (req, res) => {
-  const ctx = await auth.resolveSession(req)
-  if (!ctx) throw new AuthError('AUTH/UNAUTHENTICATED')
-
-  const dpopHeader = req.headers.get('dpop')
-  if (!dpopHeader) throw new AuthError('AUTH/DPOP_INVALID')
-
-  await verifier.verify(ctx.session.jwt, dpopHeader)
-  // jti replay -> AUTH/DPOP_INVALID
-  // thumbprint mismatch -> AUTH/DPOP_INVALID
-  // bad signature -> AUTH/DPOP_INVALID
-
-  res.json({ ok: true })
-})
-```
-
-## How it works
-
-1. Client generates an EC P-256 keypair (one per device, persisted in
-   the OS keychain or Web Crypto SubtleCrypto).
-2. On each request, the client signs a tiny DPoP JWT containing:
-   - `htm` - HTTP method.
-   - `htu` - HTTP URL.
-   - `jti` - random nonce (each one unique).
-   - `iat` - timestamp.
-   - `ath` (if attaching to an access token) - SHA-256 of the token.
-3. Sends the access token plus the DPoP proof as a `DPoP` header.
-4. Server: `verifier.verify()` checks signature, `htm`, `htu`, `jti`
-   (against the nonce store), `ath`, and the **thumbprint** in the
-   access token's `cnf.jkt` claim.
-
-If any check fails: `AUTH/DPOP_INVALID`.
-
-## Binding a payload to DPoP
-
-For internal services that mint short-lived JWTs and want to bind them
-to the DPoP key:
-
-```typescript
-import { authBindPayloadToDPoP } from '@gentleduck/auth/core/transport'
-
-const payload = {
-  sub: 'identity-id',
-  iss: 'https://api.example.com',
-  exp: Math.floor(Date.now() / 1000) + 60,
-}
-
-const bound = authBindPayloadToDPoP(payload, dpopHeader)
-// bound = { ...payload, cnf: { jkt: '<thumbprint>' } }
-
-const jwt = await transport.signJwt(bound)
-```
-
-The downstream service receives the JWT, verifies the signature, and
-checks `cnf.jkt` against the DPoP proof on its own - the binding rides
-along with the token.
-
-## Computing thumbprints
-
-For custom flows that need to compute the RFC 7638 thumbprint of a JWK:
-
-```typescript
-import { authComputeJwkThumbprint } from '@gentleduck/auth/core/transport'
-
-const jkt = await authComputeJwkThumbprint(clientJwk)
-// -> 'kIQ-AzaP-...' (43-character base64url)
-```
-
-This is what goes into the JWT's `cnf.jkt` claim.
-
-## Memory vs Redis nonce store
-
-The nonce store is the **jti replay guard**. Every accepted DPoP proof
-records its `jti`; a duplicate `jti` is rejected.
-
-| Store | Use case |
+| Option | Default |
 | --- | --- |
-| `MemoryDPoPNonceStore` | Dev / test. Per-process; replicas have independent stores. |
-| `AuthRedisDPoPNonceStore(client, { ttlMs })` | Production. Shared across all replicas. |
+| `acceptedAlgs` | `['ES256', 'EdDSA']`; `RS256` and `PS256` can be added |
+| `freshnessMs` | 60 seconds |
+| `clockSkewMs` | 30 seconds |
+| `nonceStore` | in memory; use `redisDPoPNonceStore` or `valkeyDPoPNonceStore` across instances |
+| `expectedNonce` | none; a string or a function answering the server nonce the proof must carry |
 
-```typescript
-import Redis from 'ioredis'
-import { AuthRedisDPoPNonceStore } from '@gentleduck/auth/adapters/redis'
-
-const verifier = new DPoPVerifier({
-  publicKey,
-  nonces: new AuthRedisDPoPNonceStore(new Redis(process.env.REDIS_URL!), {
-    ttlMs: 10 * 60 * 1000,
-  }),
-})
-```
-
-## Threat model
-
-DPoP defends against:
-
-- **Token theft from logs / network captures** - the token alone is useless.
-- **XSS exfiltration** - the private key lives in non-extractable Web
-  Crypto storage; even an XSS that reads the access token cannot extract
-  the key.
-- **Replay attacks** - `jti` ensures every proof is unique.
-- **Cross-API token misuse** - `aud` and `htu` claims scope every proof
-  to a specific endpoint.
-
-DPoP does **not** defend against:
-
-- A compromised device (an attacker who can use the private key wins).
-- Phishing (the legitimate client signs the proof for the attacker's
-  request).
+The in-memory `jti` store only sees its own instance, so across a fleet a proof could be replayed against another one.

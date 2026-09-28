@@ -1,0 +1,285 @@
+---
+title: "Chapter 8: production"
+description: Move DuckNotes onto Postgres and Valkey, put the cookies back to their secure defaults, let strict() refuse a misconfigured engine, and test sign-in without a database
+section: Course
+order: 8
+---
+Everything DuckNotes knows lives in maps, so a restart forgets every account and a second instance sees none of them. This chapter moves it all out of the process, puts the development settings back to their defaults, and has the engine refuse to start while anything is still wrong.
+
+## Learning goals
+
+- Keep identities, credentials and sessions in Postgres, beside your own tables.
+- Share the limiter, the events and the OAuth `state` through Valkey.
+- Know what `strict()` refuses in production, and build the engine in the order it needs.
+- Test a flow against an in-memory engine.
+
+## Where everything lives
+
+<MermaidDiagram chart={`flowchart LR
+    A["instance 1"] --> PG["Postgres: identities, credentials, sessions, notes"]
+    B["instance 2"] --> PG
+    A --> V["Valkey: limiter, events, OAuth state"]
+    B --> V`} />
+
+## Step by step
+
+<Steps>
+
+<Step>Install the drivers</Step>
+
+```bash
+npm i drizzle-orm pg ioredis
+npm i -D drizzle-kit @types/pg
+```
+
+Run Postgres and Valkey however you like. With Docker:
+
+```bash
+docker run -d --name ducknotes-pg -e POSTGRES_PASSWORD=duck -p 5432:5432 postgres:17
+docker run -d --name ducknotes-valkey -p 6379:6379 valkey/valkey:8
+export DATABASE_URL=postgres://postgres:duck@localhost:5432/postgres REDIS_URL=redis://localhost:6379
+```
+
+<Step>The schema</Step>
+
+Re-export duck-auth's tables beside your own, so one schema describes the whole database:
+
+```ts title="src/db/schema.ts"
+import { authIdentities } from '@gentleduck/auth/adapters/drizzle/pg'
+import { pgTable, serial, text, uuid } from 'drizzle-orm/pg-core'
+
+export { authCredentials, authIdentities, authIdentityProviders, authSessions } from '@gentleduck/auth/adapters/drizzle/pg'
+
+export const notes = pgTable('notes', {
+  id: serial('id').primaryKey(),
+  identityId: uuid('identity_id')
+    .notNull()
+    .references(() => authIdentities.id, { onDelete: 'cascade' }),
+  text: text('text').notNull(),
+})
+```
+
+```ts title="src/db/index.ts"
+import { drizzle } from 'drizzle-orm/node-postgres'
+import { Pool } from 'pg'
+import * as schema from './schema'
+
+export const db = drizzle(new Pool({ connectionString: process.env.DATABASE_URL }), { schema })
+```
+
+```ts title="drizzle.config.ts"
+import { defineConfig } from 'drizzle-kit'
+
+export default defineConfig({
+  dialect: 'postgresql',
+  schema: './src/db/schema.ts',
+  out: './drizzle',
+  dbCredentials: { url: process.env.DATABASE_URL ?? '' },
+})
+```
+
+```bash
+npx drizzle-kit push
+```
+
+`push` creates the four `auth_` tables and `notes`. For a deployed database, `drizzle-kit generate` writes the same change as a migration to review and commit.
+
+<Step>The engine</Step>
+
+```ts title="src/auth.ts"
+import { drizzlePgAdapter } from '@gentleduck/auth/adapters/drizzle/pg'
+import { valkeyDPoPNonceStore, valkeyEvents } from '@gentleduck/auth/adapters/valkey'
+import { createAuth, orNull } from '@gentleduck/auth/core'
+import { cookieTransport } from '@gentleduck/auth/core/transport'
+import { valkeyLimiter } from '@gentleduck/auth/limiters/valkey'
+import { magicLink } from '@gentleduck/auth/providers/magic-link'
+import { mfaProvider } from '@gentleduck/auth/providers/mfa'
+import { github } from '@gentleduck/auth/providers/oauth/github'
+import { passwords } from '@gentleduck/auth/providers/passwords'
+import Redis from 'ioredis'
+import { db } from './db'
+import { deliver } from './mailer'
+
+const stores = drizzlePgAdapter(db)
+const redis = new Redis(process.env.REDIS_URL ?? '')
+
+export const auth = createAuth({
+  baseUrl: 'https://notes.example.com',
+  deliver,
+  stores,
+  limiter: valkeyLimiter({ redis }),
+  events: valkeyEvents({ cmd: redis, sub: new Redis(process.env.REDIS_URL ?? '') }),
+  transport: cookieTransport(),
+  providers: [
+    passwords(),
+    mfaProvider({ issuer: 'DuckNotes' }),
+    (_engine, send) =>
+      magicLink({
+        callbackPath: '/magic-link',
+        deliver: send,
+        findIdentityByEmail: (email) => orNull(stores.identities.find({ email })),
+      }),
+    github({
+      clientId: process.env.GITHUB_CLIENT_ID ?? '',
+      clientSecret: process.env.GITHUB_CLIENT_SECRET ?? '',
+      redirectUri: 'https://notes.example.com/auth/providers/oauth:github/callback',
+      stateSigningSecret: process.env.OAUTH_STATE_SECRET ?? '',
+      nonceStore: valkeyDPoPNonceStore({ redis, prefix: 'auth:oauth:nonce' }),
+      profileToIdentityProfile: (p) => (p.email ? { email: p.email, username: `github:${p.sub}` } : null),
+      onFederationConflict: 'link-if-verified',
+    }),
+  ],
+  strict: false,
+})
+
+auth.events.on('lockout', ({ identityId, until }) => {
+  console.warn(`locked out ${identityId} until ${new Date(until).toISOString()}`)
+})
+
+auth.strict({ env: 'production' })
+```
+
+- `drizzlePgAdapter(db)` holds all three stores on your own connection, so the accounts and the notes share one database.
+- `valkeyEvents` takes a second connection for `sub`, because a subscribed connection can run no other command.
+- `cookieTransport()` with no options names the cookie `__Host-duck-sid`, a prefix browsers accept only on a Secure cookie that no other subdomain can set. The GitHub `stateCookie` goes back to its default, `__Host-duck-oauth`, the same way.
+- The last three statements are in that order on purpose; see [The order](#the-order).
+
+<Step>The notes</Step>
+
+In `src/server.ts`, drop the `notes` map, import `eq` from `drizzle-orm`, `db` from `./db` and `notes` from `./db/schema`, and use the table:
+
+```ts title="src/server.ts"
+app.get('/api/notes', async (_req, res) => {
+  const mine = await db.select({ text: notes.text }).from(notes).where(eq(notes.identityId, res.locals.identity.id))
+  res.json(mine.map((note) => note.text))
+})
+
+app.post('/api/notes', async (req, res) => {
+  await db.insert(notes).values({ identityId: res.locals.identity.id, text: String(req.body.text) })
+  res.status(201).end()
+})
+```
+
+and in `DELETE /api/notes`:
+
+```ts title="src/server.ts"
+  await db.delete(notes).where(eq(notes.identityId, res.locals.identity.id))
+```
+
+<Step>The pages</Step>
+
+Drop `csrfCookieName` from both clients in `src/page.ts` and `src/magic-link.ts`. Over https the CSRF cookie is `__Host-duck-csrf`, which is the client's default, and the notes request reads it under that name:
+
+```ts title="src/page.ts"
+const csrfToken = document.cookie.match(/(?:^|; )__Host-duck-csrf=([^;]*)/)?.[1] ?? ''
+```
+
+<Step>Start it</Step>
+
+```bash
+npx esbuild src/page.ts src/magic-link.ts --bundle --format=esm --outdir=public
+NODE_ENV=production npx tsx src/server.ts
+```
+
+Deploy it behind https at the `baseUrl`, and change the GitHub app's callback URL to match. Replace the mailer too: `src/mailer.ts` still prints each link.
+
+</Steps>
+
+## What strict() refuses
+
+Run chapter 7's engine with `NODE_ENV=production` and it stops at the first line that cannot work there: `memoryDPoPNonceStore()` refuses to be built. Past that, `strict()` throws one `AUTH_MISCONFIGURED` listing everything else at once:
+
+| Chapter 7 had | Refused, because | Chapter 8 has |
+| --- | --- | --- |
+| The in-process nonce store | A `state` burnt on one instance replays on another. | `valkeyDPoPNonceStore` |
+| No limiter | Each instance grants its own budget, so a fleet allows each guess once per instance. | `valkeyLimiter` |
+| `MemoryAdapter` | A restart forgets it, and no other instance sees it. The error names each slot it fills. | `drizzlePgAdapter` |
+| The in-process event bus | A lockout raised on one instance is never heard on another. | `valkeyEvents` |
+| `secure: false` | The session cookie would travel over plain http. | `cookieTransport()` |
+| `http://localhost:3000` | Links and callbacks would go out over plain http. | an `https` `baseUrl` |
+| No `lockout` listener | Nobody hears that an account is being guessed at. | the listener |
+
+[Production hardening](/duck-auth/advanced/security) lists every check.
+
+## The order
+
+`createAuth` runs `strict()` as it returns, for the environment in `NODE_ENV`, and a `lockout` listener cannot exist before `createAuth` returns. So a production engine passes `strict: false`, subscribes, then calls `auth.strict({ env: 'production' })`. It throws while `src/server.ts` is still importing `auth`, so a misconfigured deploy never serves a request.
+
+## Testing sign-in
+
+```bash
+npm i -D vitest
+```
+
+```ts title="test/sign-in.test.ts"
+import { AuthError } from '@gentleduck/auth/core'
+import { MemoryLimiter } from '@gentleduck/auth/limiters/memory'
+import { createTest } from '@gentleduck/auth/test'
+import { expect, it } from 'vitest'
+
+it('locks an account out after repeated wrong passwords', async () => {
+  const auth = createTest({ limiter: new MemoryLimiter({ max: 2, windowMs: 60_000 }) })
+  const ada = await auth.identities.create({ profile: { username: 'ada', email: 'ada@example.com' } })
+  await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials)
+  const lockouts: string[] = []
+  auth.events.on('lockout', ({ identityId }) => {
+    lockouts.push(identityId)
+  })
+
+  const attempt = () =>
+    auth.flows
+      .signIn({ providerId: 'password', input: { email: 'ada@example.com', password: 'wrong-password' } })
+      .catch((err: unknown) => (err instanceof AuthError ? err.code : 'unexpected'))
+
+  expect(await attempt()).toBe('AUTH_INVALID_CREDENTIALS')
+  expect(await attempt()).toBe('AUTH_INVALID_CREDENTIALS')
+  expect(await attempt()).toBe('AUTH_RATE_LIMITED')
+  expect(lockouts).toEqual([ada.id])
+})
+```
+
+```bash
+npx vitest run
+```
+
+`createTest()` is an engine over a `MemoryAdapter` with the password and MFA providers, so a test needs no database. Its limiter allows 1000 attempts a minute; this one allows two, so the third wrong password is refused and `lockout` fires once.
+
+## Try it
+
+1. Remove the `lockout` listener and start the server. It refuses to start, naming the missing handler.
+2. Sign in, stop the server and start it again. The session and the notes are still there. On `localhost`, curl sends the Secure cookies over plain http, so the calls from chapters 4 and 7 work with the token read from `__Host-duck-csrf`.
+3. Delete Ada's row from `auth_identities`. Her credentials, sessions and notes go with it.
+
+## Where we are
+
+```
+ducknotes/
+  drizzle.config.ts
+  public/
+  src/
+    db/
+      schema.ts   - the auth tables and notes
+      index.ts    - the connection
+    mailer.ts
+    auth.ts       - Postgres, Valkey, strict()
+    server.ts     - notes in Postgres
+    code.ts
+    page.ts
+    magic-link.ts
+  test/
+    sign-in.test.ts
+```
+
+## Where to go next
+
+- [Delivery](/duck-auth/core/delivery): a mailer that sends.
+- [Webhooks](/duck-auth/advanced/webhooks): events delivered to other services.
+- [Multi-tenancy](/duck-auth/advanced/multi-tenancy): one engine for many tenants.
+- [duck-iam bridge](/duck-auth/guides/iam-bridge): what each person may do, once you know who they are.
+
+## See also
+
+- [Drizzle](/duck-auth/adapters/drizzle): the tables, and the MySQL and SQLite adapters.
+- [Redis and Valkey](/duck-auth/adapters/redis): moving sessions to Valkey too.
+- [Production hardening](/duck-auth/advanced/security): every check `strict()` makes.
+- [Testing](/duck-auth/advanced/testing): `createTest` and its overrides.

@@ -1,75 +1,40 @@
 ---
-title: Fastify adapter
-description: Fastify 4+ as a plugin. Schema-validated routes by default.
+title: Fastify
+description: Registering the auth routes on Fastify, guarding your own routes with a preHandler, and binding the actor per handler
 section: Server
 ---
-
-## Setup
-
-```typescript
+```ts
+import { registerFastify } from '@gentleduck/auth/server/fastify'
 import Fastify from 'fastify'
-import { fastifyAuth } from '@gentleduck/auth/server/fastify'
-import { auth } from './lib/auth'
 
-const app = Fastify({ logger: true })
-
-await app.register(fastifyAuth, { auth, prefix: '/auth' })
-
-// Now /auth/signin, /auth/signout, /auth/session, /auth/providers/:providerId/begin are mounted.
-
-app.get('/api/me', async (req, reply) => {
-  const ctx = await auth.resolveSession(req.raw)
-  if (!ctx) return reply.code(401).send({ code: 'AUTH/UNAUTHENTICATED' })
-  return ctx.identity
-})
-
-await app.listen({ port: 3000 })
+const app = Fastify()
+registerFastify(app, auth)
 ```
 
-## Schema validation
+`registerFastify` mounts every route under `/auth`; pass `{ prefix: '/api/auth' }` to move them. To mount only some, register the handlers yourself: `fastifySignIn`, `fastifySignOut`, `fastifySession`, `fastifyProviderBegin` and `fastifyProviderCallback`, with `:id` in the provider paths.
 
-The plugin registers request schemas for every route. Fastify's built-in
-validator rejects malformed payloads before they reach `auth.flows.signIn`:
+- Fastify's `trustProxy` option decides which IP `req.ip` answers, and so what the session records. Set it to the proxies in front of you.
+- Apple posts its callback as a form, which Fastify refuses with a 415 unless a parser such as `@fastify/formbody` is registered.
+- The callback answers the session cookies and an empty 200. To land the browser on a page, write the callback yourself, as on the [OAuth page](/duck-auth/providers/oauth#the-routes).
 
-```json
-{
-  "providerId": "password",
-  "input": { "email": "ada@example.com", "password": "..." }
-}
-```
+## Your own routes
 
-A POST `/auth/signin` with `providerId: 42` (number instead of string)
-returns `400` with a Fastify validation error - no duck-auth code path
-is reached.
+```ts
+import { fastifyCsrf, fastifyWithActor } from '@gentleduck/auth/server/fastify'
+import { nodeHeadersToFetch } from '@gentleduck/auth/server/generic'
 
-## Error handling
+app.register(async (api) => {
+  api.addHook('preHandler', fastifyCsrf(auth))
 
-```typescript
-import { AuthError } from '@gentleduck/auth/core'
-
-app.setErrorHandler((err, req, reply) => {
-  if (err instanceof AuthError) {
-    return reply.code(err.status).send(err.toJSON())
-  }
-  reply.send(err)
+  api.get(
+    '/api/me',
+    fastifyWithActor(auth, async (req, reply) => {
+      const resolved = await auth.resolveSession({ headers: nodeHeadersToFetch(req.headers) }).orNull()
+      if (!resolved) return reply.status(401).send({ error: 'unauthenticated' })
+      return resolved.identity
+    }),
+  )
 })
 ```
 
-## Hooks
-
-For app-wide gates, register a preHandler:
-
-```typescript
-app.addHook('preHandler', async (req, reply) => {
-  if (req.url.startsWith('/api/private')) {
-    const ctx = await auth.resolveSession(req.raw)
-    if (!ctx) {
-      reply.code(401).send({ code: 'AUTH/UNAUTHENTICATED' })
-      return reply
-    }
-  }
-})
-```
-
-The preHandler runs before the route handler. Returning `reply` short-
-circuits - no other hooks or handlers run for that request.
+Fastify composes no `next`, so the actor scope wraps each handler instead of sitting in front of them. `fastifyCaller(req)` is the IP and User-Agent to pass to a flow you call yourself.

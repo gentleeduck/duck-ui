@@ -1,200 +1,173 @@
 ---
 title: Quick start
-description: Wire password + magic-link end-to-end on Express, sign-in to sign-out, in 15 minutes.
+description: Password and magic-link sign-in behind Express, stored in Postgres through Drizzle, from install to sign-out
 section: Guides
 ---
-
-We'll build a minimal but production-shaped auth setup: Express, a
-Drizzle-backed SQL adapter, password and magic-link providers, the
-React client. Estimated time: 15 minutes.
+This guide builds a small Express backend: sign-up, password and magic-link sign-in, the session endpoint and sign-out, stored in Postgres. Every file is shown whole.
 
 <Steps>
 
 <Step>Install</Step>
 
 ```bash
-bun add @gentleduck/auth
-bun add drizzle-orm pg @node-rs/argon2 resend
-bun add -D @types/pg drizzle-kit
+bun add @gentleduck/auth drizzle-orm pg express
+bun add -D drizzle-kit @types/pg @types/express
 ```
 
-<Step>Mint the JWT signing material</Step>
+<Step>Create the tables</Step>
+
+duck-auth ships its Drizzle tables. Re-export them from your schema so `drizzle-kit` sees them next to your own.
+
+```ts title="src/db/schema.ts"
+export {
+  authCredentials,
+  authIdentities,
+  authIdentityProviders,
+  authSessions,
+} from '@gentleduck/auth/adapters/drizzle/pg'
+```
+
+```ts title="drizzle.config.ts"
+import { defineConfig } from 'drizzle-kit'
+
+export default defineConfig({
+  dialect: 'postgresql',
+  schema: './src/db/schema.ts',
+  out: './drizzle',
+  dbCredentials: { url: process.env.DATABASE_URL ?? '' },
+})
+```
 
 ```bash
-bunx @gentleduck/auth keys generate hs256
-# -> emits JWT_HS256_SECRET and JWT_HS256_KID to copy into .env
+bunx drizzle-kit push
 ```
 
-<Step>Emit the migration</Step>
+`push` suits a first run; switch to `drizzle-kit generate` and a migrator once the schema is shared.
 
-```bash
-bunx @gentleduck/auth migrate pg > drizzle/0001_auth.sql
-psql $DATABASE_URL < drizzle/0001_auth.sql
-```
+<Step>Build the engine</Step>
 
-<Step>Wire `AuthEngine`</Step>
+`drizzlePgAdapter(db)` provides the identities, sessions and credentials stores. The magic-link provider is passed as a thunk so it receives the engine's `deliver`; here `deliver` prints the link instead of mailing it.
 
-```typescript title="src/lib/auth.ts"
+```ts title="src/auth.ts"
+import { drizzlePgAdapter } from '@gentleduck/auth/adapters/drizzle/pg'
+import { createAuth, type Deliver, orNull } from '@gentleduck/auth/core'
+import { cookieTransport } from '@gentleduck/auth/core/transport'
+import { MemoryLimiter } from '@gentleduck/auth/limiters/memory'
+import { magicLink } from '@gentleduck/auth/providers/magic-link'
+import { passwords } from '@gentleduck/auth/providers/passwords'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import { AuthArgon2idHasher, AuthEngine } from '@gentleduck/auth/core'
-import { CookieTransport } from '@gentleduck/auth/core/transport'
-import { createDrizzlePgBridge } from '@gentleduck/auth/adapters/drizzle/pg'
-import { authCreateSqlStores } from '@gentleduck/auth/adapters/sql'
-import { AuthMemoryLimiter } from '@gentleduck/auth/limiters/memory'
-import { magicLink } from '@gentleduck/auth/providers/magic-link'
-import { password } from '@gentleduck/auth/providers/password'
-import { AuthResendChannel } from '@gentleduck/auth/channels/resend'
-import { schema } from './db/schema'
+import * as schema from './db/schema'
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-const db = drizzle(pool)
-const bridge = createDrizzlePgBridge(db, schema)
-const sql = authCreateSqlStores({ bridge })
+const db = drizzle(new Pool({ connectionString: process.env.DATABASE_URL }), { schema })
+const stores = drizzlePgAdapter(db)
 
-export const auth = new AuthEngine({
+const deliver: Deliver = async ({ identity, kind, vars }) => {
+  console.log(`[${kind}] ${identity.profile.email}: ${vars.url}`)
+}
+
+export const auth = createAuth({
   baseUrl: 'http://localhost:3000',
-  transport: new CookieTransport({ secure: false, name: 'duck-sid' }),
-  stores: {
-    identities: sql.identities,
-    credentials: sql.credentials,
-    sessions: sql.sessions,
-  },
-  limiter: new AuthMemoryLimiter({ max: 5, windowMs: 60_000 }),
-  passwords: { hasher: new AuthArgon2idHasher() },
-})
-
-auth.providers.use(
-  password({
-    findIdentityByEmail: (email) => auth.identities.findByEmail(email),
-    passwords: auth.passwords,
-  }),
-)
-
-auth.providers.use(
-  magicLink({
-    channels: {
-      email: new AuthResendChannel({
-        apiKey: process.env.RESEND_API_KEY!,
-        from: 'no-reply@example.com',
+  deliver,
+  limiter: new MemoryLimiter(),
+  stores,
+  transport: cookieTransport({ name: 'sid', secure: false }),
+  providers: [
+    passwords(),
+    (_engine, send) =>
+      magicLink({
+        callbackPath: '/magic-link',
+        deliver: send,
+        findIdentityByEmail: (email) => orNull(stores.identities.find({ email })),
       }),
-    },
-    findIdentityByEmail: (email) => auth.identities.findByEmail(email),
-    autoCreateIdentity: true,
-    autoCreateProfile: (email) => ({ displayName: email.split('@')[0] }),
-  }),
-)
-
-// In dev: this only warns. In production it throws on bad config.
-auth.strict({ env: process.env.NODE_ENV === 'production' ? 'production' : 'development' })
+  ],
+})
 ```
 
-<Step>Mount on Express</Step>
+<Step>Mount the routes</Step>
 
-```typescript title="src/server.ts"
-import express from 'express'
-import { AuthError } from '@gentleduck/auth/core'
-import {
-  authMountProviderBegin,
-  authMountSession,
-  authMountSignIn,
-  authMountSignOut,
-} from '@gentleduck/auth/server/express'
-import { auth } from './lib/auth'
+`server/express` provides handlers for duck-auth's own endpoints. Sign-up is yours to write, since what an account needs (a name, terms accepted, an invite) is your app's call.
+
+```ts title="src/server.ts"
+import { errorToHttp } from '@gentleduck/auth/server/generic'
+import { expressCsrf, mountProviderBegin, mountSession, mountSignIn, mountSignOut } from '@gentleduck/auth/server/express'
+import express, { type ErrorRequestHandler } from 'express'
+import { auth } from './auth'
 
 const app = express()
 app.use(express.json())
 
-app.post('/auth/signin', authMountSignIn(auth))
-app.post('/auth/signout', authMountSignOut(auth))
-app.get('/auth/session', authMountSession(auth))
-app.post('/auth/providers/:providerId/begin', (req, res, next) =>
-  authMountProviderBegin(auth, req.params.providerId)(req, res, next),
-)
+app.post('/auth/signin', mountSignIn(auth))
+app.post('/auth/signout', mountSignOut(auth))
+app.get('/auth/session', mountSession(auth))
+app.post('/auth/providers/:id/begin', mountProviderBegin(auth))
 
-app.get('/api/me', async (req, res, next) => {
-  try {
-    const ctx = await auth.resolveSession(req)
-    if (!ctx) throw new AuthError('AUTH/UNAUTHENTICATED')
-    res.json({ identity: ctx.identity })
-  } catch (err) {
-    next(err)
-  }
+// Your own routes take the CSRF guard; duck-auth's handlers run it themselves.
+app.use(expressCsrf(auth))
+
+app.post('/auth/signup', async (req, res) => {
+  const { email, name, password } = req.body
+  auth.passwords.assertStrength(password)
+  const identity = await auth.identities.create({ profile: { email, name, username: email } })
+  await auth.passwords.set(identity.id, password, auth.cfg.stores.credentials)
+  res.status(201).json({ identityId: identity.id })
 })
 
-app.use((err, req, res, next) => {
-  if (err instanceof AuthError) {
-    res.status(err.status).json(err.toJSON())
-    return
-  }
-  next(err)
-})
+const onError: ErrorRequestHandler = (err, _req, res, _next) => {
+  const { status, body } = errorToHttp(err)
+  res.status(status).json(body)
+}
+app.use(onError)
 
 app.listen(3000)
 ```
 
-<Step>Drop in the React client</Step>
+`errorToHttp` maps an `AuthError` to its status and an `{ ok: false, error: { code, status } }` body, and anything else to a 500 that says nothing about the cause. `assertStrength` refuses a weak password as `AUTH_INVALID_CREDENTIALS` without naming the rule it broke.
 
-```tsx title="src/App.tsx"
-import { AuthProvider, authUseSession, authUseSignIn, authUseSignOut } from '@gentleduck/auth/client/react'
+<Step>Try it</Step>
 
-export function App() {
-  return (
-    <AuthProvider baseUrl="/auth">
-      <Page />
-    </AuthProvider>
-  )
-}
+```bash
+DATABASE_URL=postgres://localhost/app bun src/server.ts
+```
 
-function Page() {
-  const { data, status } = authUseSession()
-  const signIn = authUseSignIn()
-  const signOut = authUseSignOut()
+Sign up, then sign in; `-c` and `-b` keep the cookies between calls.
 
-  if (status === 'loading') return <p>Loading...</p>
+```bash
+curl -s localhost:3000/auth/signup -H 'content-type: application/json' \
+  -d '{"email":"ada@example.com","name":"Ada","password":"correct-horse-battery"}'
 
-  if (status === 'guest') {
-    return (
-      <form onSubmit={async (e) => {
-        e.preventDefault()
-        const fd = new FormData(e.currentTarget)
-        await signIn.mutateAsync({
-          providerId: 'password',
-          input: { email: fd.get('email'), password: fd.get('password') },
-        })
-      }}>
-        <input name="email" type="email" required />
-        <input name="password" type="password" required />
-        <button type="submit" disabled={signIn.isLoading}>Sign in</button>
-        {signIn.error && <p style={{ color: 'red' }}>{signIn.error.code}</p>}
-      </form>
-    )
-  }
+curl -s -c jar localhost:3000/auth/signin -H 'content-type: application/json' \
+  -d '{"providerId":"password","input":{"email":"ada@example.com","password":"correct-horse-battery"}}'
 
-  return (
-    <div>
-      <p>Hi, {data.identity.profile.displayName}</p>
-      <button onClick={() => signOut.mutate()}>Sign out</button>
-    </div>
-  )
-}
+curl -s -b jar localhost:3000/auth/session
+```
+
+The sign-in answers 200 with the two cookies, the session call answers `{ session, identity }`, and a wrong password answers 401 `AUTH_INVALID_CREDENTIALS`. Signing out needs the CSRF token, which the sign-in set in the `duck-csrf` cookie:
+
+```bash
+curl -s -b jar localhost:3000/auth/signout -X POST \
+  -H "x-csrf-token: $(awk '$6 == "duck-csrf" { print $7 }' jar)"
+```
+
+For a magic link, begin the provider with its input as the body; the server prints the link:
+
+```bash
+curl -s localhost:3000/auth/providers/magic-link/begin -H 'content-type: application/json' \
+  -d '{"email":"ada@example.com"}'
+```
+
+The link opens `/magic-link?token=...` on `baseUrl`. That page posts the token back to sign in:
+
+```bash
+curl -s -c jar localhost:3000/auth/signin -H 'content-type: application/json' \
+  -d '{"providerId":"magic-link","input":{"token":"<token from the link>"}}'
 ```
 
 </Steps>
 
-## What you got
+## Next steps
 
-- A real durable SQL store for identities, credentials, and sessions.
-- Argon2id hashing.
-- Password + magic-link sign-in.
-- Cookie-based session, HttpOnly, SameSite=Lax.
-- React client with `authUseSession` / `authUseSignIn` / `authUseSignOut`.
-- CSRF guard available via `authCsrfGuard` (wire it on mutating routes).
-
-## What's next
-
-- [Production hardening ->](/duck-auth/advanced/security) - what `strict()` enforces.
-- [Adding OAuth ->](/duck-auth/providers/oauth) - Google, GitHub, Apple, etc.
-- [Adding passkeys ->](/duck-auth/providers/passkey) - the strongest factor.
-- [Switching to JWT transport ->](/duck-auth/core/transports/jwt) - for microservices.
-- [Adding MFA ->](/duck-auth/guides/mfa) - TOTP + backup codes + WebAuthn-MFA.
+- [Delivery](/duck-auth/core/delivery): replace the `console.log` with a mailer.
+- [React client](/duck-auth/client/react): call these endpoints from a browser.
+- [Adding MFA](/duck-auth/guides/mfa): TOTP and backup codes as a second step.
+- [Production hardening](/duck-auth/advanced/security): what `strict()` checks once `NODE_ENV=production`.

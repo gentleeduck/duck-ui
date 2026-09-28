@@ -1,130 +1,142 @@
 ---
-title: OAuth providers
-description: Six OAuth providers (Google, GitHub, LinkedIn, Microsoft, Discord, Apple), all with PKCE-S256, signed state, and RFC 6749 refresh-token reuse detection.
+title: OAuth
+description: Sign-in through Google, GitHub, Microsoft, Apple, LinkedIn and Discord, the two routes it needs, creating and linking accounts, and adding any other OAuth 2.0 IdP
 section: Providers
 ---
+Each shipped provider is a preset over one OAuth 2.0 implementation: PKCE, a signed `state` bound to the browser that began the flow by a pre-auth cookie, and a callback that works once.
 
-## Shipped providers
-
-Every OAuth provider duck-auth ships is a thin wrapper around the
-generic `oauthProvider` core, pre-configured with the IdP's URLs and
-default scopes.
-
-| Provider | Import | OIDC? | Default scopes |
+| Provider | Import | Default scopes | Email counted as verified |
 | --- | --- | --- | --- |
-| [Google](/duck-auth/providers/oauth/google) | `@gentleduck/auth/providers/oauth/google` | yes | `openid`, `email`, `profile` |
-| [GitHub](/duck-auth/providers/oauth/github) | `@gentleduck/auth/providers/oauth/github` | no | `read:user`, `user:email` |
-| [LinkedIn](/duck-auth/providers/oauth/linkedin) | `@gentleduck/auth/providers/oauth/linkedin` | yes | `openid`, `profile`, `email` |
-| [Microsoft](/duck-auth/providers/oauth/microsoft) | `@gentleduck/auth/providers/oauth/microsoft` | yes | `openid`, `email`, `profile` |
-| [Discord](/duck-auth/providers/oauth/discord) | `@gentleduck/auth/providers/oauth/discord` | no | `identify`, `email` |
-| [Apple](/duck-auth/providers/oauth/apple) | `@gentleduck/auth/providers/oauth/apple` | yes | `email`, `name` |
+| [Google](/duck-auth/providers/oauth/google) | `providers/oauth/google` | `openid email profile` | When Google says so. |
+| [GitHub](/duck-auth/providers/oauth/github) | `providers/oauth/github` | `read:user user:email` | The primary verified address only. |
+| [Microsoft](/duck-auth/providers/oauth/microsoft) | `providers/oauth/microsoft` | `openid profile email User.Read` | Never. |
+| [Apple](/duck-auth/providers/oauth/apple) | `providers/oauth/apple` | `name email` | When the id_token says so. |
+| [LinkedIn](/duck-auth/providers/oauth/linkedin) | `providers/oauth/linkedin` | `openid profile email` | When LinkedIn says so. |
+| [Discord](/duck-auth/providers/oauth/discord) | `providers/oauth/discord` | `identify email` | When Discord says so. |
 
-## Shared shape
+## Setup
 
-Every OAuth provider takes the same shape (with provider-specific defaults
-already applied):
+```ts
+import { redisDPoPNonceStore } from '@gentleduck/auth/adapters/redis'
+import { google } from '@gentleduck/auth/providers/oauth/google'
 
-```typescript
-import { authGoogle } from '@gentleduck/auth/providers/oauth/google'
+const auth = createAuth({
+  baseUrl: 'https://app.example.com',
+  // ...
+  providers: [
+    google({
+      clientId: process.env.GOOGLE_CLIENT_ID ?? '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+      redirectUri: 'https://app.example.com/auth/providers/oauth:google/callback',
+      stateSigningSecret: process.env.OAUTH_STATE_SECRET ?? '',
+      nonceStore: redisDPoPNonceStore({ redis, prefix: 'auth:oauth:nonce' }),
+      profileToIdentityProfile: (p) => (p.email ? { email: p.email, username: `google:${p.sub}`, name: p.name } : null),
+    }),
+  ],
+})
+```
 
-authGoogle({
-  clientId: process.env.GOOGLE_CLIENT_ID!,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  redirectUri: 'https://app.example.com/auth/google/callback',
-  stateSigningSecret: process.env.OAUTH_STATE_SECRET!,
-  scopes: ['openid', 'email', 'profile'],
-  onSignIn: async ({ profile, tenantId }) => {
-    // Provision identity here. Must return { identityId }.
-    return { identityId: '...' }
-  },
-  profileToIdentityProfile: (profile) => ({
-    displayName: profile.name,
-    avatarUrl: profile.picture,
+Every provider takes these, plus its own extras:
+
+| Option | Notes |
+| --- | --- |
+| `clientId`, `clientSecret` | From the IdP's console. Apple takes a key instead of a secret. |
+| `redirectUri` | Must match what the IdP has registered, exactly. |
+| `stateSigningSecret` | Signs the `state`. Empty throws; `strict()` refuses one under 32 bytes in production. |
+| `nonceStore` | Burns each `state` on use, so a callback URL recovered from history or a log cannot sign in again. Required unless you pass `allowStateReplay: true`, which production refuses. `memoryDPoPNonceStore()` works for one process. |
+| `profileToIdentityProfile` | Builds the profile for a first-time user. Without it, or when it answers `null`, a first sign-in is refused. |
+| `onFederationConflict` | See [Linking](#linking-to-an-existing-account). Default `'reject'`. |
+| `onSignIn` | Replaces the lookup below entirely. |
+| `stateCookie` | The pre-auth cookie, `__Host-duck-oauth` by default. On plain-http development, pass `{ name: 'duck-oauth', secure: false }`. |
+| `scopes` | Replaces the default scopes. |
+
+## The routes
+
+A flow is two requests: `begin`, which sets the pre-auth cookie and redirects to the IdP, and the callback the IdP sends the browser back to. With Express:
+
+```ts
+import { applyIntents, expressCaller, mountProviderBegin } from '@gentleduck/auth/server/express'
+import { oauthCallback } from '@gentleduck/auth/server/generic'
+import express from 'express'
+
+app.post('/auth/providers/:id/begin', express.json(), mountProviderBegin(auth))
+
+const callback: express.RequestHandler = async (req, res) => {
+  const request = { body: req.body, cookie: req.headers.cookie, method: req.method, url: req.url }
+  const intents = await oauthCallback(auth, req.params.id, request, expressCaller(req))
+  applyIntents([...intents, { type: 'redirect', url: '/' }], res)
+}
+app.get('/auth/providers/:id/callback', callback)
+app.post('/auth/providers/:id/callback', express.urlencoded({ extended: false }), callback)
+```
+
+- In the browser, `client.beginProvider('oauth:google')` posts to `begin` and follows the IdP URL it answers.
+- The callback answers the session cookies and nothing else, so where the browser lands is yours: add the redirect, and on a thrown `AuthError`, redirect to your sign-in page with its code.
+- The POST route is only for Apple, which posts its callback as a form.
+
+The other [server adapters](/duck-auth/server) have the same pieces.
+
+## Who signs in
+
+On a callback, the provider finds the identity:
+
+1. One already linked to this provider account signs in.
+2. Otherwise, one owning the profile's email is a conflict, settled by `onFederationConflict`.
+3. Otherwise, `profileToIdentityProfile` creates one, linked to the provider account.
+
+A created identity starts with `emailVerified: false`: the IdP's claim is not a proof duck-auth made.
+
+## Linking to an existing account
+
+An existing account whose email matches is not linked by default. Linking on the IdP's word alone hands an account to anyone who can make an IdP assert its address.
+
+| `onFederationConflict` | Links when |
+| --- | --- |
+| `'reject'` (default) | Never; the sign-in throws `AUTH_PROVIDER_FAILED`. |
+| `'link-if-verified'` | The IdP marks the address verified and the existing identity proved it too. |
+| `(conflict) => 'link' \| 'reject'` | Your function says `'link'`; anything else refuses. |
+
+A signed-in user can link a provider deliberately with [`auth.flows.linkProvider`](/duck-auth/core/flows#linking-a-provider).
+
+## Any other IdP
+
+`oProvider` and `OAuthClient` from `@gentleduck/auth/providers/oauth/core` are what the six presets are built from:
+
+```ts
+import { getUserinfoString, OAuthClient, oProvider } from '@gentleduck/auth/providers/oauth/core'
+
+const gitlab = oProvider({
+  providerId: 'gitlab',
+  client: new OAuthClient({
+    clientId: process.env.GITLAB_CLIENT_ID ?? '',
+    clientSecret: process.env.GITLAB_CLIENT_SECRET ?? '',
+    endpoints: {
+      authorizationEndpoint: 'https://gitlab.com/oauth/authorize',
+      tokenEndpoint: 'https://gitlab.com/oauth/token',
+      userinfoEndpoint: 'https://gitlab.com/oauth/userinfo',
+    },
+    scopes: ['openid', 'email'],
   }),
+  redirectUri: 'https://app.example.com/auth/providers/oauth:gitlab/callback',
+  stateSigningSecret: process.env.OAUTH_STATE_SECRET ?? '',
+  nonceStore,
+  async fetchProfile(tokens, client) {
+    const info = await client.userinfo(tokens.access_token)
+    const sub = getUserinfoString(info, 'sub')
+    if (!sub) throw new Error('gitlab userinfo carried no sub')
+    return { sub, email: getUserinfoString(info, 'email') }
+  },
 })
 ```
 
-## What duck-auth handles for you
-
-Every OAuth provider gets:
-
-### PKCE S256
-
-A code verifier is minted at `begin`, the S256 challenge is sent to the
-IdP, and the verifier is round-tripped through state. At `complete`,
-the verifier is sent on the token exchange. This is **not optional** -
-duck-auth always uses PKCE, even for confidential clients.
-
-### Signed `state`
-
-The `state` parameter is signed (HMAC-SHA256) by `stateSigningSecret`,
-includes the PKCE verifier, an expiry timestamp (10 minutes), and a
-nonce. At `complete`, the signature is verified and the timestamp
-checked. Tampering or replay returns `AUTH/OAUTH_STATE_MISMATCH`.
-
-### OIDC `nonce` (for OIDC providers)
-
-For providers that issue an `id_token` (Google, LinkedIn, Microsoft,
-Apple), a `nonce` is generated at `begin`, included in the authorize
-URL, and verified against the JWT claim at `complete`. Re-use of the
-same `nonce` returns `AUTH/OAUTH_NONCE_REPLAY`.
-
-### Refresh-token family reuse detection
-
-Per RFC 6749 section 10.4, refresh tokens are rotated on every use and tracked
-in a **family**. If a refresh token is presented twice (once by the
-legitimate client, once by a stolen copy), duck-auth revokes the entire
-family and returns `AUTH/OAUTH_REUSE_DETECTED`. The user is forced
-through a fresh authorize hop.
-
-### CSRF defence via signed state
-
-`state` is the OAuth CSRF defence: the request returns to your callback
-with the signed state, which must match what was minted at `begin`.
-duck-auth uses HMAC, not opaque storage, so the defence works without
-a session store hit.
-
-## Wiring sign-in
-
-```typescript
-// Client
-await client.beginProvider('google', {})
-// -> response includes a redirect intent; the framework adapter sets
-//   the Location header and the browser follows.
-
-// After Google bounces back:
-// (your /auth/google/callback handler)
-await client.signIn({
-  providerId: 'google',
-  input: { code, state, codeVerifier },
-})
-// -> 200 { session, identity }
-```
-
-The mounted server adapter handles the OAuth callback parsing for you;
-you only need to call `signIn`.
-
-## Generic OAuth
-
-For an IdP not yet shipped, use `oauthProvider` directly:
-
-```typescript
-import { oauthProvider } from '@gentleduck/auth/providers/oauth'
-
-const customIdp = oauthProvider({
-  providerId: 'my-idp',
-  authorizationEndpoint: 'https://idp.example.com/authorize',
-  tokenEndpoint: 'https://idp.example.com/token',
-  userInfoEndpoint: 'https://idp.example.com/userinfo',
-  // ... same options as shipped providers
-})
-```
+`fetchProfile` answers `{ sub, email?, emailVerified?, name?, avatarUrl? }`. Set `emailVerified` only on a literal `true` from the IdP, since `'link-if-verified'` trusts it.
 
 ## Errors
 
-| Code | When |
+| Code | Cause |
 | --- | --- |
-| `AUTH/PROVIDER_FAILED` | IdP returned a non-2xx (Google rejected the code, Apple JWKS unreachable). |
-| `AUTH/OAUTH_STATE_MISMATCH` | Signed state failed verification or expired. |
-| `AUTH/OAUTH_NONCE_REPLAY` | OIDC `nonce` already seen. |
-| `AUTH/OAUTH_REUSE_DETECTED` | Refresh-token family reuse - entire family revoked. |
+| `AUTH_OAUTH_STATE_MISMATCH` | The `state` does not verify, is over ten minutes old, or reached a browser without the pre-auth cookie. |
+| `AUTH_OAUTH_NONCE_REPLAY` | The callback was already used. |
+| `AUTH_PROVIDER_FAILED` | The IdP refused the code, the profile had no subject, a conflict was refused, or `profileToIdentityProfile` answered `null`. |
+
+When a sign-in is refused after the code was exchanged, the tokens are revoked at the IdP where it supports revocation.

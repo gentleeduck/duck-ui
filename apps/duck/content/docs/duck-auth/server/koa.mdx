@@ -1,72 +1,44 @@
 ---
-title: Koa adapter
-description: Koa 2+ middleware. Composes naturally with koa-router and koa-bodyparser.
+title: Koa
+description: Mounting the auth routes on Koa with @koa/router, guarding your own routes, and binding the actor
 section: Server
 ---
-
-## Setup
-
-```typescript
-import Koa from 'koa'
-import Router from '@koa/router'
-import bodyParser from 'koa-bodyparser'
+```ts
 import {
-  authKoaProviderBegin,
-  authKoaSession,
-  authKoaSignIn,
-  authKoaSignOut,
+  koaActorContext,
+  koaCsrf,
+  koaProviderBegin,
+  koaProviderCallback,
+  koaSession,
+  koaSignIn,
+  koaSignOut,
 } from '@gentleduck/auth/server/koa'
-import { auth } from './lib/auth'
+import { bodyParser } from '@koa/bodyparser'
+import Router from '@koa/router'
+import Koa from 'koa'
 
-const app = new Koa()
+const app = new Koa({ proxy: true })
 const router = new Router()
 
-app.use(bodyParser())
+router.post('/auth/signin', koaSignIn(auth))
+router.post('/auth/signout', koaSignOut(auth))
+router.get('/auth/session', koaSession(auth))
+router.post('/auth/providers/:id/begin', koaProviderBegin(auth))
+router.get('/auth/providers/:id/callback', koaProviderCallback(auth))
+router.post('/auth/providers/:id/callback', koaProviderCallback(auth))
 
-router.post('/auth/signin', authKoaSignIn(auth))
-router.post('/auth/signout', authKoaSignOut(auth))
-router.get('/auth/session', authKoaSession(auth))
-router.post('/auth/providers/:providerId/begin', (ctx) =>
-  authKoaProviderBegin(auth, ctx.params.providerId)(ctx),
-)
-// OAuth callbacks reuse the sign-in handler.
-router.get('/auth/google/callback', authKoaSignIn(auth))
-
+app.use(bodyParser({ enableTypes: ['json', 'form'] }))
 app.use(router.routes())
-app.use(router.allowedMethods())
-
-app.listen(3000)
 ```
 
-## Resolving sessions
+- The handlers read `ctx.request.body`, so a body parser goes first. `form` is for Apple, which posts its callback as a form.
+- `proxy: true` makes `ctx.request.ip` read the forwarded address, and so what the session records. Leave it off unless a proxy you control sets that header.
+- The callback answers the session cookies and an empty 200. To land the browser on a page, write the callback yourself, as on the [OAuth page](/duck-auth/providers/oauth#the-routes).
 
-```typescript
-import { AuthError } from '@gentleduck/auth/core'
+## Your own routes
 
-router.get('/api/me', async (ctx, next) => {
-  const auth_ctx = await auth.resolveSession(ctx.req)
-  if (!auth_ctx) {
-    ctx.status = 401
-    ctx.body = { code: 'AUTH/UNAUTHENTICATED' }
-    return
-  }
-  ctx.body = auth_ctx.identity
-})
+```ts
+router.use('/api', koaCsrf(auth), koaActorContext(auth))
 ```
 
-## Error handling
-
-```typescript
-app.use(async (ctx, next) => {
-  try {
-    await next()
-  } catch (err) {
-    if (err instanceof AuthError) {
-      ctx.status = err.status
-      ctx.body = err.toJSON()
-      return
-    }
-    throw err
-  }
-})
-```
+`koaActorContext` throws a refusal to Koa, which answers it at the error's `status`. `koaCaller(ctx)` is the IP and User-Agent to pass to a flow you call yourself, and `koaApplyIntents(intents, ctx)` writes its answer onto the context.

@@ -1,106 +1,21 @@
 ---
 title: CompositeTransport
-description: Try several transports in order. Cookie on the web app, Bearer on the API, same origin.
+description: Serve browsers and native clients from one backend by combining transports, and what happens when a request carries two credentials
 section: Core
 ---
+A composite runs several transports as one: it reads the credential from whichever the request used, and issues and revokes through all of them.
 
-## When to use
+```ts
+import { bearerTransport, compositeTransport, cookieTransport } from '@gentleduck/auth/core/transport'
 
-`CompositeTransport` lets you run **two or more** transports off a single
-`AuthEngine`. The typical case: you serve a first-party web app and a
-public API from the same hostname.
-
-```
-Web app (HTML, fetch with cookies)      ->  CookieTransport
-API clients (CLI, mobile, integrations) ->  BearerTransport
-```
-
-`CompositeTransport` tries each transport in order. The first one that
-extracts a session wins.
-
-## Constructor
-
-```typescript
-import {
-  BearerTransport,
-  CompositeTransport,
-  CookieTransport,
-} from '@gentleduck/auth/core/transport'
-
-const transport = new CompositeTransport({
-  primary: new CookieTransport({ secure: true }),
-  fallback: [
-    new BearerTransport(),
-  ],
-})
-
-export const auth = new AuthEngine({ transport, /* ... */ })
-```
-
-- `primary` - the transport used for issuing sessions (sign-in, refresh).
-- `fallback` - additional transports that are only consulted on
-  `extract()`. They never issue.
-
-Order matters: `primary` is tried first.
-
-## Issue semantics
-
-When the runtime issues a session (after a successful sign-in or rotation),
-only `primary` is used:
-
-```typescript
-const intents = await auth.flows.signIn({ providerId: 'password', input })
-// transport.primary.issue() runs; fallbacks are not involved
-```
-
-This keeps the wire shape consistent - a sign-in via the web app sets
-a cookie; a sign-in via the API returns a bearer token (configure the
-API path to use a different `auth` instance with `BearerTransport` as
-primary if you need both).
-
-## Extract semantics
-
-`extract()` walks the chain:
-
-```
-1. primary.extract(req)        -> CookieTransport
-   if returns a value -> use it
-2. fallback[0].extract(req)    -> BearerTransport
-   if returns a value -> use it
-3. ...
-4. all returned null -> request is unauthenticated
-```
-
-The first transport to return a non-null result wins. Subsequent
-transports do not run, so order matters when both could legitimately
-match (e.g. a request with both a cookie and a bearer header - cookie
-wins, because cookies are the safer first-party path).
-
-## Mixing JwtTransport and CookieTransport
-
-A common production posture is **JWT for the API, cookie for the web app**:
-
-```typescript
-const transport = new CompositeTransport({
-  primary: new CookieTransport({ secure: true }),
-  fallback: [
-    new JwtTransport({
-      signKey: { kid: 'k1', key: process.env.JWT_HS256! },
-      verifyKeys: [{ kid: 'k1', key: process.env.JWT_HS256! }],
-      issuer: 'https://api.example.com',
-      ttlMs: 15 * 60 * 1000,
-    }),
-  ],
+createAuth({
+  // ...
+  transport: compositeTransport([cookieTransport(), bearerTransport()]),
 })
 ```
 
-Now your `/api/*` routes accept JWTs from machine clients **and** cookies
-from the web app - same handler, same `auth.resolveSession()` call.
+A sign-in then sets the session and CSRF cookies and answers `{ token, expiresAt }` in the body, so a browser and a native app use the same endpoint.
 
-## Caveat: CSRF only on cookie path
-
-`authCsrfGuard()` only runs CSRF checks if the resolved session came in via
-a cookie. Bearer/JWT routes are exempt (no cookies, no CSRF) - but the
-mixed router still needs to call `authCsrfGuard()` defensively. The guard
-reads the transport hint and silently passes through for non-cookie
-sessions.
+- **Extract** asks every member. A request presenting two different credentials, such as a cookie for one user and a bearer for another, is refused with `AUTH_INVALID_CREDENTIALS`, as RFC 6750 requires. `{ onMultipleCredentials: 'first' }` takes the first member's instead.
+- **Verify** tries each member that can verify, and falls back to the session store when none vouches.
+- **Issue and revoke** run through every member. Two members that both answer a JSON body, such as bearer and JWT, cannot be combined: a response has one body, so the first sign-in throws `AUTH_MISCONFIGURED`.

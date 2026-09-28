@@ -1,130 +1,67 @@
 ---
-title: Generic Web-Fetch adapter
-description: Mount duck-auth on any runtime that speaks the Web-Fetch Request / Response standard. Bun, Deno, Cloudflare Workers, Service Workers - all work.
+title: Fetch runtimes
+description: Serving the auth routes on Bun, Deno or Cloudflare Workers, and the building blocks for a route or adapter of your own
 section: Server
 ---
+The Next.js adapter is plain `(req: Request) => Promise<Response>` with no Next import, so it serves any Fetch runtime. On Bun:
 
-## When to use
+```ts
+import { mountNext, nextWithActor, withNextCsrf } from '@gentleduck/auth/server/next'
 
-The generic adapter is the lowest-level mount point. It exposes:
-
-- `authExecuteIntents(intents, baseStatus?) -> Response` - turn `Intent[]`
-  into a `Response`.
-- `parseSignInBody(raw)` - validate a sign-in JSON payload.
-- `parseProviderBeginBody(raw)` - validate a provider-begin payload.
-
-Use it when:
-
-- Your framework isn't on the shipped-adapters list and you don't want
-  to PR a new adapter.
-- You need to customise the response shape (e.g. wrap everything in
-  `{ ok: true, data: ... }`).
-- You're writing a Service Worker that intercepts auth calls client-side.
-
-## Bun (native)
-
-```typescript
-import { authExecuteIntents, parseSignInBody } from '@gentleduck/auth/server/generic'
-import { auth } from './lib/auth'
+const { GET, POST } = mountNext(auth)
+const profile = withNextCsrf(auth, nextWithActor(auth, updateProfile))
 
 Bun.serve({
-  port: 3000,
-  async fetch(req) {
-    const url = new URL(req.url)
-
-    if (url.pathname === '/auth/signin' && req.method === 'POST') {
-      const body = parseSignInBody(await req.json())
-      if (!body) return new Response('Bad Request', { status: 400 })
-
-      const intents = await auth.flows.signIn(body)
-      return authExecuteIntents(intents)
-    }
-
-    if (url.pathname === '/auth/session' && req.method === 'GET') {
-      const ctx = await auth.resolveSession(req)
-      if (!ctx) return new Response('Unauthorized', { status: 401 })
-      return Response.json(ctx)
-    }
-
-    return new Response('Not Found', { status: 404 })
+  fetch(req) {
+    const { pathname } = new URL(req.url)
+    if (pathname.startsWith('/auth/')) return req.method === 'POST' ? POST(req) : GET(req)
+    if (pathname === '/api/profile') return profile(req)
+    return new Response('Not found', { status: 404 })
   },
 })
 ```
 
-## Deno
+Deno's `Deno.serve` and a Worker's `fetch` take the same function. A `Request` carries no client IP, so sessions record only the User-Agent; to record the IP, write the sign-in route yourself, as below.
 
-```typescript
-import { authExecuteIntents } from '@gentleduck/auth/server/generic'
-import { auth } from './lib/auth.ts'
+## Building blocks
 
-Deno.serve({ port: 3000 }, async (req) => {
-  const url = new URL(req.url)
-  if (url.pathname === '/auth/signin' && req.method === 'POST') {
-    const body = await req.json()
-    const intents = await auth.flows.signIn(body)
-    return authExecuteIntents(intents)
-  }
-  // ...
-  return new Response('Not Found', { status: 404 })
-})
-```
+`@gentleduck/auth/server/generic` is what every adapter is built from:
 
-## Cloudflare Workers
+| Export | Does |
+| --- | --- |
+| `executeIntents(intents)` | A flow's intents as a `Response`: cookies, redirect, JSON body, `no-store`. Refuses an unsafe redirect. |
+| `errorResponse(err)` | A thrown error as the adapters answer it, the cause of a 5xx logged and withheld. `errorToHttp` is the same as `{ status, body }`. |
+| `jsonResponse(status, body)` | A JSON `Response` with `no-store`. |
+| `readBodyJson(req)`, `readBodyText(req)` | The body, `null` past 100 KiB or when it does not parse. |
+| `parseSignInBody`, `parseProviderBeginBody`, `parseBodyStringField` | Validate a parsed body. |
+| `oauthCallback(auth, id, req, caller)` | Finishes an OAuth sign-in from the callback's query or form body. |
+| `redirectForScript(intents, headers)` | Turns `begin`'s redirect into `{ url }` JSON for a request that accepts JSON: a script cannot follow a redirect to the IdP. |
+| `callerContext({ ip, userAgent })` | The caller fingerprint a flow takes, trimmed to what the session row holds. |
+| `requestSecurity(auth, { caller })` | The hijack and anomaly hooks the actor wrappers run. |
+| `nodeHeadersToFetch(headers)` | A Node header object as `Headers`. |
+| `isSafeRedirectUrl`, `isValidProviderId`, `serializeCookie` | The checks and cookie writer the rest use. |
 
-```typescript
-import { authExecuteIntents } from '@gentleduck/auth/server/generic'
+A sign-in route that records the IP:
 
-export default {
-  async fetch(req: Request, env: Env): Promise<Response> {
-    const auth = createAuthForRequest(env)
-    const url = new URL(req.url)
+```ts
+import { csrfGuard } from '@gentleduck/auth/core'
+import { callerContext, errorResponse, executeIntents, parseSignInBody, readBodyJson } from '@gentleduck/auth/server/generic'
 
-    if (url.pathname === '/auth/signin' && req.method === 'POST') {
-      const intents = await auth.flows.signIn(await req.json())
-      return authExecuteIntents(intents)
-    }
-    return new Response('Not Found', { status: 404 })
-  },
-}
-```
-
-## Custom intent processing
-
-If you need to wrap the response or add headers:
-
-```typescript
-import { authExecuteIntents } from '@gentleduck/auth/server/generic'
-
-const baseResponse = authExecuteIntents(intents)
-
-// Read the body, wrap it, return a new Response with the same headers.
-const wrapped = new Response(
-  JSON.stringify({ ok: true, data: await baseResponse.json() }),
-  {
-    status: baseResponse.status,
-    headers: baseResponse.headers,
-  },
-)
-
-return wrapped
-```
-
-For more sophisticated needs (different status codes, redirects to your
-SPA after sign-in), construct the response by walking the intents:
-
-```typescript
-for (const intent of intents) {
-  switch (intent.kind) {
-    case 'startSession':
-      // mint cookie/token, attach to response
-      break
-    case 'redirect':
-      return Response.redirect(intent.url, intent.status ?? 302)
-    case 'json':
-      return Response.json(intent.body, { status: intent.status })
+async function signIn(req: Request, ip: string): Promise<Response> {
+  try {
+    await csrfGuard(auth, req)
+    const body = parseSignInBody(await readBodyJson(req))
+    if (!body) return executeIntents([{ type: 'error', code: 'AUTH_INVALID_CREDENTIALS', status: 400 }])
+    const { intents } = await auth.flows.signIn({
+      ...body,
+      ...callerContext({ ip, userAgent: req.headers.get('user-agent') }),
+      previousSid: auth.transport.extract(req) ?? undefined,
+    })
+    return executeIntents(intents)
+  } catch (err) {
+    return errorResponse(err)
   }
 }
 ```
 
-This is rarely necessary - the shipped adapters cover 99% of cases -
-but the door is open.
+`previousSid` lets the flow revoke the session the browser held before, so signing in again never leaves two.

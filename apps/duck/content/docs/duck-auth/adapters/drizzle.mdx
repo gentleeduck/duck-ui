@@ -1,0 +1,42 @@
+---
+title: Drizzle
+description: The Postgres, MySQL and SQLite adapters over Drizzle, their tables, and generating the migration
+section: Adapters
+---
+One adapter per dialect, each holding all three stores:
+
+```ts
+import { drizzlePgAdapter } from '@gentleduck/auth/adapters/drizzle/pg'
+
+createAuth({
+  // ...
+  stores: drizzlePgAdapter(db),
+})
+```
+
+| Dialect | Import | Takes | Driver |
+| --- | --- | --- | --- |
+| Postgres | `adapters/drizzle/pg` | `drizzlePgAdapter(db \| pool \| url)` | `pg` |
+| MySQL | `adapters/drizzle/mysql` | `drizzleMysqlAdapter(db \| pool \| url)` | `mysql2` |
+| SQLite | `adapters/drizzle/sqlite` | `drizzleSqliteAdapter(db \| database \| path)` | `better-sqlite3`, or any drizzle sqlite handle |
+
+`drizzle-orm` and the driver are optional peers: install the ones you use. Given a connection string or a path, the adapter opens its own pool; given your drizzle handle, it shares your connection, which is what [`withTransaction`](/duck-auth/adapters#transactions) needs.
+
+## The tables
+
+Four tables, each under an `auth_` prefix: identities, their provider logins, credentials and sessions. Re-export them from your Drizzle schema so `drizzle-kit generate` writes their migration beside your own:
+
+```ts
+// src/schema.ts
+export { authCredentials, authIdentities, authIdentityProviders, authSessions } from '@gentleduck/auth/adapters/drizzle/pg'
+```
+
+Then pass that schema to `drizzle(pool, { schema })`, and the tables are yours to query too. Each dialect exports its own set, and an `auth<Dialect>Schema` object holding all four with their relations.
+
+- Emails and usernames are unique case-insensitively.
+- Credentials and sessions carry a `tenant_id`; identities are global.
+- Deleting an identity cascades to its logins, credentials and sessions. On SQLite, the adapter turns on the foreign keys this needs, per connection.
+
+## Reading the JSON columns
+
+Profiles, factors and provider links are JSON columns. To read them from your own queries the way the adapter does, `@gentleduck/auth/adapters/drizzle` exports its parsers: `parseProviders`, `parseFactors`, `parseActingAs`, `fromJsonColumn` and `storedDate`.

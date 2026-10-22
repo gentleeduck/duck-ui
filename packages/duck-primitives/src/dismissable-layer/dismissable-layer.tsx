@@ -40,7 +40,9 @@ function useDismissableLayer<E extends HTMLElement>(
   useLayoutEffect(() => {
     const node = nodeRef.current
     const layer = layerRef.current
-    if (layer && layer.node === node) return updateLayer(stack, layer, disableOutsidePointerEvents, ownsPointerEvents)
+    if (layer && layer.node === node) {
+      return updateLayer(stack, layer, disableOutsidePointerEvents, ownsPointerEvents, props.style?.pointerEvents)
+    }
     if (layer) leaveLayer(stack, layer)
     layerRef.current = node && enterLayer(stack, node, owner, disableOutsidePointerEvents, ownsPointerEvents)
   })

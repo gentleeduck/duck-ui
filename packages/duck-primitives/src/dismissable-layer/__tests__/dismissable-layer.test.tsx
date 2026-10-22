@@ -372,6 +372,27 @@ describe('DismissableLayer whose element changes', () => {
     expect(document.body.style.pointerEvents).toBe('auto')
   })
 
+  it('gives back the pointer events of an element whose style takes them over as undefined', () => {
+    function Hooked({ style }: { style: React.CSSProperties }) {
+      return <div data-testid="hooked" style={style} {...useDismissableLayer<HTMLDivElement>({ style })} />
+    }
+    function Test({ style, modal }: { style: React.CSSProperties; modal: boolean }) {
+      return (
+        <>
+          <Hooked style={style} />
+          {modal ? <DismissableLayer disableOutsidePointerEvents /> : null}
+        </>
+      )
+    }
+    const { rerender } = render(<Test style={{}} modal />)
+    const blocked = screen.getByTestId('hooked').style.pointerEvents
+
+    rerender(<Test style={{ pointerEvents: undefined }} modal />)
+    rerender(<Test style={{ pointerEvents: undefined }} modal={false} />)
+
+    expect([blocked, screen.getByTestId('hooked').style.pointerEvents]).toEqual(['none', ''])
+  })
+
   it('gives an element the hook lets go of, and that stays, the pointer events it had', () => {
     function Hooked({ on }: { on: string }) {
       const layer = useDismissableLayer<HTMLDivElement>({})

@@ -27,14 +27,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 114 | `dismissable-layer.radix.test.tsx` 35, `dismissable-layer.test.tsx` 79 |
+| Unit | 115 | `dismissable-layer.radix.test.tsx` 35, `dismissable-layer.test.tsx` 80 |
 | End to end | 31 | `dismissable-layer.e2e.ts` 31 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>145 behaviours, one per test</summary>
+<summary>146 behaviours, one per test</summary>
 
 **Unit, `dismissable-layer.test.tsx`**
 
@@ -69,6 +69,7 @@ Each test was proven by changing the code and watching a test fail.
   - leaves Escape to the highest layer only in the document it is pressed in
 - DismissableLayer whose element changes
   - keeps the new element interactive over the page it locks, and gives the page back its own value
+  - gives back the pointer events of an element whose style takes them over as undefined
   - gives an element the hook lets go of, and that stays, the pointer events it had
 - DismissableLayer outside a deferred press
   - waits for the click after a touch even without deferPointerDownOutside
@@ -264,7 +265,7 @@ Against Radix 1.1.19, the version `@radix-ui/react-dialog` 1.1.23 ships.
 - A press inside the layer that is stopped before it reaches the document no longer makes the layer miss the
   next press outside, and an `onPointerDownCapture` that prevents the default no longer makes a press inside read
   as outside. Radix's layer misses or dismisses on both.
-- These fixes cost 383 bytes, and the module is 4,154 bytes gzipped against Radix's 3,785.
+- These fixes cost 380 bytes, and the module is 4,151 bytes gzipped against Radix's 3,785.
 
 ## Smaller and faster
 

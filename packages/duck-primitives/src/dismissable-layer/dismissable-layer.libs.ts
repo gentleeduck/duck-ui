@@ -165,10 +165,18 @@ export function leaveLayer(stack: LayerStack, layer: Layer) {
   restack(stack)
 }
 
-export function updateLayer(stack: LayerStack, layer: Layer, disables: boolean, ownsPointerEvents: boolean) {
+export function updateLayer(
+  stack: LayerStack,
+  layer: Layer,
+  disables: boolean,
+  ownsPointerEvents: boolean,
+  consumerPointerEvents: string | undefined,
+) {
   if (layer.disables === disables && layer.ownsPointerEvents === ownsPointerEvents) return
   setDisables(layer, disables)
   if (ownsPointerEvents && !layer.ownsPointerEvents) layer.ownPointerEvents = layer.node.style.pointerEvents
+  // React writes nothing for a style set to undefined that it never set, which would leave the stack's value.
+  if (!ownsPointerEvents && layer.pointerEvents !== null) layer.node.style.pointerEvents = consumerPointerEvents ?? ''
   layer.ownsPointerEvents = ownsPointerEvents
   restack(stack)
 }

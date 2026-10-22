@@ -34,6 +34,7 @@ test.describe('RovingFocusGroup', () => {
     await expect(tabStop(page)).toHaveText('Bold')
 
     await page.keyboard.press('ArrowRight')
+    await expect(tool(page, 'Italic')).toBeFocused()
     await page.keyboard.press('Tab')
 
     await expect(page.getByRole('button', { name: 'After' })).toBeFocused()

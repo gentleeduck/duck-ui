@@ -85,7 +85,7 @@ const MotionSelectTrigger = React.forwardRef<React.ComponentRef<typeof SelectPri
         ref={ref}
         data-slot="select-trigger"
         className={cn(
-          'flex h-9 min-w-32 select-none items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs ring-offset-background focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-placeholder:text-muted-foreground [&>span]:line-clamp-1',
+          'flex h-8 min-w-32 select-none items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 text-sm shadow-xs ring-offset-background focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-placeholder:text-muted-foreground [&>span]:line-clamp-1',
           className,
         )}
         {...props}>

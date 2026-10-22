@@ -31,14 +31,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 90 | `associated-form.test.ts` 6, `compose-ref.test.tsx` 4, `create-collection.test.tsx` 17, `create-context.test.tsx` 9, `get-component-ref.test.ts` 4, `join-ids.test.ts` 3, `list-navigation.test.tsx` 27, `primitives-utils.test.ts` 20 |
+| Unit | 92 | `associated-form.test.ts` 8, `compose-ref.test.tsx` 4, `create-collection.test.tsx` 17, `create-context.test.tsx` 9, `get-component-ref.test.ts` 4, `join-ids.test.ts` 3, `list-navigation.test.tsx` 27, `primitives-utils.test.ts` 20 |
 | End to end | 0 | - |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>90 behaviours, one per test</summary>
+<summary>92 behaviours, one per test</summary>
 
 **Unit, `primitives-utils.test.ts`**
 
@@ -123,6 +123,8 @@ Each test was proven by changing the code and watching a test fail.
   - finds the form around the control when no form is named
   - finds the form a name points to over the one around the control
   - finds no form when the name points to an element that is not one
+  - finds no form for an empty name, not even the one around the control
+  - looks the name up in the control's own shadow root
   - finds no form without a control
   - looks the name up in the control's own document, such as an iframe's
   - finds a form from another window, such as the one around a control in an iframe

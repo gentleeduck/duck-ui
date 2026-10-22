@@ -16,7 +16,7 @@ Smaller than all 5. Faster in all 15 timed comparisons.
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI | Headless UI |
 |---|--:|--:|--:|--:|--:|--:|
-| Size, gzipped bytes | 7,258 | 10,371 (0.70x) | 11,893 (0.61x) | 17,931 (0.40x) | 11,401 (0.64x) | 11,969 (0.61x) |
+| Size, gzipped bytes | 7,351 | 10,371 (0.71x) | 11,893 (0.62x) | 17,931 (0.41x) | 11,401 (0.64x) | 11,969 (0.61x) |
 | Mount x100, ms | 6.33 | 38.4 (0.16x) | 21.2 (0.30x) | 48.3 (0.13x) | 28.6 (0.22x) | 15.1 (0.42x) |
 | Update x100, ms | 6.09 | 13.5 (0.45x) | 11.9 (0.51x) | 19.7 (0.31x) | 20.1 (0.30x) | 7.16 (0.85x) |
 | Unmount x100, ms | 1.43 | 3.03 (0.47x) | 2.64 (0.54x) | 4.79 (0.30x) | 1.72 (0.83x) | 1.56 (0.92x) |
@@ -39,14 +39,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 124 | `radio-group.radix.test.tsx` 49, `radio-group.test.tsx` 75 |
+| Unit | 135 | `radio-group.radix.test.tsx` 49, `radio-group.test.tsx` 86 |
 | End to end | 10 | `radio-group.e2e.ts` 10 |
 | registry-ui | 12 | `radio-group.test.tsx` 12 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>134 behaviours, one per test</summary>
+<summary>145 behaviours, one per test</summary>
 
 **Unit, `radio-group.radix.test.tsx`**
 
@@ -157,6 +157,10 @@ Each test was proven by changing the code and watching a test fail.
   - announces itself read-only
   - ignores a click
   - moves focus on an arrow key without checking the radio it lands on
+- RadioGroup cleared to null
+  - leaves an item valued with an empty string unchecked
+  - refuses a submit while required, though an item is valued with an empty string
+  - hands onValueChange null when a form reset takes it back to no pick
 - RadioGroup in a form
   - tells the form once when a radio is picked
   - fires no click when it mounts with a radio checked
@@ -170,6 +174,11 @@ Each test was proven by changing the code and watching a test fail.
   - runs an onFocus given to a hidden input before handing the focus on
   - restores its pick on reset when it renders into another document, such as an iframe
   - restores the inputs on reset without telling the form, as native radios do
+- RadioGroup reset by its form
+  - restores its pick when the form it names renders after it
+  - keeps its pick when the form around it resets and its form is set empty
+  - submits the pick it shows after two resets, once its name came after a change
+  - submits the pick it shows when its parent declines the reset
 - RadioGroup after a reset
   - tells the form about the next change once a reset restored a pick
   - tells the form about the next change after a second reset
@@ -177,8 +186,11 @@ Each test was proven by changing the code and watching a test fail.
 - RadioGroup typeahead
   - matches an item by its textValue rather than what it shows
   - skips a disabled item
+- RadioGroup typeahead where the browser has checkVisibility
+  - skips a hidden item
 - RadioGroup typeahead sources
   - matches an item by its aria-label when it has no textValue
+  - leaves a letter typed in a group nested inside it to that group
   - stays out of a group nested inside it
 - RadioGroup arrow keys
   - wraps from the last radio to the first by default
@@ -188,8 +200,10 @@ Each test was proven by changing the code and watching a test fail.
   - hands focus entering the group to the checked radio
 - RadioGroup picking the checked radio
   - leaves the next change audible when its click stopped propagating
+  - tells the form about a change its parent makes after declining a pick whose click stopped propagating
   - does not report a change
 - RadioGroup disabled
+  - checks no disabled item through a trigger slotted onto an element with no disabled state
   - marks the group for styling
 - RadioGroup outside a form
   - renders no hidden input without a name
@@ -244,10 +258,23 @@ Each test was proven by changing the code and watching a test fail.
 - Picking a radio tells its form once, through the hidden input, and a click handler that stops
   propagation keeps the form from hearing it.
 - `required` reaches the hidden inputs, so a form refuses to submit with nothing selected.
-- A form reset puts back the starting value and fires nothing.
+- A form reset puts back the starting value and fires nothing. The group finds its form as the form resets, so a
+  form named by `form` that renders after the group resets it too, `form=""` ties it to no form, and a form named
+  inside a shadow root is found there, as for a native input. Radix looks the form up once, in the document, and
+  reads `form=""` as no `form` at all.
+- The hidden inputs follow the pick the group shows once a reset is done, so the form submits what the group shows
+  when its parent declines the reset or the group gained its `name` after a change. Radix's take back the pick they
+  mounted with.
+- `value={null}` leaves an item valued `""` unchecked, as Radix does, so a required group cleared to `null` still
+  refuses an empty submit.
 - Typing a letter and `G` select: the group read its radios from a collection it had not rendered yet and
   always found none. Typeahead matches `textValue`, then `aria-label`, then the text, and skips a nested
-  group's radios. Typing the focused radio's name keeps focus on it.
+  group's radios. Typing the focused radio's name keeps focus on it. A key pressed in a nested group is left to
+  that group, where both groups moved focus, and typeahead, `g g` and `G` skip a hidden radio.
+- A disabled item given a trigger slotted onto an element with no disabled state, such as a `span`, checks
+  nothing when clicked.
+- A pick whose click stopped propagating keeps the form from hearing only that pick, not a different value the
+  parent sets after declining it.
 - Enter no longer clicks a radio.
 - `g g`, `G` or a typed letter right after another press on a busy page focused its radio without
   checking it. The page ran the earlier press's late clear after the next press began, which ended that
@@ -278,6 +305,8 @@ Each test was proven by changing the code and watching a test fail.
 - `IRadioGroup` drops `INavigationItem`, `IBubbleInputProps` and the context's `dir`;
   `IItemBubbleInputProps` types the new input part.
 - A radio carries no `data-collection-item` attribute.
+- `onValueChange` is typed `string | null`, since a form reset back to no pick calls it with `null`, as Radix's
+  does though it types `string`.
 
 ## registry-ui
 

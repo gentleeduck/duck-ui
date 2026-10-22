@@ -82,8 +82,8 @@ function useRadioGroupItemTrigger(
       {...triggerProps}
       {...item.handlers}
       onClick={composeEventHandlers(triggerProps.onClick, (event) => {
-        if (!checked && !context.readOnly) {
-          context.silentChangeRef.current = event.isPropagationStopped()
+        if (!checked && !disabled && !context.readOnly) {
+          context.silentValueRef.current = event.isPropagationStopped() ? value : undefined
           context.onValueChange(value)
         }
       })}

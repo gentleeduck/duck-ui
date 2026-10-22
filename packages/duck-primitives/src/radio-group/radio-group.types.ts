@@ -8,7 +8,7 @@ export namespace IRadioGroup {
   export type IScoped<TProps> = TProps & { __scopeRadioGroup?: Scope }
 
   export interface IContext {
-    value: string
+    value: string | null
     onValueChange(value: string): void
     disabled: boolean
     readOnly: boolean
@@ -17,7 +17,7 @@ export namespace IRadioGroup {
     form: string | undefined
     groupRef: React.RefObject<HTMLDivElement | null>
     isNavigationKeyPressedRef: React.RefObject<boolean>
-    silentChangeRef: React.RefObject<boolean>
+    silentValueRef: React.RefObject<string | null | undefined>
   }
 
   export interface IItemContext {
@@ -34,7 +34,7 @@ export namespace IRadioGroup {
   export interface IProps extends PrimitiveDivProps {
     value?: string | null
     defaultValue?: string
-    onValueChange?(value: string): void
+    onValueChange?(value: string | null): void
     disabled?: boolean
     readOnly?: boolean
     required?: boolean

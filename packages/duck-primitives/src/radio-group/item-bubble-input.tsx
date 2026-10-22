@@ -3,7 +3,7 @@ import { composeEventHandlers } from '../libs/compose-event-handler'
 import { useComposedRefs } from '../libs/compose-ref'
 import { Primitive } from '../primitive-elements'
 import { useRadioGroupContext, useRadioGroupItemContext } from './radio-group'
-import { getEnabledRadios } from './radio-group.libs'
+import { getNavigableRadios } from './radio-group.libs'
 import type { IRadioGroup } from './radio-group.types'
 
 const BUBBLE_INPUT_NAME = 'RadioGroupItemBubbleInput'
@@ -13,7 +13,7 @@ const RadioGroupItemBubbleInput = React.forwardRef<
   IRadioGroup.IScoped<IRadioGroup.IItemBubbleInputProps>
 >((props, forwardedRef) => {
   const { __scopeRadioGroup, ...inputProps } = props
-  const { required, name, form, groupRef, silentChangeRef } = useRadioGroupContext(BUBBLE_INPUT_NAME, __scopeRadioGroup)
+  const { required, name, form, groupRef, silentValueRef } = useRadioGroupContext(BUBBLE_INPUT_NAME, __scopeRadioGroup)
   const { value, checked, disabled } = useRadioGroupItemContext(BUBBLE_INPUT_NAME, __scopeRadioGroup)
   const ref = React.useRef<HTMLInputElement>(null)
   const composedRefs = useComposedRefs(forwardedRef, ref)
@@ -26,14 +26,27 @@ const RadioGroupItemBubbleInput = React.forwardRef<
     prevCheckedRef.current = checked
     if (!input || !checkedChanged) return
     // A native radio fires nothing when unchecked or reset, and the setter keeps React's value tracker in step.
-    if (!checked || silentChangeRef.current) {
+    if (!checked || silentValueRef.current === value) {
       input.checked = checked
       return
     }
     // The prototype setter skips React's value tracker, so React reads this click as a change and calls onChange.
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'checked')?.set?.call(input, true)
     input.dispatchEvent(new Event('click', { bubbles: true }))
-  }, [checked, silentChangeRef])
+  }, [checked, value, silentValueRef])
+
+  React.useEffect(() => {
+    const input = ref.current
+    const root = input?.getRootNode()
+    if (!input || !root) return
+    // A reset puts the input back to its default after this event, which is not the pick the group shows when its
+    // parent declined the reset or the input mounted after a change.
+    const restore = (event: Event) => {
+      if (event.target === input.form) setTimeout(() => (input.checked = prevCheckedRef.current))
+    }
+    root.addEventListener('reset', restore, true)
+    return () => root.removeEventListener('reset', restore, true)
+  }, [])
 
   return (
     <Primitive.input
@@ -54,7 +67,7 @@ const RadioGroupItemBubbleInput = React.forwardRef<
       onFocus={composeEventHandlers(inputProps.onFocus, () => {
         const group = groupRef.current
         if (group)
-          getEnabledRadios(group)
+          getNavigableRadios(group)
             .find((radio) => radio.dataset.value === value)
             ?.focus()
       })}

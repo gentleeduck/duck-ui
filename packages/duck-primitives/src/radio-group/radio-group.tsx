@@ -8,7 +8,7 @@ import { createContextScope } from '../libs/create-context'
 import { useTypeaheadListNavigation, useVimNavigation } from '../libs/list-navigation'
 import { type Primitive, primitiveElement } from '../primitive-elements/primitive-elements'
 import { createRovingFocusGroupScope, RovingFocusProvider, useRovingFocusGroup } from '../roving-focus'
-import { getEnabledRadios } from './radio-group.libs'
+import { getNavigableRadios } from './radio-group.libs'
 import type { IRadioGroup } from './radio-group.types'
 
 const RADIO_GROUP_NAME = 'RadioGroup'
@@ -59,34 +59,35 @@ const RadioGroup = React.forwardRef<RadioGroupElement, IRadioGroup.IProps>(
     const composedRefs = useComposedRefs(forwardedRef, groupRef)
     const isNavigationKeyPressedRef = React.useRef(false)
     const navigationResetTimerRef = React.useRef<number | undefined>(undefined)
-    // Set by a pick whose handler stopped propagation, or by a form reset: the inputs then follow without an event.
-    const silentChangeRef = React.useRef(false)
+    // The value a pick whose handler stopped propagation, or a form reset, asked for: its input follows without an event.
+    const silentValueRef = React.useRef<string | null | undefined>(undefined)
 
-    const [value, setValue] = useControllableState<string>({
-      prop: valueProp === null ? '' : valueProp,
-      defaultProp: defaultValue ?? '',
+    const [value, setValue] = useControllableState<string | null>({
+      prop: valueProp,
+      defaultProp: defaultValue ?? null,
       onChange: onValueChange,
       caller: RADIO_GROUP_NAME,
     })
 
-    const initialValueRef = React.useRef(value)
+    const [initialValue] = React.useState(value)
     React.useEffect(() => {
-      const associatedForm = getAssociatedForm(groupRef.current, form)
-      if (associatedForm) {
-        const reset = () => {
-          if (value === initialValueRef.current) return
-          silentChangeRef.current = true
-          setValue(initialValueRef.current)
-        }
-        associatedForm.addEventListener('reset', reset)
-        return () => associatedForm.removeEventListener('reset', reset)
+      const group = groupRef.current
+      const root = group?.getRootNode()
+      if (!group || !root) return
+      // The form is looked up as it resets, since one named by `form` may render after the group.
+      const reset = (event: Event) => {
+        if (event.target !== getAssociatedForm(group, form) || value === initialValue) return
+        silentValueRef.current = initialValue
+        setValue(initialValue)
       }
-    }, [form, value, setValue])
+      root.addEventListener('reset', reset, true)
+      return () => root.removeEventListener('reset', reset, true)
+    }, [form, value, initialValue, setValue])
 
     // Runs after the items' effects, which read it for the change this commit made.
     // biome-ignore lint/correctness/useExhaustiveDependencies: cleared only once a value lands, so a pick the parent applies later stays silent
     React.useEffect(() => {
-      silentChangeRef.current = false
+      silentValueRef.current = undefined
     }, [value])
 
     // One clear pending at a time: a busy page runs input before overdue timers, so a press's late clear would
@@ -100,7 +101,7 @@ const RadioGroup = React.forwardRef<RadioGroupElement, IRadioGroup.IProps>(
     }, [])
 
     const [, handleTypeaheadSearch, resetTypeaheadState] = useTypeaheadListNavigation<HTMLElement>({
-      getItems: () => (groupRef.current ? getEnabledRadios(groupRef.current) : []),
+      getItems: () => (groupRef.current ? getNavigableRadios(groupRef.current) : []),
       getItemElement: (radio) => radio,
       getItemTextValue: (radio) =>
         radio.getAttribute('data-text-value') ?? radio.getAttribute('aria-label') ?? radio.textContent,
@@ -150,7 +151,7 @@ const RadioGroup = React.forwardRef<RadioGroupElement, IRadioGroup.IProps>(
         form={form}
         groupRef={groupRef}
         isNavigationKeyPressedRef={isNavigationKeyPressedRef}
-        silentChangeRef={silentChangeRef}>
+        silentValueRef={silentValueRef}>
         <RovingFocusProvider scope={rovingFocusGroupScope.__scopeRovingFocusGroup} {...group.context}>
           <Element
             role="radiogroup"
@@ -165,7 +166,9 @@ const RadioGroup = React.forwardRef<RadioGroupElement, IRadioGroup.IProps>(
             onKeyDown={composeEventHandlers(
               groupProps.onKeyDown,
               (event) => {
-                if (handleVimKey(event, getEnabledRadios(event.currentTarget))) return
+                // A key pressed in a group nested inside this one is that group's.
+                if ((event.target as Element).closest('[role="radiogroup"]') !== event.currentTarget) return
+                if (handleVimKey(event, getNavigableRadios(event.currentTarget))) return
 
                 const isModifierKey = event.ctrlKey || event.altKey || event.metaKey
                 const isCharacterKey = event.key.length === 1 && event.key !== ' '

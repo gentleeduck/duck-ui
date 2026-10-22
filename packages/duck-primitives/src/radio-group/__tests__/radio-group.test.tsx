@@ -397,6 +397,49 @@ describe('RadioGroup readOnly', () => {
   })
 })
 
+describe('RadioGroup cleared to null', () => {
+  it('leaves an item valued with an empty string unchecked', () => {
+    render(
+      <RadioGroup value={null}>
+        <RadioGroupItem value="">None</RadioGroupItem>
+        <RadioGroupItem value="cat">Cat</RadioGroupItem>
+      </RadioGroup>,
+    )
+
+    expect(checked()).toBeNull()
+  })
+
+  it('refuses a submit while required, though an item is valued with an empty string', () => {
+    render(
+      <form data-testid="form">
+        <RadioGroup name="pet" required value={null}>
+          <RadioGroupItem value="">None</RadioGroupItem>
+          <RadioGroupItem value="cat">Cat</RadioGroupItem>
+        </RadioGroup>
+      </form>,
+    )
+
+    expect((screen.getByTestId('form') as HTMLFormElement).checkValidity()).toBe(false)
+  })
+
+  it('hands onValueChange null when a form reset takes it back to no pick', () => {
+    const onValueChange = mock()
+    render(
+      <form>
+        <RadioGroup name="pet" onValueChange={onValueChange}>
+          <RadioGroupItem value="cat">Cat</RadioGroupItem>
+        </RadioGroup>
+        <button type="reset">Reset</button>
+      </form>,
+    )
+    act(() => fireEvent.click(screen.getByText('Cat')))
+
+    act(() => fireEvent.click(screen.getByText('Reset')))
+
+    expect(onValueChange.mock.calls).toEqual([['cat'], [null]])
+  })
+})
+
 describe('RadioGroup in a form', () => {
   function renderPetForm(onChange: () => void) {
     render(
@@ -564,6 +607,100 @@ describe('RadioGroup in a form', () => {
   })
 })
 
+describe('RadioGroup reset by its form', () => {
+  const checkedInput = () => document.querySelector<HTMLInputElement>('input[name="pet"]:checked')?.value ?? null
+
+  it('restores its pick when the form it names renders after it', () => {
+    function LateForm({ withForm }: { withForm: boolean }) {
+      return (
+        <>
+          <RadioGroup name="pet" defaultValue="cat" form="pets">
+            <RadioGroupItem value="cat">Cat</RadioGroupItem>
+            <RadioGroupItem value="dog">Dog</RadioGroupItem>
+          </RadioGroup>
+          {withForm ? <form id="pets" data-testid="form" /> : null}
+        </>
+      )
+    }
+    const { rerender } = render(<LateForm withForm={false} />)
+    act(() => fireEvent.click(screen.getByText('Dog')))
+    rerender(<LateForm withForm />)
+
+    act(() => (screen.getByTestId('form') as HTMLFormElement).reset())
+
+    expect([checked(), checkedInput()]).toEqual(['Cat', 'cat'])
+  })
+
+  it('keeps its pick when the form around it resets and its form is set empty', () => {
+    render(
+      <form>
+        <RadioGroup name="pet" defaultValue="cat" form="">
+          <RadioGroupItem value="cat">Cat</RadioGroupItem>
+          <RadioGroupItem value="dog">Dog</RadioGroupItem>
+        </RadioGroup>
+        <button type="reset">Reset</button>
+      </form>,
+    )
+    act(() => fireEvent.click(screen.getByText('Dog')))
+
+    act(() => fireEvent.click(screen.getByText('Reset')))
+
+    expect(checked()).toBe('Dog')
+  })
+
+  it('submits the pick it shows after two resets, once its name came after a change', async () => {
+    function LateName() {
+      const [named, setNamed] = React.useState(false)
+      return (
+        <form>
+          <RadioGroup name={named ? 'pet' : undefined} defaultValue="cat">
+            <RadioGroupItem value="cat">Cat</RadioGroupItem>
+            <RadioGroupItem value="dog">Dog</RadioGroupItem>
+          </RadioGroup>
+          <button type="button" onClick={() => setNamed(true)}>
+            Name it
+          </button>
+          <button type="reset">Reset</button>
+        </form>
+      )
+    }
+    render(<LateName />)
+    act(() => fireEvent.click(screen.getByText('Dog')))
+    act(() => fireEvent.click(screen.getByText('Name it')))
+
+    act(() => fireEvent.click(screen.getByText('Reset')))
+    act(() => fireEvent.click(screen.getByText('Reset')))
+    await nextTick()
+
+    expect([checked(), checkedInput()]).toEqual(['Cat', 'cat'])
+  })
+
+  it('submits the pick it shows when its parent declines the reset', async () => {
+    function Declining() {
+      const [pet, setPet] = React.useState('cat')
+      return (
+        <form>
+          <RadioGroup name="pet" value={pet}>
+            <RadioGroupItem value="cat">Cat</RadioGroupItem>
+            <RadioGroupItem value="dog">Dog</RadioGroupItem>
+          </RadioGroup>
+          <button type="button" onClick={() => setPet('dog')}>
+            Choose dog
+          </button>
+          <button type="reset">Reset</button>
+        </form>
+      )
+    }
+    render(<Declining />)
+    act(() => fireEvent.click(screen.getByText('Choose dog')))
+
+    act(() => fireEvent.click(screen.getByText('Reset')))
+    await nextTick()
+
+    expect([checked(), checkedInput()]).toEqual(['Dog', 'dog'])
+  })
+})
+
 describe('RadioGroup after a reset', () => {
   function ControlledPetForm({ onChange }: { onChange: () => void }) {
     const [pet, setPet] = React.useState('cat')
@@ -656,6 +793,38 @@ describe('RadioGroup typeahead', () => {
   })
 })
 
+describe('RadioGroup typeahead where the browser has checkVisibility', () => {
+  beforeAll(() => {
+    Object.defineProperty(HTMLElement.prototype, 'checkVisibility', {
+      configurable: true,
+      value(this: HTMLElement) {
+        return !this.hidden
+      },
+    })
+  })
+  afterAll(() => {
+    Reflect.deleteProperty(HTMLElement.prototype, 'checkVisibility')
+  })
+
+  it('skips a hidden item', async () => {
+    render(
+      <RadioGroup>
+        <RadioGroupItem value="apple">Apple</RadioGroupItem>
+        <RadioGroupItem value="banana" hidden>
+          Banana
+        </RadioGroupItem>
+        <RadioGroupItem value="blueberry">Blueberry</RadioGroupItem>
+      </RadioGroup>,
+    )
+    act(() => screen.getByText('Apple').focus())
+
+    fireEvent.keyDown(screen.getByText('Apple'), { key: 'b' })
+    await wait(0)
+
+    expect(checked()).toBe('Blueberry')
+  })
+})
+
 describe('RadioGroup typeahead sources', () => {
   it('matches an item by its aria-label when it has no textValue', async () => {
     render(
@@ -674,6 +843,28 @@ describe('RadioGroup typeahead sources', () => {
     await wait(0)
 
     expect(checked()).toBe('Two')
+  })
+
+  it('leaves a letter typed in a group nested inside it to that group', async () => {
+    render(
+      <RadioGroup defaultValue="apple">
+        <RadioGroupItem value="apple">Apple</RadioGroupItem>
+        <RadioGroupItem value="berry">Berry</RadioGroupItem>
+        <RadioGroup defaultValue="avocado">
+          <RadioGroupItem value="avocado">Avocado</RadioGroupItem>
+          <RadioGroupItem value="banana">Banana</RadioGroupItem>
+        </RadioGroup>
+      </RadioGroup>,
+    )
+    act(() => screen.getByText('Avocado').focus())
+
+    fireEvent.keyDown(screen.getByText('Avocado'), { key: 'b' })
+    await wait(20)
+
+    expect([document.activeElement?.textContent, screen.getByText('Apple').getAttribute('aria-checked')]).toEqual([
+      'Banana',
+      'true',
+    ])
   })
 
   it('stays out of a group nested inside it', async () => {
@@ -793,6 +984,33 @@ describe('RadioGroup picking the checked radio', () => {
     expect(onChange).toHaveBeenCalledTimes(1)
   })
 
+  it('tells the form about a change its parent makes after declining a pick whose click stopped propagating', () => {
+    const onChange = mock()
+    function PetForm() {
+      const [pet, setPet] = React.useState('cat')
+      return (
+        <form onChange={onChange}>
+          <RadioGroup name="pet" value={pet}>
+            <RadioGroupItem value="cat">Cat</RadioGroupItem>
+            <RadioGroupItem value="dog" onClick={(event) => event.stopPropagation()}>
+              Dog
+            </RadioGroupItem>
+            <RadioGroupItem value="bird">Bird</RadioGroupItem>
+          </RadioGroup>
+          <button type="button" onClick={() => setPet('bird')}>
+            Choose bird
+          </button>
+        </form>
+      )
+    }
+    render(<PetForm />)
+    act(() => fireEvent.click(screen.getByText('Dog')))
+
+    act(() => fireEvent.click(screen.getByText('Choose bird')))
+
+    expect(onChange).toHaveBeenCalledTimes(1)
+  })
+
   it('does not report a change', () => {
     const onValueChange = mock()
     render(
@@ -808,6 +1026,22 @@ describe('RadioGroup picking the checked radio', () => {
 })
 
 describe('RadioGroup disabled', () => {
+  it('checks no disabled item through a trigger slotted onto an element with no disabled state', () => {
+    render(
+      <RadioGroup>
+        <RadioGroupItemProvider value="dog" disabled>
+          <RadioGroupItemTrigger asChild>
+            <span>Dog</span>
+          </RadioGroupItemTrigger>
+        </RadioGroupItemProvider>
+      </RadioGroup>,
+    )
+
+    fireEvent.click(screen.getByText('Dog'))
+
+    expect(screen.getByText('Dog').getAttribute('aria-checked')).toBe('false')
+  })
+
   it('marks the group for styling', () => {
     render(
       <RadioGroup disabled data-testid="group">

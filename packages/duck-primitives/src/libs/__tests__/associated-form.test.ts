@@ -40,6 +40,19 @@ describe('getAssociatedForm', () => {
     expect(getAssociatedForm(page.querySelector('button'), 'named')).toBeNull()
   })
 
+  it('finds no form for an empty name, not even the one around the control', () => {
+    const page = inPage('<form id="outer"><button>Pick</button></form>')
+
+    expect(getAssociatedForm(page.querySelector('button'), '')).toBeNull()
+  })
+
+  it("looks the name up in the control's own shadow root", () => {
+    const host = inPage('<div></div>').querySelector('div')!
+    host.attachShadow({ mode: 'open' }).innerHTML = '<form id="named"></form><button>Pick</button>'
+
+    expect(getAssociatedForm(host.shadowRoot!.querySelector('button'), 'named')?.id).toBe('named')
+  })
+
   it('finds no form without a control', () => {
     expect(getAssociatedForm(null, undefined)).toBeNull()
   })

@@ -7,9 +7,11 @@ const NAME = 'VisuallyHidden'
 type VisuallyHiddenElement = React.ComponentRef<typeof Primitive.span>
 
 const VisuallyHidden = React.forwardRef<VisuallyHiddenElement, IVisuallyHidden.IProps>((props, forwardedRef) => {
+  // Slotted, the marker would replace the data-slot of the component it lands on, such as a hidden dialog title.
+  const slot = props.asChild ? undefined : { 'data-slot': 'visually-hidden' }
   return (
     <Primitive.span
-      data-slot="visually-hidden"
+      {...slot}
       {...props}
       ref={forwardedRef}
       style={{

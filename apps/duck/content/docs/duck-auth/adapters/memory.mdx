@@ -12,7 +12,7 @@ createAuth({ /* ... */ stores })
 
 It holds identities, credentials, sessions and orgs in `Map`s and keeps the same contract as the SQL adapters, tenancy and uniqueness included, so a test against it exercises the engine as production runs it.
 
-- Nothing survives a restart, and nothing is shared between processes. `strict({ env: 'production' })` refuses it.
+- Nothing survives a restart, and nothing is shared between processes. `strict()` refuses it in production.
 - It has no `withClient`, so `withTransaction` refuses it.
 - `seedOrg(row)` plants an org, since the orgs store only reads.
 - `raw` hands a test the `Map`s themselves, to plant a row no store call would write.

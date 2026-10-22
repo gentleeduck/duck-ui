@@ -7,7 +7,7 @@ Everything in duck-auth hangs off one `AuthEngine`. You build it once at boot an
 
 ## Building the engine
 
-`createAuth()` is the entry point. It validates the config, builds the engine, and runs `strict()` for the environment.
+`createAuth()` is the entry point. It validates the config, builds the engine, and runs `strict()`, which reads `NODE_ENV`.
 
 ```ts
 import { MemoryAdapter } from '@gentleduck/auth/adapters/memory'
@@ -27,7 +27,7 @@ export const auth = createAuth({
 | --- | --- | --- |
 | `baseUrl` | required | The public origin every link, redirect and callback is built against. Must be absolute http(s); a trailing slash is dropped. |
 | `stores` | required | `identities`, `sessions` and `credentials`, plus an optional `orgs`. An adapter provides all of them; see [Adapters](/duck-auth/adapters). |
-| `transport` | a secure `duck-sid` cookie | How the session travels. See [Transports](/duck-auth/core/transports). |
+| `transport` | a `__Host-duck-sid` cookie, `duck-sid` outside production | How the session travels. See [Transports](/duck-auth/core/transports). |
 | `providers` | none | Providers, or thunks `(engine, deliver) => provider`. A falsy entry is skipped, so `cond && provider()` works. |
 | `limiter` | `MemoryLimiter` | What every flow spends attempts against. See [Adapters](/duck-auth/adapters#limiters). |
 | `deliver` | none | Your mailer. See [Delivery](/duck-auth/core/delivery). |
@@ -36,8 +36,9 @@ export const auth = createAuth({
 | `identities` | 16 KiB profile cap | `softDeleteGracePeriodMs`, `profileMaxBytes`. |
 | `hijack`, `anomaly` | detection off | See [Sessions](/duck-auth/core/sessions#hijack-detection) and [Anomaly detection](/duck-auth/core/anomaly). |
 | `captcha` | refuses every token | See [Captcha](/duck-auth/core/captcha). |
+| `webhooks` | none | A webhook deliverer, attached to `events` for you. See [Webhooks](/duck-auth/advanced/webhooks). |
 | `resolveActor` | none | Who `created_by` and `updated_by` name when no `withActor` scope is open. |
-| `strict` | `NODE_ENV`, else `'development'` | Which environment's checks run at the end of construction; `false` skips them. |
+| `strict` | runs | `false` defers the checks to your own `auth.strict()`. |
 
 An unknown key throws `AUTH_MISCONFIGURED` rather than being ignored, so `sessions` for `session` fails loudly.
 
@@ -75,7 +76,8 @@ resolved.session.aal // 1, or 2 after a second factor
 - `orNull()` answers `null` when the request carries no session or one that was revoked or expired.
 - It still throws `AUTH_SESSION_IDENTITY_ERASED` when the session outlived its identity.
 - `identity` is `null` for a guest session.
-- Pass `{ expectedTenantId }` to refuse a session from another tenant, and `{ requestSnapshot }` to run the [anomaly detectors](/duck-auth/core/anomaly).
+- Pass `{ expectedTenantId }` to accept only a session in that tenant; without it only a session with no tenant resolves. See [Multi-tenancy](/duck-auth/advanced/multi-tenancy).
+- Pass `{ requestSnapshot }` to run the [anomaly detectors](/duck-auth/core/anomaly).
 
 Reading a session slides its idle deadline once less than half of it is left, never past the absolute one.
 
@@ -87,7 +89,7 @@ Reading a session slides its idle deadline once less than half of it is left, ne
 await db.transaction(async (tx) => {
   const bound = auth.withTransaction(tx)
   const ada = await bound.identities.create({ profile: { email: 'ada@example.com', username: 'ada' } })
-  await bound.passwords.set(ada.id, 'correct-horse-battery', bound.stores.credentials)
+  await bound.passwords.set(ada.id, 'correct-horse-battery', bound.stores.credentials, null)
   return bound.pending
 }).then((pending) => pending.flush())
 ```
@@ -101,12 +103,15 @@ A plugin bundles providers, event listeners, an install hook and a facet under o
 ```ts
 await auth.use({
   id: 'audit',
+  delivery: 'origin',
   events: { 'signin.success': (p) => console.log('signed in', p.identity.id) },
 })
 ```
+
+`delivery` sets where the `events` handlers run, as [`on`](/duck-auth/core/events#where-a-handler-runs) does. `'fleet'`, the default, runs them on every server. `'origin'` runs each one once, on the server that emitted, which is what an audit write or an alert needs.
 
 Installing is all or nothing: a failure part-way unwinds what landed.
 
 ## Strict mode
 
-`auth.strict({ env })` throws `AUTH_MISCONFIGURED`, listing every problem at once, when a production engine is holding something that only works in development: a memory store or limiter, an in-process event bus holding a `fleet` handler, an insecure cookie, a weak signing key, no `lockout` listener. `createAuth` calls it as it returns, before any listener can exist, so a production engine passes `strict: false` and calls `auth.strict({ env: 'production' })` once its `lockout` listener is subscribed. See [Production hardening](/duck-auth/advanced/security).
+`auth.strict()` throws `AUTH_MISCONFIGURED`, listing every problem at once, when a production engine is holding something that only works in development: a memory store or limiter, an in-process event bus holding a `fleet` handler, a weak signing key, no `lockout` listener. Production is any `NODE_ENV` but `development` or `test`, unset included. `createAuth` calls it as it returns, before any listener can exist, so a production engine passes `strict: false` and calls `auth.strict()` once its `lockout` listener is subscribed. See [Production hardening](/duck-auth/advanced/security).

@@ -1,6 +1,6 @@
 ---
 title: "Chapter 7: a second factor"
-description: Enroll TOTP with backup codes, refuse a sensitive route until the session steps up, and step up with a code or a backup code
+description: Enroll TOTP with backup codes, refuse a sensitive route until the session steps up, step up with a code or a backup code, and answer the challenge a sign-in stops at
 section: Course
 order: 7
 ---
@@ -11,6 +11,7 @@ Anyone who learns Ada's password is Ada. This chapter adds a code from an authen
 - Enroll TOTP and show the backup codes once.
 - Refuse a route until the session is at AAL 2, and was proven recently.
 - Step a session up with a code or a backup code.
+- Sign in with the second factor once the account has one.
 
 ## Stepping up
 
@@ -30,14 +31,20 @@ Anyone who learns Ada's password is Ada. This chapter adds a code from an authen
 
 <Step>Register the MFA provider</Step>
 
+Put 32 random bytes (`openssl rand -base64 32`) in `MFA_KEY`. The provider stores every TOTP secret encrypted under it, and refuses to start without one.
+
 ```ts title="src/auth.ts"
+import { authAesGcmDataAtRest } from '@gentleduck/auth/core/dataAtRest'
 import { mfaProvider } from '@gentleduck/auth/providers/mfa'
 
 export const auth = createAuth({
   // ...
   providers: [
     passwords(),
-    mfaProvider({ issuer: 'DuckNotes' }),
+    mfaProvider({
+      dataAtRest: authAesGcmDataAtRest({ kid: 'k1', masterKey: Buffer.from(process.env.MFA_KEY ?? '', 'base64') }),
+      issuer: 'DuckNotes',
+    }),
     // the magic link and GitHub, as in chapter 6
   ],
 })
@@ -51,12 +58,16 @@ Add to `src/server.ts`, after the notes routes:
 
 ```ts title="src/server.ts"
 app.post('/api/mfa/totp', async (_req, res) => {
-  const { uri } = await auth.mfa.beginTotpEnrollment(res.locals.identity.id, res.locals.identity.profile.email)
+  const { uri } = await auth.mfa.beginTotpEnrollment(
+    res.locals.identity.id,
+    res.locals.identity.profile.email,
+    res.locals.session,
+  )
   res.json({ uri })
 })
 
 app.post('/api/mfa/totp/confirm', async (req, res) => {
-  const confirmed = await auth.mfa.confirmTotpEnrollment(res.locals.identity.id, String(req.body.code))
+  const confirmed = await auth.mfa.confirmTotpEnrollment(res.locals.identity.id, String(req.body.code), res.locals.session)
   if (!confirmed.ok) return res.status(400).json({ code: 'AUTH_INVALID_CREDENTIALS' })
   res.json({ backupCodes: confirmed.backupCodes })
 })
@@ -88,6 +99,34 @@ console.log(totpAt(process.argv[2] ?? '', Math.floor(Date.now() / 30_000)))
 ```
 
 It prints the current code for a secret, as the app would. A real page renders the enrollment `uri` as a QR code for the app to scan.
+
+<Step>Signing in with the second factor</Step>
+
+Once Ada has a TOTP, her password alone opens no session: `flows.signIn` answers a `challenge` instead. Change chapter 4's `/auth/signin` to hand it back, and add the route that answers it:
+
+```ts title="src/server.ts"
+app.post('/auth/signin', async (req, res) => {
+  const { providerId, input } = req.body ?? {}
+  if (typeof providerId !== 'string') throw new AuthError('AUTH_INVALID_PARAMETERS')
+  const previousSid = auth.transport.extract({ headers: toHeaders(req.headers) }) ?? undefined
+  const { challenge, intents } = await auth.flows.signIn({ input: input ?? {}, providerId, ...expressCaller(req), previousSid })
+  const body = challenge && { challenge: challenge.token, methods: challenge.methods }
+  applyIntents(body ? [...intents, { type: 'json', status: 200, body }] : intents, res)
+})
+
+app.post('/auth/mfa', async (req, res) => {
+  const { intents } = await auth.flows.completeStepUp({
+    challenge: String(req.body.challenge),
+    method: req.body.method === 'backup-code' ? 'backup-code' : 'totp',
+    code: String(req.body.code),
+    ...expressCaller(req),
+    previousSid: auth.transport.extract({ headers: toHeaders(req.headers) }) ?? undefined,
+  })
+  applyIntents(intents, res)
+})
+```
+
+curl takes the challenge from the body. A browser keeps it where script cannot read it, in an httpOnly cookie, as [`examples/duck-auth`](https://github.com/gentleeduck/duck-iam/tree/main/examples/duck-auth) does.
 
 <Step>Drive it with curl</Step>
 
@@ -125,22 +164,44 @@ curl -s -o /dev/null -w '%{http_code}\n' -b jar localhost:3000/api/notes -X DELE
 # 204
 ```
 
+Sign out and in again. The password now answers a challenge, not a session:
+
+```bash
+curl -s -b jar -c jar localhost:3000/auth/signout -X POST -H "x-csrf-token: $(csrf)"
+
+curl -s -c jar localhost:3000/auth/signin -H 'content-type: application/json' \
+  -d '{"providerId":"password","input":{"email":"ada@example.com","password":"correct-horse-battery"}}'
+# {"challenge":"kq3JX0...","methods":["totp","backup-code"]}
+```
+
+Wait for the code to change and answer it. The session it opens is at AAL 2 from the start, so the delete goes straight through:
+
+```bash
+curl -s -c jar localhost:3000/auth/mfa -H 'content-type: application/json' \
+  -d "{\"challenge\":\"<challenge>\",\"method\":\"totp\",\"code\":\"$(npx tsx src/code.ts <secret>)\"}"
+
+curl -s -o /dev/null -w '%{http_code}\n' -b jar localhost:3000/api/notes -X DELETE -H "x-csrf-token: $(csrf)"
+# 204
+```
+
 </Steps>
 
 ## What just happened
 
-1. **Enrolling stored the secret unconfirmed.** `beginTotpEnrollment` answered the `otpauth://` URI, but the secret is not a factor until a code proves the app holds it.
+1. **Enrolling stored the secret, encrypted and unconfirmed.** `beginTotpEnrollment` answered the `otpauth://` URI and stored the secret encrypted under `MFA_KEY`, so the database never holds the secret itself. It is not a factor until a code proves the app holds it.
 2. **Confirming minted ten backup codes.** They are stored hashed, so that answer is the only time they can be shown. Each stands in for a code once, for someone who lost the phone.
-3. **Sign-in did not change.** The password still answers a session at AAL 1. `checkStepUp` is where the second factor is required: AAL 2 by default, and with `freshness`, a factor presented in the last five minutes.
+3. **Ada's session was signed in before TOTP.** It stays at AAL 1, so `checkStepUp` is where the second factor is asked for: AAL 2 by default, and with `freshness`, a factor presented in the last five minutes.
 4. **The confirming code could not step up.** Every code works once, so the step-up waited for the next.
 5. **Stepping up rotated the session.** `completeStepUp` checked the code and minted a new sid at AAL 2, which `applyIntents` set along with a new `duck-csrf`. The old sid still works at AAL 1, so another tab is not signed out.
+6. **The next sign-in stopped at the second factor.** The password opened no session, only a challenge that works once and for five minutes. `completeStepUp` spent it and opened the session at AAL 2.
 
 ## Try it
 
 1. Step up with the code `000000`. The answer is 401 `AUTH_INVALID_CREDENTIALS`, and the session stays at AAL 1.
 2. Step up with a backup code (`"method":"backup-code"`), then with the same one again. The second is refused.
-3. Start enrolling again. It is refused with `AUTH_MFA_REQUIRED`: replacing a factor means removing it first with `auth.mfa.removeTotp`, behind the same `checkStepUp`.
+3. Start enrolling again from the password's session. It is refused with `AUTH_MFA_REQUIRED`: once an account has a factor, changing any of them needs a stepped-up session. Step up first and the new enrollment replaces the old one when it confirms.
 4. Set `freshness` to `10_000`, step up, and wait ten seconds before deleting. The answer is 403 again, because the factor is no longer fresh.
+5. Answer the same challenge twice. The second is refused with `AUTH_UNAUTHENTICATED`, as is a challenge older than five minutes.
 
 ## Where we are
 
@@ -152,7 +213,7 @@ ducknotes/
   src/
     mailer.ts
     auth.ts       - now with the MFA provider
-    server.ts     - plus enrollment, step-up and a guarded delete
+    server.ts     - plus enrollment, step-up, the sign-in challenge and a guarded delete
     code.ts       - the authenticator app's stand-in
     page.ts
     magic-link.ts

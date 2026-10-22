@@ -17,5 +17,5 @@ createAuth({
 A sign-in then sets the session and CSRF cookies and answers `{ token, expiresAt }` in the body, so a browser and a native app use the same endpoint.
 
 - **Extract** asks every member. A request presenting two different credentials, such as a cookie for one user and a bearer for another, is refused with `AUTH_INVALID_CREDENTIALS`, as RFC 6750 requires. `{ onMultipleCredentials: 'first' }` takes the first member's instead.
-- **Verify** tries each member that can verify, and falls back to the session store when none vouches.
+- **Verify** tries each member that can verify, and falls back to the session store when none vouches. A member set `authoritative: true` ends it: its refusal is `AUTH_INVALID_CREDENTIALS`, and the store is not asked.
 - **Issue and revoke** run through every member. Two members that both answer a JSON body, such as bearer and JWT, cannot be combined: a response has one body, so the first sign-in throws `AUTH_MISCONFIGURED`.

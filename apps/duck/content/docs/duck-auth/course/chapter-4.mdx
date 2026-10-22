@@ -102,7 +102,7 @@ app.post('/auth/signup', async (req, res) => {
   const { email, password } = req.body
   auth.passwords.assertStrength(password)
   const identity = await auth.identities.create({ profile: { email, username: email } })
-  await auth.passwords.set(identity.id, password, auth.cfg.stores.credentials)
+  await auth.passwords.set(identity.id, password, auth.cfg.stores.credentials, null)
   await auth.flows.requestEmailVerification({ identityId: identity.id })
   res.status(201).json({ identityId: identity.id })
 })
@@ -155,7 +155,7 @@ app.listen(3000, () => console.log('DuckNotes on http://localhost:3000'))
 <Step>Drive it with curl</Step>
 
 ```bash
-npx tsx src/server.ts
+NODE_ENV=development npx tsx src/server.ts
 ```
 
 In a second terminal, sign up, then verify with the token the server printed:

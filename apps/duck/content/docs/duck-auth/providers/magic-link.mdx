@@ -43,8 +43,8 @@ Make `callbackPath` a page that signs in when the person clicks a button, not on
 
 - A link works once, and throws `AUTH_RECOVERY_TOKEN_INVALID` after that, or `AUTH_RECOVERY_TOKEN_EXPIRED` past its lifetime.
 - It is refused if the account's email has changed since it was sent.
-- The session is AAL 1 with a `magic-link` factor.
-- Redeeming it proves the address, so the identity is marked `emailVerified`. If it was not before, whatever else was attached to the account is removed first: its linked providers, its credentials, its other sessions. Until then, anyone could have signed up with that address.
+- The session is AAL 1 with a `magic-link` factor. An account holding a second factor answers a [challenge](/duck-auth/guides/mfa#signing-in) first.
+- Redeeming it proves the address, so the identity is marked `emailVerified`. If it was not before, whatever else was attached to the account is removed first: its sessions, its linked providers, its credentials. Until then, anyone could have signed up with that address. A removal that fails part-way leaves the address unproven, so the next link removes them again.
 
 ## Options
 

@@ -43,7 +43,7 @@ const engine = new IamEngine({ adapter })
 | --- | --- | --- | --- |
 | `baseUrl` | `string` | required | Base URL of your IAM API. Validated at construction (see [Base URL validation](#base-url-validation)); a single trailing `/` is stripped. Every path below is appended to it verbatim. |
 | `allowedHosts` | `string[]` | `undefined` | Host allowlist for `baseUrl`. Omitted, any host is accepted and a one-time `console.warn` fires. |
-| `allowPrivateHosts` | `boolean` | `false` | Permits a `baseUrl` whose hostname is a private, loopback, or link-local IP literal. |
+| `allowPrivateHosts` | `boolean` | `false` | Permits a `baseUrl` whose hostname is an IP literal outside the public internet: private, loopback, link-local, CGNAT, multicast, reserved or documentation, or an IPv6 form carrying an IPv4. |
 | `headers` | `Record<string, string>` or `() => Record<string, string> \| Promise<…>` | `{}` | Static headers, or a function awaited before every request. This is how the adapter authenticates. |
 | `fetch` | `typeof globalThis.fetch` | `globalThis.fetch` | Custom fetch: a polyfill, or middleware for logging, tracing, or mTLS. |
 | `timeoutMs` | `number >= 0` | `5_000` | Per-request abort. `0` disables it and leaves only the engine's `adapterTimeoutMs`. |
@@ -199,11 +199,11 @@ Every row throws `IAM_HTTP_BASE_URL_INVALID`, distinguished only by `meta.reason
 | Scheme is not `http:` or `https:` | `'bad-scheme'` | `scheme` |
 | Contains a query string or fragment | `'has-query-or-fragment'` | — |
 | Host not in a non-empty `allowedHosts` | `'host-not-allowed'` | `host` |
-| Private or loopback IP literal without `allowPrivateHosts` | `'private-host'` | `host` |
+| An IP literal outside the public internet without `allowPrivateHosts` | `'private-host'` | `host` |
 
 `allowedHosts` matching is deliberate about its edges. Comparison is case-insensitive on both sides, a trailing FQDN dot is stripped, and internationalised names are punycoded through `new URL` before comparing. An entry may be a bare hostname or a `host:port` pair: a bare entry matches the hostname at any port, so `['example.com']` accepts `example.com`, `example.com:80`, and `example.com:8443`; a `host:port` entry matches only that exact port, so `example.com:8080` rejects both `example.com` and `example.com:9090`.
 
-The private-host check covers IPv4 (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, `0.0.0.0/8`), IPv6 (`::1`, `::`, `fc00::/7`, `fe80::/10`), and the tunnelling forms that smuggle an IPv4 address inside an IPv6 literal: IPv4-mapped (`::ffff:127.0.0.1` and its hex spelling `::ffff:7f00:1`), IPv4-compatible (`::127.0.0.1`), 6to4 (`2002:7f00:1::`), and NAT64 (`64:ff9b::127.0.0.1`). DNS names are never resolved, because that would need synchronous I/O at construction; constrain those with `allowedHosts`.
+The private-host check refuses these IPv4 ranges: `0.0.0.0/8`, `10.0.0.0/8`, `100.64.0.0/10` (CGNAT), `127.0.0.0/8`, `169.254.0.0/16`, `172.16.0.0/12`, `192.0.0.0/24`, `192.0.2.0/24`, `192.168.0.0/16`, `198.18.0.0/15`, `198.51.100.0/24`, `203.0.113.0/24`, `224.0.0.0/4` and `240.0.0.0/4`. In IPv6 it refuses `::`, `::1`, `fc00::/7`, `fe80::/10`, `fec0::/10`, `ff00::/8`, `100::/64`, `2001:2::/48`, `2001:db8::/32`, `3fff::/20` and `5f00::/16`, and every form that carries an IPv4 address inside an IPv6 literal, whichever address it carries: IPv4-mapped (`::ffff:7f00:1`), IPv4-compatible (`::7f00:1`), SIIT (`::ffff:0:7f00:1`), 6to4 (`2002::/16`), NAT64 (`64:ff9b::/32`) and Teredo (`2001::/32`). DNS names are never resolved, because that would need synchronous I/O at construction, so `localhost` and every other name pass it; constrain those with `allowedHosts`.
 
 <Callout tone="warning" title="SEC-042: redirects are refused, not followed">
   Every request is issued with `redirect: 'error'`. Before 2.1.0 the adapter followed redirects, so a `302` to `169.254.169.254` or an internal host bypassed the construction-time validation entirely: the guard ran once on `baseUrl` and never again. If your API legitimately redirects, point `baseUrl` at the final location.

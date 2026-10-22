@@ -1,17 +1,18 @@
 ---
 title: Multi-tenancy
-description: Which records carry a tenant, signing in and resolving sessions under one, and the routes a multi-tenant app writes itself
+description: Which records carry a tenant, signing in and resolving sessions under one, reaching every tenant at once, and the routes a multi-tenant app writes itself
 section: Advanced
 ---
 One engine serves every tenant. Identities are global: one person, one row, one email across all of them. What carries a tenant is what they hold in it:
 
 - **Credentials.** A password, TOTP secret, passkey or API key belongs to the tenant it was created under.
 - **Sessions.** A session records the tenant it was signed in to.
+- **Provider links.** A linked login, such as a Google account, signs in only to the tenant it was linked in. The same login can be linked once in each tenant, to the same person or to different people.
 
 ## Signing in to a tenant
 
 ```ts
-await auth.passwords.set(ada.id, password, auth.cfg.stores.credentials, { tenantId: 'acme' })
+await auth.passwords.set(ada.id, password, auth.cfg.stores.credentials, null, { tenantId: 'acme' })
 
 const { sid, session } = await auth.flows.signIn({ providerId: 'password', input: { email, password }, tenantId: 'acme' })
 // session.tenantId === 'acme'
@@ -19,36 +20,43 @@ const { sid, session } = await auth.flows.signIn({ providerId: 'password', input
 
 A sign-in under `globex` does not find acme's password and answers `AUTH_INVALID_CREDENTIALS`.
 
+## Leaving the tenant out
+
+A call that names no tenant reaches only the records with no tenant. An app without tenants never names one and reaches everything; a tenanted app that forgets one finds nothing of a tenant's:
+
+- A sign-in without `tenantId` finds only a credential or provider link with no tenant, and its session records none.
+- A resolve without `expectedTenantId` accepts only a session with no tenant.
+- `auth.sessions.listForIdentity(id)` lists the person's sessions with no tenant. Pass `{ tenantId }` to list one tenant's.
+- A token a flow mails in a tenant, for a password reset, an email verification or an account deletion, is redeemed in it: pass the same `tenantId` to the `complete` call.
+
+So a multi-tenant app passes the tenant, from the host or path, to every flow its [routes](/duck-auth/server) call and to its middlewares; [Fetch runtimes](/duck-auth/server/generic) has a sign-in route to start from.
+
 ## Resolving under a tenant
 
 ```ts
 const resolved = await auth.resolveSession(req, { expectedTenantId: 'acme' }).orNull()
 ```
 
-A session from another tenant resolves as absent. The [CSRF guards](/duck-auth/server#your-own-routes) take the same option: `csrfGuard(auth, req, { expectedTenantId })`, `expressCsrf(auth, { expectedTenantId })`.
-
-## Leaving the tenant out
-
-A call without a tenant is unscoped, not scoped to "no tenant":
-
-- A sign-in without `tenantId` finds a credential in any tenant, and its session records none.
-- A resolve without `expectedTenantId` accepts a session from any tenant.
-- `auth.sessions.listForIdentity(id)` lists the person's sessions in every tenant. Pass `{ tenantId }` to list one.
-
-So a multi-tenant app passes the tenant, from the host or path, to every flow its [routes](/duck-auth/server) call and to its guards; [Fetch runtimes](/duck-auth/server/generic) has a sign-in route to start from.
-
-## The ambient tenant
-
-`withTenant(tenantId, fn)` binds a tenant for everything `fn` awaits, `currentTenant()` reads it, and `resolveTenant(explicit)` answers the explicit one when given and the bound one otherwise. They are for your own code. No engine call reads the bound tenant, so each still needs its `tenantId` passed.
+A session from another tenant, or from none, resolves as absent. Each adapter's actor scope, Nest's `makeGuard` and `withGrpc` read the request's tenant through `tenantId`, on every request:
 
 ```ts
-import { resolveTenant, withTenant } from '@gentleduck/auth/core'
-
-app.use((req, _res, next) => withTenant(req.hostname.split('.')[0], next))
-
-// In a handler below it:
-const { tenantId } = resolveTenant()
-await auth.flows.signIn({ providerId: 'password', input, tenantId })
+app.use(expressActorContext(auth, { tenantId: (req) => tenantOf(req.headers.host) }))
 ```
+
+`tenantOf` is yours: a subdomain, a path segment, whatever names the tenant. Without `tenantId`, a tenant's session runs as nobody. The [OIDC provider's](/duck-auth/advanced/oidc-op) `authorize` and `userinfo` take `{ tenantId }` the same way.
+
+The [CSRF guards](/duck-auth/server#your-own-routes) take no tenant. They check the token of the session the cookie names, in whatever tenant it is: the check grants nothing, and one held to a tenant would skip the token for every session outside it.
+
+## Every tenant at once
+
+`ALL_TENANTS` reaches every tenant's records, for work across them, such as an export or signing a person out everywhere:
+
+```ts
+import { ALL_TENANTS } from '@gentleduck/auth/core'
+
+await auth.sessions.revokeAllForIdentity(ada.id, ALL_TENANTS)
+```
+
+`resolveSession(req, { allTenants: true })` accepts a session in any tenant. It is for a check that grants nothing, as the CSRF guards' does; never authorise on it.
 
 Organisations inside a tenant, with members and roles, are the [orgs facet](/duck-auth/core/orgs).

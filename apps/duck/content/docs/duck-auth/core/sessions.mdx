@@ -20,7 +20,7 @@ A session is stored under the sha-256 of its id; the plaintext `sid` only ever t
 | `ip`, `userAgent`, `fingerprint` | Captured at creation and never refreshed; hijack detection compares against them. |
 | `expiresAt`, `absoluteExpiresAt` | The idle deadline, and the hard cap set at creation. |
 | `actingAs` | The operator and reason while an impersonation is open, else `null`. |
-| `tenantId` | The tenant it was issued under; `null` is global. |
+| `tenantId` | The tenant it was issued under, `null` for none. |
 
 ## Deadlines
 
@@ -38,7 +38,7 @@ createAuth({
 
 - `resolveSession` slides `expiresAt` forward once less than half the idle window is left, never past `absoluteExpiresAt`.
 - Nothing moves `absoluteExpiresAt`. Once it passes, the user signs in again.
-- Over `maxSessionsPerIdentity`, a new sign-in revokes that identity's oldest session. Guests are not counted.
+- Over `maxSessionsPerIdentity`, a new sign-in revokes that identity's oldest session of the same kind, so the sessions an API key opens never sign its owner out of a device. Guests are not counted.
 
 An expired session reads as `AUTH_SESSION_EXPIRED`, which `orNull()` answers as `null`. The row stays until a sweep removes it; schedule `auth.sessions.gc()` yourself.
 
@@ -64,12 +64,14 @@ const devices = await auth.sessions.listForIdentity(identity.id) // live rows, n
 await auth.sessions.revoke(sid) // by plaintext sid; answers the row it removed
 await auth.sessions.revokeByHash(session.id) // by row id, for a device list
 await auth.sessions.revokeAllExcept(identity.id, currentSid) // "sign out other devices"
-await auth.sessions.revokeAllForIdentity(identity.id) // everywhere
+await auth.sessions.revokeAllForIdentity(identity.id) // every device
 ```
 
 `revoke` and `revokeByHash` throw `AUTH_SESSION_REVOKED` for a session already gone; `.orNull()` reads a repeat as a no-op. `revokeAllExcept` revokes everything when `currentSid` matches nothing, rather than keep a session you did not mean to.
 
-In a multi-tenant deployment pass the tenant (`{ tenantId }`) to `listForIdentity`, `revokeAllExcept` and `revokeAllForIdentity`; without it they reach every tenant's sessions.
+In a multi-tenant deployment pass the tenant (`{ tenantId }`) to `listForIdentity`, `revokeAllExcept` and `revokeAllForIdentity`; without it they reach only the sessions with no tenant, and [`ALL_TENANTS`](/duck-auth/advanced/multi-tenancy#every-tenant-at-once) every tenant's.
+
+On the Drizzle stores, a session minted just before `revokeAllForIdentity` runs but written just after it survives. The window is a few milliseconds. The memory and Redis stores refuse that write with `AUTH_STALE_WRITE`.
 
 ## Minting by hand
 

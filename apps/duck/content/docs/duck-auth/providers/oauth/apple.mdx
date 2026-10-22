@@ -25,6 +25,7 @@ apple({
 The provider id is `oauth:apple`, and the default scopes are `name email`.
 
 - There is no `clientSecret`. Each token exchange signs a fresh ES256 client secret from the key, valid for 30 minutes. `generateClientSecret` is exported if you need one elsewhere.
+- `privateKey` is checked when the provider is built. Anything but the P-256 key from the `.p8` throws `AUTH_MISCONFIGURED`, including an empty one and one whose line breaks an env var turned into a literal `\n`.
 - Apple posts the callback as a form, so it needs the POST callback route on the [OAuth](/duck-auth/providers/oauth#the-routes) page, and a `secure` state cookie: the cookie goes out `SameSite=None`, and a non-secure one throws `AUTH_MISCONFIGURED`. Test over https.
 - The profile is read from the id_token. `emailVerified` is set when it says `email_verified` is `true` or `"true"`. A user who hides their address signs in with an `@privaterelay.appleid.com` one.
 - Apple sends the name only on the first authorization. Store it from `profileToIdentityProfile`, since no later sign-in carries it.

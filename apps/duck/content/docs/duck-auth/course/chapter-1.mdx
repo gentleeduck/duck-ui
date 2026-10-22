@@ -39,13 +39,13 @@ import { passwords } from '@gentleduck/auth/providers/passwords'
 export const auth = createAuth({
   baseUrl: 'http://localhost:3000',
   stores: new MemoryAdapter(),
-  transport: cookieTransport({ name: 'sid', secure: false }),
+  transport: cookieTransport(),
   providers: [passwords()],
 })
 ```
 
 - `MemoryAdapter` holds all three stores in maps, so a restart forgets everything. Chapter 8 replaces it with Postgres.
-- `cookieTransport({ name: 'sid', secure: false })` puts the session id in a cookie that works over plain http. The default name, `__Host-duck-sid`, needs https.
+- `cookieTransport()` puts the session id in an HttpOnly cookie named `__Host-duck-sid`, a prefix that stops any other subdomain setting it. The prefix needs Secure, so outside production, where the cookie is not Secure and works over plain http, it is dropped: here the cookie is `duck-sid`.
 - `passwords()` hashes with Argon2id through the `@node-rs/argon2` peer.
 - `baseUrl` is where the app lives. Links the engine mails start from it.
 
@@ -56,7 +56,7 @@ import { AuthError } from '@gentleduck/auth/core'
 import { auth } from './auth'
 
 const ada = await auth.identities.create({ profile: { username: 'ada', email: 'ada@example.com' } })
-await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials)
+await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials, null)
 
 const { sid, session } = await auth.flows.signIn({
   providerId: 'password',
@@ -65,7 +65,7 @@ const { sid, session } = await auth.flows.signIn({
 console.log('signed in at AAL', session?.aal)
 // signed in at AAL 1
 
-const request = { headers: new Headers({ cookie: `sid=${sid}` }) }
+const request = { headers: new Headers({ cookie: `duck-sid=${sid}` }) }
 const resolved = await auth.resolveSession(request).orNull()
 console.log('resolved', resolved?.identity?.profile.username)
 // resolved ada
@@ -85,7 +85,7 @@ console.log('after sign-out', await auth.resolveSession(request).orNull())
 <Step>Run it</Step>
 
 ```bash
-npx tsx src/main.ts
+NODE_ENV=development npx tsx src/main.ts
 ```
 
 </Steps>
@@ -107,8 +107,8 @@ npx tsx src/main.ts
 1. **An identity is the person.** `identities.create` stores a profile holding at least `username` and `email`. The password is not on it: `passwords.set` stores a hash as a separate credential.
 2. **The provider checks the password.** It finds Ada by email, case-folded and trimmed, and verifies the hash. A wrong password and an unknown email both throw `AUTH_INVALID_CREDENTIALS`, and both run the hasher, so neither the answer nor its timing says which.
 3. **The session is minted.** `sid` is a random id for the caller; the store keeps only its SHA-256 as the row id. `session.aal` is 1 because one factor was presented.
-4. **`intents` are for a server.** They say "set the `sid` cookie and the `duck-csrf` cookie". With no server yet, this chapter drops them; chapter 4 applies them.
-5. **`resolveSession` reads it back.** The transport finds `sid` in the `cookie` header, the engine hashes it, loads the row and its identity.
+4. **`intents` are for a server.** They say "set the `duck-sid` cookie and the `duck-csrf` cookie". With no server yet, this chapter drops them; chapter 4 applies them.
+5. **`resolveSession` reads it back.** The transport finds `duck-sid` in the `cookie` header, the engine hashes it, loads the row and its identity.
 6. **`signOut` revokes the row.** The same cookie now reads as no session.
 
 ## Answers

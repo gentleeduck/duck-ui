@@ -71,7 +71,7 @@ export const auth = createAuth({
   deliver,
   limiter: new MemoryLimiter(),
   stores,
-  transport: cookieTransport({ name: 'sid', secure: false }),
+  transport: cookieTransport(),
   providers: [
     passwords(),
     (_engine, send) =>
@@ -129,7 +129,7 @@ app.post('/auth/signup', async (req, res) => {
   const { email, name, password } = req.body
   auth.passwords.assertStrength(password)
   const identity = await auth.identities.create({ profile: { email, name, username: email } })
-  await auth.passwords.set(identity.id, password, auth.cfg.stores.credentials)
+  await auth.passwords.set(identity.id, password, auth.cfg.stores.credentials, null)
   res.status(201).json({ identityId: identity.id })
 })
 
@@ -147,7 +147,7 @@ app.listen(3000)
 <Step>Try it</Step>
 
 ```bash
-DATABASE_URL=postgres://localhost/app bun src/server.ts
+NODE_ENV=development DATABASE_URL=postgres://localhost/app bun src/server.ts
 ```
 
 Sign up, then sign in; `-c` and `-b` keep the cookies between calls.
@@ -190,4 +190,4 @@ curl -s -c jar localhost:3000/auth/signin -H 'content-type: application/json' \
 - [Delivery](/duck-auth/core/delivery): replace the `console.log` with a mailer.
 - [Server adapters](/duck-auth/server): what each of these routes must check, and the same routes on other frameworks.
 - [Adding MFA](/duck-auth/guides/mfa): TOTP and backup codes as a second step.
-- [Production hardening](/duck-auth/advanced/security): what `strict()` checks once `NODE_ENV=production`.
+- [Production hardening](/duck-auth/advanced/security): what `strict()` checks in production.

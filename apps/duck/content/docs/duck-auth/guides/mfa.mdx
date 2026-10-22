@@ -3,36 +3,64 @@ title: Adding MFA
 description: Enrolling TOTP with backup codes, asking for the second factor before a sensitive action, WebAuthn as a factor, and remembered devices
 section: Guides
 ---
-Register the MFA provider beside the others:
+Register the MFA provider beside the others, with the key it stores TOTP secrets under:
 
 ```ts
+import { authAesGcmDataAtRest } from '@gentleduck/auth/core/dataAtRest'
 import { mfaProvider } from '@gentleduck/auth/providers/mfa'
 
 const auth = createAuth({
   // ...
-  providers: [passwords(), mfaProvider({ issuer: 'Example' })],
+  providers: [
+    passwords(),
+    mfaProvider({
+      dataAtRest: authAesGcmDataAtRest({ kid: 'k1', masterKey: Buffer.from(process.env.MFA_KEY ?? '', 'base64') }),
+      issuer: 'Example',
+    }),
+  ],
 })
 ```
 
-`issuer` is the name an authenticator app lists the account under. `backupCodeCount` and `backupCodeLen` default to 10.
+- `dataAtRest` is required, and `createAuth` throws `AUTH_MISCONFIGURED` without it. A TOTP secret is the factor itself, so whoever reads it from the database can make every code. Each secret is encrypted to its identity, and a row copied to another account opens nothing. [Data at rest](/duck-auth/core/data-at-rest) has the other key options, KMS among them.
+- `issuer` is the name an authenticator app lists the account under. `backupCodeCount` and `backupCodeLen` default to 10.
 
-A second factor does not change sign-in: the password still answers a session at AAL 1. What changes is that your sensitive routes can ask for more, and step the session up to AAL 2 when the factor checks out.
+Keep the key for as long as anyone holds an enrollment. A secret that does not decrypt throws rather than counting as a wrong code: `AUTH_INVALID_PARAMETERS` for the wrong key or a secret stored before encryption, `AUTH_MISCONFIGURED` for a key id the ring no longer holds. The person signs in with a backup code, which the challenge still takes, and enrolls again. To rotate, make the new key current and move the old one to `previousKeys`; each secret moves to the new key at its next good code.
+
+## Signing in
+
+Once an account holds a factor beside the password, the password alone opens no session. `signIn` answers a `challenge`, and the second step answers it:
+
+```ts
+const { challenge, intents } = await auth.flows.signIn({ providerId: 'password', input, previousSid, ...caller })
+if (challenge) holdForTheSecondStep(challenge.token) // an httpOnly cookie, for a browser
+
+const { intents: opened } = await auth.flows.completeStepUp({ challenge: token, method: 'totp', code, previousSid, ...caller })
+```
+
+- `challenge.methods` is what the account holds that the sign-in did not present, as `completeStepUp` takes them: `totp`, `backup-code`, `webauthn`, `passkey`.
+- The token works once, for five minutes, and survives a wrong code. A spent, expired or retired challenge, and a token no sign-in issued, throw `AUTH_UNAUTHENTICATED`. A newer challenge for the identity retires it, and so does a password reset.
+- The session opens at AAL 2, and `signin.success` is emitted then, not at the first step.
+- Every provider is challenged alike: a magic link, OAuth, SAML below AAL 2. A passkey that verifies the user is both factors and signs in at AAL 2. An API key is no person's sign-in and opens its session as before.
+- [`examples/duck-auth`](https://github.com/gentleeduck/duck-iam/tree/main/examples/duck-auth) holds the token in an httpOnly cookie between `/auth/signin` and `/auth/mfa/verify`.
+
+A session signed in before the account had a factor, or through a [remembered device](#remembered-devices), is still at AAL 1. Your sensitive routes ask that one for more.
 
 ## Enrolling TOTP
 
 ```ts
-const { uri } = await auth.mfa.beginTotpEnrollment(identity.id, identity.profile.email)
+const { uri } = await auth.mfa.beginTotpEnrollment(identity.id, identity.profile.email, session)
 // Render uri as a QR code; the person scans it and types the first code back.
 
-const confirmed = await auth.mfa.confirmTotpEnrollment(identity.id, code)
+const confirmed = await auth.mfa.confirmTotpEnrollment(identity.id, code, session)
 if (confirmed.ok) showOnce(confirmed.backupCodes)
 ```
 
 - A wrong first code answers `{ ok: false }` and leaves the enrollment pending, so the person can try again.
 - Confirming emits `mfa.enrolled` and mints the backup codes. They are hashed at rest, so this is the only time they can be shown.
-- Enrolling again while a confirmed factor exists is refused with `AUTH_MFA_REQUIRED`. Replacing one means removing it first, behind a step-up.
+- Enrolling again replaces the TOTP: the old one keeps working until the new one confirms, and confirming retires it and mints a fresh set of codes.
+- Once the account has a factor, both calls need a stepped-up `session`, as every factor change does: see [Changing factors](#changing-factors).
 
-These calls act on whatever identity they are given; your route decides who may make them. Take the identity from the resolved session, never the body, and pass the session's tenant, since `auth.mfa` reads unscoped without one: `{ tenantId: session.tenantId }`.
+These calls act on whatever identity they are given; your route decides who may make them. Take the identity and `session` from the resolved session, never the body (`null` for a caller with none), and pass the session's tenant, since without one `auth.mfa` reaches only the factors with no tenant: `{ tenantId: session.tenantId ?? undefined }`.
 
 ## Asking for the second factor
 
@@ -69,18 +97,26 @@ app.post('/api/step-up', async (req, res) => {
 - `checkStepUp` asks for AAL 2 by default. `freshness` also asks that the last factor be recent; `need.reason` is `mfa-required` or `fresh-required`.
 - `completeStepUp` checks the code against the session's own tenant, is rate limited per identity, and rotates to an AAL 2 session. `applyIntents` sets its cookie; the client then retries the action.
 - Step up through `completeStepUp`, not a route over `auth.mfa.verifyTotp`: that has no rate limit and answers every guess, a six-digit oracle for anyone holding the password. If you do expose one, consume `auth.limiter` on `stepup:${identityId}` first, the bucket `completeStepUp` spends.
+- A passkey steps up too. Begin it with `auth.flows.beginProvider('passkey', { sessionId, email })` and pass `{ method: 'passkey', passkey: { sessionId, response } }`; the passkey has to be the session's own and verify the user.
 - A wrong code throws `AUTH_INVALID_CREDENTIALS`. Every code works once: the one that confirmed enrollment, or passed a step-up, is refused along with any older one, so the person waits for the next. A backup code is spent by the step-up it passes; `auth.mfa.remainingBackupCodes(id)` says how many are left.
 
-[Compliance presets](/duck-auth/core/compliance) that require MFA refuse an engine without the provider, but sign-in still answers AAL 1: requiring the factor is this check.
+[Compliance presets](/duck-auth/core/compliance) that require MFA refuse an engine without the provider, but an account with no second factor still signs in at AAL 1: requiring one is this check.
 
-## Removing a factor
+## Changing factors
+
+A password alone is the only account that changes its factors without a step-up. Once it holds anything else (a TOTP, backup codes, a security key or a passkey), every call that adds, removes or replaces a factor, mints backup codes or remembers a device takes the caller's `session` and throws `AUTH_MFA_REQUIRED` unless it is the identity's own, at AAL 2, in the same tenant and still fresh. `meta.methods` names what the account holds, as `completeStepUp` takes them: `totp`, `backup-code`, `webauthn`, `passkey`.
 
 ```ts
-await auth.mfa.removeTotp(identityId)
-const codes = await auth.mfa.regenerateBackupCodes(identityId)
+await auth.mfa.removeTotp(identityId, session)
+await auth.mfa.removeBackupCodes(identityId, session)
+const codes = await auth.mfa.regenerateBackupCodes(identityId, session)
 ```
 
-`removeTotp` also revokes every remembered device and emits `mfa.removed`. `regenerateBackupCodes` revokes the old codes. Put both behind `checkStepUp`, or someone holding only the password can remove the factor that was meant to stop them.
+- Backup codes are a factor of their own. `removeTotp` leaves them, so the account still needs a step-up until `removeBackupCodes` runs too.
+- `removeTotp` and `removeWebauthnMfa` also revoke every remembered device and emit `mfa.removed`. `regenerateBackupCodes` revokes the old codes.
+- A ceremony of two calls asks at both, so one begun stepped up cannot finish once the session lapses.
+- A password reset asks the same of an account with any factor beside the password: `completePasswordReset` throws `AUTH_RECOVERY_REQUIRES_MFA` without a stepped-up `currentSid`.
+- Someone who has lost every factor cannot step up, so recovering the account is an operator's job against the store.
 
 ## WebAuthn as a factor
 
@@ -97,21 +133,21 @@ const webauthn = {
 }
 
 // Enrolling
-const creation = await auth.mfa.beginWebauthnMfaEnrollment(identityId, { ...webauthn, rpName: 'Example', userName: email })
-await auth.mfa.confirmWebauthnMfaEnrollment(identityId, { ...webauthn, response: registrationResponse })
+const creation = await auth.mfa.beginWebauthnMfaEnrollment(identityId, { ...webauthn, session, rpName: 'Example', userName: email })
+await auth.mfa.confirmWebauthnMfaEnrollment(identityId, { ...webauthn, session, response: registrationResponse })
 
 // Stepping up
 const request = await auth.mfa.beginWebauthnMfaVerify(identityId, webauthn)
 await auth.flows.completeStepUp({ currentSid: sid, method: 'webauthn', webauthn: { ...webauthn, response: authenticationResponse } })
 ```
 
-The browser side is `startRegistration` and `startAuthentication` from `@simplewebauthn/browser`, given the options each `begin` answers.
+The browser side is `startRegistration` and `startAuthentication` from `@simplewebauthn/browser`, given the options each `begin` answers. A sign-in's challenge has no session yet: begin the assertion for `challenge.identityId`, key the challenge store on something else, and pass `challenge` in place of `currentSid`.
 
-TOTP enrollment is refused while a WebAuthn factor exists, but a WebAuthn enrollment adds a key beside whatever the account has, which is how a backup key is added. Once the account has any factor, put this enrollment behind `checkStepUp`, or a password alone can add a key and step up with it.
+A WebAuthn enrollment adds a key beside whatever the account has, which is how a backup key is added. Both calls take `session` and ask for a step-up as in [Changing factors](#changing-factors); otherwise a password alone could add a key and step up with it. [Passkey](/duck-auth/providers/passkey) registration follows the same rule, since a passkey that verifies the user signs in at AAL 2 by itself.
 
 ## Remembered devices
 
-`rememberMeFacet` issues a long-lived token for a "trust this device" checkbox. Nothing in the engine reads it: your sign-in decides what a remembered device skips.
+`rememberMeFacet` issues a long-lived token for a "trust this device" checkbox. Pass it to `signIn` as `rememberedDevice`: a live token of the same identity skips the challenge, and the session stays at AAL 1, so a sensitive route still asks for the factor. A provider answering `requireMfa` is challenged even from a remembered device.
 
 ```ts
 import { createHash, randomBytes } from 'node:crypto'
@@ -122,8 +158,11 @@ const devices = rememberMeFacet(auth.cfg.stores.credentials, {
   authSha256: (value) => createHash('sha256').update(value).digest('hex'),
 })
 
-const { token } = await devices.issue(identityId, { metadata: { label: 'MacBook' } })
+const { token } = await devices.issue(identityId, session, { metadata: { label: 'MacBook' } })
 const trusted = await devices.verify(token).orNull()
+
+// A later sign-in from that device
+await auth.flows.signIn({ providerId: 'password', input, rememberedDevice: token, ...caller })
 ```
 
-A token lasts 90 days and is stored hashed. `list`, `revoke` and `revokeAll` manage them; a password reset and removing a factor revoke them all.
+A token skips a factor, so issuing one asks for a stepped-up `session`, as in [Changing factors](#changing-factors). It lasts 90 days and is stored hashed. `list`, `revoke` and `revokeAll` manage them; a password reset and removing a factor revoke them all.

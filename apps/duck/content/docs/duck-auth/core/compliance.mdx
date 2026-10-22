@@ -9,19 +9,18 @@ A preset is a floor. `createAuth({ compliance })` shortens the session lifetimes
 const auth = createAuth({
   // ...
   compliance: 'hipaa', // or a list, such as ['gdpr', 'soc2']
-  providers: [passwords({ compliance: 'hipaa' }), mfaProvider({ compliance: 'hipaa' })],
+  providers: [passwords({ compliance: 'hipaa' }), mfaProvider({ compliance: 'hipaa', dataAtRest })],
   strict: false, // checked below, once the listeners exist
 })
 
 auth.events.on('lockout', alertOnLockout)
 auth.strict({
-  env: 'production',
   compliance: { auditLogRetained7y: true, baaCompliantChannel: true, dataAtRest: true, mailerChannel: true },
 })
 ```
 
 - A list composes by taking the stricter value of every field.
-- The checks run in every env, not only production, and one error lists every gap.
+- The checks run whatever `NODE_ENV` says, not only in production, and one error lists every gap.
 - `strict: false` defers them: `createAuth` runs `strict()` as it returns, before you have subscribed anything, and it has no way to take your attestations.
 
 ## What each preset sets
@@ -37,7 +36,7 @@ auth.strict({
 
 The session lifetimes only ever shorten what you set. The password, backup-code and API key floors belong to the providers, so pass the same preset to `passwords({ compliance })`, `mfaProvider({ compliance })` and `apiKeyProvider({ compliance })`; `createAuth` cannot reach providers that are already built.
 
-hipaa and fips refuse an engine with no mfa provider. Sign-in still answers AAL 1; demanding the second factor is your `checkStepUp`, as in [step-up](/duck-auth/core/flows#step-up).
+hipaa and fips refuse an engine with no mfa provider. An account with no second factor still signs in at AAL 1; demanding one is your `checkStepUp`, as in [step-up](/duck-auth/core/flows#step-up).
 
 ## The checks
 

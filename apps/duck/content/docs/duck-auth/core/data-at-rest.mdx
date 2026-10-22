@@ -3,7 +3,7 @@ title: Data at rest
 description: Encrypting sensitive profile fields before they reach the database, with a local AES-256-GCM key ring or KMS envelope encryption
 section: Core
 ---
-`@gentleduck/auth/core/dataAtRest` encrypts one field at a time, for values such as a national id or a date of birth that should never sit in the database in plaintext. Nothing in the engine or the stores calls it: you encrypt before writing the profile and decrypt after reading it.
+`@gentleduck/auth/core/dataAtRest` encrypts one field at a time, for values such as a national id or a date of birth that should never sit in the database in plaintext. [`mfaProvider`](/duck-auth/guides/mfa) requires one and stores every TOTP secret under it. A profile field is yours: you encrypt before writing the profile and decrypt after reading it.
 
 ```ts
 import { authAesGcmDataAtRest } from '@gentleduck/auth/core/dataAtRest'
@@ -19,7 +19,7 @@ const updated = await auth.identities.updateProfile(ada.id, { ssn }, ada.version
 const plain = await dataAtRest.decrypt(updated.profile.ssn, { identityId: ada.id, field: 'ssn' })
 ```
 
-The context is part of the key: a ciphertext decrypts only under the `identityId`, `field` and optional `tag` it was written with, so one copied onto another row or field fails with `AUTH_INVALID_PARAMETERS`. Use `tag` for a tenant or a row revision.
+The context is part of the key: a ciphertext decrypts only under the `identityId`, `field` and optional `tag` it was written with, so one copied onto another row or field fails with `AUTH_INVALID_PARAMETERS`. Use `tag` for a tenant or a row revision. The MFA provider writes under the field `totp`, so give it a key of its own or keep that name out of your profile.
 
 Both encryptors refuse a plaintext over 1 MiB.
 
@@ -28,7 +28,7 @@ Both encryptors refuse a plaintext over 1 MiB.
 `authAesGcmDataAtRest({ kid, masterKey, previousKeys? })` derives a key per identity and field from a 32-byte master key, and writes `aes-256-gcm.v3$<kid>$...`.
 
 - `masterKey` must be at least 32 bytes, and `kid` a non-empty string without `$`; both are checked at construction.
-- To rotate, make the new key current and move the old one to `previousKeys`. Old ciphertexts still decrypt, and `needsReEncrypt(cipher)` answers `true` for them until you re-encrypt.
+- To rotate, make the new key current and move the old one to `previousKeys`. Old ciphertexts still decrypt, and `needsReEncrypt(cipher)` answers `true` for them until you re-encrypt. The MFA provider re-encrypts a TOTP secret at its next good code.
 
 ```ts
 const dataAtRest = authAesGcmDataAtRest({
@@ -63,4 +63,4 @@ The KMS rotates its own keys, so `needsReEncrypt` always answers `false` here.
 
 ## Compliance
 
-The gdpr, hipaa and fips [presets](/duck-auth/core/compliance) require `dataAtRest`. The engine cannot see whether you encrypt anything, so you attest it in `strict({ compliance: { dataAtRest: true } })`.
+The gdpr, hipaa and fips [presets](/duck-auth/core/compliance) require `dataAtRest`. The engine cannot see whether you encrypt your profile fields, so you attest it in `strict({ compliance: { dataAtRest: true } })`.

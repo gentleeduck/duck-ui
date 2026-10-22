@@ -29,21 +29,31 @@ const { client_secret } = await op.registerClient({
 
 | Route | Call | Answers |
 | --- | --- | --- |
-| `GET /authorize` | `op.authorize(query, { headers })` | `redirect`, `login_required`, `consent_required` or `error`, by `kind` |
-| Your consent form | `op.completeConsent({ client_id, identity, redirect_uri, scope, sid, tenant_id, ... })` | The same, usually `redirect` with the code |
+| `GET /authorize` | `op.authorize(query, { headers }, { tenantId })` | `redirect`, `login_required`, `consent_required` or `error`, by `kind` |
+| Your consent form | `op.completeConsent({ client_id, identity, redirect_uri, scope, sid, tenant_id, auth_time, ... })` | The same, usually `redirect` with the code |
 | `POST /token` | `op.token(body, headers)` | The tokens, or `{ error }` |
-| `GET /userinfo` | `op.userinfo(headers)` | The claims, or `{ error }` |
+| `GET /userinfo` | `op.userinfo(headers, { tenantId })` | The claims, or `{ error }` |
 | `POST /introspect` | `op.introspect(body, headers)` | `{ active, ... }` |
-| `POST /revoke` | `op.revoke(body, headers)` | Nothing |
+| `POST /revoke` | `op.revoke(body, headers)` | `{ error: 'invalid_client' }` to send as a 401, or nothing, a 200 |
 | `POST /register` | `op.register(body, headers)` | `{ status, body }` |
 
-`headers` is a Fetch `Headers`. `authorize` finds the signed-in person through the engine's transport, so `login_required` means sending them to your sign-in page and back.
+`headers` is a Fetch `Headers`. `authorize` finds the signed-in person through the engine's transport, so `login_required` means sending them to your sign-in page and back. `tenantId` is the request's tenant, left out in an app without tenants: a session in a tenant reads as signed out to `authorize` without it, and a token issued in one is `invalid_token` to `userinfo`. It also answers `prompt=login`, and a `max_age` that has passed since the person's last factor, with `reason` saying which. `max_age=0` is `prompt=login`. Resume the request without `login` in `prompt` and without `max_age`, which that sign-in answered, or it asks again.
 
-A code lives 10 minutes and works once. Access and ID tokens live an hour and refresh tokens 30 days; `config` changes each. A refresh token rotates on every use, and presenting a spent one revokes its whole family. Tokens are stored as SHA-256 hashes.
+`completeConsent` checks the scope and PKCE again, as `authorize` did, because its input comes back through your form.
+
+`consent_required` carries an `auth_time`: when the person last presented a factor. Pass it back to `completeConsent` and the ID token carries the `auth_time` claim, which an RP that asked for `max_age` is entitled to (OIDC Core 3.1.3.6). Leave it out and the claim is omitted rather than invented. Read it off the session rather than a hidden form field, or the person can claim a sign-in fresher than they had. The `sid` you pass becomes the `sid` claim, and both survive every refresh of the grant (OIDC Core 12.2), so a refreshed ID token reports the sign-in it descends from and not the refresh.
+
+`/introspect` and `/revoke` take a client's credentials as `/token` does: Basic, or `client_id` and `client_secret` in the body. A public client names itself with `client_id`. A client can revoke only the tokens issued to it. Another client's token is left alone and answered with a 200, as an unknown token is, so the answer never tells a client that someone else's token is live. RFC 7009 has the server answer an error there instead.
+
+A code lives 10 minutes and works once. Access and ID tokens live an hour and refresh tokens 30 days; `config` changes each. A refresh token rotates on every use, and presenting a spent one revokes its whole family. Presenting it as another client is refused without spending it. Tokens are stored as SHA-256 hashes.
+
+Ending a grant ends both kinds of token it issued, so a stolen access token does not outlive the code or refresh token it came from. A code redeemed twice is refused and revokes what the first redemption issued (RFC 6749 4.1.2), however many rotations ago that was; so does a replayed refresh token, and so does revoking a refresh token at `/revoke` (RFC 7009 2.1). Revoking a single access token there takes only that token, since one leaked token is not a leaked grant.
+
+Erasing or soft-deleting an identity ends its grants: its codes and refresh tokens answer `invalid_grant`, and its tokens introspect as `{ active: false }`.
 
 ## Stores
 
-The defaults are in memory. For production, pass the Drizzle stores for your dialect, from `oidc/op/drizzle/pg`, `mysql` or `sqlite`:
+The defaults are in memory, for development and test; production refuses them as they are built, since each instance would hold only its own grants and a restart would forget them all. Pass the Drizzle stores for your dialect, from `oidc/op/drizzle/pg`, `mysql` or `sqlite`:
 
 ```ts
 import { authCreateDrizzlePgOidcOpStores, authGcDrizzlePgOidcOp } from '@gentleduck/auth/oidc/op/drizzle/pg'
@@ -52,6 +62,8 @@ const op = createOidcOP({ auth, config, signIdToken, stores: authCreateDrizzlePg
 
 await authGcDrizzlePgOidcOp(db) // on a schedule; removes expired codes and tokens
 ```
+
+A store of your own implements the same interfaces. Codes carry `sid` and a nullable `auth_time`, refresh tokens carry both as well, and access tokens carry the `family_id` of their grant plus a `revokeFamily(family_id)` that deletes every access token holding it.
 
 ## Dynamic registration
 
@@ -66,6 +78,10 @@ const op = createOidcOP({
 })
 ```
 
-Without `initialAccessToken` anyone can register a client, so keep that behind a private network. Advertise the endpoint with `registrationEndpoint` in the [discovery document](/duck-auth/advanced/oidc).
+Leave `initialAccessToken` out and anyone can register a client, so keep that behind a private network. The key present but `undefined`, as an unset environment variable gives, throws `AUTH_MISCONFIGURED` rather than opening registration. So does a blank token, or a `maxRedirectUris` that is not a whole number of 1 or more.
+
+A consent screen links `client_uri` and shows `logo_uri`, so each must be an `http` or `https` URL of at most 2048 characters, without a username or password. A field of the wrong type, or a URI that breaks this, answers 400 `invalid_client_metadata`. `registerClient` refuses the same URIs with `AUTH_INVALID_PARAMETERS`.
+
+Advertise the endpoint with `registrationEndpoint` in the [discovery document](/duck-auth/advanced/oidc).
 
 A working provider with a consent page is in [`examples/oidc-op`](https://github.com/gentleeduck/duck-iam/tree/main/examples/oidc-op).

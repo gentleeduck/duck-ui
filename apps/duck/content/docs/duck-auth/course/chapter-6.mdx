@@ -50,7 +50,7 @@ export const auth = createAuth({
   baseUrl: 'http://localhost:3000',
   deliver,
   stores,
-  transport: cookieTransport({ name: 'sid', secure: false }),
+  transport: cookieTransport(),
   providers: [
     passwords(),
     (_engine, send) =>
@@ -64,7 +64,6 @@ export const auth = createAuth({
       clientSecret: process.env.GITHUB_CLIENT_SECRET ?? '',
       redirectUri: 'http://localhost:3000/auth/providers/oauth:github/callback',
       stateSigningSecret: process.env.OAUTH_STATE_SECRET ?? '',
-      stateCookie: { name: 'duck-oauth', secure: false },
       nonceStore: memoryDPoPNonceStore(),
       profileToIdentityProfile: (p) => (p.email ? { email: p.email, username: `github:${p.sub}` } : null),
       onFederationConflict: 'link-if-verified',
@@ -74,7 +73,7 @@ export const auth = createAuth({
 ```
 
 - The magic-link provider is a **thunk**: the engine calls it with its own `deliver`, so both kinds of mail go through one mailer.
-- `stateCookie` gets a plain name and `secure: false` for http, as the session cookie did in chapter 1.
+- The `state` cookie is `duck-oauth` outside production, so it works over http like the session cookie.
 - `nonceStore` burns each `state` once, so a callback URL copied from history cannot sign in again. The memory store serves one process; chapter 8 moves it to Valkey.
 - `profileToIdentityProfile` builds the profile for someone GitHub sends who has no account yet.
 
@@ -196,7 +195,7 @@ document.querySelector('button')?.addEventListener('click', async () => {
 
 ```bash
 npx esbuild src/page.ts src/magic-link.ts --bundle --format=esm --outdir=public
-npx tsx src/server.ts
+NODE_ENV=development npx tsx src/server.ts
 ```
 
 </Steps>

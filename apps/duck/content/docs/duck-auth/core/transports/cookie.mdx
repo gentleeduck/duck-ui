@@ -14,31 +14,24 @@ createAuth({
 })
 ```
 
-Without a `transport`, `createAuth` uses `cookieTransport({ name: 'duck-sid' })`: the same cookie under a name without the `__Host-` prefix.
+Without a `transport`, `createAuth` uses `cookieTransport()`, with the defaults below.
 
 | Option | Default | Notes |
 | --- | --- | --- |
 | `name` | `__Host-duck-sid`, or `duck-sid` with a `domain` | The `__Host-` prefix makes browsers insist on Secure, `Path=/` and no Domain. |
-| `secure` | `true` | Set `false` only for plain-http local development; `strict()` refuses it in production. |
-| `sameSite` | `'lax'` | `'none'` requires `secure`. |
-| `path` | `/` | The `__Host-` prefix requires `/`. |
-| `domain` | none | Shares the cookie across subdomains; forbidden with a `__Host-` name. |
+| `sameSite` | `'lax'` | `'none'` keeps the cookie Secure in every environment, since a browser drops `SameSite=None` without it. |
+| `path` | `/` | Starts with `/`. The `__Host-` prefix requires `/` itself. |
+| `domain` | none | A bare host, such as `example.com`, with no scheme or port. Shares the cookie across subdomains; forbidden with a `__Host-` name. |
 | `maxAgeSec` | the session's absolute deadline | Ends the cookie earlier than the session. |
 
 A contradiction, such as a `__Host-` name with a `domain`, throws `AUTH_MISCONFIGURED` at construction.
 
 ## The CSRF cookie
 
-Every sign-in also sets `__Host-duck-csrf` (or `duck-csrf` when the settings rule out the prefix) with the session's CSRF token. It is not HttpOnly: your page reads it and echoes it in the `x-csrf-token` header on every state-changing request. The adapters' CSRF guards check it; a mismatch answers 403 `AUTH_CSRF`.
+Every sign-in also sets `__Host-duck-csrf` (or `duck-csrf` when the settings or the environment rule out the prefix) with the session's CSRF token. It is not HttpOnly: your page reads it and echoes it in the `x-csrf-token` header on every state-changing request. The adapters' CSRF guards check it; a mismatch answers 403 `AUTH_CSRF`.
 
 `transport.csrfCookieName` answers the name in use, for the page to read it by.
 
-## Local development
+## Secure and the environment
 
-Browsers drop a Secure cookie over plain http on anything but `localhost`, and a `__Host-` name requires Secure. For http development pass a plain name:
-
-```ts
-cookieTransport({ name: 'sid', secure: false })
-```
-
-The CSRF cookie follows, becoming `duck-csrf`.
+Cookies are Secure in production. Outside it they are not, so they survive plain http, and a `__Host-` prefix, which requires Secure, is dropped from the name: the defaults become `duck-sid` and `duck-csrf`. Production is any `NODE_ENV` but `development` or `test`, unset included, so a local server runs with `NODE_ENV=development`.

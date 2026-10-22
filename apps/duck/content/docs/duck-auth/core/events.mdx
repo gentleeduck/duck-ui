@@ -17,7 +17,7 @@ off() // unsubscribe
 
 Payloads are typed per event name. Handlers run one after another; a handler that throws is logged and the rest still run, so a broken listener never fails the sign-in that emitted.
 
-`strict({ env: 'production' })` refuses an engine with no `lockout` listener, since a lockout nobody hears is a brute force nobody sees.
+`strict()` refuses a production engine with no `lockout` listener, since a lockout nobody hears is a brute force nobody sees.
 
 ## Where a handler runs
 
@@ -34,7 +34,7 @@ auth.events.on('authz.revoked', ({ identityId }) => decisionCache.drop(identityI
 | `'origin'` | the server that emitted, once | kept |
 | `'fleet'`, the default | every server | kept on the emitter; the others get a copy of the payload and none |
 
-On the in-process bus both run on the one server there is. Webhooks are delivered as `origin`, once per emit.
+On the in-process bus both run on the one server there is. Webhooks are delivered as `origin`, once per emit. A plugin's `events` run as its `delivery` says, `fleet` unless it says `origin`.
 
 ## The events
 
@@ -51,7 +51,7 @@ On the in-process bus both run on the one server there is. Webhooks are delivere
 | `mfa.enrolled`, `mfa.removed` | `identityId`, `method` | A second factor was added or removed. |
 | `identity.linked` | `identityId`, `providerId` | A provider login was attached. |
 | `identity.unlinked` | `identityId`, `providerId`, `allowedLockout` | A provider login was removed. |
-| `identity.erased` | `identityId`, `reason` | An identity was erased for good. |
+| `identity.erased` | `identityId`, `reason` | An identity was erased for good: by `erase` or `eraseMany`, by `gc` once its grace window closed (`reason: 'gc'`), or by a `bulkCreate` replace (`reason: 'bulkCreate replace'`). |
 | `identity.impersonated` | `realIdentityId`, `targetIdentityId`, `reason`, `iamDecisionId?` | An impersonation began. |
 | `identity.impersonation.ended` | `sessionId`, `realIdentityId`, `targetIdentityId`, `endedBy` | It ended: `'release'`, `'revoke'` or `'expiry'`. |
 | `recovery.password.requested` | `identityId` | A reset link was sent. |
@@ -89,5 +89,6 @@ createAuth({
 - `redis` is an `@upstash/redis`-shaped client with `publish` and `subscribe`. For ioredis or iovalkey, `valkeyEvents({ cmd, sub })` from `@gentleduck/auth/adapters/valkey` takes a command connection and a dedicated subscriber one.
 - Each emit goes to the channel `${prefix}:${event}`. The emitter runs its `origin` and `fleet` handlers straight off the emit, and every other instance runs its `fleet` handlers when the message arrives, with `Date` fields revived. An instance subscribes to a channel only while it holds a `fleet` handler for that event.
 - A failed publish is logged, not thrown, so Redis being down never fails a sign-in.
+- A failed subscribe is logged and retried, after 1 second and doubling to 30, while the event has a `fleet` handler. It fails while Redis is unreachable, and on a client made with `enableOfflineQueue: false` that has not connected yet.
 
-`strict({ env: 'production' })` refuses the in-process bus while it holds a `fleet` handler, naming the events, and passes it when every handler is `origin`. It sees only the handlers registered before it runs.
+In production, `strict()` refuses the in-process bus while it holds a `fleet` handler, naming the events, and passes it when every handler is `origin`. It sees only the handlers registered before it runs.

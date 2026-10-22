@@ -4,7 +4,7 @@ description: Forwarding engine events to your own endpoints, signed, retried and
 section: Advanced
 ---
 ```ts
-import { AuthWebhookDeliverer } from '@gentleduck/auth/core'
+import { AuthWebhookDeliverer, createAuth } from '@gentleduck/auth/core'
 
 const webhooks = new AuthWebhookDeliverer({
   endpoints: [
@@ -17,22 +17,27 @@ const webhooks = new AuthWebhookDeliverer({
   deadLetter: { put: async (entry) => saveFailedDelivery(entry) },
 })
 
-const detach = webhooks.attach(auth.events)
+const auth = createAuth({
+  // ...
+  webhooks,
+})
 ```
 
-`attach` subscribes the deliverer to the events its endpoints name, as `origin` handlers, and returns the call that detaches it. Attach it on every server: each posts only the events it emitted, so a fleet sends each webhook once. An event another service publishes straight to Redis is that service's to deliver. An emit does not wait for the delivery, so a slow receiver never slows a sign-in. On shutdown, `await webhooks.drain()` settles what is still in flight.
+`createAuth` attaches the deliverer to the engine's bus, subscribing it to the events its endpoints name as `origin` handlers. Build it on every server: each posts only the events it emitted, so a fleet sends each webhook once. An event another service publishes straight to Redis is that service's to deliver. An emit does not wait for the delivery, so a slow receiver never slows a sign-in. On shutdown, `await webhooks.drain()` settles what is still in flight.
+
+To change the endpoints at runtime, `attach` a new deliverer to `auth.events` and detach the old one: `attach` returns the detach, and called again on a bus it already holds, returns the same one.
 
 ## Endpoints
 
 | Field | Default | |
 | --- | --- | --- |
-| `url` | required | HTTPS. Loopback, private, link-local and cloud-metadata hosts are refused at construction, and `allowInsecure: true` on the deliverer permits `http` for development only. |
+| `url` | required | HTTPS. Loopback, private, link-local and cloud-metadata hosts are refused at construction. Outside production plain `http` and loopback are admitted, so `http://localhost:3000/hooks` works in development. |
 | `secret` | required | Signs each request. |
 | `events` | `'*'` | The [event names](/duck-auth/core/events) this endpoint receives. A name the engine never emits is refused. |
-| `signatureHeader` | `X-Duck-Signature` | Where the signature goes. |
+| `signatureHeader` | `X-Duck-Signature` | Where the signature goes. A header the request already carries, such as `Content-Type` or `X-Duck-Timestamp`, is refused. |
 | `id` | the URL without its query | Names the endpoint in results and dead letters. |
 
-The guard reads the host as written. Pass `resolveHost` to also check the addresses a name resolves to before each attempt; in Node, `(await lookup(host, { all: true })).map((a) => a.address)` from `node:dns/promises`.
+The guard reads the host as written. Pass `resolveHost` to also check the addresses a name resolves to before each attempt. It receives an IPv6 host without its brackets, as `lookup` takes it; in Node, `(await lookup(host, { all: true })).map((a) => a.address)` from `node:dns/promises`.
 
 ## What is sent
 
@@ -48,7 +53,7 @@ A `POST` with the JSON body `{ deliveryId, event, payload, timestamp }`, where `
 
 A 2xx is delivered. A 408, a 429, any 5xx, a timeout (`timeoutMs`, 5 seconds) or a network failure is retried, up to `maxAttempts` (5) with exponential backoff from `backoffMs` (500 ms), jittered. Any other 4xx is not retried. A delivery that runs out goes to `deadLetter.put` with the endpoint, event, redacted payload, attempts and last error.
 
-`webhooks.deliverOne(event, payload)` delivers one event by hand, for a replay, and answers per endpoint whether it landed.
+`webhooks.deliverOne(event, payload)` delivers one event by hand and answers per endpoint whether it landed. It sends to every endpoint the event names, each under a new `X-Duck-Delivery-Id`. Replaying one endpoint's dead letter with it reaches the others again too, and a receiver that already acted on the event cannot tell it from a new one.
 
 ## Receiving
 

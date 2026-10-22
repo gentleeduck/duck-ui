@@ -40,7 +40,7 @@ export const auth = createAuth({
   baseUrl: 'http://localhost:3000',
   deliver,
   stores: new MemoryAdapter(),
-  transport: cookieTransport({ name: 'sid', secure: false }),
+  transport: cookieTransport(),
   providers: [passwords()],
   session: {
     ttlMs: 24 * 60 * 60 * 1000,
@@ -60,7 +60,7 @@ import { AuthError } from '@gentleduck/auth/core'
 import { auth } from './auth'
 
 const ada = await auth.identities.create({ profile: { username: 'ada', email: 'ada@example.com' } })
-await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials)
+await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials, null)
 const input = { email: 'ada@example.com', password: 'correct-horse-battery' }
 
 const laptop = await auth.flows.signIn({ providerId: 'password', input, ip: '203.0.113.7', userAgent: 'Firefox' })
@@ -76,7 +76,7 @@ console.log(devices.map((session) => `${session.userAgent} from ${session.ip}`))
 await auth.sessions.revokeAllExcept(ada.id, laptop.sid)
 console.log((await auth.sessions.listForIdentity(ada.id)).map((session) => session.userAgent))
 // [ 'Firefox' ]
-console.log('phone', await auth.resolveSession({ headers: new Headers({ cookie: `sid=${phone.sid}` }) }).orNull())
+console.log('phone', await auth.resolveSession({ headers: new Headers({ cookie: `duck-sid=${phone.sid}` }) }).orNull())
 // phone null
 ```
 
@@ -85,7 +85,7 @@ console.log('phone', await auth.resolveSession({ headers: new Headers({ cookie: 
 Add to `src/main.ts`:
 
 ```ts title="src/main.ts"
-const cookie = new Headers({ cookie: `sid=${laptop.sid}` })
+const cookie = new Headers({ cookie: `duck-sid=${laptop.sid}` })
 const resolved = await auth.resolveSession({ headers: cookie })
 
 console.log(await auth.hijack.evaluate(resolved.session, { ip: '192.0.2.99', userAgent: 'Firefox' }))

@@ -25,14 +25,12 @@ app.post('/auth/signup', async (req, res) => {
 | `authTurnstileVerifier` | `expectedAction` |
 | `authHCaptchaVerifier` | none; hCaptcha echoes no action |
 | `authRecaptchaV3Verifier` | `minScore` (0.5 by default), `expectedAction` |
-| `authNullCaptchaVerifier` | Passes everything, for tests. It refuses to construct under `NODE_ENV=production`. |
+| `authNullCaptchaVerifier` | Passes everything, for tests. It refuses to construct in production. |
 
-Every siteverify verifier takes `secret`, `expectedHostname` (one or a list), `maxChallengeAgeMs` (5 minutes by default), `timeoutMs` (5 seconds), and `endpoint` to override the provider URL, which must be a public https host.
+Every siteverify verifier takes `secret`, `expectedHostname` (a bare host such as `app.example.com`, or a list), `maxChallengeAgeMs` (5 minutes by default), `timeoutMs` (5 seconds), and `endpoint` to override the provider URL, which must be a public https host; outside production, plain `http` and loopback are admitted, for a local mock.
 
 ## The result
 
 `verify` never throws. A rejected token, a timeout, a network failure and an unreadable response all answer `{ success: false, errorCodes }`, so a captcha outage cannot turn sign-up into a 500. `errorCodes` mixes the provider's own codes with duck-auth's, such as `timeout`, `hostname-mismatch`, `action-mismatch`, `challenge-expired` and `score-too-low`. The result also reports `score`, `hostname`, `action` and `challengeTs`, for a caller that wants its own rule.
 
 Without a `captcha` in the config, `auth.captcha` fails every call with `captcha-not-configured` rather than being `undefined`.
-
-`strict({ env: 'production' })` refuses the null verifier and a plain-http `endpoint`.

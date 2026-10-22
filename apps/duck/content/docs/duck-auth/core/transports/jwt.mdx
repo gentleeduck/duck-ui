@@ -37,9 +37,9 @@ The token is checked by signature alone, so **revoking the session does not revo
 | `ttlMs` | 15 minutes | Never past the session's own deadlines. |
 | `freshnessMs` | 5 minutes | How long after sign-in the rebuilt session counts as fresh. |
 | `clockSkewSec` | 0 | Leeway on `exp` for servers whose clocks disagree. |
-| `refresh` | off | `{ cookieName?, ttlMs?, sameSite? }`; cookie `__Host-duck-refresh`, 7 days, `'strict'`. |
+| `refresh` | off | `{ cookieName?, ttlMs?, sameSite? }`; cookie `__Host-duck-refresh`, `duck-refresh` outside production, 7 days, `'strict'`. |
 
-`alg` is `HS256` (the default), `ES256`, `RS256` or `EdDSA`, and a token is refused unless its header names the alg pinned to its `kid`. `strict()` refuses an HS256 secret under 32 bytes in production.
+`alg` is `HS256` (the default), `ES256`, `RS256` or `EdDSA`, and a token is refused unless its header names the alg pinned to its `kid`. Set it on every asymmetric key: a PEM under HS256 is refused, since it would make the public key the HMAC secret. `strict()` refuses an HS256 secret under 32 bytes in production.
 
 The token carries the session's `ip` and `userAgent` for hijack detection. Anyone holding it can read them.
 
@@ -50,7 +50,7 @@ The refresh cookie holds the plaintext session id. Your refresh route reads it, 
 ```ts
 import { JwtTransport, parseCookie } from '@gentleduck/auth/core/transport'
 
-const sid = parseCookie(request.headers.get('cookie') ?? '', '__Host-duck-refresh')
+const sid = parseCookie(request.headers.get('cookie') ?? '', jwt.refreshCookieName)
 if (!sid) throw new AuthError('AUTH_UNAUTHENTICATED')
 const session = await auth.sessions.getBySid(sid).orNull()
 if (!session) throw new AuthError('AUTH_UNAUTHENTICATED')
@@ -65,4 +65,4 @@ jwt.rotateSignKey({ signKey: { kid: '2026-10', key: next } })
 jwt.retireVerifyKey('2026-09')
 ```
 
-Tokens signed with the old key keep verifying until it is retired. For ES256, RS256 and EdDSA pass the public half as `verifyKey`, and serve `jwt.jwks()` at `/.well-known/jwks.json` so other services can verify; HS256 secrets never appear in it.
+Tokens signed with the old key keep verifying until it is retired. For ES256, RS256 and EdDSA pass the public half as `verifyKey`, under the same `alg`, and serve `jwt.jwks()` at `/.well-known/jwks.json` so other services can verify; HS256 secrets never appear in it.

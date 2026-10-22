@@ -22,7 +22,7 @@ An account needs more than a password: a proven address, a way back in when the 
     MAIL --> U["the person clicks"]
     U --> C["auth.flows.complete... with the token"]`} />
 
-The engine mints the token, builds `baseUrl + callbackPath + '?token=...'`, and hands it to `deliver`. What happens next is your mailer's business.
+The engine mints the token, builds `baseUrl + callbackPath` with `token` set in its query, and hands it to `deliver`. What happens next is your mailer's business.
 
 ## Step by step
 
@@ -55,7 +55,7 @@ export const auth = createAuth({
   baseUrl: 'http://localhost:3000',
   deliver,
   stores: new MemoryAdapter(),
-  transport: cookieTransport({ name: 'sid', secure: false }),
+  transport: cookieTransport(),
   providers: [passwords()],
 })
 
@@ -74,7 +74,7 @@ const lastToken = () => new URL(outbox.at(-1)?.url ?? '').searchParams.get('toke
 
 const ada = await auth.identities.create({ profile: { username: 'ada', email: 'ada@example.com' } })
 // welcome ada
-await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials)
+await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials, null)
 
 await auth.flows.requestEmailVerification({ identityId: ada.id })
 const { identity } = await auth.flows.completeEmailVerification({ token: lastToken() })
@@ -95,7 +95,7 @@ console.log(outbox.map((message) => message.kind))
 // [ 'email-verification', 'password-reset' ]
 
 await auth.flows.completePasswordReset({ token: lastToken(), newPassword: 'staple-battery-horse' })
-console.log('old session', await auth.resolveSession({ headers: new Headers({ cookie: `sid=${sid}` }) }).orNull())
+console.log('old session', await auth.resolveSession({ headers: new Headers({ cookie: `duck-sid=${sid}` }) }).orNull())
 // old session null
 
 await auth.flows.signIn({ providerId: 'password', input }).catch(() => {})

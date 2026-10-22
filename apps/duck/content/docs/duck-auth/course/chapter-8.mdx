@@ -1,10 +1,10 @@
 ---
 title: "Chapter 8: production"
-description: Move DuckNotes onto Postgres and Valkey, put the cookies back to their secure defaults, let strict() refuse a misconfigured engine, and test sign-in without a database
+description: Move DuckNotes onto Postgres and Valkey, run it in production with Secure cookies, let strict() refuse a misconfigured engine, and test sign-in without a database
 section: Course
 order: 8
 ---
-Everything DuckNotes knows lives in maps, so a restart forgets every account and a second instance sees none of them. This chapter moves it all out of the process, puts the development settings back to their defaults, and has the engine refuse to start while anything is still wrong.
+Everything DuckNotes knows lives in maps, so a restart forgets every account and a second instance sees none of them. This chapter moves it all out of the process, runs it in production, and has the engine refuse to start while anything is still wrong.
 
 ## Learning goals
 
@@ -90,6 +90,7 @@ npx drizzle-kit push
 import { drizzlePgAdapter } from '@gentleduck/auth/adapters/drizzle/pg'
 import { valkeyDPoPNonceStore, valkeyEvents } from '@gentleduck/auth/adapters/valkey'
 import { createAuth, orNull } from '@gentleduck/auth/core'
+import { authAesGcmDataAtRest } from '@gentleduck/auth/core/dataAtRest'
 import { cookieTransport } from '@gentleduck/auth/core/transport'
 import { valkeyLimiter } from '@gentleduck/auth/limiters/valkey'
 import { magicLink } from '@gentleduck/auth/providers/magic-link'
@@ -112,7 +113,10 @@ export const auth = createAuth({
   transport: cookieTransport(),
   providers: [
     passwords(),
-    mfaProvider({ issuer: 'DuckNotes' }),
+    mfaProvider({
+      dataAtRest: authAesGcmDataAtRest({ kid: 'k1', masterKey: Buffer.from(process.env.MFA_KEY ?? '', 'base64') }),
+      issuer: 'DuckNotes',
+    }),
     (_engine, send) =>
       magicLink({
         callbackPath: '/magic-link',
@@ -136,12 +140,13 @@ auth.events.on('lockout', ({ identityId, until }) => {
   console.warn(`locked out ${identityId} until ${new Date(until).toISOString()}`)
 })
 
-auth.strict({ env: 'production' })
+auth.strict()
 ```
 
 - `drizzlePgAdapter(db)` holds all three stores on your own connection, so the accounts and the notes share one database.
 - `valkeyEvents` takes a second connection for `sub`, because a subscribed connection can run no other command.
-- `cookieTransport()` with no options names the cookie `__Host-duck-sid`, a prefix browsers accept only on a Secure cookie that no other subdomain can set. The GitHub `stateCookie` goes back to its default, `__Host-duck-oauth`, the same way.
+- `MFA_KEY` is the key from chapter 7. Back it up with the database: without it, no enrolled TOTP verifies until its owner enrolls again.
+- In production every cookie is Secure, so each keeps its `__Host-` prefix: the session cookie is `__Host-duck-sid`, which no other subdomain can set, and the CSRF and GitHub `state` cookies are `__Host-duck-csrf` and `__Host-duck-oauth`.
 - The last three statements are in that order on purpose; see [The order](#the-order).
 
 <Step>The notes</Step>
@@ -168,7 +173,7 @@ and in `DELETE /api/notes`:
 
 <Step>The pages</Step>
 
-Over https the CSRF cookie is `__Host-duck-csrf`, so `src/page.ts` and `src/magic-link.ts` read it under that name:
+In production the CSRF cookie is `__Host-duck-csrf`, so `src/page.ts` and `src/magic-link.ts` read it under that name:
 
 ```ts title="src/page.ts"
 'x-csrf-token': document.cookie.match(/(?:^|; )__Host-duck-csrf=([^;]*)/)?.[1] ?? '',
@@ -195,7 +200,6 @@ Run chapter 7's engine with `NODE_ENV=production` and it stops at the first line
 | No limiter | Each instance grants its own budget, so a fleet allows each guess once per instance. | `valkeyLimiter` |
 | `MemoryAdapter` | A restart forgets it, and no other instance sees it. The error names each slot it fills. | `drizzlePgAdapter` |
 | The in-process event bus | Once the `lockout` listener is on it, a lockout raised on one instance is never heard on another. | `valkeyEvents` |
-| `secure: false` | The session cookie would travel over plain http. | `cookieTransport()` |
 | `http://localhost:3000` | Links and callbacks would go out over plain http. | an `https` `baseUrl` |
 | No `lockout` listener | Nobody hears that an account is being guessed at. | the listener |
 
@@ -203,7 +207,7 @@ Run chapter 7's engine with `NODE_ENV=production` and it stops at the first line
 
 ## The order
 
-`createAuth` runs `strict()` as it returns, for the environment in `NODE_ENV`, and a `lockout` listener cannot exist before `createAuth` returns. So a production engine passes `strict: false`, subscribes, then calls `auth.strict({ env: 'production' })`. It throws while `src/server.ts` is still importing `auth`, so a misconfigured deploy never serves a request.
+`createAuth` runs `strict()` as it returns, and a `lockout` listener cannot exist before `createAuth` returns. So a production engine passes `strict: false`, subscribes, then calls `auth.strict()`. It throws while `src/server.ts` is still importing `auth`, so a misconfigured deploy never serves a request.
 
 ## Testing sign-in
 
@@ -220,7 +224,7 @@ import { expect, it } from 'vitest'
 it('locks an account out after repeated wrong passwords', async () => {
   const auth = createTest({ limiter: new MemoryLimiter({ max: 2, windowMs: 60_000 }) })
   const ada = await auth.identities.create({ profile: { username: 'ada', email: 'ada@example.com' } })
-  await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials)
+  await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials, null)
   const lockouts: string[] = []
   auth.events.on('lockout', ({ identityId }) => {
     lockouts.push(identityId)

@@ -24,10 +24,10 @@ export const auth = createAuth({
 })
 
 auth.events.on('lockout', (event) => alertOps(event))
-auth.strict({ env: 'production' })
+auth.strict()
 ```
 
-`createAuth` runs `strict()` as it returns, for the env named by `strict` or else `NODE_ENV`, falling back to `development`. Production requires a `lockout` listener, which cannot exist before `createAuth` returns, so a production engine opts out there and calls `strict()` once it is subscribed.
+Every production check reads `NODE_ENV`. Only `development` and `test` relax them, so an unset or unknown value is production. `createAuth` runs `strict()` as it returns, and production requires a `lockout` listener, which cannot exist before `createAuth` returns, so a production engine passes `strict: false` and calls `auth.strict()` once it is subscribed.
 
 Outside production, `strict()` checks only the [compliance preset](/duck-auth/core/compliance), if one is set. A failure throws one `AUTH_MISCONFIGURED` whose `meta.detail` lists every problem.
 
@@ -38,9 +38,8 @@ Outside production, `strict()` checks only the [compliance preset](/duck-auth/co
 | Limiter | None, `NoopLimiter`, or the in-process `MemoryLimiter`. |
 | Stores | A memory store in any `stores` slot. |
 | Events | No bus, or the in-process one, while it holds a `fleet` handler. |
-| Captcha | The null verifier, which passes everything, or a siteverify endpoint over `http`. |
-| Transport | A cookie transport with `secure: false`, or a JWT transport signing HS256 with a key under 32 bytes. A composite's parts are checked one by one. |
-| OAuth | A `stateSigningSecret` under 32 bytes, or `allowStateReplay: true`. |
+| Transport | A JWT transport signing HS256 with a key under 32 bytes. A composite's parts are checked one by one. |
+| OAuth | A `stateSigningSecret` under 32 bytes. |
 | Passkey | The in-process challenge store. |
 | Magic link | No `deliver`, so no link could be sent. |
 | Passwords | A hasher below its own defaults: scrypt `N` under 2^14, `r` under 8 or `keylen` under 32; Argon2id `memoryCost` under 19456, `timeCost` under 2 or `hashLength` under 32. |
@@ -49,5 +48,16 @@ Outside production, `strict()` checks only the [compliance preset](/duck-auth/co
 A store, transport, provider or hasher of your own publishes none of the markers these checks read, so it is not judged.
 
 The in-process pieces are refused because a second instance cannot see them: a limiter budget is granted once per instance, and a revocation, OAuth `state` or passkey challenge used on one instance stays live on the others. [Redis and Valkey](/duck-auth/adapters/redis) has the shared versions.
+
+## Refused at construction
+
+These throw `AUTH_MISCONFIGURED` in production as they are built, before `strict()` runs:
+
+- The null captcha verifier, `MemoryDPoPNonceStore`, `MemoryIdempotency`, and the OIDC OP's in-memory stores, which `createOidcOP` falls back to for a store it is not given.
+- An OAuth provider with no `nonceStore`, and a SAML provider with no `replayStore`.
+- A captcha `endpoint` or webhook `url` over plain http or on loopback. Private, link-local and cloud-metadata hosts are refused in every environment.
+- An OIDC issuer over plain http.
+
+Cookies are Secure in production. Outside it they are not, and a `__Host-` or `__Secure-` prefix is dropped from the name along with Secure, so plain-http development works with the defaults: the session cookie is `duck-sid` and its CSRF companion `duck-csrf`. `sameSite: 'none'` keeps a cookie Secure in every environment.
 
 Reporting, scope and a deployment checklist are in [SECURITY.md](https://github.com/gentleeduck/duck-iam/blob/main/packages/duck-auth/SECURITY.md).

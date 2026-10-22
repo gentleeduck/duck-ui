@@ -1,0 +1,39 @@
+.page {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  justify-items: start;
+  padding: 24px;
+  font-family: apple-system, BlinkMacSystemFont, helvetica, arial, sans-serif;
+  font-size: 13px;
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+  width: 240px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 240px;
+}
+
+[dir="rtl"] .mark {
+  color: rgb(200, 0, 0);
+}
+
+.triggers {
+  display: flex;
+  gap: 16px;
+  padding: 24px 200px;
+}
+
+.content {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+}

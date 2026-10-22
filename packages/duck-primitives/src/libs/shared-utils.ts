@@ -10,13 +10,25 @@ export function wrapArray<T>(array: T[], startIndex: number) {
   return array.map<T>((_, index) => array[(startIndex + index) % array.length]!)
 }
 
+/** A sort comparator putting nodes in document order. */
+export function byDocumentPosition(a: Node, b: Node) {
+  return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_PRECEDING ? 1 : -1
+}
+
+/** The focused element of the document or shadow root `node` is in, of which the top document names only the host. */
+export function getRootActiveElement(node: Node) {
+  return (node.getRootNode() as Document | ShadowRoot).activeElement
+}
+
 /** Focus first candidate that actually accepts focus. */
 export function focusFirst(candidates: HTMLElement[], preventScroll = false) {
-  const previouslyFocusedElement = document.activeElement
+  // The top document names only the iframe or shadow host while focus moves inside it.
+  const root = candidates[0]?.getRootNode() as Document | ShadowRoot | undefined
+  const previouslyFocusedElement = root?.activeElement
   for (const candidate of candidates) {
     if (candidate === previouslyFocusedElement) return
     candidate.focus({ preventScroll })
-    if (document.activeElement !== previouslyFocusedElement) return
+    if (root?.activeElement !== previouslyFocusedElement) return
   }
 }
 

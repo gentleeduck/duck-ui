@@ -1,4 +1,5 @@
 import React from 'react'
+import { useLayoutEffect } from '../hooks/use-layout-effect'
 import { createSlot, type Slot } from '../slot'
 import { useComposedRefs } from './compose-ref'
 import type { Scope } from './create-context'
@@ -64,7 +65,8 @@ function createCollection<ItemElement extends HTMLElement, ItemData = {}>(name: 
     const composedRefs = useComposedRefs(forwardedRef, ref)
     const context = useCollectionContext(ITEM_SLOT_NAME, scope)
 
-    React.useEffect(() => {
+    // Before any parent's layout effect, so a list can read its items in the commit that changed them.
+    useLayoutEffect(() => {
       context.itemMap.set(ref, { ref, ...(itemData as unknown as ItemData) })
       return () => void context.itemMap.delete(ref)
     })
@@ -78,6 +80,8 @@ function createCollection<ItemElement extends HTMLElement, ItemData = {}>(name: 
 
   CollectionItemSlot.displayName = ITEM_SLOT_NAME
 
+  type Item = { ref: React.RefObject<ItemElement> } & ItemData
+
   function useCollection(scope: Scope) {
     const context = useCollectionContext(`${name}CollectionConsumer`, scope)
 
@@ -85,10 +89,10 @@ function createCollection<ItemElement extends HTMLElement, ItemData = {}>(name: 
       const collectionNode = context.collectionRef.current
       if (!collectionNode) return []
       const orderedNodes = Array.from(collectionNode.querySelectorAll(`[${ITEM_DATA_ATTR}]`))
-      const items = Array.from(context.itemMap.values())
+      // An item is in the map only between the layout effects that mount and unmount it, so its node is there.
+      const items = Array.from(context.itemMap.values()) as Item[]
       const orderedItems = items.sort(
-        // biome-ignore lint/style/noNonNullAssertion: item refs are always mounted when queried from the collection
-        (a, b) => orderedNodes.indexOf(a.ref.current!) - orderedNodes.indexOf(b.ref.current!),
+        (a, b) => orderedNodes.indexOf(a.ref.current) - orderedNodes.indexOf(b.ref.current),
       )
       return orderedItems
     }, [context.collectionRef, context.itemMap])

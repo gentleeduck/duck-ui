@@ -1,0 +1,86 @@
+.page {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  justify-items: start;
+  padding: 24px;
+  font-family: apple-system, BlinkMacSystemFont, helvetica, arial, sans-serif;
+  font-size: 13px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.layer {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: white;
+}
+
+.floating {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  padding: 8px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: white;
+}
+
+.behind {
+  position: relative;
+  padding: 16px;
+  border: 1px dashed #999;
+}
+
+.surface {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.2);
+}
+
+.scroller {
+  box-sizing: border-box;
+  width: 200px;
+  height: 80px;
+  overflow: auto;
+  border: 1px solid #999;
+}
+
+.styledScroller {
+  composes: scroller;
+}
+
+.styledScroller::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.styledScroller::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+.scroller > div {
+  width: 400px;
+  height: 400px;
+}
+
+.tall {
+  height: 2000px;
+}
+
+.frame {
+  width: 320px;
+  height: 120px;
+  border: 1px solid #999;
+}

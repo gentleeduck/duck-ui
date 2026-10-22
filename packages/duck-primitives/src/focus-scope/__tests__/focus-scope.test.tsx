@@ -500,6 +500,24 @@ describe('FocusScope looping past native radios', () => {
     expect(document.activeElement).toBe(screen.getByText('Middle'))
   })
 
+  it('keeps a group in a shadow root apart from radios of the same name outside it', () => {
+    const host = document.createElement('div')
+    const medium = host.attachShadow({ mode: 'open' }).appendChild(document.createElement('input'))
+    Object.assign(medium, { type: 'radio', name: 'size', checked: true })
+    render(
+      <FocusScope loop trapped>
+        <input type="radio" name="size" aria-label="Small" />
+        <button type="button">Middle</button>
+        <div ref={(node) => node?.append(host)} />
+      </FocusScope>,
+    )
+    act(() => medium.focus())
+
+    expect(fireEvent.keyDown(medium, { key: 'Tab' })).toBe(false)
+
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Small' }))
+  })
+
   it('leaves the Tab to the browser when the next group is still inside', () => {
     render(
       <FocusScope loop trapped>

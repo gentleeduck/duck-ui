@@ -30,7 +30,12 @@ const isRadio = (element?: Element): element is HTMLInputElement =>
 function isSameStop(element: Element, other: Element | undefined) {
   return (
     element === other ||
-    (isRadio(element) && isRadio(other) && !!element.name && element.name === other.name && element.form === other.form)
+    (isRadio(element) &&
+      isRadio(other) &&
+      !!element.name &&
+      element.name === other.name &&
+      element.form === other.form &&
+      element.getRootNode() === other.getRootNode())
   )
 }
 

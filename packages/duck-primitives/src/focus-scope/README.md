@@ -25,14 +25,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 83 | `branches.test.tsx` 5, `focus-scope.radix.test.tsx` 19, `focus-scope.test.tsx` 59 |
+| Unit | 84 | `branches.test.tsx` 5, `focus-scope.radix.test.tsx` 19, `focus-scope.test.tsx` 60 |
 | End to end | 24 | `focus-scope.e2e.ts` 24 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>107 behaviours, one per test</summary>
+<summary>108 behaviours, one per test</summary>
 
 **Unit, `focus-scope.test.tsx`**
 
@@ -72,6 +72,7 @@ Each test was proven by changing the code and watching a test fail.
   - loops onto the checked radio of the group that starts it, as Tab into a group does
   - loops back onto the checked radio of the group that ends it
   - reaches an element between an unchecked radio and the checked one of its group
+  - keeps a group in a shadow root apart from radios of the same name outside it
   - leaves the Tab to the browser when the next group is still inside
   - reads checkboxes sharing a name as a stop each
   - reads each radio without a name as a group of its own
@@ -213,8 +214,8 @@ Against Radix 1.1.16, the version `@radix-ui/react-dialog` 1.1.23 ships.
   `onUnmountAutoFocus`, and leaves the stack of open scopes, so the scope under it takes focus back while this one
   is still open.
 - A looping scope counts a group of native radios as one stop, as the browser does, and looping into a group lands
-  on its checked radio. Radix counts each radio, so a Tab from a radio of the group that ends the scope left it or
-  stuck.
+  on its checked radio. Radios in a shadow root are a group apart from those of the same name outside it, as in the
+  browser. Radix counts each radio, so a Tab from a radio of the group that ends the scope left it or stuck.
 - Nothing inside an `inert` element is a stop, and neither is a control that matches `:disabled`, which takes in
   the controls of a disabled `<fieldset>` outside its first `<legend>`. Radix checks only an element's own
   `disabled`.

@@ -42,8 +42,8 @@ test.describe('FocusScope', () => {
 
     await press(page, page, 'Close')
 
-    expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true)
     await expect(output(page, 'Events')).toHaveText('onMountAutoFocus, onUnmountAutoFocus')
+    expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true)
   })
 
   test('loops Tab from its last element to its first, and Shift+Tab from its first to its last', async ({ page }) => {

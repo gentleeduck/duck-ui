@@ -25,14 +25,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 78 | `branches.test.tsx` 5, `focus-scope.radix.test.tsx` 19, `focus-scope.test.tsx` 54 |
+| Unit | 83 | `branches.test.tsx` 5, `focus-scope.radix.test.tsx` 19, `focus-scope.test.tsx` 59 |
 | End to end | 24 | `focus-scope.e2e.ts` 24 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>102 behaviours, one per test</summary>
+<summary>107 behaviours, one per test</summary>
 
 **Unit, `focus-scope.test.tsx`**
 
@@ -71,6 +71,7 @@ Each test was proven by changing the code and watching a test fail.
   - loops on a Shift+Tab from either end of an unchecked group that starts it
   - loops onto the checked radio of the group that starts it, as Tab into a group does
   - loops back onto the checked radio of the group that ends it
+  - reaches an element between an unchecked radio and the checked one of its group
   - leaves the Tab to the browser when the next group is still inside
   - reads checkboxes sharing a name as a stop each
   - reads each radio without a name as a group of its own
@@ -78,10 +79,12 @@ Each test was proven by changing the code and watching a test fail.
 - FocusScope on mount
   - moves on to the next element when the first will not take focus
   - passes over a link to focus the first element after it
+  - passes over an svg link to focus the first element after it
   - focuses its own element when nothing inside takes focus
   - leaves focus where it is when an element inside already has it
 - FocusScope trapped
   - lets focus go outside a scope that has never held it, with nothing to send it back to
+  - takes focus to its own element when the element it last held has gone
   - holds Tab on the last element and Shift+Tab on the first without loop
   - leaves a Tab to the browser from an element Tab cannot reach when nothing inside can be tabbed to
 - FocusScope leaving Tab to the browser
@@ -104,6 +107,8 @@ Each test was proven by changing the code and watching a test fail.
   - gives focus back to what had it in the frame document on unmount
 - FocusScope holding a shadow root
   - gives focus back to the field inside it, not to its host
+  - reads a field inside the shadow root at its end as its last stop
+  - reads an element slotted into the shadow root where its slot is
 - FocusScope in a shadow root
   - focuses its first element on mount and loops Tab from its last
   - takes focus back from outside it, and from outside its shadow root
@@ -210,8 +215,14 @@ Against Radix 1.1.16, the version `@radix-ui/react-dialog` 1.1.23 ships.
 - A looping scope counts a group of native radios as one stop, as the browser does, and looping into a group lands
   on its checked radio. Radix counts each radio, so a Tab from a radio of the group that ends the scope left it or
   stuck.
-- Nothing inside an `inert` element or a disabled `<fieldset>` is a stop. Radix checks only an element's own
+- Nothing inside an `inert` element is a stop, and neither is a control that matches `:disabled`, which takes in
+  the controls of a disabled `<fieldset>` outside its first `<legend>`. Radix checks only an element's own
   `disabled`.
+- The walk for stops enters each open shadow root inside the scope and follows its slots, so a field inside a
+  custom element at the scope's edge is its first or last stop. Radix's walk stops at the host.
+- A trapped scope whose last focused element has gone, such as a button in a branch that closed, takes focus to
+  its own element when focus leaves. Radix focuses the element that has gone, so focus stays outside.
+- Mount focus passes over a link inside an svg, as it does an html one. Radix passes over only the html one.
 - A Tab while an input method is composing text is left to the input method.
 - `branches` names nodes outside the scope's DOM that focus may move into, such as a nested layer's portalled
   content, and `FocusScopeBranchProvider`, `useFocusScopeBranchRegistry` and `useFocusScopeBranch` register them.
@@ -221,8 +232,3 @@ Against Radix 1.1.16, the version `@radix-ui/react-dialog` 1.1.23 ships.
 
 - The first and last visible stops are found with `checkVisibility` where the browser has it, one native check
   per element instead of a computed style for each of its ancestors.
-
-## Later
-
-- The walk for stops does not enter a shadow root inside the scope, so a field inside a custom element at the
-  scope's edge is not its first or last stop.

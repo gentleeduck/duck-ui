@@ -284,10 +284,10 @@ describe('FocusScope', () => {
         <div>
           <FocusScope.Root asChild loop trapped>
             <form>
-              <TestField label={INNER_NAME_INPUT_LABEL} />
               <TestField label="hidden-display" style={{ display: 'none' }} />
-              <TestField label="hidden-visibility" style={{ visibility: 'hidden' }} />
+              <TestField label={INNER_NAME_INPUT_LABEL} />
               <button>{INNER_SUBMIT_LABEL}</button>
+              <TestField label="hidden-visibility" style={{ visibility: 'hidden' }} />
             </form>
           </FocusScope.Root>
         </div>,
@@ -296,16 +296,16 @@ describe('FocusScope', () => {
       visibleLast = rendered.getByText(INNER_SUBMIT_LABEL) as HTMLButtonElement
     })
 
-    it('should skip elements with display: none when looping backward', async () => {
+    it('should skip elements with display: none when looping backward', () => {
       visibleFirst.focus()
-      await userEvent.tab({ shift: true })
-      await waitFor(() => expect(visibleLast).toHaveFocus())
+      expect(fireEvent.keyDown(visibleFirst, { key: 'Tab', shiftKey: true })).toBe(false)
+      expect(visibleLast).toHaveFocus()
     })
 
-    it('should skip elements with visibility: hidden when looping forward', async () => {
+    it('should skip elements with visibility: hidden when looping forward', () => {
       visibleLast.focus()
-      await userEvent.tab()
-      await waitFor(() => expect(visibleFirst).toHaveFocus())
+      expect(fireEvent.keyDown(visibleLast, { key: 'Tab' })).toBe(false)
+      expect(visibleFirst).toHaveFocus()
     })
   })
 })

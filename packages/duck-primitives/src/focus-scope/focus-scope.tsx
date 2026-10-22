@@ -63,20 +63,25 @@ const FocusScope = React.forwardRef<FocusScopeElement, IFocusScope.IProps>((prop
     const root = container.getRootNode()
     const isInScope = (target: EventTarget | null) =>
       contains(container, target) || !!branchesRef.current?.some((branch) => contains(branch, target))
+    // The element last focused may have gone with a branch since, which the observer below never sees.
+    const focusBack = () => {
+      const last = lastFocusedComponentRef.current
+      if (last) focus(last.isConnected && isInScope(last) ? last : container)
+    }
 
     const handleFocusIn = (event: Event) => {
       if (focusScope.paused) return
       // The element focused, where a listener outside its shadow root is handed the shadow host.
       const target = event.composedPath()[0] as FocusableElement
       if (isInScope(target)) lastFocusedComponentRef.current = target
-      else focus(lastFocusedComponentRef.current)
+      else focusBack()
     }
 
     const handleFocusOut = (event: Event) => {
       if (focusScope.paused) return
       const { relatedTarget } = event as FocusEvent
       // No relatedTarget: the window lost focus, or the focused element went, and the browser decides what follows.
-      if (relatedTarget !== null && !isInScope(relatedTarget)) focus(lastFocusedComponentRef.current)
+      if (relatedTarget !== null && !isInScope(relatedTarget)) focusBack()
     }
 
     // Browser moves focus to body when the focused element is removed; bring it back.

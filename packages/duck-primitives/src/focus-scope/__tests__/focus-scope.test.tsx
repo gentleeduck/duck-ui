@@ -375,7 +375,7 @@ describe('FocusScope focusing an input', () => {
     const input = screen.getByDisplayValue<HTMLInputElement>('inside')
     input.setSelectionRange(2, 2)
 
-    fireEvent.keyDown(input, { key: 'Tab' })
+    expect(fireEvent.keyDown(input, { key: 'Tab' })).toBe(false)
 
     expect([document.activeElement, input.selectionStart, input.selectionEnd]).toEqual([input, 2, 2])
   })
@@ -486,6 +486,20 @@ describe('FocusScope looping past native radios', () => {
     expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Small' }))
   })
 
+  it('reaches an element between an unchecked radio and the checked one of its group', () => {
+    render(
+      <FocusScope loop trapped>
+        <input type="radio" name="size" aria-label="Small" />
+        <button type="button">Middle</button>
+        <input type="radio" name="size" aria-label="Large" defaultChecked />
+      </FocusScope>,
+    )
+
+    expect(tabFrom('Large')).toBe(false)
+
+    expect(document.activeElement).toBe(screen.getByText('Middle'))
+  })
+
   it('leaves the Tab to the browser when the next group is still inside', () => {
     render(
       <FocusScope loop trapped>
@@ -575,6 +589,21 @@ describe('FocusScope on mount', () => {
     expect(document.activeElement?.textContent).toBe('First')
   })
 
+  it('passes over an svg link to focus the first element after it', () => {
+    render(
+      <FocusScope>
+        <svg aria-label="Logo">
+          <a href="#home" tabIndex={0}>
+            <text>Home</text>
+          </a>
+        </svg>
+        <button type="button">First</button>
+      </FocusScope>,
+    )
+
+    expect(document.activeElement?.textContent).toBe('First')
+  })
+
   it('focuses its own element when nothing inside takes focus', () => {
     render(
       <FocusScope data-testid="scope">
@@ -620,6 +649,25 @@ describe('FocusScope trapped', () => {
     window.removeEventListener('error', record)
 
     expect([document.activeElement?.textContent, errors]).toEqual(['Outside', []])
+  })
+
+  it('takes focus to its own element when the element it last held has gone', () => {
+    const branch = document.body.appendChild(document.createElement('div'))
+    const portalled = branch.appendChild(document.createElement('button'))
+    render(
+      <>
+        <FocusScope branches={[branch]} data-testid="scope" trapped>
+          <button type="button">Inside</button>
+        </FocusScope>
+        <button type="button">Outside</button>
+      </>,
+    )
+    act(() => portalled.focus())
+    branch.remove()
+
+    act(() => screen.getByText('Outside').focus())
+
+    expect(document.activeElement).toBe(screen.getByTestId('scope'))
   })
 
   it('holds Tab on the last element and Shift+Tab on the first without loop', () => {
@@ -931,6 +979,38 @@ describe('FocusScope holding a shadow root', () => {
     act(() => screen.getByText('Outside').focus())
 
     expect(host.shadowRoot?.activeElement).toBe(field)
+  })
+
+  it('reads a field inside the shadow root at its end as its last stop', () => {
+    const host = document.createElement('div')
+    const field = host.attachShadow({ mode: 'open' }).appendChild(document.createElement('input'))
+    render(
+      <FocusScope loop trapped>
+        <button type="button">First</button>
+        <div ref={(node) => node?.append(host)} />
+      </FocusScope>,
+    )
+    act(() => field.focus())
+
+    expect(fireEvent.keyDown(field, { key: 'Tab' })).toBe(false)
+
+    expect(document.activeElement).toBe(screen.getByText('First'))
+  })
+
+  it('reads an element slotted into the shadow root where its slot is', () => {
+    const host = document.createElement('div')
+    const shadowRoot = host.attachShadow({ mode: 'open' })
+    shadowRoot.append(document.createElement('slot'), document.createElement('input'))
+    const slotted = host.appendChild(document.createElement('button'))
+    render(
+      <FocusScope loop trapped>
+        <button type="button">First</button>
+        <div ref={(node) => node?.append(host)} />
+      </FocusScope>,
+    )
+    act(() => slotted.focus())
+
+    expect(fireEvent.keyDown(slotted, { key: 'Tab' })).toBe(true)
   })
 })
 

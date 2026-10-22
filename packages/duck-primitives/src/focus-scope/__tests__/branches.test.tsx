@@ -39,11 +39,12 @@ describe('useFocusScopeBranchRegistry', () => {
   })
 
   it('holds the same registry across renders', () => {
-    const { host, rerender } = renderHost()
-    const { registry } = host.current
+    const { host } = renderHost()
+    const { registry, nodes } = host.current
 
-    rerender(<div />)
+    act(() => registry.add(document.createElement('div')))
 
+    expect(host.current.nodes).not.toBe(nodes)
     expect(host.current.registry).toBe(registry)
   })
 })

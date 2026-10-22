@@ -34,32 +34,40 @@ function isSameStop(element: Element, other: Element | undefined) {
   )
 }
 
-/** First and last visible tab stops inside a container. Tab into a radio group lands on its checked radio. */
+/** First and last visible tab stops inside a container. */
 function getTabbableEdges(container: HTMLElement) {
   const candidates = getTabbableCandidates(container)
-  const toStop = (edge?: FocusableElement) =>
-    candidates.find((candidate) => (candidate as HTMLInputElement).checked && isSameStop(candidate, edge)) ?? edge
-  const first = toStop(findVisible(candidates, container))
-  const last = toStop(findVisible([...candidates].reverse(), container))
-  return [first, last] as const
+  // Tab into a radio group lands on its checked radio, so the group's other radios are no stop of their own.
+  const stops = candidates.filter(
+    (candidate) =>
+      !isRadio(candidate) ||
+      candidate.checked ||
+      !candidates.some((other) => isRadio(other) && other.checked && isSameStop(candidate, other)),
+  )
+  return [findVisible(stops, container), findVisible([...stops].reverse(), container)] as const
 }
 
 /**
- * Tabbable candidates via TreeWalker. Approximation: does not account for computed
- * visibility (use findVisible/isHidden for that). Relies on `.tabIndex` for runtime tabbability.
+ * Tabbable candidates in the order Tab reaches them, into open shadow roots and through their slots. Approximation:
+ * does not account for computed visibility (use findVisible/isHidden for that). Relies on `.tabIndex` for runtime
+ * tabbability.
  */
 function getTabbableCandidates(container: HTMLElement) {
   const nodes: FocusableElement[] = []
-  const walker = container.ownerDocument.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, {
+  const collect = (parent: Element) => {
+    const children =
+      parent.shadowRoot?.children ??
+      (parent.localName === 'slot' ? (parent as HTMLSlotElement).assignedElements({ flatten: true }) : parent.children)
     // An svg takes focus as an html element does, and an iframe's elements fail `instanceof` this realm's classes.
-    acceptNode: (node: FocusableElement) => {
+    for (const node of children as Iterable<FocusableElement>) {
       // Nothing inside a hidden or inert element takes focus.
-      if (node.hasAttribute('hidden') || node.hasAttribute('inert')) return NodeFilter.FILTER_REJECT
+      if (node.hasAttribute('hidden') || node.hasAttribute('inert')) continue
       // `:disabled` also matches a control in a disabled fieldset, where its own `disabled` stays false.
-      return node.tabIndex >= 0 && !node.matches(':disabled') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
-    },
-  })
-  while (walker.nextNode()) nodes.push(walker.currentNode as FocusableElement)
+      if (node.tabIndex >= 0 && !node.matches(':disabled')) nodes.push(node)
+      collect(node)
+    }
+  }
+  collect(container)
   return nodes
 }
 
@@ -76,9 +84,13 @@ function findVisible(elements: FocusableElement[], container: HTMLElement) {
   }
 }
 
+// The parent an element is drawn in: the slot it is assigned to, or the host of the shadow root it tops.
+const renderedParent = (node: Element) =>
+  node.assignedSlot ?? node.parentElement ?? (node.parentNode as ShadowRoot).host
+
 function isHidden(element: FocusableElement, container: HTMLElement) {
   if (getComputedStyle(element).visibility === 'hidden') return true
-  for (let node: Element = element; node !== container; node = node.parentElement as Element) {
+  for (let node: Element = element; node !== container; node = renderedParent(node)) {
     if (getComputedStyle(node).display === 'none') return true
   }
   return false
@@ -93,9 +105,9 @@ function focus(element: FocusableElement | null | undefined) {
   if (element !== previouslyFocusedElement && element.tagName === 'INPUT') (element as HTMLInputElement).select()
 }
 
-/** Strip anchors; prevents auto-focusing links on mount. */
+/** Strip anchors, an svg's among them; prevents auto-focusing links on mount. */
 function removeLinks(items: FocusableElement[]) {
-  return items.filter((item) => item.tagName !== 'A')
+  return items.filter((item) => item.localName !== 'a')
 }
 
 type FocusScopeAPI = { paused: boolean; pause(): void; resume(): void }

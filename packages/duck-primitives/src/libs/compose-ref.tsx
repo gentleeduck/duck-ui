@@ -12,66 +12,42 @@ function setRef<T>(ref: PossibleRef<T>, value: T) {
 }
 
 /**
- * Compose refs into a single callback ref. If any child ref returns a React 19 cleanup,
- * the composed ref returns a combined cleanup that runs each (and nulls others).
+ * Assigns the node to every ref. If any callback ref returns a React 19 cleanup, returns one cleanup that runs each
+ * (and nulls the others).
  */
-function composeRefs<T>(...refs: PossibleRef<T>[]): React.RefCallback<T> {
-  return (node) => {
-    let hasCleanup = false
-    const cleanups = refs.map((ref) => {
-      const cleanup = setRef(ref, node)
-      if (!hasCleanup && typeof cleanup === 'function') {
-        hasCleanup = true
-      }
-      return cleanup
-    })
+function assignRefs<T>(refs: PossibleRef<T>[], node: T) {
+  let hasCleanup = false
+  const cleanups = refs.map((ref) => {
+    const cleanup = setRef(ref, node)
+    if (!hasCleanup && typeof cleanup === 'function') {
+      hasCleanup = true
+    }
+    return cleanup
+  })
 
-    if (hasCleanup) {
-      return () => {
-        for (let i = 0; i < cleanups.length; i++) {
-          const cleanup = cleanups[i]
-          if (typeof cleanup === 'function') {
-            cleanup()
-          } else {
-            setRef(refs[i], null)
-          }
+  if (hasCleanup) {
+    return () => {
+      for (let i = 0; i < cleanups.length; i++) {
+        const cleanup = cleanups[i]
+        if (typeof cleanup === 'function') {
+          cleanup()
+        } else {
+          setRef(refs[i], null)
         }
       }
     }
   }
 }
 
+/** Compose refs into a single callback ref. */
+function composeRefs<T>(...refs: PossibleRef<T>[]): React.RefCallback<T> {
+  return (node) => assignRefs(refs, node)
+}
+
 /** Memoized composeRefs; rebuilds only when any input ref changes. */
 function useComposedRefs<T>(...refs: PossibleRef<T>[]): React.RefCallback<T> {
-  // Build callback lazily inside useCallback factory; eager `composeRefs(...refs)` would
-  // allocate every render and useCallback only retains the first-captured fn.
-  return React.useCallback<React.RefCallback<T>>(
-    (node) => {
-      let hasCleanup = false
-      const cleanups = refs.map((ref) => {
-        const cleanup = setRef(ref, node)
-        if (!hasCleanup && typeof cleanup === 'function') {
-          hasCleanup = true
-        }
-        return cleanup
-      })
-
-      if (hasCleanup) {
-        return () => {
-          for (let i = 0; i < cleanups.length; i++) {
-            const cleanup = cleanups[i]
-            if (typeof cleanup === 'function') {
-              cleanup()
-            } else {
-              setRef(refs[i], null)
-            }
-          }
-        }
-      }
-    },
-    // biome-ignore lint/correctness/useExhaustiveDependencies: spread refs as deps so the callback updates when any ref changes
-    refs,
-  )
+  // biome-ignore lint/correctness/useExhaustiveDependencies: spread refs as deps so the callback updates when any ref changes
+  return React.useCallback<React.RefCallback<T>>((node) => assignRefs(refs, node), refs)
 }
 
 export { composeRefs, useComposedRefs }

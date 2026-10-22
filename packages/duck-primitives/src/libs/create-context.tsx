@@ -101,8 +101,7 @@ function composeContextScopes(...scopes: [ICreateScope, ...ICreateScope[]]): ICr
         Object.assign(nextScopes, currentScope)
       }
 
-      // biome-ignore lint/correctness/useExhaustiveDependencies: nextScopes is intentionally rebuilt each render to compose all scope contexts
-      return React.useMemo(() => ({ [`__scope${baseScope.scopeName}`]: nextScopes }), [nextScopes])
+      return { [`__scope${baseScope.scopeName}`]: nextScopes }
     }
   }
 

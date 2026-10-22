@@ -1,18 +1,12 @@
 import * as React from 'react'
 import { useCallbackRef } from '../hooks/use-callback-ref'
+import { getRootActiveElement, wrapArray } from './shared-utils'
 
 export const NAVIGATION_KEYS = ['ArrowUp', 'ArrowDown', 'Home', 'End'] as const
-export const SELECTION_KEYS = [' ', 'Enter']
 
-/** Focus first candidate that accepts focus, scrolling into view. */
-export function focusFirst(candidates: Array<HTMLElement | null>) {
-  const previouslyFocused = document.activeElement
-  for (const candidate of candidates) {
-    if (candidate === previouslyFocused) return
-    candidate?.scrollIntoView({ block: 'nearest' })
-    candidate?.focus({ preventScroll: true })
-    if (document.activeElement !== previouslyFocused) return
-  }
+function focusItem(item: HTMLElement) {
+  item.scrollIntoView({ block: 'nearest' })
+  item.focus({ preventScroll: true })
 }
 
 /** Ordered arrow-key candidates: reversed for Up/End, sliced past current for Up/Down. */
@@ -32,26 +26,17 @@ export function getNavigationCandidates(
   return candidates
 }
 
-/** `wrapArray(['a','b','c','d'], 2) === ['c','d','a','b']` */
-export function wrapArray<T>(array: T[], startIndex: number) {
-  // biome-ignore lint/style/noNonNullAssertion: modulo guarantees the index is always within bounds
-  return array.map<T>((_, index) => array[(startIndex + index) % array.length]!)
-}
-
 /**
- * Find next typeahead match. Repeated chars (e.g. 'aaa') collapse to one char and cycle
- * starting after currentItem; a fresh single char searches from the top of the list.
+ * Find next typeahead match. Repeated chars (e.g. 'aaa') collapse to one char, and a single char searches from
+ * the item after currentItem, so typing it again cycles through the items it starts.
  */
 export function findNextItem<T extends { textValue: string }>(items: T[], search: string, currentItem?: T) {
   const isRepeated = search.length > 1 && Array.from(search).every((char) => char === search[0])
   // biome-ignore lint/style/noNonNullAssertion: search.length > 1 guarantees search[0] exists when isRepeated is true
   const normalizedSearch = isRepeated ? search[0]! : search
   const currentItemIndex = currentItem ? items.indexOf(currentItem) : -1
-  const isFreshSingleChar = search.length === 1
-  const startIndex = isFreshSingleChar ? 0 : Math.max(currentItemIndex, 0)
-  let wrappedItems = wrapArray(items, startIndex)
-  const excludeCurrentItem = !isFreshSingleChar && normalizedSearch.length === 1
-  if (excludeCurrentItem) wrappedItems = wrappedItems.filter((v) => v !== currentItem)
+  let wrappedItems = wrapArray(items, Math.max(currentItemIndex, 0))
+  if (normalizedSearch.length === 1) wrappedItems = wrappedItems.filter((v) => v !== currentItem)
   const nextItem = wrappedItems.find((item) => item.textValue.toLowerCase().startsWith(normalizedSearch.toLowerCase()))
   return nextItem !== currentItem ? nextItem : undefined
 }
@@ -70,19 +55,22 @@ export function useTypeaheadSearch(
   const searchRef = externalSearchRef ?? internalSearchRef
   const timerRef = React.useRef(0)
 
+  const clearSearchLater = React.useCallback(() => {
+    window.clearTimeout(timerRef.current)
+    if (searchRef.current === '') return
+    timerRef.current = window.setTimeout(() => {
+      searchRef.current = ''
+    }, 1000)
+  }, [searchRef])
+
   const handleTypeaheadSearch = React.useCallback(
     (key: string) => {
       const search = searchRef.current + key
       const nextSearch = handleSearchChange(search, key)
-      const resolvedSearch = typeof nextSearch === 'string' ? nextSearch : search
-
-      ;(function updateSearch(value: string) {
-        searchRef.current = value
-        window.clearTimeout(timerRef.current)
-        if (value !== '') timerRef.current = window.setTimeout(() => updateSearch(''), 1000)
-      })(resolvedSearch)
+      searchRef.current = typeof nextSearch === 'string' ? nextSearch : search
+      clearSearchLater()
     },
-    [handleSearchChange, searchRef],
+    [handleSearchChange, searchRef, clearSearchLater],
   )
 
   const resetTypeahead = React.useCallback(() => {
@@ -90,9 +78,11 @@ export function useTypeaheadSearch(
     window.clearTimeout(timerRef.current)
   }, [searchRef])
 
+  // StrictMode replays the cleanup on a list that stays mounted, so a search typed before the replay is timed again.
   React.useEffect(() => {
+    clearSearchLater()
     return () => window.clearTimeout(timerRef.current)
-  }, [])
+  }, [clearSearchLater])
 
   return [searchRef, handleTypeaheadSearch, resetTypeahead] as const
 }
@@ -116,7 +106,7 @@ interface ITypeaheadListNavigationOptions<T> {
 }
 
 /**
- * Typeahead list navigation. Falls back to latest key when accumulated search misses,
+ * Typeahead list navigation. Falls back to latest key when no item, the current one included, matches the search,
  * and tracks last matched element so consecutive keys stay stable across async focus shifts.
  */
 export function useTypeaheadListNavigation<T>(options: ITypeaheadListNavigationOptions<T>) {
@@ -133,14 +123,15 @@ export function useTypeaheadListNavigation<T>(options: ITypeaheadListNavigationO
 
     if (searchableItems.length === 0) return ''
 
+    const element = searchableItems.map((entry) => options.getItemElement(entry.item)).find(Boolean)
     const state: ITypeaheadListState = {
-      activeElement: document.activeElement,
+      activeElement: getRootActiveElement(element ?? document),
       lastMatchedElement: lastMatchedRefObject.current,
     }
 
-    const defaultCurrentItem =
-      searchableItems.find((entry) => options.getItemElement(entry.item) === state.activeElement)?.item ??
-      searchableItems.find((entry) => options.getItemElement(entry.item) === state.lastMatchedElement)?.item
+    const itemAt = (target: Element | null) =>
+      target ? searchableItems.find((entry) => options.getItemElement(entry.item) === target)?.item : undefined
+    const defaultCurrentItem = itemAt(state.activeElement) ?? itemAt(state.lastMatchedElement)
 
     const currentItem =
       options.getCurrentItem?.(
@@ -152,15 +143,15 @@ export function useTypeaheadListNavigation<T>(options: ITypeaheadListNavigationO
 
     let nextEntry = findNextItem(searchableItems, search, currentEntry)
     let effectiveSearch = search
+    const currentMatches = currentEntry?.textValue.toLowerCase().startsWith(search.toLowerCase())
 
-    if (!nextEntry && search.length > 1) {
+    if (!nextEntry && search.length > 1 && !currentMatches) {
       effectiveSearch = key
       nextEntry = findNextItem(searchableItems, effectiveSearch, currentEntry)
     }
 
     if (nextEntry) {
-      const nextElement = options.getItemElement(nextEntry.item)
-      if (nextElement) lastMatchedRefObject.current = nextElement
+      lastMatchedRefObject.current = options.getItemElement(nextEntry.item)
       options.onMatch(nextEntry.item)
     }
 
@@ -176,7 +167,7 @@ export function useTypeaheadListNavigation<T>(options: ITypeaheadListNavigationO
 }
 
 interface IVimNavigationOptions {
-  onNavigate?: () => void
+  onNavigate: () => void
   ggTimeoutMs?: number
 }
 
@@ -185,14 +176,16 @@ interface IVimNavigationOptions {
  * Handler returns true when a command fired (caller must skip typeahead/nav). The first
  * `g` returns false so typeahead still fires on items starting with 'g'.
  */
-export function useVimNavigation(options: IVimNavigationOptions = {}) {
+export function useVimNavigation(options: IVimNavigationOptions) {
   const { ggTimeoutMs = 300 } = options
   const lastGPressRef = React.useRef(0)
-  const onNavigate = useCallbackRef(options.onNavigate ?? (() => {}))
+  const onNavigate = useCallbackRef(options.onNavigate)
 
   const handleVimKey = React.useCallback(
     (event: KeyboardEvent | React.KeyboardEvent, items: HTMLElement[]): boolean => {
-      if (items.length === 0) return false
+      const first = items[0]
+      const last = items[items.length - 1]
+      if (!first || !last) return false
       if (event.ctrlKey || event.altKey || event.metaKey) {
         lastGPressRef.current = 0
         return false
@@ -202,8 +195,7 @@ export function useVimNavigation(options: IVimNavigationOptions = {}) {
         lastGPressRef.current = 0
         event.preventDefault()
         onNavigate()
-        const last = items[items.length - 1]
-        if (last) setTimeout(() => focusFirst([last]))
+        setTimeout(() => focusItem(last))
         return true
       }
 
@@ -213,8 +205,7 @@ export function useVimNavigation(options: IVimNavigationOptions = {}) {
           lastGPressRef.current = 0
           event.preventDefault()
           onNavigate()
-          const first = items[0]
-          if (first) setTimeout(() => focusFirst([first]))
+          setTimeout(() => focusItem(first))
           return true
         }
         lastGPressRef.current = now

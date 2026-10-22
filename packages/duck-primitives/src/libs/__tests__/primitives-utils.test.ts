@@ -1,8 +1,9 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, spyOn, test } from 'bun:test'
+import { freshDom } from '../../__tests__/dom'
 import { clamp } from '../clamp'
 import { composeEventHandlers } from '../compose-event-handler'
 import { getState } from '../get-state'
-import { isPointInPolygon, wrapArray } from '../shared-utils'
+import { focusFirst, isPointInPolygon, wrapArray } from '../shared-utils'
 
 describe('duck-primitives utils', () => {
   test('clamp constrains numbers within an inclusive range', () => {
@@ -114,6 +115,15 @@ describe('isPointInPolygon', () => {
     expect(isPointInPolygon({ x: -10, y: -10 }, square)).toBe(false)
   })
 
+  test('point beside it, level with it, returns false', () => {
+    expect(isPointInPolygon({ x: -5, y: 5 }, square)).toBe(false)
+  })
+
+  test('counts a point on its left edge as inside and one on its right edge as outside, casting its ray rightwards', () => {
+    expect(isPointInPolygon({ x: 0, y: 5 }, square)).toBe(true)
+    expect(isPointInPolygon({ x: 10, y: 5 }, square)).toBe(false)
+  })
+
   test('works with triangle', () => {
     const triangle = [
       { x: 0, y: 0 },
@@ -122,5 +132,54 @@ describe('isPointInPolygon', () => {
     ]
     expect(isPointInPolygon({ x: 5, y: 3 }, triangle)).toBe(true)
     expect(isPointInPolygon({ x: 0, y: 10 }, triangle)).toBe(false)
+  })
+})
+
+describe('focusFirst', () => {
+  freshDom()
+
+  test('moves on past a candidate that will not take focus', () => {
+    const [refuses, takes] = ['Refuses', 'Takes'].map((label) => {
+      const button = document.body.appendChild(document.createElement('button'))
+      button.textContent = label
+      return button
+    })
+    refuses.focus = () => {}
+
+    focusFirst([refuses, takes])
+
+    expect(document.activeElement?.textContent).toBe('Takes')
+    refuses.remove()
+    takes.remove()
+  })
+
+  test('stops at the first candidate that takes focus, and hands on preventScroll', () => {
+    const [first, second] = ['First', 'Second'].map((label) => {
+      const button = document.body.appendChild(document.createElement('button'))
+      button.textContent = label
+      return button
+    })
+    const focus = spyOn(first as HTMLButtonElement, 'focus')
+
+    focusFirst([first as HTMLButtonElement, second as HTMLButtonElement], true)
+
+    expect([document.activeElement?.textContent, focus.mock.calls]).toEqual(['First', [[{ preventScroll: true }]]])
+    first?.remove()
+    second?.remove()
+  })
+
+  test('leaves focus on a candidate that already has it', () => {
+    const [focused, other] = ['Focused', 'Other'].map((label) => {
+      const button = document.body.appendChild(document.createElement('button'))
+      button.textContent = label
+      return button
+    })
+    focused?.focus()
+
+    focusFirst([focused as HTMLButtonElement, other as HTMLButtonElement])
+
+    expect(document.activeElement?.textContent).toBe('Focused')
+    focused?.remove()
+    other?.remove()
   })
 })

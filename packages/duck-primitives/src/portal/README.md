@@ -72,7 +72,9 @@ Each test was proven by changing the code and watching a test fail.
 Against `@radix-ui/react-portal` 1.1.17, the version Radix's dialog, popover, menu, select and tooltip ship.
 
 - `container` takes a ref as well as an element, as Base UI and Ark UI do, so content can portal into an element
-  that renders after it without keeping that element in state. Nothing renders while the ref holds no element.
+  that renders after it in the same commit without keeping that element in state. Nothing renders while the ref
+  holds no element, and the ref is read again only when the portal renders, so an element that comes in a later
+  commit is passed through state.
 - The `div` it renders carries `data-slot="portal"`. With `asChild` it carries none, so the child keeps its own.
 
 ## Fixed

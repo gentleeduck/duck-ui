@@ -3,7 +3,7 @@ import { join, relative } from 'node:path'
 import { type IFileCoverage, instrument } from './instrument'
 
 // A ratchet: raise a floor as coverage rises, and read a drop as the thing to fix, never the number to lower.
-const FLOOR = { statements: 73, branches: 64, functions: 68, lines: 74 }
+const FLOOR = { statements: 73, branches: 65, functions: 68, lines: 74 }
 
 const PACKAGE = join(import.meta.dir, '../../..')
 const SRC = join(PACKAGE, 'src')

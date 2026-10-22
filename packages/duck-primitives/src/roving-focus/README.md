@@ -27,14 +27,14 @@ covered by `toggle-group.radix.e2e.ts`.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 30 | `roving-focus.test.tsx` 30 |
+| Unit | 32 | `roving-focus.test.tsx` 32 |
 | End to end | 10 | `roving-focus.e2e.ts` 10 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>40 behaviours, one per test</summary>
+<summary>42 behaviours, one per test</summary>
 
 **Unit, `roving-focus.test.tsx`**
 
@@ -58,6 +58,7 @@ covered by `toggle-group.radix.e2e.ts`.
   - leaves focus on the group when a consumer prevents the entry focus
 - RovingFocusGroup arrow keys
   - counts a press made before the last one has moved focus from where that one is taking it
+  - counts a press made before the last one has moved focus from where focus landed, past an item that refused it
   - counts a press that lands between two moves from the later one
   - skips an item that cannot take focus moving forward and back
   - stops at the last item without loop and wraps with it
@@ -71,6 +72,8 @@ covered by `toggle-group.radix.e2e.ts`.
   - passes over an item whose element it cannot reach, by arrow and on entry
 - RovingFocusGroup tab order
   - leaves the tab order once no item can take focus
+- RovingFocusGroup slotted onto an element of its own
+  - keeps the element's own tabIndex, and puts one without it in the tab order
 - RovingFocusGroup in another root
   - moves one item at a time inside a shadow root
   - moves one item at a time inside an iframe
@@ -98,8 +101,8 @@ covered by `toggle-group.radix.e2e.ts`.
 Against `@radix-ui/react-roving-focus` 1.1.19, the version Radix's menu, radio group, toggle group, tabs and
 toolbar ship. 1.2.1, the latest, behaves the same.
 
-- An arrow key, Home or End pressed before the last one has moved focus counts from the item that one is moving
-  to, so two quick presses move two items. Radix counts both from the same item and moves one.
+- An arrow key pressed before the last one has moved focus counts from where that one left focus, so two quick
+  presses move two items, past an item that refuses focus too. Radix counts both from the same item and moves one.
 - `useRovingFocusItem` returns an item's tab stop, keys and ref as props to spread onto the element that takes
   focus, so a part built on the group renders no component for each item. Radix's item is always a component.
 
@@ -123,7 +126,7 @@ toolbar ship. 1.2.1, the latest, behaves the same.
 
 ## Smaller and faster
 
-- The module is 4,236 bytes against Radix's 7,594, each minified and gzipped with everything it imports but React.
+- The module is 4,300 bytes against Radix's 7,594, each minified and gzipped with everything it imports but React.
 - The group keeps its items in a set it sorts into document order on a key press, where a collection gave the
   group two components and each item a slot of its own.
 - `useRovingFocusGroup` returns the group's context and the props for an element of the caller's own, so Radio
@@ -138,12 +141,13 @@ toolbar ship. 1.2.1, the latest, behaves the same.
   group inside an element with `dir="rtl"` but no `DirectionProvider` now runs its items left to right, as its
   arrow keys already read them. Give it `dir="rtl"` or a provider.
 - The group writes its `tabindex` to its element after React commits rather than rendering it, so server markup
-  carries none. A `tabIndex` given to the group is still left alone.
+  carries none. A `tabIndex` given to the group, or carried by the element `asChild` slots it onto, is still left
+  alone.
 - `IRovingFocus.IContext` adds an item with `register`, which returns what removes it, in place of
   `onFocusableItemAdd` and `onFocusableItemRemove`. `IRovingFocus.IGroupImplProps` is gone.
 - `Collection`, `useCollection` and `createCollectionScope` are gone, and an item carries no
   `data-collection-item` attribute. `IRovingFocus.IItemData` is `IRovingFocus.IItem`, which holds the item's ref,
-  and the context gains `items`.
+  and the context gains `items` and `queuedMovesRef`.
 
 ## Later
 

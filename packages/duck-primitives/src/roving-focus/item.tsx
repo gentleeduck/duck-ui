@@ -3,6 +3,7 @@ import { useId } from '../hooks/use-id'
 import { useLayoutEffect } from '../hooks/use-layout-effect'
 import { composeEventHandlers } from '../libs/compose-event-handler'
 import { useComposedRefs } from '../libs/compose-ref'
+import { getRootActiveElement } from '../libs/shared-utils'
 import { Primitive } from '../primitive-elements'
 import { NO_GROUP, useRovingFocusContext } from './roving-focus'
 import { focusFirst, getFocusableItems, getFocusIntent, wrapArray } from './roving-focus.libs'
@@ -60,24 +61,25 @@ function useRovingFocusItem<E extends HTMLElement>(
         if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return
         event.preventDefault()
 
-        let candidateNodes = getFocusableItems(items).map(({ node }) => node)
-
-        if (focusIntent === 'last') {
-          candidateNodes.reverse()
-        } else if (focusIntent === 'prev' || focusIntent === 'next') {
-          if (focusIntent === 'prev') candidateNodes.reverse()
-          // Focus moves a task later, so a press before it lands counts from where the last one is taking it.
-          const from = context.pendingFocusRef.current ?? event.currentTarget
-          const currentIndex = candidateNodes.indexOf(from)
-          candidateNodes = context.loop
-            ? wrapArray(candidateNodes, currentIndex + 1)
-            : candidateNodes.slice(currentIndex + 1)
-        }
-
-        const [next] = candidateNodes
-        if (next) context.pendingFocusRef.current = next
+        const pressed = event.currentTarget
+        // Focus moves a task later, so a press made before the last one landed counts from where that one left focus.
+        const queued = context.queuedMovesRef.current++ > 0
         setTimeout(() => {
-          if (context.pendingFocusRef.current === next) context.pendingFocusRef.current = null
+          context.queuedMovesRef.current--
+          let candidateNodes = getFocusableItems(items).map(({ node }) => node)
+
+          if (focusIntent === 'last') {
+            candidateNodes.reverse()
+          } else if (focusIntent === 'prev' || focusIntent === 'next') {
+            if (focusIntent === 'prev') candidateNodes.reverse()
+            const focused = getRootActiveElement(pressed)
+            const from = (queued && candidateNodes.find((node) => node === focused)) || pressed
+            const currentIndex = candidateNodes.indexOf(from)
+            candidateNodes = context.loop
+              ? wrapArray(candidateNodes, currentIndex + 1)
+              : candidateNodes.slice(currentIndex + 1)
+          }
+
           focusFirst(candidateNodes)
         })
       }),

@@ -237,6 +237,26 @@ describe('RovingFocusGroup arrow keys', () => {
     expect(document.activeElement).toBe(screen.getByText('B'))
   })
 
+  it('counts a press made before the last one has moved focus from where focus landed, past an item that refused it', async () => {
+    render(
+      <RovingFocusGroup>
+        <RovingFocusGroupItem>A</RovingFocusGroupItem>
+        <RovingFocusGroupItem asChild>
+          <span ref={(node) => node && Object.assign(node, { focus: () => {} })}>B</span>
+        </RovingFocusGroupItem>
+        <RovingFocusGroupItem>C</RovingFocusGroupItem>
+        <RovingFocusGroupItem>D</RovingFocusGroupItem>
+      </RovingFocusGroup>,
+    )
+    act(() => screen.getByText('A').focus())
+
+    fireEvent.keyDown(screen.getByText('A'), { key: 'ArrowRight' })
+    fireEvent.keyDown(screen.getByText('A'), { key: 'ArrowRight' })
+    await wait(0)
+
+    expect(document.activeElement).toBe(screen.getByText('D'))
+  })
+
   it('counts a press that lands between two moves from the later one', async () => {
     render(
       <RovingFocusGroup>
@@ -463,6 +483,27 @@ describe('RovingFocusGroup tab order', () => {
     )
 
     expect([before, screen.getByTestId('group').tabIndex]).toEqual([0, -1])
+  })
+})
+
+describe('RovingFocusGroup slotted onto an element of its own', () => {
+  it("keeps the element's own tabIndex, and puts one without it in the tab order", () => {
+    render(
+      <>
+        <RovingFocusGroup asChild>
+          <div data-testid="kept" tabIndex={-1}>
+            <RovingFocusGroupItem>A</RovingFocusGroupItem>
+          </div>
+        </RovingFocusGroup>
+        <RovingFocusGroup asChild>
+          <div data-testid="entered">
+            <RovingFocusGroupItem>B</RovingFocusGroupItem>
+          </div>
+        </RovingFocusGroup>
+      </>,
+    )
+
+    expect([screen.getByTestId('kept').tabIndex, screen.getByTestId('entered').tabIndex]).toEqual([-1, 0])
   })
 })
 

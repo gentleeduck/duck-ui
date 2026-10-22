@@ -22,7 +22,7 @@ const noop = () => {}
 // What an item reads outside any group, so one whose roving focus is switched off still calls the same hooks.
 export const NO_GROUP: IRovingFocus.IContext = {
   currentTabStopId: null,
-  pendingFocusRef: { current: null },
+  queuedMovesRef: { current: 0 },
   items: new Set(),
   onItemFocus: noop,
   onItemShiftTab: noop,
@@ -37,14 +37,16 @@ export const [RovingFocusProvider, useRovingFocusContext] = createRovingFocusGro
 // Written onto the element rather than rendered, so items arriving and leaving cost the group no render.
 interface ITabStop {
   node: HTMLElement | null
+  lastNode: HTMLElement | null
   focusable: number
   tabbingBackOut: boolean
   owned: boolean
+  childOwned: boolean
 }
 
 function syncTabStop(tabStop: ITabStop) {
   const { node } = tabStop
-  if (!node || tabStop.owned) return
+  if (!node || tabStop.owned || tabStop.childOwned) return
   const tabIndex = tabStop.tabbingBackOut || tabStop.focusable === 0 ? '-1' : '0'
   if (node.getAttribute('tabindex') !== tabIndex) node.setAttribute('tabindex', tabIndex)
 }
@@ -80,14 +82,27 @@ function useRovingFocusGroup<E extends HTMLElement>(
   })
   const handleEntryFocus = useCallbackRef(onEntryFocus)
   const [group] = React.useState(() => {
-    const tabStop: ITabStop = { node: null, focusable: 0, tabbingBackOut: false, owned: tabIndex !== undefined }
+    const tabStop: ITabStop = {
+      node: null,
+      lastNode: null,
+      focusable: 0,
+      tabbingBackOut: false,
+      owned: tabIndex !== undefined,
+      childOwned: false,
+    }
     const items = new Set<IRovingFocus.IItem>()
     return {
       tabStop,
       items,
       isClickFocus: false,
-      pendingFocusRef: { current: null } as React.RefObject<HTMLElement | null>,
+      queuedMovesRef: { current: 0 },
       ref: (node: HTMLElement | null) => {
+        // A tabIndex on a child slotted in by `asChild` is the caller's. Read only from a new element, since one
+        // seen before may carry the group's own.
+        if (node && node !== tabStop.lastNode) {
+          tabStop.lastNode = node
+          tabStop.childOwned = !tabStop.owned && node.hasAttribute('tabindex')
+        }
         tabStop.node = node
         syncTabStop(tabStop)
       },
@@ -121,7 +136,7 @@ function useRovingFocusGroup<E extends HTMLElement>(
       dir,
       loop,
       currentTabStopId,
-      pendingFocusRef: group.pendingFocusRef,
+      queuedMovesRef: group.queuedMovesRef,
       items,
       onItemFocus: setCurrentTabStopId,
       onItemShiftTab: group.onItemShiftTab,

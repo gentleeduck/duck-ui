@@ -17,7 +17,7 @@ export namespace IRovingFocus {
 
   export interface IContext extends IOptions {
     currentTabStopId: string | null
-    pendingFocusRef: React.RefObject<HTMLElement | null>
+    queuedMovesRef: React.RefObject<number>
     onItemFocus(tabStopId: string): void
     onItemShiftTab(): void
     /** Adds an item to `items`, returning what takes it out again. */

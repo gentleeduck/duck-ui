@@ -1,23 +1,23 @@
 ---
 name: code-review
-description: "Review a diff against a fixed point on two axes - Standards (does it follow what this repo documents?) and Spec (does it do what the ticket asked?) - kept separate so neither masks the other. Carries the Fowler smell baseline plus the findings that have actually recurred in IRYSS audits. Use to review a branch, a PR, work in progress, or \"review since X\"."
+description: "Review a diff against a fixed point on two axes - Standards (does it follow what this repo documents?) and Spec (does it do what the issue asked?) - kept separate so neither masks the other. Carries the Fowler smell baseline plus the defects duck-ui's own work has turned up. Use to review a branch, a PR, work in progress, or \"review since X\"."
 ---
 
 Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
 
 - **Standards**: does the code conform to what this repo documents?
-- **Spec**: does the code faithfully implement the originating ticket?
+- **Spec**: does the code faithfully implement what was asked?
 
-Run both axes inline by default. **This repo's standing preference is no subagents**, so
-fan out to parallel sub-agents only when the user asks for it or the diff is too large to
-hold at once; when you do, keep the two briefs separate so they cannot pollute each other.
+Run both axes inline by default. Fan out to parallel sub-agents only when the user asks for it
+or the diff is too large to hold at once; when you do, keep the two briefs separate so they
+cannot pollute each other.
 
 ## Process
 
 ### 1. Pin the fixed point
 
-Whatever the user said is the fixed point (a commit SHA, branch name, tag, `main`, `HEAD~5`).
-If they didn't specify one, ask.
+Whatever the user said is the fixed point (a commit SHA, branch name, tag, `master`, `HEAD~5`).
+If they didn't specify one, use the PR's base, and `master` when there is no PR.
 
 Capture the diff command once: `git diff <fixed-point>...HEAD` (three-dot, so the comparison
 is against the merge-base). Also note the list of commits via
@@ -26,39 +26,32 @@ is against the merge-base). Also note the list of commits via
 Confirm the fixed point resolves (`git rev-parse <fixed-point>`) and the diff is non-empty
 before going further.
 
-**`main` is routinely the wrong fixed point here.** Branches stack on a feature branch, and
-`main` has been 150 commits behind the branch every recent PR targeted. The `pr` skill, step 1,
-is how you find the real one: check what merged PRs actually based on, then confirm with a
-commit count that matches the work on the branch rather than someone else's history.
+**In a stack the base is the PR before, not `master`.** Diffing a stacked branch against
+`master` reviews every PR under it again. Read the base off `gh pr view <n> --json baseRefName`.
 
 ### 2. Identify the spec source
 
-The issue tracker is **Linear**, reached through its MCP tools. Look for the spec in this
-order:
+Look for the spec in this order:
 
-1. An `IRY-` id in the branch name, the commit messages, or the PR body, read with
-   `mcp__linear__get_issue`.
+1. An issue the branch name, a commit message or the PR body names, read with
+   `gh issue view <n>`, comments included.
 2. A path the user passed as an argument.
-3. A plan under `docs/business-architecture/`, which is where a module's intended behaviour
-   is written down before it is built.
-4. Ask the user. If they say there is no spec, the Spec axis reports "no spec available".
+3. A plan under `.github/plans/`.
+4. The PR body itself, which states what the PR claims to do.
+5. Ask the user. If they say there is no spec, the Spec axis reports "no spec available".
 
-A ticket assigned to someone else is still a valid spec to review against. Check `assignee`
-before proposing code, because writing it is that person's job.
+**Read the PR body against the branch.** It goes stale with every push. Check each claim it
+makes: what a component now does, which export moved, which PR has to merge first.
 
 ### 3. Identify the standards sources
 
-This repo documents its standards in four places, and they are the authority:
-
 | Source | Owns |
 |---|---|
-| `CLAUDE.md` | toolchain, imports, test placement, gates, env vars, commits, the comment policy |
-| `building-a-module` skill | the order the work has to happen in, the schema and IAM rules |
-| `docs/business-architecture/modules/01-commerce-api/patterns.md` | the internal shape every module follows |
-| `tdd` skill | which layer a test belongs at, the harnesses, the coverage ratchet |
-| `pr` skill | base branch, the commit split, commit message rules |
-
-A module's own `README.md` is the local authority for that module.
+| `CLAUDE.md` | the package map, the build and test commands, the component conventions: `cn()`, `cva()`, `displayName`, `data-slot`, import order |
+| `CONTRIBUTING.md` | the comment rule, commit subjects, the PR checklist, plain ASCII in prose |
+| a module's `README.md` | what that module promises, its tests, and where it departs from Radix ("Beyond Radix", "Fixed") |
+| `tdd` skill | where a test goes, which runner it is under, the coverage floor |
+| `pr` skill | the base branch, the commit split, commit messages, the changeset |
 
 **Skip anything tooling already enforces.** Biome is the only linter and formatter, and
 `check-types` reads the types, so formatting, import order, unused symbols and type errors
@@ -68,34 +61,41 @@ On top of the repo's sources, the Standards axis always carries the two baseline
 are labelled heuristics ("possible Feature Envy"), never hard violations, and a documented
 repo standard always overrides them.
 
-#### The local baseline: what IRYSS audits keep finding
+#### The local baseline: what duck-ui's own work has turned up
 
-Each of these was a real defect here more than once. Match them against the diff first,
-because they cost more than the generic smells:
+Each of these was a real defect here. Match them against the diff first, because they cost
+more than the generic smells:
 
-- **Fail-open catch**: a `catch` that swallows and continues, so a refusal becomes a pass. A
-  fail-closed catch is deliberate and fine; a fail-open one is a security bug.
-- **Hand-thrown ORM error**: `.orNull()` plus a hand-thrown error, or catch-and-rethrow,
-  instead of the `errors()` rename table that turns a generated code into a module code.
-- **Drizzle at a call site**: raw drizzle, or a bespoke wrapper around a table (a status
-  setter, a filter-scoped list). Widen the ORM instead, never through the query DTO.
-- **A route that grants nobody**: a capability no role holds is a dead route that type-checks
-  and whose tests pass. Also check `action` then `resource` come first in the decorator
-  object, in single quotes, or the coverage test stops seeing the route at all.
-- **`unscoped()` with no reason beside it**: it takes the tenant rail off one call, which is
-  a decision that has to be written down.
+- **An export dropped without a breaking marker**: `@gentleduck/primitives` exports every
+  module's `index` and every file under `hooks/`, so a removed or renamed export is a public
+  removal. It needs the `!` in the commit, the `breaking` label, and a `major` changeset.
+- **A behaviour that changed with no line in the module's README**: a primitive that now differs
+  from Radix says so under "Beyond Radix", and a bug it no longer has goes under "Fixed". A
+  change missing from both reads to the next reviewer as a regression.
+- **A condition's `false` reaching an attribute**: an id list built as `cond && id` and joined
+  without filtering wrote `aria-describedby="false"`. Read every value that lands in an `aria-*`
+  or `id` attribute for a branch that leaves `false`, `undefined` or an empty string.
+- **A browser spec named `*.e2e.test.ts`**: bun 1.3.10 ignores `test.pathIgnorePatterns`, so
+  `bun test` runs it too and fails without a browser. Playwright matches
+  `**/__tests__/*.e2e.ts`.
+- **A test file that leaves its roots mounted**: the next file in the same run finds focus
+  trapped or a portal still open. A file that asserts on focus starts from `freshDom()` in
+  `src/__tests__/dom.ts`.
+- **A test that cannot fail**: every module README claims each test was proven by changing the
+  code and watching it fail. Mutate the line the test is about and run it; green means unproven.
+- **A tsconfig `paths` entry pointing into another package's `src`**: under TypeScript 7 the
+  declaration build writes `.d.ts` files into that package's source tree.
+- **A stale count in a module README**: the `<!-- tests -->` and `<!-- behaviour -->` blocks list
+  each test file and its tests, so a test added, renamed or removed leaves them wrong. Recount from
+  the runner at the head; never trust the README's number.
+- **A byte count in a changeset that is not from the latest benchmark run**: a rebuild moves a
+  module's size by a few bytes, so compare it against `results.json`.
 - **A cast that structural typing would have handled**: prefer the structural type, and keep
   an `as X` only where `check-types` proves it is needed.
-- **A destructured parameter on a decorated service method**, which makes `ttsc-nestia` panic
-  during `bun run sdk` and names no file when it does.
-- **A body DTO that is not an `interface`**: a long `Partial<Pick<...>>` prints truncated
-  into invalid SDK code and every e2e suite then fails to collect.
-- **A test colocated beside its source** rather than in `__tests__/`, which is silently never
-  run.
-- **A comment that restates the code**, narrates the change, or banners a section. The
-  comment policy in `CLAUDE.md` is that most code gets none.
-- **In `admin-portal`**: a filter missing `single: true`, and a mutation with no settle after
-  it. Those two were the repeated findings of the portal sweep.
+- **A comment that restates the code** or narrates the change. `CONTRIBUTING.md`: comments
+  explain why, not what.
+- **A non-ASCII character in prose or a commit**: an em dash, a curly quote, an arrow, an
+  ellipsis. `CONTRIBUTING.md`, "PR checklist".
 
 #### The generic baseline: Fowler's smells
 
@@ -131,9 +131,8 @@ If there is no spec, skip the Spec axis and say so.
 ### 5. Check a finding before reporting it
 
 A deliberate decision looks identical to a defect in a diff. Before reporting, run
-`git log -S` or `git blame` on the hunk and read what the commit message claimed. Two
-findings from the last audit round turned out to be decisions with a written rationale, and
-one of them had a ticket filed against it.
+`git log -S` or `git blame` on the hunk and read what the commit message claimed, and read the
+module README's "Beyond Radix" and "Fixed", where a departure from Radix is written down.
 
 Two things in a diff are the user's and are reported, never edited: a `@ts-expect-error`,
 and a failing test that pins a bug the user knowingly left unfixed.
@@ -147,11 +146,13 @@ End with a one-line summary: total findings per axis, and the worst issue _withi
 Don't pick a single winner across axes: that's the reranking the separation exists to
 prevent.
 
+Posting the findings on the PR is the `pr-comment` skill's job, and only on the user's word.
+
 ## Why two axes
 
 A change can pass one axis and fail the other:
 
 - Code that follows every standard but implements the wrong thing -> **Standards pass, Spec fail.**
-- Code that does exactly what the ticket asked but breaks the project's conventions -> **Spec pass, Standards fail.**
+- Code that does exactly what the issue asked but breaks the project's conventions -> **Spec pass, Standards fail.**
 
 Reporting them separately stops one axis from masking the other.

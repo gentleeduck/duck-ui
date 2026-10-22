@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: The red-green loop and the machinery it runs on in this repo - seams, vertical slices, which layer a test belongs at, which harness wires it, the coverage ratchet, and the anti-patterns that produce tests nobody can refactor past. Use when writing, fixing or reviewing any test here, building a feature test-first, or when a test passes without being able to fail.
+description: The red-green loop and the machinery it runs on in this repo - seams, vertical slices, which file and runner a test belongs in, the Radix ports, the story server, the coverage floor, and the anti-patterns that produce tests nobody can refactor past. Use when writing, fixing or reviewing any test here, building a feature test-first, or when a test passes without being able to fail.
 ---
 
 # Test-Driven Development
@@ -14,28 +14,30 @@ not after.
 
 Five facts change how the loop behaves here:
 
-- **Red has to be an assertion failure.** Vitest never type-checks, so a test that "fails"
-  because the types are wrong is not red, it is unwired. `bun run check-types` is the only
-  thing that reads a type, and a `.types.ts` file under `__tests__/` is a type test run by
-  that command, never by vitest.
-- **The seam for a hermetic cycle is the mocked ORM**, `mockOrm()` in `apps/marketplace-api`.
-  It is a public boundary, not an internal collaborator, so asserting on `db.$calls` is a
-  seam test rather than the implementation-coupling the anti-patterns below warn about.
-- **One cycle, one tier.** `bun run test` is hermetic and is where the loop lives.
-  `test:integration` and `test:e2e` each need a live Postgres and run at
-  `--concurrency=1`; pull one of those into the loop and the cycle stops being tight.
+- **Red has to be an assertion failure.** Neither `bun test` nor vitest type-checks, so a test
+  that "fails" because the types are wrong is not red, it is unwired. `bun run check-types` is
+  the only thing that reads a type.
+- **Two runners.** `@gentleduck/primitives`, `registry-ui`, `motion`, `registers`,
+  `registry-build` and `docs` run under `bun test`, with jsdom loaded by each package's
+  `jsdom-setup.ts`. `calendar`, `cli`, `hooks`, `lazy`, `libs`, `variants` and `vim` run under
+  vitest. Read the package's `test` script before reaching for an API: `bun:test` and `vitest`
+  differ in `vi`, timers and module mocks.
+- **One cycle, one tier.** The unit suite is where the loop lives. The browser tier,
+  `bun run test:e2e` in `packages/duck-primitives`, builds the stories and starts browsers;
+  pull it into the loop and the cycle stops being tight.
 - **A failing test may be pinning a bug on purpose.** Before turning one green, find out
   whether it is red because your code is wrong or because the code it covers is knowingly
   broken. Rewriting the second kind deletes the only record of the bug.
-- **Domain language comes from `docs/business-architecture/`** and the module's own
-  `README.md`. Name cases in those words so a test reads as a claim about the business.
+- **Names come from Radix and the module's own `README.md`.** A primitive's parts, states and
+  data attributes are named there. Name cases in those words so a test reads as a claim about
+  the component.
 
 ## What a good test is
 
 Tests verify behavior through public interfaces, not implementation details. Code can change
-entirely; tests shouldn't. A good test reads like a specification: "user can checkout with
-valid cart" tells you exactly what capability exists, and it survives refactors because it
-doesn't care about internal structure.
+entirely; tests shouldn't. A good test reads like a specification: "closes on Escape and hands
+focus back to the trigger" tells you exactly what capability exists, and it survives refactors
+because it doesn't care about internal structure.
 
 See [tests.md](tests.md) for examples and [mocking.md](mocking.md) for mocking guidelines.
 
@@ -51,23 +53,28 @@ and complex logic instead of every edge case.
 
 Ask: "What's the public interface, and which seams should we test?"
 
-In a module here the seams are already named, and each file wires **only as much as its
-layer needs**. Tests get more unit-like closer to the data and more integration-like closer
-to the route.
+For a primitive the seams are already named. Its tests sit in `src/<module>/__tests__/`, and
+each file proves what the one before it cannot:
 
-| File | Wires | Uses |
+| File | Runs under | Proves |
 |---|---|---|
-| `{module}.model.test.ts` | the model alone | `mockClient([{module}Model])`, reading `$calls` |
-| `{module}.admin.service.test.ts` | the service as a bare provider over a mocked `Orm` | `mockOrm()` |
-| `{module}.admin.controller.test.ts` | the controller over a mocked service | `vi.fn()`, `handlerMeta` |
-| `{module}.module.test.ts` | the real `{Module}Module` plus a `@Global()` module providing `Orm` | `createTestingApp`, `mockOrm()` |
-| `{module}.admin.service.integration.test.ts` | the service over real Postgres | `createTestDatabase()` |
-| `{module}.admin.e2e.test.ts` | nothing, real HTTP against built output | `startBuiltServer()`, the generated SDK |
+| `<module>.test.tsx` | `bun test`, jsdom | the parts through their props and the DOM they render, driven with `@testing-library/react` and `user-event` |
+| `<name>.radix.test.tsx` | `bun test`, `src/__tests__/radix/harness.tsx` | Radix's own cases for the same primitive pass here too. Each file calls `radixEnvironment()`. |
+| `<module>.e2e.ts` | Playwright, the module's `__stories__` | what jsdom cannot: layout, real focus order, pointer events, animation |
 
-The mocks live in `src/common/test-helpers/orm.ts`; the three harnesses are
-`@iryss/testing`. A model test that imports the whole module, or a module test that
-hand-wires providers instead of importing the real module, is testing the wrong thing at
-that layer.
+Suites that cross modules, keyboard, axe and integration, live in `src/__tests__/` itself. A
+helper reused across modules goes in `src/libs/` with its own tests there, and is tested again
+only through the primitives that use it.
+
+Three things bite at these seams:
+
+- **A browser spec is named `*.e2e.ts`**, never `*.e2e.test.ts`. bun 1.3.10 ignores
+  `test.pathIgnorePatterns`, so `bun test` would collect it and fail without a browser.
+- **Roots left mounted by an earlier file** trap focus in a later one under `bun test`, since
+  every file shares one jsdom. A file that asserts on focus starts from `freshDom()` in
+  `src/__tests__/dom.ts`.
+- **The story server is on port 9009** and Playwright reuses one already running outside CI.
+  Check `lsof -iTCP:9009` first, or the run tests another checkout's stories.
 
 When the shape of that interface is itself in question (how deep the module is, where the
 seam belongs, what the interface should expose), call the Skill tool with "codebase-design"
@@ -77,17 +84,19 @@ leverage and locality terms, and it is a reference to consult, not a session to 
 ## Anti-patterns
 
 - **Implementation-coupled**: mocks internal collaborators, tests private methods, or
-  verifies through a side channel (querying the database instead of using the interface).
-  The tell: the test breaks when you refactor but behavior hasn't changed.
+  verifies through a side channel (reading a ref or a context instead of what the part
+  renders). The tell: the test breaks when you refactor but behavior hasn't changed.
 - **Tautological**: the assertion recomputes the expected value the way the code does
-  (`expect(add(a, b)).toBe(a + b)`, a snapshot derived by hand the same way, a constant
-  asserted equal to itself), so it passes by construction and can never disagree with the
-  code. Expected values must come from an independent source of truth: a known-good literal,
-  a worked example, the spec.
-- **Passing without asserting**: an `expect` that never runs, a `resolves` with nothing
-  behind it, an awaited promise whose rejection nobody reads. Prove a new test can fail by
-  mutating the code it covers and watching it go red. Mutate the file the test actually
-  loads: against built output that is `dist`, not `src`.
+  (`expect(clamp(v, a, b)).toBe(Math.min(Math.max(v, a), b))`, a snapshot derived by hand the
+  same way, a constant asserted equal to itself), so it passes by construction and can never
+  disagree with the code. Expected values must come from an independent source of truth: a
+  known-good literal, a worked example, Radix's behaviour, the WAI-ARIA pattern.
+- **Passing without asserting**: an `expect` that never runs, a `waitFor` whose callback
+  returns rather than throws, an awaited promise whose rejection nobody reads. Prove a new test
+  can fail by mutating the code it covers and watching it go red. Every module README claims
+  this was done for each of its tests.
+- **Thrown for any reason**: a bare `toThrow()` passes when the code throws for the wrong
+  reason. Assert the message, as the `createContext` tests assert the part and root it names.
 - **Horizontal slicing**: writing all tests first, then all implementation. Bulk tests verify
   _imagined_ behavior: you test the _shape_ of things rather than user-facing behavior, the
   tests go insensitive to real changes, and you commit to test structure before understanding
@@ -104,23 +113,23 @@ leverage and locality terms, and it is a reference to consult, not a session to 
 
 ## Coverage
 
-Thresholds are enforced per package, in that package's own `vitest.config.ts`, and are a
-ratchet rather than an aspiration. `test:coverage` is what `pre-push` runs, because a
-threshold is only read when coverage is collected.
+`@gentleduck/primitives` holds a coverage floor in `src/__tests__/istanbul/run.ts`. It is read
+only when `bun run test` runs the whole suite, since a filtered run covers part of the package,
+and a source file no test loads counts as never run. The floor is a ratchet: set at what the
+package measures, raised as coverage rises, and a drop is the thing to fix rather than the
+number to lower.
 
 - **An uncovered line is a design signal first.** Before writing a test to reach it, ask
-  whether the line should exist. An unreachable `catch`, a defensive branch the types
-  forbid, an error code nothing throws: delete it. `health.service.ts` reached 100% by
-  removing a `try` around code that cannot throw, not by testing it.
+  whether the line should exist. An unreachable `catch` or a defensive branch the types forbid
+  is deleted, not tested.
 - **Raise the bar, never lower it.** No ignore pragma, no excluding a file to go green, no
-  asserting on a mock where the real thing was available. Read a drop as the thing to fix.
-- **A genuinely unreachable line is documented at the config**, with which of the three
-  causes it is: TypeScript's `__decorate` helper branching on the runtime, a
-  module-load or OS path, or a `typia.createAssert` validator inlined into the file.
+  asserting on a mock where the real thing was available.
 
 ## Before calling the cycle done
 
 - The test failed for the right reason before it passed.
 - It asserts behaviour a reader can name, at a seam that was agreed.
 - `bun run test` is green for the whole package, not just the one file you ran.
-- `bun run check-types` is green, since vitest read none of the types.
+- `bun run check-types` is green, since neither runner read the types.
+- The module README's `<!-- tests -->` and `<!-- behaviour -->` blocks list the test, and its
+  "Beyond Radix" or "Fixed" section names a behaviour that now differs from Radix.

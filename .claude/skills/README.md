@@ -14,26 +14,27 @@ A skill marked **slash-only** sets `disable-model-invocation: true`, so it runs 
 
 ## Build it here
 
-Repo-specific. These five know IRYSS and are the ones to reach for on this codebase.
+Repo-specific. These five know duck-ui and are the ones to reach for on this codebase.
 
 | Skill | For |
 |---|---|
-| `building-a-module` | the order of work for a new module: plan, schema, migration, IAM, code, tests, README |
-| `tdd` | the red-green loop, which layer a test belongs at, the harnesses, the coverage ratchet |
-| `pr` | the real base branch, the commit split, the body, labels, push |
-| `code-review` | two-axis review, standards against spec, with the findings IRYSS audits keep turning up |
-| `setup-pre-commit` | what husky runs at each hook and how to change a gate |
+| `tdd` | the red-green loop, which file and runner a test belongs in, the Radix ports, the coverage floor |
+| `pr` | the base branch, the commit split, the changeset, the body, labels, push |
+| `code-review` | two-axis review, standards against spec, with the defects duck-ui's own work has turned up |
+| `pr-comment` | one inline comment per finding, a short summary review, an approval, a reply on a thread |
+| `setup-pre-commit` | what husky runs at each hook, what CI adds, and how to change a gate |
 
 ## Know the toolchain
 
 Generated from each tool's own docs, so they are current rather than remembered. Matched to
-what this repo actually runs: `turbo.json`, 8 `tsdown.config.ts`, 14 vitest configs, and the
-one `vite.config.ts` under `admin-portal`.
+what this repo actually runs: `turbo.json`, a `tsdown.config.ts` per built package, and vitest in
+the packages that do not run under `bun test`. Only deprecated packages still have a
+`vite.config.ts`.
 
 | Skill | For |
 |---|---|
 | `turborepo` | task pipelines, `dependsOn`, `--filter`, `--affected`, cache misses |
-| `vitest` | config, mocking, coverage, filtering, and type testing for the `.types.ts` files |
+| `vitest` | config, mocking, coverage and filtering, for the packages tested under vitest |
 | `tsdown` | bundling a package, emitting declarations, plugins and hooks |
 | `vite` | `vite.config.ts`, the plugin API, SSR |
 | `typescript-advanced-types` | generics, conditional and mapped types, template literals |
@@ -52,10 +53,10 @@ one `vite.config.ts` under `admin-portal`.
 | `prototype` | throwaway build to answer a design question |
 | `research` | investigate against primary sources, capture findings as a repo file |
 
-## Build the portal
+## Build the components and the docs
 
-`admin-portal` is React plus TanStack Start, so the Next.js half of the Vercel guidance does
-not apply. Read them for the React half.
+The docs app, `apps/duck`, is Next.js, so all of the Vercel guidance applies there. For the
+packages, read the React half: render cost, and compound components without boolean props.
 
 | Skill | For |
 |---|---|
@@ -65,7 +66,7 @@ not apply. Read them for the React half.
 
 ## Design the frontend
 
-Not IRYSS-aware. `frontend-design` is Anthropic's; the other four come from
+Not duck-ui-aware. `frontend-design` is Anthropic's; the other four come from
 `Leonxlnx/taste-skill`.
 
 | Skill | For |
@@ -151,3 +152,5 @@ Read these before trusting a skill that touches tooling:
   without being told in that same message.
 - **`turborepo`** ships a slash command at `turborepo/command/turborepo.md`. Commands load
   from `.claude/commands/`, not from inside a skill, so it is inert where it sits.
+- **`duck-ui`** here is a Windows link file, not a symlink, so the repo's own `skills/duck-ui`
+  skill does not load from this folder.

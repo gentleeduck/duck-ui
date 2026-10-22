@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Open a PR in this repo, end to end - find the real base branch (never assume main), split the working tree into one commit per feature, pull the Linear tickets, write a body that shows the change rather than describing it, and confirm the base, assignee and labels landed. Use whenever asked to make, open or push a PR, or to commit a working tree "by feature" so a PR can follow.
+description: Open a PR in this repo end to end - base it on master, commit the tree one feature per commit, read the issues it closes, add the changeset a published package needs, write a short body a reviewer takes in at a glance, and confirm the base, assignee and labels landed. Use whenever asked to make, open or push a PR, or to commit a working tree "by feature" so a PR can follow.
 metadata:
   credits:
     skill: show-me
@@ -9,298 +9,157 @@ metadata:
     url: "https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md"
 ---
 
-# Opening a PR in IRYSS
+# Opening a PR in duck-ui
 
-Every step here exists because skipping it produced a wrong PR once: the wrong base branch, a
-104-file commit, a made-up label. Do all of them in order.
+Each step is here because skipping it produces a wrong PR: the wrong base, a commit that mixes
+three changes, a made-up label, a body nobody reads to the end.
 
-## 1. Find the real base branch, never assume `main`
+## 1. Base it on `master`
 
-`main` can be far behind the branch everything actually merges into. Check what recent PRs
-really targeted before picking a base:
-
-```bash
-gh pr list --state merged --limit 5 --json number,title,baseRefName,headRefName,mergedAt
-```
-
-Then confirm with a commit count, not a guess:
+`master` is the branch that releases. `dev` is stale, and CI runs only for PRs into `master`.
+Confirm the count is this branch's own work and nobody else's:
 
 ```bash
-git fetch origin <candidate-base> --quiet
-git log --oneline origin/<candidate-base>..HEAD | wc -l
+git fetch origin master --quiet
+git log --oneline origin/master..HEAD | wc -l
 ```
 
-The right base is the one where that count matches the work actually on this branch (single
-digits for a normal PR), not hundreds. `main` here was 150 commits behind while
-`feat/storefront-configuration` was the branch every recent PR (#26-30) actually targeted, and
-`git merge-base` against the wrong candidate silently includes someone else's unmerged history
-in the diff.
+A PR in a stack bases on the PR before it until that one merges. CI does not run on it there, so
+run the gates at its tip yourself (section 7).
 
-## 2. Commit by feature, not by "everything at once"
+## 2. One commit per feature
 
-A PR title makes one claim. A working tree with several unrelated fixes tangled together
-cannot back that claim, whatever the title says. Before touching git:
+A PR title makes one claim, and a tree of tangled fixes cannot back it.
 
-1. `git status --porcelain=v1` and `git diff` to map every changed file to the feature it
-   belongs to.
-2. For each feature, stage only its files and diff `--stat` to sanity check the scope before
-   committing.
-3. **When one file has hunks from two features genuinely interleaved** (there is no
-   `git add -p` here, interactive flags are disallowed): reconstruct the file's state for
-   feature A only, verify that state on its own with a scoped `vitest run`, commit, then put
-   feature B's hunks back on top of the committed base and verify again.
-4. Before every commit: `bun run check-types`, `bun run test`, and `bunx biome check <staged
-   files>` at the repo root, not just the touched package. A change that compiles alone can
-   still break a sibling that imports it.
-5. Conventional commit message, ASCII only, explains why not what, no `Co-Authored-By`
-   trailer. Start a body paragraph with a word rather than a `word:` token, or commitlint
-   reads it as a footer and warns.
+1. Map every changed file to its feature with `git status --porcelain=v1` and `git diff`.
+2. Stage one feature, check `git diff --cached --stat`, run `bun run check-types` and the tests of
+   the package it touches so the commit stands on its own, and commit. Repeat.
+3. When one file interleaves two features' hunks (there is no `git add -p` here), write feature A's
+   version of it, verify, commit, then put B's hunks back on top.
+4. A shared index file (a package's `stories.ts`, a register) is split by hunk the same way, so
+   each commit lists only what it adds.
 
-Don't wait to be asked before flagging it: if the tree turns out to hold more than the one
-thing you were told about, say so and propose the split rather than silently committing
-everything as one commit.
+Messages are conventional commits, checked by commitlint (`commitlint.config.cjs`):
 
-## 3. Pull in the tickets
+- types `feat`, `fix`, `docs`, `chore`, `refactor`, `perf`, `test`, `build`, `ci`, `style`, `revert`
+- a header of at most 100 characters, whose subject is not start case, pascal case or upper case
+- body lines of at most 200 characters
+- a `!` after the scope for a breaking change: `perf(primitives)!: ...`
+- plain ASCII, no em dashes, curly quotes, arrows or ellipsis characters
+- the why, not the what. The diff shows what. A claim that something "fails without" the change
+  has to be true at the commit's parent.
+- no `Co-Authored-By` trailer
 
-Before writing the body, find every Linear ticket the work closes or touches:
-`mcp__linear__get_issue` for anything already referenced in the conversation,
-`mcp__linear__list_issues` with `parentId` for sub-issues of a parent ticket. Read each one;
-don't just link the id. A ticket with no Linear equivalent (a fix that came from a code
-review, a branch's own original scope) still gets a line in the Summary, it just has no link.
+A body paragraph starts with a word, not a `word:` token, or commitlint reads it as a footer.
 
-Check `assignee` before writing code for a ticket. One assigned to someone else is theirs to
-build.
+If the tree holds more than the one thing you were told about, say so and propose the split.
 
-## 4. Body shape: simple, list-first, no ceremony
+## 3. Read the issues
+
+Read every issue the work closes or touches, not just its number: `gh issue view <n>`. "Fixes #N"
+in the body closes it when the PR merges into `master`.
+
+## 4. The changeset
+
+A change to a published package needs a `.changeset/*.md`: `"@gentleduck/<pkg>": patch`, `minor`
+or `major`, then a prose paragraph, which becomes the CHANGELOG line. `bun changeset` writes one.
+The docs app, `@gentleduck/ui-docs`, is ignored.
+
+Merging the PR publishes nothing. The Release workflow then opens `chore: version packages`, and
+merging that one publishes to npm behind the `npm` environment's approval. A stack that ships as
+one release carries its changeset in its last PR only.
+
+A byte count quoted in a changeset comes from the latest benchmark run's `results.json`, since a
+rebuild moves a module's size by a few bytes.
+
+## 5. Write the body
+
+A reviewer should take it in at a glance: what changed, what to look at, what cannot be undone,
+and the proof. Each commit message already carries its own why, so the body does not repeat it.
+`.github/PULL_REQUEST_TEMPLATE.md` lays out the same shape.
 
 ```markdown
-## Summary
+<What this does and for whom, in one or two plain sentences, issue linked. Why it lands now, if
+that is not obvious.>
 
-<the one visual that makes the change legible, then one bullet per distinct piece of work>
+- <one line per distinct piece of work, only when there are two or more>
 
-- **Thing one** ([IRY-N](url)): what was broken, one sentence, and what the fix does.
-- **Thing two** (no ticket, matches this branch's original scope): same shape.
+Worth a look:
 
-## Changes
+- <a decision or trade-off a reviewer should check, one line each>
 
-- [x] Short past/imperative line per commit, in commit order
+Merge danger:
 
-## Verified
+- <something reverting the PR does not undo, or a merge order, one line each>
 
-Before and after. What was actually run and passed, naming the tier.
+For later:
 
-## Merge Danger
+- [ ] <what is left out on purpose, one line each>
 
-Only when the answer is interesting. One-way or two-way door, and the blast radius.
+<The proof in one line: which tests ran and passed, and the test that pins a fix.>
 ```
 
-Every top-level bullet must trace to an actual commit on the branch. If a bullet needs three
-sentences to justify itself, the commit it describes is not scoped tightly enough yet: go back
-to step 2.
+Drop a section with nothing to say. Aim under 1,500 characters for one feature and 3,000 for the
+largest PR, and cut prose to get there, never the proof.
 
-Skip all preambles and keep prose brief. Domain language comes from
-`docs/business-architecture/` and the module's own `README.md`.
+Leave out:
 
-## 5. Assignee and labels come from the repo, not from memory
+- the commit list, which GitHub's Commits tab already shows
+- commit hashes, and test counts. "All tests pass" says it.
+- a preamble, a `## Summary` heading, or praise
+- the gate's steps spelled out
+- how the branch got here, or what was re-run after which commit. The body describes the head.
+- a line saying a risk is small. No merge danger means no section.
+- a mechanism explained in prose. That belongs to the commit message.
+
+At most one visual, and only when it says the change faster than a sentence: a component's tree
+before and after, or a module's file layout.
+
+The proof names what ran, since each proves something different: `bun run test` runs each
+package's unit suite, and in `@gentleduck/primitives` also the ported Radix suites and the
+coverage floor. `bun run test:e2e` in `packages/duck-primitives` drives the stories in real
+browsers. A test that pins a fix is named, with the fact that it failed before. For a visual
+change, a screenshot beats both.
+
+Merge danger is for what reverting the PR does not undo:
+
+- a version a changeset publishes, since npm keeps it
+- an export removed or renamed. `@gentleduck/primitives` exports every module's `index` and every
+  file under `hooks/`, so an export dropped from one of them is gone for every consumer.
+- a prop, default or `data-*` attribute that changed meaning, which consumer code and CSS keep
+  compiling against
+- a dependency bump consumers feel: a peer range, React, Next, TypeScript
+- a stack: which PR merges first
+
+Write "PR #N" or "issue #N", never a bare `#N`, since the two share one counter. Plain ASCII.
+
+## 6. Assignee and labels come from the repo
 
 ```bash
-gh api user --jq '.login'      # this session's authenticated user, for --assignee
-gh label list                   # the actual label taxonomy - never invent one
+gh api user --jq .login   # for --assignee
+gh label list             # the real taxonomy; never invent a label
 ```
 
-Pick labels that match what the diff touches: a `type: fix`/`type: feat`/etc. for the dominant
-kind of change, one `area: *` per app or package meaningfully touched, and any status label
-(`security`, `breaking change`) the content actually earns. A rank or permission-check fix
-earns `security`; a repository rename does not.
+One type label for the dominant change (`fix`, `feature`, `perf`, `refactor`, `docs`, `test`,
+`chore`, `build`, `ci`), one `pkg: *` per package meaningfully touched, `breaking` for a breaking
+change, and `dependencies` for a bump. `security` only when a fix earns it.
 
-## 6. Push and create
+## 7. Push, create, confirm
 
 ```bash
 git push -u origin <branch>
-gh pr create --base <verified-base> --head <branch> \
-  --title "<type>(<scope>): <summary>" \
-  --body-file <path> \
-  --assignee <login> \
-  --label "type: x" --label "area: y" ...
+gh pr create --base master --head <branch> --title "<type>(<scope>): <summary>" \
+  --body-file <path> --assignee <login> --label "<type>" --label "pkg: <name>"
 gh pr view <number> --json title,assignees,labels,baseRefName,headRefName,url
 ```
 
-Let `pre-push` run. It is `lint`, `format`, `fix`, `check`, `check-types`, `test:coverage`,
-`build`, and it passes on a healthy tree. `--no-verify` is for a gate that is itself broken,
-needs the user's explicit say-so, and leaves whatever it skipped still to be run. Because
-`format` and `fix` write, read `git status` after a push that took a while.
+Let `pre-push` run (the `setup-pre-commit` skill says what it runs). `--no-verify` needs the
+user's say-so, and whatever it skipped is still owed. `bun run fix` writes, so read `git status`
+after a long push.
 
-The final `gh pr view` is not optional: confirm the base, assignee and labels landed as asked
-before reporting the PR back as done.
+The final `gh pr view` is not optional: confirm the base, assignee and labels before calling the
+PR done.
 
----
-
-# Choosing the visual
-
-Reference for the `## Summary` and `## Verified` sections above.
-
-## Summary
-
-Pick the smallest view that makes the key point clear.
-
-- Show logic or an algorithm as pseudocode:
-
-```text
-on(save)
-  if content is unchanged
-    return cached result
-  write new content
-  return fresh result
-```
-
-- Show runtime control flow as a call tree:
-
-```text
-submitForm
-  createSession
-    persistPrompt
-    launchAgent
-  navigateToSession
-```
-
-- Show UI structure as a component tree, including state and module boundaries that matter:
-
-```tsx
-<SessionPage>(apps / example / src / routes / session.tsx);
-useSessionEvents() < SessionToolbar > <RunSkillButton>(packages / ui);
-```
-
-- Show file responsibility or a broad refactor as a shallow file tree:
-
-```text
-src/
-├── commands/       # parses user actions
-├── sessions/       # owns session state
-└── transport/      # sends API requests
-```
-
-- Show component interaction, control flow, or data flow with Mermaid:
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant UI
-    participant Daemon
-    User->>UI: choose command
-    UI->>Daemon: send expanded prompt
-    Daemon-->>UI: stream result
-```
-
-- Use `diff` when the point is what changes and the surrounding shape already exists. Match
-  the diff shape to the topic.
-
-For a component change:
-
-```diff
- <SessionPage>
-   useSessionEvents()
-   <SessionToolbar>
-+    <RunSkillButton />
-   <SessionTimeline>
-+    <SkillResultCard />
-```
-
-For a file-layout change:
-
-```diff
- src/
- ├── commands/
-+│   └── show-me.ts       # expands the slash command
- ├── sessions/
--└── transport.ts
-+└── transport/
-+    ├── client.ts
-+    └── stream.ts
-```
-
-For a call-tree or call-stack change:
-
-```diff
- submitForm
-   createSession
-     persistPrompt
-+    expandSkillMention
-     launchAgent
--  navigateToSession
-+  navigateToSession
-+    subscribeToEvents
-```
-
-For a state or control-flow change:
-
-```diff
- on(save)
--  write content
-+  if content is unchanged
-+    return cached result
-+  write new content
-+  invalidate cache
-```
-
-- Show the whole block when most of it is new, when omitted context would hide ownership or
-  order, or when the user needs a copyable target shape:
-
-```ts
-function expandSkill(command: string): string {
-  const skillName = command.slice(1)
-  return `use the ${skillName} skill`
-}
-```
-
-### Guidance
-
-Place each visual next to the short text it supports. Keep only the calls, files, props,
-states, and boundaries needed to answer the user's current question or the options to
-resolve the current discussion point.
-
-You may use one of these, you may use several, it is unlikely you will use all of them. Use
-your judgement and don't overwhelm the user.
-
-Three shapes recur in this monorepo and are worth reaching for first:
-
-- **A schema or constraint change** reads as a diff of the column and the constraint that
-  guards it, because the CHECK is the behaviour.
-- **A module added or reshaped** reads as the shallow file tree of
-  `modules/{module}/`, which is the shape
-  `docs/business-architecture/modules/01-commerce-api/patterns.md` sets.
-- **A permission change** reads as the scope ladder it walks, since who a route admits is
-  the whole point and prose hides it.
-
-## Verified
-
-Concrete evidence that the change works. Show a before and after.
-
-Screenshots are S-tier, when the environment is set up for it and the change is visual.
-
-Execution-based evidence is A-tier. Test results, console output. Show the exact test that
-now fails and passes.
-
-Name the tier something ran at, because the three prove different things here:
-`bun run test` is hermetic, `test:integration` and `test:e2e` need a live Postgres. "Tests
-pass" without the tier is not evidence, and a claim that e2e passed is only true if the
-reference data was seeded first.
-
-## Merge Danger
-
-Add this section when the answer is interesting. Describe whether it's a one-way or two-way
-door. You can walk back through two-way doors, but not one-way doors. A PR that is cheap to
-roll back is lower risk. Changes that involve destructive actions or hard-to-reverse
-decisions are one-way doors.
-
-The blast radius is the potential impact or scope of the changes introduced by this PR.
-Consider all possibilities. Examples are layout shift, breakages for consumers, mobile
-responsiveness, etc.
-
-Four things are one-way doors in this repo and deserve saying so in the body:
-
-- **A migration**, because an applied one is not un-run by reverting the PR, and an
-  out-of-order timestamp is skipped silently while migrate prints success.
-- **A widened IAM grant**, because every session holding it has to be re-evaluated to know
-  what it reached in the meantime.
-- **A published SDK regeneration**, since consumers compile against it.
-- **A deleted column or dropped constraint**, which takes the data with it.
+A later push can make the body wrong: a renamed export, a "merge PR #N first" that has merged.
+Rewrite the body for the new head in the same sitting (`gh pr edit <n> --body-file`), rather
+than appending what changed.

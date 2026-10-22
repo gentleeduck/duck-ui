@@ -1,0 +1,78 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 420px;
+  font-family: system-ui, sans-serif;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.notice,
+.panel {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.notice[data-state="open"] {
+  animation: fade-in 300ms ease-out;
+}
+
+.notice[data-state="closed"] {
+  animation: fade-out 300ms ease-in forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.panel[data-state="closed"] {
+  opacity: 0;
+  translate: 0 -8px;
+}
+
+.panel[data-transition="one"] {
+  transition: opacity 300ms;
+}
+
+.panel[data-transition="delayed"] {
+  transition: opacity 300ms 300ms;
+}
+
+.panel[data-transition="several"] {
+  transition:
+    opacity 200ms,
+    translate 300ms 300ms;
+}
+
+/* Without `interpolate-size`, a height to or from `auto` starts no transition. */
+.panel[data-transition="auto"] {
+  overflow: hidden;
+  transition: height 300ms;
+}
+
+.panel[data-transition="auto"][data-state="closed"] {
+  height: 0;
+  padding-block: 0;
+}
+
+/* As Tailwind's motion-reduce:transition-none leaves it: no property transitions, a duration still set. */
+.panel[data-transition="none"] {
+  transition-property: none;
+  transition-duration: 300ms;
+}

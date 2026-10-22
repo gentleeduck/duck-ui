@@ -1,67 +1,32 @@
 'use client'
 
 import * as React from 'react'
-import { useComputedTimeoutTransition } from './mount.libs'
+import { getTransitionMs, isTransitioning } from './mount.libs'
 import type { IMount } from './mount.types'
 
-function MountMinimal({
-  forceMount = false,
-  open = false,
-  children,
+// A forwarded ref and not a `ref` prop, which React 18 never hands a function component.
+const MountMinimal = React.forwardRef<HTMLElement, IMount.IMinimalProps>(function MountMinimal(
+  { forceMount = false, open = false, children, skipWaiting = false, renderOnce = false },
   ref,
-  skipWaiting = false,
-  renderOnce = false,
-}: IMount.IMinimalProps) {
-  const [hasForceMounted, setHasForceMounted] = React.useState(false)
-  const [isVisible, setIsVisible] = React.useState(false)
-  const [hasRenderedOnce, setHasRenderedOnce] = React.useState(false)
-  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const shouldRender = forceMount ? hasForceMounted : open
+) {
+  const shouldRender = forceMount || open
+  const [mounted, setMounted] = React.useState(shouldRender)
+  // Set while rendering, so opening commits the children at once instead of rendering them a second time.
+  if (shouldRender && !mounted) setMounted(true)
 
   React.useEffect(() => {
-    if (open && forceMount) {
-      setHasForceMounted(true)
-    }
-
-    if (shouldRender) {
-      setIsVisible(true)
-      setHasRenderedOnce(true)
+    if (shouldRender || !mounted || renderOnce) return
+    // The ref is read, never written: it points at the element whose transition the children wait out.
+    const element = typeof ref === 'function' ? null : ref?.current
+    if (skipWaiting || !element || !isTransitioning(element)) {
+      setMounted(false)
       return
     }
+    const timer = setTimeout(() => setMounted(false), getTransitionMs(element))
+    return () => clearTimeout(timer)
+  }, [shouldRender, mounted, ref, skipWaiting, renderOnce])
 
-    if (renderOnce && hasRenderedOnce) return
-
-    const element = ref
-    if (element) {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-
-      if (skipWaiting) {
-        setIsVisible(false)
-        timeoutRef.current = null
-      } else {
-        timeoutRef.current =
-          // biome-ignore lint/correctness/useHookAtTopLevel: useComputedTimeoutTransition is a utility that computes CSS transition duration, not a React hook despite the naming
-          useComputedTimeoutTransition(element, () => {
-            setIsVisible(false)
-            timeoutRef.current = null
-          }) ?? null
-      }
-    }
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-        timeoutRef.current = null
-      }
-    }
-  }, [shouldRender, ref, open, forceMount, skipWaiting, renderOnce, hasRenderedOnce])
-
-  if (!shouldRender && !isVisible && !(renderOnce && hasRenderedOnce)) return null
-
-  return <>{children}</>
-}
+  return mounted ? children : null
+})
 
 export { MountMinimal }

@@ -16,7 +16,7 @@ Smaller than all 5. Faster in all 15 timed comparisons.
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI | Headless UI |
 |---|--:|--:|--:|--:|--:|--:|
-| Size, gzipped bytes | 7,417 | 10,371 (0.72x) | 11,893 (0.62x) | 17,931 (0.41x) | 11,401 (0.65x) | 11,969 (0.62x) |
+| Size, gzipped bytes | 7,457 | 10,371 (0.72x) | 11,893 (0.63x) | 17,931 (0.42x) | 11,401 (0.65x) | 11,969 (0.62x) |
 | Mount x100, ms | 6.33 | 38.4 (0.16x) | 21.2 (0.30x) | 48.3 (0.13x) | 28.6 (0.22x) | 15.1 (0.42x) |
 | Update x100, ms | 6.09 | 13.5 (0.45x) | 11.9 (0.51x) | 19.7 (0.31x) | 20.1 (0.30x) | 7.16 (0.85x) |
 | Unmount x100, ms | 1.43 | 3.03 (0.47x) | 2.64 (0.54x) | 4.79 (0.30x) | 1.72 (0.83x) | 1.56 (0.92x) |
@@ -39,14 +39,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 135 | `radio-group.radix.test.tsx` 49, `radio-group.test.tsx` 86 |
+| Unit | 136 | `radio-group.radix.test.tsx` 49, `radio-group.test.tsx` 87 |
 | End to end | 10 | `radio-group.e2e.ts` 10 |
 | registry-ui | 12 | `radio-group.test.tsx` 12 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>145 behaviours, one per test</summary>
+<summary>146 behaviours, one per test</summary>
 
 **Unit, `radio-group.radix.test.tsx`**
 
@@ -176,6 +176,7 @@ Each test was proven by changing the code and watching a test fail.
   - restores the inputs on reset without telling the form, as native radios do
 - RadioGroup reset by its form
   - restores its pick when the form it names renders after it
+  - keeps its pick when the form cancels the reset
   - keeps its pick when the form around it resets and its form is set empty
   - submits the pick it shows after two resets, once its name came after a change
   - submits the pick it shows when its parent declines the reset
@@ -258,10 +259,10 @@ Each test was proven by changing the code and watching a test fail.
 - Picking a radio tells its form once, through the hidden input, and a click handler that stops
   propagation keeps the form from hearing it.
 - `required` reaches the hidden inputs, so a form refuses to submit with nothing selected.
-- A form reset puts back the starting value and fires nothing. The group finds its form as the form resets, so a
-  form named by `form` that renders after the group resets it too, `form=""` ties it to no form, and a form named
-  inside a shadow root is found there, as for a native input. Radix looks the form up once, in the document, and
-  reads `form=""` as no `form` at all.
+- A form reset puts back the starting value and fires nothing, and a reset the form cancels changes nothing. The
+  group finds its form as the form resets, so a form named by `form` that renders after the group resets it too,
+  `form=""` ties it to no form, and a form named inside a shadow root is found there, as for a native input. Radix
+  looks the form up once, in the document, and reads `form=""` as no `form` at all.
 - The hidden inputs follow the pick the group shows once a reset is done, so the form submits what the group shows
   when its parent declines the reset or the group gained its `name` after a change. Radix's take back the pick they
   mounted with.

@@ -631,6 +631,23 @@ describe('RadioGroup reset by its form', () => {
     expect([checked(), checkedInput()]).toEqual(['Cat', 'cat'])
   })
 
+  it('keeps its pick when the form cancels the reset', () => {
+    render(
+      <form onReset={(event) => event.preventDefault()}>
+        <RadioGroup name="pet" defaultValue="cat">
+          <RadioGroupItem value="cat">Cat</RadioGroupItem>
+          <RadioGroupItem value="dog">Dog</RadioGroupItem>
+        </RadioGroup>
+        <button type="reset">Reset</button>
+      </form>,
+    )
+    act(() => fireEvent.click(screen.getByText('Dog')))
+
+    act(() => fireEvent.click(screen.getByText('Reset')))
+
+    expect([checked(), checkedInput()]).toEqual(['Dog', 'dog'])
+  })
+
   it('keeps its pick when the form around it resets and its form is set empty', () => {
     render(
       <form>

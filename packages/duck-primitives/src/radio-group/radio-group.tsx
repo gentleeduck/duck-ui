@@ -74,14 +74,15 @@ const RadioGroup = React.forwardRef<RadioGroupElement, IRadioGroup.IProps>(
       const group = groupRef.current
       const root = group?.getRootNode()
       if (!group || !root) return
-      // The form is looked up as it resets, since one named by `form` may render after the group.
+      // The form is looked up as it resets, since one named by `form` may render after the group. Heard as the reset
+      // bubbles to the root, after the form's own onReset, so a reset it cancels changes nothing.
       const reset = (event: Event) => {
-        if (event.target !== getAssociatedForm(group, form) || value === initialValue) return
+        if (event.defaultPrevented || event.target !== getAssociatedForm(group, form) || value === initialValue) return
         silentValueRef.current = initialValue
         setValue(initialValue)
       }
-      root.addEventListener('reset', reset, true)
-      return () => root.removeEventListener('reset', reset, true)
+      root.addEventListener('reset', reset)
+      return () => root.removeEventListener('reset', reset)
     }, [form, value, initialValue, setValue])
 
     // Runs after the items' effects, which read it for the change this commit made.

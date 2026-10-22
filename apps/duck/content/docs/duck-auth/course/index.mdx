@@ -77,8 +77,10 @@ mkdir src
 
 ```bash
 npm i -D tsx
-npx tsx src/main.ts
+NODE_ENV=development npx tsx src/main.ts
 ```
+
+duck-auth reads an unset `NODE_ENV` as production, which refuses the in-memory pieces chapters 1 to 7 build on, so every run until chapter 8 sets `NODE_ENV=development`.
 
 <Step>Start</Step>
 

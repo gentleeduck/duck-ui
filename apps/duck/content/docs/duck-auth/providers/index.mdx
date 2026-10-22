@@ -12,7 +12,7 @@ import { mfaProvider } from '@gentleduck/auth/providers/mfa'
 
 const auth = createAuth({
   // ...
-  providers: [passwords(), google(googleOptions), mfaProvider()],
+  providers: [passwords(), google(googleOptions), mfaProvider({ dataAtRest })],
 })
 ```
 
@@ -30,14 +30,14 @@ A falsy entry is skipped, so `process.env.GOOGLE_CLIENT_ID && google({ ... })` r
 | [SAML](/duck-auth/providers/saml) | `providers/saml` | `saml` | |
 | [MFA](/duck-auth/guides/mfa) | `providers/mfa` | | `auth.mfa` |
 
-Every import is under `@gentleduck/auth/`. MFA signs nobody in; it adds TOTP, backup codes and WebAuthn as second factors for [step-up](/duck-auth/core/flows#step-up). Using a facet whose provider is not registered throws `AUTH_PROVIDER_NOT_REGISTERED`.
+Every import is under `@gentleduck/auth/`. MFA signs nobody in; it adds TOTP, backup codes and WebAuthn as second factors for [step-up](/duck-auth/core/flows#step-up), and takes the `dataAtRest` key its TOTP secrets are stored under. Using a facet whose provider is not registered throws `AUTH_PROVIDER_NOT_REGISTERED`.
 
 ## How a sign-in runs
 
 A provider has two steps:
 
 - `begin` starts a flow that needs one: OAuth answers a redirect, magic link sends the email. Call it with `auth.flows.beginProvider(id, input)`. Password and API key have nothing to begin.
-- `complete` checks the proof. Through `auth.flows.signIn({ providerId, input })`, a success opens the session and answers the transport's intents.
+- `complete` checks the proof. Through `auth.flows.signIn({ providerId, input })`, a success opens the session and answers the transport's intents, or stops at a [challenge](/duck-auth/guides/mfa#signing-in) when the account holds a factor the provider did not check.
 
 Each answers intents, such as `redirect`, `setCookie` or `json`, which the [server adapters](/duck-auth/server) turn into a response.
 
@@ -69,4 +69,4 @@ const ldap: Provider.Me<unknown, { username: string; password: string }> = {
 createAuth({ /* ... */ providers: [ldap] })
 ```
 
-`ctx` carries the stores, the tenant, the limiter, the event bus and crypto helpers. Rate-limit whatever an attacker can guess, and throw the same error for a wrong secret and an unknown account. A provider answering `requireMfa` instead refuses the sign-in with `AUTH_STEP_UP_REQUIRED`.
+`ctx` carries the stores, the tenant, the limiter, the event bus and crypto helpers. Rate-limit whatever an attacker can guess, and throw the same error for a wrong secret and an unknown account. A provider answering `requireMfa` asks for the second factor even from a remembered device: beside `startSession`, the sign-in stops at its challenge, and with no `startSession`, or an account with no second factor, it throws `AUTH_STEP_UP_REQUIRED`.

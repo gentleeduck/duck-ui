@@ -14,9 +14,10 @@ app.get('/.well-known/openid-configuration', (_req, res) => res.json(discovery))
 app.get('/.well-known/jwks.json', (_req, res) => res.json(jwt.jwks()))
 ```
 
-- `issuer` must be `https` unless `allowHttp: true`; a trailing slash is dropped.
+- `issuer` must be `https`, or plain `http` outside production; a trailing slash is dropped.
 - `signingAlgs` defaults to `['HS256']`; set it to your transport's algorithm. HS256 secrets never appear in the JWKS, so only an asymmetric key can be verified elsewhere.
-- The OAuth endpoints it advertises sit under `prefix` (default `/auth`), and `jwks_uri` under `jwksPath` (default `/.well-known/jwks.json`). `extraClaims` adds fields but cannot replace these.
+- `none` is refused with `AUTH_MISCONFIGURED`, in any casing. A relying party reads this list to decide which signatures to accept, and `none` in it tells that party an unsigned ID token is acceptable. The type already rules it out where you write the list by hand; the check is for a list parsed from config or an environment variable.
+- The OAuth endpoints it advertises sit under `prefix` (default `/auth`), and `jwks_uri` under `jwksPath` (default `/.well-known/jwks.json`). Each is appended to the issuer as text, so each must start with `/`; one that does not throws `AUTH_MISCONFIGURED`. `extraClaims` adds fields but cannot replace these.
 - Build the JWKS per request, so a key added by `rotateSignKey` appears. `authBuildOidcRoutes({ config, transport })` answers both documents at once, with the JWKS as of that call.
 
 ## Reading another issuer
@@ -27,4 +28,14 @@ import { authFetchOidcDiscovery } from '@gentleduck/auth/oidc'
 const doc = await authFetchOidcDiscovery('https://accounts.example.com')
 ```
 
-It fetches `/.well-known/openid-configuration` under the issuer, refuses `http` unless `allowHttp: true`, and caches the answer for an hour. `bypassCache: true` refetches, and `authFlushOidcDiscoveryCache()` empties the cache.
+It fetches `/.well-known/openid-configuration` under the issuer, refuses `http` in production, and caches the answer for an hour, or for `ttlMs`. `bypassCache: true` refetches, and `authFlushOidcDiscoveryCache()` empties the cache.
+
+An issuer that is down, slow or answers garbage throws `AUTH_PROVIDER_FAILED`:
+
+- `timeoutMs` (default 10 seconds) bounds the whole request, the body included, so an issuer that stalls mid-body cannot hold the caller.
+- The body is read no further than 64 KiB. A real discovery document runs to a few KiB.
+- The document must carry what OIDC Discovery 1.0 requires: `issuer`, `authorization_endpoint`, `token_endpoint`, `jwks_uri`, `response_types_supported`, `subject_types_supported` and `id_token_signing_alg_values_supported`. A list it leaves out takes the spec's default, such as `token_endpoint_auth_methods_supported` as `['client_secret_basic']`.
+
+The answer is typed `IPublishedDocument`, where `userinfo_endpoint` and `end_session_endpoint` may be absent, as the spec allows. Check for them before you call one.
+
+`authConfigureOidcDiscoveryCache({ ttlMs, capacity })` sets the cache's default lifetime and how many issuers it holds (32 by default). A negative or `NaN` `ttlMs`, or a `capacity` that is not a whole number of 0 or more, throws `AUTH_MISCONFIGURED` and leaves the cache as it was. The old misspelled name, `authCfgureOidcDiscoveryCache`, still works and is deprecated.

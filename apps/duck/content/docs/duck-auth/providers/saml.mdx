@@ -44,39 +44,58 @@ Give the IdP your metadata from `buildSpMetadata({ client, metadata: { entityId:
 
 ## The routes
 
-`begin` redirects to the IdP with a relay state you issued; the IdP posts the response back to the callback.
+`begin` redirects to the IdP with a relay state you issued, and gives the browser a cookie holding it; the IdP posts the response back to the callback.
 
 ```ts
 import { randomUUID } from 'node:crypto'
+import { parseCookie } from '@gentleduck/auth/core/transport'
+import { applyIntents, expressCaller, toHeaders } from '@gentleduck/auth/server/express'
 
 app.get('/auth/providers/saml/begin', async (_req, res) => {
   const relayState = randomUUID()
   await redis.set(`saml:relay:${relayState}`, '1', 'EX', 600)
-  applyIntents(await auth.flows.beginProvider('saml', { relayState, host: 'app.example.com' }), res)
+  applyIntents(
+    [
+      // The IdP posts the response back cross-site, and only a SameSite=None cookie comes with it
+      {
+        type: 'setCookie',
+        name: 'saml-relay',
+        value: relayState,
+        options: { httpOnly: true, maxAge: 600, path: '/', sameSite: 'none', secure: true },
+      },
+      ...(await auth.flows.beginProvider('saml', { relayState, host: 'app.example.com' })),
+    ],
+    res,
+  )
 })
 
 app.post('/auth/providers/saml/callback', express.urlencoded({ extended: false }), async (req, res) => {
+  // A relay state this browser was not given belongs to someone else's sign-in
+  const relayState = req.body.RelayState
+  if (typeof relayState !== 'string' || relayState !== parseCookie(toHeaders(req.headers).get('cookie') ?? '', 'saml-relay')) {
+    return res.status(403).end()
+  }
   const { intents } = await auth.flows.signIn({
     providerId: 'saml',
-    input: { SAMLResponse: req.body.SAMLResponse, relayState: req.body.RelayState },
+    input: { SAMLResponse: req.body.SAMLResponse, relayState },
     ...expressCaller(req),
   })
   applyIntents([...intents, { type: 'redirect', url: '/' }], res)
 })
 ```
 
-The callback is a cross-site form post from the IdP, so keep it out of your CSRF guard: the relay state is its proof.
+The callback is a cross-site form post from the IdP, so keep it out of your CSRF guard: the relay state, matched against its cookie, is its proof.
 
 ## What is checked
 
-- **The request.** `verifyRelayState` must accept the relay state, or the response is refused: otherwise an assertion an attacker obtained for their own account, posted into your browser, signs you in as them. For IdP-initiated sign-in, which has no request, pass `allowUnsolicited: true` instead.
-- **Replay.** `replayStore.consume` must answer `true` for an assertion id only once. Without a store, pass `allowReplay: true`, which lets a captured post sign in again until the assertion expires.
+- **The request.** The relay state must be the one this browser was given, and `verifyRelayState` must accept it, or the response is refused: otherwise an assertion an attacker obtained for their own account, posted into your browser, signs you in as them. Checking only that you issued it is not enough, since anyone can open `begin` for a relay state of their own; the cookie in the routes above ties it to the browser. For IdP-initiated sign-in, which has no request, pass `allowUnsolicited: true` instead, which accepts that risk.
+- **Replay.** `replayStore.consume` must answer `true` for an assertion id only once. Production requires a store; without one, which development and test allow, a captured post signs in again until the assertion expires.
 - **The signature.** node-saml checks it. A client configured to want neither a signed assertion nor a signed response is refused at construction.
 - **The subject.** The nameID must be in `allowedNameIdFormats`, by default only the email format, since a transient nameID changes every sign-in. Under the email format, an asserted `email` must equal the nameID.
 
 Every refusal throws `AUTH_PROVIDER_FAILED` with the same detail; the real reason is emitted as `signin.failed`.
 
-The session is AAL 2 only when the IdP's `AuthnContextClassRef` is one of `mfaAuthnContexts`, such as a smartcard or a one-time code. A password at the IdP is AAL 1.
+The session is AAL 2 only when the IdP's `AuthnContextClassRef` is one of `mfaAuthnContexts`, such as a smartcard or a one-time code. A password at the IdP is AAL 1, and an account that also holds a second factor here answers a [challenge](/duck-auth/guides/mfa#signing-in) before the session opens.
 
 ## Options
 
@@ -86,11 +105,15 @@ The session is AAL 2 only when the IdP's `AuthnContextClassRef` is one of `mfaAu
 | `callbackUrl` | required | The ACS URL; must match the client's. |
 | `onSignIn` | required | Answers the identity for a validated profile, creating it on first sign-in. |
 | `verifyRelayState` | none | Required unless `allowUnsolicited`. |
-| `replayStore` | none | Required unless `allowReplay`. |
+| `replayStore` | none | Required in production. |
 | `providerId` | `'saml'` | Register one provider per IdP under different ids, such as `'saml:acme'`. |
 | `allowedNameIdFormats` | email | The nameID formats accepted. |
 | `mfaAuthnContexts` | `SAML_MFA_AUTHN_CONTEXTS` | The contexts that earn AAL 2. |
 | `allowedAttributes` | all | The attributes `onSignIn` sees. |
 | `limiterKey` | per tenant | The limiter bucket for each phase. |
 
+By default each phase spends from one bucket per tenant, before any signature is checked. Under the engine's default limiter that is 10 SAML sign-ins per tenant every 15 minutes, and anyone who can reach `begin` or the ACS URL can spend them. `limiterKey` gets no request, so to key on the client address, read it from a request-scoped store such as `AsyncLocalStorage`.
+
 For single logout, `samlSloController({ client })` checks the logout messages both ways: `beginSp` and `completeSp` for a logout you start, `completeIdp` for one the IdP sends, answering the nameID whose sessions you end.
+
+A logout request the IdP signed carries no expiry, and nothing records one that has been answered, so `completeIdp` accepts it again whenever it comes back. Over the redirect binding it is a URL, which access logs and browser history keep, and whoever has it can sign that user out again. It cannot sign anyone in.

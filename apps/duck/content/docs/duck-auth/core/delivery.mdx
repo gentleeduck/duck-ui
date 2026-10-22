@@ -18,7 +18,7 @@ const deliver: Deliver = async ({ kind, identity, vars, tenant }) => {
 }
 ```
 
-`vars.url` is the full link, already carrying its token, built as `baseUrl + callbackPath + '?token=...'`. `vars.ttlMin` is how long it stays good.
+`vars.url` is the full link, already carrying its token: `baseUrl + callbackPath` with `token` set in its query, beside any query `callbackPath` has of its own. `vars.ttlMin` is how long it stays good.
 
 | `kind` | Sent by | Extra `vars` | Default path, TTL |
 | --- | --- | --- | --- |
@@ -71,7 +71,7 @@ declare function sendMail(to: string, subject: string, url: string): Promise<voi
 
 - **Reset and magic-link requests do not wait for `deliver`.** Both take an email address from a stranger, and awaiting the mailer would make the answer slower for an address that exists. The answer is `{ ok: true }` either way and the message goes out behind it. The verification and deletion flows run for a known identity and await it.
 - **A throw is reported, not raised.** duck-auth emits `signin.failed` with `reason: 'deliver threw'` and the message kind as `providerId`. It never reads the thrown error, since a mailer's error text tends to carry the recipient and the link.
-- **No `deliver` is a misconfiguration.** A flow that needs one throws `AUTH_MISCONFIGURED`, and under `strict({ env: 'production' })` a magic-link provider without one fails at boot.
+- **No `deliver` is a misconfiguration.** A flow that needs one throws `AUTH_MISCONFIGURED`, and in production `strict()` fails a magic-link provider without one at boot.
 - **An unknown address sends nothing.** `requestPasswordReset` and the magic-link `begin` answer the same for a stranger as for an account, and do the same store work, so neither the body nor the timing tells them apart.
 
 ## Testing

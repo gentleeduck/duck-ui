@@ -37,7 +37,7 @@ const auth = createAuth({
 })
 
 auth.events.on('lockout', alertOps)
-auth.strict({ env: 'production' })
+auth.strict()
 ```
 
 `sub` must be a connection of its own: a subscribed connection can run no other command. [Production hardening](/duck-auth/advanced/security) explains the `strict` order.
@@ -56,7 +56,7 @@ With a mixed bag of stores, [`withTransaction`](/duck-auth/adapters#transactions
 
 `valkeyAdapter(client)` turns an ioredis or iovalkey client into the shape `adapters/redis` takes, so any `redis*` store works with it.
 
-`strict({ env: 'production' })` refuses the in-process version of every row above, since each one lets a second instance miss what the first did: a limiter budget granted once per instance, a revocation another instance never hears, an OAuth callback or a passkey assertion that replays on a neighbour.
+Production refuses the in-process version of every row above, `strict()` at boot or the store as it is built, since each one lets a second instance miss what the first did: a limiter budget granted once per instance, a revocation another instance never hears, an OAuth callback or a passkey assertion that replays on a neighbour.
 
 ## Options
 
@@ -66,7 +66,7 @@ With a mixed bag of stores, [`withTransaction`](/duck-auth/adapters#transactions
 | | `maxTtlSec`, a ceiling on every key's TTL | 30 days |
 | | `gcLeaseSec`, how long one instance holds the expiry sweep | 5 minutes |
 | Limiter | `max` attempts per window | 10 |
-| | `windowMs` | 15 minutes |
+| | `windowMs`, in whole milliseconds | 15 minutes |
 | | `prefix` | `'auth:rl'` |
 | Events | `prefix`; each event is published on `<prefix>:<event>` | `'auth:events'` |
 | Nonces | `prefix` | `'auth:dpop:jti'` |
@@ -101,7 +101,9 @@ app.post('/payments', async (req, res) => {
 - A missing key, or one over 256 characters, runs the executor uncached, so a route that must not repeat refuses it first.
 - The executor runs once per key, and a repeat within `ttlMs` (a day by default) answers the cached response.
 - A thrown error or a 5xx caches nothing, so the client's retry runs for real.
-- A repeat arriving while the first is still running waits up to `pollTimeoutMs` (5s) for it, then answers 409.
+- A repeat arriving while the first is still running waits up to `pollTimeoutMs` (5s) for it, then answers 409. If the first fails while it waits, the repeat runs instead.
+- A response the store cannot cache is still answered, and the failure is logged. A repeat of its key then answers 409 until `ttlMs` ends.
+- The cached copy leaves out `Set-Cookie`, so a replay does not carry the session the first response set.
 - Pass `fingerprint`, a hash of the method, path and body, and a key reused for a different request answers 422.
 - Pass `identityId`, or every anonymous caller shares one bucket and the key alone authorises the replay.
 

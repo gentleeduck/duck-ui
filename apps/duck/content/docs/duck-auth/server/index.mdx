@@ -14,6 +14,7 @@ duck-auth ships no routes and no client. Your app writes its own routes over `au
 | `GET /auth/session` | `auth.resolveSession({ headers }).orNull()` |
 | `POST /auth/providers/:id/begin` | `auth.flows.beginProvider(id, input)`: the OAuth redirect, the magic-link email, the passkey challenge |
 | `GET` and `POST /auth/providers/:id/callback` | `auth.flows.signIn` with the IdP's `code` and `state` |
+| `POST /auth/mfa/verify` | `auth.flows.completeStepUp({ challenge, method, code, previousSid, ...caller })`, for a sign-in that answered a `challenge` |
 
 The paths are yours to choose. Write only what you use; a password-only app needs the first three. [`examples/duck-auth`](https://github.com/gentleeduck/duck-iam/tree/main/examples/duck-auth) has the full set for every framework below.
 
@@ -38,6 +39,7 @@ Every import is under `@gentleduck/auth/`. `executeIntents` is in `server/generi
 - **Guard CSRF** on sign-in, sign-out, begin and every other mutation. The guard answers 403 `AUTH_CSRF`: a cross-site `Sec-Fetch-Site` is refused, and once a session exists, the `x-csrf-token` header must match its [CSRF cookie](/duck-auth/core/transports/cookie#the-csrf-cookie). A bearer request with no cookie skips the token.
 - **Pass the caller** from the adapter's caller helper, so the session records the User-Agent and the IP the framework resolved, never a forwarded header. Set your framework's proxy trust so that IP is the client's.
 - **Pass `previousSid`**, the session the request came in with, so signing in again revokes it instead of leaving two.
+- **Hand the challenge on.** A sign-in to an account with a second factor opens no session and answers `challenge`. Keep its `token` for the second step, in an httpOnly cookie for a browser, and answer it with `completeStepUp`. A route that drops it signs nobody with a second factor in. See [Adding MFA](/duck-auth/guides/mfa#signing-in).
 - **Strip `csrfHash`** from any session you answer with. It is server-side state; the browser holds the plaintext.
 - **Answer `Cache-Control: no-store`.** The intents writers and `jsonResponse` set it.
 - **Map a throw with `errorToHttp`**, which answers an `AuthError` as `{ ok: false, error: { code, status, detail? } }` at its status, and anything else as a 500 with the cause logged and withheld.
@@ -52,5 +54,6 @@ For every other route:
 - **Read the session** with `auth.resolveSession({ headers })`. `.orNull()` answers `null` when there is none, and still throws when the store is down.
 - **Guard it against CSRF** with the adapter's CSRF helper, on every state-changing route a cookie session reaches.
 - **Bind the actor** with the adapter's actor scope, so writes downstream record who made them in `created_by` and `updated_by`. Give it `getCaller`, and it also runs [hijack detection](/duck-auth/core/sessions#hijack-detection) and the [anomaly detectors](/duck-auth/core/anomaly) on every request.
+- **Name the tenant**, in a multi-tenant app: give the actor scope `tenantId: (req) => …` and `resolveSession` its `expectedTenantId`, or a tenant's session resolves as nobody. See [Multi-tenancy](/duck-auth/advanced/multi-tenancy#resolving-under-a-tenant).
 
 The actor scope authorises nothing: it binds nobody for a request with no session, and refusing that is your guard's job.

@@ -23,11 +23,11 @@ const auth = createAuth({
 })
 ```
 
-`rpID` is the domain a passkey is bound to, which every origin in `expectedOrigins` must be on. A passkey made for one `rpID` never works on another.
+`rpID` is the domain a passkey is bound to, which every origin in `expectedOrigins` must be on. A passkey made for one `rpID` never works on another. Write each origin as a browser sends it, `https://app.example.com`, with no trailing slash or default port. A bare-host `rpID` and such origins are checked when the provider is built and when a registration begins, and anything else throws `AUTH_MISCONFIGURED`, since no browser could complete a ceremony against it.
 
 ## Registering a passkey
 
-Registration is two calls from a signed-in session, with the browser in between. Keep the options in one object: registration and sign-in must agree on the relying party.
+Registration is two calls from a signed-in session, with the browser in between, and both take that session. Keep the options in one object: registration and sign-in must agree on the relying party.
 
 ```ts
 import { beginPasskeyRegistration, completePasskeyRegistration } from '@gentleduck/auth/providers/passkey'
@@ -36,6 +36,7 @@ const optionsJSON = await beginPasskeyRegistration(passkeyOptions, {
   identityId: identity.id,
   userName: identity.profile.email,
   sessionId: session.id,
+  session,
   credentialStore: auth.cfg.stores.credentials,
   tenant: {},
 })
@@ -43,6 +44,7 @@ const optionsJSON = await beginPasskeyRegistration(passkeyOptions, {
 await completePasskeyRegistration(passkeyOptions, {
   identityId: identity.id,
   sessionId: session.id,
+  session,
   response,
   credentialStore: auth.cfg.stores.credentials,
   tenant: {},
@@ -50,6 +52,8 @@ await completePasskeyRegistration(passkeyOptions, {
 ```
 
 The browser refuses to register an authenticator the account already has. Registration offers Ed25519, ES256 and RS256 only, and refuses a credential id another account holds.
+
+Once the account has any factor beside the password (a TOTP, backup codes, a WebAuthn-MFA key or another passkey), both calls throw `AUTH_MFA_REQUIRED` unless `session` is the account's own, stepped up to AAL 2 in the same tenant and still fresh. A passkey that verifies the user signs in at AAL 2 by itself, so otherwise a password alone could register one and skip the second factor. Step up with one of the methods `meta.methods` names, then register. `session` is `null` for a caller with none, at sign-up.
 
 ## Signing in
 
@@ -66,20 +70,33 @@ if (begun.ok) {
 
 `sessionId` is any id the two calls share; the challenge is kept under it. Pass `email` to both to narrow the browser's picker to that account's passkeys; without one, the browser offers every passkey it has for the site.
 
-- The session is AAL 2 when the authenticator verified the user with a PIN or biometric, and AAL 1 when it only saw them present.
+- The session is AAL 2 when the authenticator verified the user with a PIN or biometric, and AAL 1 when it only saw them present. An account holding another factor then answers a [challenge](/duck-auth/guides/mfa#signing-in) for it.
 - A signature counter that goes backwards means a cloned authenticator: the sign-in is refused and `suspicious` is emitted.
 - Every refusal at `signIn` throws `AUTH_PASSKEY_MISMATCH`: an unknown, expired or revoked passkey, a spent or missing challenge, a failed signature.
+
+## Stepping up with a passkey
+
+A passkey also answers a password sign-in's [challenge](/duck-auth/guides/mfa#signing-in), and steps a live session up to AAL 2, so an account whose only factor is a passkey can change its factors:
+
+```ts
+await auth.flows.beginProvider('passkey', { sessionId, email })
+// Browser: const response = await startAuthentication({ optionsJSON })
+const signedIn = await auth.flows.completeStepUp({ challenge: token, method: 'passkey', passkey: { sessionId, response } })
+// A live session's step-up takes `currentSid: sid` in place of `challenge`
+```
+
+The passkey has to belong to the identity signing in, or the session's, and verify the user, whatever `userVerification` says; anything else throws `AUTH_INVALID_CREDENTIALS` and leaves the passkey's counter as it was. Without the `passkey` provider, it throws `AUTH_PROVIDER_NOT_REGISTERED`.
 
 ## Managing passkeys
 
 ```ts
 const store = auth.cfg.stores.credentials
 await auth.passkeys.list(identityId, store)
-await auth.passkeys.revoke(identityId, credentialId, store)
-await auth.passkeys.revokeAll(identityId, store)
+await auth.passkeys.revoke(identityId, credentialId, store, session)
+await auth.passkeys.revokeAll(identityId, store, session)
 ```
 
-`revoke` refuses a credential that is not a passkey of that identity. A revoked authenticator can be registered again.
+`revoke` refuses a credential that is not a passkey of that identity. Both ask for a stepped-up `session` once the account holds any factor beside the password, as in [Adding MFA](/duck-auth/guides/mfa#changing-factors). A revoked authenticator can be registered again.
 
 ## Options
 

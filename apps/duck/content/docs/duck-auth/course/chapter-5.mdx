@@ -116,7 +116,7 @@ await render()
 ```bash
 npm i -D esbuild
 npx esbuild src/page.ts --bundle --format=esm --outfile=public/page.js
-npx tsx src/server.ts
+NODE_ENV=development npx tsx src/server.ts
 ```
 
 Open `http://localhost:3000`, sign up Ada with the curl call from chapter 4, then sign in from the page.
@@ -128,8 +128,8 @@ Open `http://localhost:3000`, sign up Ada with the curl call from chapter 4, the
 1. **`render` asked the server once on load,** and again after every sign-in and sign-out. The page remembers nothing, so there is one place that decides what is shown.
 2. **A wrong password was an envelope, not a throw.** A refused request answers `{ ok: false, error }` at the error's status, with `error.code` as the server wrote it. A request that never reached the server rejects, which the `.catch` turns into "Try again".
 3. **Every write sent the CSRF token.** `post` reads the `duck-csrf` cookie and echoes it in `x-csrf-token`. Sign-in has no session yet, so `expressCsrf` checks only the origin there; sign-out and the notes need the token.
-4. **The cookie name matches the server.** Over https with the default cookie settings the cookie is `__Host-duck-csrf`; chapter 8 changes the regex with it.
-5. **The session cookie stayed out of reach.** `sid` is HttpOnly, so no script on the page, yours or an injected one, can read it. `duck-csrf` is readable on purpose.
+4. **The cookie name matches the server.** In production the cookie is `__Host-duck-csrf`; chapter 8 changes the regex with it.
+5. **The session cookie stayed out of reach.** `duck-sid` is HttpOnly, so no script on the page, yours or an injected one, can read it. `duck-csrf` is readable on purpose.
 
 ## Try it
 

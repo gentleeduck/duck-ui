@@ -69,7 +69,8 @@ Without one, the engine counts in a `MemoryLimiter`. `strict()` refuses that in 
 
 Implement `Identities.Store`, `Credential.Store` and `Sessions.Store` from `@gentleduck/auth/core`. The contract each method keeps is on its type.
 
-- A missing row rejects with its not-found code, such as `AUTH_IDENTITY_NOT_FOUND`; it never answers `null`.
+- A missing row rejects with its not-found code, such as `AUTH_IDENTITY_NOT_FOUND`; it never answers `null`. A value a column cannot hold, such as a malformed uuid, is the store's miss or `AUTH_INVALID_PARAMETERS`, never `AUTH_ADAPTER_FAILED`.
 - A stale `expectedVersion` rejects with `AUTH_STALE_WRITE`, and a taken email, username or login with its own code.
+- A credential or session call takes a `TenantContext`: `{ tenantId }` reaches that tenant's rows, `{}` only the rows with no tenant, and `ALL_TENANTS` (`{ allTenants: true }`) every row.
 - Extend `AdapterStore` from `@gentleduck/auth/adapters` and call through `run`: it maps what your driver throws onto the codes you declare, and anything else to `AUTH_ADAPTER_FAILED`.
 - Give it a `withClient(tx)` answering the same stores on a transaction handle, and it can join `withTransaction`.

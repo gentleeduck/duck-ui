@@ -30,10 +30,11 @@ The detectors need the request, so they run only when `resolveSession` gets a `r
 app.use(
   expressActorContext(auth, {
     getCaller: (req) => ({ ...expressCaller(req), geo: lookupGeo(req.ip) }),
-    onAnomaly: async (result) => {
+    onAnomaly: async (result, session) => {
       // called for every decision but 'allow', in place of the default refusal
       if (result.decision === 'deny') throw new AuthError('AUTH_ANOMALY_DENIED', { score: result.score })
-      throw new AuthError('AUTH_STEP_UP_REQUIRED', { challenge: result.signals })
+      // a fresh session has just presented a factor, so it goes through, and the device is remembered
+      if (!session.fresh) throw new AuthError('AUTH_STEP_UP_REQUIRED', { challenge: result.signals })
     },
   }),
 )
@@ -41,7 +42,7 @@ app.use(
 
 - Without `onAnomaly`, a `deny` is refused with `AUTH_ANOMALY_DENIED` (403) and a `step-up` is let through, since a new device alone reaches the step-up score and refusing it would demand MFA on every first visit.
 - With `onAnomaly`, the decision is yours: throw to refuse, including for a `deny`.
-- What a detector learns, such as a new device, is recorded only once the request is let through.
+- What a detector learns, such as a new device, is recorded only once the request is let through. So refuse a `step-up` only on a session that is not `fresh`: refused every time, it is asked for forever, completing it included. Finish it on a route outside the wrapper with `flows.completeStepUp`, which leaves the session fresh.
 
 Calling `resolveSession({ headers }, { requestSnapshot })` yourself, branch on `result.anomaly?.decision` and call `result.anomaly?.admit()` once you serve the request.
 

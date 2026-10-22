@@ -16,9 +16,9 @@ Pass an `orgs` store next to the others: `stores: { ...drizzlePgAdapter(db), org
 | `listMembers(orgId, ctx)` | Answer the org's memberships. |
 | `addMember(membership, ctx)` | Insert it, stamping `joinedAt`. |
 | `removeMember(orgId, identityId, ctx)` | Set `leftAt`, or throw `AUTH_MEMBERSHIP_NOT_FOUND`. |
-| `setRoles(orgId, identityId, roles, ctx)` | Replace the roles, or throw `AUTH_MEMBERSHIP_NOT_FOUND`. |
+| `setRoles(orgId, identityId, roles, ctx)` | Replace the roles, or throw `AUTH_MEMBERSHIP_NOT_FOUND`, for a membership that has ended too. |
 
-Every row carries a `tenantId` (`null` when global), and the facet refuses a row from a tenant other than the one asked for with `AUTH_TENANT_SCOPE_VIOLATION`. Without an `orgs` store, `auth.orgs` throws `AUTH_PROVIDER_NOT_REGISTERED`.
+Every row carries a `tenantId` (`null` for none), and the facet refuses a row from a tenant other than the one asked for with `AUTH_TENANT_SCOPE_VIOLATION`. Without an `orgs` store, `auth.orgs` throws `AUTH_PROVIDER_NOT_REGISTERED`.
 
 ## Memberships
 
@@ -35,14 +35,15 @@ await auth.orgs.listForIdentity(ada.id, {}) // the orgs ada belongs to
 await auth.orgs.listMembers('acme', {}) // live memberships only
 ```
 
-- The last argument is the tenant context: `{}` for a single-tenant app, `{ tenantId }` otherwise.
+- The last argument is the tenant context: `{ tenantId }` reaches one tenant's rows, `{}` the rows with no tenant, which in a single-tenant app is all of them, and `ALL_TENANTS` every tenant's.
 - `addMember` refuses a live member with `AUTH_ALREADY_EXISTS`. Someone who left can be added again.
-- `removeMember` marks the membership `leftAt` rather than deleting it; a left member stops appearing everywhere.
+- `removeMember` marks the membership `leftAt` rather than deleting it; a left member stops appearing everywhere. Removing them again answers the same row.
 - Roles are deduplicated, empty or overlong entries are dropped, and at most 64 are kept.
-- `resolveMembership`, `removeMember` and `setRoles` throw `AUTH_MEMBERSHIP_NOT_FOUND` for a non-member, which `.orNull()` reads as `null`.
+- `resolveMembership` and `setRoles` throw `AUTH_MEMBERSHIP_NOT_FOUND` for someone who never joined or has left, and `removeMember` for someone who never joined. `.orNull()` reads it as `null`.
+- An `orgId` or `identityId` that is not a non-empty string, such as a `null` from a request body, throws `AUTH_INVALID_PARAMETERS` on a write. `resolveMembership` and `listForIdentity` answer no membership for one, since a guest session's `identityId` is `null`.
 
-Each write emits `org.member.added`, `org.member.removed` or `org.roles.set`.
+Each write that changes a live membership emits `org.member.added`, `org.member.removed` or `org.roles.set`, so a listener can keep its own copy of the roles current. Removing someone a second time emits nothing.
 
 ## Roles and authorization
 
-Org roles are labels duck-auth stores; it never decides what they allow. To enforce them, hand the membership to your authorization layer. With duck-iam, see the [IAM bridge](/duck-auth/guides/iam-bridge).
+Org roles are labels duck-auth stores; it never decides what they allow. To enforce them, hand the membership to your authorization layer. With duck-iam, the [IAM bridge](/duck-auth/guides/iam-bridge) maps the session to a subject and a scope, and an org id can be a scope the same way a tenant is.

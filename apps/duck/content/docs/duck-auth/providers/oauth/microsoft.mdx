@@ -27,4 +27,6 @@ The provider id is `oauth:microsoft`, and the default scopes are `openid profile
 
 The `email` Entra returns is set by each tenant's administrators and Microsoft documents it as unverified, so it is never marked verified. Under `'common'` anyone can create a tenant claiming any address. `'link-if-verified'` therefore never links a Microsoft sign-in to an existing account; link deliberately instead.
 
+The profile carries `sub`, `name` and that `email`, and no `avatarUrl`. Entra's `picture` is Graph's `/me/photo/$value`, the same URL for every account, which only the account's own Graph token can read.
+
 The routes, the options every provider shares and account linking are on the [OAuth](/duck-auth/providers/oauth) page.

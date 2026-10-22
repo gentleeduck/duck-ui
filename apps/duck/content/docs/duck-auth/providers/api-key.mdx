@@ -17,12 +17,14 @@ const auth = createAuth({
 ## Creating a key
 
 ```ts
-const { key, plaintext } = await auth.apiKeys.create(identityId, { name: 'CI', scopes: ['deploy'] })
+const { key, plaintext } = await auth.apiKeys.create(identityId, { name: 'CI', scopes: ['deploy'], session })
 ```
 
 `plaintext` is `ak_live_` and 43 random characters. It is answered this once and stored only as a hash, so show it to the user now. `key` is the record without it. Pass `expiresAt`, in epoch ms, for a key that expires.
 
 Scopes are your own strings, up to 64 per key, in the OAuth scope grammar: no spaces, quotes or backslashes.
+
+A key signs in without a second factor, so once the account has one, `create` throws `AUTH_MFA_REQUIRED` unless `session` is the account's own, [stepped up](/duck-auth/core/flows#step-up) to AAL 2 in the key's tenant and still fresh. `session` is `null` for a caller with none.
 
 ## Checking a key
 
@@ -43,12 +45,14 @@ auth.apiKeys.requireScopes(scopes, ['deploy'])
 
 ```ts
 await auth.apiKeys.list(identityId)
-const next = await auth.apiKeys.rotate(key.id)
+const next = await auth.apiKeys.rotate(key.id, session)
 await auth.apiKeys.revoke(key.id)
 await auth.apiKeys.revokeAll(identityId)
 ```
 
-`rotate` revokes the key and answers a new one with the same name, scopes and expiry. Revoking, rotating or revoking all also ends every `apikey` session of that identity.
+`rotate` revokes the key and answers a new one with the same name, scopes, expiry and tenant, and asks the key owner's `session` as `create` does. Revoking, rotating or revoking all also ends every `apikey` session of that identity.
+
+`revoke` and `rotate` act on the key the id names, whoever holds it, and `rotate` answers a working key for its owner. Check the id is in the caller's `list` before either. A key's id is also its m2m client id, which a client sends in the clear.
 
 ## Client credentials
 
@@ -67,6 +71,20 @@ app.post('/oauth/token', express.urlencoded({ extended: false }), async (req, re
 
 - `scopeMode: 'intersect'` grants the requested scopes the key holds; `'strict'` refuses a request naming one it lacks. No `scope` grants all of them.
 - The token lives the shorter of `ttlMs` and the JWT transport's own `ttlMs`, and revoking the key does not end one already issued.
+
+## Keys in a tenant
+
+A key created with a `tenantId` belongs to that tenant, and every call on it names the tenant or finds nothing:
+
+```ts
+const { plaintext } = await auth.apiKeys.create(identityId, { name: 'CI', scopes: ['deploy'], tenantId: 'acme', session })
+
+await auth.apiKeys.verify(token, { tenantId: 'acme' })
+await auth.flows.signIn({ providerId: 'api-key', input: { token }, tenantId: 'acme' })
+await tokens.exchange({ clientId, clientSecret, tenantId: 'acme' })
+```
+
+`list(identityId, ctx)`, `rotate(id, session, ctx)`, `revoke(id, ctx)` and `revokeAll(identityId, ctx)` take it as `{ tenantId }` too, and `ALL_TENANTS` reaches the keys of every tenant.
 
 ## Options
 

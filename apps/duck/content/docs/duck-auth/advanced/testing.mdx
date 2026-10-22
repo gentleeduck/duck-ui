@@ -12,7 +12,7 @@ import { expect, it } from 'vitest'
 it('signs in with the right password', async () => {
   const auth = createTest()
   const ada = await auth.identities.create({ profile: { username: 'ada', email: 'ada@example.com' } })
-  await auth.passwords.set(ada.id, 'correct horse battery staple', auth.cfg.stores.credentials)
+  await auth.passwords.set(ada.id, 'correct horse battery staple', auth.cfg.stores.credentials, null)
 
   const { sid, session } = await auth.flows.signIn({
     providerId: 'password',
@@ -51,7 +51,7 @@ import { createAuth } from '@gentleduck/auth/core'
 import { authTestDeliver } from '@gentleduck/auth/test'
 
 const { deliver, outbox } = authTestDeliver()
-const auth = createAuth({ baseUrl: 'https://app.example.com', stores: new MemoryAdapter(), deliver, strict: false })
+const auth = createAuth({ baseUrl: 'https://app.example.com', stores: new MemoryAdapter(), deliver })
 
 const ada = await auth.identities.create({ profile: { username: 'ada', email: 'ada@example.com' } })
 await auth.flows.requestEmailVerification({ identityId: ada.id })
@@ -61,6 +61,8 @@ const token = new URL(String(outbox[0]?.vars.url)).searchParams.get('token')
 ```
 
 `outbox` holds every [message](/duck-auth/core/delivery) as `deliver` would have received it, with `identityId` and `tenantId` added.
+
+Vitest, Jest and `bun test` set `NODE_ENV=test`, which relaxes every production check, so `createAuth` accepts the memory store here. `node --test` sets nothing, so set it there.
 
 ## Redis
 

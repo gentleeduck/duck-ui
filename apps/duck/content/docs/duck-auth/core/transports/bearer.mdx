@@ -23,4 +23,4 @@ A sign-in answers `{ token, expiresAt }`; sign-out answers `{ revoked: true }` a
 
 The token is refused, reading as no session, when the scheme does not match, the header joins several values with commas, or the token is over 4 KB.
 
-Bearer requests carry no ambient credential a third-party page could ride, so the CSRF check exempts a request that has a bearer header and no session cookie.
+Bearer requests carry no ambient credential a third-party page could ride, so the CSRF check exempts a request that has a bearer header and no session cookie. It asks the engine's transport, so a `header` or `scheme` of your own counts too.

@@ -8,10 +8,11 @@ section: Core
 ## Signing in and out
 
 ```ts
-const { session, sid, intents } = await auth.flows.signIn({
+const { challenge, session, sid, intents } = await auth.flows.signIn({
   providerId: 'password',
   input: { email: 'ada@example.com', password: 'correct-horse-battery' },
   previousSid, // the sid the request arrived with, if any; it is revoked
+  rememberedDevice, // the token of a remembered device, if the request carries one
   ip,
   userAgent,
 })
@@ -20,7 +21,9 @@ const { intents: cleared } = await auth.flows.signOut(sid)
 ```
 
 - `signIn` hands `input` to the provider's `complete`, mints the session through [rotation](/duck-auth/core/sessions#rotation), and emits `signin.success`.
-- `session` is `null` and `sid` empty when the provider answered with something other than a session, such as an OAuth redirect.
+- A person's sign-in to an account holding a factor it did not present opens no session. It answers `challenge` instead: a single-use `token`, the `methods` that answer it, the `identityId` and `expiresAt`. [`completeStepUp`](#step-up) opens the session. A passkey that verifies the user is both factors, so it signs in at AAL 2 straight away.
+- `rememberedDevice` skips the challenge for a live token of the same identity, and the session stays at AAL 1. A provider answering `requireMfa` is challenged even then, and throws `AUTH_STEP_UP_REQUIRED` for an account with no second factor.
+- `session` is `null` and `sid` empty when the provider answered with something other than a session, such as an OAuth redirect, and when the sign-in stopped at a challenge.
 - An unknown `providerId` throws `AUTH_PROVIDER_FAILED`.
 - `signOut` revokes the session, ignores one already gone, and answers the intents that clear the transport.
 
@@ -28,19 +31,24 @@ const { intents: cleared } = await auth.flows.signOut(sid)
 
 ## Step-up
 
-Enrolling a second factor does not change sign-in, which still answers an AAL 1 session. A privileged route asks for more with `checkStepUp`:
+`completeStepUp` takes the second factor, for a sign-in's `challenge` or for a live session a privileged route finds short with `checkStepUp`:
 
 ```ts
+const signedIn = await auth.flows.completeStepUp({ challenge: token, method: 'totp', code, previousSid, ip, userAgent })
+signedIn.session.aal // 2
+
 const need = await auth.flows.checkStepUp(session, { aal: 2, methods: ['totp'], freshness: 5 * 60_000 })
 if (!need.satisfied) {
   // need.reason: 'mfa-required' | 'fresh-required'; need.methods: what would satisfy it
 }
-
 const stepped = await auth.flows.completeStepUp({ currentSid: sid, method: 'totp', code, ip, userAgent })
-stepped.session.aal // 2
 ```
 
-`completeStepUp` takes `'totp'`, `'backup-code'`, or `'webauthn'` with a `webauthn` response, is rate limited per identity, and rotates to an AAL 2 session. A wrong code throws `AUTH_INVALID_CREDENTIALS`. See [Adding MFA](/duck-auth/guides/mfa).
+- It takes `'totp'`, `'backup-code'`, `'webauthn'` with a `webauthn` response, or `'passkey'` with a `passkey` assertion begun by `beginProvider('passkey', { sessionId })`, is rate limited per identity, and rotates to an AAL 2 session. A wrong code throws `AUTH_INVALID_CREDENTIALS`.
+- A challenge lasts five minutes and survives a wrong code. The answer that opens its session spends it, revokes `previousSid` and emits `signin.success`. A spent, expired or retired challenge, and a token no sign-in issued, throw `AUTH_UNAUTHENTICATED`. A newer challenge for the identity retires it, and so does a password reset.
+- A live session's step-up leaves the old session valid, for another tab still holding it.
+
+See [Adding MFA](/duck-auth/guides/mfa).
 
 ## Password reset
 
@@ -55,7 +63,8 @@ await auth.flows.completePasswordReset({ token, newPassword })
 
 - The request answers `{ ok: true }` whether or not the address exists, and mails a `password-reset` link through [Delivery](/duck-auth/core/delivery) when it does.
 - Completing it spends the token, revokes every session of the account, then sets the password. A bad token throws `AUTH_RECOVERY_TOKEN_INVALID`, an old one `AUTH_RECOVERY_TOKEN_EXPIRED`.
-- When the account has TOTP or WebAuthn MFA, a mailed link alone is not enough: it throws `AUTH_RECOVERY_REQUIRES_MFA` with the `methods`, until the call carries `currentSid` of a fresh AAL 2 session of the same account. That session is rotated rather than revoked, and its replacement comes back in `intents`.
+- When the account has any factor beside the password (a TOTP, backup codes, a WebAuthn-MFA key or a passkey), a mailed link alone is not enough: it throws `AUTH_RECOVERY_REQUIRES_MFA` with the `methods`, until the call carries `currentSid` of a fresh AAL 2 session of the same account. That session is rotated rather than revoked, and its replacement comes back in `intents`.
+- The link proves the address, so an account whose address was not verified is marked `emailVerified`. Unless the call carries a session of that account, whatever else is attached to it is removed first: its linked providers and its credentials, in every tenant. Until then, anyone could have signed up with that address.
 
 ## Email verification
 
@@ -80,6 +89,7 @@ const deleted = await auth.flows.completeAccountDeletion({ token, sendUndoLink: 
 await auth.flows.cancelAccountDeletion({ token: deleted.cancellationToken })
 ```
 
+- The link is refused, `AUTH_RECOVERY_TOKEN_INVALID`, if the account's email has changed since it was sent.
 - `completeAccountDeletion` soft-deletes the identity and revokes its sessions. With `sendUndoLink` it mails an `account-deletion-cancel` link; without it, deliver `cancellationToken` yourself or drop it to turn undo off.
 - `cancelAccountDeletion` takes either the undo token (the user's route) or `{ identityId, authorize }` (an operator's). Both or neither throws `AUTH_MISCONFIGURED`.
 - Once the window closes, `identities.gc()` erases the row.
@@ -100,7 +110,7 @@ await auth.flows.advanceSignUp({ flowToken, stage: 'terms-accepted', profilePatc
 const { session, intents } = await auth.flows.completeSignUp({ flowToken })
 ```
 
-- Stages are `email-collected`, `email-verified`, `profile-completed`, `mfa-enrolled`, `terms-accepted` and `completed`. Your code proves each one before advancing it; `advanceSignUp` records it.
+- Stages are `email-collected`, `email-verified`, `profile-completed`, `mfa-enrolled`, `terms-accepted` and `completed`. Your code proves each one before advancing it; `advanceSignUp` records it. Any other name, in `required` or in `advanceSignUp`, throws `AUTH_MISCONFIGURED`.
 - `completeSignUp` throws `AUTH_SIGNUP_INCOMPLETE` with the `missing` stages, otherwise merges the collected profile and signs the user in.
 - The flow expires 30 minutes after its last step and 24 hours after it began. A dead or spent token throws `AUTH_SIGNUP_TOKEN_INVALID`. `getSignUpFlow(flowToken)` reads the flow, and `.orNull()` answers `null` for a dead one.
 - `profilePatch` cannot change the email the flow began with.
@@ -123,6 +133,7 @@ const back = await auth.flows.releaseImpersonation(acting.sid)
 
 - `authorize` is mandatory and decides; with [duck-iam](/duck-auth/guides/iam-bridge) it wraps `engine.authorize()`. Never pass `async () => true`.
 - The session lives at most an hour, emits `identity.impersonated`, and cannot impersonate again or target the operator.
+- It is in the tenant of the operator's session, and so is the session `releaseImpersonation` hands back. Name that tenant with `tenantId`: naming another, or none for an operator session in one, throws `AUTH_UNAUTHENTICATED`.
 - `releaseImpersonation` ends it and mints the operator a session of their own, or answers `session: null` when the operator's account went away meanwhile.
 
 ## Linking a provider
@@ -133,9 +144,12 @@ await auth.flows.linkProvider({
   providerId: 'oauth:github',
   providerSub,
   authorize: async ({ identity }) => identity.id === signedInIdentityId,
+  session,
 })
 
-await auth.flows.unlinkProvider({ identityId: identity.id, providerId: 'oauth:github' })
+await auth.flows.unlinkProvider({ identityId: identity.id, providerId: 'oauth:github', session })
 ```
 
-A link is a permanent way to sign in, so `authorize` must answer `false` unless `providerSub` came from a token exchange your own code performed. `unlinkProvider` refuses the last way in unless `allowLockout` is set, which is for deletion and admin overrides.
+A link is a permanent way to sign in, so `authorize` must answer `false` unless `providerSub` came from a token exchange your own code performed. Both take a `tenantId`, the tenant the link signs in to, and link or unlink with no tenant without one. Linking a second account at a provider the identity already holds in that tenant throws `AUTH_PROVIDER_TAKEN`; unlink the first. `unlinkProvider` refuses the last way into the tenant unless `allowLockout` is set, which is for deletion and admin overrides.
+
+Both take the caller's `session`. Once the account has a factor beside the password in the link's tenant, each throws `AUTH_MFA_REQUIRED` unless that session is the account's own, [stepped up](#step-up) to AAL 2 in that tenant and still fresh. `allowLockout` lifts the last-way-in guard only, never this one; an admin changing such an account goes [through the store](/duck-auth/core/identities#provider-links).

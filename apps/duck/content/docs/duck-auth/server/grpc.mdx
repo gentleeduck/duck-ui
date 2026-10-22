@@ -19,6 +19,7 @@ server.addService(GreeterService, {
 - An `AuthError` is answered with its code as the message, at the gRPC status its HTTP status maps to: 401 `UNAUTHENTICATED`, 403 `PERMISSION_DENIED`, 429 `RESOURCE_EXHAUSTED`. `httpStatusToGrpc` is that mapping.
 - `headerName` reads another metadata key. A `cookie` entry is read too, for grpc-web bridges that forward one.
 - The handler runs inside the actor scope. Pass `getCaller` to also run hijack and anomaly checks; `grpcCaller(call)` answers the User-Agent, and a peer address is yours to add.
+- In a multi-tenant app, `tenantId: (call) => …` names the call's tenant. Without it only a session with no tenant resolves; see [Multi-tenancy](/duck-auth/advanced/multi-tenancy#resolving-under-a-tenant).
 
 ## Service-to-service
 

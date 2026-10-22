@@ -34,7 +34,7 @@ export { authCredentials, authIdentities, authIdentityProviders, authSessions } 
 Then pass that schema to `drizzle(pool, { schema })`, and the tables are yours to query too. Each dialect exports its own set, and an `auth<Dialect>Schema` object holding all four with their relations.
 
 - Emails and usernames are unique case-insensitively.
-- Credentials and sessions carry a `tenant_id`; identities are global.
+- Credentials, sessions and provider links carry a `tenant_id`; identities are global.
 - Deleting an identity cascades to its logins, credentials and sessions. On SQLite, the adapter turns on the foreign keys this needs, per connection.
 
 ## Reading the JSON columns

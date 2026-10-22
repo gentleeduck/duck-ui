@@ -72,21 +72,23 @@ import { passwords } from '@gentleduck/auth/providers/passwords'
 const auth = createAuth({
   baseUrl: 'http://localhost:3000',
   stores: new MemoryAdapter(),
-  transport: cookieTransport({ name: 'sid', secure: false }),
+  transport: cookieTransport(),
   providers: [passwords()],
 })
 
 const ada = await auth.identities.create({ profile: { email: 'ada@example.com', name: 'Ada', username: 'ada' } })
-await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials)
+await auth.passwords.set(ada.id, 'correct-horse-battery', auth.cfg.stores.credentials, null)
 
 const { sid } = await auth.flows.signIn({
   providerId: 'password',
   input: { email: 'ada@example.com', password: 'correct-horse-battery' },
 })
 
-const resolved = await auth.resolveSession({ headers: new Headers({ cookie: `sid=${sid}` }) }).orNull()
+const resolved = await auth.resolveSession({ headers: new Headers({ cookie: `duck-sid=${sid}` }) }).orNull()
 resolved?.identity?.profile.email // 'ada@example.com'
 ```
+
+Run it with `NODE_ENV=development`, where the session cookie is `duck-sid`; production names it `__Host-duck-sid`. Unset, `NODE_ENV` reads as production, which refuses the memory store and an http `baseUrl`.
 
 ## Next steps
 

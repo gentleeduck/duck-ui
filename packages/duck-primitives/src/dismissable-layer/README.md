@@ -27,14 +27,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 103 | `dismissable-layer.radix.test.tsx` 35, `dismissable-layer.test.tsx` 68 |
+| Unit | 114 | `dismissable-layer.radix.test.tsx` 35, `dismissable-layer.test.tsx` 79 |
 | End to end | 31 | `dismissable-layer.e2e.ts` 31 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>134 behaviours, one per test</summary>
+<summary>145 behaviours, one per test</summary>
 
 **Unit, `dismissable-layer.test.tsx`**
 
@@ -65,9 +65,11 @@ Each test was proven by changing the code and watching a test fail.
 - DismissableLayer in two documents
   - locks the body of each document holding a modal layer, and gives each its own back
   - hears a press outside only from its own document
+  - leaves a layer pressable and hearing presses outside while a modal layer blocks only another document
   - leaves Escape to the highest layer only in the document it is pressed in
 - DismissableLayer whose element changes
   - keeps the new element interactive over the page it locks, and gives the page back its own value
+  - gives an element the hook lets go of, and that stays, the pointer events it had
 - DismissableLayer outside a deferred press
   - waits for the click after a touch even without deferPointerDownOutside
   - leaves the focus that moves during a deferred touch to the click that follows
@@ -82,6 +84,10 @@ Each test was proven by changing the code and watching a test fail.
   - listens to focus again once the mouse lifts with no click to wait for
   - leaves a click with no press of its own, as Enter on a button sends, to the button
   - listens to focus again once a touch turns into a scroll, which sends no click
+  - stays open when a modal layer opens over it between the press and its click
+  - settles a stopped click on its own press, not on a press made before the stop is read
+  - settles a tap on a click a browser holds back 350ms after the lift, waiting out a double tap
+  - listens to focus again once a tap sends no click for a second after it lifts
   - closes on a mouse press on a surface that stops its click, as a dialog overlay may
 - DismissableLayer and scrollbars outside it
   - stays open when a scrollbar outside it is pressed, and closes on the content beside it
@@ -110,8 +116,13 @@ Each test was proven by changing the code and watching a test fail.
 - DismissableLayer and the press around its mount
   - leaves alone the press that opened it, which reaches the document after it mounts
   - hears a press outside made after it mounted, without waiting for the task that mounted it to end
+  - hears a press dispatched on the document itself as outside
+- DismissableLayer and a press inside it
+  - hears the next press outside after one inside stopped before reaching the document
+  - reads a press inside as inside when its own pointer down capture prevents the default
 - DismissableLayer inside a shadow root
   - stays open on a press or focus in a branch inside the shadow root
+  - stays open on a press or focus in a shadow root a branch holds
   - closes once focus moves from inside it to an element outside it in the same shadow root
   - keeps hearing focus in the shadow root while another layer there stays open
   - stops hearing focus in the shadow root once its last layer there closes
@@ -119,6 +130,7 @@ Each test was proven by changing the code and watching a test fail.
   - hands a press outside the element pressed, not the shadow host, when deferring is false
   - hands a press outside the element pressed, not the shadow host, when deferring is true
   - closes on a press on a surface inside the shadow root, though the surface stops its click
+  - closes on a press in a shadow root a surface holds, though the surface stops its click
 
 **Unit, `dismissable-layer.radix.test.tsx`**
 
@@ -156,7 +168,7 @@ Each test was proven by changing the code and watching a test fail.
   - spreads props it does not consume onto the element it renders
   - forwards props to the child element when `asChild` is set
   - merges its own `pointerEvents` into the consumer's `style`
-  - renders pointer-events auto override before the body is disabled
+  - has its pointer-events auto override in place in the commit that disables the body, before paint
 - DismissableLayer.Branch
   - spreads props it does not consume onto the element it renders
   - forwards props to the child element when `asChild` is set
@@ -211,8 +223,9 @@ Each test was proven by changing the code and watching a test fail.
 Against Radix 1.1.19, the version `@radix-ui/react-dialog` 1.1.23 ships.
 
 - A press outside counts from the moment the layer mounts. Radix starts listening a timer after the mount, which
-  a busy page runs after the input queued behind it, so a quick press just after a menu opened did nothing. Only
-  the press that opened the layer is ignored, since it is stamped no later than the mount.
+  a busy page runs after the input queued behind it, so a quick press just after a menu opened did nothing. Until
+  that timer runs, a press counts only when it is stamped later than the mount, which the press that opened the
+  layer never is.
 - A touch outside always waits for its click, so that click does not land on whatever the closing layer
   uncovered. With `deferPointerDownOutside`, a right or control press dismisses at once, since macOS sends no
   click for either. Radix waits for that click.
@@ -231,7 +244,9 @@ Against Radix 1.1.19, the version `@radix-ui/react-dialog` 1.1.23 ships.
 - A dismiss surface listens for its own clicks, since iOS Safari sends no click for a tap on an element without
   a click listener.
 - `useDismissableLayer` returns the layer's props and ref to spread onto an element of the caller's, so content
-  built on a layer renders no `DismissableLayer` of its own. Radix's layer is always a component.
+  built on a layer renders no `DismissableLayer` of its own. Radix's layer is always a component. The hook reads
+  its element after each render of the component that calls it, so the ref goes on an element that component
+  renders; content that attaches it later uses `DismissableLayer`.
 
 ## Fixed
 
@@ -242,9 +257,14 @@ Against Radix 1.1.19, the version `@radix-ui/react-dialog` 1.1.23 ships.
 - A deferred mouse press that gets no click, such as one on a scrollbar drawn over a box, is let go once the
   mouse lifts. The layer kept waiting for that click, so focus leaving it did not dismiss it, and the next click,
   even Enter on a button inside the layer, dismissed it for that press.
-- A touch outside that turns into a scroll is let go the same way. Radix keeps waiting for its click, so Enter on
-  a button inside its layer dismisses it.
-- These fixes cost 256 bytes, and the module is 4,027 bytes gzipped against Radix's 3,785.
+- A touch outside that turns into a scroll is let go the same way, and so is a tap that sends no click within a
+  second of lifting. Radix keeps waiting for its click, so Enter on a button inside its layer dismisses it.
+- A modal layer in another document, such as an iframe's, no longer turns off the pointer events of a layer in
+  this one or stops it hearing presses outside, as Radix's does.
+- A press inside the layer that is stopped before it reaches the document no longer makes the layer miss the
+  next press outside, and an `onPointerDownCapture` that prevents the default no longer makes a press inside read
+  as outside. Radix's layer misses or dismisses on both.
+- These fixes cost 383 bytes, and the module is 4,154 bytes gzipped against Radix's 3,785.
 
 ## Smaller and faster
 
@@ -254,7 +274,7 @@ Against Radix 1.1.19, the version `@radix-ui/react-dialog` 1.1.23 ships.
 - The stack compares each layer's `pointer-events` with what it last wrote, where it read every layer's style back
   on every change, and dispatches no event. Unmounting 100 open Tooltips or Popovers takes 0.79 of the time it
   did, about 0.45 ms less.
-- A document gets one listener per event type for all of its layers, where each layer added fifteen of its own.
+- The layers in a document share its listeners, where each layer added fifteen of its own.
 - Unmounting 100 open overlays at once takes 0.60 of Radix's time for an Alert Dialog, 0.61 for a Dialog, 0.39
   for a Dropdown Menu, 0.38 for a Hover Card, 0.33 for a Tooltip and 0.49 for a Popover, and unmounting 100
   Navigation Menus takes 0.42.

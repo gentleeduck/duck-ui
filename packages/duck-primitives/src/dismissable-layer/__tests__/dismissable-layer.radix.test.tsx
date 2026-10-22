@@ -10,7 +10,7 @@ const DismissableLayer = { Branch: DismissableLayerBranch, Root: DismissableLaye
 
 radixEnvironment()
 
-async function waitForDocumentPointerDownListener() {
+async function waitForNextTask() {
   await act(async () => {
     await new Promise((resolve) => window.setTimeout(resolve, 0))
   })
@@ -80,7 +80,7 @@ describe('DismissableLayer', () => {
     const onDismiss = vi.fn()
 
     renderDismissableLayer({ onPointerDownOutside, onInteractOutside, onDismiss })
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     firePointerMouseClick(screen.getByText('outside'))
 
@@ -93,7 +93,7 @@ describe('DismissableLayer', () => {
     const onDismiss = vi.fn()
 
     renderDismissableLayer({ onDismiss })
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     fireEvent.pointerDown(screen.getByText('outside'))
 
@@ -104,7 +104,7 @@ describe('DismissableLayer', () => {
     const onDismiss = vi.fn()
 
     renderDismissableLayer({ onDismiss })
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     fireEvent.pointerDown(screen.getByText('inside'))
 
@@ -118,7 +118,7 @@ describe('DismissableLayer', () => {
       onPointerDownOutside: (event) => event.preventDefault(),
       onDismiss,
     })
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     firePointerMouseClick(screen.getByText('outside'))
 
@@ -132,7 +132,7 @@ describe('DismissableLayer', () => {
       onInteractOutside: (event) => event.preventDefault(),
       onDismiss,
     })
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     firePointerMouseClick(screen.getByText('outside'))
 
@@ -172,7 +172,7 @@ describe('DismissableLayer', () => {
         <button type="button">branch</button>
       </DismissableLayer.Branch>,
     )
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     fireEvent.pointerDown(screen.getByText('branch'))
 
@@ -183,7 +183,7 @@ describe('DismissableLayer', () => {
     const onDismiss = vi.fn()
 
     renderDismissableLayer({ deferPointerDownOutside: true, onDismiss })
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     fireEvent.pointerDown(screen.getByText('outside'), { pointerType: 'touch' })
     expect(onDismiss).not.toHaveBeenCalled()
@@ -224,7 +224,7 @@ describe('DismissableLayer', () => {
     }
 
     const rendered = render(<Test dispatchClick={false} />)
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     fireEvent.pointerDown(screen.getByText('outside'))
 
@@ -242,7 +242,7 @@ describe('DismissableLayer', () => {
     const onDismiss = vi.fn()
 
     renderDismissableLayer({ onDismiss })
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     fireEvent.pointerDown(screen.getByText('outside'), { button: 2, pointerType: 'mouse' })
 
@@ -253,7 +253,7 @@ describe('DismissableLayer', () => {
     const onDismiss = vi.fn()
 
     renderDismissableLayer({ onDismiss })
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     fireEvent.pointerDown(screen.getByText('outside'), { button: 2, pointerType: 'pen' })
 
@@ -264,11 +264,12 @@ describe('DismissableLayer', () => {
     const onDismiss = vi.fn()
 
     renderDismissableLayer({ deferPointerDownOutside: true, onDismiss })
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     fireEvent.pointerDown(screen.getByText('outside'), { pointerType: 'touch' })
     fireEvent.pointerDown(screen.getByText('inside'))
     fireEvent.click(screen.getByText('outside'))
+    await waitForNextTask()
 
     expect(onDismiss).not.toHaveBeenCalled()
   })
@@ -284,7 +285,7 @@ describe('DismissableLayer', () => {
         <button type="button">outside</button>
       </>,
     )
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     const shadowButton = screen.getByTestId('inside-shadow-host').shadowRoot?.querySelector('button')
     expect(shadowButton).toBeInstanceOf(HTMLButtonElement)
@@ -298,7 +299,7 @@ describe('DismissableLayer', () => {
     const onDismiss = vi.fn()
 
     renderDismissableLayer({ onDismiss })
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     const outside = screen.getByText('outside')
     const stopPropagation = (event: Event) => event.stopPropagation()
@@ -318,7 +319,7 @@ describe('DismissableLayer', () => {
     const onDismiss = vi.fn()
 
     renderDismissableLayer({ deferPointerDownOutside: true, onDismiss })
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     const outside = screen.getByText('outside')
     const stopPropagation = (event: Event) => event.stopPropagation()
@@ -330,6 +331,7 @@ describe('DismissableLayer', () => {
     fireEvent.mouseDown(outside)
     fireEvent.mouseUp(outside)
     fireEvent.click(outside)
+    await waitForNextTask()
 
     expect(onDismiss).not.toHaveBeenCalled()
   })
@@ -354,10 +356,10 @@ describe('DismissableLayer', () => {
         <Surface />
       </>,
     )
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     firePointerMouseClick(screen.getByText('surface'))
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
     expect(onDismiss).toHaveBeenCalledTimes(1)
   })
 
@@ -381,10 +383,10 @@ describe('DismissableLayer', () => {
         <Surface />
       </>,
     )
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     firePointerMouseClick(screen.getByText('surface'))
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
     expect(onDismiss).toHaveBeenCalledTimes(1)
   })
 
@@ -409,7 +411,7 @@ describe('DismissableLayer', () => {
         <button type="button">outside</button>
       </>,
     )
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     // A non-surface outside element that stops propagation should still block
     // dismissal.
@@ -420,11 +422,11 @@ describe('DismissableLayer', () => {
     outside.addEventListener('click', stopPropagation)
 
     firePointerMouseClick(outside)
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
     expect(onDismiss).not.toHaveBeenCalled()
 
     firePointerMouseClick(screen.getByText('surface'))
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
     expect(onDismiss).toHaveBeenCalledTimes(1)
   })
 
@@ -457,7 +459,7 @@ describe('DismissableLayer', () => {
     const onDismiss = vi.fn()
 
     renderDismissableLayer({ deferPointerDownOutside: true, onDismiss })
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     const outside = screen.getByText('outside')
     const stopPropagation = (event: Event) => event.stopPropagation()
@@ -470,33 +472,48 @@ describe('DismissableLayer', () => {
     fireEvent.focusIn(outside)
     fireEvent.mouseUp(outside)
     fireEvent.click(outside)
+    await waitForNextTask()
 
     expect(onDismiss).not.toHaveBeenCalled()
   })
+
+  function NestedLayers({ onChildDismiss, onParentDismiss }: { onChildDismiss(): void; onParentDismiss(): void }) {
+    const [childOpen, setChildOpen] = React.useState(true)
+    return (
+      <>
+        <DismissableLayer.Root disableOutsidePointerEvents deferPointerDownOutside onDismiss={onParentDismiss}>
+          <button type="button">parent</button>
+        </DismissableLayer.Root>
+        {childOpen ? (
+          <DismissableLayer.Root
+            disableOutsidePointerEvents
+            onDismiss={() => {
+              onChildDismiss()
+              setChildOpen(false)
+            }}>
+            <button type="button">child</button>
+          </DismissableLayer.Root>
+        ) : null}
+        <button type="button">outside</button>
+      </>
+    )
+  }
 
   // Regression test for https://github.com/radix-ui/primitives/issues/3971
   it('does not dismiss a deferred parent when a child layer dismisses first', async () => {
     const onParentDismiss = vi.fn()
     const onChildDismiss = vi.fn()
 
-    render(
-      <>
-        <DismissableLayer.Root disableOutsidePointerEvents deferPointerDownOutside onDismiss={onParentDismiss}>
-          <button type="button">parent</button>
-        </DismissableLayer.Root>
-        <DismissableLayer.Root disableOutsidePointerEvents onDismiss={onChildDismiss}>
-          <button type="button">child</button>
-        </DismissableLayer.Root>
-        <button type="button">outside</button>
-      </>,
-    )
-    await waitForDocumentPointerDownListener()
+    render(<NestedLayers onChildDismiss={onChildDismiss} onParentDismiss={onParentDismiss} />)
+    await waitForNextTask()
 
     firePointerMouseClick(screen.getByText('outside'))
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     expect(onChildDismiss).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('child')).toBeNull()
     expect(onParentDismiss).not.toHaveBeenCalled()
+    expect(screen.getByText('parent')).toBeTruthy()
   })
 
   // Regression test for https://github.com/radix-ui/primitives/issues/3461
@@ -504,28 +521,20 @@ describe('DismissableLayer', () => {
     const onParentDismiss = vi.fn()
     const onChildDismiss = vi.fn()
 
-    render(
-      <>
-        <DismissableLayer.Root disableOutsidePointerEvents deferPointerDownOutside onDismiss={onParentDismiss}>
-          <button type="button">parent</button>
-        </DismissableLayer.Root>
-        <DismissableLayer.Root disableOutsidePointerEvents onDismiss={onChildDismiss}>
-          <button type="button">child</button>
-        </DismissableLayer.Root>
-        <button type="button">outside</button>
-      </>,
-    )
-    await waitForDocumentPointerDownListener()
+    render(<NestedLayers onChildDismiss={onChildDismiss} onParentDismiss={onParentDismiss} />)
+    await waitForNextTask()
 
     const outside = screen.getByText('outside')
     fireEvent.pointerDown(outside, { pointerType: 'touch' })
     fireEvent.touchStart(outside)
     fireEvent.touchEnd(outside)
     fireEvent.click(outside)
-    await waitForDocumentPointerDownListener()
+    await waitForNextTask()
 
     expect(onChildDismiss).toHaveBeenCalledTimes(1)
+    expect(screen.queryByText('child')).toBeNull()
     expect(onParentDismiss).not.toHaveBeenCalled()
+    expect(screen.getByText('parent')).toBeTruthy()
   })
 
   // Regression test for https://github.com/radix-ui/primitives/issues/3963
@@ -711,8 +720,8 @@ describe('DismissableLayer.Root', () => {
     expect(onClick).toHaveBeenCalled()
   })
 
-  // Regression test for httpp://github.com/radix-ui/primitives/issues/4093
-  it('renders pointer-events auto override before the body is disabled', () => {
+  // Regression test for https://github.com/radix-ui/primitives/issues/4093
+  it('has its pointer-events auto override in place in the commit that disables the body, before paint', () => {
     let bodyPointerEvents = ''
     let layerPointerEvents = ''
     // Its layout effect runs after the layer's, and before the browser paints.

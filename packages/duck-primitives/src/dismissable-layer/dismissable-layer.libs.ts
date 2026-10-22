@@ -7,15 +7,21 @@ const FOCUS_OUTSIDE = 'dismissableLayer.focusOutside'
 // Third-party code that stops one of these after a pointer down outside cancels a deferred dismissal.
 const OUTSIDE_INTERACTION_EVENTS = ['pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click']
 
+// A browser holds a tap's click up to ~350ms after the lift to rule out a double tap.
+const TAP_CLICK_WINDOW = 1000
+
 export interface LayerOwner {
   props: IDismissableLayer.IOptions
-  pointerInside: boolean
+  // A press stopped inside never reaches the document, so the press is kept rather than a flag it would leave set.
+  pressInside: Event | null
   focusInside: boolean
 }
 
 interface LayerDocument {
   layers: number
   disabling: number
+  // The index of the highest layer blocking this document, or -1.
+  highest: number
   bodyPointerEvents: string
   focus: EventListener
   remove: () => void
@@ -31,6 +37,8 @@ export interface Layer {
   // The element's `pointer-events` as the stack last wrote or found them, so a change reads no layer's style back. Null
   // while the consumer's style holds them.
   pointerEvents: string | null
+  // Its own `pointer-events` from before the stack took them, put back once the layer leaves an element that stays.
+  ownPointerEvents: string
   // -1 once it has left the stack.
   index: number
   // The press that opened it reaches the document after it mounts. A press stamped later is a new one; a tie on a
@@ -51,7 +59,6 @@ interface Press {
 
 export interface LayerStack {
   layers: Layer[]
-  highest: number
   branches: Set<HTMLElement>
   surfaces: Set<HTMLElement>
   documents: Map<Document, LayerDocument>
@@ -61,7 +68,6 @@ export interface LayerStack {
 export function createLayerStack(): LayerStack {
   return {
     layers: [],
-    highest: -1,
     branches: new Set(),
     surfaces: new Set(),
     documents: new Map(),
@@ -71,13 +77,13 @@ export function createLayerStack(): LayerStack {
 
 // One pass per change writes the pointer events that changed, where every layer used to rerender on every change.
 function restack(stack: LayerStack) {
-  let highest = -1
+  for (const perDocument of stack.documents.values()) perDocument.highest = -1
   stack.layers.forEach((layer, index) => {
     layer.index = index
-    if (layer.disables) highest = index
+    if (layer.disables) layer.perDocument.highest = index
   })
-  stack.highest = highest
   for (const layer of stack.layers) {
+    const { highest } = layer.perDocument
     const value = !layer.ownsPointerEvents ? null : highest === -1 ? '' : layer.index >= highest ? 'auto' : 'none'
     if (value !== null && value !== layer.pointerEvents) layer.node.style.pointerEvents = value
     layer.pointerEvents = value
@@ -115,6 +121,7 @@ export function enterLayer(
     disables: false,
     ownsPointerEvents,
     pointerEvents: node.style.pointerEvents,
+    ownPointerEvents: node.style.pointerEvents,
     index: -1,
     // Read off an event, since that is the clock events carry: jsdom stamps them with Date.now().
     mountedAt: new (node.ownerDocument.defaultView ?? window).Event('').timeStamp,
@@ -142,6 +149,7 @@ export function leaveLayer(stack: LayerStack, layer: Layer) {
   stack.layers.splice(layer.index, 1)
   layer.index = -1
   reset(layer)
+  if (layer.pointerEvents !== null) layer.node.style.pointerEvents = layer.ownPointerEvents
   if (layer.root !== ownerDocument && !stack.layers.some((other) => other.root === layer.root)) {
     layer.root.removeEventListener('focusin', layer.perDocument.focus)
   }
@@ -160,6 +168,7 @@ export function leaveLayer(stack: LayerStack, layer: Layer) {
 export function updateLayer(stack: LayerStack, layer: Layer, disables: boolean, ownsPointerEvents: boolean) {
   if (layer.disables === disables && layer.ownsPointerEvents === ownsPointerEvents) return
   setDisables(layer, disables)
+  if (ownsPointerEvents && !layer.ownsPointerEvents) layer.ownPointerEvents = layer.node.style.pointerEvents
   layer.ownsPointerEvents = ownsPointerEvents
   restack(stack)
 }
@@ -168,7 +177,11 @@ export function updateLayer(stack: LayerStack, layer: Layer, disables: boolean, 
 // the event is over.
 const targetOf = (event: Event) => event.composedPath()[0] as HTMLElement
 
-const isInBranch = (stack: LayerStack, target: Node) => [...stack.branches].some((branch) => branch.contains(target))
+// The path crosses into the shadow roots inside a branch, where `contains` stops at their hosts.
+const isInBranch = (stack: LayerStack, event: Event) => {
+  const path = event.composedPath()
+  return [...stack.branches].some((branch) => path.includes(branch))
+}
 
 // WebKit takes a press within 17px of the edge on a scrollbar drawn over its box, measured.
 const OVERLAY_SCROLLBAR = 17
@@ -235,7 +248,8 @@ function dismissOutside<E extends IDismissableLayer.PointerDownOutsideEvent | ID
 function settle(layer: Layer, press: Press) {
   const wasIntercepted = [...layer.intercepted.values()].some(Boolean)
   reset(layer)
-  if (wasIntercepted) return
+  // A modal layer opened over it since the press, such as a menu its trigger opens on pointer down.
+  if (wasIntercepted || layer.index < layer.perDocument.highest) return
   handleAndDispatchCustomEvent(
     POINTER_DOWN_OUTSIDE,
     (event: IDismissableLayer.PointerDownOutsideEvent) =>
@@ -248,16 +262,18 @@ function settle(layer: Layer, press: Press) {
 
 // A programmatic click can fire inside a React commit, where flushSync is not allowed. A trusted one runs its
 // microtasks as soon as the listener returns, so it loses nothing by waiting too.
-const settleAfterClick = (layer: Layer) => queueMicrotask(() => layer.pending && settle(layer, layer.pending))
+const settleAfterClick = (layer: Layer, press: Press) =>
+  queueMicrotask(() => layer.pending === press && settle(layer, press))
 
 function pressOutside(stack: LayerStack, layer: Layer, event: PointerEvent) {
   const target = targetOf(event)
-  const ignored = layer.owner.pointerInside || layer.index < stack.highest || isInBranch(stack, target)
-  const onScrollbar = ignored ? undefined : scrollbarPress(event, target)
+  const ignored =
+    layer.owner.pressInside === event || layer.index < layer.perDocument.highest || isInBranch(stack, event)
+  // A press dispatched on the document itself has no box to measure.
+  const onScrollbar = ignored || target.nodeType !== Node.ELEMENT_NODE ? undefined : scrollbarPress(event, target)
   layer.scrollbarBox = onScrollbar === 'beside' ? target : null
   if (ignored || layer.scrollbarBox) {
     reset(layer)
-    layer.owner.pointerInside = false
     return
   }
   layer.pending = { event, target }
@@ -275,7 +291,7 @@ function pressOutside(stack: LayerStack, layer: Layer, event: PointerEvent) {
 function focusOutside(stack: LayerStack, layer: Layer, event: IDismissableLayer.FocusOutsideEvent) {
   // The deferred pointer down decides, once its click lands.
   if (layer.deferred) return
-  if (event.target === layer.scrollbarBox || isInBranch(stack, event.target as Node)) return
+  if (event.target === layer.scrollbarBox || isInBranch(stack, event.detail.originalEvent)) return
   dismissOutside(layer, event, layer.owner.props.onFocusOutside)
 }
 
@@ -286,7 +302,7 @@ function eachLayerIn(stack: LayerStack, ownerDocument: Document, callback: (laye
   }
 }
 
-// One listener per event type for every layer in a document, where each layer used to add fifteen of its own.
+// The layers in a document share its listeners, where each layer used to add fifteen of its own.
 function listenOn(stack: LayerStack, ownerDocument: Document): LayerDocument {
   const existing = stack.documents.get(ownerDocument)
   if (existing) {
@@ -330,19 +346,22 @@ function listenOn(stack: LayerStack, ownerDocument: Document): LayerDocument {
     })
   }
   const handleCapture = (event: Event) => {
-    const target = targetOf(event)
+    const path = event.composedPath()
     eachLayerIn(stack, ownerDocument, (layer) => {
       // A box takes the focus its scrollbar's press gives it before the pointer lifts.
       if (event.type === 'pointerup') layer.scrollbarBox = null
       const press = layer.pending
       if (!press) return
       // A dismiss surface, such as a dialog's overlay, still dismisses when it stops its own events.
-      layer.intercepted.set(event.type, ![...stack.surfaces].some((surface) => surface.contains(target)))
+      layer.intercepted.set(event.type, ![...stack.surfaces].some((surface) => path.includes(surface)))
       // A stopped click never reaches the document, so it is settled from here.
-      if (event.type === 'click') window.setTimeout(() => layer.pending && settleAfterClick(layer), 0)
+      if (event.type === 'click') window.setTimeout(() => layer.pending === press && settleAfterClick(layer, press), 0)
       // A mouse's click lands before a timer set at its pointerup, so a press still waiting then never gets one.
-      if (event.type === 'pointerup' && press.event.pointerType === 'mouse') {
-        window.setTimeout(() => layer.pending === press && !layer.intercepted.has('click') && reset(layer), 0)
+      if (event.type === 'pointerup') {
+        window.setTimeout(
+          () => layer.pending === press && !layer.intercepted.has('click') && reset(layer),
+          press.event.pointerType === 'mouse' ? 0 : TAP_CLICK_WINDOW,
+        )
       }
     })
   }
@@ -351,7 +370,7 @@ function listenOn(stack: LayerStack, ownerDocument: Document): LayerDocument {
   const handleBubble = (event: Event) =>
     eachLayerIn(stack, ownerDocument, (layer) => {
       layer.intercepted.set(event.type, false)
-      if (event.type === 'click') settleAfterClick(layer)
+      if (event.type === 'click' && layer.pending) settleAfterClick(layer, layer.pending)
     })
 
   ownerDocument.addEventListener('keydown', handleKeyDown, true)
@@ -365,6 +384,7 @@ function listenOn(stack: LayerStack, ownerDocument: Document): LayerDocument {
   const perDocument = {
     layers: 1,
     disabling: 0,
+    highest: -1,
     bodyPointerEvents: '',
     focus: handleFocus as EventListener,
     remove: () => {

@@ -274,9 +274,16 @@ test.describe('DismissableLayer deferring a press outside', () => {
     await expect(output(page, 'Events')).toHaveText('')
 
     await page.getByRole('checkbox', { name: 'Defer press outside' }).uncheck()
-    await button(page, 'Stops its click').click()
+    await expect(layer(page)).toHaveCount(0)
+    await button(page, 'Open').click()
+    await expect(layer(page)).toBeVisible()
+    const stops = await center(button(page, 'Stops its click'))
+    await page.mouse.move(stops.x, stops.y)
+    await page.mouse.down()
 
     await expect(layer(page)).toHaveCount(0)
+
+    await page.mouse.up()
   })
 
   test('closes on a press on a surface, though the surface stops its click', async ({ page }) => {

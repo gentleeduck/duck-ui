@@ -28,7 +28,7 @@ function useDismissableLayer<E extends HTMLElement>(
   const stack = React.useContext(DismissableLayerContext)
   const nodeRef = React.useRef<E | null>(null)
   const layerRef = React.useRef<Layer | null>(null)
-  const [owner] = React.useState<LayerOwner>(() => ({ props, pointerInside: false, focusInside: false }))
+  const [owner] = React.useState<LayerOwner>(() => ({ props, pressInside: null, focusInside: false }))
   // A `pointerEvents` key in the consumer's style wins, as it did when the layer spread it over its own.
   const ownsPointerEvents = !(props.style && 'pointerEvents' in props.style)
 
@@ -62,9 +62,13 @@ function useDismissableLayer<E extends HTMLElement>(
     onBlurCapture: composeEventHandlers(props.onBlurCapture, () => {
       owner.focusInside = false
     }),
-    onPointerDownCapture: composeEventHandlers(props.onPointerDownCapture, () => {
-      owner.pointerInside = true
-    }),
+    onPointerDownCapture: composeEventHandlers(
+      props.onPointerDownCapture,
+      (event) => {
+        owner.pressInside = event.nativeEvent
+      },
+      { checkForDefaultPrevented: false },
+    ),
   }
 }
 

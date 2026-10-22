@@ -1,12 +1,18 @@
-import { describe, expect, it, mock } from 'bun:test'
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, describe, expect, it, mock } from 'bun:test'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import * as React from 'react'
 import { flushSync } from 'react-dom'
 import { clickOutside, freshDom, wait } from '../../__tests__/dom'
 import { DismissableLayer } from '../dismissable-layer'
-import { DismissableLayerBranch, useDismissableLayerSurface } from '../index'
+import { DismissableLayerBranch, useDismissableLayer, useDismissableLayerSurface } from '../index'
 
 freshDom()
+// Frames, shadow hosts and buttons a test hangs on the body go with its roots, even when an assertion throws.
+afterEach(() => {
+  cleanup()
+  document.body.replaceChildren()
+  document.body.removeAttribute('style')
+})
 
 describe('DismissableLayer', () => {
   it('renders children', () => {
@@ -316,6 +322,21 @@ describe('DismissableLayer in two documents', () => {
     expect(onPageDismiss).not.toHaveBeenCalled()
   })
 
+  it('leaves a layer pressable and hearing presses outside while a modal layer blocks only another document', async () => {
+    const other = document.implementation.createHTMLDocument('frame')
+    const container = other.body.appendChild(other.createElement('div'))
+    const onDismiss = mock()
+    render(<DismissableLayer data-testid="page layer" onDismiss={onDismiss} />)
+    render(<DismissableLayer disableOutsidePointerEvents />, { container })
+    const outside = document.body.appendChild(document.createElement('button'))
+    await wait(0)
+
+    expect(screen.getByTestId('page layer').style.pointerEvents).toBe('')
+    outside.dispatchEvent(new window.PointerEvent('pointerdown', { bubbles: true, pointerType: 'mouse' }))
+
+    expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
+
   it('leaves Escape to the highest layer only in the document it is pressed in', () => {
     const { other, onPageDismiss, onFrameDismiss } = renderInBoth()
 
@@ -349,7 +370,28 @@ describe('DismissableLayer whose element changes', () => {
 
     unmount()
     expect(document.body.style.pointerEvents).toBe('auto')
-    document.body.style.pointerEvents = ''
+  })
+
+  it('gives an element the hook lets go of, and that stays, the pointer events it had', () => {
+    function Hooked({ on }: { on: string }) {
+      const layer = useDismissableLayer<HTMLDivElement>({})
+      return ['first', 'second'].map((name) => <div data-testid={name} key={name} {...(on === name ? layer : {})} />)
+    }
+    function Test({ on }: { on: string }) {
+      return (
+        <>
+          <Hooked on={on} />
+          <DismissableLayer disableOutsidePointerEvents />
+        </>
+      )
+    }
+    const { rerender } = render(<Test on="first" />)
+    expect(screen.getByTestId('first').style.pointerEvents).toBe('none')
+
+    rerender(<Test on="second" />)
+
+    expect(screen.getByTestId('first').style.pointerEvents).toBe('')
+    expect(screen.getByTestId('second').style.pointerEvents).toBe('auto')
   })
 })
 
@@ -563,6 +605,71 @@ describe('DismissableLayer outside a deferred press', () => {
     expect(onDismiss).not.toHaveBeenCalled()
 
     act(() => outside.focus())
+    expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
+
+  it('stays open when a modal layer opens over it between the press and its click', async () => {
+    const onDismiss = mock()
+    function Test({ modal }: { modal: boolean }) {
+      return (
+        <>
+          <DismissableLayer deferPointerDownOutside onDismiss={onDismiss} />
+          {modal ? <DismissableLayer disableOutsidePointerEvents /> : null}
+          <button type="button">Outside</button>
+        </>
+      )
+    }
+    const { rerender } = render(<Test modal={false} />)
+    await wait(0)
+    const outside = screen.getByText('Outside')
+
+    fireEvent.pointerDown(outside, { pointerType: 'mouse' })
+    rerender(<Test modal />)
+    fireEvent.click(outside)
+    await wait(0)
+
+    expect(onDismiss).not.toHaveBeenCalled()
+  })
+
+  it('settles a stopped click on its own press, not on a press made before the stop is read', async () => {
+    const onDismiss = mock()
+    const outside = await renderLayer({ deferPointerDownOutside: true, onDismiss })
+    const stopping = document.body.appendChild(document.createElement('button'))
+    stopping.addEventListener('click', (event) => event.stopPropagation())
+
+    fireEvent.pointerDown(stopping, { pointerType: 'mouse' })
+    fireEvent.click(stopping)
+    fireEvent.pointerDown(outside, { pointerType: 'mouse' })
+    await wait(0)
+    expect(onDismiss).not.toHaveBeenCalled()
+
+    fireEvent.click(outside)
+    await wait(0)
+    expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
+
+  it('settles a tap on a click a browser holds back 350ms after the lift, waiting out a double tap', async () => {
+    const onDismiss = mock()
+    const outside = await renderLayer({ onDismiss })
+
+    fireEvent.pointerDown(outside, { pointerType: 'touch' })
+    fireEvent.pointerUp(outside, { pointerType: 'touch' })
+    await wait(350)
+    fireEvent.click(outside)
+    await wait(0)
+
+    expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
+
+  it('listens to focus again once a tap sends no click for a second after it lifts', async () => {
+    const onDismiss = mock()
+    const outside = await renderLayer({ onDismiss })
+
+    fireEvent.pointerDown(outside, { pointerType: 'touch' })
+    fireEvent.pointerUp(outside, { pointerType: 'touch' })
+    await wait(1000)
+    act(() => outside.focus())
+
     expect(onDismiss).toHaveBeenCalledTimes(1)
   })
 
@@ -907,7 +1014,7 @@ describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
     document.body.append(frame)
     const frameDocument = frame.contentDocument as Document
     const container = frameDocument.body.appendChild(frameDocument.createElement('div'))
-    const { unmount } = render(
+    render(
       <>
         <DismissableLayer onDismiss={onDismiss} />
         <button type="button">Outside</button>
@@ -931,8 +1038,6 @@ describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
     pressAt(within(container).getByText('Outside'), { clientX: 290, clientY: 50 })
 
     expect(onDismiss).not.toHaveBeenCalled()
-    unmount()
-    frame.remove()
   })
 
   it('closes at once at the edge of a page that does not scroll, or whose scrollbars take room', async () => {
@@ -1024,7 +1129,51 @@ describe('DismissableLayer and the press around its mount', () => {
     outside.dispatchEvent(new window.PointerEvent('pointerdown', { bubbles: true, pointerType: 'mouse' }))
 
     expect(onDismiss).toHaveBeenCalledTimes(1)
-    outside.remove()
+  })
+
+  it('hears a press dispatched on the document itself as outside', async () => {
+    const onDismiss = mock()
+    await renderLayer({ onDismiss })
+
+    document.dispatchEvent(new window.PointerEvent('pointerdown', { bubbles: true, pointerType: 'mouse' }))
+
+    expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('DismissableLayer and a press inside it', () => {
+  it('hears the next press outside after one inside stopped before reaching the document', async () => {
+    const onDismiss = mock()
+    render(
+      <>
+        <DismissableLayer onDismiss={onDismiss}>
+          <button onPointerDown={(event) => event.stopPropagation()} type="button">
+            Inside
+          </button>
+        </DismissableLayer>
+        <span>Outside</span>
+      </>,
+    )
+    await wait(0)
+
+    fireEvent.pointerDown(screen.getByText('Inside'))
+    fireEvent.pointerDown(screen.getByText('Outside'))
+
+    expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
+
+  it('reads a press inside as inside when its own pointer down capture prevents the default', async () => {
+    const onDismiss = mock()
+    render(
+      <DismissableLayer onDismiss={onDismiss} onPointerDownCapture={(event) => event.preventDefault()}>
+        <button type="button">Inside</button>
+      </DismissableLayer>,
+    )
+    await wait(0)
+
+    fireEvent.pointerDown(screen.getByText('Inside'))
+
+    expect(onDismiss).not.toHaveBeenCalled()
   })
 })
 
@@ -1061,6 +1210,25 @@ describe('DismissableLayer inside a shadow root', () => {
 
     fireEvent.pointerDown(shadow.getByLabelText('Branch field'))
     act(() => shadow.getByLabelText('Branch field').focus())
+
+    expect(onDismiss).not.toHaveBeenCalled()
+  })
+
+  it('stays open on a press or focus in a shadow root a branch holds', async () => {
+    const onDismiss = mock()
+    const host = document.createElement('div')
+    const button = host.attachShadow({ mode: 'open' }).appendChild(document.createElement('button'))
+    render(
+      <>
+        <DismissableLayer onDismiss={onDismiss} />
+        <DismissableLayerBranch data-testid="branch" />
+      </>,
+    )
+    screen.getByTestId('branch').append(host)
+    await wait(0)
+
+    fireEvent.pointerDown(button)
+    act(() => button.focus())
 
     expect(onDismiss).not.toHaveBeenCalled()
   })
@@ -1160,6 +1328,31 @@ describe('DismissableLayer inside a shadow root', () => {
     await wait(0)
 
     await clickOutside(within(container).getByText('Surface'))
+
+    expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes on a press in a shadow root a surface holds, though the surface stops its click', async () => {
+    const onDismiss = mock()
+    const host = document.createElement('div')
+    const button = host.attachShadow({ mode: 'open' }).appendChild(document.createElement('button'))
+    function Surface() {
+      return (
+        // biome-ignore lint/a11y/noStaticElementInteractions: a backdrop for the pointer, as a dialog's overlay is
+        // biome-ignore lint/a11y/useKeyWithClickEvents: a backdrop for the pointer, as a dialog's overlay is
+        <div data-testid="surface" onClick={(event) => event.stopPropagation()} ref={useDismissableLayerSurface()} />
+      )
+    }
+    render(
+      <>
+        <DismissableLayer deferPointerDownOutside onDismiss={onDismiss} />
+        <Surface />
+      </>,
+    )
+    screen.getByTestId('surface').append(host)
+    await wait(0)
+
+    await clickOutside(button)
 
     expect(onDismiss).toHaveBeenCalledTimes(1)
   })

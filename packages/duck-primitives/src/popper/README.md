@@ -26,14 +26,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 55 | `popper.radix.test.tsx` 9, `popper.test.tsx` 46 |
+| Unit | 57 | `popper.radix.test.tsx` 9, `popper.test.tsx` 48 |
 | End to end | 22 | `popper.e2e.ts` 20, `popper.radix.e2e.ts` 2 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>77 behaviours, one per test</summary>
+<summary>79 behaviours, one per test</summary>
 
 **Unit, `popper.test.tsx`**
 
@@ -61,6 +61,7 @@ Each test was proven by changing the code and watching a test fail.
   - holds its wrapper off screen until placed, then pins it at least as wide as its content
   - tells its content the anchor's size
   - names the side and alignment it was placed at, after a flip
+  - places itself where the host has no ResizeObserver, as a test DOM may not
   - skips a null collision boundary
   - keeps its collision padding when it shifts
   - shifts along its side's own axis rather than flipping, when told to
@@ -70,6 +71,7 @@ Each test was proven by changing the code and watching a test fail.
   - stops shifting at the anchor edge, or keeps shifting when sticky is always
   - hides itself once its anchor leaves the viewport, when asked
   - hides itself once a scroll container clips its anchor, with no boundary given
+  - hides itself once a scroll container clips its anchor, with only a null boundary given
   - hides itself once its anchor leaves the collision boundary
   - grows from the arrow on every side
   - reports once it is placed, and holds its animation until then

@@ -72,12 +72,9 @@ export const PopperContent = React.forwardRef<PopperContentElement, IPopper.ICon
       direction === 'rtl' && side === 'left' ? 'right' : direction === 'rtl' && side === 'right' ? 'left' : side
     const desiredPlacement = (placementSide + (align !== 'center' ? `-${align}` : '')) as Placement
 
-    const boundary = [collisionBoundary].flat()
+    const boundary = [collisionBoundary].flat().filter((element) => element !== null)
 
-    const detectOverflowOptions = {
-      padding: collisionPadding,
-      boundary: boundary.filter((element) => element !== null),
-    }
+    const detectOverflowOptions = { padding: collisionPadding, boundary }
 
     const [placedSizes] = React.useState(() => new WeakMap<object, { width: number; height: number }>())
 
@@ -105,20 +102,24 @@ export const PopperContent = React.forwardRef<PopperContentElement, IPopper.ICon
         }
         // Floating UI places again for every size its observer reports, the first ones too, which placed the content
         // three times each time it opened. This places again only for a size it was not placed at.
-        const observer = new ResizeObserver((entries) => {
-          const resized = entries.some(({ target, borderBoxSize }) => {
-            // Firefox before 92 reports one size rather than a list.
-            const [size] = [borderBoxSize].flat()
-            const placed = placedSizes.get(target)
-            return size?.inlineSize !== placed?.width || size?.blockSize !== placed?.height
-          })
-          if (resized) update()
-        })
-        if ('setAttribute' in reference) observer.observe(reference)
-        observer.observe(floating)
+        // A test DOM may have no observer, which Floating UI checks for too.
+        const observer =
+          typeof ResizeObserver === 'function'
+            ? new ResizeObserver((entries) => {
+                const resized = entries.some(({ target, borderBoxSize }) => {
+                  // Firefox before 92 reports one size rather than a list.
+                  const [size] = [borderBoxSize].flat()
+                  const placed = placedSizes.get(target)
+                  return size?.inlineSize !== placed?.width || size?.blockSize !== placed?.height
+                })
+                if (resized) update()
+              })
+            : undefined
+        if ('setAttribute' in reference) observer?.observe(reference)
+        observer?.observe(floating)
         return () => {
           stop()
-          observer.disconnect()
+          observer?.disconnect()
           for (const ancestor of ancestors) {
             if (updateOnScroll) ancestor.removeEventListener('scroll', update)
             const updates = resizing.get(ancestor)
@@ -163,7 +164,7 @@ export const PopperContent = React.forwardRef<PopperContentElement, IPopper.ICon
           hide({
             strategy: 'referenceHidden',
             ...detectOverflowOptions,
-            boundary: boundary.length ? detectOverflowOptions.boundary : undefined,
+            boundary: boundary.length ? boundary : undefined,
           }),
       ],
     })

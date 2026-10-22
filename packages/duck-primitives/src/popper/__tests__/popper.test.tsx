@@ -441,6 +441,19 @@ describe('Popper positioning', () => {
     expect([content.getAttribute('data-side'), content.getAttribute('data-align')]).toEqual(['top', 'end'])
   })
 
+  it('places itself where the host has no ResizeObserver, as a test DOM may not', async () => {
+    const original = globalThis.ResizeObserver
+    Reflect.deleteProperty(globalThis, 'ResizeObserver')
+
+    try {
+      const { position } = await place({})
+
+      expect(position).toBe('translate(85px, 120px)')
+    } finally {
+      globalThis.ResizeObserver = original
+    }
+  })
+
   it('skips a null collision boundary', async () => {
     const alone = await place({ collisionBoundary: null })
     const listed = await place({ collisionBoundary: [null] })
@@ -515,6 +528,15 @@ describe('Popper positioning', () => {
 
   it('hides itself once a scroll container clips its anchor, with no boundary given', async () => {
     const { hidden } = await place({ hideWhenDetached: true }, { scroller: [0, 300, 1000, 200] })
+
+    expect(hidden).toBe(true)
+  })
+
+  it('hides itself once a scroll container clips its anchor, with only a null boundary given', async () => {
+    const { hidden } = await place(
+      { hideWhenDetached: true, collisionBoundary: [null] },
+      { scroller: [0, 300, 1000, 200] },
+    )
 
     expect(hidden).toBe(true)
   })

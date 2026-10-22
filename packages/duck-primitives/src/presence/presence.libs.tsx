@@ -23,7 +23,7 @@ function usePresence(present: boolean) {
     if (state !== 'mounted') return
     const node = nodeRef.current
     // No `animationrun` event exists, and `animationstart` waits for animation-delay; an exit animation is told
-    // from the one that ran while open by its computed name.
+    // from the one that ran while open by its computed name, and from one still in its delay by `exitAnimations`.
     const exits = node && getAnimationName(node) !== openAnimationRef.current
     exitAnimationsRef.current = exits ? exitAnimations(node) : []
     setState(exitAnimationsRef.current.length ? 'exiting' : 'unmounted')
@@ -68,10 +68,11 @@ function getAnimationName(node: HTMLElement) {
   return getComputedStyle(node).animationName || 'none'
 }
 
-// The CSS animations on the node still to end. jsdom has no `getAnimations`, so there content leaves at once.
+// The CSS animations the close started, pending until the next frame; one the content opened with is past that, even
+// while it waits out a delay. jsdom has no `getAnimations`, so there content leaves at once.
 function exitAnimations(node: HTMLElement) {
   return (node.getAnimations?.() ?? []).filter(
-    (animation) => 'animationName' in animation && animation.playState !== 'finished',
+    (animation) => 'animationName' in animation && animation.pending && animation.playState !== 'finished',
   )
 }
 

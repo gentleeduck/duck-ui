@@ -26,14 +26,14 @@ frame it was created, while its `finished` promise is rejected in all three, and
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 36 | `presence.radix.test.tsx` 8, `presence.test.tsx` 28 |
-| End to end | 10 | `presence.e2e.ts` 10 |
+| Unit | 37 | `presence.radix.test.tsx` 8, `presence.test.tsx` 29 |
+| End to end | 11 | `presence.e2e.ts` 11 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>46 behaviours, one per test</summary>
+<summary>48 behaviours, one per test</summary>
 
 **Unit, `presence.test.tsx`**
 
@@ -55,6 +55,7 @@ frame it was created, while its `finished` promise is rejected in all three, and
   - waits for a paused exit animation, which ends once it plays again
   - waits for CSS animations only, not a transition or a script animation running beside them
   - unmounts at once when the animation running on close is the one that ran while open
+  - unmounts at once when the animation it opened with is still in its delay, which sends no animationstart
   - learns the open animation inside a shadow root, which an animation event does not leave
   - learns the open animation from the content, not from a child animating inside it
   - stops learning from an element its child no longer gives it
@@ -93,6 +94,7 @@ frame it was created, while its `finished` promise is rejected in all three, and
   - drops content at once when its exit animation is cancelled
   - drops content at once when its exit animation has no keyframes
   - drops content at once when the animation on close is the one it opened with
+  - drops content at once when the animation it opened with is still in its delay
   - drops content at once when it is hidden on close
   - keeps the same element when it reopens during the exit
   - keeps a render function content once the exit ends, telling it it is not present

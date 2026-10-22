@@ -12,6 +12,7 @@ const EXITS = {
   contains: 'fade-out 300ms, opening with fade 600ms',
   missing: 'an animation with no keyframes',
   same: 'the animation it opened with',
+  delayed: 'an opening animation still in its delay',
   hidden: 'fade-out 300ms while display is none',
 }
 
@@ -35,6 +36,7 @@ const STYLES = `
 .presence-story-content[data-exit="contains"][data-state="closed"] { animation: presence-story-fade-out 300ms ease-in }
 .presence-story-content[data-exit="missing"][data-state="closed"] { animation: presence-story-missing 300ms }
 .presence-story-content[data-exit="same"] { animation: presence-story-fade-in 300ms ease-out }
+.presence-story-content[data-exit="delayed"] { animation: presence-story-fade-in 300ms ease-out 2s infinite }
 .presence-story-content[data-exit="hidden"][data-state="closed"] { display: none; animation: presence-story-fade-out 300ms }
 .presence-story-content[data-exit="none"] { animation: none }
 `

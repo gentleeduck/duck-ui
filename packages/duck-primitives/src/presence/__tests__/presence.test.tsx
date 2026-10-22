@@ -89,7 +89,7 @@ describe('Presence', () => {
 
 describe('Presence with a CSS exit animation', () => {
   let animationName = 'none'
-  let animations: (Pick<Animation, 'finished' | 'playState'> & { animationName?: string })[] = []
+  let animations: (Pick<Animation, 'finished' | 'pending' | 'playState'> & { animationName?: string })[] = []
   let styleSpy: ReturnType<typeof spyOn>
 
   beforeEach(() => {
@@ -113,7 +113,7 @@ describe('Presence with a CSS exit animation', () => {
 
   const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
 
-  function animate(name: string, playState: AnimationPlayState = 'running') {
+  function animate(name: string, playState: AnimationPlayState = 'running', pending = true) {
     let end = () => {}
     let cancel = () => {}
     const finished = new Promise<Animation>((resolve, reject) => {
@@ -122,7 +122,7 @@ describe('Presence with a CSS exit animation', () => {
     })
     finished.catch(() => {})
     if (playState === 'finished') end()
-    animations.push({ animationName: name, finished, playState })
+    animations.push({ animationName: name, finished, pending, playState })
     return { end, cancel }
   }
 
@@ -231,7 +231,7 @@ describe('Presence with a CSS exit animation', () => {
   it('waits for CSS animations only, not a transition or a script animation running beside them', async () => {
     const { rerender } = renderContent(true)
     const fadeOut = animate('fade-out')
-    animations.push({ finished: new Promise(() => {}), playState: 'running' })
+    animations.push({ finished: new Promise(() => {}), pending: true, playState: 'running' })
     close(rerender, 'fade-out')
 
     await settle(fadeOut.end)
@@ -244,6 +244,15 @@ describe('Presence with a CSS exit animation', () => {
     animationName = 'spin'
     animationEvent('animationstart', 'spin')
     animate('spin')
+
+    close(rerender, 'spin')
+
+    expect(screen.queryByTestId('content')).toBeNull()
+  })
+
+  it('unmounts at once when the animation it opened with is still in its delay, which sends no animationstart', () => {
+    const { rerender } = renderContent(true)
+    animate('spin', 'running', false)
 
     close(rerender, 'spin')
 

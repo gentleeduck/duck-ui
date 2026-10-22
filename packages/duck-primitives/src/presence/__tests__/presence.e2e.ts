@@ -67,7 +67,10 @@ test.describe('Presence', () => {
     await page.getByRole('button', { name: 'Open' }).click()
     await expect(content(page)).toBeVisible()
 
-    expect(await msToUnmount(page)).toBeGreaterThanOrEqual(290)
+    const ms = await msToUnmount(page)
+
+    expect(ms).toBeGreaterThanOrEqual(290)
+    expect(ms).toBeLessThan(700)
   })
 
   test('drops content at once when its exit animation is cancelled', async ({ page }) => {
@@ -107,6 +110,14 @@ test.describe('Presence', () => {
   test('drops content at once when the animation on close is the one it opened with', async ({ page }) => {
     await visit(page, 'the animation it opened with')
     await open(page)
+
+    expect(await msToUnmount(page)).toBeLessThan(150)
+  })
+
+  test('drops content at once when the animation it opened with is still in its delay', async ({ page }) => {
+    await visit(page, 'an opening animation still in its delay')
+    await page.getByRole('button', { name: 'Open' }).click()
+    await content(page).evaluate((element) => Promise.all(element.getAnimations().map((animation) => animation.ready)))
 
     expect(await msToUnmount(page)).toBeLessThan(150)
   })

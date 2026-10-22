@@ -1,0 +1,50 @@
+.page {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  justify-items: start;
+  padding: 24px;
+  font-family: apple-system, BlinkMacSystemFont, helvetica, arial, sans-serif;
+  font-size: 13px;
+}
+
+.scope {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #333;
+  border-radius: 6px;
+}
+
+.floating,
+.stray {
+  position: fixed;
+  bottom: 24px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: white;
+}
+
+.floating {
+  right: 24px;
+}
+
+.stray {
+  left: 24px;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+}
+
+.frame {
+  width: 480px;
+  height: 120px;
+  border: 1px solid #999;
+}

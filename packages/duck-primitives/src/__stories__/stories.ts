@@ -2,6 +2,7 @@ import type * as React from 'react'
 import * as arrow from '../arrow/__stories__/arrow.stories'
 import * as direction from '../direction/__stories__/direction.stories'
 import * as dismissableLayer from '../dismissable-layer/__stories__/dismissable-layer.stories'
+import * as focusScope from '../focus-scope/__stories__/focus-scope.stories'
 import * as hooks from '../hooks/__stories__/hooks.stories'
 import * as mount from '../mount/__stories__/mount.stories'
 import * as portal from '../portal/__stories__/portal.stories'
@@ -25,6 +26,7 @@ for (const module of [
   arrow,
   direction,
   dismissableLayer,
+  focusScope,
   hooks,
   mount,
   portal,

@@ -1,19 +1,46 @@
-type FocusableTarget = HTMLElement | { focus(): void }
+type FocusableElement = Element & HTMLOrSVGElement
+
+/** The element focus is on, inside any open shadow root it is in. */
+function activeElement(document: Document) {
+  let element = document.activeElement
+  while (element?.shadowRoot?.activeElement) element = element.shadowRoot.activeElement
+  return element as FocusableElement | null
+}
+
+/** `contains` across shadow roots, since a scope's own `contains` stops at each one. */
+function contains(ancestor: Node, target: EventTarget | null) {
+  let node = target as Node | null
+  while (node && node !== ancestor) node = node.parentNode ?? (node as Partial<ShadowRoot>).host ?? null
+  return !!node
+}
 
 /** Focus first candidate that actually accepts focus. */
-function focusFirst(candidates: HTMLElement[], { select = false } = {}) {
-  const previouslyFocusedElement = document.activeElement
+function focusFirst(candidates: FocusableElement[]) {
   for (const candidate of candidates) {
-    focus(candidate, { select })
-    if (document.activeElement !== previouslyFocusedElement) return
+    const previouslyFocusedElement = activeElement(candidate.ownerDocument)
+    focus(candidate)
+    if (activeElement(candidate.ownerDocument) !== previouslyFocusedElement) return
   }
 }
 
-/** First and last visible tabbable elements inside a container. */
+const isRadio = (element?: Element): element is HTMLInputElement =>
+  element?.tagName === 'INPUT' && (element as HTMLInputElement).type === 'radio'
+
+/** Tab leaves a group of native radios from any radio in it, so the group is one stop. */
+function isSameStop(element: Element, other: Element | undefined) {
+  return (
+    element === other ||
+    (isRadio(element) && isRadio(other) && !!element.name && element.name === other.name && element.form === other.form)
+  )
+}
+
+/** First and last visible tab stops inside a container. Tab into a radio group lands on its checked radio. */
 function getTabbableEdges(container: HTMLElement) {
   const candidates = getTabbableCandidates(container)
-  const first = findVisible(candidates, container)
-  const last = findVisible(candidates.reverse(), container)
+  const toStop = (edge?: FocusableElement) =>
+    candidates.find((candidate) => (candidate as HTMLInputElement).checked && isSameStop(candidate, edge)) ?? edge
+  const first = toStop(findVisible(candidates, container))
+  const last = toStop(findVisible([...candidates].reverse(), container))
   return [first, last] as const
 }
 
@@ -22,87 +49,80 @@ function getTabbableEdges(container: HTMLElement) {
  * visibility (use findVisible/isHidden for that). Relies on `.tabIndex` for runtime tabbability.
  */
 function getTabbableCandidates(container: HTMLElement) {
-  const nodes: HTMLElement[] = []
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, {
-    acceptNode: (node: Node) => {
-      if (!(node instanceof HTMLElement)) return NodeFilter.FILTER_SKIP
-      const isHiddenInput = node.tagName === 'INPUT' && (node as HTMLInputElement).type === 'hidden'
-      if (node.hidden || isHiddenInput) return NodeFilter.FILTER_SKIP
-      if ('disabled' in node && node.disabled) return NodeFilter.FILTER_SKIP
-      return node.tabIndex >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
+  const nodes: FocusableElement[] = []
+  const walker = container.ownerDocument.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, {
+    // An svg takes focus as an html element does, and an iframe's elements fail `instanceof` this realm's classes.
+    acceptNode: (node: FocusableElement) => {
+      // Nothing inside a hidden or inert element takes focus.
+      if (node.hasAttribute('hidden') || node.hasAttribute('inert')) return NodeFilter.FILTER_REJECT
+      // `:disabled` also matches a control in a disabled fieldset, where its own `disabled` stays false.
+      return node.tabIndex >= 0 && !node.matches(':disabled') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
     },
   })
-  while (walker.nextNode()) nodes.push(walker.currentNode as HTMLElement)
+  while (walker.nextNode()) nodes.push(walker.currentNode as FocusableElement)
   return nodes
 }
 
+// `checkVisibilityCSS` is the name browsers shipped first; each reads the one it knows.
+const VISIBILITY_OPTIONS = { checkVisibilityCSS: true, visibilityProperty: true }
+
 /** First visible element; visibility checked up to (excluding) the container. */
-function findVisible(elements: HTMLElement[], container: HTMLElement) {
+function findVisible(elements: FocusableElement[], container: HTMLElement) {
+  // One native check per element instead of a computed style per ancestor.
+  const native = typeof container.checkVisibility === 'function' && container.checkVisibility(VISIBILITY_OPTIONS)
   for (const element of elements) {
-    if (!isHidden(element, { upTo: container })) return element
+    const hidden = native ? !element.checkVisibility(VISIBILITY_OPTIONS) : isHidden(element, container)
+    if (!hidden) return element
   }
 }
 
-function isHidden(node: HTMLElement, { upTo }: { upTo?: HTMLElement }) {
-  if (getComputedStyle(node).visibility === 'hidden') return true
-  while (node) {
-    if (upTo !== undefined && node === upTo) return false
+function isHidden(element: FocusableElement, container: HTMLElement) {
+  if (getComputedStyle(element).visibility === 'hidden') return true
+  for (let node: Element = element; node !== container; node = node.parentElement as Element) {
     if (getComputedStyle(node).display === 'none') return true
-    node = node.parentElement as HTMLElement
   }
   return false
 }
 
-function isSelectableInput(element: unknown): element is FocusableTarget & { select: () => void } {
-  return element instanceof HTMLInputElement && 'select' in element
-}
-
-/** Focus with preventScroll; optionally select input contents. */
-function focus(element?: FocusableTarget | null, { select = false } = {}) {
-  if (element?.focus) {
-    const previouslyFocusedElement = document.activeElement
-    element.focus({ preventScroll: true })
-    if (element !== previouslyFocusedElement && isSelectableInput(element) && select) element.select()
-  }
+/** Focus without scrolling, selecting the text of an input that focus moves to. */
+function focus(element: FocusableElement | null | undefined) {
+  if (!element) return
+  // The element's own document: the global one may be another realm's, or gone by the unmount timer.
+  const previouslyFocusedElement = activeElement(element.ownerDocument)
+  element.focus({ preventScroll: true })
+  if (element !== previouslyFocusedElement && element.tagName === 'INPUT') (element as HTMLInputElement).select()
 }
 
 /** Strip anchors; prevents auto-focusing links on mount. */
-function removeLinks(items: HTMLElement[]) {
+function removeLinks(items: FocusableElement[]) {
   return items.filter((item) => item.tagName !== 'A')
 }
 
 type FocusScopeAPI = { paused: boolean; pause(): void; resume(): void }
 
-function createFocusScopesStack() {
-  let stack: FocusScopeAPI[] = []
+let stack: FocusScopeAPI[] = []
 
-  return {
-    add(focusScope: FocusScopeAPI) {
-      const activeFocusScope = stack[0]
-      if (focusScope !== activeFocusScope) {
-        activeFocusScope?.pause()
-      }
-      stack = arrayRemove(stack, focusScope)
-      stack.unshift(focusScope)
-    },
+const focusScopesStack = {
+  add(focusScope: FocusScopeAPI) {
+    stack[0]?.pause()
+    stack = [focusScope, ...stack]
+  },
 
-    remove(focusScope: FocusScopeAPI) {
-      stack = arrayRemove(stack, focusScope)
-      stack[0]?.resume()
-    },
-  }
+  remove(focusScope: FocusScopeAPI) {
+    stack = stack.filter((scope) => scope !== focusScope)
+    stack[0]?.resume()
+  },
 }
 
-function arrayRemove<T>(array: T[], item: T) {
-  const updatedArray = [...array]
-  const index = updatedArray.indexOf(item)
-  if (index !== -1) {
-    updatedArray.splice(index, 1)
-  }
-  return updatedArray
+export type { FocusableElement, FocusScopeAPI }
+export {
+  activeElement,
+  contains,
+  focus,
+  focusFirst,
+  focusScopesStack,
+  getTabbableCandidates,
+  getTabbableEdges,
+  isSameStop,
+  removeLinks,
 }
-
-const focusScopesStack = createFocusScopesStack()
-
-export type { FocusableTarget, FocusScopeAPI }
-export { focus, focusFirst, focusScopesStack, getTabbableCandidates, getTabbableEdges, removeLinks }

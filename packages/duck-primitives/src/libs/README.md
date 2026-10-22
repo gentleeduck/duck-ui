@@ -31,14 +31,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 84 | `compose-ref.test.tsx` 4, `create-collection.test.tsx` 17, `create-context.test.tsx` 9, `get-component-ref.test.ts` 4, `join-ids.test.ts` 3, `list-navigation.test.tsx` 27, `primitives-utils.test.ts` 20 |
+| Unit | 90 | `associated-form.test.ts` 6, `compose-ref.test.tsx` 4, `create-collection.test.tsx` 17, `create-context.test.tsx` 9, `get-component-ref.test.ts` 4, `join-ids.test.ts` 3, `list-navigation.test.tsx` 27, `primitives-utils.test.ts` 20 |
 | End to end | 0 | - |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>84 behaviours, one per test</summary>
+<summary>90 behaviours, one per test</summary>
 
 **Unit, `primitives-utils.test.ts`**
 
@@ -116,6 +116,16 @@ Each test was proven by changing the code and watching a test fail.
 - createCollection slots
   - renders the collection element and each item as its child, with no element of its own, and hands it the ref
   - registers each item once under strict mode, and drops it on unmount
+
+**Unit, `associated-form.test.ts`**
+
+- getAssociatedForm
+  - finds the form around the control when no form is named
+  - finds the form a name points to over the one around the control
+  - finds no form when the name points to an element that is not one
+  - finds no form without a control
+  - looks the name up in the control's own document, such as an iframe's
+  - finds a form from another window, such as the one around a control in an iframe
 
 **Unit, `compose-ref.test.tsx`**
 

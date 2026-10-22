@@ -1,12 +1,14 @@
 import * as React from 'react'
 import { useDirection } from '../direction'
 import { useControllableState } from '../hooks/use-controllable-state'
+import { getAssociatedForm } from '../libs/associated-form'
 import { composeEventHandlers } from '../libs/compose-event-handler'
+import { useComposedRefs } from '../libs/compose-ref'
 import { createContextScope } from '../libs/create-context'
 import { useTypeaheadListNavigation, useVimNavigation } from '../libs/list-navigation'
-import { Primitive } from '../primitive-elements'
-import * as RovingFocusGroup from '../roving-focus'
-import { createRovingFocusGroupScope } from '../roving-focus'
+import { type Primitive, primitiveElement } from '../primitive-elements/primitive-elements'
+import { createRovingFocusGroupScope, RovingFocusProvider, useRovingFocusGroup } from '../roving-focus'
+import { getEnabledRadios } from './radio-group.libs'
 import type { IRadioGroup } from './radio-group.types'
 
 const RADIO_GROUP_NAME = 'RadioGroup'
@@ -28,6 +30,9 @@ const useRovingFocusGroupScope = createRovingFocusGroupScope()
 
 const [RadioGroupProvider, useRadioGroupContext] = createRadioGroupContext<IRadioGroup.IContext>(RADIO_GROUP_NAME)
 
+const [RadioGroupItemContextProvider, useRadioGroupItemContext] =
+  createRadioGroupContext<IRadioGroup.IItemContext>('RadioGroupItem')
+
 type RadioGroupElement = React.ComponentRef<typeof Primitive.div>
 
 const RadioGroup = React.forwardRef<RadioGroupElement, IRadioGroup.IProps>(
@@ -38,96 +43,100 @@ const RadioGroup = React.forwardRef<RadioGroupElement, IRadioGroup.IProps>(
       defaultValue,
       onValueChange,
       disabled = false,
+      readOnly = false,
       required = false,
       name,
+      form,
       dir,
       orientation,
       loop = true,
+      asChild,
       ...groupProps
     } = props
     const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeRadioGroup)
-    const getItems = RovingFocusGroup.useCollection(rovingFocusGroupScope['__scopeRovingFocusGroup'])
     const direction = useDirection(dir)
+    const groupRef = React.useRef<RadioGroupElement>(null)
+    const composedRefs = useComposedRefs(forwardedRef, groupRef)
     const isNavigationKeyPressedRef = React.useRef(false)
-    const navigationResetTimerRef = React.useRef<number | null>(null)
+    const navigationResetTimerRef = React.useRef<number | undefined>(undefined)
+    // Set by a pick whose handler stopped propagation, or by a form reset: the inputs then follow without an event.
+    const silentChangeRef = React.useRef(false)
 
-    const [value = '', setValue] = useControllableState({
-      prop: valueProp,
+    const [value, setValue] = useControllableState<string>({
+      prop: valueProp === null ? '' : valueProp,
       defaultProp: defaultValue ?? '',
       onChange: onValueChange,
       caller: RADIO_GROUP_NAME,
     })
 
-    const getEnabledNavigationItems = React.useCallback((): IRadioGroup.INavigationItem[] => {
-      return getItems()
-        .filter((item) => item.focusable)
-        .map((item) => {
-          const node = item.ref.current as HTMLElement | null
-          if (!node) return null
-
-          const value = node.getAttribute('data-value') ?? ''
-          const textValue = (
-            node.getAttribute('data-text-value') ??
-            node.getAttribute('aria-label') ??
-            value ??
-            node.textContent ??
-            ''
-          ).trim()
-
-          return {
-            node,
-            value,
-            textValue,
-          }
-        })
-        .filter((item): item is IRadioGroup.INavigationItem => item !== null)
-    }, [getItems])
-
-    const [, handleTypeaheadSearch, resetTypeaheadState] = useTypeaheadListNavigation<IRadioGroup.INavigationItem>({
-      getItems: getEnabledNavigationItems,
-      getItemElement: (item) => item.node,
-      getItemTextValue: (item) => item.textValue,
-      onMatch: (item) => {
-        isNavigationKeyPressedRef.current = true
-        setValue(item.value)
-
-        // Keep the navigation flag true while focus changes so item onFocus can commit selection.
-        setTimeout(() => {
-          item.node.focus()
-          isNavigationKeyPressedRef.current = false
-        })
-      },
-    })
-
-    const scheduleNavigationReset = React.useCallback(() => {
-      if (navigationResetTimerRef.current !== null) {
-        window.clearTimeout(navigationResetTimerRef.current)
+    const initialValueRef = React.useRef(value)
+    React.useEffect(() => {
+      const associatedForm = getAssociatedForm(groupRef.current, form)
+      if (associatedForm) {
+        const reset = () => {
+          if (value === initialValueRef.current) return
+          silentChangeRef.current = true
+          setValue(initialValueRef.current)
+        }
+        associatedForm.addEventListener('reset', reset)
+        return () => associatedForm.removeEventListener('reset', reset)
       }
+    }, [form, value, setValue])
+
+    // Runs after the items' effects, which read it for the change this commit made.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: cleared only once a value lands, so a pick the parent applies later stays silent
+    React.useEffect(() => {
+      silentChangeRef.current = false
+    }, [value])
+
+    // One clear pending at a time: a busy page runs input before overdue timers, so a press's late clear would
+    // otherwise end the navigation the next press began, and its radio would take focus unchecked.
+    const armNavigation = React.useCallback((clearAfterMs = 0) => {
+      window.clearTimeout(navigationResetTimerRef.current)
+      isNavigationKeyPressedRef.current = true
       navigationResetTimerRef.current = window.setTimeout(() => {
         isNavigationKeyPressedRef.current = false
-        navigationResetTimerRef.current = null
-      })
+      }, clearAfterMs)
     }, [])
+
+    const [, handleTypeaheadSearch, resetTypeaheadState] = useTypeaheadListNavigation<HTMLElement>({
+      getItems: () => (groupRef.current ? getEnabledRadios(groupRef.current) : []),
+      getItemElement: (radio) => radio,
+      getItemTextValue: (radio) =>
+        radio.getAttribute('data-text-value') ?? radio.getAttribute('aria-label') ?? radio.textContent,
+      onMatch: (radio) => {
+        armNavigation(16)
+        setTimeout(() => radio.focus())
+      },
+    })
 
     const handleVimKey = useVimNavigation({
       onNavigate: () => {
         resetTypeaheadState()
-        isNavigationKeyPressedRef.current = true
-
-        // useVimNavigation focuses on a timeout; clear shortly after.
-        window.setTimeout(() => {
-          isNavigationKeyPressedRef.current = false
-        }, 16)
+        // useVimNavigation focuses on a timeout it sets after this call.
+        armNavigation(16)
       },
     })
 
-    React.useEffect(() => {
-      return () => {
-        if (navigationResetTimerRef.current !== null) {
-          window.clearTimeout(navigationResetTimerRef.current)
-        }
-      }
-    }, [])
+    const group = useRovingFocusGroup<RadioGroupElement>(
+      {
+        orientation,
+        dir: direction,
+        loop,
+        tabIndex: groupProps.tabIndex,
+        style: groupProps.style,
+        onMouseDown: groupProps.onMouseDown,
+        onFocus: groupProps.onFocus,
+        onBlur: composeEventHandlers(groupProps.onBlur, (event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+            isNavigationKeyPressedRef.current = false
+            resetTypeaheadState()
+          }
+        }),
+      },
+      composedRefs,
+    )
+    const Element = primitiveElement('div', asChild)
 
     return (
       <RadioGroupProvider
@@ -135,27 +144,28 @@ const RadioGroup = React.forwardRef<RadioGroupElement, IRadioGroup.IProps>(
         value={value}
         onValueChange={setValue}
         disabled={disabled}
+        readOnly={readOnly}
         required={required}
         name={name}
-        dir={direction}
-        isNavigationKeyPressedRef={isNavigationKeyPressedRef}>
-        <RovingFocusGroup.Root asChild {...rovingFocusGroupScope} orientation={orientation} dir={direction} loop={loop}>
-          <Primitive.div
+        form={form}
+        groupRef={groupRef}
+        isNavigationKeyPressedRef={isNavigationKeyPressedRef}
+        silentChangeRef={silentChangeRef}>
+        <RovingFocusProvider scope={rovingFocusGroupScope.__scopeRovingFocusGroup} {...group.context}>
+          <Element
             role="radiogroup"
             data-slot="radio-group"
             aria-required={required}
+            aria-readonly={readOnly || undefined}
             aria-orientation={orientation}
             data-disabled={disabled ? '' : undefined}
-            dir={direction}
+            data-readonly={readOnly ? '' : undefined}
             {...groupProps}
-            ref={forwardedRef}
+            {...group.props}
             onKeyDown={composeEventHandlers(
               groupProps.onKeyDown,
               (event) => {
-                const enabledItems = getEnabledNavigationItems()
-                const nodes = enabledItems.map((item) => item.node)
-
-                if (handleVimKey(event, nodes)) return
+                if (handleVimKey(event, getEnabledRadios(event.currentTarget))) return
 
                 const isModifierKey = event.ctrlKey || event.altKey || event.metaKey
                 const isCharacterKey = event.key.length === 1 && event.key !== ' '
@@ -164,25 +174,14 @@ const RadioGroup = React.forwardRef<RadioGroupElement, IRadioGroup.IProps>(
                 }
 
                 if ((RADIO_GROUP_NAVIGATION_KEYS as readonly string[]).includes(event.key)) {
-                  isNavigationKeyPressedRef.current = true
+                  armNavigation()
                   resetTypeaheadState()
-                  scheduleNavigationReset()
                 }
               },
               { checkForDefaultPrevented: false },
             )}
-            onBlur={composeEventHandlers(groupProps.onBlur, (event) => {
-              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-                if (navigationResetTimerRef.current !== null) {
-                  window.clearTimeout(navigationResetTimerRef.current)
-                  navigationResetTimerRef.current = null
-                }
-                isNavigationKeyPressedRef.current = false
-                resetTypeaheadState()
-              }
-            })}
           />
-        </RovingFocusGroup.Root>
+        </RovingFocusProvider>
       </RadioGroupProvider>
     )
   },
@@ -192,9 +191,9 @@ RadioGroup.displayName = RADIO_GROUP_NAME
 
 export {
   createRadioGroupScope,
-  RADIO_GROUP_NAME,
   RadioGroup,
-  RadioGroupProvider,
+  RadioGroupItemContextProvider,
   useRadioGroupContext,
+  useRadioGroupItemContext,
   useRovingFocusGroupScope,
 }

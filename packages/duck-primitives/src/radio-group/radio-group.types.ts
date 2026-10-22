@@ -2,28 +2,26 @@ import type * as React from 'react'
 import type { IDirection } from '../direction'
 import type { Scope } from '../libs/create-context'
 import type { Primitive } from '../primitive-elements'
-import type * as RovingFocusGroup from '../roving-focus'
+import type { IRovingFocus } from '../roving-focus'
 
 export namespace IRadioGroup {
   export type IScoped<TProps> = TProps & { __scopeRadioGroup?: Scope }
-
-  export interface INavigationItem {
-    node: HTMLElement
-    value: string
-    textValue: string
-  }
 
   export interface IContext {
     value: string
     onValueChange(value: string): void
     disabled: boolean
+    readOnly: boolean
     required: boolean
-    name?: string | undefined
-    dir: IDirection.Kind
+    name: string | undefined
+    form: string | undefined
+    groupRef: React.RefObject<HTMLDivElement | null>
     isNavigationKeyPressedRef: React.RefObject<boolean>
+    silentChangeRef: React.RefObject<boolean>
   }
 
   export interface IItemContext {
+    value: string
     checked: boolean
     disabled: boolean
   }
@@ -31,33 +29,40 @@ export namespace IRadioGroup {
   type PrimitiveDivProps = React.ComponentPropsWithoutRef<typeof Primitive.div>
   type PrimitiveButtonProps = React.ComponentPropsWithoutRef<typeof Primitive.button>
   type PrimitiveSpanProps = React.ComponentPropsWithoutRef<typeof Primitive.span>
-  type RovingFocusGroupProps = React.ComponentPropsWithoutRef<typeof RovingFocusGroup.Root>
+  type PrimitiveInputProps = React.ComponentPropsWithoutRef<typeof Primitive.input>
 
   export interface IProps extends PrimitiveDivProps {
-    value?: string
+    value?: string | null
     defaultValue?: string
     onValueChange?(value: string): void
     disabled?: boolean
+    readOnly?: boolean
     required?: boolean
     name?: string
+    form?: string
     dir?: IDirection.Kind
-    orientation?: RovingFocusGroupProps['orientation']
-    loop?: RovingFocusGroupProps['loop']
+    orientation?: IRovingFocus.IGroupProps['orientation']
+    loop?: IRovingFocus.IGroupProps['loop']
   }
 
-  export interface IItemProps extends PrimitiveButtonProps {
+  export interface IItemProviderProps {
     value: string
+    disabled?: boolean
+    children?: React.ReactNode
+  }
+
+  export interface IItemTriggerProps extends Omit<PrimitiveButtonProps, 'disabled' | 'value'> {
     textValue?: string
+  }
+
+  export interface IItemProps extends IItemTriggerProps {
+    value: string
+    disabled?: boolean
   }
 
   export interface IIndicatorProps extends PrimitiveSpanProps {
     forceMount?: true
   }
 
-  export interface IBubbleInputProps {
-    name: string
-    value: string
-    checked: boolean
-    disabled: boolean
-  }
+  export interface IItemBubbleInputProps extends PrimitiveInputProps {}
 }

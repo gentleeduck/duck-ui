@@ -1,94 +1,122 @@
 import * as React from 'react'
 import { composeEventHandlers } from '../libs/compose-event-handler'
-import { useComposedRefs } from '../libs/compose-ref'
 import type { Scope } from '../libs/create-context'
-import { createContextScope } from '../libs/create-context'
-import { Primitive } from '../primitive-elements'
-import * as RovingFocusGroup from '../roving-focus'
-import { useRadioGroupContext, useRovingFocusGroupScope } from './radio-group'
+import { type Primitive, primitiveElement } from '../primitive-elements/primitive-elements'
+import { useRovingFocusItem } from '../roving-focus'
+import { RadioGroupItemBubbleInput } from './item-bubble-input'
+import {
+  RadioGroupItemContextProvider,
+  useRadioGroupContext,
+  useRadioGroupItemContext,
+  useRovingFocusGroupScope,
+} from './radio-group'
 import type { IRadioGroup } from './radio-group.types'
 
 const ITEM_NAME = 'RadioGroupItem'
-
-const [createRadioGroupItemContext] = createContextScope(ITEM_NAME)
-
-const [RadioGroupItemProvider, useRadioGroupItemContext] =
-  createRadioGroupItemContext<IRadioGroup.IItemContext>(ITEM_NAME)
+const ITEM_PROVIDER_NAME = 'RadioGroupItemProvider'
+const ITEM_TRIGGER_NAME = 'RadioGroupItemTrigger'
 
 type RadioGroupItemElement = React.ComponentRef<typeof Primitive.button>
 
+function getItemState(
+  context: IRadioGroup.IContext,
+  value: string,
+  disabled: boolean | undefined,
+): IRadioGroup.IItemContext {
+  return { value, checked: context.value === value, disabled: context.disabled || !!disabled }
+}
+
+function RadioGroupItemProvider(props: IRadioGroup.IScoped<IRadioGroup.IItemProviderProps>) {
+  const { __scopeRadioGroup, value, disabled, children } = props
+  const context = useRadioGroupContext(ITEM_PROVIDER_NAME, __scopeRadioGroup)
+  return (
+    <RadioGroupItemContextProvider scope={__scopeRadioGroup} {...getItemState(context, value, disabled)}>
+      {children}
+    </RadioGroupItemContextProvider>
+  )
+}
+
+RadioGroupItemProvider.displayName = ITEM_PROVIDER_NAME
+
+// Item calls this instead of rendering ItemTrigger, which would cost a fiber per radio.
+function useRadioGroupItemTrigger(
+  __scopeRadioGroup: Scope,
+  { value, checked, disabled }: IRadioGroup.IItemContext,
+  { textValue, asChild, onMouseDown, onFocus, onKeyDown, ...triggerProps }: IRadioGroup.IItemTriggerProps,
+  forwardedRef: React.ForwardedRef<RadioGroupItemElement>,
+) {
+  const context = useRadioGroupContext(ITEM_TRIGGER_NAME, __scopeRadioGroup)
+  const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeRadioGroup)
+  const item = useRovingFocusItem(
+    {
+      ...rovingFocusGroupScope,
+      focusable: !disabled,
+      active: checked,
+      onMouseDown,
+      onKeyDown: composeEventHandlers(onKeyDown, (event) => {
+        // A radio checks on Space; a button would also click on Enter.
+        if (event.key === 'Enter') event.preventDefault()
+      }),
+      onFocus: composeEventHandlers(onFocus, (event) => {
+        // An arrow key checks the radio it lands on with a click, as on a native radio.
+        if (context.isNavigationKeyPressedRef.current) event.currentTarget.click()
+      }),
+    },
+    forwardedRef,
+  )
+  const Element = primitiveElement('button', asChild)
+
+  return (
+    <Element
+      type="button"
+      {...item.attributes}
+      role="radio"
+      data-slot="radio-group-item"
+      aria-checked={checked}
+      data-state={checked ? 'checked' : 'unchecked'}
+      data-disabled={disabled ? '' : undefined}
+      data-readonly={context.readOnly ? '' : undefined}
+      disabled={disabled}
+      data-text-value={textValue}
+      data-value={value}
+      {...triggerProps}
+      {...item.handlers}
+      onClick={composeEventHandlers(triggerProps.onClick, (event) => {
+        if (!checked && !context.readOnly) {
+          context.silentChangeRef.current = event.isPropagationStopped()
+          context.onValueChange(value)
+        }
+      })}
+    />
+  )
+}
+
+const RadioGroupItemTrigger = React.forwardRef<RadioGroupItemElement, IRadioGroup.IItemTriggerProps>(
+  (props: IRadioGroup.IScoped<IRadioGroup.IItemTriggerProps>, forwardedRef) => {
+    const { __scopeRadioGroup, ...triggerProps } = props
+    const item = useRadioGroupItemContext(ITEM_TRIGGER_NAME, __scopeRadioGroup)
+    return useRadioGroupItemTrigger(__scopeRadioGroup, item, triggerProps, forwardedRef)
+  },
+)
+
+RadioGroupItemTrigger.displayName = ITEM_TRIGGER_NAME
+
 const RadioGroupItem = React.forwardRef<RadioGroupItemElement, IRadioGroup.IItemProps>(
   (props: IRadioGroup.IScoped<IRadioGroup.IItemProps>, forwardedRef) => {
-    const { __scopeRadioGroup, value, textValue, disabled: disabledProp, ...itemProps } = props
+    const { __scopeRadioGroup, value, disabled, ...triggerProps } = props
     const context = useRadioGroupContext(ITEM_NAME, __scopeRadioGroup)
-    const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeRadioGroup)
-    const checked = context.value === value
-    const disabled = context.disabled || disabledProp || false
-    const ref = React.useRef<RadioGroupItemElement>(null)
-    const composedRefs = useComposedRefs(forwardedRef, ref)
+    const item = getItemState(context, value, disabled)
+    const trigger = useRadioGroupItemTrigger(__scopeRadioGroup, item, triggerProps, forwardedRef)
 
     return (
-      <RadioGroupItemProvider scope={__scopeRadioGroup as Scope} checked={checked} disabled={disabled}>
-        <RovingFocusGroup.Item asChild {...rovingFocusGroupScope} focusable={!disabled} active={checked}>
-          <Primitive.button
-            type="button"
-            role="radio"
-            data-slot="radio-group-item"
-            aria-checked={checked}
-            data-state={checked ? 'checked' : 'unchecked'}
-            data-disabled={disabled ? '' : undefined}
-            disabled={disabled}
-            dir={context.dir}
-            {...itemProps}
-            data-value={value}
-            data-text-value={textValue}
-            ref={composedRefs}
-            onClick={composeEventHandlers(props.onClick, () => {
-              if (!checked) {
-                context.onValueChange(value)
-              }
-            })}
-            onFocus={composeEventHandlers(props.onFocus, () => {
-              // arrow-key focus auto-selects per WAI-ARIA radio pattern
-              if (context.isNavigationKeyPressedRef.current) {
-                context.onValueChange(value)
-              }
-            })}
-          />
-        </RovingFocusGroup.Item>
-        {context.name && <BubbleInput name={context.name} value={value} checked={checked} disabled={disabled} />}
-      </RadioGroupItemProvider>
+      <RadioGroupItemContextProvider scope={__scopeRadioGroup} {...item}>
+        {trigger}
+        {context.name ? <RadioGroupItemBubbleInput __scopeRadioGroup={__scopeRadioGroup} /> : null}
+      </RadioGroupItemContextProvider>
     )
   },
 )
 
 RadioGroupItem.displayName = ITEM_NAME
 
-function BubbleInput(props: IRadioGroup.IBubbleInputProps) {
-  const { name, value, checked, disabled } = props
-  return (
-    <input
-      type="radio"
-      name={name}
-      value={value}
-      checked={checked}
-      disabled={disabled}
-      // Avoid React warning for checked without onChange
-      onChange={() => {}}
-      tabIndex={-1}
-      style={{
-        position: 'absolute',
-        pointerEvents: 'none',
-        opacity: 0,
-        margin: 0,
-        // Minimum size so it can still be clicked by assistive tech
-        width: 1,
-        height: 1,
-        overflow: 'hidden',
-      }}
-      aria-hidden
-    />
-  )
-}
-
-export { RadioGroupItem, RadioGroupItemProvider, useRadioGroupItemContext }
+export { RadioGroupItem, RadioGroupItemProvider, RadioGroupItemTrigger }

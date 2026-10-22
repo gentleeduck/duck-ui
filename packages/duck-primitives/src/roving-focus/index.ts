@@ -1,13 +1,11 @@
-export { RovingFocusGroupItem, RovingFocusGroupItem as Item } from './item'
+export { RovingFocusGroupItem, RovingFocusGroupItem as Item, useRovingFocusItem } from './item'
 export {
-  Collection,
-  createCollectionScope,
   createRovingFocusGroupScope,
   RovingFocusGroup,
   RovingFocusGroup as Root,
   RovingFocusProvider,
-  useCollection,
   useRovingFocusContext,
+  useRovingFocusGroup,
 } from './roving-focus'
-export { focusFirst, getFocusIntent, wrapArray } from './roving-focus.libs'
+export { focusFirst, getFocusableItems, getFocusIntent, wrapArray } from './roving-focus.libs'
 export type { IRovingFocus } from './roving-focus.types'

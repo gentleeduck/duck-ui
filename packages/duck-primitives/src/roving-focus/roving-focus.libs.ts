@@ -1,5 +1,6 @@
 import type * as React from 'react'
 import type { IDirection } from '../direction'
+import { byDocumentPosition } from '../libs/shared-utils'
 import type { IRovingFocus } from './roving-focus.types'
 
 export { focusFirst, wrapArray } from '../libs/shared-utils'
@@ -28,4 +29,14 @@ function getFocusIntent(event: React.KeyboardEvent, orientation?: IRovingFocus.O
   return MAP_KEY_TO_FOCUS_INTENT[key]
 }
 
-export { getFocusIntent }
+/** The items that can take focus and have an element, in document order. */
+function getFocusableItems(items: Iterable<IRovingFocus.IItem>) {
+  const found: { item: IRovingFocus.IItem; node: HTMLElement }[] = []
+  for (const item of items) {
+    const node = item.ref.current
+    if (item.focusable && node) found.push({ item, node })
+  }
+  return found.sort((a, b) => byDocumentPosition(a.node, b.node))
+}
+
+export { getFocusableItems, getFocusIntent }

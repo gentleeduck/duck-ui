@@ -1,0 +1,42 @@
+.page {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  justify-items: start;
+  padding: 24px;
+  font-family: apple-system, BlinkMacSystemFont, helvetica, arial, sans-serif;
+  font-size: 13px;
+}
+
+.button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #333;
+  text-decoration: none;
+}
+
+.link {
+  color: royalblue;
+}
+
+.field {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid #999;
+  border-radius: 6px;
+}
+
+.label {
+  font-weight: 600;
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+}

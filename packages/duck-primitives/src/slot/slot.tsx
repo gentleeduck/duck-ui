@@ -1,65 +1,37 @@
-import { cn } from '@gentleduck/libs/cn'
 import * as React from 'react'
-import { composeRefs } from '../libs/compose-ref'
+import { useComposedRefs } from '../libs/compose-ref'
 import { getComponentRef } from '../libs/get-component-ref'
+import { joinIds } from '../libs/join-ids'
 import type { ISlot } from './slot.types'
 
-// unwrap lazy RSC references before any isValidElement check (matches Radix 1.2.4)
 const REACT_LAZY_TYPE = Symbol.for('react.lazy')
 // biome-ignore lint/suspicious/noExplicitAny: accessing React.use without bundler treeshaking it
-const reactUse = (React as any)[' use '.trim()] as (<T>(p: Promise<T>) => T) | undefined
+const reactUse = (React as any)[' use '.trim()] as (<T>(usable: PromiseLike<T>) => T) | undefined
 
-function isPromiseLike(v: unknown): v is PromiseLike<unknown> {
-  return typeof v === 'object' && v !== null && 'then' in (v as object)
-}
-
-function isLazyRef(v: unknown): v is { $$typeof: symbol; _payload: PromiseLike<unknown> } {
-  return (
-    v != null &&
-    typeof v === 'object' &&
-    '$$typeof' in (v as object) &&
-    (v as { $$typeof: unknown }).$$typeof === REACT_LAZY_TYPE &&
-    '_payload' in (v as object) &&
-    isPromiseLike((v as { _payload: unknown })._payload)
-  )
-}
+type AnyProps = { ref?: React.Ref<unknown> | undefined; children?: React.ReactNode; [key: string]: unknown }
+type LazyReference = { _payload: PromiseLike<React.ReactNode> }
+type SlottableElement = React.ReactElement<ISlot.ISlottableProps, ISlot.ISlottableComponent>
 
 /* @__NO_SIDE_EFFECTS__ */ export function createSlot(ownerName: string) {
-  const SlotClone = createSlotClone(ownerName)
   const Slot = React.forwardRef<HTMLElement, ISlot.IProps>((props, forwardedRef) => {
-    let { children, ...slotProps } = props
+    const { children: childrenProp, ...slotProps } = props
+    const children = unwrapLazy(childrenProp)
+    const target = getTarget(children)
+    const targetRef = target ? getComponentRef(target) : undefined
+    const composedRef = useComposedRefs(forwardedRef, targetRef)
 
-    if (isLazyRef(children) && typeof reactUse === 'function') {
-      children = reactUse(children._payload as Promise<React.ReactNode>)
-    }
-
-    const childrenArray = React.Children.toArray(children)
-    const slottable = childrenArray.find(isSlottable)
-
-    if (slottable) {
-      const newElement = slottable.props.children
-
-      const newChildren = childrenArray.map((child) => {
-        if (child === slottable) {
-          if (React.Children.count(newElement) > 1) return React.Children.only(null)
-          return React.isValidElement(newElement) ? (newElement.props as { children: React.ReactNode }).children : null
-        } else {
-          return child
-        }
-      })
-
-      return (
-        <SlotClone {...slotProps} ref={forwardedRef}>
-          {React.isValidElement(newElement) ? React.cloneElement(newElement, undefined, newChildren) : null}
-        </SlotClone>
+    if (!target) {
+      if (!children && children !== 0) return null
+      const slottable = React.Children.toArray(children).some(isSlottable)
+      throw new Error(
+        `${ownerName} failed to slot onto its ${slottable ? '`Slottable`' : 'children'}. Expected a single React element ${slottable ? 'inside `Slottable`' : 'child or `Slottable`'}.`,
       )
     }
 
-    return (
-      <SlotClone {...slotProps} ref={forwardedRef}>
-        {children}
-      </SlotClone>
-    )
+    const merged = mergeProps(slotProps, target.props)
+    // React 19 refuses a ref on a Fragment.
+    if (target.type !== React.Fragment) merged.ref = forwardedRef ? composedRef : targetRef
+    return React.cloneElement(target, merged)
   })
 
   Slot.displayName = `${ownerName}.Slot`
@@ -68,36 +40,12 @@ function isLazyRef(v: unknown): v is { $$typeof: symbol; _payload: PromiseLike<u
 
 const Slot = createSlot('Slot')
 
-/* @__NO_SIDE_EFFECTS__ */ function createSlotClone(ownerName: string) {
-  const SlotClone = React.forwardRef<HTMLElement, ISlot.ICloneProps>((props, forwardedRef) => {
-    let { children, ...slotProps } = props
-
-    if (isLazyRef(children) && typeof reactUse === 'function') {
-      children = reactUse(children._payload as Promise<React.ReactNode>)
-    }
-
-    if (React.isValidElement(children)) {
-      const childrenRef = getComponentRef(children)
-      const props = mergeProps(slotProps, children.props as AnyProps)
-      if (children.type !== React.Fragment) {
-        props.ref = forwardedRef ? composeRefs(forwardedRef, childrenRef) : childrenRef
-      }
-      return React.cloneElement(children, props)
-    }
-
-    return React.Children.count(children) > 1 ? React.Children.only(null) : null
-  })
-
-  SlotClone.displayName = `${ownerName}.SlotClone`
-  return SlotClone
-}
-
-const SLOTTABLE_IDENTIFIER = Symbol('gentleduck.slottable')
+// Shared through the global registry, so another copy of the package's Slottable is still recognized.
+const SLOTTABLE_IDENTIFIER = Symbol.for('gentleduck.slottable')
 
 /* @__NO_SIDE_EFFECTS__ */ export function createSlottable(ownerName: string) {
-  const Slottable: ISlot.ISlottableComponent = ({ children }) => {
-    return <>{children}</>
-  }
+  const Slottable: ISlot.ISlottableComponent = (props) =>
+    'child' in props ? props.children(props.child) : props.children
   Slottable.displayName = `${ownerName}.Slottable`
   Slottable.__radixId = SLOTTABLE_IDENTIFIER
   return Slottable
@@ -105,18 +53,47 @@ const SLOTTABLE_IDENTIFIER = Symbol('gentleduck.slottable')
 
 const Slottable = createSlottable('Slottable')
 
-type AnyProps = { ref?: React.Ref<unknown> | undefined; [key: string]: unknown }
-
-// Props a Slot child must never forward onto the cloned node. The Slot owns its
-// content rendering, so `asChild` cannot be used as a raw-HTML injection vector.
-const FORBIDDEN_SLOT_PROPS = ['dangerouslySetInnerHTML'] as const
-
-function isSlottable(child: React.ReactNode): child is React.ReactElement<ISlot.ISlottableProps, typeof Slottable> {
+function isSlottable(child: React.ReactNode): child is SlottableElement {
   return (
     React.isValidElement(child) &&
     typeof child.type === 'function' &&
     '__radixId' in child.type &&
     child.type.__radixId === SLOTTABLE_IDENTIFIER
+  )
+}
+
+function isLazyReference(node: unknown): node is LazyReference {
+  const payload = (node as { _payload?: { then?: unknown } } | null)?._payload
+  return (node as { $$typeof?: unknown } | null)?.$$typeof === REACT_LAZY_TYPE && typeof payload?.then === 'function'
+}
+
+// A Flight reference can resolve to another reference, so this runs until it reaches the node. `use` may run in a loop.
+function unwrapLazy(node: React.ReactNode) {
+  let unwrapped = node
+  while (isLazyReference(unwrapped) && reactUse) unwrapped = reactUse(unwrapped._payload)
+  return unwrapped
+}
+
+/** The element the Slot's props land on: its one element child, or the one inside its Slottable. */
+function getTarget(children: React.ReactNode): React.ReactElement<AnyProps> | null {
+  if (React.isValidElement<AnyProps>(children) && !isSlottable(children)) return children
+  // Unlike toArray, forEach keeps the holes a false child leaves, so the element's children keep their place.
+  const nodes: React.ReactNode[] = []
+  let slottable: SlottableElement | undefined
+  React.Children.forEach(children, (node) => {
+    if (!slottable && isSlottable(node)) slottable = node
+    nodes.push(node)
+  })
+  if (!slottable) return null
+  const { props } = slottable
+  const child = unwrapLazy('child' in props ? props.child : props.children)
+  if (!React.isValidElement<AnyProps>(child)) return null
+  const element = 'child' in props ? React.cloneElement(child, undefined, props.children(child.props.children)) : child
+  // The Slot's other children sit around the element's own.
+  return React.cloneElement(
+    element,
+    undefined,
+    nodes.map((node) => (node === slottable ? element.props.children : node)),
   )
 }
 
@@ -141,20 +118,17 @@ function mergeProps(slotProps: AnyProps, childProps: AnyProps) {
     } else if (propName === 'style') {
       overrideProps[propName] = { ...(slotPropValue as object), ...(childPropValue as object) }
     } else if (propName === 'className') {
-      overrideProps[propName] = cn(slotPropValue as string, childPropValue as string)
+      overrideProps[propName] = [slotPropValue, childPropValue].filter(Boolean).join(' ')
+    } else if (propName === 'aria-describedby') {
+      overrideProps[propName] = joinIds(childPropValue, slotPropValue)
     }
   }
 
-  const merged = { ...slotProps, ...overrideProps }
-
-  // Force-override forbidden props to `undefined`: deleting the key is not enough
-  // because `cloneElement` keeps any key absent from the new props, which would
-  // leave a child's original `dangerouslySetInnerHTML` intact on the clone.
-  for (const forbidden of FORBIDDEN_SLOT_PROPS) {
-    merged[forbidden] = undefined
-  }
-
+  const merged: AnyProps = { ...slotProps, ...overrideProps }
+  // The Slot owns its content, so `asChild` cannot inject raw HTML. Cleared rather than deleted, since cloneElement
+  // keeps a key the new props leave out, and only when set, since a Fragment child refuses the key.
+  if ('dangerouslySetInnerHTML' in merged) merged.dangerouslySetInnerHTML = undefined
   return merged
 }
 
-export { Slot, Slottable }
+export { Slot as Root, Slot, Slottable }

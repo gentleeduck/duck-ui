@@ -1,0 +1,17 @@
+.page {
+  display: flex;
+  gap: 24px;
+  align-items: flex-end;
+  padding: 24px;
+  font-family: apple-system, BlinkMacSystemFont, helvetica, arial, sans-serif;
+  font-size: 13px;
+}
+
+.arrow {
+  display: block;
+  fill: royalblue;
+}
+
+.box {
+  outline: 1px dashed #999;
+}

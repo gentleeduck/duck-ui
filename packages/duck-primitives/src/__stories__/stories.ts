@@ -1,4 +1,5 @@
 import type * as React from 'react'
+import * as arrow from '../arrow/__stories__/arrow.stories'
 import * as direction from '../direction/__stories__/direction.stories'
 import * as hooks from '../hooks/__stories__/hooks.stories'
 import * as mount from '../mount/__stories__/mount.stories'
@@ -17,7 +18,7 @@ const kebab = (value: string) =>
 
 export const stories = new Map<string, React.ComponentType>()
 
-for (const module of [direction, hooks, mount, primitive, slot, visuallyHidden] as StoryModule[]) {
+for (const module of [arrow, direction, hooks, mount, primitive, slot, visuallyHidden] as StoryModule[]) {
   for (const [name, story] of Object.entries(module)) {
     if (name === 'default' || typeof story !== 'function') continue
     stories.set(

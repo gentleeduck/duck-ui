@@ -38,6 +38,8 @@ export const [RovingFocusProvider, useRovingFocusContext] = createRovingFocusGro
 interface ITabStop {
   node: HTMLElement | null
   lastNode: HTMLElement | null
+  // What the group last wrote to `lastNode`, so a tabindex it finds there that differs is the caller's.
+  written: string | null
   focusable: number
   tabbingBackOut: boolean
   owned: boolean
@@ -49,6 +51,13 @@ function syncTabStop(tabStop: ITabStop) {
   if (!node || tabStop.owned || tabStop.childOwned) return
   const tabIndex = tabStop.tabbingBackOut || tabStop.focusable === 0 ? '-1' : '0'
   if (node.getAttribute('tabindex') !== tabIndex) node.setAttribute('tabindex', tabIndex)
+  tabStop.written = tabIndex
+}
+
+/** A tabindex on a child slotted in by `asChild` that the group did not write is the caller's. */
+function readChildTabIndex(tabStop: ITabStop) {
+  const tabIndex = tabStop.node?.getAttribute('tabindex') ?? null
+  tabStop.childOwned = !tabStop.owned && tabIndex !== null && tabIndex !== tabStop.written
 }
 
 /**
@@ -85,6 +94,7 @@ function useRovingFocusGroup<E extends HTMLElement>(
     const tabStop: ITabStop = {
       node: null,
       lastNode: null,
+      written: null,
       focusable: 0,
       tabbingBackOut: false,
       owned: tabIndex !== undefined,
@@ -97,13 +107,12 @@ function useRovingFocusGroup<E extends HTMLElement>(
       isClickFocus: false,
       queuedMovesRef: { current: 0 },
       ref: (node: HTMLElement | null) => {
-        // A tabIndex on a child slotted in by `asChild` is the caller's. Read only from a new element, since one
-        // seen before may carry the group's own.
         if (node && node !== tabStop.lastNode) {
           tabStop.lastNode = node
-          tabStop.childOwned = !tabStop.owned && node.hasAttribute('tabindex')
+          tabStop.written = null
         }
         tabStop.node = node
+        readChildTabIndex(tabStop)
         syncTabStop(tabStop)
       },
       register: (item: IRovingFocus.IItem) => {
@@ -125,10 +134,12 @@ function useRovingFocusGroup<E extends HTMLElement>(
   const { tabStop, items } = group
   const ref = useComposedRefs(forwardedRef, group.ref)
 
+  // After every render, since the caller can add or drop a slotted child's tabIndex in any of them.
   useLayoutEffect(() => {
     tabStop.owned = tabIndex !== undefined
+    readChildTabIndex(tabStop)
     syncTabStop(tabStop)
-  }, [tabStop, tabIndex])
+  })
 
   return {
     context: {

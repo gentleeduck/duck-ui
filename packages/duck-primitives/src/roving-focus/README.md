@@ -27,14 +27,14 @@ covered by `toggle-group.radix.e2e.ts`.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 32 | `roving-focus.test.tsx` 32 |
+| Unit | 33 | `roving-focus.test.tsx` 33 |
 | End to end | 10 | `roving-focus.e2e.ts` 10 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>42 behaviours, one per test</summary>
+<summary>43 behaviours, one per test</summary>
 
 **Unit, `roving-focus.test.tsx`**
 
@@ -74,6 +74,8 @@ covered by `toggle-group.radix.e2e.ts`.
   - leaves the tab order once no item can take focus
 - RovingFocusGroup slotted onto an element of its own
   - keeps the element's own tabIndex, and puts one without it in the tab order
+- RovingFocusGroup slotted onto an element that drops its tabIndex
+  - puts the element in the tab order once its own tabIndex is gone
 - RovingFocusGroup in another root
   - moves one item at a time inside a shadow root
   - moves one item at a time inside an iframe
@@ -126,7 +128,7 @@ toolbar ship. 1.2.1, the latest, behaves the same.
 
 ## Smaller and faster
 
-- The module is 4,300 bytes against Radix's 7,594, each minified and gzipped with everything it imports but React.
+- The module is 4,326 bytes against Radix's 7,594, each minified and gzipped with everything it imports but React.
 - The group keeps its items in a set it sorts into document order on a key press, where a collection gave the
   group two components and each item a slot of its own.
 - `useRovingFocusGroup` returns the group's context and the props for an element of the caller's own, so Radio
@@ -142,7 +144,7 @@ toolbar ship. 1.2.1, the latest, behaves the same.
   arrow keys already read them. Give it `dir="rtl"` or a provider.
 - The group writes its `tabindex` to its element after React commits rather than rendering it, so server markup
   carries none. A `tabIndex` given to the group, or carried by the element `asChild` slots it onto, is still left
-  alone.
+  alone, and the group takes the tab stop back once that `tabIndex` is dropped.
 - `IRovingFocus.IContext` adds an item with `register`, which returns what removes it, in place of
   `onFocusableItemAdd` and `onFocusableItemRemove`. `IRovingFocus.IGroupImplProps` is gone.
 - `Collection`, `useCollection` and `createCollectionScope` are gone, and an item carries no

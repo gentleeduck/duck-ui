@@ -507,6 +507,25 @@ describe('RovingFocusGroup slotted onto an element of its own', () => {
   })
 })
 
+describe('RovingFocusGroup slotted onto an element that drops its tabIndex', () => {
+  it('puts the element in the tab order once its own tabIndex is gone', () => {
+    function Slotted({ own }: { own: boolean }) {
+      return (
+        <RovingFocusGroup asChild>
+          <div data-testid="group" tabIndex={own ? -1 : undefined}>
+            <RovingFocusGroupItem>A</RovingFocusGroupItem>
+          </div>
+        </RovingFocusGroup>
+      )
+    }
+    const { rerender } = render(<Slotted own />)
+
+    rerender(<Slotted own={false} />)
+
+    expect(screen.getByTestId('group').tabIndex).toBe(0)
+  })
+})
+
 describe('RovingFocusGroup in another root', () => {
   function renderInto(container: HTMLElement) {
     render(

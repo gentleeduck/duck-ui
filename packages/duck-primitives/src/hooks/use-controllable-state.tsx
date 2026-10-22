@@ -1,10 +1,4 @@
 import * as React from 'react'
-import { useLayoutEffect } from './use-layout-effect'
-
-// space-trick string prevents bundlers from tree-shaking useInsertionEffect on older React
-const useInsertionEffect: typeof useLayoutEffect =
-  ((React as Record<string, unknown>)[' useInsertionEffect '.trim().toString()] as typeof useLayoutEffect) ||
-  useLayoutEffect
 
 type ChangeHandler<T> = (state: T) => void
 type SetStateFn<T> = React.Dispatch<React.SetStateAction<T>>
@@ -30,12 +24,10 @@ export function useControllableState<T>({
   const isControlled = prop !== undefined
   const value = isControlled ? prop : uncontrolledProp
 
-  // dev-only mode-switch warning. NODE_ENV is constant per build so hook order is stable;
-  // production builds strip the whole block.
   if (process.env.NODE_ENV !== 'production') {
-    // biome-ignore lint/correctness/useHookAtTopLevel: hooks are intentionally called inside a NODE_ENV check — the condition is static per build so hook order is stable at runtime
+    // biome-ignore lint/correctness/useHookAtTopLevel: NODE_ENV is fixed per build, so these run on every render or on none
     const isControlledRef = React.useRef(prop !== undefined)
-    // biome-ignore lint/correctness/useHookAtTopLevel: hooks are intentionally called inside a NODE_ENV check — the condition is static per build so hook order is stable at runtime
+    // biome-ignore lint/correctness/useHookAtTopLevel: NODE_ENV is fixed per build, so these run on every render or on none
     React.useEffect(() => {
       const wasControlled = isControlledRef.current
       if (wasControlled !== isControlled) {
@@ -78,7 +70,7 @@ function useUncontrolledState<T>({
   const prevValueRef = React.useRef(value)
 
   const onChangeRef = React.useRef(onChange)
-  useInsertionEffect(() => {
+  React.useInsertionEffect(() => {
     onChangeRef.current = onChange
   }, [onChange])
 

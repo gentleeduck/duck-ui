@@ -1,39 +1,47 @@
 import * as React from 'react'
 import { useLayoutEffect } from './use-layout-effect'
 
+type Size = { width: number; height: number }
+
 /** Border-box size via ResizeObserver; initial size delivered synchronously from offset*. */
 function useSize(element: HTMLElement | null) {
-  const [size, setSize] = React.useState<{ width: number; height: number } | undefined>(undefined)
+  const [size, setSize] = React.useState<Size | undefined>(undefined)
 
   useLayoutEffect(() => {
-    if (element) {
-      setSize({ width: element.offsetWidth, height: element.offsetHeight })
-
-      const resizeObserver = new ResizeObserver((entries) => {
-        if (!Array.isArray(entries) || !entries.length) return
-
-        // biome-ignore lint/style/noNonNullAssertion: guarded by the entries.length check above
-        const entry = entries[0]!
-        let width: number
-        let height: number
-
-        if ('borderBoxSize' in entry) {
-          const borderSize = Array.isArray(entry.borderBoxSize) ? entry.borderBoxSize[0] : entry.borderBoxSize
-          width = borderSize.inlineSize
-          height = borderSize.blockSize
-        } else {
-          width = element.offsetWidth
-          height = element.offsetHeight
-        }
-
-        setSize({ width, height })
-      })
-
-      resizeObserver.observe(element, { box: 'border-box' })
-
-      return () => resizeObserver.unobserve(element)
-    } else {
+    if (!element) {
       setSize(undefined)
+      return
+    }
+
+    // The observer's first report repeats the offset size, so skipping a repeat spares a render per mount.
+    let last: Size | undefined
+    const update = (width: number, height: number) => {
+      if (last?.width === width && last.height === height) return
+      last = { width, height }
+      setSize(last)
+    }
+    update(element.offsetWidth, element.offsetHeight)
+
+    let frame = 0
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries?.[0]
+      if (!entry) return
+      // A layout change made in the same frame would loop the observer and log "undelivered notifications".
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        if ('borderBoxSize' in entry) {
+          const box = Array.isArray(entry.borderBoxSize) ? entry.borderBoxSize[0] : entry.borderBoxSize
+          update(box.inlineSize, box.blockSize)
+        } else {
+          update(element.offsetWidth, element.offsetHeight)
+        }
+      })
+    })
+    observer.observe(element, { box: 'border-box' })
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      observer.disconnect()
     }
   }, [element])
 

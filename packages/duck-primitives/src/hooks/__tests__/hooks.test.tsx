@@ -1,6 +1,7 @@
-import { describe, expect, it, mock } from 'bun:test'
+import { describe, expect, it, mock, spyOn } from 'bun:test'
 import { act, fireEvent, render } from '@testing-library/react'
 import * as React from 'react'
+import { renderToString } from 'react-dom/server'
 import { useCallbackRef } from '../use-callback-ref'
 import { useControllableState } from '../use-controllable-state'
 import { useEscapeKeydown } from '../use-escape-keydown'
@@ -49,6 +50,25 @@ describe('useCallbackRef', () => {
     const { container } = render(<Comp />)
     expect(() => fireEvent.click(container.querySelector('button')!)).not.toThrow()
   })
+
+  it("has the latest callback in place before a child's effect calls it in the same commit", () => {
+    const seen: number[][] = []
+    function Child({ call, n }: { call: () => number; n: number }) {
+      React.useEffect(() => {
+        seen.push([n, call()])
+      }, [call, n])
+      return null
+    }
+    function Parent({ n }: { n: number }) {
+      return <Child call={useCallbackRef(() => n)} n={n} />
+    }
+    const { rerender } = render(<Parent n={1} />)
+    rerender(<Parent n={2} />)
+    expect(seen).toEqual([
+      [1, 1],
+      [2, 2],
+    ])
+  })
 })
 
 // --- usePrevious ---
@@ -65,6 +85,48 @@ describe('usePrevious', () => {
     rerender(<Comp value={2} />)
     rerender(<Comp value={3} />)
     expect(values).toEqual([1, 1, 2])
+  })
+
+  it('keeps the previous value through a render with the same value', () => {
+    const values: Array<number | undefined> = []
+    function Comp({ value }: { value: number; tick: number }) {
+      values.push(usePrevious(value))
+      return null
+    }
+    const { rerender } = render(<Comp tick={0} value={1} />)
+    rerender(<Comp tick={0} value={2} />)
+    rerender(<Comp tick={1} value={2} />)
+    rerender(<Comp tick={2} value={2} />)
+    expect(values).toEqual([1, 1, 1, 1])
+  })
+
+  it('leaves out a value from a render React threw away, as when a transition suspends and another replaces it', async () => {
+    const never = new Promise(() => {})
+    function Suspends({ when }: { when: boolean }) {
+      if (when) throw never
+      return null
+    }
+    let set: (value: string) => void = () => {}
+    const committed: string[] = []
+    function Comp() {
+      const [value, setValue] = React.useState('A')
+      set = setValue
+      const previous = usePrevious(value)
+      React.useEffect(() => {
+        committed.push(`${previous} to ${value}`)
+      })
+      return <Suspends when={value === 'B'} />
+    }
+    render(
+      <React.Suspense fallback="loading">
+        <Comp />
+      </React.Suspense>,
+    )
+
+    await act(async () => React.startTransition(() => set('B')))
+    await act(async () => React.startTransition(() => set('C')))
+
+    expect(committed).toEqual(['A to A', 'A to C'])
   })
 })
 
@@ -119,6 +181,32 @@ describe('useStateMachine', () => {
     act(() => send('PAUSE'))
     expect(state).toBe('idle')
   })
+
+  it('renders nothing for an event its state does not take', () => {
+    let renders = 0
+    let send: (event: string) => void = () => {}
+    function Comp() {
+      renders++
+      send = useStateMachine('idle', machine)[1] as (event: string) => void
+      return null
+    }
+    render(<Comp />)
+    act(() => send('PAUSE'))
+    expect(renders).toBe(1)
+  })
+
+  it('keeps send the same function through every transition', () => {
+    const sends: unknown[] = []
+    function Comp() {
+      sends.push(useStateMachine('idle', machine)[1])
+      return null
+    }
+    render(<Comp />)
+    const send = sends[0] as (event: string) => void
+    act(() => send('START'))
+    act(() => send('PAUSE'))
+    expect([sends.length, new Set(sends).size]).toEqual([3, 1])
+  })
 })
 
 // --- useEscapeKeydown ---
@@ -157,6 +245,24 @@ describe('useEscapeKeydown', () => {
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(handler).toHaveBeenCalledTimes(0)
   })
+
+  it('listens on the document it is given, as one inside an iframe', () => {
+    const frame = document.createElement('iframe')
+    document.body.append(frame)
+    const other = frame.contentDocument as Document
+    const heard: string[] = []
+    function Comp() {
+      useEscapeKeydown((event) => heard.push(event.target === other ? 'iframe' : 'page'), other)
+      return null
+    }
+    render(<Comp />)
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+    fireEvent.keyDown(other, { key: 'Escape' })
+    frame.remove()
+
+    expect(heard).toEqual(['iframe'])
+  })
 })
 
 // --- useId ---
@@ -170,6 +276,16 @@ describe('useId', () => {
     }
     render(<Comp />)
     expect(id).toBe('my-id')
+  })
+
+  it('takes an empty id as none given, as a blank id prop passes it', () => {
+    let id = ''
+    function Comp() {
+      id = useId('')
+      return null
+    }
+    render(<Comp />)
+    expect(id).toMatch(/^gentleduck-/)
   })
 
   it('generates a prefixed ID when no deterministic ID is given', () => {
@@ -271,6 +387,63 @@ describe('useControllableState', () => {
     expect(onChange).not.toHaveBeenCalled()
   })
 
+  it('hands a controlled updater the controlled value, not the default', () => {
+    const onChange = mock(() => {})
+    let setValue: React.Dispatch<React.SetStateAction<string>> = () => {}
+    function Comp() {
+      setValue = useControllableState({ prop: 'b', defaultProp: 'a', onChange })[1]
+      return null
+    }
+    render(<Comp />)
+    act(() => setValue((value) => `${value}!`))
+    expect(onChange.mock.calls).toEqual([['b!']])
+  })
+
+  it('reports an uncontrolled change back to the value it started at', () => {
+    const onChange = mock(() => {})
+    let setValue: React.Dispatch<React.SetStateAction<string>> = () => {}
+    function Comp() {
+      setValue = useControllableState({ defaultProp: 'a', onChange })[1]
+      return null
+    }
+    render(<Comp />)
+    act(() => setValue('b'))
+    act(() => setValue('a'))
+    expect(onChange.mock.calls).toEqual([['b'], ['a']])
+  })
+
+  it('reports an uncontrolled change to the onChange it was given last', () => {
+    const first = mock(() => {})
+    const last = mock(() => {})
+    let setValue: React.Dispatch<React.SetStateAction<string>> = () => {}
+    function Comp({ onChange }: { onChange: (value: string) => void }) {
+      setValue = useControllableState({ defaultProp: 'a', onChange })[1]
+      return null
+    }
+    const { rerender } = render(<Comp onChange={first} />)
+    rerender(<Comp onChange={last} />)
+    act(() => setValue('b'))
+    expect([first.mock.calls, last.mock.calls]).toEqual([[], [['b']]])
+  })
+
+  it('warns each time it switches between controlled and uncontrolled, the switch back included', () => {
+    function Probe({ value }: { value?: string }) {
+      useControllableState({ prop: value, defaultProp: 'default', caller: 'Probe' })
+      return null
+    }
+    const warn = spyOn(console, 'warn').mockImplementation(() => {})
+    const { rerender } = render(<Probe />)
+    rerender(<Probe value="controlled" />)
+    rerender(<Probe />)
+    const starts = warn.mock.calls.map(([message]) => String(message).split('.')[0])
+    warn.mockRestore()
+
+    expect(starts).toEqual([
+      'Probe is changing from uncontrolled to controlled',
+      'Probe is changing from controlled to uncontrolled',
+    ])
+  })
+
   it('works with boolean values', () => {
     let value = false
     function Comp() {
@@ -320,5 +493,49 @@ describe('useStateMachine (edge cases)', () => {
     act(() => send('STOP'))
     act(() => send('START'))
     expect(state).toBe('running')
+  })
+})
+
+describe('useControllableState in production', () => {
+  it('switches from uncontrolled to controlled without the development warning', () => {
+    function Probe({ value }: { value?: string }) {
+      const [current] = useControllableState({ prop: value, defaultProp: 'default', caller: 'Probe' })
+      return <span>{current}</span>
+    }
+    const warn = spyOn(console, 'warn').mockImplementation(() => {})
+    const nodeEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+
+    try {
+      const { container, rerender } = render(<Probe />)
+      rerender(<Probe value="controlled" />)
+
+      expect([container.textContent, warn.mock.calls.length]).toEqual(['controlled', 0])
+    } finally {
+      process.env.NODE_ENV = nodeEnv
+      warn.mockRestore()
+    }
+  })
+})
+
+describe('useLayoutEffect on the server', () => {
+  it("is a no-op rather than React's, which React 18 warns about there", async () => {
+    const serverCopy = '../use-layout-effect.tsx?server'
+    const page = globalThis.document
+    Reflect.deleteProperty(globalThis, 'document')
+    const server: typeof import('../use-layout-effect') = await import(serverCopy).finally(() => {
+      globalThis.document = page
+    })
+    const effect = mock()
+    function Probe() {
+      server.useLayoutEffect(effect)
+      return <span>server</span>
+    }
+
+    expect([
+      renderToString(<Probe />),
+      server.useLayoutEffect === React.useLayoutEffect,
+      effect.mock.calls.length,
+    ]).toEqual(['<span>server</span>', false, 0])
   })
 })

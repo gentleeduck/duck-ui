@@ -10,7 +10,8 @@ function useEscapeKeydown(
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      // An Escape during an IME composition cancels the composition, so it belongs to the input method.
+      if (event.key === 'Escape' && !event.isComposing && event.keyCode !== 229) {
         onEscapeKeyDown(event)
       }
     }

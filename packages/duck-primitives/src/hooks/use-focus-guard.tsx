@@ -1,6 +1,7 @@
 import * as React from 'react'
 
 let count = 0
+let guards: [HTMLSpanElement, HTMLSpanElement] | undefined
 
 /** Component wrapper for `useFocusGuards`. */
 function FocusGuards(props: { children?: React.ReactNode }) {
@@ -15,18 +16,18 @@ function FocusGuards(props: { children?: React.ReactNode }) {
  */
 function useFocusGuards() {
   React.useEffect(() => {
-    const edgeGuards = document.querySelectorAll('[data-slot="focus-guard"]')
-    document.body.insertAdjacentElement('afterbegin', edgeGuards[0] ?? createFocusGuard())
-    document.body.insertAdjacentElement('beforeend', edgeGuards[1] ?? createFocusGuard())
+    guards ??= [createFocusGuard(), createFocusGuard()]
+    const [start, end] = guards
+    // Moving a guard that is already in place still dirties layout for every overlay that measures after it.
+    if (document.body.firstElementChild !== start) document.body.insertAdjacentElement('afterbegin', start)
+    if (document.body.lastElementChild !== end) document.body.insertAdjacentElement('beforeend', end)
     count++
 
     return () => {
-      if (count === 1) {
-        for (const node of document.querySelectorAll('[data-slot="focus-guard"]')) {
-          node.remove()
-        }
-      }
-      count--
+      if (--count) return
+      start.remove()
+      end.remove()
+      guards = undefined
     }
   }, [])
 }

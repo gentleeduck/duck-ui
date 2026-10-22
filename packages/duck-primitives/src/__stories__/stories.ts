@@ -1,4 +1,5 @@
 import type * as React from 'react'
+import * as hooks from '../hooks/__stories__/hooks.stories'
 
 type StoryModule = { default: { title: string } } & Record<string, unknown>
 
@@ -11,7 +12,7 @@ const kebab = (value: string) =>
 
 export const stories = new Map<string, React.ComponentType>()
 
-for (const module of [] as StoryModule[]) {
+for (const module of [hooks] as StoryModule[]) {
   for (const [name, story] of Object.entries(module)) {
     if (name === 'default' || typeof story !== 'function') continue
     stories.set(

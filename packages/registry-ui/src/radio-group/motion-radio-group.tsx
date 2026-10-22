@@ -17,28 +17,27 @@ const MotionRadioGroupItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item> & {
     indicator?: React.ReactElement
     checkedIndicator?: React.ReactElement
-    textValue?: string
     index?: number
   }
->(({ className, indicator, checkedIndicator, children, textValue, index = 0, onClick, ...props }, ref) => {
+>(({ className, indicator, checkedIndicator, children, textValue, index = 0, onClick, id, style, ...props }, ref) => {
   const content = useMotionPreset(scaleIn, { transition: springBouncy, delay: index * 0.05 })
   const [bounce, setBounce] = React.useState(false)
   const { indicatorReady, checkedIndicatorReady, inputStyle, SvgIndicator } = useSvgIndicator({
     checkedIndicator,
     indicator,
   })
-  const itemId = React.useId()
+  const generatedId = React.useId()
+  const itemId = id ?? generatedId
   const resolvedTextValue =
     textValue ?? (typeof children === 'string' || typeof children === 'number' ? String(children) : undefined)
 
-  const indicatorStateClass =
-    indicatorReady && checkedIndicatorReady
-      ? 'after:mask-[var(--svg-off)] data-[state=checked]:after:mask-[var(--svg-on)]'
-      : indicatorReady
-        ? 'after:mask-[var(--svg-off)]'
-        : checkedIndicatorReady
-          ? 'data-[state=checked]:after:mask-[var(--svg-on)]'
-          : ''
+  const indicatorStateClass = cn(
+    indicatorReady &&
+      'after:mask-[var(--svg-off)] after:scale-100 after:bg-muted-foreground after:opacity-100 data-[state=checked]:after:bg-current',
+    checkedIndicatorReady
+      ? 'data-[state=checked]:after:mask-[var(--svg-on)]'
+      : indicatorReady && 'data-[state=checked]:after:mask-none',
+  )
 
   return (
     <LazyMotion features={loadDomAnimation}>
@@ -46,7 +45,7 @@ const MotionRadioGroupItem = React.forwardRef<
         initial={content.initial}
         animate={content.animate}
         transition={content.transition}
-        className="flex items-center gap-2">
+        className="group/radio flex items-center gap-2">
         <m.div
           animate={bounce ? checkerBounce : {}}
           transition={contentTransition}
@@ -68,10 +67,9 @@ const MotionRadioGroupItem = React.forwardRef<
               '[&:before,&:after]:transition-[opacity,transform,translate,scale,rotate] [&:before,&:after]:duration-[inherit] [&:before,&:after]:ease-[inherit]',
               className,
             )}
-            data-slot="radio-group-item"
             ref={ref}
-            style={inputStyle}
-            data-text-value={resolvedTextValue}
+            style={{ ...style, ...inputStyle }}
+            textValue={resolvedTextValue}
             onClick={(e) => {
               setBounce(true)
               onClick?.(e)
@@ -79,12 +77,15 @@ const MotionRadioGroupItem = React.forwardRef<
             {...props}
           />
         </m.div>
-        <SvgIndicator className="sr-only" />
-        {children && (
-          <label className="cursor-pointer font-normal text-base" data-slot="radio-label" htmlFor={itemId}>
+        <SvgIndicator />
+        {children || children === 0 ? (
+          <label
+            className="cursor-pointer font-normal text-base group-has-disabled/radio:cursor-not-allowed group-has-disabled/radio:opacity-70"
+            data-slot="radio-label"
+            htmlFor={itemId}>
             {children}
           </label>
-        )}
+        ) : null}
       </m.div>
     </LazyMotion>
   )

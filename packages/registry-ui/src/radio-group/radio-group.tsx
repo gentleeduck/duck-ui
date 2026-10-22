@@ -9,14 +9,7 @@ const RadioGroup = React.forwardRef<
   React.ComponentRef<typeof RadioGroupPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root>
 >(({ className, ...props }, ref) => {
-  return (
-    <RadioGroupPrimitive.Root
-      className={cn('flex flex-col gap-2', className)}
-      data-slot="radio-group"
-      ref={ref}
-      {...props}
-    />
-  )
+  return <RadioGroupPrimitive.Root className={cn('flex flex-col gap-2', className)} ref={ref} {...props} />
 })
 RadioGroup.displayName = 'RadioGroup'
 
@@ -25,29 +18,27 @@ const RadioGroupItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item> & {
     indicator?: React.ReactElement
     checkedIndicator?: React.ReactElement
-    textValue?: string
   }
->(({ className, indicator, checkedIndicator, children, textValue, ...props }, ref) => {
+>(({ className, indicator, checkedIndicator, children, textValue, id, style, ...props }, ref) => {
   const { indicatorReady, checkedIndicatorReady, inputStyle, SvgIndicator } = useSvgIndicator({
     checkedIndicator,
     indicator,
   })
-  const itemRef = React.useRef<HTMLButtonElement>(null)
-  const itemId = React.useId()
+  const generatedId = React.useId()
+  const itemId = id ?? generatedId
   const resolvedTextValue =
     textValue ?? (typeof children === 'string' || typeof children === 'number' ? String(children) : undefined)
 
-  const indicatorStateClass =
-    indicatorReady && checkedIndicatorReady
-      ? 'after:mask-[var(--svg-off)] data-[state=checked]:after:mask-[var(--svg-on)]'
-      : indicatorReady
-        ? 'after:mask-[var(--svg-off)]'
-        : checkedIndicatorReady
-          ? 'data-[state=checked]:after:mask-[var(--svg-on)]'
-          : ''
+  const indicatorStateClass = cn(
+    indicatorReady &&
+      'after:mask-[var(--svg-off)] after:scale-100 after:bg-muted-foreground after:opacity-100 data-[state=checked]:after:bg-current',
+    checkedIndicatorReady
+      ? 'data-[state=checked]:after:mask-[var(--svg-on)]'
+      : indicatorReady && 'data-[state=checked]:after:mask-none',
+  )
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="group/radio flex items-center gap-2">
       <RadioGroupPrimitive.Item
         id={itemId}
         className={cn(
@@ -65,22 +56,20 @@ const RadioGroupItem = React.forwardRef<
           '[&:before,&:after]:transition-[opacity,transform,translate,scale,rotate] [&:before,&:after]:duration-[inherit] [&:before,&:after]:ease-[inherit]',
           className,
         )}
-        data-slot="radio-group-item"
-        ref={(node) => {
-          itemRef.current = node
-          if (typeof ref === 'function') ref(node)
-          else if (ref) (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node
-        }}
-        style={inputStyle}
-        data-text-value={resolvedTextValue}
+        ref={ref}
+        style={{ ...style, ...inputStyle }}
+        textValue={resolvedTextValue}
         {...props}
       />
-      <SvgIndicator className="sr-only" />
-      {children && (
-        <label className="cursor-pointer font-normal text-base" data-slot="radio-label" htmlFor={itemId}>
+      <SvgIndicator />
+      {children || children === 0 ? (
+        <label
+          className="cursor-pointer font-normal text-base group-has-disabled/radio:cursor-not-allowed group-has-disabled/radio:opacity-70"
+          data-slot="radio-label"
+          htmlFor={itemId}>
           {children}
         </label>
-      )}
+      ) : null}
     </div>
   )
 })

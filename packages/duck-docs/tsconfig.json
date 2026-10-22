@@ -4,8 +4,7 @@
     "noEmit": true,
     "outDir": "./dist",
     "paths": {
-      "@duck-docs/*": ["./src/*"],
-      "@gentleduck/registry-ui/*": ["../registry-ui/src/*"]
+      "@duck-docs/*": ["./src/*"]
     },
     "rootDir": "../..",
     "types": ["node"]

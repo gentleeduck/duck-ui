@@ -1,0 +1,8 @@
+.page {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  padding: 24px;
+  font-family: apple-system, BlinkMacSystemFont, helvetica, arial, sans-serif;
+  font-size: 13px;
+}

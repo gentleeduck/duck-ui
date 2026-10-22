@@ -1,7 +1,6 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { NextConfig } from 'next'
-import { PHASE_DEVELOPMENT_SERVER } from 'next/constants'
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url))
 const monorepoRoot = path.join(currentDir, '../..')
@@ -271,18 +270,4 @@ const nextConfig: NextConfig = {
   ],
 }
 
-// Dev server budget is 2 GB total: 1 GB for Turbopack's native (Rust) side
-// here, 1 GB of V8 heap via --max-old-space-size in the `dev` script.
-// Builds keep the default so the Netlify build isn't throttled.
-const DEV_TURBOPACK_MEMORY_LIMIT = 1024 * 1024 * 1024
-
-export default function config(phase: string): NextConfig {
-  if (phase !== PHASE_DEVELOPMENT_SERVER) return nextConfig
-  return {
-    ...nextConfig,
-    experimental: {
-      ...nextConfig.experimental,
-      turbopackMemoryLimit: DEV_TURBOPACK_MEMORY_LIMIT,
-    },
-  }
-}
+export default nextConfig

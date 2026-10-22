@@ -13,17 +13,25 @@ const DirectionProvider: React.FC<IDirection.IProviderProps> = (props) => {
   return (
     <DirectionContext.Provider value={dir}>
       {/* `display: contents` keeps the wrapper out of layout; `dir` still flows to descendants. */}
-      <div data-slot="direction" dir={dir} style={{ direction: dir, display: 'contents' }}>
+      <div data-slot="direction" dir={dir} style={{ display: 'contents' }}>
         {children}
       </div>
     </DirectionContext.Provider>
   )
 }
 
+const documentDirListeners = new Set<() => void>()
+let documentDirObserver: MutationObserver | undefined
+
+// One observer for every mounted primitive: one each made unmounting a page of toggles 1.8x slower than Radix.
+// Observing again is a no-op on the same root and picks up a replaced one.
 function subscribeToDocumentDir(onChange: () => void) {
-  const observer = new MutationObserver(onChange)
-  observer.observe(document.documentElement, { attributeFilter: ['dir'], attributes: true })
-  return () => observer.disconnect()
+  documentDirListeners.add(onChange)
+  documentDirObserver ??= new MutationObserver(() => {
+    for (const listener of documentDirListeners) listener()
+  })
+  documentDirObserver.observe(document.documentElement, { attributeFilter: ['dir'], attributes: true })
+  return () => documentDirListeners.delete(onChange)
 }
 
 function getDocumentDir(): IDirection.Kind {

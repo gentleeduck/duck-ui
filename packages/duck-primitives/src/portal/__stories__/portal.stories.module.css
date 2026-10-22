@@ -1,0 +1,21 @@
+.page {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  font-family: apple-system, BlinkMacSystemFont, helvetica, arial, sans-serif;
+  font-size: 13px;
+}
+
+.clip {
+  position: relative;
+  width: 200px;
+  height: 40px;
+  overflow: hidden;
+  border: 1px solid #999;
+}
+
+.box {
+  min-height: 24px;
+  padding: 8px;
+  border: 1px dashed #999;
+}

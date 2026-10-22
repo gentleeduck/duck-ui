@@ -1,126 +1,90 @@
 import * as React from 'react'
 import { useLayoutEffect } from '../hooks/use-layout-effect'
-import { useStateMachine } from '../hooks/use-state-machine'
 import { getComponentRef } from '../libs/get-component-ref'
 
 function usePresence(present: boolean) {
-  const [node, setNode] = React.useState<HTMLElement>()
-  const stylesRef = React.useRef<CSSStyleDeclaration>({} as CSSStyleDeclaration)
-  const prevPresentRef = React.useRef(present)
-  const prevAnimationNameRef = React.useRef<string>('none')
-  const initialState = present ? 'mounted' : 'unmounted'
-  const [state, send] = useStateMachine(initialState, {
-    mounted: {
-      UNMOUNT: 'unmounted',
-      ANIMATION_OUT: 'unmountSuspended',
-    },
-    unmountSuspended: {
-      MOUNT: 'mounted',
-      ANIMATION_END: 'unmounted',
-    },
-    unmounted: {
-      MOUNT: 'mounted',
-    },
+  const [state, setState] = React.useState<'mounted' | 'exiting' | 'unmounted'>(present ? 'mounted' : 'unmounted')
+  // Set while rendering, so opening renders the child in this pass rather than in two more commits.
+  if (present && state !== 'mounted') setState('mounted')
+  const nodeRef = React.useRef<HTMLElement | null>(null)
+  // Learnt as an animation starts, since reading it as the content mounts recalculates the page's styles in the commit.
+  const openAnimationRef = React.useRef('none')
+  const exitAnimationsRef = React.useRef<Animation[]>([])
+  const [handleAnimationStart] = React.useState(() => (event: AnimationEvent) => {
+    const node = event.currentTarget as HTMLElement
+    if (event.target === node) openAnimationRef.current = getAnimationName(node)
   })
 
-  React.useEffect(() => {
-    const currentAnimationName = getAnimationName(stylesRef.current)
-    prevAnimationNameRef.current = state === 'mounted' ? currentAnimationName : 'none'
+  useLayoutEffect(() => {
+    if (present) {
+      openAnimationRef.current = 'none'
+      return
+    }
+    if (state !== 'mounted') return
+    const node = nodeRef.current
+    // No `animationrun` event exists, and `animationstart` waits for animation-delay; an exit animation is told
+    // from the one that ran while open by its computed name.
+    const exits = node && getAnimationName(node) !== openAnimationRef.current
+    exitAnimationsRef.current = exits ? exitAnimations(node) : []
+    setState(exitAnimationsRef.current.length ? 'exiting' : 'unmounted')
+  }, [present, state])
+
+  useLayoutEffect(() => {
+    const node = nodeRef.current
+    if (state !== 'exiting' || !node) return
+    let exiting = true
+    const ownerWindow = node.ownerDocument.defaultView ?? window
+    // `finished` settles on an end or a cancel, and a cancel before the animation started sends no `animationcancel`.
+    Promise.allSettled(exitAnimationsRef.current.map((animation) => animation.finished)).then(() => {
+      if (!exiting) return
+      setState('unmounted')
+      // A forwards fill holds the last frame when React commits the unmount a frame late.
+      const fillMode = node.style.animationFillMode
+      node.style.animationFillMode = 'forwards'
+      ownerWindow.setTimeout(() => {
+        if (node.style.animationFillMode === 'forwards') node.style.animationFillMode = fillMode
+      })
+    })
+    return () => {
+      exiting = false
+    }
   }, [state])
 
-  useLayoutEffect(() => {
-    const styles = stylesRef.current
-    const wasPresent = prevPresentRef.current
-    const hasPresentChanged = wasPresent !== present
-
-    if (hasPresentChanged) {
-      const prevAnimationName = prevAnimationNameRef.current
-      const currentAnimationName = getAnimationName(styles)
-
-      if (present) {
-        // Cancel any in-flight exit animation; otherwise its animationend
-        // would fire and accidentally unmount the re-opened content.
-        if (node) {
-          ;(node as HTMLElement).style.animationName = 'none'
-          void (node as HTMLElement).offsetWidth
-          ;(node as HTMLElement).style.animationName = ''
-        }
-        send('MOUNT')
-      } else if (currentAnimationName === 'none' || styles?.display === 'none') {
-        // No exit animation, or hidden -> unmount immediately
-        send('UNMOUNT')
-      } else {
-        // No `animationrun` event exists, and `animationstart` waits for animation-delay;
-        // detect an exit animation by diffing computed animation-name instead.
-        const isAnimating = prevAnimationName !== currentAnimationName
-
-        if (wasPresent && isAnimating) {
-          send('ANIMATION_OUT')
-        } else {
-          send('UNMOUNT')
-        }
-      }
-
-      prevPresentRef.current = present
-    }
-  }, [present, send])
-
-  useLayoutEffect(() => {
-    if (node) {
-      let timeoutId: number
-      const ownerWindow = node.ownerDocument.defaultView ?? window
-
-      // ANIMATION_OUT interrupting ANIMATION_IN fires animationcancel for the in-anim
-      // AFTER we've entered unmountSuspended; only treat events for the active animation as END.
-      const handleAnimationEnd = (event: AnimationEvent) => {
-        const currentAnimationName = getAnimationName(stylesRef.current)
-        const isCurrentAnimation = currentAnimationName.includes(event.animationName)
-        if (event.target === node && isCurrentAnimation) {
-          // forwards fill-mode prevents content-flash when React 18 concurrency applies the
-          // state update a frame late
-          send('ANIMATION_END')
-          if (!prevPresentRef.current) {
-            const currentFillMode = node.style.animationFillMode
-            node.style.animationFillMode = 'forwards'
-            timeoutId = ownerWindow.setTimeout(() => {
-              if (node.style.animationFillMode === 'forwards') {
-                node.style.animationFillMode = currentFillMode
-              }
-            })
-          }
-        }
-      }
-      const handleAnimationStart = (event: AnimationEvent) => {
-        if (event.target === node) {
-          prevAnimationNameRef.current = getAnimationName(stylesRef.current)
-        }
-      }
-      node.addEventListener('animationstart', handleAnimationStart)
-      node.addEventListener('animationcancel', handleAnimationEnd)
-      node.addEventListener('animationend', handleAnimationEnd)
-      return () => {
-        ownerWindow.clearTimeout(timeoutId)
-        node.removeEventListener('animationstart', handleAnimationStart)
-        node.removeEventListener('animationcancel', handleAnimationEnd)
-        node.removeEventListener('animationend', handleAnimationEnd)
-      }
-    } else {
-      // node removed before animation completed
-      send('ANIMATION_END')
-    }
-  }, [node, send])
-
   return {
-    isPresent: ['mounted', 'unmountSuspended'].includes(state),
-    ref: React.useCallback((node: HTMLElement) => {
-      if (node) stylesRef.current = getComputedStyle(node)
-      setNode(node)
-    }, []),
+    isPresent: present || state !== 'unmounted',
+    closing: !present && state === 'mounted',
+    ref: React.useCallback(
+      (node: HTMLElement | null) => {
+        nodeRef.current?.removeEventListener('animationstart', handleAnimationStart)
+        nodeRef.current = node
+        node?.addEventListener('animationstart', handleAnimationStart)
+      },
+      [handleAnimationStart],
+    ),
   }
 }
 
-function getAnimationName(styles?: CSSStyleDeclaration) {
-  return styles?.animationName || 'none'
+function getAnimationName(node: HTMLElement) {
+  return getComputedStyle(node).animationName || 'none'
 }
 
-export { getAnimationName, getComponentRef, usePresence }
+// The CSS animations on the node still to end. jsdom has no `getAnimations`, so there content leaves at once.
+function exitAnimations(node: HTMLElement) {
+  return (node.getAnimations?.() ?? []).filter(
+    (animation) => 'animationName' in animation && animation.playState !== 'finished',
+  )
+}
+
+// True for the one commit between `present` turning false and Presence unmounting the child or starting its exit.
+const PresenceClosingContext = React.createContext(false)
+
+/**
+ * `open`, held until the content has left the page or started its exit. Releasing a scroll lock or the body's
+ * pointer events just before the content is removed makes the removal recalculate the style of every element on
+ * the page: 3.1ms against 1.2ms per close with 2,000 of them.
+ */
+function useHeldOpen(open: boolean) {
+  return React.useContext(PresenceClosingContext) || open
+}
+
+export { getComponentRef, PresenceClosingContext, useHeldOpen, usePresence }

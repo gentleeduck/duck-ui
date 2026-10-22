@@ -8,14 +8,19 @@ export const ALIGN_OPTIONS = ['start', 'center', 'end'] as const
 const POPPER_NAME = 'Popper'
 export const [createPopperContext, createPopperScope] = createContextScope(POPPER_NAME)
 
-export const [PopperProvider, usePopperContext] = createPopperContext<IPopper.IContext>(POPPER_NAME)
+const [PopperProvider, usePopperContext] = createPopperContext<IPopper.IContext>(POPPER_NAME)
+
+export { usePopperContext }
 
 export function Popper(props: IPopper.IScoped<IPopper.IProps>) {
-  const { __scopePopper, children } = props
+  const { __scopePopper, anchor: anchorProp, children } = props
   const [anchor, setAnchor] = React.useState<IPopper.IContext['anchor']>(null)
 
   return (
-    <PopperProvider scope={__scopePopper} anchor={anchor} onAnchorChange={setAnchor}>
+    <PopperProvider
+      scope={__scopePopper}
+      anchor={anchorProp === undefined ? anchor : anchorProp}
+      onAnchorChange={setAnchor}>
       {children}
     </PopperProvider>
   )

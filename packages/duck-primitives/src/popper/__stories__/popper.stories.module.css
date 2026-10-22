@@ -1,0 +1,85 @@
+/* From Radix UI primitives, apps/storybook/stories/popper.stories.module.css. MIT, see ../../__tests__/radix/LICENSE. */
+
+.page {
+  display: grid;
+  gap: 12px;
+  padding: 40px;
+  justify-items: start;
+}
+
+.boundary {
+  position: relative;
+  width: 360px;
+  height: 240px;
+  outline: 1px dashed gray;
+}
+
+.content {
+  transform-origin: var(--gentleduck-popper-transform-origin);
+  background-color: var(--color-gray100);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.contentLarge {
+  width: 160px;
+  height: 100px;
+  box-sizing: border-box;
+}
+
+.contentFitted {
+  box-sizing: border-box;
+  width: var(--gentleduck-popper-anchor-width);
+  max-height: var(--gentleduck-popper-available-height);
+  overflow: auto;
+}
+
+.anchor {
+  background-color: hotpink;
+}
+
+.anchorPlaced {
+  margin: 80px 0;
+  margin-inline-start: 200px;
+  padding: 8px 16px;
+}
+
+.anchorBox {
+  width: 80px;
+  height: 32px;
+}
+
+.anchorSmall {
+  width: 24px;
+  height: 24px;
+}
+
+.anchorWide {
+  width: 320px;
+  height: 32px;
+}
+
+.anchorFancy {
+  &[data-popper-side="top"] {
+    background-color: tomato;
+  }
+  &[data-popper-side="right"] {
+    background-color: dodgerblue;
+  }
+  &[data-popper-side="bottom"] {
+    background-color: lightgreen;
+  }
+  &[data-popper-side="left"] {
+    background-color: goldenrod;
+  }
+  &[data-popper-align="start"] {
+    border-inline-start: 4px solid black;
+  }
+  &[data-popper-align="end"] {
+    border-inline-end: 4px solid black;
+  }
+}
+
+.arrow {
+  fill: var(--color-gray100);
+}

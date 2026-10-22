@@ -12,6 +12,19 @@ const OPPOSITE_SIDE: Record<IPopper.Side, IPopper.Side> = {
   left: 'right',
 }
 
+const TRANSFORM_ORIGIN: Partial<Record<IPopper.Side, string>> = {
+  right: '0 0',
+  bottom: 'center 0',
+  left: '100% 0',
+}
+
+const TRANSFORM: Record<IPopper.Side, string> = {
+  top: 'translateY(100%)',
+  right: 'translateY(50%) rotate(90deg) translateX(-50%)',
+  bottom: 'rotate(180deg)',
+  left: 'translateY(50%) rotate(-90deg) translateX(50%)',
+}
+
 type PopperArrowElement = React.ComponentRef<typeof Arrow>
 
 export const PopperArrow = React.forwardRef<PopperArrowElement, IPopper.IArrowProps>(
@@ -29,18 +42,8 @@ export const PopperArrow = React.forwardRef<PopperArrowElement, IPopper.IArrowPr
           left: contentContext.arrowX,
           top: contentContext.arrowY,
           [baseSide]: 0,
-          transformOrigin: {
-            top: '',
-            right: '0 0',
-            bottom: 'center 0',
-            left: '100% 0',
-          }[contentContext.placedSide],
-          transform: {
-            top: 'translateY(100%)',
-            right: 'translateY(50%) rotate(90deg) translateX(-50%)',
-            bottom: 'rotate(180deg)',
-            left: 'translateY(50%) rotate(-90deg) translateX(50%)',
-          }[contentContext.placedSide],
+          transformOrigin: TRANSFORM_ORIGIN[contentContext.placedSide],
+          transform: TRANSFORM[contentContext.placedSide],
           visibility: contentContext.shouldHideArrow ? 'hidden' : undefined,
         }}>
         <Arrow {...arrowProps} ref={forwardedRef} style={{ ...arrowProps.style, display: 'block' }} />

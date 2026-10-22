@@ -20,7 +20,10 @@ export const PopperAnchor = React.forwardRef<PopperAnchorElement, IPopper.IAncho
       context.onAnchorChange(virtualRef?.current ?? ref.current)
     })
 
-    return virtualRef ? null : <Primitive.div data-slot="popper-anchor" {...anchorProps} ref={composedRefs} />
+    if (virtualRef) return null
+    // An asChild anchor's element belongs to the trigger or component it is given, which names its own slot.
+    const slot = anchorProps.asChild ? {} : { 'data-slot': 'popper-anchor' }
+    return <Primitive.div {...slot} {...anchorProps} ref={composedRefs} />
   },
 )
 

@@ -132,7 +132,7 @@ const renderPages = (items: IPagination.IRangeItem[]) =>
   ))
 
 /** The root's pages, each in an item, with the ellipsis the same size as a page so the controls never shift. */
-const PaginationPages = ({ children = renderPages }: React.ComponentProps<typeof PaginationPrimitive.Pages>) => (
+const PaginationPages = ({ children = renderPages }: IPagination.IPagesProps) => (
   <PaginationPrimitive.Pages>{children}</PaginationPrimitive.Pages>
 )
 

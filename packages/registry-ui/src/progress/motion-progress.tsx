@@ -28,7 +28,7 @@ const MOTION_PROGRESS_SHIMMER_TRANSITION = {
 
 const MotionProgress = React.forwardRef<
   React.ComponentRef<typeof ProgressPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>
+  Omit<React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>, 'asChild'>
 >(({ className, value, min, max, ...props }, ref) => {
   const percent = getProgressPercent(value, max, min)
   const barAnimate = React.useMemo(

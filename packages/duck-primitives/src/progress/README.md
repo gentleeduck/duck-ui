@@ -46,7 +46,7 @@ Each test was proven by changing the code and watching a test fail.
 |---|--:|---|
 | Unit | 69 | `progress-libs.test.ts` 22, `progress.radix.test.tsx` 4, `progress.test.tsx` 43 |
 | End to end | 9 | `progress.e2e.ts` 9 |
-| registry-ui | 12 | `progress.test.tsx` 12 |
+| registry-ui | 13 | `progress.test.tsx` 13 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -195,7 +195,8 @@ Each test was proven by changing the code and watching a test fail.
 ## registry-ui
 
 - `Progress` and `MotionProgress` are built on the primitive's `Root` and `Indicator`. They announce
-  `aria-valuetext`, expose `data-state`, and take `min`, `max` and `getValueLabel`.
+  `aria-valuetext`, expose `data-state`, and take `min`, `max` and `getValueLabel`. They take no `asChild`,
+  since their indicator is their only child.
 - `MotionProgress` animates the primitive's `Indicator`, so its fill carries
   `data-slot="progress-indicator"` and `data-state`, where it was a bare `div`.
 - `Progress` and `MotionProgress` write no `dir` of their own, so they fill from the side the element around

@@ -52,6 +52,10 @@ describe('registry-ui progress', () => {
     expect(renderToStaticMarkup(<Progress value={30} min={20} max={70} />)).toContain('width:20%')
   })
 
+  test('fills against the max the primitive falls back to past a min that reaches 100', () => {
+    expect(renderToStaticMarkup(<Progress value={100} min={100} />)).toContain('width:0%')
+  })
+
   test('reads a value the progress bar refuses as indeterminate, as the primitive does', () => {
     for (const value of [150, -10, Number.NaN]) {
       const html = renderToStaticMarkup(<Progress value={value} />)

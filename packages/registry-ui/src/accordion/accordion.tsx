@@ -16,11 +16,7 @@ export type AccordionProps = IAccordionProps
 const Accordion = React.forwardRef<HTMLDivElement, IAccordionProps>(
   ({ className, renderOnce = false, ...props }, ref) => (
     <AccordionRenderOnceContext.Provider value={renderOnce}>
-      <AccordionPrimitive.Root
-        ref={ref}
-        className={cn('min-w-100 font-sans not-italic [interpolate-size:allow-keywords]', className)}
-        {...props}
-      />
+      <AccordionPrimitive.Root ref={ref} className={cn('min-w-100 font-sans not-italic', className)} {...props} />
     </AccordionRenderOnceContext.Provider>
   ),
 )
@@ -44,54 +40,45 @@ const AccordionTrigger = React.forwardRef<
   }
 >(({ className, children, icon, ...props }, ref) => {
   return (
-    <AccordionPrimitive.Trigger
-      ref={ref}
-      className={cn(
-        'group/accordion-trigger flex w-full cursor-pointer select-none items-center justify-between py-4 text-start font-medium font-sans text-base not-italic ring-offset-background transition-[color,background-color,border-color,box-shadow] hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-        className,
-      )}
-      {...props}>
-      <span>{children}</span>
-      <span
+    <AccordionPrimitive.Header className="flex">
+      <AccordionPrimitive.Trigger
+        ref={ref}
         className={cn(
-          '[&>svg:not([class*=size-])]:size-4 [&>svg]:shrink-0 [&>svg]:transition-transform [&>svg]:duration-200 [&>svg]:ease-(--gentleduck-motion-ease) group-data-[state=open]/accordion-trigger:[&>svg]:rotate-180',
+          'group/accordion-trigger flex w-full cursor-pointer select-none items-center justify-between py-4 text-start font-medium font-sans text-base not-italic ring-offset-background transition-[color,background-color,border-color,box-shadow] hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          className,
         )}
-        data-slot="accordion-icon">
-        {icon ? icon : <ChevronDown aria-hidden="true" />}
-      </span>
-    </AccordionPrimitive.Trigger>
+        {...props}>
+        <span>{children}</span>
+        <AccordionPrimitive.Indicator
+          className="[&>svg:not([class*=size-])]:size-4 [&>svg]:shrink-0 [&>svg]:transition-transform [&>svg]:duration-200 [&>svg]:ease-(--gentleduck-motion-ease) data-[state=open]:[&>svg]:rotate-180"
+          data-slot="accordion-icon">
+          {icon ?? <ChevronDown />}
+        </AccordionPrimitive.Indicator>
+      </AccordionPrimitive.Trigger>
+    </AccordionPrimitive.Header>
   )
 })
 AccordionTrigger.displayName = 'AccordionTrigger'
 
 const AccordionContent = React.forwardRef<
   HTMLDivElement,
-  Omit<React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>, 'asChild' | 'forceMount'> & {
-    rerender?: boolean
-  }
->(({ className, children, rerender: _rerender = false, ...props }, ref) => {
+  Omit<React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>, 'asChild' | 'forceMount' | 'hiddenUntilFound'>
+>(({ className, children, ...props }, ref) => {
   const renderOnce = React.useContext(AccordionRenderOnceContext)
   const { open } = AccordionPrimitive.useAccordionItemContext('AccordionContent', undefined)
   const [hasOpened, setHasOpened] = React.useState(open)
-
-  React.useEffect(() => {
-    if (open) setHasOpened(true)
-  }, [open])
-
-  if (renderOnce && !hasOpened) return null
+  if (open && !hasOpened) setHasOpened(true)
 
   return (
     <AccordionPrimitive.Content
       ref={ref}
-      forceMount
-      inert={!open || undefined}
+      hiddenUntilFound={!renderOnce || hasOpened}
       className={cn(
-        'block overflow-hidden font-sans text-base not-italic',
-        'data-[state=closed]:h-0 data-[state=open]:h-auto',
-        'data-[state=closed]:opacity-0 data-[state=open]:opacity-100',
-        'data-[state=closed]:pointer-events-none',
-        'transition-[height,opacity] duration-[200ms,150ms] ease-(--gentleduck-motion-ease)',
-        'motion-reduce:transition-none',
+        // tw-animate-css's accordion keyframes read the Radix name for the height.
+        'overflow-hidden font-sans text-base not-italic [--radix-accordion-content-height:var(--gentleduck-accordion-content-height)]',
+        'data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down',
+        'animation-duration-200 data-[state=closed]:animation-duration-150 ease-(--gentleduck-motion-ease)',
+        'motion-reduce:animate-none',
         className,
       )}
       {...props}>

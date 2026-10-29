@@ -43,20 +43,10 @@ MotionAccordionItem.displayName = 'MotionAccordionItem'
 
 const MotionAccordion = React.forwardRef<HTMLDivElement, IAccordionProps>(({ children, ...props }, ref) => {
   let index = 0
-  const total = React.Children.toArray(children).filter(
-    (child) => React.isValidElement(child) && child.type === MotionAccordionItem,
-  ).length
-
-  const injectIndex = (child: React.ReactNode): React.ReactNode => {
-    if (React.isValidElement(child) && child.type === MotionAccordionItem) {
-      return React.cloneElement(child as React.ReactElement<{ index?: number; total?: number }>, {
-        index: index++,
-        total,
-      })
-    }
-
-    return child
-  }
+  const injectIndex = (child: React.ReactNode): React.ReactNode =>
+    React.isValidElement<{ index?: number }>(child) && child.type === MotionAccordionItem
+      ? React.cloneElement(child, { index: index++ })
+      : child
 
   return (
     <Accordion ref={ref} {...props}>
@@ -77,29 +67,33 @@ const MotionAccordionTrigger = React.forwardRef<
 
   return (
     <LazyMotion features={loadDomAnimation}>
-      <AccordionPrimitive.Trigger asChild {...props}>
-        <m.button
-          ref={ref}
-          className={cn(
-            'flex w-full cursor-pointer select-none items-center justify-between py-4 font-medium font-sans text-base not-italic ring-offset-background transition-[color,background-color,border-color,box-shadow] hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-            className,
-          )}>
-          <m.span
-            initial={content.initial}
-            animate={content.animate}
-            transition={content.transition}
-            className="flex-1 text-start">
-            {children}
-          </m.span>
-          <m.span
-            animate={{ rotate: open ? 180 : 0 }}
-            transition={tweenExpand}
-            className="ms-2 [&>svg:not([class*='size-'])]:size-4 [&>svg]:shrink-0"
-            data-slot="accordion-icon">
-            {icon ? icon : <ChevronDown aria-hidden="true" />}
-          </m.span>
-        </m.button>
-      </AccordionPrimitive.Trigger>
+      <AccordionPrimitive.Header className="flex">
+        <AccordionPrimitive.Trigger asChild {...props}>
+          <m.button
+            ref={ref}
+            className={cn(
+              'flex w-full cursor-pointer select-none items-center justify-between py-4 font-medium font-sans text-base not-italic ring-offset-background transition-[color,background-color,border-color,box-shadow] hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              className,
+            )}>
+            <m.span
+              initial={content.initial}
+              animate={content.animate}
+              transition={content.transition}
+              className="flex-1 text-start">
+              {children}
+            </m.span>
+            <AccordionPrimitive.Indicator asChild>
+              <m.span
+                animate={{ rotate: open ? 180 : 0 }}
+                transition={tweenExpand}
+                className="ms-2 [&>svg:not([class*='size-'])]:size-4 [&>svg]:shrink-0"
+                data-slot="accordion-icon">
+                {icon ?? <ChevronDown />}
+              </m.span>
+            </AccordionPrimitive.Indicator>
+          </m.button>
+        </AccordionPrimitive.Trigger>
+      </AccordionPrimitive.Header>
     </LazyMotion>
   )
 })
@@ -112,10 +106,7 @@ const MotionAccordionContent = React.forwardRef<
   const renderOnce = React.useContext(AccordionRenderOnceContext)
   const { open } = AccordionPrimitive.useAccordionItemContext('MotionAccordionContent', undefined)
   const [hasOpened, setHasOpened] = React.useState(open)
-
-  React.useEffect(() => {
-    if (open) setHasOpened(true)
-  }, [open])
+  if (open && !hasOpened) setHasOpened(true)
 
   if (renderOnce && !hasOpened) return null
 

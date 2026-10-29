@@ -50,7 +50,7 @@ export default function Demo() {
         </AccordionTrigger>
         <AccordionContent>
           Accordions are versatile and can be used in a variety of scenarios, such as:
-          <ul className="mt-2 ml-5 list-disc">
+          <ul className="ms-5 mt-2 list-disc">
             <li>FAQ sections to organize questions and answers.</li>
             <li>Collapsible menus or sub-menus in navigation systems.</li>
             <li>Displaying content-heavy sections in a compact way, such as product details or documentation.</li>

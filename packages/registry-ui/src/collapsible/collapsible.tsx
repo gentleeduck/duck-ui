@@ -1,18 +1,17 @@
 'use client'
 
 import { cn } from '@gentleduck/libs/cn'
-import { useDirection } from '@gentleduck/primitives/direction'
+import { useControllableState } from '@gentleduck/primitives/hooks/use-controllable-state'
 import { MountMinimal } from '@gentleduck/primitives/mount'
 import * as React from 'react'
 import { Button } from '../button'
-import { toDirection } from '../direction/direction.libs'
 
 const CollapsibleContext = React.createContext<{
   open: boolean
   onOpenChange: (open: boolean) => void
   wrapperRef: React.RefObject<HTMLDivElement | null>
   triggerRef: React.RefObject<HTMLButtonElement | null>
-  contentRef: React.RefObject<HTMLDivElement | null>
+  contentRef: React.RefObject<HTMLElement | null>
   contentId: string
 } | null>(null)
 
@@ -24,6 +23,17 @@ export function useCollapsible() {
   return context
 }
 
+function useForwardedRef<T>(own: React.RefObject<T | null>, ref: React.ForwardedRef<T>) {
+  return React.useCallback(
+    (node: T | null) => {
+      own.current = node
+      if (typeof ref === 'function') ref(node)
+      else if (ref) ref.current = node
+    },
+    [own, ref],
+  )
+}
+
 const Collapsible = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & {
@@ -31,59 +41,25 @@ const Collapsible = React.forwardRef<
     onOpenChange?: (open: boolean) => void
     defaultOpen?: boolean
   }
->(({ children, className, open: openProp, onOpenChange, defaultOpen, dir, ...props }, ref) => {
-  const direction = useDirection(toDirection(dir))
+>(({ children, className, open: openProp, onOpenChange, defaultOpen = false, ...props }, ref) => {
   const wrapperRef = React.useRef<HTMLDivElement>(null)
   const triggerRef = React.useRef<HTMLButtonElement>(null)
-  const contentRef = React.useRef<HTMLDivElement>(null)
-  const [open, setOpen] = React.useState(openProp ?? defaultOpen ?? false)
-
+  const contentRef = React.useRef<HTMLElement>(null)
+  const [open, setOpen] = useControllableState({ prop: openProp, defaultProp: defaultOpen, onChange: onOpenChange })
   const contentId = React.useId()
-
-  const handleOpenChange = React.useCallback(
-    (state: boolean) => {
-      setOpen(state)
-      onOpenChange?.(state)
-    },
-    [onOpenChange],
-  )
-
-  const handleClick = React.useCallback(() => {
-    const nextOpen = triggerRef.current?.getAttribute('data-open') === 'true'
-    onOpenChange?.(nextOpen)
-  }, [onOpenChange])
-
-  React.useEffect(() => {
-    if (open) {
-      handleOpenChange(open)
-    }
-  }, [open, handleOpenChange])
-
-  React.useEffect(() => {
-    const node = triggerRef.current
-    node?.addEventListener('click', handleClick)
-    return () => node?.removeEventListener('click', handleClick)
-  }, [handleClick])
+  const wrapperRefs = useForwardedRef(wrapperRef, ref)
 
   const ctxValue = React.useMemo(
-    () => ({ contentId, contentRef, onOpenChange: handleOpenChange, open, triggerRef, wrapperRef }),
-    [contentId, handleOpenChange, open],
+    () => ({ contentId, contentRef, onOpenChange: setOpen, open, triggerRef, wrapperRef }),
+    [contentId, setOpen, open],
   )
 
   return (
     <CollapsibleContext.Provider value={ctxValue}>
       <div
         className={cn('flex flex-col gap-2', className)}
-        dir={direction}
         data-slot="collapsible"
-        ref={(node) => {
-          ;(wrapperRef as React.RefObject<HTMLDivElement | null>).current = node
-          if (typeof ref === 'function') {
-            ref(node)
-          } else if (ref) {
-            ref.current = node
-          }
-        }}
+        ref={wrapperRefs}
         {...props}
         data-open={open}>
         {children}
@@ -96,6 +72,7 @@ Collapsible.displayName = 'Collapsible'
 const CollapsibleTrigger = React.forwardRef<HTMLButtonElement, React.ComponentPropsWithoutRef<typeof Button>>(
   ({ children, onClick, ...props }, ref) => {
     const { open, onOpenChange, triggerRef, contentId } = useCollapsible()
+    const triggerRefs = useForwardedRef(triggerRef, ref)
 
     return (
       <Button
@@ -103,18 +80,11 @@ const CollapsibleTrigger = React.forwardRef<HTMLButtonElement, React.ComponentPr
         aria-expanded={open}
         data-open={open}
         data-slot="collapsible-trigger"
-        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-          onOpenChange?.(!open)
-          onClick?.(e)
+        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+          onClick?.(event)
+          if (!event.defaultPrevented) onOpenChange(!open)
         }}
-        ref={(node) => {
-          ;(triggerRef as React.RefObject<HTMLButtonElement | null>).current = node
-          if (typeof ref === 'function') {
-            ref(node)
-          } else if (ref) {
-            ref.current = node
-          }
-        }}
+        ref={triggerRefs}
         variant="ghost"
         {...props}>
         {children}
@@ -129,6 +99,7 @@ const CollapsibleContent = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement> & { forceMount?: boolean }
 >(({ children, forceMount = false, className, ...props }, ref) => {
   const { open, contentRef, contentId } = useCollapsible()
+  const contentRefs = useForwardedRef(contentRef, ref)
 
   return (
     <section
@@ -142,16 +113,9 @@ const CollapsibleContent = React.forwardRef<
       inert={!open || undefined}
       data-slot="collapsible-content"
       id={contentId}
-      ref={(node) => {
-        ;(contentRef as React.RefObject<HTMLDivElement | null>).current = node as HTMLDivElement
-        if (typeof ref === 'function') {
-          ref(node)
-        } else if (ref) {
-          ref.current = node
-        }
-      }}
+      ref={contentRefs}
       {...props}>
-      <MountMinimal forceMount={forceMount} open={open} ref={contentRef as never}>
+      <MountMinimal forceMount={forceMount} open={open} ref={contentRef}>
         {children}
       </MountMinimal>
     </section>
@@ -159,4 +123,4 @@ const CollapsibleContent = React.forwardRef<
 })
 CollapsibleContent.displayName = 'CollapsibleContent'
 
-export { Collapsible, CollapsibleContent, CollapsibleTrigger }
+export { Collapsible, CollapsibleContent, CollapsibleTrigger, useForwardedRef }

@@ -6,13 +6,14 @@ import { heightAuto } from '@gentleduck/motion/presets/height-auto'
 import { tweenExpand } from '@gentleduck/motion/transitions/tweens'
 import { LazyMotion, m } from 'motion/react'
 import * as React from 'react'
-import { useCollapsible } from './collapsible'
+import { useCollapsible, useForwardedRef } from './collapsible'
 
 const MotionCollapsibleContent = React.forwardRef<
-  HTMLDivElement,
+  HTMLElement,
   Omit<React.HTMLAttributes<HTMLDivElement>, 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart'>
 >(({ children, className, ...props }, ref) => {
-  const { open, contentId } = useCollapsible()
+  const { open, contentId, contentRef } = useCollapsible()
+  const contentRefs = useForwardedRef(contentRef, ref)
 
   return (
     <LazyMotion features={loadDomAnimation}>
@@ -25,7 +26,7 @@ const MotionCollapsibleContent = React.forwardRef<
         inert={!open || undefined}
         data-slot="collapsible-content"
         id={contentId}
-        ref={ref}
+        ref={contentRefs}
         {...props}>
         <div className={cn(className)}>{children}</div>
       </m.section>

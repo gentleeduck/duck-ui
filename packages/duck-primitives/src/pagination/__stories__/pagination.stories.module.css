@@ -1,0 +1,17 @@
+.content {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.content button,
+.content a,
+.content [data-slot="pagination-ellipsis"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 32px;
+}

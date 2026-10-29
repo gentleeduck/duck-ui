@@ -1,33 +1,38 @@
 import * as React from 'react'
 import { useDirection } from '../direction'
 import { useControllableState } from '../hooks/use-controllable-state'
+import { composeEventHandlers } from '../libs/compose-event-handler'
 import { createContextScope } from '../libs/create-context'
 import { Primitive } from '../primitive-elements'
 import type { IAccordion } from './accordion.types'
 
 const ACCORDION_NAME = 'Accordion'
 
+const ACCORDION_KEYS = ['Home', 'End', 'ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight']
+const ROOT_SELECTOR = '[data-slot="accordion"]'
+const TRIGGER_SELECTOR = '[data-slot="accordion-trigger"]'
+
 const [createAccordionContext, createAccordionScope] = createContextScope(ACCORDION_NAME)
 
 const [AccordionProvider, useAccordionContext] = createAccordionContext<IAccordion.IContext>(ACCORDION_NAME)
 
-const Accordion = React.forwardRef<React.ComponentRef<typeof Primitive.div>, IAccordion.IProps>(
+const Accordion = React.forwardRef<HTMLDivElement, IAccordion.IProps>(
   (props: IAccordion.IScoped<IAccordion.IProps>, forwardedRef) => {
-    if (props.type === 'multiple') {
-      return <AccordionMultiple {...props} ref={forwardedRef} />
-    }
-
-    return <AccordionSingle {...props} ref={forwardedRef} />
+    return props.type === 'multiple' ? (
+      <AccordionMultiple {...props} ref={forwardedRef} />
+    ) : (
+      <AccordionSingle {...props} ref={forwardedRef} />
+    )
   },
 )
 
 Accordion.displayName = ACCORDION_NAME
 
-const AccordionSingle = React.forwardRef<React.ComponentRef<typeof Primitive.div>, IAccordion.ISingle>(
+const AccordionSingle = React.forwardRef<HTMLDivElement, IAccordion.ISingle>(
   (props: IAccordion.IScoped<IAccordion.ISingle>, forwardedRef) => {
-    const { value: valueProp, defaultValue, onValueChange, collapsible = true, ...accordionProps } = props
+    const { type: _, value: valueProp, defaultValue, onValueChange, collapsible = false, ...accordionProps } = props
 
-    const [value = '', setValue] = useControllableState({
+    const [value, setValue] = useControllableState({
       prop: valueProp,
       defaultProp: defaultValue ?? '',
       onChange: onValueChange,
@@ -36,7 +41,7 @@ const AccordionSingle = React.forwardRef<React.ComponentRef<typeof Primitive.div
 
     const handleItemOpenChange = React.useCallback(
       (itemValue: string) => {
-        setValue((currentValue = '') => {
+        setValue((currentValue) => {
           if (currentValue === itemValue) {
             return collapsible ? '' : currentValue
           }
@@ -51,7 +56,6 @@ const AccordionSingle = React.forwardRef<React.ComponentRef<typeof Primitive.div
       <AccordionImpl
         {...accordionProps}
         ref={forwardedRef}
-        type="single"
         openItems={value ? [value] : []}
         onItemOpenChange={handleItemOpenChange}
         collapsible={collapsible}
@@ -62,11 +66,11 @@ const AccordionSingle = React.forwardRef<React.ComponentRef<typeof Primitive.div
 
 AccordionSingle.displayName = `${ACCORDION_NAME}Single`
 
-const AccordionMultiple = React.forwardRef<React.ComponentRef<typeof Primitive.div>, IAccordion.IMultiple>(
+const AccordionMultiple = React.forwardRef<HTMLDivElement, IAccordion.IMultiple>(
   (props: IAccordion.IScoped<IAccordion.IMultiple>, forwardedRef) => {
-    const { value: valueProp, defaultValue, onValueChange, ...accordionProps } = props
+    const { type: _, value: valueProp, defaultValue, onValueChange, ...accordionProps } = props
 
-    const [value = [], setValue] = useControllableState({
+    const [value, setValue] = useControllableState({
       prop: valueProp,
       defaultProp: defaultValue ?? [],
       onChange: onValueChange,
@@ -75,7 +79,7 @@ const AccordionMultiple = React.forwardRef<React.ComponentRef<typeof Primitive.d
 
     const handleItemOpenChange = React.useCallback(
       (itemValue: string) => {
-        setValue((currentValue = []) => {
+        setValue((currentValue) => {
           if (currentValue.includes(itemValue)) {
             return currentValue.filter((value) => value !== itemValue)
           }
@@ -90,7 +94,6 @@ const AccordionMultiple = React.forwardRef<React.ComponentRef<typeof Primitive.d
       <AccordionImpl
         {...accordionProps}
         ref={forwardedRef}
-        type="multiple"
         openItems={value}
         onItemOpenChange={handleItemOpenChange}
         collapsible
@@ -101,20 +104,60 @@ const AccordionMultiple = React.forwardRef<React.ComponentRef<typeof Primitive.d
 
 AccordionMultiple.displayName = `${ACCORDION_NAME}Multiple`
 
-const AccordionImpl = React.forwardRef<React.ComponentRef<typeof Primitive.div>, IAccordion.IImplPrivate>(
+const AccordionImpl = React.forwardRef<HTMLDivElement, IAccordion.IImplPrivate>(
   (props: IAccordion.IScoped<IAccordion.IImplPrivate>, forwardedRef) => {
-    const { __scopeAccordion, type, openItems, onItemOpenChange, collapsible, dir, ...accordionProps } = props
+    const {
+      __scopeAccordion,
+      openItems,
+      onItemOpenChange,
+      collapsible,
+      disabled = false,
+      loop = true,
+      onFocusChange,
+      dir,
+      orientation = 'vertical',
+      ...accordionProps
+    } = props
     const direction = useDirection(dir)
+
+    const handleKeyDown = composeEventHandlers(props.onKeyDown, (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (!ACCORDION_KEYS.includes(event.key)) return
+      const triggers = getTriggers(event.currentTarget).filter((trigger) => !trigger.disabled)
+      const index = triggers.indexOf(event.target as HTMLButtonElement)
+      if (index === -1) return
+      event.preventDefault()
+
+      const forward = direction === 'ltr' ? 'ArrowRight' : 'ArrowLeft'
+      const backward = direction === 'ltr' ? 'ArrowLeft' : 'ArrowRight'
+      const next = orientation === 'vertical' ? 'ArrowDown' : forward
+      const previous = orientation === 'vertical' ? 'ArrowUp' : backward
+      const last = triggers.length - 1
+      let nextIndex = index
+      if (event.key === 'Home') nextIndex = 0
+      else if (event.key === 'End') nextIndex = last
+      else if (event.key === next) nextIndex = index < last ? index + 1 : loop ? 0 : index
+      else if (event.key === previous) nextIndex = index > 0 ? index - 1 : loop ? last : index
+      triggers[nextIndex]?.focus()
+    })
 
     return (
       <AccordionProvider
         scope={__scopeAccordion}
-        type={type}
         openItems={openItems}
         onItemOpenChange={onItemOpenChange}
         collapsible={collapsible}
-        dir={direction}>
-        <Primitive.div data-slot="accordion" dir={direction} {...accordionProps} ref={forwardedRef} />
+        disabled={disabled}
+        orientation={orientation}
+        onFocusChange={onFocusChange}>
+        <Primitive.div
+          data-slot="accordion"
+          data-orientation={orientation}
+          data-disabled={disabled ? '' : undefined}
+          dir={dir}
+          {...accordionProps}
+          ref={forwardedRef}
+          onKeyDown={handleKeyDown}
+        />
       </AccordionProvider>
     )
   },
@@ -122,11 +165,20 @@ const AccordionImpl = React.forwardRef<React.ComponentRef<typeof Primitive.div>,
 
 AccordionImpl.displayName = `${ACCORDION_NAME}Impl`
 
-export {
-  ACCORDION_NAME,
-  Accordion,
-  AccordionProvider,
-  createAccordionContext,
-  createAccordionScope,
-  useAccordionContext,
+// A trigger belongs to the nearest accordion around it. One React has hidden, in a suspended Suspense boundary or a
+// hidden Activity, carries an inline display: none on itself or an ancestor and cannot take focus.
+function isTrigger(root: Element, node: EventTarget | null): node is HTMLButtonElement {
+  if (!(node as Element | null)?.matches?.(TRIGGER_SELECTOR)) return false
+  for (let element = node as HTMLElement | null; element !== root; element = element.parentElement) {
+    if (!element || element.style.display === 'none' || element.matches(ROOT_SELECTOR)) {
+      return false
+    }
+  }
+  return true
 }
+
+function getTriggers(root: Element) {
+  return Array.from(root.querySelectorAll(TRIGGER_SELECTOR)).filter((node) => isTrigger(root, node))
+}
+
+export { Accordion, createAccordionContext, createAccordionScope, isTrigger, ROOT_SELECTOR, useAccordionContext }

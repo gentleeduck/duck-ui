@@ -1,0 +1,235 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  width: 360px;
+
+  &[data-orientation="horizontal"] {
+    flex-direction: row;
+    align-items: flex-start;
+    width: max-content;
+  }
+}
+
+.inner {
+  width: auto;
+}
+
+.item {
+  border-bottom: 1px solid #ddd;
+
+  &[data-orientation="horizontal"] {
+    display: flex;
+    border-bottom: 0;
+    border-inline-end: 1px solid #ddd;
+  }
+}
+
+.header {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 8px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 400;
+  text-align: start;
+  cursor: pointer;
+
+  &[data-disabled] {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.styled[data-state="open"] {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.indicator {
+  display: inline-flex;
+  transition: transform 200ms ease;
+
+  &[data-state="open"] {
+    transform: rotate(180deg);
+  }
+}
+
+.plus[data-state="open"] {
+  transform: rotate(45deg);
+}
+
+.content {
+  overflow: hidden;
+
+  &[data-orientation="horizontal"] {
+    white-space: nowrap;
+  }
+
+  /* preview.css hides every [hidden], which would keep find-in-page out of until-found content. */
+  &[hidden="until-found"] {
+    display: block;
+  }
+}
+
+.answer {
+  margin: 0;
+  padding: 0 8px 12px;
+
+  & ul {
+    margin: 8px 0 0;
+    padding-inline-start: 20px;
+  }
+}
+
+.animated {
+  &[data-state="open"] {
+    animation: accordion-down 300ms ease-out;
+  }
+
+  &[data-state="closed"] {
+    animation: accordion-up 300ms ease-in;
+  }
+
+  &[data-orientation="horizontal"][data-state="open"] {
+    animation-name: accordion-right;
+  }
+
+  &[data-orientation="horizontal"][data-state="closed"] {
+    animation-name: accordion-left;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none !important;
+  }
+}
+
+/* Force-mounted content stays in the page, so the item collapses it. A transition on the content itself would be
+   cut short, since the content measures itself with transitions off. */
+.collapse {
+  display: grid;
+  grid-template-rows: auto 0fr;
+
+  &[data-state="open"] {
+    grid-template-rows: auto 1fr;
+  }
+
+  &[data-orientation="horizontal"] {
+    grid-template-rows: none;
+    grid-template-columns: auto 0fr;
+  }
+
+  &[data-orientation="horizontal"][data-state="open"] {
+    grid-template-columns: auto 1fr;
+  }
+
+  & > .content {
+    min-width: 0;
+    min-height: 0;
+  }
+
+  & > .content[data-state="closed"] {
+    visibility: hidden;
+  }
+}
+
+.smooth {
+  transition:
+    grid-template-rows 300ms ease,
+    grid-template-columns 300ms ease;
+
+  & > .content[data-state="closed"] {
+    transition: visibility 0s 300ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    & > .content[data-state="closed"] {
+      transition: none;
+    }
+  }
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: system-ui, sans-serif;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.log {
+  margin: 0;
+  font:
+    12px ui-monospace,
+    monospace;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  font-family: system-ui, sans-serif;
+}
+
+.cell {
+  min-width: 300px;
+}
+
+.caption {
+  margin: 0 0 4px;
+  font:
+    12px ui-monospace,
+    monospace;
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--gentleduck-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--gentleduck-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+@keyframes accordion-right {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--gentleduck-accordion-content-width);
+  }
+}
+
+@keyframes accordion-left {
+  from {
+    width: var(--gentleduck-accordion-content-width);
+  }
+  to {
+    width: 0;
+  }
+}

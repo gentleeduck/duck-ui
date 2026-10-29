@@ -1,4 +1,5 @@
 import type * as React from 'react'
+import * as accordion from '../accordion/__stories__/accordion.stories'
 import * as arrow from '../arrow/__stories__/arrow.stories'
 import * as direction from '../direction/__stories__/direction.stories'
 import * as dismissableLayer from '../dismissable-layer/__stories__/dismissable-layer.stories'
@@ -26,6 +27,7 @@ const kebab = (value: string) =>
 export const stories = new Map<string, React.ComponentType>()
 
 for (const module of [
+  accordion,
   arrow,
   direction,
   dismissableLayer,

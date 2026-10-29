@@ -1,13 +1,13 @@
 import * as React from 'react'
 import { composeEventHandlers } from '../libs/compose-event-handler'
 import { Primitive } from '../primitive-elements'
-import { useAccordionContext } from './accordion'
+import { isTrigger, ROOT_SELECTOR, useAccordionContext } from './accordion'
 import type { IAccordion } from './accordion.types'
 import { useAccordionItemContext } from './item'
 
 const TRIGGER_NAME = 'AccordionTrigger'
 
-const AccordionTrigger = React.forwardRef<React.ComponentRef<typeof Primitive.button>, IAccordion.ITriggerProps>(
+const AccordionTrigger = React.forwardRef<HTMLButtonElement, IAccordion.ITriggerProps>(
   (props: IAccordion.IScoped<IAccordion.ITriggerProps>, forwardedRef) => {
     const { __scopeAccordion, disabled: disabledProp, ...triggerProps } = props
     const context = useAccordionContext(TRIGGER_NAME, __scopeAccordion)
@@ -25,13 +25,16 @@ const AccordionTrigger = React.forwardRef<React.ComponentRef<typeof Primitive.bu
         data-disabled={disabled ? '' : undefined}
         disabled={disabled}
         id={itemContext.triggerId}
-        dir={context.dir}
+        data-orientation={context.orientation}
         {...triggerProps}
         ref={forwardedRef}
         onClick={composeEventHandlers(props.onClick, () => {
-          if (!disabled) {
-            context.onItemOpenChange(itemContext.value)
-          }
+          if (!disabled) itemContext.onOpenToggle()
+        })}
+        onFocus={composeEventHandlers(props.onFocus, () => context.onFocusChange?.(itemContext.value))}
+        onBlur={composeEventHandlers(props.onBlur, (event) => {
+          const root = context.onFocusChange && event.currentTarget.closest(ROOT_SELECTOR)
+          if (root && !isTrigger(root, event.relatedTarget)) context.onFocusChange?.(null)
         })}
       />
     )

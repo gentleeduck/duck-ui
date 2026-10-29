@@ -8,15 +8,22 @@ const ITEM_NAME = 'AccordionItem'
 
 const [AccordionItemProvider, useAccordionItemContext] = createAccordionContext<IAccordion.IItemContext>(ITEM_NAME)
 
-const AccordionItem = React.forwardRef<React.ComponentRef<typeof Primitive.div>, IAccordion.IItemProps>(
+const AccordionItem = React.forwardRef<HTMLDivElement, IAccordion.IItemProps>(
   (props: IAccordion.IScoped<IAccordion.IItemProps>, forwardedRef) => {
-    const { __scopeAccordion, value: valueProp, disabled = false, ...itemProps } = props
+    const { __scopeAccordion, value: valueProp, disabled: disabledProp = false, onOpenChange, ...itemProps } = props
     const context = useAccordionContext(ITEM_NAME, __scopeAccordion)
+    const disabled = context.disabled || disabledProp
     const generatedValue = useId()
     const triggerId = useId()
     const contentId = useId()
     const value = valueProp ?? generatedValue
     const open = context.openItems.includes(value)
+    const { collapsible, onItemOpenChange } = context
+    const onOpenToggle = React.useCallback(() => {
+      if (open && !collapsible) return
+      onItemOpenChange(value)
+      onOpenChange?.(!open)
+    }, [open, collapsible, onItemOpenChange, value, onOpenChange])
 
     return (
       <AccordionItemProvider
@@ -25,13 +32,14 @@ const AccordionItem = React.forwardRef<React.ComponentRef<typeof Primitive.div>,
         open={open}
         disabled={disabled}
         triggerId={triggerId}
-        contentId={contentId}>
+        contentId={contentId}
+        onOpenToggle={onOpenToggle}>
         <Primitive.div
           data-slot="accordion-item"
           data-state={open ? 'open' : 'closed'}
           data-disabled={disabled ? '' : undefined}
           data-value={value}
-          dir={context.dir}
+          data-orientation={context.orientation}
           {...itemProps}
           ref={forwardedRef}
         />

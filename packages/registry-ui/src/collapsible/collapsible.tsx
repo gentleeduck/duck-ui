@@ -23,12 +23,22 @@ export function useCollapsible() {
   return context
 }
 
-function useForwardedRef<T>(own: React.RefObject<T | null>, ref: React.ForwardedRef<T>) {
+function useForwardedRef<T>(own: React.RefObject<T | null>, ref: React.Ref<T>) {
   return React.useCallback(
     (node: T | null) => {
       own.current = node
-      if (typeof ref === 'function') ref(node)
-      else if (ref) ref.current = node
+      if (typeof ref !== 'function') {
+        if (ref) ref.current = node
+        return
+      }
+      const cleanup = ref(node)
+      // React calls a cleanup a ref returns in place of the ref with null, so the caller's own one runs from here.
+      if (typeof cleanup === 'function') {
+        return () => {
+          own.current = null
+          cleanup()
+        }
+      }
     },
     [own, ref],
   )

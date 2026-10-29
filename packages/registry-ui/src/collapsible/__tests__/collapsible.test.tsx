@@ -129,3 +129,19 @@ describe('Collapsible', () => {
     expect(refs?.contentRef.current).toBe(contentRef.current)
   })
 })
+
+describe('Collapsible refs', () => {
+  test('runs the cleanup a callback ref returns, on every part', () => {
+    const cleanup = mock()
+    const { unmount } = render(
+      <Collapsible open ref={() => cleanup}>
+        <CollapsibleTrigger ref={() => cleanup}>Details</CollapsibleTrigger>
+        <CollapsibleContent ref={() => cleanup}>Body</CollapsibleContent>
+      </Collapsible>,
+    )
+
+    unmount()
+
+    expect(cleanup).toHaveBeenCalledTimes(3)
+  })
+})

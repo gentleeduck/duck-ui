@@ -47,7 +47,7 @@ Each test was proven by changing the code and watching a test fail.
 |---|--:|---|
 | Unit | 140 | `accordion.radix.test.tsx` 84, `accordion.test.tsx` 56 |
 | End to end | 116 | `accordion.e2e.ts` 116 |
-| registry-ui | 18 | `accordion.test.tsx` 7, `collapsible.test.tsx` 10, `motion-collapsible.test.tsx` 1 |
+| registry-ui | 19 | `accordion.test.tsx` 7, `collapsible.test.tsx` 11, `motion-collapsible.test.tsx` 1 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -478,6 +478,7 @@ Each test was proven by changing the code and watching a test fail.
   that calls `preventDefault` keeps it as it is.
 - `CollapsibleContent` unmounts its children once the close transition ends, and `forceMount` keeps them
   mounted before the first open. `MotionCollapsibleContent` fills `useCollapsible().contentRef` too.
+- The collapsible parts run the cleanup a callback ref returns, where they called the ref again with `null`.
 - `Collapsible` carries a `dir` attribute only when given one (breaking).
 
 ## Later

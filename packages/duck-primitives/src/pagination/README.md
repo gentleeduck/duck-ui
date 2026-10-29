@@ -45,14 +45,14 @@ returning them only below that count gives the same list, since the folded list 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 46 | `controls.test.tsx` 27, `pagination.test.tsx` 7, `range.test.ts` 12 |
+| Unit | 49 | `controls.test.tsx` 30, `pagination.test.tsx` 7, `range.test.ts` 12 |
 | End to end | 12 | `pagination.e2e.ts` 12 |
 | registry-ui | 12 | `pagination-links.test.tsx` 4, `pagination-pages.test.tsx` 5, `pagination.test.tsx` 3 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>58 behaviours, one per test</summary>
+<summary>61 behaviours, one per test</summary>
 
 **Unit, `range.test.ts`**
 
@@ -91,7 +91,8 @@ returning them only below that count gives the same list, since the folded list 
   - takes a label in place of its own
   - does not move when the handler prevents it
 - Pagination outside the range
-  - refuses a page past either end, staying where it is and reporting nothing
+  - disables a page past either end, staying where it is and reporting nothing
+  - gives a page link past either end no address
 - Pagination controlled
   - asks for the page and waits for it
   - follows the page it is given
@@ -102,6 +103,8 @@ returning them only below that count gives the same list, since the folded list 
   - keeps a link that would leave the range a link, with no address and no effect
   - moves to the page a link points at
   - runs no click handler on a link with nowhere to go, as a disabled button runs none
+  - runs no click handler of a slotted link with nowhere to go
+  - stays on its page when a click opens the link somewhere else
   - moves when a client router prevents the browser from following the link
 - Pagination scope
   - reads the root its scope names over a nearer one
@@ -151,14 +154,17 @@ returning them only below that count gives the same list, since the folded list 
 - `Pagination.Page`, `First`, `Previous`, `Next` and `Last` move between pages, disable themselves at
   either end and get a default label.
 - With `getPageHref` every control is a link, and one with nowhere to go loses its address and its tab
-  stop.
+  stop. A child given through `asChild` keeps its own `href`, since `Slot` lets a child's props win, though a
+  click on it does nothing.
 - `Content` and `Item` put the controls in a `ul` of `li`s inside the `nav`. Ark has no list parts.
 - `getPaginationRange` returns the same list for code that does not mount the root.
-- A disabled page or trigger runs no click handler, link or button, as a disabled button never does.
+- A disabled page or trigger runs no click handler, link or button, a slotted child's included, as a disabled
+  button never does.
+- A click with a modifier key opens a link somewhere else, so it leaves the page where it is.
 - On a link, a click handler that prevents the browser following it, as a client router does to navigate
   itself, still moves the page. Only a button reads `preventDefault` as staying put.
-- A `Pagination.Page` given a `value` outside `1` to `pageCount` is refused, as Ark refuses it, leaving the
-  page where it is and `onPageChange` silent.
+- A `Pagination.Page` given a `value` outside `1` to `pageCount` is disabled, as Ark refuses it, so it
+  neither moves the page nor links anywhere.
 
 ## Smaller and faster
 

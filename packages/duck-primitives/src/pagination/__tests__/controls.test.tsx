@@ -221,7 +221,7 @@ describe('Pagination triggers', () => {
 })
 
 describe('Pagination outside the range', () => {
-  it('refuses a page past either end, staying where it is and reporting nothing', () => {
+  it('disables a page past either end, staying where it is and reporting nothing', () => {
     const onPageChange = mock()
     render(
       <Pagination.Root defaultPage={2} onPageChange={onPageChange} pageCount={3}>
@@ -234,6 +234,21 @@ describe('Pagination outside the range', () => {
     fireEvent.click(screen.getByRole('button', { name: '4' }))
 
     expect(onPageChange.mock.calls).toEqual([])
+    expect(screen.getByRole('button', { name: '4' }).hasAttribute('disabled')).toBe(true)
+  })
+
+  it('gives a page link past either end no address', () => {
+    render(
+      <Pagination.Root pageCount={3} getPageHref={(page) => `/posts?page=${page}`}>
+        <Pagination.Page value={0} />
+        <Pagination.Page value={4} />
+      </Pagination.Root>,
+    )
+
+    for (const name of ['0', '4']) {
+      const link = screen.getByRole('link', { name })
+      expect([link.hasAttribute('href'), link.getAttribute('aria-disabled')]).toEqual([false, 'true'])
+    }
   })
 })
 
@@ -312,6 +327,34 @@ describe('Pagination links', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Previous page' }))
 
     expect(onClick).not.toHaveBeenCalled()
+  })
+
+  it('runs no click handler of a slotted link with nowhere to go', () => {
+    const onClick = mock()
+    render(
+      <Pagination.Root pageCount={3} getPageHref={href}>
+        <Pagination.Previous asChild>
+          <a href="/posts?page=0" onClick={onClick}>
+            Back
+          </a>
+        </Pagination.Previous>
+      </Pagination.Root>,
+    )
+
+    expect(fireEvent.click(screen.getByRole('link', { name: 'Previous page' }))).toBe(false)
+    expect(onClick).not.toHaveBeenCalled()
+  })
+
+  it('stays on its page when a click opens the link somewhere else', () => {
+    render(<Pager pageCount={5} getPageHref={href} />)
+
+    for (const key of ['metaKey', 'ctrlKey', 'shiftKey', 'altKey']) {
+      fireEvent.click(screen.getByRole('link', { name: '3' }), { [key]: true })
+    }
+
+    expect(current()).toBe('1')
+    fireEvent.click(screen.getByRole('link', { name: '3' }))
+    expect(current()).toBe('3')
   })
 
   it('moves when a client router prevents the browser from following the link', () => {

@@ -8,7 +8,8 @@ const PAGE_NAME = 'PaginationPage'
 const PaginationPage = React.forwardRef<HTMLElement, IPagination.IPageProps>(
   (props: IPagination.IScoped<IPagination.IPageProps>, forwardedRef) => {
     const { value, children, ...pageProps } = props
-    const selected = usePaginationContext(PAGE_NAME, props.__scopePagination).page === value
+    const { page, pageCount } = usePaginationContext(PAGE_NAME, props.__scopePagination)
+    const selected = page === value
 
     return (
       <PaginationControl
@@ -16,6 +17,7 @@ const PaginationPage = React.forwardRef<HTMLElement, IPagination.IPageProps>(
         aria-current={selected ? 'page' : undefined}
         data-selected={selected ? '' : undefined}
         {...pageProps}
+        disabled={pageProps.disabled || value < 1 || value > pageCount}
         name={PAGE_NAME}
         target={value}
         ref={forwardedRef}>

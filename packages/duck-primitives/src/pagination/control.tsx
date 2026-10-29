@@ -14,12 +14,20 @@ export const PaginationControl = React.forwardRef<HTMLElement, IPagination.IScop
       ...controlProps,
       // React only writes the element into a ref, so one typed for any element takes the link or the button.
       ref: forwardedRef as React.Ref<HTMLAnchorElement & HTMLButtonElement>,
+      // Stopped before any click handler runs, a slotted child's included, as a disabled button runs none.
+      onClickCapture: disabled ? stopClick : controlProps.onClickCapture,
       onClick: disabled
-        ? (event: React.MouseEvent<HTMLElement>) => event.preventDefault()
+        ? undefined
         : // A client router prevents the browser following a link so it can navigate itself; the page still moves.
-          composeEventHandlers(onClick, () => context.setPage(target), {
-            checkForDefaultPrevented: !context.getPageHref,
-          }),
+          composeEventHandlers(
+            onClick,
+            (event: React.MouseEvent<HTMLElement>) => {
+              // A modified click opens the link somewhere else, so this page stays where it is.
+              if (context.getPageHref && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)) return
+              context.setPage(target)
+            },
+            { checkForDefaultPrevented: !context.getPageHref },
+          ),
     }
 
     return context.getPageHref ? (
@@ -34,3 +42,8 @@ export const PaginationControl = React.forwardRef<HTMLElement, IPagination.IScop
     )
   },
 )
+
+function stopClick(event: React.MouseEvent<HTMLElement>) {
+  event.preventDefault()
+  event.stopPropagation()
+}

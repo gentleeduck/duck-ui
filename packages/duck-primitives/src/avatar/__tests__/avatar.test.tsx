@@ -6,6 +6,7 @@ import { freshDom } from '../../__tests__/dom'
 import { Avatar, createAvatarScope } from '../avatar'
 import { AvatarFallback } from '../fallback'
 import { AvatarImage } from '../image'
+import { mockImageLoading } from './image-loading'
 
 freshDom()
 
@@ -247,21 +248,21 @@ describe('AvatarImage loading', () => {
     expect(image(container)?.dataset.state).toBe('loading')
   })
 
-  it('hides the image again while a new src loads', () => {
+  it('hides the image again while a new src loads, though the old image still reports complete', () => {
     const { container, rerender } = render(avatar(<AvatarImage src="/ada.png" alt="Ada" />))
     settle(image(container))
-    Object.defineProperty(image(container), 'complete', { value: false })
 
     rerender(avatar(<AvatarImage src="/grace.png" alt="Grace" />))
 
     expect(image(container)?.dataset.state).toBe('loading')
     expect(fallback(container)).not.toBeNull()
+    settle(image(container))
+    expect(image(container)?.dataset.state).toBe('loaded')
   })
 
   it('hides the image again while a new srcSet loads under the same src', () => {
     const { container, rerender } = render(avatar(<AvatarImage src="/ada.png" srcSet="/ada-2x.png 2x" alt="Ada" />))
     settle(image(container))
-    Object.defineProperty(image(container), 'complete', { value: false })
 
     rerender(avatar(<AvatarImage src="/ada.png" srcSet="/ada-3x.png 3x" alt="Ada" />))
 
@@ -269,13 +270,28 @@ describe('AvatarImage loading', () => {
     expect(fallback(container)).not.toBeNull()
   })
 
-  it('shows a new src at once when the browser already has it', () => {
+  it('shows the fallback while a src that went away and came back loads again', () => {
     const { container, rerender } = render(avatar(<AvatarImage src="/ada.png" alt="Ada" />))
     settle(image(container))
 
-    rerender(avatar(<AvatarImage src="/grace.png" alt="Grace" />))
+    rerender(avatar(<AvatarImage src="" alt="Ada" />))
+    rerender(avatar(<AvatarImage src="/ada.png" alt="Ada" />))
 
-    expect(image(container)?.dataset.state).toBe('loaded')
+    expect(image(container)?.dataset.state).toBe('loading')
+    expect(fallback(container)).not.toBeNull()
+  })
+
+  it('shows a new src at once when the browser already has it', () => {
+    const restore = mockImageLoading({ cache: new Set(['/ada.png', '/grace.png']) })
+    try {
+      const { container, rerender } = render(avatar(<AvatarImage src="/ada.png" alt="Ada" />))
+
+      rerender(avatar(<AvatarImage src="/grace.png" alt="Grace" />))
+
+      expect(image(container)?.dataset.state).toBe('loaded')
+    } finally {
+      restore()
+    }
   })
 
   it('loads and shows an image that has only a srcSet', () => {

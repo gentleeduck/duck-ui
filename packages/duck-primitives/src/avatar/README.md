@@ -45,14 +45,14 @@ Each test was proven by changing the code and watching a test fail. Setting `src
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 67 | `avatar.radix.test.tsx` 35, `avatar.test.tsx` 32 |
+| Unit | 68 | `avatar.radix.test.tsx` 35, `avatar.test.tsx` 33 |
 | End to end | 5 | `avatar.e2e.ts` 5 |
 | registry-ui | 15 | `avatar.test.tsx` 14, `motion-avatar.test.tsx` 1 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>72 behaviours, one per test</summary>
+<summary>73 behaviours, one per test</summary>
 
 **Unit, `avatar.test.tsx`**
 
@@ -84,8 +84,9 @@ Each test was proven by changing the code and watching a test fail. Setting `src
   - keeps the image hidden and the fallback shown when it fails
   - shows an image that loaded before the page hydrated
   - ignores a load that arrives while the image is not complete, as one for a replaced request does
-  - hides the image again while a new src loads
+  - hides the image again while a new src loads, though the old image still reports complete
   - hides the image again while a new srcSet loads under the same src
+  - shows the fallback while a src that went away and came back loads again
   - shows a new src at once when the browser already has it
   - loads and shows an image that has only a srcSet
   - still calls the onLoad and onError it was given
@@ -172,6 +173,8 @@ Each test was proven by changing the code and watching a test fail. Setting `src
   image host.
 - An image that loaded before the page hydrated shows at once, and a load or error for a request since
   replaced is ignored.
+- Each source gets its own `<img>`, so a new one shows only once its own request loads. An img reports its last
+  image as complete until the next request starts, which read as the new source having loaded.
 - An image that loads with a natural width of 0 counts as an error, so the fallback shows instead of an
   empty box.
 - The fallback renders again when the image unmounts, and a second `Avatar.Image` in one root logs a

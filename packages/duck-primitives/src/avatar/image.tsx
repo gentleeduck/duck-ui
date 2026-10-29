@@ -15,8 +15,8 @@ type AvatarImageElement = React.ComponentRef<typeof Primitive.img>
 type Settled = { source: string; status: IAvatar.ImageLoadingStatus }
 
 // The image's own state decides, since a load or error can arrive before hydration or for a request since replaced.
-function settle(image: HTMLImageElement | null, source: string, setSettled: (settled: Settled) => void) {
-  if (image?.complete) setSettled({ source, status: image.naturalWidth > 0 ? 'loaded' : 'error' })
+function settle(image: HTMLImageElement | null, source: string, setSettled: (settled?: Settled) => void) {
+  setSettled(image?.complete ? { source, status: image.naturalWidth > 0 ? 'loaded' : 'error' } : undefined)
 }
 
 const AvatarImage = React.forwardRef<AvatarImageElement, IAvatar.IImageProps>(
@@ -55,6 +55,8 @@ const AvatarImage = React.forwardRef<AvatarImageElement, IAvatar.IImageProps>(
     return source ? (
       // biome-ignore lint/performance/noImgElement: avatar primitive needs raw <img> for framework-agnostic usage
       <Primitive.img
+        // A new element per source: until its next request starts, an img reports its last image as complete.
+        key={source}
         data-slot="avatar-image"
         data-state={status}
         {...imageProps}

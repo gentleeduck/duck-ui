@@ -33,7 +33,8 @@ export function mockImageLoading({
     broken.delete(image)
     if (!src) return
     setTimeout(() => {
-      if (sourceOf(image) !== src) return
+      // An image a finished test unmounted would otherwise fill the cache the next test cleared.
+      if (!image.isConnected || sourceOf(image) !== src) return
       if (succeeds(image)) {
         cache.add(src)
         image.dispatchEvent(new Event('load'))

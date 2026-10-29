@@ -344,15 +344,12 @@ describe('given an Avatar with an image that only works when referrerPolicy=no-r
     })
 
     it('should never render the image', async () => {
-      try {
-        await waitFor(() => rendered.getByRole('img'), {
-          timeout: DELAY + 100,
-        })
-      } catch (error) {
-        expect(error).toBeInstanceOf(Error)
-        expect((error as Error).name).toBe('TestingLibraryElementError')
-        expect((error as Error).message).toContain('Unable to find role="img"')
-      }
+      const error = await waitFor(() => rendered.getByRole('img'), { timeout: DELAY + 100 }).then(
+        () => null,
+        (error: Error) => error,
+      )
+      expect(error?.name).toBe('TestingLibraryElementError')
+      expect(error?.message).toContain('Unable to find role="img"')
     })
   })
 })

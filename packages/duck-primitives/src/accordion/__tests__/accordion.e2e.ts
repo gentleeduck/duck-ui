@@ -45,8 +45,8 @@ test.describe('Accordion', () => {
       await trigger(page, 'Is it accessible?').click()
       const opened = content(page, 'item-1')
 
-      await expect(opened).toHaveAttribute('data-state', 'open')
       expect(await running(opened)).toBe(1)
+      await expect(opened).toHaveAttribute('data-state', 'open')
       await expectSettled(opened)
       const { variable, size } = await sizeVariable(opened, 'height')
       expect(variable).toBeCloseTo(size, 2)
@@ -70,9 +70,9 @@ test.describe('Accordion', () => {
       await trigger(page, 'Is it styled?').click()
       const closing = content(page, 'item-1')
 
+      expect(await running(closing)).toBe(1)
       await expect(closing).toHaveAttribute('data-state', 'closed')
       await expect(closing).toHaveAttribute('aria-hidden', 'true')
-      expect(await running(closing)).toBe(1)
       await expect(closing).toHaveCount(0)
       await expect(content(page, 'item-2')).toBeVisible()
     })
@@ -83,9 +83,18 @@ test.describe('Accordion', () => {
 
       await trigger(page, 'Is it accessible?').click()
 
-      await expect(trigger(page, 'Is it accessible?')).toHaveAttribute('aria-expanded', 'false')
       expect(await running(content(page, 'item-1'))).toBe(1)
+      await expect(trigger(page, 'Is it accessible?')).toHaveAttribute('aria-expanded', 'false')
       await expect(content(page, 'item-1')).toHaveCount(0)
+    })
+
+    test('passes over a trigger a stylesheet hides, since it cannot take focus', async ({ page }) => {
+      await page.addStyleTag({ content: '[data-value="item-2"] { display: none }' })
+
+      await trigger(page, 'Is it accessible?').focus()
+      await page.keyboard.press('ArrowDown')
+
+      await expect(trigger(page, 'Is it animated?')).toBeFocused()
     })
 
     test('opens and closes from the keyboard', async ({ page }) => {
@@ -213,8 +222,8 @@ test.describe('Accordion', () => {
 
       await trigger(page, 'Is it accessible?').click()
 
-      await expect(indicator).toHaveAttribute('data-state', 'open')
       expect(await running(indicator)).toBe(1)
+      await expect(indicator).toHaveAttribute('data-state', 'open')
       await expectSettled(indicator)
       await expect(indicator).not.toHaveCSS('transform', 'none')
     })
@@ -308,8 +317,8 @@ test.describe('Accordion', () => {
     test('opens and closes with the item transition, keeping the content mounted', async ({ page }) => {
       await trigger(page, 'Is it accessible?').click()
 
-      await expect(content(page, 'item-1')).toHaveAttribute('data-state', 'open')
       expect(await running(item(page, 'item-1'))).toBe(1)
+      await expect(content(page, 'item-1')).toHaveAttribute('data-state', 'open')
       await expect(content(page, 'item-1')).toBeVisible()
       await expectSettled(item(page, 'item-1'))
 
@@ -374,8 +383,8 @@ test.describe('Accordion', () => {
       await trigger(page, 'Is it styled?').click()
       const opened = content(page, 'item-2')
 
-      await expect(opened).toHaveAttribute('data-orientation', 'horizontal')
       expect(await running(opened)).toBe(1)
+      await expect(opened).toHaveAttribute('data-orientation', 'horizontal')
       await expectSettled(opened)
       const { variable, size } = await sizeVariable(opened, 'width')
       expect(variable).toBeCloseTo(size, 2)
@@ -443,8 +452,8 @@ test.describe('Accordion', () => {
 
       await page.getByRole('button', { name: 'Open item-2' }).click()
 
-      await expect(content(page, 'item-2')).toHaveAttribute('data-state', 'open')
       expect(await running(content(page, 'item-2'))).toBe(1)
+      await expect(content(page, 'item-2')).toHaveAttribute('data-state', 'open')
       await expect(content(page, 'item-1')).toHaveCount(0)
       await expect(page.locator('output')).toHaveText('value: item-2')
     })
@@ -601,9 +610,9 @@ test.describe('Accordion', () => {
       await trigger(page, 'Is it styled?').click()
       const region = page.getByRole('region', { name: 'Is it styled?' })
 
+      expect(await running(region)).toBe(1)
       await expect(region).toBeVisible()
       expect(await region.evaluate((node) => node.tagName)).toBe('SECTION')
-      expect(await running(region)).toBe(1)
     })
   })
 })
@@ -636,8 +645,11 @@ async function checkCombination(page: Page, combination: ICombination) {
     await expect(content(root, value)).toHaveAttribute('data-state', 'closed')
     await expectUnseen(content(root, value).getByText(`Answer ${value}`))
     // A disabled item stays out of find-in-page.
-    if (mode === 'until-found')
+    if (mode === 'until-found') {
       await expect(content(root, value)).toHaveAttribute('hidden', DISABLED.has(value) ? '' : 'until-found')
+      // Inert content is out of find-in-page too, so it is inert only while it animates closed.
+      expect(await content(root, value).evaluate((node) => node.inert)).toBe(false)
+    }
   }
 
   await expectOpen('one')
@@ -646,15 +658,18 @@ async function checkCombination(page: Page, combination: ICombination) {
   await expect(button('four')).toBeDisabled()
 
   await button('two').click()
+  if (animated) {
+    expect(await running(moving('two'))).toBe(1)
+    if (type === 'single') expect(await running(moving('one'))).toBe(1)
+    // Content animating closed is out of reach of Tab. A force-mounted item animates itself, not its content.
+    if (type === 'single' && mode !== 'force-mount')
+      expect(await content(root, 'one').evaluate((node) => node.inert)).toBe(true)
+  }
   await expectOpen('two')
-  if (animated) expect(await running(moving('two'))).toBe(1)
   if (type === 'multiple') await expectOpen('one')
   else {
     await expect(button('one')).toHaveAttribute('aria-expanded', 'false')
-    if (animated) {
-      await expect(content(root, 'one')).toHaveAttribute('data-state', 'closed')
-      expect(await running(moving('one'))).toBe(1)
-    }
+    if (animated) await expect(content(root, 'one')).toHaveAttribute('data-state', 'closed')
     await expectClosed('one')
   }
   await expectSettled(moving('two'))

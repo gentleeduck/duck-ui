@@ -52,9 +52,31 @@ const AccordionContentImpl = React.forwardRef<HTMLDivElement, IAccordion.IConten
       const node = contentRef.current
       if (!node || !findable) return
       node.setAttribute('hidden', 'until-found')
-      node.addEventListener('beforematch', onOpenToggle)
-      return () => node.removeEventListener('beforematch', onOpenToggle)
+      // The browser shows the content after this event whether or not the item opens, so it is hidden again when a
+      // controlled value keeps the item closed.
+      const onBeforeMatch = () => {
+        onOpenToggle()
+        requestAnimationFrame(() => {
+          if (node.dataset.state !== 'open') node.setAttribute('hidden', 'until-found')
+        })
+      }
+      node.addEventListener('beforematch', onBeforeMatch)
+      return () => {
+        node.removeEventListener('beforematch', onBeforeMatch)
+        // React writes nothing to a `hidden` it already rendered, so an item disabled while closed keeps "until-found".
+        if (node.getAttribute('hidden') === 'until-found') node.setAttribute('hidden', '')
+      }
     }, [findable, onOpenToggle])
+
+    // Content stays in the page while it animates closed, aria-hidden but still reachable by Tab until it is inert.
+    useLayoutEffect(() => {
+      const node = contentRef.current
+      if (!node || open || !present || node.inert) return
+      node.inert = true
+      return () => {
+        node.inert = false
+      }
+    }, [open, present])
 
     // Measured with animations off, so a closing item still reports its open size. It runs before Presence reads
     // the exit animation, so switching animations back on here starts that animation instead of cancelling it.

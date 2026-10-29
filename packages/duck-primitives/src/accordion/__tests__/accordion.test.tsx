@@ -408,6 +408,33 @@ describe('Accordion find-in-page', () => {
     expect(content('Returns are free for thirty days.').getAttribute('hidden')).toBe('')
     expect(onValueChange).not.toHaveBeenCalled()
   })
+
+  it('takes a closed item out of find-in-page once it is disabled', () => {
+    const ui = (disabled: boolean) => (
+      <Accordion>
+        <AccordionItem value="shipping" disabled={disabled}>
+          <AccordionTrigger>Shipping</AccordionTrigger>
+          <AccordionContent hiddenUntilFound>Parcels leave within two days.</AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    )
+    const { rerender } = render(ui(false))
+
+    rerender(ui(true))
+
+    expect(content('Parcels leave within two days.').getAttribute('hidden')).toBe('')
+  })
+
+  it('hides the content again when a controlled value keeps the item closed after a find', async () => {
+    renderFindable({ value: '', onValueChange: () => {} })
+    const node = content('Parcels leave within two days.')
+
+    fireEvent(node, new Event('beforematch'))
+    node.removeAttribute('hidden')
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    expect(node.getAttribute('hidden')).toBe('until-found')
+  })
 })
 
 describe('Accordion.Item onOpenChange', () => {
@@ -484,6 +511,27 @@ describe('Accordion dir', () => {
     fireEvent.keyDown(screen.getByText('Section 1'), { key: 'ArrowLeft' })
 
     expect(withDir).toEqual(['accordion'])
+    expect(document.activeElement).toBe(screen.getByText('Section 2'))
+  })
+
+  it('reads a dir on any element around it for the arrow keys', () => {
+    const page = document.body.appendChild(document.createElement('div'))
+    page.dir = 'rtl'
+    render(
+      <Accordion type="single" orientation="horizontal" loop={false}>
+        <AccordionItem value="one">
+          <AccordionTrigger>Section 1</AccordionTrigger>
+        </AccordionItem>
+        <AccordionItem value="two">
+          <AccordionTrigger>Section 2</AccordionTrigger>
+        </AccordionItem>
+      </Accordion>,
+      { container: page },
+    )
+
+    screen.getByText('Section 1').focus()
+    fireEvent.keyDown(screen.getByText('Section 1'), { key: 'ArrowLeft' })
+
     expect(document.activeElement).toBe(screen.getByText('Section 2'))
   })
 })

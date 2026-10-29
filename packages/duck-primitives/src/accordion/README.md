@@ -45,14 +45,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 137 | `accordion.radix.test.tsx` 84, `accordion.test.tsx` 53 |
-| End to end | 115 | `accordion.e2e.ts` 115 |
+| Unit | 140 | `accordion.radix.test.tsx` 84, `accordion.test.tsx` 56 |
+| End to end | 116 | `accordion.e2e.ts` 116 |
 | registry-ui | 18 | `accordion.test.tsx` 7, `collapsible.test.tsx` 10, `motion-collapsible.test.tsx` 1 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>252 behaviours, one per test</summary>
+<summary>256 behaviours, one per test</summary>
 
 **Unit, `accordion.test.tsx`**
 
@@ -94,6 +94,8 @@ Each test was proven by changing the code and watching a test fail.
   - opens the item when the browser finds a match in its content
   - hides the content until found again once the item closes
   - keeps a disabled item out of find-in-page
+  - takes a closed item out of find-in-page once it is disabled
+  - hides the content again when a controlled value keeps the item closed after a find
 - Accordion.Item onOpenChange
   - tells an item when its trigger opens and closes it
   - tells only the item whose trigger was pressed
@@ -102,6 +104,7 @@ Each test was proven by changing the code and watching a test fail.
 - Accordion dir
   - writes no dir attribute without a dir prop
   - puts a dir prop on the root alone and reads it for the arrow keys
+  - reads a dir on any element around it for the arrow keys
 - Accordion content animation
   - exposes the open size as CSS variables for the animation to read
   - keeps a size variable its style sets, measuring only the other
@@ -273,6 +276,7 @@ Each test was proven by changing the code and watching a test fail.
   - ties each trigger to the region it controls
   - plays the exit animation of the open item before removing it when another opens
   - collapses the open item when its trigger is pressed again
+  - passes over a trigger a stylesheet hides, since it cannot take focus
   - opens and closes from the keyboard
   - moves focus with the arrow keys, Home and End, and wraps at the ends
 - Accordion &gt; open on load
@@ -417,18 +421,21 @@ Each test was proven by changing the code and watching a test fail.
 - `Accordion.Header` renders the `h3` that holds a trigger, and `Accordion.Indicator` an `aria-hidden` span
   for the icon. Both carry the item's `data-state`, `data-disabled` and `data-orientation`.
 - `hiddenUntilFound` keeps closed content in the page as `hidden="until-found"`, as in Base UI, so the
-  browser's find-in-page opens the item holding the match. A disabled item stays out of the search.
+  browser's find-in-page opens the item holding the match. A disabled item stays out of the search, and content a
+  controlled `value` keeps closed is hidden again.
 
 ## Fixed
 
 - Passes every Radix accordion test.
 - The arrow keys, Home and End move focus between triggers, skipping disabled items and following
-  `orientation` and `dir`. They find the root and its triggers by `data-slot`, so a trigger given another
-  `data-slot` is skipped, and so is a nested accordion's or one React has hidden.
+  `orientation` and the direction of the page around the root. They find the root and its triggers by
+  `data-slot`, so a trigger given another `data-slot` is skipped, and so is a nested accordion's, one React has
+  hidden, or one a stylesheet hides.
 - Content stays mounted until its closing CSS animation ends, and sets its open size as
   `--gentleduck-accordion-content-height` and `--gentleduck-accordion-content-width` for the keyframes. A
   `style` that sets one of them keeps its value, and only the other is measured. An item open on load skips
   its opening animation.
+- Content is inert while it animates closed, so Tab passes over it, and findable again once it is hidden.
 - `forceMount` content stays visible when closed, for a JavaScript animation library to drive.
 
 ## Smaller and faster
@@ -441,7 +448,8 @@ Each test was proven by changing the code and watching a test fail.
 - An item open on load skips its animation by a flag cleared on its first change, where Radix's content schedules a
   frame to clear it.
 - Ids come straight from React's `useId`, with no state or effect around it.
-- Only the root resolves its direction, for the arrow keys; the parts read none.
+- No part resolves a direction. The arrow keys read it from the page when pressed, so a `dir` on any element
+  around the root counts.
 - The trigger toggles through one `onOpenToggle` on the item's context, which the find-in-page listener
   shares.
 - Each part's ref is typed as its DOM element.

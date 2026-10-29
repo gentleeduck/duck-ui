@@ -1,8 +1,8 @@
 import * as React from 'react'
-import { useDirection } from '../direction'
 import { useControllableState } from '../hooks/use-controllable-state'
 import { composeEventHandlers } from '../libs/compose-event-handler'
 import { createContextScope } from '../libs/create-context'
+import { focusFirst, wrapArray } from '../libs/shared-utils'
 import { Primitive } from '../primitive-elements'
 import type { IAccordion } from './accordion.types'
 
@@ -118,7 +118,6 @@ const AccordionImpl = React.forwardRef<HTMLDivElement, IAccordion.IImplPrivate>(
       orientation = 'vertical',
       ...accordionProps
     } = props
-    const direction = useDirection(dir)
 
     const handleKeyDown = composeEventHandlers(props.onKeyDown, (event: React.KeyboardEvent<HTMLDivElement>) => {
       if (!ACCORDION_KEYS.includes(event.key)) return
@@ -127,17 +126,18 @@ const AccordionImpl = React.forwardRef<HTMLDivElement, IAccordion.IImplPrivate>(
       if (index === -1) return
       event.preventDefault()
 
-      const forward = direction === 'ltr' ? 'ArrowRight' : 'ArrowLeft'
-      const backward = direction === 'ltr' ? 'ArrowLeft' : 'ArrowRight'
-      const next = orientation === 'vertical' ? 'ArrowDown' : forward
-      const previous = orientation === 'vertical' ? 'ArrowUp' : backward
-      const last = triggers.length - 1
-      let nextIndex = index
-      if (event.key === 'Home') nextIndex = 0
-      else if (event.key === 'End') nextIndex = last
-      else if (event.key === next) nextIndex = index < last ? index + 1 : loop ? 0 : index
-      else if (event.key === previous) nextIndex = index > 0 ? index - 1 : loop ? last : index
-      triggers[nextIndex]?.focus()
+      // The page decides, so a `dir` on any element around the root counts, which no context can see.
+      const rtl = event.currentTarget.closest('[dir="ltr"], [dir="rtl"]')?.getAttribute('dir') === 'rtl'
+      const next = orientation === 'vertical' ? 'ArrowDown' : rtl ? 'ArrowLeft' : 'ArrowRight'
+      const previous = orientation === 'vertical' ? 'ArrowUp' : rtl ? 'ArrowRight' : 'ArrowLeft'
+      let candidates: HTMLButtonElement[] = []
+      if (event.key === 'Home') candidates = triggers
+      else if (event.key === 'End') candidates = [...triggers].reverse()
+      else if (event.key === next) candidates = loop ? wrapArray(triggers, index + 1) : triggers.slice(index + 1)
+      else if (event.key === previous)
+        candidates = (loop ? wrapArray(triggers, index) : triggers.slice(0, index)).reverse()
+      // A trigger hidden by a stylesheet or a `hidden` ancestor refuses focus, so the next one takes it.
+      focusFirst(candidates)
     })
 
     return (

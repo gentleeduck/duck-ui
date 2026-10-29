@@ -138,6 +138,7 @@ describe('progress.libs', () => {
       const msg = getInvalidValueError('999', 'MyProgress')
       expect(msg).toContain('999')
       expect(msg).toContain('MyProgress')
+      expect(msg).toContain(`at most the value passed to \`max\` (or ${DEFAULT_MAX} if no \`max\` prop is set)`)
     })
   })
 })

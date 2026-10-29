@@ -1,0 +1,52 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 360px;
+  font-family: system-ui, sans-serif;
+}
+
+.root {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 12px;
+  align-items: center;
+}
+
+.track {
+  grid-column: 1 / -1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e5e7eb;
+}
+
+.indicator {
+  height: 100%;
+  background: #2563eb;
+  transition: width 200ms ease-out;
+}
+
+.indicator[data-state="complete"] {
+  background: #16a34a;
+}
+
+.indicator[data-state="indeterminate"] {
+  width: 40%;
+  animation: sweep 1.2s ease-in-out infinite;
+}
+
+@keyframes sweep {
+  from {
+    margin-inline-start: -40%;
+  }
+  to {
+    margin-inline-start: 100%;
+  }
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

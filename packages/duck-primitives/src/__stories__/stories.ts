@@ -11,6 +11,7 @@ import * as popper from '../popper/__stories__/popper.stories'
 import * as portal from '../portal/__stories__/portal.stories'
 import * as presence from '../presence/__stories__/presence.stories'
 import * as primitive from '../primitive-elements/__stories__/primitive-elements.stories'
+import * as progress from '../progress/__stories__/progress.stories'
 import * as radioGroup from '../radio-group/__stories__/radio-group.stories'
 import * as rovingFocus from '../roving-focus/__stories__/roving-focus.stories'
 import * as slot from '../slot/__stories__/slot.stories'
@@ -40,6 +41,7 @@ for (const module of [
   portal,
   presence,
   primitive,
+  progress,
   radioGroup,
   rovingFocus,
   slot,

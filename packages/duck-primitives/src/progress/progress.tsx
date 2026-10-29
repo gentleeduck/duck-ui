@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { useDirection } from '../direction'
 import { createContextScope } from '../libs/create-context'
 import { Primitive } from '../primitive-elements'
 import {
@@ -27,39 +26,44 @@ const Progress = React.forwardRef<ProgressElement, IProgress.IProps>(
     const {
       __scopeProgress,
       value: valueProp = null,
+      min = 0,
       max: maxProp,
       getValueLabel = defaultGetValueLabel,
-      dir,
       ...progressProps
     } = props
-    const direction = useDirection(dir)
 
-    if ((maxProp || maxProp === 0) && !isValidMaxNumber(maxProp)) {
+    if (process.env.NODE_ENV !== 'production' && (maxProp || maxProp === 0) && !isValidMaxNumber(maxProp, min)) {
       console.error(getInvalidMaxError(`${maxProp}`, 'Progress'))
     }
 
-    const max = isValidMaxNumber(maxProp) ? maxProp : DEFAULT_MAX
+    const max = isValidMaxNumber(maxProp, min) ? maxProp : DEFAULT_MAX
 
-    if (valueProp !== null && !isValidValueNumber(valueProp, max)) {
+    if (process.env.NODE_ENV !== 'production' && valueProp !== null && !isValidValueNumber(valueProp, max, min)) {
       console.error(getInvalidValueError(`${valueProp}`, 'Progress'))
     }
 
-    const value = isValidValueNumber(valueProp, max) ? valueProp : null
-    const valueLabel = isNumber(value) ? getValueLabel(value, max) : undefined
+    const value = isValidValueNumber(valueProp, max, min) ? valueProp : null
+    const valueLabel = isNumber(value) ? getValueLabel(value, max, min) : undefined
+    const [labelId, setLabelId] = React.useState<string>()
 
     return (
-      <ProgressProvider scope={__scopeProgress} value={value} max={max} dir={direction}>
+      <ProgressProvider
+        scope={__scopeProgress}
+        value={value}
+        max={max}
+        valueLabel={valueLabel}
+        onLabelIdChange={setLabelId}>
         <Primitive.div
           data-slot="progress"
+          aria-labelledby={labelId}
           aria-valuemax={max}
-          aria-valuemin={0}
+          aria-valuemin={min}
           aria-valuenow={isNumber(value) ? value : undefined}
           aria-valuetext={valueLabel}
           role="progressbar"
           data-state={getProgressState(value, max)}
-          data-value={value ?? undefined}
+          data-value={value}
           data-max={max}
-          dir={direction}
           {...progressProps}
           ref={forwardedRef}
         />

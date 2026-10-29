@@ -1,3 +1,5 @@
 export { ProgressIndicator, ProgressIndicator as Indicator } from './indicator'
+export { ProgressLabel, ProgressLabel as Label } from './label'
 export { createProgressScope, Progress, Progress as Root } from './progress'
 export type { IProgress } from './progress.types'
+export { ProgressValue, ProgressValue as Value } from './value'

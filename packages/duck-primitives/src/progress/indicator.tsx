@@ -16,9 +16,8 @@ const ProgressIndicator = React.forwardRef<ProgressIndicatorElement, IProgress.I
       <Primitive.div
         data-slot="progress-indicator"
         data-state={getProgressState(context.value, context.max)}
-        data-value={context.value ?? undefined}
+        data-value={context.value}
         data-max={context.max}
-        dir={context.dir}
         {...indicatorProps}
         ref={forwardedRef}
       />

@@ -23,7 +23,6 @@ const MotionPagination = React.forwardRef<
       <m.div initial={content.initial} animate={content.animate} transition={content.transition}>
         <PaginationPrimitive.Root
           className={cn('mx-auto flex w-full justify-center', className)}
-          data-slot="pagination"
           ref={ref}
           {...props}
         />

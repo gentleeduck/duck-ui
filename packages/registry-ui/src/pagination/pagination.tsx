@@ -1,5 +1,6 @@
 import { cn } from '@gentleduck/libs/cn'
 import { useDirection } from '@gentleduck/primitives/direction'
+import type { IPagination } from '@gentleduck/primitives/pagination'
 import * as PaginationPrimitive from '@gentleduck/primitives/pagination'
 import {
   ChevronLeft,
@@ -8,6 +9,7 @@ import {
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
+  type LucideIcon,
   MoreHorizontal,
 } from 'lucide-react'
 import * as React from 'react'
@@ -19,12 +21,7 @@ const Pagination = React.forwardRef<
   React.ComponentRef<typeof PaginationPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof PaginationPrimitive.Root>
 >(({ className, ...props }, ref) => (
-  <PaginationPrimitive.Root
-    className={cn('mx-auto flex w-full justify-center', className)}
-    data-slot="pagination"
-    ref={ref}
-    {...props}
-  />
+  <PaginationPrimitive.Root className={cn('mx-auto flex w-full justify-center', className)} ref={ref} {...props} />
 ))
 Pagination.displayName = 'Pagination'
 
@@ -32,21 +29,14 @@ const PaginationContent = React.forwardRef<
   React.ComponentRef<typeof PaginationPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof PaginationPrimitive.Content>
 >(({ className, ...props }, ref) => (
-  <PaginationPrimitive.Content
-    className={cn('flex flex-row items-center gap-1', className)}
-    data-slot="pagination-content"
-    ref={ref}
-    {...props}
-  />
+  <PaginationPrimitive.Content className={cn('flex flex-row items-center gap-1', className)} ref={ref} {...props} />
 ))
 PaginationContent.displayName = 'PaginationContent'
 
 const PaginationItem = React.forwardRef<
   React.ComponentRef<typeof PaginationPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof PaginationPrimitive.Item>
->(({ className, ...props }, ref) => (
-  <PaginationPrimitive.Item className={cn(className)} data-slot="pagination-item" ref={ref} {...props} />
-))
+>(({ className, ...props }, ref) => <PaginationPrimitive.Item className={cn(className)} ref={ref} {...props} />)
 PaginationItem.displayName = 'PaginationItem'
 
 const PaginationLink = React.forwardRef<HTMLAnchorElement, IPaginationLinkProps>(
@@ -118,6 +108,56 @@ const PaginationEllipsis = React.forwardRef<
 ))
 PaginationEllipsis.displayName = 'PaginationEllipsis'
 
+const PaginationPage = React.forwardRef<
+  React.ComponentRef<typeof PaginationPrimitive.Page>,
+  React.ComponentPropsWithoutRef<typeof PaginationPrimitive.Page>
+>(({ className, ...props }, ref) => (
+  <PaginationPrimitive.Page
+    className={cn(
+      buttonVariants({ size: 'icon', variant: 'ghost' }),
+      'data-selected:border data-selected:border-input data-selected:bg-background data-selected:shadow-xs',
+      className,
+    )}
+    ref={ref}
+    {...props}
+  />
+))
+PaginationPage.displayName = 'PaginationPage'
+
+const renderPages = (items: IPagination.IRangeItem[]) =>
+  items.map((item) => (
+    <PaginationItem key={item}>
+      {typeof item === 'number' ? <PaginationPage value={item} /> : <PaginationEllipsis />}
+    </PaginationItem>
+  ))
+
+/** The root's pages, each in an item, with the ellipsis the same size as a page so the controls never shift. */
+const PaginationPages = ({ children = renderPages }: React.ComponentProps<typeof PaginationPrimitive.Pages>) => (
+  <PaginationPrimitive.Pages>{children}</PaginationPrimitive.Pages>
+)
+
+function createTrigger(Trigger: typeof PaginationPrimitive.Next, Icon: LucideIcon, displayName: string) {
+  const PaginationTrigger = React.forwardRef<
+    React.ComponentRef<typeof Trigger>,
+    React.ComponentPropsWithoutRef<typeof Trigger>
+  >(({ className, children, ...props }, ref) => (
+    <Trigger className={cn(buttonVariants({ size: 'icon', variant: 'ghost' }), className)} ref={ref} {...props}>
+      {children ?? <Icon aria-hidden="true" className="rtl:rotate-180" />}
+    </Trigger>
+  ))
+  PaginationTrigger.displayName = displayName
+  return PaginationTrigger
+}
+
+const PaginationFirstTrigger = createTrigger(PaginationPrimitive.First, ChevronsLeftIcon, 'PaginationFirstTrigger')
+const PaginationPreviousTrigger = createTrigger(
+  PaginationPrimitive.Previous,
+  ChevronLeftIcon,
+  'PaginationPreviousTrigger',
+)
+const PaginationNextTrigger = createTrigger(PaginationPrimitive.Next, ChevronRightIcon, 'PaginationNextTrigger')
+const PaginationLastTrigger = createTrigger(PaginationPrimitive.Last, ChevronsRightIcon, 'PaginationLastTrigger')
+
 const PaginationWrapper = (props: IDuckPaginationProps) => {
   const { className: wrapperClassName, dir, ...wrapperProps } = props.wrapper ?? {}
   const { className: contentClassName, ...contentProps } = props.content ?? {}
@@ -184,9 +224,15 @@ export {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
+  PaginationFirstTrigger,
   PaginationItem,
+  PaginationLastTrigger,
   PaginationLink,
   PaginationNext,
+  PaginationNextTrigger,
+  PaginationPage,
+  PaginationPages,
   PaginationPrevious,
+  PaginationPreviousTrigger,
   PaginationWrapper,
 }

@@ -21,7 +21,7 @@ const AvatarFallback = React.forwardRef<AvatarFallbackElement, IAvatar.IFallback
     }, [delayMs])
 
     return canRender && context.imageLoadingStatus !== 'loaded' ? (
-      <Primitive.span data-slot="avatar-fallback" dir={context.dir} {...fallbackProps} ref={forwardedRef} />
+      <Primitive.span data-slot="avatar-fallback" {...fallbackProps} ref={forwardedRef} />
     ) : null
   },
 )

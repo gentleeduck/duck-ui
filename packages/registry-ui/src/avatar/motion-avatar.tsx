@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@gentleduck/libs/cn'
+import { useDuckReducedMotion } from '@gentleduck/motion'
 import { loadDomAnimation } from '@gentleduck/motion/motion-features'
 import { useMotionPreset } from '@gentleduck/motion/motion-presets'
 import { scaleIn } from '@gentleduck/motion/presets/scale-in'
@@ -20,10 +21,11 @@ const MotionAvatarGroup = React.forwardRef<HTMLDivElement, IAvatarGroupProps>(
     const visibleImgs = imgs.slice(0, maxVisible)
     const overflowCount = imgs.length > maxVisible ? imgs.length - maxVisible : 0
     const content = useMotionPreset(scaleIn, { transition: springBouncy })
+    const reduced = useDuckReducedMotion()
     // The target's own transition wins over the transition prop, so the delay goes in the target.
     const stagger = (index: number) => ({
       ...content.animate,
-      transition: { ...content.transition, delay: index * 0.08 },
+      transition: { ...content.transition, delay: reduced ? 0 : index * 0.08 },
     })
 
     return (

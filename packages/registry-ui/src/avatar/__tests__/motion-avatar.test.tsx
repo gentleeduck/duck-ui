@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import { MotionAvatarGroup } from '../motion-avatar'
 
 afterEach(cleanup)
@@ -21,5 +21,26 @@ describe('registry-ui MotionAvatarGroup', () => {
     for (let step = 0; step < 10; step++) await wait(100)
 
     expect(opacity(screen.getByText('+1'))).toBe(1)
+  })
+
+  test('enters every avatar at once for a reader who asks for reduced motion', async () => {
+    const matchMedia = window.matchMedia
+    window.matchMedia = (query: string) =>
+      ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+        media: query,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+      }) as unknown as MediaQueryList
+    try {
+      render(<MotionAvatarGroup imgs={[{ alt: 'Ada' }, { alt: 'Grace' }, { alt: 'Alan' }, { alt: 'Edsger' }]} />)
+      const first = screen.getByRole('img', { name: 'Ada' }).closest('[data-slot="avatar"]')?.parentElement
+
+      await waitFor(() => expect(Number(first?.style.opacity)).toBe(1))
+
+      expect(Number(screen.getByText('+1').style.opacity)).toBe(1)
+    } finally {
+      window.matchMedia = matchMedia
+    }
   })
 })

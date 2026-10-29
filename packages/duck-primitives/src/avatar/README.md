@@ -47,7 +47,7 @@ Each test was proven by changing the code and watching a test fail. Setting `src
 |---|--:|---|
 | Unit | 68 | `avatar.radix.test.tsx` 35, `avatar.test.tsx` 33 |
 | End to end | 5 | `avatar.e2e.ts` 5 |
-| registry-ui | 15 | `avatar.test.tsx` 14, `motion-avatar.test.tsx` 1 |
+| registry-ui | 16 | `avatar.test.tsx` 14, `motion-avatar.test.tsx` 2 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -203,6 +203,7 @@ Each test was proven by changing the code and watching a test fail. Setting `src
   `getOverflowLabel` in another language. A screen reader read "plus N".
 - The group's fallback takes the first two letters a reader sees, so a flag, an emoji sequence or a letter
   with a combining mark stays whole, where it took two UTF-16 units and cut them in half.
+- `MotionAvatarGroup` enters every avatar at once under reduced motion, where each still waited its turn.
 - `AvatarImage` carries the primitive's `data-slot="avatar-image"`, where it set `avatar-img` (breaking for
   a style matching the old slot), and the parts stop setting the `data-slot` the primitive already sets.
 - `IAvatarGroupProps` moves to `avatar.types.ts`. The examples give each image a name for its `alt`, where

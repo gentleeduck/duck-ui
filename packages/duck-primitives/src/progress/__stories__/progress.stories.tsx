@@ -47,7 +47,11 @@ export const Basic = () => {
         <div className={styles.track}>
           <Progress.Indicator
             className={styles.indicator}
-            style={{ width: `${percent(value, scale.min, scale.max)}%` }}
+            style={
+              value === null || value < scale.min || value > scale.max
+                ? undefined
+                : { width: `${percent(value, scale.min, scale.max)}%` }
+            }
           />
         </div>
         <Progress.Value>

@@ -229,6 +229,13 @@ describe('Progress min', () => {
     expect(errorSpy.mock.calls.some(([message]) => String(message).includes('`20`'))).toBe(true)
     expect(container.querySelector('[role="progressbar"]')?.getAttribute('aria-valuemax')).toBe('100')
   })
+
+  it('falls back to a max 100 past a min that reaches 100, so the label stays a number', () => {
+    const { container } = render(<Progress value={100} min={100} max={100} />)
+    const el = container.querySelector('[role="progressbar"]')
+
+    expect([el?.getAttribute('aria-valuemax'), el?.getAttribute('aria-valuetext')]).toEqual(['200', '0%'])
+  })
 })
 
 describe('Progress parts', () => {

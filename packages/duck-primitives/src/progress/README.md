@@ -44,14 +44,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 68 | `progress-libs.test.ts` 22, `progress.radix.test.tsx` 4, `progress.test.tsx` 42 |
+| Unit | 69 | `progress-libs.test.ts` 22, `progress.radix.test.tsx` 4, `progress.test.tsx` 43 |
 | End to end | 9 | `progress.e2e.ts` 9 |
 | registry-ui | 12 | `progress.test.tsx` 12 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>77 behaviours, one per test</summary>
+<summary>78 behaviours, one per test</summary>
 
 **Unit, `progress.radix.test.tsx`**
 
@@ -94,6 +94,7 @@ Each test was proven by changing the code and watching a test fail.
   - hands min to getValueLabel
   - logs a value below min and renders it as indeterminate
   - logs a max that is not above min and falls back to 100
+  - falls back to a max 100 past a min that reaches 100, so the label stays a number
 - Progress parts
   - hands its parts the scope it is given
   - names each part in React DevTools
@@ -171,7 +172,8 @@ Each test was proven by changing the code and watching a test fail.
   Base UI has it.
 - `min` is the value an empty bar stands for, announced as `aria-valuemin`, as in Base UI, Ark and React
   Aria. A value below it is refused as one above `max` is, the default label measures the way from `min` to
-  `max`, and `getValueLabel` receives it as its third argument.
+  `max`, and `getValueLabel` receives it as its third argument. A `max` it refuses falls back to 100, or to 100
+  past `min` once `min` reaches 100.
 
 ## Fixed
 

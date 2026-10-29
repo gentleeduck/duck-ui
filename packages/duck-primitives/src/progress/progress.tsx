@@ -2,8 +2,8 @@ import * as React from 'react'
 import { createContextScope } from '../libs/create-context'
 import { Primitive } from '../primitive-elements'
 import {
-  DEFAULT_MAX,
   defaultGetValueLabel,
+  getDefaultMax,
   getInvalidMaxError,
   getInvalidValueError,
   getProgressState,
@@ -33,10 +33,10 @@ const Progress = React.forwardRef<ProgressElement, IProgress.IProps>(
     } = props
 
     if (process.env.NODE_ENV !== 'production' && (maxProp || maxProp === 0) && !isValidMaxNumber(maxProp, min)) {
-      console.error(getInvalidMaxError(`${maxProp}`, 'Progress'))
+      console.error(getInvalidMaxError(`${maxProp}`, 'Progress', getDefaultMax(min)))
     }
 
-    const max = isValidMaxNumber(maxProp, min) ? maxProp : DEFAULT_MAX
+    const max = isValidMaxNumber(maxProp, min) ? maxProp : getDefaultMax(min)
 
     if (process.env.NODE_ENV !== 'production' && valueProp !== null && !isValidValueNumber(valueProp, max, min)) {
       console.error(getInvalidValueError(`${valueProp}`, 'Progress'))

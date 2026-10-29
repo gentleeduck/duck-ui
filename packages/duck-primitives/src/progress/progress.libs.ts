@@ -14,6 +14,11 @@ function isNumber(value: unknown): value is number {
   return typeof value === 'number'
 }
 
+/** `DEFAULT_MAX`, or that far past `min` once `min` reaches it, so the range never closes to nothing. */
+function getDefaultMax(min: number) {
+  return min < DEFAULT_MAX ? DEFAULT_MAX : min + DEFAULT_MAX
+}
+
 function isValidMaxNumber(max: unknown, min = 0): max is number {
   return isNumber(max) && !Number.isNaN(max) && max > min
 }
@@ -22,8 +27,8 @@ function isValidValueNumber(value: unknown, max: number, min = 0): value is numb
   return isNumber(value) && !Number.isNaN(value) && value <= max && value >= min
 }
 
-function getInvalidMaxError(propValue: string, componentName: string) {
-  return `Invalid prop \`max\` of value \`${propValue}\` supplied to \`${componentName}\`. Only numbers greater than \`min\` are valid max values. Defaulting to \`${DEFAULT_MAX}\`.`
+function getInvalidMaxError(propValue: string, componentName: string, fallback = DEFAULT_MAX) {
+  return `Invalid prop \`max\` of value \`${propValue}\` supplied to \`${componentName}\`. Only numbers greater than \`min\` are valid max values. Defaulting to \`${fallback}\`.`
 }
 
 function getInvalidValueError(propValue: string, componentName: string) {
@@ -39,6 +44,7 @@ export type { ProgressState }
 export {
   DEFAULT_MAX,
   defaultGetValueLabel,
+  getDefaultMax,
   getInvalidMaxError,
   getInvalidValueError,
   getProgressState,

@@ -2,22 +2,23 @@
 
 import { cn } from '@gentleduck/libs/cn'
 import { loadDomAnimation } from '@gentleduck/motion/motion-features'
-import { useDirection } from '@gentleduck/primitives/direction'
+import * as ProgressPrimitive from '@gentleduck/primitives/progress'
 import { LazyMotion, m } from 'motion/react'
 import * as React from 'react'
-import { toDirection } from '../direction/direction.libs'
+import { getProgressPercent } from './progress.libs'
 
-const MOTION_PROGRESS_BAR_STYLE = { originX: 0 } as const
-const MOTION_PROGRESS_BAR_STYLE_RTL = { originX: 1 } as const
 const MOTION_PROGRESS_BAR_INITIAL = { scaleX: 0, opacity: 0.5 } as const
 const MOTION_PROGRESS_BAR_TRANSITION = {
   scaleX: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
   opacity: { duration: 0.2, ease: 'easeOut' },
 } as const
+const MOTION_PROGRESS_BAR_WAITING = { scaleX: 1, opacity: [1, 0.5, 1] }
+const MOTION_PROGRESS_BAR_WAITING_TRANSITION = {
+  scaleX: MOTION_PROGRESS_BAR_TRANSITION.scaleX,
+  opacity: { duration: 2, ease: 'easeInOut', repeat: Number.POSITIVE_INFINITY },
+} as const
 const MOTION_PROGRESS_SHIMMER_INITIAL = { x: '-100%' } as const
 const MOTION_PROGRESS_SHIMMER_ANIMATE = { x: '200%' } as const
-const MOTION_PROGRESS_SHIMMER_INITIAL_RTL = { x: '100%' } as const
-const MOTION_PROGRESS_SHIMMER_ANIMATE_RTL = { x: '-200%' } as const
 const MOTION_PROGRESS_SHIMMER_TRANSITION = {
   duration: 2,
   ease: 'easeInOut',
@@ -26,40 +27,39 @@ const MOTION_PROGRESS_SHIMMER_TRANSITION = {
 } as const
 
 const MotionProgress = React.forwardRef<
-  HTMLDivElement,
-  Omit<React.HTMLProps<HTMLDivElement>, 'value' | 'ref'> & { value: number }
->(({ className, value, dir, ...props }, ref) => {
-  const direction = useDirection(toDirection(dir))
-  const isRtl = direction === 'rtl'
-  const safeValue = Math.max(0, Math.min(100, value ?? 0))
-  const barAnimate = React.useMemo(() => ({ scaleX: safeValue / 100, opacity: 1 }), [safeValue])
+  React.ComponentRef<typeof ProgressPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>
+>(({ className, value, min, max, ...props }, ref) => {
+  const percent = getProgressPercent(value, max, min)
+  const barAnimate = React.useMemo(
+    () => (percent === null ? MOTION_PROGRESS_BAR_WAITING : { scaleX: percent / 100, opacity: 1 }),
+    [percent],
+  )
   return (
     <LazyMotion features={loadDomAnimation}>
-      <div
+      <ProgressPrimitive.Root
         className={cn('relative h-2 w-full overflow-hidden rounded-full bg-secondary', className)}
+        max={max}
+        min={min}
         ref={ref}
-        {...props}
-        aria-valuemax={100}
-        aria-valuemin={0}
-        aria-valuenow={safeValue}
-        dir={direction}
-        data-slot="progress"
-        role="progressbar">
-        <m.div
-          className="relative h-full bg-primary"
-          style={isRtl ? MOTION_PROGRESS_BAR_STYLE_RTL : MOTION_PROGRESS_BAR_STYLE}
-          initial={MOTION_PROGRESS_BAR_INITIAL}
-          animate={barAnimate}
-          transition={MOTION_PROGRESS_BAR_TRANSITION}>
-          <m.span
-            aria-hidden="true"
-            className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.25)_50%,transparent_100%)]"
-            initial={isRtl ? MOTION_PROGRESS_SHIMMER_INITIAL_RTL : MOTION_PROGRESS_SHIMMER_INITIAL}
-            animate={isRtl ? MOTION_PROGRESS_SHIMMER_ANIMATE_RTL : MOTION_PROGRESS_SHIMMER_ANIMATE}
-            transition={MOTION_PROGRESS_SHIMMER_TRANSITION}
-          />
-        </m.div>
-      </div>
+        value={value}
+        {...props}>
+        <ProgressPrimitive.Indicator asChild>
+          <m.div
+            className="relative h-full origin-left bg-primary [&:dir(rtl)]:origin-right"
+            initial={MOTION_PROGRESS_BAR_INITIAL}
+            animate={barAnimate}
+            transition={percent === null ? MOTION_PROGRESS_BAR_WAITING_TRANSITION : MOTION_PROGRESS_BAR_TRANSITION}>
+            <m.span
+              aria-hidden="true"
+              className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.25)_50%,transparent_100%)] [&:dir(rtl)]:-scale-x-100"
+              initial={MOTION_PROGRESS_SHIMMER_INITIAL}
+              animate={MOTION_PROGRESS_SHIMMER_ANIMATE}
+              transition={MOTION_PROGRESS_SHIMMER_TRANSITION}
+            />
+          </m.div>
+        </ProgressPrimitive.Indicator>
+      </ProgressPrimitive.Root>
     </LazyMotion>
   )
 })

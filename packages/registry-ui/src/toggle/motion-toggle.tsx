@@ -6,6 +6,7 @@ import { useMotionPreset } from '@gentleduck/motion/motion-presets'
 import { tapScale } from '@gentleduck/motion/presets/content'
 import { scaleIn } from '@gentleduck/motion/presets/scale-in'
 import { springBouncy } from '@gentleduck/motion/transitions/springs'
+import { TAP_SCALE_TRANSITION } from '@gentleduck/motion/transitions/tweens'
 import * as TogglePrimitive from '@gentleduck/primitives/toggle'
 import type { Variants } from '@gentleduck/variants'
 import { LazyMotion, m } from 'motion/react'
@@ -24,19 +25,25 @@ const MotionToggle = React.forwardRef<
   return (
     <LazyMotion features={loadDomAnimation}>
       <TogglePrimitive.Root asChild ref={ref} {...props}>
-        <m.button whileTap={tapScale} className={cn(toggleVariants({ className, size, variant }))} data-slot="toggle">
-          {React.Children.map(children, (child, i) => (
-            <m.span
-              // biome-ignore lint/suspicious/noArrayIndexKey: span wraps positional child by index
-              key={i}
-              initial={content.initial}
-              animate={content.animate}
-              transition={{ ...content.transition, delay: i * 0.05 }}
-              className="inline-flex">
-              {child}
-            </m.span>
-          ))}
-        </m.button>
+        {(pressed) => (
+          <m.button
+            className={cn(toggleVariants({ className, size, variant }))}
+            // motion releases a press through this transition, and with none it springs back.
+            transition={TAP_SCALE_TRANSITION}
+            whileTap={tapScale}>
+            {React.Children.map(typeof children === 'function' ? children(pressed) : children, (child, i) => (
+              <m.span
+                // biome-ignore lint/suspicious/noArrayIndexKey: span wraps positional child by index
+                key={i}
+                initial={content.initial}
+                // The target's own transition wins over the transition prop, so the delay goes in the target.
+                animate={{ ...content.animate, transition: { ...content.transition, delay: i * 0.05 } }}
+                className="inline-flex">
+                {child}
+              </m.span>
+            ))}
+          </m.button>
+        )}
       </TogglePrimitive.Root>
     </LazyMotion>
   )

@@ -1,0 +1,22 @@
+.page {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+  padding: 50px;
+}
+
+.toggle {
+  padding: 6px 12px;
+  border: 1px solid #999;
+  border-radius: 6px;
+  background: white;
+}
+
+.toggle[data-state="on"] {
+  background: #222;
+  color: white;
+}
+
+.toggle:disabled {
+  opacity: 0.5;
+}

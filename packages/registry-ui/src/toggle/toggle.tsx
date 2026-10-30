@@ -10,14 +10,7 @@ const Toggle = React.forwardRef<
   React.ComponentRef<typeof TogglePrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof TogglePrimitive.Root> & Variants.VariantProps<typeof toggleVariants>
 >(({ className, variant = 'default', size = 'default', ...props }, ref) => {
-  return (
-    <TogglePrimitive.Root
-      className={cn(toggleVariants({ className, size, variant }))}
-      data-slot="toggle"
-      ref={ref}
-      {...props}
-    />
-  )
+  return <TogglePrimitive.Root className={cn(toggleVariants({ className, size, variant }))} ref={ref} {...props} />
 })
 Toggle.displayName = 'Toggle'
 

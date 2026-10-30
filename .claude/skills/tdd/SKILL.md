@@ -73,7 +73,8 @@ Three things bite at these seams:
 - **Roots left mounted by an earlier file** trap focus in a later one under `bun test`, since
   every file shares one jsdom. A file that asserts on focus starts from `freshDom()` in
   `src/__tests__/dom.ts`.
-- **The story server is on port 9009** and Playwright reuses one already running outside CI.
+- **The story server is on port 9009**: `bun run stories` in `packages/duck-primitives` serves an index of every
+  story at `/`. Playwright reuses one already running outside CI.
   Check `lsof -iTCP:9009` first, or the run tests another checkout's stories.
 
 When the shape of that interface is itself in question (how deep the module is, where the

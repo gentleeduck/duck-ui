@@ -1,3 +1,8 @@
 import stories from './iframe.html'
 
-Bun.serve({ development: { hmr: false }, port: 9009, routes: { '/iframe.html': stories } })
+const server = Bun.serve({
+  development: { hmr: false },
+  port: 9009,
+  routes: { '/': stories, '/iframe.html': stories },
+})
+console.log(`Stories at ${server.url}`)

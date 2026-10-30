@@ -109,6 +109,7 @@
     "fix": "biome check --write .",
     "format": "biome format --write .",
     "lint": "biome lint .",
+    "stories": "bun src/__stories__/server.ts",
     "test": "bun src/__tests__/istanbul/run.ts",
     "test:coverage": "bun test --coverage",
     "test:e2e": "playwright test",

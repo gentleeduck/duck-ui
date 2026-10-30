@@ -31,7 +31,7 @@ export default defineConfig({
     viewport: { height: 768, width: 1024 },
   },
   webServer: {
-    command: 'bun src/__stories__/server.ts',
+    command: 'bun run stories',
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
     url: `${baseURL}/iframe.html`,

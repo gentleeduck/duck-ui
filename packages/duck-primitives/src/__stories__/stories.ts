@@ -27,7 +27,13 @@ const kebab = (value: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 
-export const stories = new Map<string, React.ComponentType>()
+export interface IStoryEntry {
+  title: string
+  name: string
+  Story: React.ComponentType
+}
+
+export const stories = new Map<string, IStoryEntry>()
 
 for (const module of [
   accordion,
@@ -51,9 +57,11 @@ for (const module of [
 ] as StoryModule[]) {
   for (const [name, story] of Object.entries(module)) {
     if (name === 'default' || typeof story !== 'function') continue
-    stories.set(
-      `${kebab(module.default.title)}--${kebab(name.replace(/([a-z0-9])([A-Z])/g, '$1 $2'))}`,
-      story as React.ComponentType,
-    )
+    const words = name.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    stories.set(`${kebab(module.default.title)}--${kebab(words)}`, {
+      title: module.default.title,
+      name: words,
+      Story: story as React.ComponentType,
+    })
   }
 }

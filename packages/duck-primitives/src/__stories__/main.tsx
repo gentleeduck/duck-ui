@@ -1,9 +1,11 @@
 import * as React from 'react'
 import { createRoot } from 'react-dom/client'
 import { stories } from './stories'
+import { StoryIndex } from './story-index'
 
-const id = new URLSearchParams(window.location.search).get('id') ?? ''
-const Story = stories.get(id)
+const id = new URLSearchParams(window.location.search).get('id')
+const entry = id === null ? undefined : stories.get(id)
+if (entry) document.title = `${entry.title} / ${entry.name}`
 const container = document.getElementById('root')
 if (!container) throw new Error('iframe.html has no #root')
 
@@ -18,9 +20,11 @@ function Mounted({ children }: { children: React.ReactNode }) {
 // Radix's Storybook renders every story in strict mode.
 createRoot(container).render(
   <React.StrictMode>
-    {Story ? (
+    {id === null ? (
+      <StoryIndex />
+    ) : entry ? (
       <Mounted>
-        <Story />
+        <entry.Story />
       </Mounted>
     ) : (
       <p>No story named {id}</p>

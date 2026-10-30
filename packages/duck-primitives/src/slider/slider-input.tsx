@@ -37,7 +37,7 @@ const SliderBubbleInput = React.forwardRef<HTMLInputElement, ISlider.IScoped<ISl
         hasUnhandledRequest && ((isRequestFromThisRender && requestedValue !== prevValue) || requestedValue === value)
 
       shouldStopPropagationRef.current = !isUserInteraction
-      setNativeValue.call(input, value)
+      setNativeValue.call(input, value ?? '')
       input.dispatchEvent(new Event('input', { bubbles: true }))
       shouldStopPropagationRef.current = false
     }, [index, value, userRequestedValues])

@@ -575,6 +575,24 @@ describe('Slider hidden input', () => {
 
     expect(onAncestorInput).toHaveBeenCalledTimes(1)
   })
+
+  it('empties the input of a thumb whose value is gone', () => {
+    function Price({ value }: { value: number[] }) {
+      return (
+        <form>
+          <Slider name="price" value={value}>
+            <SliderThumb index={0} />
+            <SliderThumb index={1} />
+          </Slider>
+        </form>
+      )
+    }
+    const { container, rerender } = render(<Price value={[10, 30]} />)
+
+    rerender(<Price value={[10]} />)
+
+    expect(Array.from(container.querySelectorAll('input'), (input) => input.value)).toEqual(['10', ''])
+  })
 })
 
 describe('Slider on the server', () => {
@@ -924,6 +942,47 @@ describe('Slider pointer capture', () => {
     fireEvent.pointerUp(slider, { pointerId: 1, clientX: 25 })
 
     expect(onValueCommit.mock.calls).toEqual([[[25]]])
+  })
+
+  it('commits the last move when the release lands before that move renders', () => {
+    const { slider, onValueCommit } = renderHorizontalSlider()
+    fireEvent.pointerDown(slider, { pointerId: 1, clientX: 25 })
+
+    act(() => {
+      fireEvent.pointerMove(slider, { pointerId: 1, clientX: 40 })
+      fireEvent.pointerUp(slider, { pointerId: 1, clientX: 40 })
+    })
+
+    expect(onValueCommit.mock.calls).toEqual([[[40]]])
+  })
+
+  it('commits the last move of a controlled slider when the release lands before that move renders', () => {
+    const onValueCommit = mock((_value: number[]) => {})
+    function Volume() {
+      const [value, setValue] = React.useState([50])
+      return (
+        <Slider value={value} onValueChange={setValue} onValueCommit={onValueCommit} data-testid="slider">
+          <SliderTrack>
+            <SliderRange />
+          </SliderTrack>
+          <SliderThumb />
+        </Slider>
+      )
+    }
+    render(<Volume />)
+    const slider = screen.getByTestId('slider')
+    slider.getBoundingClientRect = () => new DOMRect(0, 0, 100, 10)
+    slider.setPointerCapture = () => {}
+    slider.releasePointerCapture = () => {}
+    slider.hasPointerCapture = () => true
+    fireEvent.pointerDown(slider, { pointerId: 1, clientX: 25 })
+
+    act(() => {
+      fireEvent.pointerMove(slider, { pointerId: 1, clientX: 40 })
+      fireEvent.pointerUp(slider, { pointerId: 1, clientX: 40 })
+    })
+
+    expect(onValueCommit.mock.calls).toEqual([[[40]]])
   })
 })
 

@@ -44,14 +44,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 158 | `slider-libs.test.ts` 32, `slider.radix.test.tsx` 39, `slider.test.tsx` 87 |
+| Unit | 161 | `slider-libs.test.ts` 32, `slider.radix.test.tsx` 39, `slider.test.tsx` 90 |
 | End to end | 25 | `slider.e2e.ts` 25 |
 | registry-ui | 16 | `slider.test.tsx` 16 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>183 behaviours, one per test</summary>
+<summary>186 behaviours, one per test</summary>
 
 **Unit, `slider.radix.test.tsx`**
 
@@ -162,6 +162,7 @@ Each test was proven by changing the code and watching a test fail.
   - renders none outside a form
   - renders one for a form named by `form` that does not contain the slider
   - treats a parent moving back to the last requested value as programmatic
+  - empties the input of a thumb whose value is gone
 - Slider on the server
   - renders a lone thumb where its value puts it, with that value in its input
   - renders each thumb of a range where its value puts it, once told its index
@@ -191,6 +192,8 @@ Each test was proven by changing the code and watching a test fail.
   - ends a slide the browser cancels as a release, committing it and measuring the track again next time
   - stops a drag past either end of the track at min or max
   - commits nothing for a second slide that ends where it began
+  - commits the last move when the release lands before that move renders
+  - commits the last move of a controlled slider when the release lands before that move renders
 - Slider keys it steps with
   - claims each arrow and page key, so the page does not scroll as the thumb moves
 - Slider keys it does not use
@@ -333,6 +336,9 @@ Against `@radix-ui/react-slider` 1.4.7, the version the benchmarks run. 1.6.1, t
   showed a bare track, as Radix's still does.
 - `onValueCommit` fires whenever a drag changed any value, where it compared one thumb and missed a drag
   that left two thumbs on the same value.
+- A release that lands before React renders the move before it commits that move, where it sent the values
+  from before the move.
+- The hidden input of a thumb whose value is gone holds an empty value, where it submitted `undefined`.
 - Focus moves to the changed thumb without the focus ring when a pointer moved it.
 - A right click or a Control click on the track moves nothing, since each opens the context menu. Either
   moved the closest thumb to the pointer, as Radix's still does.

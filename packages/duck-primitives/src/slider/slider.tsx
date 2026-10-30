@@ -89,6 +89,8 @@ const Slider = React.forwardRef<SliderElement, ISlider.IProps>(
       caller: SLIDER_NAME,
     })
     const valuesBeforeSlideStartRef = React.useRef(values)
+    // A release can land before React renders the move before it, so the slide keeps the values it last asked for.
+    const slideValuesRef = React.useRef(values)
     // React replays an update queued behind one it skipped, and a second array of the same values would report it twice.
     const lastChangedValuesRef = React.useRef(values)
 
@@ -117,7 +119,8 @@ const Slider = React.forwardRef<SliderElement, ISlider.IProps>(
     }
 
     function handleSlideEnd() {
-      if (String(values) !== String(valuesBeforeSlideStartRef.current)) onValueCommit(values)
+      const slideValues = slideValuesRef.current
+      if (String(slideValues) !== String(valuesBeforeSlideStartRef.current)) onValueCommit(slideValues)
     }
 
     function updateValues(value: number, atIndex: number, { commit } = { commit: false }) {
@@ -148,6 +151,7 @@ const Slider = React.forwardRef<SliderElement, ISlider.IProps>(
       const requested = getNextValues(values)
       if (requested?.hasChanged) {
         setUserRequestedValues(requested.nextValues)
+        slideValuesRef.current = requested.nextValues
         // Outside the updater, which StrictMode runs twice. Only a key commits, and React renders between two keys.
         if (commit) onValueCommit(requested.nextValues)
       }
@@ -187,6 +191,7 @@ const Slider = React.forwardRef<SliderElement, ISlider.IProps>(
               ref={composedRefs}
               onPointerDown={composeEventHandlers(sliderProps.onPointerDown, () => {
                 valuesBeforeSlideStartRef.current = values
+                slideValuesRef.current = values
                 interactionRef.current = 'pointer'
               })}
               min={min}

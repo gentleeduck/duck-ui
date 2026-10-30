@@ -1,60 +1,137 @@
-import svgToMiniDataURI from 'mini-svg-data-uri'
+import * as React from 'react'
+import { useLayoutEffect } from '../hooks/use-layout-effect'
 
-import React from 'react'
-
-/** Renders SVG indicators to a hidden node, then exposes them as `--svg-off` / `--svg-on` data-URI CSS vars. */
-export function useSvgIndicator({
-  indicator,
-  checkedIndicator,
-}: {
+export interface ISvgIndicatorOptions {
   indicator?: React.ReactNode
   checkedIndicator?: React.ReactNode
-}) {
-  const refOff = React.useRef<HTMLDivElement>(null)
-  const refOn = React.useRef<HTMLDivElement>(null)
-  const [uriOff, setUriOff] = React.useState<string>('')
-  const [uriOn, setUriOn] = React.useState<string>('')
-  const [indicatorReady, setIndicatorReady] = React.useState<boolean>(false)
-  const [checkedIndicatorReady, setCheckedIndicatorReady] = React.useState<boolean>(false)
+  indeterminateIndicator?: React.ReactNode
+}
 
-  React.useEffect(() => {
-    const offMarkup = refOff.current?.innerHTML.trim() ?? ''
-    const onMarkup = refOn.current?.innerHTML.trim() ?? ''
-    const hasOff = offMarkup.length > 0
-    const hasOn = onMarkup.length > 0
-    const newUriOff = hasOff ? svgToMiniDataURI(offMarkup) : ''
-    const newUriOn = hasOn ? svgToMiniDataURI(onMarkup) : ''
+const SLOTS = [
+  ['indicator', '--svg-off'],
+  ['checkedIndicator', '--svg-on'],
+  ['indeterminateIndicator', '--svg-indeterminate'],
+] as const
 
-    setUriOff(newUriOff)
-    setUriOn(newUriOn)
-    setIndicatorReady(hasOff)
-    setCheckedIndicatorReady(hasOn)
-  }, [])
+// An image is parsed as its own XML document and draws nothing without the SVG namespace, which serialized
+// HTML only carries when the markup set it as an attribute.
+const toUrl = (markup: string) =>
+  `url("data:image/svg+xml,${encodeURIComponent(markup.replace(/^<svg(?![^>]*\sxmlns=)/, '<svg xmlns="http://www.w3.org/2000/svg"'))}")`
 
-  const inputStyle: React.CSSProperties = {
-    ...(uriOff ? { '--svg-off': `url("${uriOff}")` } : {}),
-    ...(uriOn ? { '--svg-on': `url("${uriOn}")` } : {}),
-  } as React.CSSProperties
+/**
+ * Renders SVG indicators into hidden nodes and hands their markup back as data-URI CSS variables: `--svg-off`,
+ * `--svg-on` and `--svg-indeterminate`, for an input that cannot hold children to draw as a mask.
+ */
+export function useSvgIndicator(options: ISvgIndicatorOptions) {
+  const latest = React.useRef(options)
+  // The returned component keeps one identity so its markup is never remounted, and reads what to draw from here.
+  latest.current = options
+  const [sources] = React.useState<(HTMLDivElement | null)[]>(() => [])
+  const [markup, setMarkup] = React.useState<readonly string[]>(['', '', ''])
 
-  const SvgIndicator: React.FC<React.HTMLAttributes<HTMLDivElement>> = (props) => (
-    <>
-      {indicator && (
-        <div aria-hidden hidden {...props} ref={refOff}>
-          {indicator}
-        </div>
-      )}
-      {checkedIndicator && (
-        <div aria-hidden hidden {...props} ref={refOn}>
-          {checkedIndicator}
-        </div>
-      )}
-    </>
-  )
+  const [SvgIndicator] = React.useState(() => {
+    const refs = SLOTS.map((_, index) => (node: HTMLDivElement | null) => {
+      sources[index] = node
+    })
+    function SvgIndicator(props: React.HTMLAttributes<HTMLDivElement>) {
+      return SLOTS.map(([option], index) =>
+        latest.current[option] ? (
+          <div aria-hidden hidden {...props} key={option} ref={refs[index]}>
+            {latest.current[option]}
+          </div>
+        ) : null,
+      )
+    }
+    return SvgIndicator
+  })
+
+  useLayoutEffect(() => {
+    const next = SLOTS.map((_, index) => sources[index]?.innerHTML.trim() ?? '')
+    setMarkup((previous) => (next.every((value, index) => value === previous[index]) ? previous : next))
+  })
+
+  const inputStyle = React.useMemo(
+    () =>
+      Object.fromEntries(
+        SLOTS.flatMap(([, name], index) => {
+          const value = markup[index]
+          return value ? [[name, toUrl(value)]] : []
+        }),
+      ),
+    [markup],
+  ) as React.CSSProperties
 
   return {
-    checkedIndicatorReady,
-    indicatorReady,
+    checkedIndicatorReady: !!markup[1],
+    indeterminateIndicatorReady: !!markup[2],
+    indicatorReady: !!markup[0],
     inputStyle,
     SvgIndicator,
+  }
+}
+
+export interface ICheckedSyncOptions {
+  /** The state the owner holds the input on, or `undefined` while the input keeps its own. */
+  checked: boolean | undefined
+  onChange?: React.ChangeEventHandler<HTMLInputElement>
+  onClick?: React.MouseEventHandler<HTMLInputElement>
+}
+
+/**
+ * Keeps a native checkbox's form in step with the `checked` its owner sets. A change from outside reaches the form as
+ * the click Radix's hidden input sends, without running the input's handlers, and a form reset the owner does not
+ * follow is undone before the next paint. Returns the `onChange` and `onClick` to put on the input.
+ */
+export function useCheckedSync(
+  ref: React.RefObject<HTMLInputElement | null>,
+  { checked, onChange, onClick }: ICheckedSyncOptions,
+) {
+  const latest = React.useRef(checked)
+  latest.current = checked
+  const heard = React.useRef(checked)
+  const syncing = React.useRef(false)
+
+  React.useEffect(() => {
+    const input = ref.current
+    if (checked === undefined || checked === heard.current) return
+    heard.current = checked
+    if (!input?.form) return
+    // React reports a click as a change only when the value differs from the last one it saw, so it is shown the old
+    // value and the new one is set past it.
+    input.checked = !checked
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'checked')?.set?.call(input, checked)
+    syncing.current = true
+    input.dispatchEvent(new Event('click', { bubbles: true }))
+    syncing.current = false
+  }, [checked, ref])
+
+  React.useEffect(() => {
+    const input = ref.current
+    if (!input?.form) return
+    const { form } = input
+    let frame = 0
+    // The reset lands after its event, so the owner's value goes back on in the frame that would paint it.
+    const hold = () => {
+      frame = requestAnimationFrame(() => {
+        if (latest.current !== undefined) input.checked = latest.current
+      })
+    }
+    form.addEventListener('reset', hold)
+    return () => {
+      form.removeEventListener('reset', hold)
+      cancelAnimationFrame(frame)
+    }
+  }, [ref])
+
+  return {
+    onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (syncing.current) return
+      heard.current = event.target.checked
+      onChange?.(event)
+    },
+    onClick: (event: React.MouseEvent<HTMLInputElement>) => {
+      if (syncing.current) return event.stopPropagation()
+      onClick?.(event)
+    },
   }
 }

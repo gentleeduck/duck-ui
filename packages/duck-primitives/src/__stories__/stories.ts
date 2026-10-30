@@ -2,6 +2,7 @@ import type * as React from 'react'
 import * as accordion from '../accordion/__stories__/accordion.stories'
 import * as arrow from '../arrow/__stories__/arrow.stories'
 import * as avatar from '../avatar/__stories__/avatar.stories'
+import * as checkers from '../checkers/__stories__/checkers.stories'
 import * as direction from '../direction/__stories__/direction.stories'
 import * as dismissableLayer from '../dismissable-layer/__stories__/dismissable-layer.stories'
 import * as focusScope from '../focus-scope/__stories__/focus-scope.stories'
@@ -39,6 +40,7 @@ for (const module of [
   accordion,
   arrow,
   avatar,
+  checkers,
   direction,
   dismissableLayer,
   focusScope,

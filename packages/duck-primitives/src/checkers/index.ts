@@ -1,1 +1,2 @@
-export { useSvgIndicator, useSvgIndicator as default } from './checkers'
+export type { ICheckedSyncOptions, ISvgIndicatorOptions } from './checkers'
+export { useCheckedSync, useSvgIndicator, useSvgIndicator as default } from './checkers'

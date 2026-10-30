@@ -1,0 +1,46 @@
+.box {
+  appearance: none;
+  position: relative;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border: 1px solid var(--color-black);
+}
+
+.box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-black);
+  mask: var(--svg-off) center / contain no-repeat;
+}
+
+.box:checked::after {
+  mask-image: var(--svg-on);
+}
+
+.box:indeterminate::after {
+  mask-image: var(--svg-indeterminate);
+}
+
+.switch {
+  appearance: none;
+  position: relative;
+  width: 40px;
+  height: 20px;
+  margin: 0;
+  border: 1px solid var(--color-black);
+  border-radius: 10px;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-black);
+  mask: var(--svg-off) center / contain no-repeat;
+}
+
+.switch:checked::after {
+  mask-image: var(--svg-on);
+}

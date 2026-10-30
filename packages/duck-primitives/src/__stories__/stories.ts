@@ -18,6 +18,7 @@ import * as radioGroup from '../radio-group/__stories__/radio-group.stories'
 import * as rovingFocus from '../roving-focus/__stories__/roving-focus.stories'
 import * as slot from '../slot/__stories__/slot.stories'
 import * as toggle from '../toggle/__stories__/toggle.stories'
+import * as toggleGroup from '../toggle-group/__stories__/toggle-group.stories'
 import * as visuallyHidden from '../visibility-hidden/__stories__/visibility-hidden.stories'
 
 type StoryModule = { default: { title: string } } & Record<string, unknown>
@@ -57,6 +58,7 @@ for (const module of [
   rovingFocus,
   slot,
   toggle,
+  toggleGroup,
   visuallyHidden,
 ] as StoryModule[]) {
   for (const [name, story] of Object.entries(module)) {

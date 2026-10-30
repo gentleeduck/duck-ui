@@ -3,14 +3,14 @@ import { Bold, Italic, Underline } from 'lucide-react'
 
 export default function Demo() {
   return (
-    <ToggleGroup type="single">
-      <ToggleGroupItem aria-label="Toggle bold" disabled value="bold">
+    <ToggleGroup aria-label="Text style" disabled type="single">
+      <ToggleGroupItem aria-label="Toggle bold" value="bold">
         <Bold className="h-4 w-4" />
       </ToggleGroupItem>
-      <ToggleGroupItem aria-label="Toggle italic" disabled value="italic">
+      <ToggleGroupItem aria-label="Toggle italic" value="italic">
         <Italic className="h-4 w-4" />
       </ToggleGroupItem>
-      <ToggleGroupItem aria-label="Toggle underline" disabled value="underline">
+      <ToggleGroupItem aria-label="Toggle underline" value="underline">
         <Underline className="h-4 w-4" />
       </ToggleGroupItem>
     </ToggleGroup>

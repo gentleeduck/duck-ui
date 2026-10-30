@@ -6,7 +6,9 @@ import type { Variants } from '@gentleduck/variants'
 import * as React from 'react'
 import { toggleVariants } from '../toggle/toggle.constants'
 
-interface IToggleGroupContextProps extends Variants.VariantProps<typeof toggleVariants> {}
+interface IToggleGroupContextProps extends Variants.VariantProps<typeof toggleVariants> {
+  type?: 'single' | 'multiple'
+}
 
 const ToggleGroupContext = React.createContext<IToggleGroupContextProps>({
   size: 'default',
@@ -21,18 +23,25 @@ type ToggleGroupProps = IToggleGroupProps
 const ToggleGroup: React.ForwardRefExoticComponent<IToggleGroupProps & React.RefAttributes<ToggleGroupElement>> =
   React.forwardRef<ToggleGroupElement, IToggleGroupProps>(
     ({ className, variant = 'default', size = 'default', children, ...props }, ref) => {
-      const contextValue = React.useMemo<IToggleGroupContextProps>(() => ({ size, variant }), [size, variant])
+      const { type } = props
+      const vertical = props.orientation === 'vertical'
+      const contextValue = React.useMemo<IToggleGroupContextProps>(
+        () => ({ size, type, variant }),
+        [size, type, variant],
+      )
       return (
         <ToggleGroupContext.Provider value={contextValue}>
           <ToggleGroupPrimitive.Root
             className={cn(
-              'isolate flex items-center justify-center rounded-md *:first:rounded-s-md *:last:rounded-e-md',
+              'isolate flex rounded-md',
+              vertical
+                ? 'flex-col items-stretch *:first:rounded-t-md *:last:rounded-b-md'
+                : 'items-center justify-center *:first:rounded-s-md *:last:rounded-e-md',
               variant === 'outline' &&
-                '[&>*:first-child]:border-e-0 [&>*:not(:first-child):not(:last-child)]:border-e-0',
+                (vertical ? '[&>*:not(:last-child)]:border-b-0' : '[&>*:not(:last-child)]:border-e-0'),
               className,
             )}
             ref={ref}
-            data-slot="toggle-group"
             {...props}>
             {children}
           </ToggleGroupPrimitive.Root>
@@ -60,7 +69,6 @@ const ToggleGroupItem: React.ForwardRefExoticComponent<
           className,
         )}
         ref={ref}
-        data-slot="toggle-group-item"
         {...props}>
         {children}
       </ToggleGroupPrimitive.Item>

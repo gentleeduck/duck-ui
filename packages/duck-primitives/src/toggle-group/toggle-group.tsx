@@ -2,9 +2,8 @@ import * as React from 'react'
 import { useDirection } from '../direction'
 import { useControllableState } from '../hooks/use-controllable-state'
 import { createContextScope } from '../libs/create-context'
-import { Primitive } from '../primitive-elements'
-import * as RovingFocusGroup from '../roving-focus'
-import { createRovingFocusGroupScope } from '../roving-focus'
+import { type Primitive, primitiveElement } from '../primitive-elements/primitive-elements'
+import { createRovingFocusGroupScope, RovingFocusProvider, useRovingFocusGroup } from '../roving-focus'
 import type { IToggleGroup } from './toggle-group.types'
 
 const TOGGLE_GROUP_NAME = 'ToggleGroup'
@@ -16,134 +15,95 @@ const useRovingFocusGroupScope = createRovingFocusGroupScope()
 
 const [ToggleGroupProvider, useToggleGroupContext] = createToggleGroupContext<IToggleGroup.IContext>(TOGGLE_GROUP_NAME)
 
-const ToggleGroup = React.forwardRef<React.ComponentRef<typeof Primitive.div>, IToggleGroup.IProps>(
+const toList = (value: string | string[]) => (typeof value === 'string' ? (value ? [value] : []) : value)
+
+type ToggleGroupElement = React.ComponentRef<typeof Primitive.div>
+
+const ToggleGroup = React.forwardRef<ToggleGroupElement, IToggleGroup.IProps>(
   (props: IToggleGroup.IScoped<IToggleGroup.IProps>, forwardedRef) => {
-    if (props.type === 'single') {
-      return <ToggleGroupSingle {...(props as IToggleGroup.IScoped<IToggleGroup.ISingle>)} ref={forwardedRef} />
-    }
-    if (props.type === 'multiple') {
-      return <ToggleGroupMultiple {...(props as IToggleGroup.IScoped<IToggleGroup.IMultiple>)} ref={forwardedRef} />
-    }
-    return <ToggleGroupSingle {...(props as IToggleGroup.IScoped<IToggleGroup.ISingle>)} ref={forwardedRef} />
-  },
-)
-
-ToggleGroup.displayName = TOGGLE_GROUP_NAME
-
-const ToggleGroupSingle = React.forwardRef<React.ComponentRef<typeof Primitive.div>, IToggleGroup.ISingle>(
-  (props: IToggleGroup.IScoped<IToggleGroup.ISingle>, forwardedRef) => {
-    const { value: valueProp, defaultValue, onValueChange, ...toggleGroupProps } = props
-
-    const [value = '', setValue] = useControllableState({
-      prop: valueProp,
-      defaultProp: defaultValue ?? '',
-      onChange: onValueChange,
-      caller: TOGGLE_GROUP_NAME,
-    })
-
-    return (
-      <ToggleGroupImpl
-        {...toggleGroupProps}
-        ref={forwardedRef}
-        value={value ? [value] : []}
-        onItemActivate={setValue}
-        onItemDeactivate={React.useCallback(() => setValue(''), [setValue])}
-      />
-    )
-  },
-)
-
-ToggleGroupSingle.displayName = `${TOGGLE_GROUP_NAME}Single`
-
-const ToggleGroupMultiple = React.forwardRef<React.ComponentRef<typeof Primitive.div>, IToggleGroup.IMultiple>(
-  (props: IToggleGroup.IScoped<IToggleGroup.IMultiple>, forwardedRef) => {
-    const { value: valueProp, defaultValue, onValueChange, ...toggleGroupProps } = props
-
-    const [value = [], setValue] = useControllableState({
-      prop: valueProp,
-      defaultProp: defaultValue ?? [],
-      onChange: onValueChange,
-      caller: TOGGLE_GROUP_NAME,
-    })
-
-    const handleItemActivate = React.useCallback(
-      (itemValue: string) => setValue((prevValue = []) => [...prevValue, itemValue]),
-      [setValue],
-    )
-
-    const handleItemDeactivate = React.useCallback(
-      (itemValue: string) => setValue((prevValue = []) => prevValue.filter((v) => v !== itemValue)),
-      [setValue],
-    )
-
-    return (
-      <ToggleGroupImpl
-        {...toggleGroupProps}
-        ref={forwardedRef}
-        value={value}
-        onItemActivate={handleItemActivate}
-        onItemDeactivate={handleItemDeactivate}
-      />
-    )
-  },
-)
-
-ToggleGroupMultiple.displayName = `${TOGGLE_GROUP_NAME}Multiple`
-
-const ToggleGroupImpl = React.forwardRef<React.ComponentRef<typeof Primitive.div>, IToggleGroup.IImplPrivate>(
-  (props: IToggleGroup.IScoped<IToggleGroup.IImplPrivate>, forwardedRef) => {
     const {
       __scopeToggleGroup,
       type,
-      value,
-      onItemActivate,
-      onItemDeactivate,
+      value: valueProp,
+      defaultValue,
+      onValueChange,
+      asChild,
       rovingFocus = true,
       disabled = false,
+      deselectable = true,
       orientation,
       dir,
       loop = true,
       ...groupProps
     } = props
+    // A group given no type, as JavaScript allows, is single. Either type holds its value as a list.
+    const single = type !== 'multiple'
     const rovingFocusGroupScope = useRovingFocusGroupScope(__scopeToggleGroup)
     const direction = useDirection(dir)
+    const [value, setValue] = useControllableState<string[]>({
+      prop: React.useMemo(() => (valueProp === undefined ? undefined : toList(valueProp)), [valueProp]),
+      defaultProp: defaultValue === undefined ? [] : toList(defaultValue),
+      onChange: (next) =>
+        props.type === 'multiple' ? props.onValueChange?.(next) : props.onValueChange?.(next[0] ?? ''),
+      caller: TOGGLE_GROUP_NAME,
+    })
+    const group = useRovingFocusGroup<ToggleGroupElement>(
+      {
+        orientation,
+        dir: direction,
+        loop,
+        tabIndex: groupProps.tabIndex,
+        style: groupProps.style,
+        onMouseDown: groupProps.onMouseDown,
+        onFocus: groupProps.onFocus,
+        onBlur: groupProps.onBlur,
+      },
+      forwardedRef,
+    )
 
-    const commonProps = {
-      role: 'group' as const,
-      'data-slot': 'toggle-group',
-      dir: direction,
-      ...groupProps,
-      ref: forwardedRef,
-    }
+    const Element = primitiveElement('div', asChild)
+    const element = (
+      <Element
+        role={single ? 'radiogroup' : rovingFocus ? 'toolbar' : 'group'}
+        // Orientation is the axis of the arrow keys, which only roving focus listens to.
+        aria-orientation={rovingFocus ? orientation : undefined}
+        data-slot="toggle-group"
+        dir={direction}
+        {...groupProps}
+        {...(rovingFocus ? group.props : { ref: forwardedRef })}
+      />
+    )
 
     return (
       <ToggleGroupProvider
         scope={__scopeToggleGroup}
-        type={type}
+        type={single ? 'single' : 'multiple'}
         value={value}
-        onItemActivate={onItemActivate}
-        onItemDeactivate={onItemDeactivate}
+        onItemActivate={React.useCallback(
+          (itemValue: string) => setValue((previous) => (single ? [itemValue] : [...previous, itemValue])),
+          [single, setValue],
+        )}
+        onItemDeactivate={React.useCallback(
+          (itemValue: string) => setValue((previous) => (single ? [] : previous.filter((v) => v !== itemValue))),
+          [single, setValue],
+        )}
         rovingFocus={rovingFocus}
         disabled={disabled}
+        deselectable={deselectable}
         dir={direction}>
         {rovingFocus ? (
-          <RovingFocusGroup.Root
-            asChild
-            {...rovingFocusGroupScope}
-            orientation={orientation}
-            dir={direction}
-            loop={loop}>
-            <Primitive.div {...commonProps} />
-          </RovingFocusGroup.Root>
+          <RovingFocusProvider scope={rovingFocusGroupScope.__scopeRovingFocusGroup} {...group.context}>
+            {element}
+          </RovingFocusProvider>
         ) : (
-          <Primitive.div {...commonProps} />
+          element
         )}
       </ToggleGroupProvider>
     )
   },
 )
 
-ToggleGroupImpl.displayName = `${TOGGLE_GROUP_NAME}Impl`
+ToggleGroup.displayName = TOGGLE_GROUP_NAME
 
 export {
   createToggleGroupScope,

@@ -3,7 +3,7 @@ import { Bold, Italic, Underline } from 'lucide-react'
 
 export default function Demo() {
   return (
-    <ToggleGroup type="single" variant={'outline'}>
+    <ToggleGroup aria-label="Text style" type="single" variant="outline">
       <ToggleGroupItem aria-label="Toggle bold" value="bold">
         <Bold className="h-4 w-4" />
       </ToggleGroupItem>

@@ -5,7 +5,7 @@ import { Bold, Italic, Underline } from 'lucide-react'
 
 export default function Demo() {
   return (
-    <MotionToggleGroup type="single">
+    <MotionToggleGroup aria-label="Text style" type="single">
       <MotionToggleGroupItem aria-label="Toggle bold" value="bold">
         <Bold className="h-4 w-4" />
       </MotionToggleGroupItem>

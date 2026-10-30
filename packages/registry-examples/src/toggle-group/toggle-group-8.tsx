@@ -5,7 +5,7 @@ import { Bold, Italic, Underline } from 'lucide-react'
 export default function Demo() {
   return (
     <DirectionProvider dir="rtl">
-      <ToggleGroup type="multiple" variant="outline">
+      <ToggleGroup aria-label="تنسيق النص" type="multiple" variant="outline">
         <ToggleGroupItem aria-label="غامق" value="bold">
           <Bold />
         </ToggleGroupItem>

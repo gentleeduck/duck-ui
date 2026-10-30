@@ -2,7 +2,7 @@ import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '@gentl
 
 export default function Demo() {
   return (
-    <InputOTP maxLength={6}>
+    <InputOTP aria-label="One-time code" maxLength={6}>
       <InputOTPGroup>
         <InputOTPSlot />
         <InputOTPSlot />

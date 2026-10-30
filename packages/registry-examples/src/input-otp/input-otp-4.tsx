@@ -7,7 +7,7 @@ export default function Demo() {
 
   return (
     <div className="space-y-2">
-      <InputOTP maxLength={6} onValueChange={(value) => setValue(value)} value={value}>
+      <InputOTP aria-label="One-time code" maxLength={6} onValueChange={(value) => setValue(value)} value={value}>
         <InputOTPGroup>
           <InputOTPSlot />
           <InputOTPSlot />

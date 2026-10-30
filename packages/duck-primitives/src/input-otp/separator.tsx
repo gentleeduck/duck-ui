@@ -8,16 +8,14 @@ type InputOTPSeparatorElement = React.ComponentRef<typeof Primitive.div>
 
 const InputOTPSeparator = React.forwardRef<InputOTPSeparatorElement, IInputOTP.ISeparatorProps>(
   (props, forwardedRef) => {
-    const { customIndicator, children, ...separatorProps } = props
     return (
       <Primitive.div
-        {...separatorProps}
+        {...props}
         ref={forwardedRef}
         role="presentation"
         aria-hidden="true"
-        data-slot="input-otp-separator">
-        {customIndicator ?? children}
-      </Primitive.div>
+        data-slot="input-otp-separator"
+      />
     )
   },
 )

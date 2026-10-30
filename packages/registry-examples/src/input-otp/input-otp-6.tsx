@@ -40,11 +40,11 @@ export default function Demo() {
           name="pin"
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="form-rhf-input-otp-pin">One-Time Password</FieldLabel>
+              <FieldLabel id="form-rhf-input-otp-pin">One-Time Password</FieldLabel>
               <InputOTP
-                id="form-rhf-input-otp-pin"
+                aria-labelledby="form-rhf-input-otp-pin"
+                autoSubmit
                 maxLength={6}
-                name={field.name}
                 value={field.value}
                 onBlur={field.onBlur}
                 onValueChange={field.onChange}

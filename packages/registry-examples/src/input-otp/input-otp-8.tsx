@@ -4,7 +4,7 @@ import { InputOTPGroup, InputOTPSeparator, InputOTPSlot, MotionInputOTP } from '
 
 export default function Demo() {
   return (
-    <MotionInputOTP maxLength={6}>
+    <MotionInputOTP aria-label="One-time code" maxLength={6}>
       <InputOTPGroup>
         <InputOTPSlot />
         <InputOTPSlot />

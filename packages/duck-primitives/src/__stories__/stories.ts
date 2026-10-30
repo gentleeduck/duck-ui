@@ -7,6 +7,7 @@ import * as direction from '../direction/__stories__/direction.stories'
 import * as dismissableLayer from '../dismissable-layer/__stories__/dismissable-layer.stories'
 import * as focusScope from '../focus-scope/__stories__/focus-scope.stories'
 import * as hooks from '../hooks/__stories__/hooks.stories'
+import * as inputOtp from '../input-otp/__stories__/input-otp.stories'
 import * as mount from '../mount/__stories__/mount.stories'
 import * as pagination from '../pagination/__stories__/pagination.stories'
 import * as popper from '../popper/__stories__/popper.stories'
@@ -48,6 +49,7 @@ for (const module of [
   dismissableLayer,
   focusScope,
   hooks,
+  inputOtp,
   mount,
   pagination,
   popper,

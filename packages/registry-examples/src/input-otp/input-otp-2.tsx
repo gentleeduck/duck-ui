@@ -3,7 +3,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot, REGEXP_ONLY_DIGITS } from '@gent
 
 export default function Demo() {
   return (
-    <InputOTP maxLength={6} pattern={REGEXP_ONLY_DIGITS}>
+    <InputOTP aria-label="One-time code" maxLength={6} pattern={REGEXP_ONLY_DIGITS}>
       <InputOTPGroup>
         <InputOTPSlot />
         <InputOTPSlot />

@@ -3,13 +3,15 @@ import { Minus } from 'lucide-react'
 
 export default function Demo() {
   return (
-    <InputOTP maxLength={6}>
+    <InputOTP aria-label="One-time code" maxLength={6}>
       <InputOTPGroup>
         <InputOTPSlot />
         <InputOTPSlot />
         <InputOTPSlot />
       </InputOTPGroup>
-      <InputOTPSeparator customIndicator={<Minus aria-hidden="true" />} />
+      <InputOTPSeparator>
+        <Minus aria-hidden="true" />
+      </InputOTPSeparator>
       <InputOTPGroup>
         <InputOTPSlot />
         <InputOTPSlot />

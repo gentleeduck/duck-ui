@@ -54,18 +54,13 @@ const Checkbox = React.forwardRef<HTMLInputElement, ICheckboxProps>(
         event.target.indeterminate = checked === 'indeterminate'
       },
       onClick,
+      onReset: () => setChecked(resetTo),
     })
 
+    // The form resets the input to this, and the state follows it through onReset.
     useLayoutEffect(() => {
-      const input = inputRef.current
-      if (!input) return
-      // The form resets the input to this, and the state follows it from the reset event.
-      input.defaultChecked = resetTo === true
-      const { form } = input
-      const reset = () => setChecked(resetTo)
-      form?.addEventListener('reset', reset)
-      return () => form?.removeEventListener('reset', reset)
-    }, [resetTo, setChecked])
+      if (inputRef.current) inputRef.current.defaultChecked = resetTo === true
+    }, [resetTo])
 
     return (
       <>

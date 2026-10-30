@@ -323,6 +323,30 @@ describe('useCheckedSync', () => {
     expect(input().checked).toBe(false)
   })
 
+  it('hears an uncancelled reset of the form the input belongs to now', () => {
+    const onReset = mock()
+    function InForm({ form }: { form: string }) {
+      const ref = React.useRef<HTMLInputElement>(null)
+      const sync = useCheckedSync(ref, { checked: undefined, onReset })
+      return <input type="checkbox" aria-label="synced" form={form} ref={ref} {...sync} />
+    }
+    const ui = (form: string) => (
+      <>
+        <form id="sync-cancelled" onReset={(event) => event.preventDefault()} />
+        <form id="sync-plain" />
+        <InForm form={form} />
+      </>
+    )
+    const { rerender } = render(ui('sync-cancelled'))
+
+    act(() => document.forms.namedItem('sync-cancelled')?.reset())
+    rerender(ui('sync-plain'))
+    act(() => document.forms.namedItem('sync-plain')?.reset())
+    act(() => document.forms.namedItem('sync-cancelled')?.reset())
+
+    expect(onReset.mock.calls.map(([target]) => target === input())).toEqual([true])
+  })
+
   it('puts nothing back once it unmounts', async () => {
     const owned = (checked: boolean | null) => (
       <form>{checked === null ? null : <Synced checked={checked} onChange={() => undefined} />}</form>

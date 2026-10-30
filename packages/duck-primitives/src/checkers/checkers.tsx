@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useCallbackRef } from '../hooks/use-callback-ref'
 import { useLayoutEffect } from '../hooks/use-layout-effect'
 
 export interface ISvgIndicatorOptions {
@@ -75,6 +76,8 @@ export interface ICheckedSyncOptions {
   checked: boolean | undefined
   onChange?: React.ChangeEventHandler<HTMLInputElement>
   onClick?: React.MouseEventHandler<HTMLInputElement>
+  /** Runs when the input's own form resets and no handler cancelled it, before the form puts the input back. */
+  onReset?: (input: HTMLInputElement) => void
 }
 
 /**
@@ -84,11 +87,15 @@ export interface ICheckedSyncOptions {
  */
 export function useCheckedSync(
   ref: React.RefObject<HTMLInputElement | null>,
-  { checked, onChange, onClick }: ICheckedSyncOptions,
+  { checked, onChange, onClick, onReset }: ICheckedSyncOptions,
 ) {
   const latest = React.useRef(checked)
-  latest.current = checked
+  const handleReset = useCallbackRef(onReset)
   const heard = React.useRef(checked)
+
+  useLayoutEffect(() => {
+    latest.current = checked
+  })
   const syncing = React.useRef(false)
 
   React.useEffect(() => {
@@ -107,21 +114,26 @@ export function useCheckedSync(
 
   React.useEffect(() => {
     const input = ref.current
-    if (!input?.form) return
-    const { form } = input
+    if (!input) return
+    const root = input.getRootNode()
     let frame = 0
-    // The reset lands after its event, so the owner's value goes back on in the frame that would paint it.
-    const hold = () => {
+    // Heard once the reset has bubbled up, so a handler that cancels it has run, and matched to the form the input
+    // belongs to now, which a later `form` attribute can change.
+    const reset = (event: Event) => {
+      if (event.defaultPrevented || event.target !== input.form) return
+      handleReset(input)
+      // The reset lands after its event, so the owner's value goes back on in the frame that would paint it.
+      cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
         if (latest.current !== undefined) input.checked = latest.current
       })
     }
-    form.addEventListener('reset', hold)
+    root.addEventListener('reset', reset)
     return () => {
-      form.removeEventListener('reset', hold)
+      root.removeEventListener('reset', reset)
       cancelAnimationFrame(frame)
     }
-  }, [ref])
+  }, [ref, handleReset])
 
   return {
     onChange: (event: React.ChangeEvent<HTMLInputElement>) => {

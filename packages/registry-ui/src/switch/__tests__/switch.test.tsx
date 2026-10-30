@@ -34,6 +34,20 @@ describe('registry-ui Switch', () => {
 })
 
 describe('registry-ui Switch in a form that is reset', () => {
+  test('tells the owner nothing of a reset a handler cancels', () => {
+    const onCheckedChange = mock()
+    render(
+      <form onReset={(event) => event.preventDefault()}>
+        <Switch defaultChecked onCheckedChange={onCheckedChange} />
+      </form>,
+    )
+    fireEvent.click(screen.getByRole('switch'))
+
+    act(() => screen.getByRole<HTMLInputElement>('switch').form?.reset())
+
+    expect(onCheckedChange.mock.calls).toEqual([[false]])
+  })
+
   test('tells the owner of an uncontrolled switch the value it goes back to', () => {
     const onCheckedChange = mock()
     const { container } = render(
@@ -126,6 +140,21 @@ describe('registry-ui MotionSwitch', () => {
 })
 
 describe('registry-ui MotionSwitch in a form that is reset', () => {
+  test('keeps its thumb and tells the owner nothing of a reset a handler cancels', () => {
+    const onCheckedChange = mock()
+    const { container } = render(
+      <form onReset={(event) => event.preventDefault()}>
+        <MotionSwitch defaultChecked onCheckedChange={onCheckedChange} />
+      </form>,
+    )
+    fireEvent.click(screen.getByRole('switch'))
+
+    act(() => container.querySelector('form')?.reset())
+
+    expect(container.querySelector('[data-slot="switch"]')?.getAttribute('data-state')).toBe('unchecked')
+    expect(onCheckedChange.mock.calls).toEqual([[false]])
+  })
+
   test('moves its thumb back and tells the owner', () => {
     const onCheckedChange = mock()
     const { container } = render(

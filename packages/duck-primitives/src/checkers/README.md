@@ -33,14 +33,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 22 | `checkers.test.tsx` 22 |
+| Unit | 23 | `checkers.test.tsx` 23 |
 | End to end | 9 | `checkers.e2e.ts` 9 |
-| registry-ui | 80 | `checkbox.radix.test.tsx` 26, `checkbox.test.tsx` 20, `motion-checkbox.test.tsx` 3, `switch.radix.test.tsx` 13, `switch.test.tsx` 18 |
+| registry-ui | 84 | `checkbox.radix.test.tsx` 26, `checkbox.test.tsx` 22, `motion-checkbox.test.tsx` 3, `switch.radix.test.tsx` 13, `switch.test.tsx` 20 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>31 behaviours, one per test</summary>
+<summary>32 behaviours, one per test</summary>
 
 **Unit, `checkers.test.tsx`**
 
@@ -68,6 +68,7 @@ Each test was proven by changing the code and watching a test fail.
   - tells the form nothing of a value it already heard from a click
   - puts the owner's value back after a reset the owner does not follow
   - leaves an input that keeps its own state to the reset
+  - hears an uncancelled reset of the form the input belongs to now
   - puts nothing back once it unmounts
 
 **End to end, `checkers.e2e.ts`**
@@ -146,6 +147,9 @@ Both:
   move between unchecked and mixed, which the box shows the same way to the form, fires nothing.
 - A controlled checkbox or switch whose owner does not follow a form reset goes back to its `checked`
   before the next paint, where it showed the reset value while its prop said otherwise.
+- Both follow a reset only once it has bubbled past every handler, so one a handler cancels changes nothing, and
+  only of the form the input belongs to when it happens, so a later `form` attribute counts. `useCheckedSync`
+  takes the `onReset` they share.
 
 ## Later
 

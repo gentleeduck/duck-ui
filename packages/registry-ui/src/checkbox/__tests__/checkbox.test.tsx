@@ -150,6 +150,41 @@ describe('registry-ui Checkbox in a form that is reset', () => {
     expect(box().dataset.checked).toBe('true')
   })
 
+  test('keeps its state through a reset a handler cancels', () => {
+    render(
+      <form onReset={(event) => event.preventDefault()}>
+        <Checkbox />
+      </form>,
+    )
+    fireEvent.click(box())
+
+    act(() => box().form?.reset())
+
+    expect([box().checked, box().dataset.checked]).toEqual([true, 'true'])
+  })
+
+  test('follows a reset of the form it names now, not the one it named before', () => {
+    const ui = (form: string) => (
+      <>
+        <form id="checkbox-form-a" />
+        <form id="checkbox-form-b" />
+        <Checkbox form={form} />
+      </>
+    )
+    const { rerender } = render(ui('checkbox-form-a'))
+    rerender(ui('checkbox-form-b'))
+    fireEvent.click(box())
+
+    act(() => document.forms.namedItem('checkbox-form-a')?.reset())
+    const afterOldForm = [box().checked, box().dataset.checked]
+    act(() => document.forms.namedItem('checkbox-form-b')?.reset())
+
+    expect([afterOldForm, [box().checked, box().dataset.checked]]).toEqual([
+      [true, 'true'],
+      [false, 'false'],
+    ])
+  })
+
   test('goes back on a reset of a form it names by id', () => {
     render(
       <>

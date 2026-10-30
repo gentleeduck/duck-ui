@@ -31,20 +31,6 @@ const MotionSwitch = React.forwardRef<
   const inputRef = React.useRef<HTMLInputElement>(null)
   React.useImperativeHandle(ref, () => inputRef.current as HTMLInputElement, [])
 
-  React.useEffect(() => {
-    const input = inputRef.current
-    const form = input?.form
-    if (!input || !form) return
-    // A reset fires no change event, so the thumb and the owner hear of the value it puts the input back on here.
-    const reset = () => {
-      if (input.checked === input.defaultChecked) return
-      if (!isControlled) setInternalChecked(input.defaultChecked)
-      onCheckedChange?.(input.defaultChecked)
-    }
-    form.addEventListener('reset', reset)
-    return () => form.removeEventListener('reset', reset)
-  }, [isControlled, onCheckedChange])
-
   const handleChange = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!isControlled) setInternalChecked(e.target.checked)
@@ -54,7 +40,17 @@ const MotionSwitch = React.forwardRef<
     [isControlled, onChange, onCheckedChange],
   )
 
-  const sync = useCheckedSync(inputRef, { checked: isControlled ? value : undefined, onChange: handleChange, onClick })
+  const sync = useCheckedSync(inputRef, {
+    checked: isControlled ? value : undefined,
+    onChange: handleChange,
+    onClick,
+    // A reset fires no change event, so the thumb and the owner hear of the value it puts the input back on here.
+    onReset: (input) => {
+      if (input.checked === input.defaultChecked) return
+      if (!isControlled) setInternalChecked(input.defaultChecked)
+      onCheckedChange?.(input.defaultChecked)
+    },
+  })
 
   const releasePress = React.useCallback(() => setPressed(false), [])
   const handlePointerDown = React.useCallback(() => setPressed(true), [])

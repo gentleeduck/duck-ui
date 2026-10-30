@@ -23,18 +23,6 @@ const Switch = React.forwardRef<
     const inputRef = React.useRef<HTMLInputElement>(null)
     React.useImperativeHandle(ref, () => inputRef.current as HTMLInputElement, [])
 
-    React.useEffect(() => {
-      const input = inputRef.current
-      const form = input?.form
-      if (!input || !form) return
-      // A reset fires no change event, so the owner hears of the value it puts the input back on from here.
-      const reset = () => {
-        if (input.checked !== input.defaultChecked) onCheckedChange?.(input.defaultChecked)
-      }
-      form.addEventListener('reset', reset)
-      return () => form.removeEventListener('reset', reset)
-    }, [onCheckedChange])
-
     const sync = useCheckedSync(inputRef, {
       checked,
       onChange: (event) => {
@@ -42,6 +30,10 @@ const Switch = React.forwardRef<
         onCheckedChange?.(event.target.checked)
       },
       onClick,
+      // A reset fires no change event, so the owner hears of the value it puts the input back on from here.
+      onReset: (input) => {
+        if (input.checked !== input.defaultChecked) onCheckedChange?.(input.defaultChecked)
+      },
     })
 
     const { indicatorReady, checkedIndicatorReady, inputStyle, SvgIndicator } = useSvgIndicator({

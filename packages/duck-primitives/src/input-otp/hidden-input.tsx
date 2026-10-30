@@ -11,6 +11,7 @@ const InputOTPHiddenInput = React.forwardRef<HTMLInputElement, IInputOTP.IHidden
     return (
       <input
         name={context.name}
+        disabled={context.disabled}
         data-slot="input-otp-hidden-input"
         {...hiddenInputProps}
         ref={forwardedRef}

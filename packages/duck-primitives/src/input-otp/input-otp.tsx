@@ -157,7 +157,7 @@ const InputOTP = React.forwardRef<InputOTPElement, IInputOTP.IProps>(
       }
       if (key !== 'Backspace' && key !== 'Delete' && key.length !== 1) return
       event.preventDefault()
-      if (readOnly) return
+      if (slots[index]?.readOnly) return
       if (key === 'Backspace') remove(slots, Math.min(index, value.length - 1))
       else if (key === 'Delete') remove(slots, index)
       else fill(slots, index, key)
@@ -182,7 +182,7 @@ const InputOTP = React.forwardRef<InputOTPElement, IInputOTP.IProps>(
       const { slots, index } = locate(event.target)
       if (index < 0) return
       event.preventDefault()
-      if (!readOnly) fill(slots, index, event.clipboardData.getData('text'))
+      if (!slots[index]?.readOnly) fill(slots, index, event.clipboardData.getData('text'))
     }
 
     return (

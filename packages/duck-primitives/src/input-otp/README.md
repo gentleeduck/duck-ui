@@ -40,14 +40,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 89 | `input-otp.test.tsx` 77, `one-time-password-field.radix.test.tsx` 12 |
+| Unit | 91 | `input-otp.test.tsx` 79, `one-time-password-field.radix.test.tsx` 12 |
 | End to end | 18 | `input-otp.e2e.ts` 18 |
 | registry-ui | 3 | `input-otp.test.tsx` 3 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>107 behaviours, one per test</summary>
+<summary>109 behaviours, one per test</summary>
 
 **Unit, `input-otp.test.tsx`**
 
@@ -108,6 +108,7 @@ Each test was proven by changing the code and watching a test fail.
   - keeps a read-only code as it is but lets focus move
 - InputOTP slot disabled or read-only on its own
   - disables or makes read-only the slot given the prop, and leaves the others
+  - keeps a slot read-only on its own from a key and a paste
 - InputOTP slots
   - masks every slot when the type is password
   - opens the numeric keyboard for a digits-only code
@@ -120,6 +121,7 @@ Each test was proven by changing the code and watching a test fail.
 - InputOTPHiddenInput
   - holds the code under the name the root gives it
   - takes a name of its own over the root
+  - is disabled with its root, so a form leaves the code out
 - InputOTP patterns
   - REGEXP_ONLY_DIGITS_AND_CHARS takes letters and digits and nothing else
   - REGEXP_ONLY_CHARS takes letters only
@@ -204,8 +206,9 @@ Each test was proven by changing the code and watching a test fail.
   Ark's do with `otp`. A slot's own `autoComplete` wins.
 - `onComplete` is called with the code once every slot is filled, as `onComplete` in `input-otp` and
   `onValueComplete` in Ark.
-- `HiddenInput` submits the code under the root's `name`. The root takes `defaultValue`, `disabled`,
-  `readOnly` and `type="password"`.
+- `HiddenInput` submits the code under the root's `name`, and nothing while the root is disabled. The root
+  takes `defaultValue`, `disabled`, `readOnly` and `type="password"`, and a slot takes `disabled` and
+  `readOnly` of its own.
 
 ## Fixed
 

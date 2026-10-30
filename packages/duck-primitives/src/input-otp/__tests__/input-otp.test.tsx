@@ -563,6 +563,23 @@ describe('InputOTP slot disabled or read-only on its own', () => {
       [false, false],
     ])
   })
+
+  it('keeps a slot read-only on its own from a key and a paste', () => {
+    const onValueChange = mock()
+    const { container } = render(
+      <InputOTP maxLength={3} onValueChange={onValueChange}>
+        <InputOTPSlot readOnly />
+        <InputOTPSlot />
+        <InputOTPSlot />
+      </InputOTP>,
+    )
+    const slots = slotsOf(container)
+
+    fireEvent.keyDown(slots[0] as HTMLInputElement, { key: '5' })
+    fireEvent.paste(slots[0] as HTMLInputElement, { clipboardData: { getData: () => '99' } })
+
+    expect(onValueChange).not.toHaveBeenCalled()
+  })
 })
 
 describe('InputOTP slots', () => {
@@ -681,6 +698,18 @@ describe('InputOTPHiddenInput', () => {
     )
 
     expect(container.querySelector<HTMLInputElement>('input[type="hidden"]')?.name).toBe('otp')
+  })
+
+  it('is disabled with its root, so a form leaves the code out', () => {
+    const { container } = render(
+      <InputOTP maxLength={2} name="code" defaultValue="42" disabled>
+        <InputOTPSlot />
+        <InputOTPSlot />
+        <InputOTPHiddenInput />
+      </InputOTP>,
+    )
+
+    expect(container.querySelector<HTMLInputElement>('input[type="hidden"]')?.disabled).toBe(true)
   })
 })
 

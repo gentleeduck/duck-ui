@@ -61,12 +61,27 @@ function linearScale(input: readonly [number, number], output: readonly [number,
 }
 
 function getDecimalCount(value: number) {
-  return (String(value).split('.')[1] || '').length
+  // Below 1e-6 a number prints as `1e-7`, so the exponent counts as decimals too.
+  const [coefficient, exponent = 0] = String(value).split('e')
+  return Math.max(0, (coefficient.split('.')[1] || '').length - Number(exponent))
 }
 
 function roundValue(value: number, decimalCount: number) {
   const rounder = 10 ** decimalCount
   return Math.round(value * rounder) / rounder
+}
+
+function getNextStepValue(
+  value: number,
+  { min, step, direction, multiplier }: { min: number; step: number; direction: number; multiplier: number },
+) {
+  const decimalCount = getDecimalCount(step)
+  const steps = (value - min) / step
+  const nearest = Math.round(steps)
+  const isAligned = roundValue(nearest * step + min, decimalCount) === roundValue(value, decimalCount)
+  // Off the grid, the first step lands on the next grid line instead of a full step away.
+  const from = isAligned ? nearest : direction > 0 ? Math.ceil(steps) - 1 : Math.floor(steps) + 1
+  return roundValue((from + multiplier * direction) * step + min, decimalCount)
 }
 
 export {
@@ -75,6 +90,7 @@ export {
   getDecimalCount,
   getLabel,
   getNextSortedValues,
+  getNextStepValue,
   getThumbInBoundsOffset,
   hasMinStepsBetweenValues,
   linearScale,

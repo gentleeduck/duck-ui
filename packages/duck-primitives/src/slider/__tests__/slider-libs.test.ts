@@ -5,6 +5,8 @@ import {
   getDecimalCount,
   getLabel,
   getNextSortedValues,
+  getNextStepValue,
+  getThumbInBoundsOffset,
   hasMinStepsBetweenValues,
   linearScale,
   roundValue,
@@ -108,6 +110,10 @@ describe('slider.libs', () => {
       expect(scale(100)).toBe(1)
     })
 
+    test('scales from where the input starts', () => {
+      expect(linearScale([10, 20], [0, 100])(15)).toBe(50)
+    })
+
     test('handles identical input range', () => {
       const scale = linearScale([5, 5], [0, 100])
       expect(scale(5)).toBe(0)
@@ -131,6 +137,43 @@ describe('slider.libs', () => {
       expect(getDecimalCount(5.55)).toBe(2)
       expect(getDecimalCount(5.555)).toBe(3)
     })
+
+    test('counts the exponent of a number printed in scientific notation', () => {
+      expect(getDecimalCount(1e-7)).toBe(7)
+      expect(getDecimalCount(1.5e-7)).toBe(8)
+      expect(getDecimalCount(1e21)).toBe(0)
+    })
+
+    test('a non-finite number has 0 decimals', () => {
+      expect(getDecimalCount(Number.NaN)).toBe(0)
+      expect(getDecimalCount(Number.POSITIVE_INFINITY)).toBe(0)
+    })
+  })
+
+  describe('getNextStepValue', () => {
+    const grid = { min: 1000, step: 5000 }
+
+    test('moves an aligned value by whole steps', () => {
+      expect(getNextStepValue(46000, { ...grid, direction: 1, multiplier: 1 })).toBe(51000)
+      expect(getNextStepValue(46000, { ...grid, direction: -1, multiplier: 10 })).toBe(-4000)
+    })
+
+    test('snaps an off-grid value to the next grid line in the direction of travel', () => {
+      expect(getNextStepValue(49000, { ...grid, direction: 1, multiplier: 1 })).toBe(51000)
+      expect(getNextStepValue(49000, { ...grid, direction: -1, multiplier: 1 })).toBe(46000)
+      expect(getNextStepValue(47000, { ...grid, direction: 1, multiplier: 1 })).toBe(51000)
+      expect(getNextStepValue(47000, { ...grid, direction: -1, multiplier: 1 })).toBe(46000)
+    })
+
+    test('counts the snap as the first of several steps', () => {
+      expect(getNextStepValue(49000, { ...grid, direction: 1, multiplier: 10 })).toBe(96000)
+      expect(getNextStepValue(49000, { ...grid, direction: -1, multiplier: 10 })).toBe(1000)
+    })
+
+    test('keeps the precision of a fractional step', () => {
+      expect(getNextStepValue(0.2, { min: 0, step: 0.1, direction: 1, multiplier: 1 })).toBe(0.3)
+      expect(getNextStepValue(1e-7, { min: 0, step: 1e-7, direction: 1, multiplier: 1 })).toBe(2e-7)
+    })
   })
 
   // --- roundValue ---
@@ -143,6 +186,16 @@ describe('slider.libs', () => {
 
     test('no-op for integers', () => {
       expect(roundValue(5, 0)).toBe(5)
+    })
+  })
+
+  describe('getThumbInBoundsOffset', () => {
+    test('pulls a 20px thumb half its width inside the track at either end and leaves it centred midway', () => {
+      expect([0, 50, 100].map((percent) => getThumbInBoundsOffset(20, percent, 1))).toEqual([10, 0, -10])
+    })
+
+    test('keeps a right-to-left thumb inside too, where the -50% translate still pulls it left', () => {
+      expect([0, 50, 100].map((percent) => getThumbInBoundsOffset(20, percent, -1))).toEqual([-10, -20, -30])
     })
   })
 })

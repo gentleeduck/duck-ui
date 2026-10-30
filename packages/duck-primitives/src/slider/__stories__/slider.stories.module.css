@@ -1,0 +1,71 @@
+.page {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+  padding: 50px;
+}
+
+.root {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 200px;
+  height: 20px;
+  touch-action: none;
+  user-select: none;
+}
+
+.root[data-orientation="vertical"] {
+  flex-direction: column;
+  width: 20px;
+  height: 200px;
+}
+
+.track {
+  position: relative;
+  flex-grow: 1;
+  height: 4px;
+  background-color: #ccc;
+}
+
+.root[data-orientation="vertical"] .track {
+  width: 4px;
+  height: auto;
+}
+
+.range {
+  position: absolute;
+  height: 100%;
+  background-color: #2563eb;
+}
+
+.root[data-orientation="vertical"] .range {
+  width: 100%;
+  height: auto;
+}
+
+.thumb {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #333;
+  border-radius: 50%;
+  background-color: white;
+}
+
+.grip {
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin: 4px;
+  border-radius: 50%;
+  background-color: #2563eb;
+}
+
+.thumb:focus-visible {
+  outline: 2px solid #2563eb;
+}
+
+.root[data-disabled] {
+  opacity: 0.5;
+}

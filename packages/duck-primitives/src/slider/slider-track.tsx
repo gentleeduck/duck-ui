@@ -16,7 +16,6 @@ const SliderTrack = React.forwardRef<SliderTrackElement, ISlider.ITrackProps>(
         data-slot="slider-track"
         data-disabled={context.disabled ? '' : undefined}
         data-orientation={context.orientation}
-        dir={context.dir}
         {...trackProps}
         ref={forwardedRef}
       />

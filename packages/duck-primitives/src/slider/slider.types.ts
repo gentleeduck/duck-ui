@@ -7,7 +7,7 @@ import type { Primitive } from '../primitive-elements'
 export namespace ISlider {
   export type IScoped<TProps> = TProps & { __scopeSlider?: Scope }
 
-  export type IThumbElement = React.ComponentRef<typeof Primitive.span>
+  export type ThumbElement = React.ComponentRef<typeof Primitive.span>
   export type Side = 'top' | 'right' | 'bottom' | 'left'
   export type SlideDirection = 'from-left' | 'from-right' | 'from-bottom' | 'from-top'
 
@@ -18,10 +18,22 @@ export namespace ISlider {
     max: number
     values: number[]
     valueIndexToChangeRef: React.RefObject<number>
-    thumbs: Set<IThumbElement>
+    thumbs: Set<ThumbElement>
     orientation: IProps['orientation']
     dir: IDirection.Kind
     form: string | undefined
+    userRequestedValues: number[] | null
+  }
+
+  export interface IThumbContext {
+    value: number | undefined
+    name: string | undefined
+    form: string | undefined
+    isFormControl: boolean
+    index: number
+    percent: number
+    size: ReturnType<typeof useSize>
+    onThumbChange(thumb: ThumbElement | null): void
   }
 
   export interface IOrientationContext {
@@ -32,7 +44,7 @@ export namespace ISlider {
   }
 
   type PrimitiveSpanProps = React.ComponentPropsWithoutRef<typeof Primitive.span>
-  type PrimitiveDivProps = React.ComponentPropsWithoutRef<typeof Primitive.div>
+  type PrimitiveInputProps = React.ComponentPropsWithoutRef<typeof Primitive.input>
 
   export interface IOrientationPrivateProps {
     min: number
@@ -55,7 +67,7 @@ export namespace ISlider {
     onStepKeyDown(event: React.KeyboardEvent): void
   }
 
-  export interface IImplProps extends PrimitiveDivProps, IImplPrivateProps {}
+  export interface IImplProps extends PrimitiveSpanProps, IImplPrivateProps {}
 
   export interface IOrientationProps extends Omit<IImplProps, keyof IImplPrivateProps>, IOrientationPrivateProps {}
 
@@ -75,7 +87,10 @@ export namespace ISlider {
     min?: number
     max?: number
     step?: number
+    /** How far Page Up, Page Down and Shift with an arrow key move a thumb. Ten steps when unset. */
+    largeStep?: number
     minStepsBetweenThumbs?: number
+    preserveThumbOrder?: boolean
     value?: number[]
     defaultValue?: number[]
     onValueChange?(value: number[]): void
@@ -85,12 +100,25 @@ export namespace ISlider {
   }
 
   export interface IRangeProps extends PrimitiveSpanProps {}
+  export interface IValueProps extends Omit<PrimitiveSpanProps, 'children'> {
+    children?: React.ReactNode | ((values: number[]) => React.ReactNode)
+  }
   export interface ITrackProps extends PrimitiveSpanProps {}
 
-  export interface IThumbImplProps extends PrimitiveSpanProps {
-    index: number
+  export interface IThumbProviderProps {
     name?: string
+    /** Where the thumb sits among the values until it mounts, so a range renders its thumbs on the server. */
+    index?: number | undefined
+    children?: React.ReactNode
   }
 
-  export interface IThumbProps extends Omit<IThumbImplProps, 'index'> {}
+  export interface IThumbTriggerProps extends PrimitiveSpanProps {}
+
+  export interface IThumbProps extends IThumbTriggerProps {
+    name?: string
+    /** Where the thumb sits among the values until it mounts, so a range renders its thumbs on the server. */
+    index?: number | undefined
+  }
+
+  export interface IBubbleInputProps extends Omit<PrimitiveInputProps, 'value'> {}
 }

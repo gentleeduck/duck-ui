@@ -39,14 +39,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 55 | `toggle-group.radix.test.tsx` 17, `toggle-group.test.tsx` 38 |
+| Unit | 57 | `toggle-group.radix.test.tsx` 17, `toggle-group.test.tsx` 40 |
 | End to end | 13 | `toggle-group.e2e.ts` 12, `toggle-group.radix.e2e.ts` 1 |
 | registry-ui | 9 | `toggle-group.test.tsx` 9 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>68 behaviours, one per test</summary>
+<summary>70 behaviours, one per test</summary>
 
 **Unit, `toggle-group.radix.test.tsx`**
 
@@ -111,6 +111,9 @@ Each test was proven by changing the code and watching a test fail.
 - ToggleGroup without a type
   - keeps one item on at a time
   - draws its items as radios
+- ToggleGroup single values
+  - shows one item on once a multiple group becomes single
+  - keeps an item whose value is empty off, as the empty value it reports means
 - ToggleGroup deselectable
   - keeps the item of a single group on when it is clicked again
   - still moves a single group to another item
@@ -171,6 +174,8 @@ Each test was proven by changing the code and watching a test fail.
 - The root sets `aria-orientation` from `orientation` while roving focus is on.
 - A group given no `type`, which only JavaScript allows, is single all the way through, where its items
   announced themselves as pressed buttons rather than radios.
+- A single group shows at most one item on, the first, when it was multiple and kept the list it held, and an
+  item whose value is empty stays off, since an empty value means nothing is on.
 
 ## Smaller and faster
 

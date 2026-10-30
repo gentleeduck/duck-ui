@@ -322,6 +322,35 @@ describe('ToggleGroup without a type', () => {
   })
 })
 
+describe('ToggleGroup single values', () => {
+  const group = (props: React.ComponentProps<typeof ToggleGroup>) => (
+    <ToggleGroup {...props}>
+      <ToggleGroupItem value="a">A</ToggleGroupItem>
+      <ToggleGroupItem value="b">B</ToggleGroupItem>
+    </ToggleGroup>
+  )
+
+  it('shows one item on once a multiple group becomes single', () => {
+    const { rerender } = render(group({ type: 'multiple', defaultValue: ['a', 'b'] }))
+
+    rerender(group({ type: 'single' }))
+
+    expect(screen.getAllByRole('radio').map((radio) => radio.getAttribute('aria-checked'))).toEqual(['true', 'false'])
+  })
+
+  it('keeps an item whose value is empty off, as the empty value it reports means', () => {
+    render(
+      <ToggleGroup type="single">
+        <ToggleGroupItem value="">None</ToggleGroupItem>
+      </ToggleGroup>,
+    )
+
+    fireEvent.click(screen.getByText('None'))
+
+    expect(screen.getByText('None').getAttribute('aria-checked')).toBe('false')
+  })
+})
+
 describe('ToggleGroup deselectable', () => {
   it('keeps the item of a single group on when it is clicked again', () => {
     const onValueChange = mock()

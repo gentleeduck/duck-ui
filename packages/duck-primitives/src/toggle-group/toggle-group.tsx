@@ -47,6 +47,8 @@ const ToggleGroup = React.forwardRef<ToggleGroupElement, IToggleGroup.IProps>(
         props.type === 'multiple' ? props.onValueChange?.(next) : props.onValueChange?.(next[0] ?? ''),
       caller: TOGGLE_GROUP_NAME,
     })
+    // A group switched from multiple to single keeps the list it held, so it shows the first item of it as on.
+    const shown = React.useMemo(() => (single && value.length > 1 ? value.slice(0, 1) : value), [single, value])
     const group = useRovingFocusGroup<ToggleGroupElement>(
       {
         orientation,
@@ -78,9 +80,9 @@ const ToggleGroup = React.forwardRef<ToggleGroupElement, IToggleGroup.IProps>(
       <ToggleGroupProvider
         scope={__scopeToggleGroup}
         type={single ? 'single' : 'multiple'}
-        value={value}
+        value={shown}
         onItemActivate={React.useCallback(
-          (itemValue: string) => setValue((previous) => (single ? [itemValue] : [...previous, itemValue])),
+          (itemValue: string) => setValue((previous) => (single ? toList(itemValue) : [...previous, itemValue])),
           [single, setValue],
         )}
         onItemDeactivate={React.useCallback(

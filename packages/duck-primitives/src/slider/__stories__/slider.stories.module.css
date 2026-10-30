@@ -39,6 +39,12 @@
   background-color: #2563eb;
 }
 
+.value {
+  position: absolute;
+  inset-inline-start: calc(100% + 12px);
+  white-space: nowrap;
+}
+
 .root[data-orientation="vertical"] .range {
   width: 100%;
   height: auto;

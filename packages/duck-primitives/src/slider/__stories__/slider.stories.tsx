@@ -77,11 +77,22 @@ export const Range = () => {
         <Slider.Thumb className={styles.thumb}>
           <span className={styles.grip} />
         </Slider.Thumb>
-        <Slider.Value>{(values) => `${values[0]} to ${values[1]}`}</Slider.Value>
+        <Slider.Value className={styles.value}>{(values) => `${values[0]} to ${values[1]}`}</Slider.Value>
       </Slider.Root>
       <output aria-label="Value">{value.join(', ')}</output>
       <output aria-label="Commits">{commits}</output>
-      <Toggles toggles={[['Keep order', keepOrder, setKeepOrder]]} />
+      <Toggles
+        toggles={[
+          [
+            'Keep order',
+            keepOrder,
+            (checked) => {
+              setKeepOrder(checked)
+              setValue([20, 80])
+            },
+          ],
+        ]}
+      />
     </div>
   )
 }

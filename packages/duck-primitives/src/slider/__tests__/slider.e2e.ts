@@ -183,8 +183,9 @@ test.describe('Slider', () => {
 
     const range = await page.locator('[data-slot="slider-range"]').boundingBox()
     const track = await page.locator('[data-slot="slider-track"]').boundingBox()
+    if (!range || !track) throw new Error('no track or range')
 
-    expect(Math.round((range?.x ?? 0) + (range?.width ?? 0))).toBe(Math.round((track?.x ?? 0) + (track?.width ?? 0)))
+    expect(Math.round(range.x + range.width)).toBe(Math.round(track.x + track.width))
   })
 
   test('vertical, the value rises from the bottom and ArrowUp raises it', async ({ page }) => {

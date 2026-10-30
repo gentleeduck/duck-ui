@@ -2,7 +2,7 @@
 
 import { cn } from '@gentleduck/libs/cn'
 import { checkersStylePattern } from '@gentleduck/motion/variants'
-import { useSvgIndicator } from '@gentleduck/primitives/checkers'
+import { useCheckedSync, useSvgIndicator } from '@gentleduck/primitives/checkers'
 import { useDirection } from '@gentleduck/primitives/direction'
 import * as React from 'react'
 import { toDirection } from '../direction/direction.libs'
@@ -14,54 +14,83 @@ const Switch = React.forwardRef<
     checkedIndicator?: React.ReactElement
     onCheckedChange?: (checked: boolean) => void
   }
->(({ className, indicator, checkedIndicator, onChange, onCheckedChange, dir, style, ...props }, ref) => {
-  const direction = useDirection(toDirection(dir))
-  const { indicatorReady, checkedIndicatorReady, inputStyle, SvgIndicator } = useSvgIndicator({
-    checkedIndicator,
-    indicator,
-  })
+>(
+  (
+    { className, indicator, checkedIndicator, checked, onChange, onClick, onCheckedChange, dir, style, ...props },
+    ref,
+  ) => {
+    const direction = useDirection(toDirection(dir))
+    const inputRef = React.useRef<HTMLInputElement>(null)
+    React.useImperativeHandle(ref, () => inputRef.current as HTMLInputElement, [])
 
-  return (
-    <>
-      <input
-        className={cn(
-          checkersStylePattern({
-            indicatorState:
-              indicatorReady && checkedIndicatorReady
-                ? 'both'
-                : indicatorReady
-                  ? 'indicatorReady'
-                  : checkedIndicatorReady
-                    ? 'checkedIndicatorReady'
-                    : 'default',
-            type: 'switch',
-          }),
-          'transition-[color,background-color,border-color,box-shadow,opacity] duration-200 ease-(--gentleduck-motion-ease)',
-          '[&:before,&:after]:transition-[opacity,transform,translate,scale,rotate] [&:before,&:after]:duration-[inherit] [&:before,&:after]:ease-[inherit]',
-          '[&[dir=ltr]:checked]:after:translate-x-full [&[dir=ltr]]:after:translate-x-0',
-          '[&[dir=rtl]:checked]:after:-translate-x-full [&[dir=rtl]]:after:translate-x-0',
-          '[&[dir=ltr]:checked]:after:origin-right [&[dir=ltr]:not(:checked)]:after:origin-left',
-          '[&[dir=rtl]:checked]:after:origin-left [&[dir=rtl]:not(:checked)]:after:origin-right',
-          'active:after:scale-x-125 active:after:scale-y-110',
-          className,
-        )}
-        onChange={(e) => {
-          onChange?.(e)
-          onCheckedChange?.(e.target.checked)
-        }}
-        aria-checked={props.checked}
-        ref={ref}
-        role="switch"
-        dir={direction}
-        style={{ ...style, ...inputStyle }}
-        type="checkbox"
-        {...props}
-        data-slot="switch"
-      />
-      <SvgIndicator className="sr-only" />
-    </>
-  )
-})
+    React.useEffect(() => {
+      const input = inputRef.current
+      const form = input?.form
+      if (!input || !form) return
+      // A reset fires no change event, so the owner hears of the value it puts the input back on from here.
+      const reset = () => {
+        if (input.checked !== input.defaultChecked) onCheckedChange?.(input.defaultChecked)
+      }
+      form.addEventListener('reset', reset)
+      return () => form.removeEventListener('reset', reset)
+    }, [onCheckedChange])
+
+    const sync = useCheckedSync(inputRef, {
+      checked,
+      onChange: (event) => {
+        onChange?.(event)
+        onCheckedChange?.(event.target.checked)
+      },
+      onClick,
+    })
+
+    const { indicatorReady, checkedIndicatorReady, inputStyle, SvgIndicator } = useSvgIndicator({
+      checkedIndicator,
+      indicator,
+    })
+
+    return (
+      <>
+        <input
+          className={cn(
+            checkersStylePattern({
+              indicatorState:
+                indicatorReady && checkedIndicatorReady
+                  ? 'both'
+                  : indicatorReady
+                    ? 'indicatorReady'
+                    : checkedIndicatorReady
+                      ? 'checkedIndicatorReady'
+                      : 'default',
+              type: 'switch',
+            }),
+            'transition-[color,background-color,border-color,box-shadow,opacity] duration-200 ease-(--gentleduck-motion-ease)',
+            '[&:before,&:after]:transition-[opacity,transform,translate,scale,rotate] [&:before,&:after]:duration-[inherit] [&:before,&:after]:ease-[inherit]',
+            '[&[dir=ltr]:checked]:after:translate-x-full [&[dir=ltr]]:after:translate-x-0',
+            '[&[dir=rtl]:checked]:after:-translate-x-full [&[dir=rtl]]:after:translate-x-0',
+            '[&[dir=ltr]:checked]:after:origin-right [&[dir=ltr]:not(:checked)]:after:origin-left',
+            '[&[dir=rtl]:checked]:after:origin-left [&[dir=rtl]:not(:checked)]:after:origin-right',
+            'active:after:scale-x-125 active:after:scale-y-110',
+            indicatorReady && !checkedIndicatorReady && 'checked:after:mask-none',
+            className,
+          )}
+          checked={checked}
+          onChange={sync.onChange}
+          onClick={sync.onClick}
+          ref={inputRef}
+          // biome-ignore lint/a11y/useAriaPropsForRole: a native checkbox carries its checked state, which aria-checked would only repeat
+          role="switch"
+          dir={direction}
+          style={{ ...style, ...inputStyle }}
+          type="checkbox"
+          {...props}
+          data-slot="switch"
+        />
+        <SvgIndicator />
+      </>
+    )
+  },
+)
 Switch.displayName = 'Switch'
 
 export { Switch }

@@ -7,6 +7,7 @@ export interface ICheckboxProps
   extends Omit<React.HTMLProps<HTMLInputElement>, 'checked' | 'onChange' | 'defaultChecked'> {
   indicator?: React.ReactElement
   checkedIndicator?: React.ReactElement
+  indeterminateIndicator?: React.ReactElement
   checked?: CheckedState
   defaultChecked?: CheckedState
   onCheckedChange?: (checked: CheckedState) => void

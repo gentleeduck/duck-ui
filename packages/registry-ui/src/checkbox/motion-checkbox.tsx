@@ -67,8 +67,8 @@ const MotionCheckboxGroup = React.forwardRef<HTMLDivElement, Omit<ICheckboxGroup
           <MotionCheckboxWithLabel
             checkbox={{
               ...checkbox,
-              checked,
               className: 'size-4 rounded-full border-muted-foreground/80',
+              defaultChecked: checked,
             }}
             label={{ ...label, children: title }}
             data-slot="checkbox-with-label"

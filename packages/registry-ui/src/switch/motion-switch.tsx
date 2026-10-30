@@ -3,6 +3,7 @@
 import { cn } from '@gentleduck/libs/cn'
 import { loadDomAnimation } from '@gentleduck/motion/motion-features'
 import { springBouncy } from '@gentleduck/motion/transitions/springs'
+import { useCheckedSync } from '@gentleduck/primitives/checkers'
 import { useDirection } from '@gentleduck/primitives/direction'
 import { LazyMotion, m } from 'motion/react'
 import * as React from 'react'
@@ -20,13 +21,29 @@ const MotionSwitch = React.forwardRef<
   Omit<React.HTMLProps<HTMLInputElement>, 'ref' | 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart'> & {
     onCheckedChange?: (checked: boolean) => void
   }
->(({ className, onCheckedChange, onChange, checked, defaultChecked, dir, disabled, style, ...props }, ref) => {
+>(({ className, onCheckedChange, onChange, onClick, checked, defaultChecked, dir, disabled, style, ...props }, ref) => {
   const direction = useDirection(toDirection(dir))
   const isRtl = direction === 'rtl'
   const isControlled = checked !== undefined
   const [internalChecked, setInternalChecked] = React.useState<boolean>(defaultChecked ?? false)
   const value = isControlled ? (checked ?? false) : internalChecked
   const [pressed, setPressed] = React.useState(false)
+  const inputRef = React.useRef<HTMLInputElement>(null)
+  React.useImperativeHandle(ref, () => inputRef.current as HTMLInputElement, [])
+
+  React.useEffect(() => {
+    const input = inputRef.current
+    const form = input?.form
+    if (!input || !form) return
+    // A reset fires no change event, so the thumb and the owner hear of the value it puts the input back on here.
+    const reset = () => {
+      if (input.checked === input.defaultChecked) return
+      if (!isControlled) setInternalChecked(input.defaultChecked)
+      onCheckedChange?.(input.defaultChecked)
+    }
+    form.addEventListener('reset', reset)
+    return () => form.removeEventListener('reset', reset)
+  }, [isControlled, onCheckedChange])
 
   const handleChange = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,6 +53,8 @@ const MotionSwitch = React.forwardRef<
     },
     [isControlled, onChange, onCheckedChange],
   )
+
+  const sync = useCheckedSync(inputRef, { checked: isControlled ? value : undefined, onChange: handleChange, onClick })
 
   const releasePress = React.useCallback(() => setPressed(false), [])
   const handlePointerDown = React.useCallback(() => setPressed(true), [])
@@ -74,15 +93,16 @@ const MotionSwitch = React.forwardRef<
         onPointerLeave={releasePress}
         onPointerCancel={releasePress}>
         <input
-          ref={ref}
+          ref={inputRef}
           type="checkbox"
+          // biome-ignore lint/a11y/useAriaPropsForRole: a native checkbox carries its checked state, which aria-checked would only repeat
           role="switch"
-          aria-checked={value}
           dir={direction}
           disabled={disabled}
           checked={isControlled ? value : undefined}
           defaultChecked={!isControlled ? defaultChecked : undefined}
-          onChange={handleChange}
+          onChange={sync.onChange}
+          onClick={sync.onClick}
           className="absolute inset-0 size-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
           {...props}
         />

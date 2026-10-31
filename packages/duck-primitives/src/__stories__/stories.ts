@@ -19,6 +19,7 @@ import * as primitive from '../primitive-elements/__stories__/primitive-elements
 import * as progress from '../progress/__stories__/progress.stories'
 import * as radioGroup from '../radio-group/__stories__/radio-group.stories'
 import * as rovingFocus from '../roving-focus/__stories__/roving-focus.stories'
+import * as sheet from '../sheet/__stories__/sheet.stories'
 import * as slider from '../slider/__stories__/slider.stories'
 import * as slot from '../slot/__stories__/slot.stories'
 import * as toggle from '../toggle/__stories__/toggle.stories'
@@ -63,6 +64,7 @@ for (const module of [
   progress,
   radioGroup,
   rovingFocus,
+  sheet,
   slider,
   slot,
   toggle,

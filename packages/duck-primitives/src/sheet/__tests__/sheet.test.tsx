@@ -1,26 +1,29 @@
 import { describe, expect, it } from 'bun:test'
-import { render } from '@testing-library/react'
-import * as React from 'react'
+import * as Dialog from '../../dialog'
 import * as Sheet from '../index'
 
 describe('Sheet', () => {
-  it('re-exports Dialog components', () => {
-    expect(Sheet.Root).toBeDefined()
-    expect(Sheet.Trigger).toBeDefined()
-    expect(Sheet.Close).toBeDefined()
-    expect(Sheet.Portal).toBeDefined()
-    expect(Sheet.Overlay).toBeDefined()
-    expect(Sheet.Content).toBeDefined()
-    expect(Sheet.Title).toBeDefined()
-    expect(Sheet.Description).toBeDefined()
-  })
-
-  it('renders trigger with data-slot="dialog-trigger"', () => {
-    const { container } = render(
-      <Sheet.Root>
-        <Sheet.Trigger>Open Sheet</Sheet.Trigger>
-      </Sheet.Root>,
-    )
-    expect(container.querySelector('[data-slot="dialog-trigger"]')).not.toBeNull()
+  it('is Dialog under both its short and its sheet names', () => {
+    expect([
+      [Sheet.Root, Sheet.Sheet],
+      [Sheet.Trigger, Sheet.SheetTrigger],
+      [Sheet.Close, Sheet.SheetClose],
+      [Sheet.Portal, Sheet.SheetPortal],
+      [Sheet.Overlay, Sheet.SheetOverlay],
+      [Sheet.Content, Sheet.SheetContent],
+      [Sheet.Title, Sheet.SheetTitle],
+      [Sheet.Description, Sheet.SheetDescription],
+      [Sheet.createSheetScope],
+    ]).toEqual([
+      [Dialog.Root, Dialog.Root],
+      [Dialog.Trigger, Dialog.Trigger],
+      [Dialog.Close, Dialog.Close],
+      [Dialog.Portal, Dialog.Portal],
+      [Dialog.Overlay, Dialog.Overlay],
+      [Dialog.Content, Dialog.Content],
+      [Dialog.Title, Dialog.Title],
+      [Dialog.Description, Dialog.Description],
+      [Dialog.createDialogScope],
+    ])
   })
 })

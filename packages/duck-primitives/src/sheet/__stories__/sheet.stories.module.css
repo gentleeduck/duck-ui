@@ -1,0 +1,46 @@
+.page {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  min-height: 200vh;
+  padding: 50px;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgb(0 0 0 / 0.2);
+}
+
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 320px;
+  padding: 24px;
+  background-color: white;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.12);
+}
+
+/* Physical sides: Bun's CSS bundler rewrites inline insets to guess the direction from the language, not from dir. */
+.panel[dir="rtl"],
+.panel[data-side="start"] {
+  right: auto;
+  left: 0;
+}
+
+.panel[dir="rtl"][data-side="start"] {
+  right: 0;
+  left: auto;
+}
+
+.body {
+  display: grid;
+  flex: 1;
+  gap: 8px;
+  overflow: auto;
+}

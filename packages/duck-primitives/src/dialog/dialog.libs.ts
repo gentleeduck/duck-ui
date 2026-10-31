@@ -1,73 +1,30 @@
 'use client'
 
-let prevBodyOverflow: string | null = null
-let prevScrollbarGutter: string | null = null
-let didLock = false
-let lockCount = 0
+import * as React from 'react'
+import { useLayoutEffect } from '../hooks/use-layout-effect'
+import { joinIds } from '../libs/join-ids'
 
-function isPageScrollable(): boolean {
-  if (typeof document === 'undefined') return false
-  const { documentElement, body } = document
-
-  const scrollEl = document.scrollingElement ?? documentElement
-  const hasScrollableContent =
-    scrollEl.scrollHeight > scrollEl.clientHeight || scrollEl.scrollWidth > scrollEl.clientWidth
-
-  const bodyScrollable = body.scrollHeight > body.clientHeight || body.scrollWidth > body.clientWidth
-
-  return hasScrollableContent || bodyScrollable
+/** Ids registered by the parts that mount inside the content, in mount order. */
+export function useIdRegistry() {
+  const [registry] = React.useState(() => new Map<string, string>())
+  const [ids, setIds] = React.useState<string>()
+  const onIdChange = React.useCallback(
+    (key: string, id?: string) => {
+      if (id) registry.set(key, id)
+      else registry.delete(key)
+      setIds(joinIds(...registry.values()))
+    },
+    [registry],
+  )
+  return [ids, onIdChange, registry] as const
 }
 
-export function lockScrollbar(isLocked: boolean) {
-  if (typeof document === 'undefined') return
-  const { documentElement, body } = document
-
-  if (isLocked) {
-    // Don't remove scroll if there isn't any scroll to begin with
-    if (!isPageScrollable() && lockCount === 0) return false
-
-    if (!didLock) {
-      prevScrollbarGutter = documentElement.style.scrollbarGutter
-      prevBodyOverflow = body.style.overflow
-      didLock = true
-    }
-
-    lockCount += 1
-
-    // Reserve scrollbar space so width doesn't change
-    documentElement.style.scrollbarGutter = 'stable'
-    body.style.overflow = 'hidden'
-    return true
-  } else {
-    if (!didLock || lockCount === 0) return false
-
-    lockCount -= 1
-    if (lockCount > 0) return true
-
-    documentElement.style.scrollbarGutter = prevScrollbarGutter ?? ''
-    body.style.overflow = prevBodyOverflow ?? ''
-
-    prevScrollbarGutter = null
-    prevBodyOverflow = null
-    didLock = false
-    lockCount = 0
-    return true
-  }
-}
-
-export function cleanLockScrollbar() {
-  if (typeof document === 'undefined') return
-  if (!didLock || lockCount === 0) return
-
-  lockCount -= 1
-  if (lockCount > 0) return
-
-  const { documentElement, body } = document
-  documentElement.style.scrollbarGutter = prevScrollbarGutter ?? ''
-  body.style.overflow = prevBodyOverflow ?? ''
-
-  prevScrollbarGutter = null
-  prevBodyOverflow = null
-  didLock = false
-  lockCount = 0
+/** The part's id, its own or a generated one, registered with the content for as long as the part is mounted. */
+export function useRegisteredId(idProp: string | undefined, onIdChange: (key: string, id?: string) => void) {
+  const key = React.useId()
+  const id = idProp || key
+  // Split so a changed id keeps its place in the list, and only unmounting removes it.
+  useLayoutEffect(() => () => onIdChange(key), [key, onIdChange])
+  useLayoutEffect(() => onIdChange(key, id), [key, id, onIdChange])
+  return id
 }

@@ -291,10 +291,15 @@ describe('Dialog keyboard', () => {
     expect(handler).toHaveBeenCalledWith(true)
   })
 
-  it('trigger has aria-controls attribute', () => {
+  it('trigger names the content in aria-controls only while it is open', () => {
     const { container } = renderDialog()
     const trigger = container.querySelector('[data-slot="dialog-trigger"]')!
-    expect(trigger.getAttribute('aria-controls')).toBeTruthy()
+    expect(trigger.hasAttribute('aria-controls')).toBe(false)
+
+    fireEvent.click(trigger)
+    const controlled = document.getElementById(trigger.getAttribute('aria-controls') ?? '')
+    expect(controlled?.getAttribute('role')).toBe('dialog')
+    expect(controlled?.textContent).toContain('Description')
   })
 
   it('trigger aria-haspopup is dialog', () => {

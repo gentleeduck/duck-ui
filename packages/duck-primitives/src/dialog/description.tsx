@@ -1,21 +1,19 @@
 import * as React from 'react'
 import { Primitive } from '../primitive-elements'
-import { useDialogContext } from './dialog'
+import { useDialogContentContext } from './dialog'
+import { useRegisteredId } from './dialog.libs'
 import type { IDialog } from './dialog.types'
 
 const DESCRIPTION_NAME = 'DialogDescription'
 
-type DialogDescriptionElement = React.ComponentRef<typeof Primitive.p>
-
-export const DialogDescription = React.forwardRef<DialogDescriptionElement, IDialog.IDescriptionProps>(
+export const DialogDescription = React.forwardRef<HTMLParagraphElement, IDialog.IDescriptionProps>(
   (props: IDialog.IScoped<IDialog.IDescriptionProps>, forwardedRef) => {
-    const { __scopeDialog, ...descriptionProps } = props
-    const context = useDialogContext(DESCRIPTION_NAME, __scopeDialog)
+    const { __scopeDialog, id: idProp, ...descriptionProps } = props
+    const { onDescriptionIdChange } = useDialogContentContext(DESCRIPTION_NAME, __scopeDialog)
     return (
       <Primitive.p
         data-slot="dialog-description"
-        id={context.descriptionId}
-        dir={context.dir}
+        id={useRegisteredId(idProp, onDescriptionIdChange)}
         {...descriptionProps}
         ref={forwardedRef}
       />

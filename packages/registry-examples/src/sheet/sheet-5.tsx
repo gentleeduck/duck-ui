@@ -24,7 +24,7 @@ export default function Demo() {
           <SheetTrigger asChild>
             <Button variant={'outline'}>{side}</Button>
           </SheetTrigger>
-          <MotionSheetContent className="flex flex-col" side={side}>
+          <MotionSheetContent side={side}>
             <SheetHeader>
               <SheetTitle>Edit profile</SheetTitle>
               <SheetDescription>Make changes to your profile here. Click save when you're done.</SheetDescription>
@@ -32,16 +32,16 @@ export default function Demo() {
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="s5-name">Name</Label>
-                <Input className="col-span-3" id="s5-name" value="Pedro Duarte" />
+                <Input className="col-span-3" id="s5-name" defaultValue="Pedro Duarte" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="s5-username">Username</Label>
-                <Input className="col-span-3" id="s5-username" value="@peduarte" />
+                <Input className="col-span-3" id="s5-username" defaultValue="@peduarte" />
               </div>
             </div>
             <SheetFooter className="mt-2">
-              <SheetClose>
-                <Button variant={'outline'}>Save changes</Button>
+              <SheetClose asChild>
+                <Button>Save changes</Button>
               </SheetClose>
             </SheetFooter>
           </MotionSheetContent>

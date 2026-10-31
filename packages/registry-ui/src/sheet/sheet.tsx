@@ -8,16 +8,12 @@ import * as React from 'react'
 import { sheetVariants } from './sheet.constants'
 
 const Sheet = SheetPrimitive.Root
-Sheet.displayName = 'Sheet'
 
 const SheetTrigger = SheetPrimitive.Trigger
-SheetTrigger.displayName = 'SheetTrigger'
 
 const SheetClose = SheetPrimitive.Close
-SheetClose.displayName = 'SheetClose'
 
 const SheetPortal = SheetPrimitive.Portal
-SheetPortal.displayName = 'SheetPortal'
 
 const SheetOverlay = React.forwardRef<
   React.ComponentRef<typeof SheetPrimitive.Overlay>,
@@ -25,7 +21,7 @@ const SheetOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Overlay
     className={cn(
-      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80 data-[state=closed]:animate-out data-[state=open]:animate-in',
+      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/80 data-[state=closed]:animate-out data-[state=open]:animate-in data-[nested]:bg-transparent',
       'animation-duration-300 data-[state=closed]:animation-duration-200 ease-(--gentleduck-motion-ease)',
       className,
     )}
@@ -37,23 +33,27 @@ SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
 interface ISheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-    Variants.VariantProps<typeof sheetVariants> {}
+    Variants.VariantProps<typeof sheetVariants> {
+  closeText?: string
+  hideClose?: boolean
+}
 
-const SheetContent = React.forwardRef<
-  React.ComponentRef<typeof SheetPrimitive.Content>,
-  ISheetContentProps & { closeText?: string }
->(({ side = 'right', className, children, closeText = 'Close', ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-      {children}
-      <SheetPrimitive.Close className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed data-[state=open]:bg-secondary">
-        <X aria-hidden="true" className="size-4" />
-        <span className="sr-only">{closeText}</span>
-      </SheetPrimitive.Close>
-    </SheetPrimitive.Content>
-  </SheetPortal>
-))
+const SheetContent = React.forwardRef<React.ComponentRef<typeof SheetPrimitive.Content>, ISheetContentProps>(
+  ({ side = 'right', className, children, closeText = 'Close', hideClose = false, ...props }, ref) => (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
+        {children}
+        {!hideClose && (
+          <SheetPrimitive.Close className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+            <X aria-hidden="true" className="size-4" />
+            <span className="sr-only">{closeText}</span>
+          </SheetPrimitive.Close>
+        )}
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  ),
+)
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
@@ -65,11 +65,7 @@ SheetHeader.displayName = 'SheetHeader'
 
 const SheetFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2', className)}
-      {...props}
-    />
+    <div ref={ref} className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)} {...props} />
   ),
 )
 SheetFooter.displayName = 'SheetFooter'

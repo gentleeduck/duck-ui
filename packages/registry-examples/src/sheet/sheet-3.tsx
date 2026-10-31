@@ -22,7 +22,7 @@ export default function Demo() {
         <SheetTrigger asChild>
           <Button variant={'outline'}>فتح اللوحة</Button>
         </SheetTrigger>
-        <SheetContent className="flex flex-col" closeText="إغلاق">
+        <SheetContent closeText="إغلاق">
           <SheetHeader>
             <SheetTitle>تعديل الملف الشخصي</SheetTitle>
             <SheetDescription>عدّل بيانات ملفك الشخصي هنا، ثم اضغط على حفظ عند الانتهاء.</SheetDescription>

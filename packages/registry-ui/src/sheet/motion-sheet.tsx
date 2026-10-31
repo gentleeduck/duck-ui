@@ -17,7 +17,14 @@ import { toDirection } from '../direction/direction.libs'
 import type { ISheetContentProps } from './sheet'
 import { SheetPortal } from './sheet'
 
-const OVERLAY_OPTIONS = { transition: tweenSlow } as const
+const MOTION_OPTIONS = { transition: tweenSlow } as const
+
+const POSITION_CLASSES: Record<DirectionalSide, string> = {
+  top: 'inset-x-0 top-0 max-h-dvh border-b',
+  bottom: 'inset-x-0 bottom-0 max-h-dvh border-t',
+  left: 'inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm',
+  right: 'inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm',
+}
 
 /** Carries the root `dir` prop to the content, which needs a physical side for the slide offset. */
 const MotionSheetDirContext = React.createContext<IDirection.Kind | undefined>(undefined)
@@ -48,57 +55,56 @@ function MotionSheet({
 }
 MotionSheet.displayName = 'MotionSheet'
 
-const MotionSheetContent = React.forwardRef<
-  React.ComponentRef<typeof SheetPrimitive.Content>,
-  ISheetContentProps & { closeText?: string; hideClose?: boolean }
->(({ side = 'right', className, children, closeText = 'Close', hideClose = false, ...props }, ref) => {
-  const { isOpen } = useMotionContent()
-  const overlay = useMotionPreset(fadeIn, OVERLAY_OPTIONS)
-  const rootDir = React.useContext(MotionSheetDirContext)
-  const direction = useDirection(toDirection(props.dir) ?? rootDir)
-  const resolvedSide = resolveSheetSide(side, direction)
-  const slide = React.useMemo(() => createSlideEdge(resolvedSide), [resolvedSide])
-  const shouldRender = useMotionMount(isOpen, 320)
+const MotionSheetContent = React.forwardRef<React.ComponentRef<typeof SheetPrimitive.Content>, ISheetContentProps>(
+  ({ side = 'right', className, children, closeText = 'Close', hideClose = false, ...props }, ref) => {
+    const { isOpen } = useMotionContent()
+    const overlay = useMotionPreset(fadeIn, MOTION_OPTIONS)
+    const rootDir = React.useContext(MotionSheetDirContext)
+    const direction = useDirection(toDirection(props.dir) ?? rootDir)
+    const resolvedSide = resolveSheetSide(side, direction)
+    const slide = useMotionPreset(
+      React.useMemo(() => createSlideEdge(resolvedSide), [resolvedSide]),
+      MOTION_OPTIONS,
+    )
+    const shouldRender = useMotionMount(isOpen, 320)
 
-  const positionClasses: Record<string, string> = {
-    top: 'inset-x-0 top-0 border-b',
-    bottom: 'inset-x-0 bottom-0 border-t',
-    left: 'inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm',
-    right: 'inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm',
-  }
+    if (!shouldRender) return null
 
-  if (!shouldRender) return null
-
-  return (
-    <LazyMotion features={loadDomAnimation}>
-      <SheetPortal forceMount>
-        <SheetPrimitive.Overlay forceMount asChild>
-          <m.div
-            className="fixed inset-0 z-50 bg-black/80"
-            initial={overlay.initial}
-            animate={isOpen ? overlay.animate : { ...overlay.exit, pointerEvents: 'none' }}
-            transition={overlay.transition}
-          />
-        </SheetPrimitive.Overlay>
-        <SheetPrimitive.Content ref={ref} forceMount asChild {...props}>
-          <m.div
-            className={cn('fixed z-50 gap-4 bg-background p-6 shadow-lg', positionClasses[resolvedSide], className)}
-            initial={slide.initial}
-            animate={isOpen ? slide.animate : { ...slide.exit, pointerEvents: 'none' }}
-            transition={tweenSlow}>
-            {children}
-            {!hideClose && (
-              <SheetPrimitive.Close className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed data-[state=open]:bg-secondary">
-                <X aria-hidden="true" className="size-4" />
-                <span className="sr-only">{closeText}</span>
-              </SheetPrimitive.Close>
-            )}
-          </m.div>
-        </SheetPrimitive.Content>
-      </SheetPortal>
-    </LazyMotion>
-  )
-})
+    return (
+      <LazyMotion features={loadDomAnimation}>
+        <SheetPortal forceMount>
+          <SheetPrimitive.Overlay forceMount asChild>
+            <m.div
+              className="fixed inset-0 z-50 bg-black/80 data-[nested]:bg-transparent"
+              initial={overlay.initial}
+              animate={isOpen ? overlay.animate : { ...overlay.exit, pointerEvents: 'none' }}
+              transition={overlay.transition}
+            />
+          </SheetPrimitive.Overlay>
+          <SheetPrimitive.Content ref={ref} forceMount asChild {...props}>
+            <m.div
+              className={cn(
+                'fixed z-50 flex flex-col gap-4 bg-background p-6 shadow-lg',
+                POSITION_CLASSES[resolvedSide],
+                className,
+              )}
+              initial={slide.initial}
+              animate={isOpen ? slide.animate : { ...slide.exit, pointerEvents: 'none' }}
+              transition={slide.transition}>
+              {children}
+              {!hideClose && (
+                <SheetPrimitive.Close className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  <X aria-hidden="true" className="size-4" />
+                  <span className="sr-only">{closeText}</span>
+                </SheetPrimitive.Close>
+              )}
+            </m.div>
+          </SheetPrimitive.Content>
+        </SheetPortal>
+      </LazyMotion>
+    )
+  },
+)
 MotionSheetContent.displayName = 'MotionSheetContent'
 
 export { MotionSheet, MotionSheetContent }

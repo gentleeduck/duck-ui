@@ -21,7 +21,7 @@ export default function Demo() {
         <Button
           variant="destructive"
           className="data-[state=open]:opacity-90 data-[state=open]:ring-2 data-[state=open]:ring-destructive/50">
-          <Trash2 className="mr-2 h-4 w-4" />
+          <Trash2 className="me-2 h-4 w-4" />
           Delete account
         </Button>
       </AlertDialogTrigger>

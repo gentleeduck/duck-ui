@@ -46,7 +46,7 @@ const MotionAlertDialogContent = React.forwardRef<
       <AlertDialogPortal forceMount>
         <AlertDialogPrimitive.Overlay forceMount asChild>
           <m.div
-            className={cn('fixed inset-0 z-50 bg-black/80')}
+            className="fixed inset-0 z-50 bg-black/80 data-[nested]:bg-transparent"
             initial={overlay.initial}
             animate={isOpen ? overlay.animate : { ...overlay.exit, pointerEvents: 'none' }}
             transition={overlay.transition}

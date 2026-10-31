@@ -1,18 +1,8 @@
-import * as React from 'react'
 import * as DialogPrimitive from '../dialog'
-import { useDialogScope } from './alert-dialog'
+import { dialogPart } from './alert-dialog'
 import type { IAlertDialog } from './alert-dialog.types'
 
-const ACTION_NAME = 'AlertDialogAction'
-
-type AlertDialogActionElement = React.ComponentRef<typeof DialogPrimitive.Close>
-
-export const AlertDialogAction = React.forwardRef<AlertDialogActionElement, IAlertDialog.IActionProps>(
-  (props: IAlertDialog.IScoped<IAlertDialog.IActionProps>, forwardedRef) => {
-    const { __scopeAlertDialog, ...actionProps } = props
-    const dialogScope = useDialogScope(__scopeAlertDialog)
-    return <DialogPrimitive.Close {...dialogScope} {...actionProps} ref={forwardedRef} />
-  },
+export const AlertDialogAction = dialogPart<HTMLButtonElement, IAlertDialog.IActionProps>(
+  DialogPrimitive.Close,
+  'AlertDialogAction',
 )
-
-AlertDialogAction.displayName = ACTION_NAME

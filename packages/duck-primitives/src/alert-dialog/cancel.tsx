@@ -7,9 +7,7 @@ import { useAlertDialogContentContext } from './content'
 
 const CANCEL_NAME = 'AlertDialogCancel'
 
-type AlertDialogCancelElement = React.ComponentRef<typeof DialogPrimitive.Close>
-
-export const AlertDialogCancel = React.forwardRef<AlertDialogCancelElement, IAlertDialog.ICancelProps>(
+export const AlertDialogCancel = React.forwardRef<HTMLButtonElement, IAlertDialog.ICancelProps>(
   (props: IAlertDialog.IScoped<IAlertDialog.ICancelProps>, forwardedRef) => {
     const { __scopeAlertDialog, ...cancelProps } = props
     const { cancelRef } = useAlertDialogContentContext(CANCEL_NAME, __scopeAlertDialog)

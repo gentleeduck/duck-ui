@@ -1,5 +1,6 @@
 import type * as React from 'react'
 import * as accordion from '../accordion/__stories__/accordion.stories'
+import * as alertDialog from '../alert-dialog/__stories__/alert-dialog.stories'
 import * as arrow from '../arrow/__stories__/arrow.stories'
 import * as avatar from '../avatar/__stories__/avatar.stories'
 import * as checkers from '../checkers/__stories__/checkers.stories'
@@ -43,6 +44,7 @@ export const stories = new Map<string, IStoryEntry>()
 
 for (const module of [
   accordion,
+  alertDialog,
   arrow,
   avatar,
   checkers,

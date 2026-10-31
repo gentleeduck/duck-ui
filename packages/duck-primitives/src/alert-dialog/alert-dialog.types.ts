@@ -1,36 +1,32 @@
 import type * as React from 'react'
-import type * as DialogPrimitive from '../dialog'
+import type { IDialog } from '../dialog'
 import type { Scope } from '../libs/create-context'
 
 export namespace IAlertDialog {
   export type IScoped<TProps> = TProps & { __scopeAlertDialog?: Scope }
 
-  type DialogProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>
-  export interface IProps extends Omit<DialogProps, 'modal'> {}
+  export interface IProps extends Omit<IDialog.IProps, 'modal'> {}
 
-  type DialogCloseProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Close>
-  export interface IActionProps extends DialogCloseProps {}
-  export interface ICancelProps extends DialogCloseProps {}
+  export interface IActionProps extends IDialog.ICloseProps {}
+  export interface ICancelProps extends IDialog.ICloseProps {}
 
-  type DialogContentProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
-  export interface IContentProps extends Omit<DialogContentProps, 'onPointerDownOutside' | 'onInteractOutside'> {}
+  export interface IContentProps
+    extends Omit<IDialog.IContentProps, 'onPointerDownOutside' | 'onInteractOutside' | 'initialFocus'> {
+    /** Focused on open in place of the cancel button. */
+    initialFocus?: IDialog.IFocusTarget
+  }
 
-  type DialogDescriptionProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
-  export interface IDescriptionProps extends DialogDescriptionProps {}
+  export interface IDescriptionProps extends IDialog.IDescriptionProps {}
 
-  type DialogOverlayProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
-  export interface IOverlayProps extends DialogOverlayProps {}
+  export interface IOverlayProps extends IDialog.IOverlayProps {}
 
-  type DialogPortalProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Portal>
-  export interface IPortalProps extends DialogPortalProps {}
+  export interface IPortalProps extends IDialog.IPortalProps {}
 
-  type DialogTitleProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
-  export interface ITitleProps extends DialogTitleProps {}
+  export interface ITitleProps extends IDialog.ITitleProps {}
 
-  type DialogTriggerProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Trigger>
-  export interface ITriggerProps extends DialogTriggerProps {}
+  export interface ITriggerProps extends IDialog.ITriggerProps {}
 
   export interface IContentContextValue {
-    cancelRef: React.RefObject<React.ComponentRef<typeof DialogPrimitive.Close> | null>
+    cancelRef: React.RefObject<HTMLButtonElement | null>
   }
 }

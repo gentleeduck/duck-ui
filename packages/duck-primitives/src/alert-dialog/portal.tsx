@@ -1,18 +1,8 @@
-import type * as React from 'react'
 import * as DialogPrimitive from '../dialog'
-import { useDialogScope } from './alert-dialog'
+import { dialogPart } from './alert-dialog'
 import type { IAlertDialog } from './alert-dialog.types'
 
-const PORTAL_NAME = 'AlertDialogPortal'
-
-const AlertDialogPortal: React.FC<IAlertDialog.IPortalProps> = (
-  props: IAlertDialog.IScoped<IAlertDialog.IPortalProps>,
-) => {
-  const { __scopeAlertDialog, ...portalProps } = props
-  const dialogScope = useDialogScope(__scopeAlertDialog)
-  return <DialogPrimitive.Portal {...dialogScope} {...portalProps} />
-}
-
-AlertDialogPortal.displayName = PORTAL_NAME
-
-export { AlertDialogPortal }
+export const AlertDialogPortal = dialogPart<never, IAlertDialog.IPortalProps>(
+  DialogPrimitive.Portal,
+  'AlertDialogPortal',
+)

@@ -11,6 +11,8 @@ re-exports it, as `roving-focus` does `focusFirst` and `wrapArray`.
 | `createCollection` | Registers the items of a list and reads them back in document order | `command`, `select`, `slider` |
 | `createContext` | A context whose reader throws, naming the part and its root, when it has no provider and no default | `dialog` |
 | `createContextScope` | Contexts a primitive can scope, so one built of another reads its own and not those of the same primitive around it | Every primitive with parts |
+| `createScopedPart` | Builds a part of a component made of another that hands its own scope on, as the other's, to the part it renders | `alert-dialog` |
+| `focusOn` | Turns `initialFocus` and `finalFocus` into the focus scope's mount and unmount handlers | `alert-dialog`, `dialog` |
 | `getComponentRef` | Reads a child element's ref under React 18 and 19 without the warning either logs | `presence`, `slot` |
 | `getState` | `open` or `closed`, for `data-state` | `dialog`, `popover` |
 | `joinIds` | Joins id lists, dropping blanks, repeats and anything not a string | `dialog`, `slot`, `tooltip` |
@@ -31,14 +33,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 92 | `associated-form.test.ts` 8, `compose-ref.test.tsx` 4, `create-collection.test.tsx` 17, `create-context.test.tsx` 9, `get-component-ref.test.ts` 4, `join-ids.test.ts` 3, `list-navigation.test.tsx` 27, `primitives-utils.test.ts` 20 |
+| Unit | 98 | `associated-form.test.ts` 8, `compose-ref.test.tsx` 4, `create-collection.test.tsx` 17, `create-context.test.tsx` 9, `focus-on.test.ts` 4, `get-component-ref.test.ts` 4, `join-ids.test.ts` 3, `list-navigation.test.tsx` 27, `primitives-utils.test.ts` 20, `scoped-part.test.tsx` 2 |
 | End to end | 0 | - |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>92 behaviours, one per test</summary>
+<summary>98 behaviours, one per test</summary>
 
 **Unit, `primitives-utils.test.ts`**
 
@@ -138,6 +140,20 @@ Each test was proven by changing the code and watching a test fail.
   - runs a callback ref cleanup on unmount and nulls the object ref beside it
   - keeps one callback while its refs stay the same, and hands the node to a ref that replaces one
 
+**Unit, `scoped-part.test.tsx`**
+
+- createScopedPart
+  - hands its own scope on as the inner scope and keeps it off the part
+  - names the part it makes
+
+**Unit, `focus-on.test.ts`**
+
+- focusOn
+  - hands back the handler it is given when no target is named
+  - calls the handler, keeps the focus scope from moving focus, and focuses the target without scrolling
+  - keeps the focus scope from moving focus and focuses nothing for a target of false
+  - leaves focus to a handler that prevents the default itself
+
 **Unit, `get-component-ref.test.ts`**
 
 - getComponentRef
@@ -200,6 +216,8 @@ ship them.
 - `gg` and `G` move to the first and last item of a menu, a select and a radio group.
 - A letter typed before strict mode replays a list's mount effects is still forgotten a second later. Radix clears
   its timer in that replay and sets no new one, so the next letter, however late, builds on the old search.
+- `focusOn` and the `initialFocus` and `finalFocus` props it backs are not in Radix, which leaves focus to
+  `onOpenAutoFocus` and `onCloseAutoFocus`.
 
 ## Fixed
 

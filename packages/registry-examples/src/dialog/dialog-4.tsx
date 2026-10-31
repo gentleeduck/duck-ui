@@ -20,7 +20,7 @@ export default function Demo() {
         <Button
           variant="outline"
           className="data-[state=open]:bg-primary data-[state=open]:text-primary-foreground data-[state=open]:ring-2 data-[state=open]:ring-primary/50">
-          <Pencil className="mr-2 h-4 w-4" />
+          <Pencil className="me-2 h-4 w-4" />
           Edit profile
         </Button>
       </DialogTrigger>

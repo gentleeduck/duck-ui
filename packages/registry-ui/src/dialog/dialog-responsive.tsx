@@ -53,9 +53,7 @@ function DialogContentResponsive({
   const isDesktop = useMediaQuery('(min-width: 768px)')
 
   if (isDesktop) {
-    return (
-      <DialogContent {...(props as React.ComponentPropsWithoutRef<typeof DialogContent>)}>{children}</DialogContent>
-    )
+    return <DialogContent {...props}>{children}</DialogContent>
   }
 
   return <DrawerContent {...(props as React.ComponentPropsWithoutRef<typeof DrawerContent>)}>{children}</DrawerContent>

@@ -10,6 +10,7 @@ export {
   DialogTitle,
   DialogTrigger,
 } from './dialog'
+export type { IDialogContentProps } from './dialog.types'
 export {
   DialogCloseResponsive,
   DialogContentResponsive,

@@ -45,7 +45,7 @@ export default function Demo() {
         <Button variant="outline">Open checklist</Button>
       </DrawerTrigger>
       <DrawerContent className="mx-auto max-w-md">
-        <DrawerHeader className="text-left">
+        <DrawerHeader className="text-start">
           <div className="flex items-center justify-between">
             <DrawerTitle>Launch checklist</DrawerTitle>
             <span
@@ -80,7 +80,7 @@ export default function Demo() {
                 type="button"
                 onClick={() => toggle(task.id)}
                 className={cn(
-                  'flex items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent/50',
+                  'flex items-start gap-3 rounded-lg px-3 py-2.5 text-start transition-colors hover:bg-accent/50',
                   done && 'opacity-60',
                 )}>
                 {done ? (
@@ -101,7 +101,7 @@ export default function Demo() {
           {allDone ? (
             <DrawerClose asChild>
               <Button className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700">
-                <Sparkles className="mr-2 h-4 w-4" />
+                <Sparkles className="me-2 h-4 w-4" />
                 Ship it
               </Button>
             </DrawerClose>

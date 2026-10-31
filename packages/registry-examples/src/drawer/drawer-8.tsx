@@ -18,7 +18,7 @@ export default function Demo() {
         <Button
           variant="outline"
           className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:ring-2 data-[state=open]:ring-ring">
-          <Menu className="mr-2 h-4 w-4" />
+          <Menu className="me-2 h-4 w-4" />
           Open drawer
         </Button>
       </DrawerTrigger>

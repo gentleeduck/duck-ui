@@ -12,6 +12,8 @@ import { X } from 'lucide-react'
 import { LazyMotion, m } from 'motion/react'
 import * as React from 'react'
 import { DialogPortal } from './dialog'
+import { dialogStackStyle } from './dialog.constants'
+import type { IDialogContentProps } from './dialog.types'
 
 function MotionDialog({
   children,
@@ -31,53 +33,50 @@ function MotionDialog({
 }
 MotionDialog.displayName = 'MotionDialog'
 
-const MotionDialogContent = React.forwardRef<
-  React.ComponentRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
-    closeText?: string
-    hideClose?: boolean
-  }
->(({ className, children, closeText = 'Close', hideClose = false, ...props }, ref) => {
-  const { isOpen } = useMotionContent()
-  const overlay = useMotionPreset(fadeIn, { transition: springBouncy })
-  const content = useMotionPreset(rotateIn, { transition: springBouncy })
-  const shouldRender = useMotionMount(isOpen)
+const MotionDialogContent = React.forwardRef<React.ComponentRef<typeof DialogPrimitive.Content>, IDialogContentProps>(
+  ({ className, children, closeText = 'Close', hideClose = false, ...props }, ref) => {
+    const { isOpen } = useMotionContent()
+    const overlay = useMotionPreset(fadeIn, { transition: springBouncy })
+    const content = useMotionPreset(rotateIn, { transition: springBouncy })
+    const shouldRender = useMotionMount(isOpen)
 
-  if (!shouldRender) return null
+    if (!shouldRender) return null
 
-  return (
-    <LazyMotion features={loadDomAnimation}>
-      <DialogPortal forceMount>
-        <DialogPrimitive.Overlay forceMount asChild>
-          <m.div
-            className="fixed inset-0 z-50 bg-black/80"
-            initial={overlay.initial}
-            animate={isOpen ? overlay.animate : { ...overlay.exit, pointerEvents: 'none' }}
-            transition={overlay.transition}
-          />
-        </DialogPrimitive.Overlay>
-        <DialogPrimitive.Content ref={ref} forceMount asChild {...props}>
-          <m.div
-            className={cn(
-              'fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border bg-background p-6 shadow-lg sm:rounded-lg',
-              className,
-            )}
-            initial={content.initial}
-            animate={isOpen ? content.animate : { ...content.exit, pointerEvents: 'none' }}
-            transition={content.transition}>
-            {children}
-            {!hideClose && (
-              <DialogPrimitive.Close className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-                <X aria-hidden="true" className="size-4" />
-                <span className="sr-only">{closeText}</span>
-              </DialogPrimitive.Close>
-            )}
-          </m.div>
-        </DialogPrimitive.Content>
-      </DialogPortal>
-    </LazyMotion>
-  )
-})
+    return (
+      <LazyMotion features={loadDomAnimation}>
+        <DialogPortal forceMount>
+          <DialogPrimitive.Overlay forceMount asChild>
+            <m.div
+              className="fixed inset-0 z-50 bg-black/80 data-[nested]:bg-transparent"
+              initial={overlay.initial}
+              animate={isOpen ? overlay.animate : { ...overlay.exit, pointerEvents: 'none' }}
+              transition={overlay.transition}
+            />
+          </DialogPrimitive.Overlay>
+          <DialogPrimitive.Content ref={ref} forceMount asChild {...props}>
+            <m.div
+              className={cn(
+                'fixed top-1/2 left-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border bg-background p-6 shadow-lg sm:rounded-lg',
+                dialogStackStyle,
+                className,
+              )}
+              initial={content.initial}
+              animate={isOpen ? content.animate : { ...content.exit, pointerEvents: 'none' }}
+              transition={content.transition}>
+              {children}
+              {!hideClose && (
+                <DialogPrimitive.Close className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  <X aria-hidden="true" className="size-4" />
+                  <span className="sr-only">{closeText}</span>
+                </DialogPrimitive.Close>
+              )}
+            </m.div>
+          </DialogPrimitive.Content>
+        </DialogPortal>
+      </LazyMotion>
+    )
+  },
+)
 MotionDialogContent.displayName = 'MotionDialogContent'
 
 export { MotionDialog, MotionDialogContent }

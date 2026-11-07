@@ -1,9 +1,9 @@
 import type * as React from 'react'
 import type { IDirection } from '../direction'
-import type { DismissableLayer } from '../dismissable-layer'
+import type { IDismissableLayer } from '../dismissable-layer'
 import type { Scope } from '../libs/create-context'
-import type * as PopperPrimitive from '../popper'
-import type { Portal as PortalPrimitive } from '../portal'
+import type { IPopper } from '../popper'
+import type { IPortal } from '../portal'
 import type { Primitive } from '../primitive-elements'
 
 export namespace IHoverCard {
@@ -11,13 +11,12 @@ export namespace IHoverCard {
 
   export interface IContext {
     open: boolean
-    onOpenChange(open: boolean): void
     onOpen(): void
     onClose(): void
     onDismiss(): void
     hasSelectionRef: React.RefObject<boolean>
     isPointerDownOnContentRef: React.RefObject<boolean>
-    dir: IDirection.Kind
+    dir: IDirection.Kind | undefined
   }
 
   export interface IPortalContext {
@@ -32,21 +31,19 @@ export namespace IHoverCard {
     openDelay?: number
     closeDelay?: number
     dir?: IDirection.Kind
+    /** Keeps the card closed, and closes it if it is open. */
+    disabled?: boolean
   }
 
-  type PopperArrowProps = React.ComponentPropsWithoutRef<typeof PopperPrimitive.Arrow>
-  type PopperContentProps = React.ComponentPropsWithoutRef<typeof PopperPrimitive.Content>
-  type DismissableLayerProps = React.ComponentPropsWithoutRef<typeof DismissableLayer>
   type PrimitiveLinkProps = React.ComponentPropsWithoutRef<typeof Primitive.a>
-  type PortalProps = React.ComponentPropsWithoutRef<typeof PortalPrimitive>
 
-  export interface IArrowProps extends PopperArrowProps {}
+  export interface IArrowProps extends IPopper.IArrowProps {}
 
-  export interface IContentImplProps extends Omit<PopperContentProps, 'onPlaced'> {
-    onEscapeKeyDown?: DismissableLayerProps['onEscapeKeyDown']
-    onPointerDownOutside?: DismissableLayerProps['onPointerDownOutside']
-    onFocusOutside?: DismissableLayerProps['onFocusOutside']
-    onInteractOutside?: DismissableLayerProps['onInteractOutside']
+  export interface IContentImplProps extends Omit<IPopper.IContentProps, 'onPlaced'> {
+    onEscapeKeyDown?: IDismissableLayer.IProps['onEscapeKeyDown']
+    onPointerDownOutside?: IDismissableLayer.IProps['onPointerDownOutside']
+    onFocusOutside?: IDismissableLayer.IProps['onFocusOutside']
+    onInteractOutside?: IDismissableLayer.IProps['onInteractOutside']
   }
 
   export interface IContentProps extends IContentImplProps {
@@ -55,7 +52,7 @@ export namespace IHoverCard {
 
   export interface IPortalProps {
     children?: React.ReactNode | undefined
-    container?: PortalProps['container'] | undefined
+    container?: IPortal.IProps['container'] | undefined
     forceMount?: true | undefined
   }
 

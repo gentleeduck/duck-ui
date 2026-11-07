@@ -14,19 +14,30 @@ export const HoverCardTrigger = React.forwardRef<HoverCardTriggerElement, IHover
     const { __scopeHoverCard, ...triggerProps } = props
     const context = useHoverCardContext(TRIGGER_NAME, __scopeHoverCard)
     const popperScope = usePopperScope(__scopeHoverCard)
+    // A tap focuses a link after the pointer is up, so the press is remembered until a blur or a cancel.
+    const touchedRef = React.useRef(false)
     return (
       <PopperPrimitive.Anchor asChild {...popperScope}>
         <Primitive.a
           data-slot="hover-card-trigger"
           data-state={context.open ? 'open' : 'closed'}
-          dir={context.dir}
           {...triggerProps}
           ref={forwardedRef}
           onPointerEnter={composeEventHandlers(props.onPointerEnter, excludeTouch(context.onOpen))}
           onPointerLeave={composeEventHandlers(props.onPointerLeave, excludeTouch(context.onClose))}
-          onFocus={composeEventHandlers(props.onFocus, context.onOpen)}
-          onBlur={composeEventHandlers(props.onBlur, context.onClose)}
-          onTouchStart={composeEventHandlers(props.onTouchStart, (event) => event.preventDefault())}
+          onPointerDown={composeEventHandlers(props.onPointerDown, (event) => {
+            touchedRef.current = event.pointerType === 'touch'
+          })}
+          onPointerCancel={composeEventHandlers(props.onPointerCancel, () => {
+            touchedRef.current = false
+          })}
+          onFocus={composeEventHandlers(props.onFocus, () => {
+            if (!touchedRef.current) context.onOpen()
+          })}
+          onBlur={composeEventHandlers(props.onBlur, () => {
+            touchedRef.current = false
+            context.onClose()
+          })}
         />
       </PopperPrimitive.Anchor>
     )

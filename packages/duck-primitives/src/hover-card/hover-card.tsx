@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { useDirection } from '../direction'
 import { useControllableState } from '../hooks/use-controllable-state'
 import { createContextScope } from '../libs/create-context'
 import * as PopperPrimitive from '../popper'
@@ -24,9 +23,9 @@ export const HoverCard: React.FC<IHoverCard.IProps> = (props: IHoverCard.IScoped
     openDelay = 700,
     closeDelay = 300,
     dir,
+    disabled = false,
   } = props
   const popperScope = usePopperScope(__scopeHoverCard)
-  const direction = useDirection(dir)
   const openTimerRef = React.useRef(0)
   const closeTimerRef = React.useRef(0)
   const hasSelectionRef = React.useRef(false)
@@ -40,23 +39,31 @@ export const HoverCard: React.FC<IHoverCard.IProps> = (props: IHoverCard.IScoped
   })
 
   const handleOpen = React.useCallback(() => {
-    clearTimeout(closeTimerRef.current)
+    if (disabled) return
+    window.clearTimeout(closeTimerRef.current)
     openTimerRef.current = window.setTimeout(() => setOpen(true), openDelay)
-  }, [openDelay, setOpen])
+  }, [openDelay, setOpen, disabled])
 
   const handleClose = React.useCallback(() => {
-    clearTimeout(openTimerRef.current)
-    if (!hasSelectionRef.current && !isPointerDownOnContentRef.current) {
-      closeTimerRef.current = window.setTimeout(() => setOpen(false), closeDelay)
-    }
+    window.clearTimeout(openTimerRef.current)
+    // Read when the delay ends: a release finds out whether it selected text only a frame after it.
+    closeTimerRef.current = window.setTimeout(() => {
+      if (!hasSelectionRef.current && !isPointerDownOnContentRef.current) setOpen(false)
+    }, closeDelay)
   }, [closeDelay, setOpen])
 
   const handleDismiss = React.useCallback(() => setOpen(false), [setOpen])
 
   React.useEffect(() => {
+    if (!disabled) return
+    window.clearTimeout(openTimerRef.current)
+    setOpen(false)
+  }, [disabled, setOpen])
+
+  React.useEffect(() => {
     return () => {
-      clearTimeout(openTimerRef.current)
-      clearTimeout(closeTimerRef.current)
+      window.clearTimeout(openTimerRef.current)
+      window.clearTimeout(closeTimerRef.current)
     }
   }, [])
 
@@ -64,13 +71,12 @@ export const HoverCard: React.FC<IHoverCard.IProps> = (props: IHoverCard.IScoped
     <HoverCardProvider
       scope={__scopeHoverCard}
       open={open}
-      onOpenChange={setOpen}
       onOpen={handleOpen}
       onClose={handleClose}
       onDismiss={handleDismiss}
       hasSelectionRef={hasSelectionRef}
       isPointerDownOnContentRef={isPointerDownOnContentRef}
-      dir={direction}>
+      dir={dir}>
       <PopperPrimitive.Root {...popperScope}>{children}</PopperPrimitive.Root>
     </HoverCardProvider>
   )

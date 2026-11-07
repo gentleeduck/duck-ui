@@ -1,0 +1,65 @@
+.page {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  justify-items: start;
+  padding: 50px;
+  font-family: apple-system, BlinkMacSystemFont, helvetica, arial, sans-serif;
+  font-size: 13px;
+}
+
+.list {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list a {
+  display: inline-block;
+  padding: 4px 8px;
+}
+
+.target {
+  display: inline-block;
+  margin: 120px 300px;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #333;
+  color: white;
+  text-decoration: none;
+}
+
+.frame {
+  width: 480px;
+  height: 320px;
+  border: 1px solid #999;
+}
+
+.animated[data-state="open"] {
+  animation: fade-in 150ms ease-out;
+}
+
+.animated[data-state="closed"] {
+  animation: fade-out 500ms ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}

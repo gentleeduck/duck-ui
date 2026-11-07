@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useDirection } from '../direction'
 import { DismissableLayer } from '../dismissable-layer'
 import { composeEventHandlers } from '../libs/compose-event-handler'
 import { useComposedRefs } from '../libs/compose-ref'
@@ -9,14 +10,19 @@ import type { IHoverCard } from './hover-card.types'
 import { usePortalContext } from './portal'
 import { excludeTouch } from './trigger'
 
-let originalBodyUserSelect: string
-
 const CONTENT_NAME = 'HoverCardContent'
 
-type HoverCardContentImplElement = React.ComponentRef<typeof PopperPrimitive.Content>
-type HoverCardContentElement = HoverCardContentImplElement
+const POPPER_VARIABLES = {
+  '--gentleduck-hover-card-content-transform-origin': 'var(--gentleduck-popper-transform-origin)',
+  '--gentleduck-hover-card-content-available-width': 'var(--gentleduck-popper-available-width)',
+  '--gentleduck-hover-card-content-available-height': 'var(--gentleduck-popper-available-height)',
+  '--gentleduck-hover-card-trigger-width': 'var(--gentleduck-popper-anchor-width)',
+  '--gentleduck-hover-card-trigger-height': 'var(--gentleduck-popper-anchor-height)',
+} as React.CSSProperties
 
-export const HoverCardContent = React.forwardRef<HoverCardContentElement, IHoverCard.IContentProps>(
+type HoverCardContentImplElement = React.ComponentRef<typeof PopperPrimitive.Content>
+
+export const HoverCardContent = React.forwardRef<HoverCardContentImplElement, IHoverCard.IContentProps>(
   (props: IHoverCard.IScoped<IHoverCard.IContentProps>, forwardedRef) => {
     const portalContext = usePortalContext(CONTENT_NAME, props.__scopeHoverCard)
     const { forceMount = portalContext.forceMount, ...contentProps } = props
@@ -51,53 +57,61 @@ const HoverCardContentImpl = React.forwardRef<HoverCardContentImplElement, IHove
     const popperScope = usePopperScope(__scopeHoverCard)
     const ref = React.useRef<HoverCardContentImplElement>(null)
     const composedRefs = useComposedRefs(forwardedRef, ref)
-    const [containSelection, setContainSelection] = React.useState(false)
+    const [press, setPress] = React.useState<{ document: Document; inside: boolean } | null>(null)
+    const direction = useDirection(context.dir)
+    const { hasSelectionRef, isPointerDownOnContentRef } = context
 
     React.useEffect(() => {
-      if (containSelection) {
-        const body = document.body
+      if (!press) return
+      const { style } = press.document.body
+      const userSelect = style.userSelect || style.webkitUserSelect
+      if (press.inside) {
+        style.userSelect = 'none'
+        style.webkitUserSelect = 'none'
+      }
 
-        // Safari requires prefix
-        originalBodyUserSelect = body.style.userSelect || body.style.webkitUserSelect
+      const handleRelease = () => {
+        setPress(null)
+        isPointerDownOnContentRef.current = false
+        // A press inside the selection clears it only once the release is done.
+        setTimeout(() => {
+          if (press.document.getSelection()?.toString()) hasSelectionRef.current = true
+        })
+      }
 
-        body.style.userSelect = 'none'
-        body.style.webkitUserSelect = 'none'
-        return () => {
-          body.style.userSelect = originalBodyUserSelect
-          body.style.webkitUserSelect = originalBodyUserSelect
+      press.document.addEventListener('pointerup', handleRelease)
+      press.document.addEventListener('pointercancel', handleRelease)
+      return () => {
+        press.document.removeEventListener('pointerup', handleRelease)
+        press.document.removeEventListener('pointercancel', handleRelease)
+        if (press.inside) {
+          style.userSelect = userSelect
+          style.webkitUserSelect = userSelect
         }
       }
-    }, [containSelection])
+    }, [press, hasSelectionRef, isPointerDownOnContentRef])
+
+    React.useEffect(
+      () => () => {
+        hasSelectionRef.current = false
+        isPointerDownOnContentRef.current = false
+      },
+      [hasSelectionRef, isPointerDownOnContentRef],
+    )
 
     React.useEffect(() => {
-      if (ref.current) {
-        const handlePointerUp = () => {
-          setContainSelection(false)
-          context.isPointerDownOnContentRef.current = false
-
-          // defer one frame so we read the post-pointerup selection
-          setTimeout(() => {
-            const hasSelection = document.getSelection()?.toString() !== ''
-            if (hasSelection) context.hasSelectionRef.current = true
-          })
-        }
-
-        document.addEventListener('pointerup', handlePointerUp)
-        return () => {
-          document.removeEventListener('pointerup', handlePointerUp)
-          context.hasSelectionRef.current = false
-          context.isPointerDownOnContentRef.current = false
+      const content = ref.current
+      if (!content) return
+      const removeFromTabOrder = () => {
+        for (const node of content.querySelectorAll<HTMLElement | SVGElement>('*')) {
+          if (node.tabIndex >= 0) node.setAttribute('tabindex', '-1')
         }
       }
-    }, [context.isPointerDownOnContentRef, context.hasSelectionRef])
-
-    React.useEffect(() => {
-      if (ref.current) {
-        const tabbables = getTabbableNodes(ref.current)
-        for (const tabbable of tabbables) {
-          tabbable.setAttribute('tabindex', '-1')
-        }
-      }
+      removeFromTabOrder()
+      // A child can render on its own after the card opens, as a profile that loads does.
+      const observer = new MutationObserver(removeFromTabOrder)
+      observer.observe(content, { attributeFilter: ['tabindex'], childList: true, subtree: true })
+      return () => observer.disconnect()
     })
 
     return (
@@ -113,31 +127,21 @@ const HoverCardContentImpl = React.forwardRef<HoverCardContentImplElement, IHove
         onDismiss={context.onDismiss}>
         <PopperPrimitive.Content
           data-slot="hover-card-content"
-          dir={context.dir}
+          dir={direction}
           {...popperScope}
           {...contentProps}
           onPointerDown={composeEventHandlers(contentProps.onPointerDown, (event) => {
-            // contain text selection to this layer
-            if (event.currentTarget.contains(event.target as HTMLElement)) {
-              setContainSelection(true)
-            }
-            context.hasSelectionRef.current = false
-            context.isPointerDownOnContentRef.current = true
+            const { currentTarget } = event
+            setPress({ document: currentTarget.ownerDocument, inside: currentTarget.contains(event.target as Node) })
+            hasSelectionRef.current = false
+            isPointerDownOnContentRef.current = true
           })}
           ref={composedRefs}
           style={{
             ...contentProps.style,
-            userSelect: containSelection ? 'text' : undefined,
-            // Safari requires prefix
-            WebkitUserSelect: containSelection ? 'text' : undefined,
-            // expose popper custom props under hover-card-* namespace
-            ...{
-              '--gentleduck-hover-card-content-transform-origin': 'var(--gentleduck-popper-transform-origin)',
-              '--gentleduck-hover-card-content-available-width': 'var(--gentleduck-popper-available-width)',
-              '--gentleduck-hover-card-content-available-height': 'var(--gentleduck-popper-available-height)',
-              '--gentleduck-hover-card-trigger-width': 'var(--gentleduck-popper-anchor-width)',
-              '--gentleduck-hover-card-trigger-height': 'var(--gentleduck-popper-anchor-height)',
-            },
+            userSelect: press?.inside ? 'text' : undefined,
+            WebkitUserSelect: press?.inside ? 'text' : undefined,
+            ...POPPER_VARIABLES,
           }}
         />
       </DismissableLayer>
@@ -146,16 +150,3 @@ const HoverCardContentImpl = React.forwardRef<HoverCardContentImplElement, IHove
 )
 
 HoverCardContentImpl.displayName = 'HoverCardContentImpl'
-
-function getTabbableNodes(container: HTMLElement) {
-  const nodes: HTMLElement[] = []
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, {
-    acceptNode: (node: Node) => {
-      if (!(node instanceof HTMLElement)) return NodeFilter.FILTER_SKIP
-      // `.tabIndex` property (not attribute) covers runtime-tabbable nodes uniformly
-      return node.tabIndex >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
-    },
-  })
-  while (walker.nextNode()) nodes.push(walker.currentNode as HTMLElement)
-  return nodes
-}

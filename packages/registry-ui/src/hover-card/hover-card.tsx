@@ -5,26 +5,9 @@ import * as HoverCardPrimitive from '@gentleduck/primitives/hover-card'
 import type { Variants } from '@gentleduck/variants'
 import * as React from 'react'
 import { buttonVariants } from '../button'
+import { hoverCardContentStyle } from './hover-card.constants'
 
-const HoverCard = React.forwardRef<
-  React.ComponentRef<typeof HoverCardPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Root> & {
-    delayDuration?: number
-    skipDelayDuration?: number
-    placement?: React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Content>['side']
-  }
->(({ closeDelay, openDelay, placement = 'top', delayDuration, skipDelayDuration, ...props }, _ref) => {
-  void skipDelayDuration
-
-  return (
-    <HoverCardPrimitive.Root
-      closeDelay={closeDelay}
-      data-slot="hover-card"
-      openDelay={openDelay ?? delayDuration}
-      {...props}
-    />
-  )
-})
+const HoverCard = HoverCardPrimitive.Root
 HoverCard.displayName = 'HoverCard'
 
 const HoverCardTrigger = React.forwardRef<
@@ -46,27 +29,21 @@ HoverCardTrigger.displayName = HoverCardPrimitive.Trigger.displayName
 const HoverCardContent = React.forwardRef<
   React.ComponentRef<typeof HoverCardPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Content>
->(({ className, children, side = 'top', align = 'center', sideOffset = 4, style, ...props }, ref) => {
+>(({ className, children, side = 'top', align = 'center', sideOffset = 4, ...props }, ref) => {
   return (
-    <HoverCardPrimitive.Portal>
+    <HoverCardPrimitive.Portal forceMount={props.forceMount}>
       <HoverCardPrimitive.Content
         ref={ref}
         align={align}
         className={cn(
-          'z-50 w-64 rounded-md border border-(--hover-card-border-color) bg-popover p-4 text-popover-foreground shadow-md outline-hidden',
-          'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative origin-(--gentleduck-hover-card-content-transform-origin) data-[state=closed]:animate-out data-[state=open]:animate-in',
+          'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=open]:animate-in',
           'animation-duration-200 data-[state=closed]:animation-duration-150 ease-(--gentleduck-motion-ease)',
+          hoverCardContentStyle,
           className,
         )}
         data-slot="hover-card-content"
         side={side}
         sideOffset={sideOffset}
-        style={
-          {
-            '--hover-card-border-color': 'var(--border)',
-            ...style,
-          } as React.CSSProperties
-        }
         {...props}>
         {children}
       </HoverCardPrimitive.Content>

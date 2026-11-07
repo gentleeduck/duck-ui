@@ -8,34 +8,27 @@ import { MotionRootContext, useMotionContent, useMotionMount, useMotionRoot } fr
 import * as HoverCardPrimitive from '@gentleduck/primitives/hover-card'
 import { LazyMotion, m } from 'motion/react'
 import * as React from 'react'
+import { hoverCardContentStyle } from './hover-card.constants'
 
 export const HoverCardPlacementContext = React.createContext<'top' | 'right' | 'bottom' | 'left' | undefined>('top')
 
-const MotionHoverCard = React.forwardRef<
-  React.ComponentRef<typeof HoverCardPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Root> & {
-    delayDuration?: number
-    skipDelayDuration?: number
-    placement?: 'top' | 'right' | 'bottom' | 'left'
-  }
->(({ closeDelay, openDelay, placement = 'top', delayDuration, skipDelayDuration, ...props }, _ref) => {
-  void skipDelayDuration
-  const { rootProps, contextValue } = useMotionRoot({ onOpenChange: props.onOpenChange })
+function MotionHoverCard({
+  placement = 'top',
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...rest
+}: React.ComponentProps<typeof HoverCardPrimitive.Root> & { placement?: 'top' | 'right' | 'bottom' | 'left' }) {
+  const { rootProps, contextValue } = useMotionRoot({ open, defaultOpen, onOpenChange })
 
   return (
     <MotionRootContext.Provider value={contextValue}>
       <HoverCardPlacementContext.Provider value={placement}>
-        <HoverCardPrimitive.Root
-          closeDelay={closeDelay}
-          data-slot="hover-card"
-          openDelay={openDelay ?? delayDuration}
-          {...props}
-          onOpenChange={rootProps.onOpenChange}
-        />
+        <HoverCardPrimitive.Root {...rootProps} {...rest} />
       </HoverCardPlacementContext.Provider>
     </MotionRootContext.Provider>
   )
-})
+}
 MotionHoverCard.displayName = 'MotionHoverCard'
 
 const MotionHoverCardContent = React.forwardRef<
@@ -62,10 +55,7 @@ const MotionHoverCardContent = React.forwardRef<
           asChild
           {...props}>
           <m.div
-            className={cn(
-              'z-50 w-64 overflow-hidden rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-hidden',
-              className,
-            )}
+            className={cn(hoverCardContentStyle, className)}
             data-slot="hover-card-content"
             initial={preset.initial}
             animate={isOpen ? preset.animate : { ...preset.exit, pointerEvents: 'none' }}

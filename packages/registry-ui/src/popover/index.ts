@@ -5,5 +5,7 @@ export {
   PopoverArrow,
   PopoverClose,
   PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
   PopoverTrigger,
 } from './popover'

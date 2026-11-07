@@ -9,6 +9,7 @@ import { MotionRootContext, useMotionContent, useMotionMount, useMotionRoot } fr
 import * as PopoverPrimitive from '@gentleduck/primitives/popover'
 import { LazyMotion, m } from 'motion/react'
 import * as React from 'react'
+import { popoverContentStyle } from './popover.constants'
 
 const CONTENT_OPTIONS = { transition: springBouncy } as const
 
@@ -33,7 +34,7 @@ MotionPopover.displayName = 'MotionPopover'
 const MotionPopoverContent = React.forwardRef<
   React.ComponentRef<typeof PopoverPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
->(({ className, align = 'center', sideOffset = 4, children, ...props }, ref) => {
+>(({ className, sideOffset = 4, children, ...props }, ref) => {
   const { isOpen } = useMotionContent()
   const content = useMotionPreset(scaleIn, CONTENT_OPTIONS)
   const shouldRender = useMotionMount(isOpen)
@@ -43,12 +44,9 @@ const MotionPopoverContent = React.forwardRef<
   return (
     <LazyMotion features={loadDomAnimation}>
       <PopoverPrimitive.Portal forceMount>
-        <PopoverPrimitive.Content ref={ref} align={align} sideOffset={sideOffset} forceMount asChild {...props}>
+        <PopoverPrimitive.Content ref={ref} sideOffset={sideOffset} forceMount asChild {...props}>
           <m.div
-            className={cn(
-              'z-50 w-72 origin-(--gentleduck-popover-content-transform-origin) rounded-md border bg-popover p-4 text-start text-popover-foreground shadow-md outline-hidden',
-              className,
-            )}
+            className={cn(popoverContentStyle, className)}
             initial={content.initial}
             animate={isOpen ? content.animate : { ...content.exit, pointerEvents: 'none' }}
             transition={content.transition}>

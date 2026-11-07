@@ -3,7 +3,14 @@
 import { Button } from '@gentleduck/registry-ui/button'
 import { Input } from '@gentleduck/registry-ui/input'
 import { Label } from '@gentleduck/registry-ui/label'
-import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'
+import {
+  Popover,
+  PopoverClose,
+  PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@gentleduck/registry-ui/popover'
 
 export default function Demo() {
   return (
@@ -18,8 +25,8 @@ export default function Demo() {
             e.preventDefault()
           }}>
           <div className="space-y-2">
-            <h4 className="font-medium leading-none">Dimensions</h4>
-            <p className="text-muted-foreground text-sm">Configure the dimensions for the layer.</p>
+            <PopoverTitle>Dimensions</PopoverTitle>
+            <PopoverDescription>Configure the dimensions for the layer.</PopoverDescription>
           </div>
           <div className="grid gap-2">
             <div className="grid grid-cols-3 items-center gap-4">

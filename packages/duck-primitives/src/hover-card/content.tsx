@@ -91,13 +91,15 @@ const HoverCardContentImpl = React.forwardRef<HoverCardContentImplElement, IHove
       }
     }, [press, hasSelectionRef, isPointerDownOnContentRef])
 
-    React.useEffect(
-      () => () => {
+    // Content kept mounted closes without unmounting, so a press or a selection is forgotten at each close too.
+    React.useEffect(() => {
+      const forget = () => {
         hasSelectionRef.current = false
         isPointerDownOnContentRef.current = false
-      },
-      [hasSelectionRef, isPointerDownOnContentRef],
-    )
+      }
+      if (!context.open) forget()
+      return forget
+    }, [context.open, hasSelectionRef, isPointerDownOnContentRef])
 
     React.useEffect(() => {
       const content = ref.current

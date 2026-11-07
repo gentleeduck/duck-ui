@@ -182,6 +182,29 @@ describe('HoverCard delays', () => {
     expect(isOpen()).toBe(true)
   })
 
+  it('opens nothing once the pointer leaves, though focus asked it to open as well', async () => {
+    const trigger = renderClosedCard({ openDelay: 20 })
+
+    fireEvent.pointerEnter(trigger, { pointerType: 'mouse' })
+    act(() => trigger.focus())
+    fireEvent.pointerLeave(trigger, { pointerType: 'mouse' })
+    await wait(40)
+
+    expect(isOpen()).toBe(false)
+  })
+
+  it('stays open when the pointer comes back, though a blur asked it to close as well', async () => {
+    const trigger = renderClosedCard({ defaultOpen: true, closeDelay: 20 })
+    act(() => trigger.focus())
+
+    fireEvent.pointerLeave(trigger, { pointerType: 'mouse' })
+    act(() => trigger.blur())
+    fireEvent.pointerEnter(trigger, { pointerType: 'mouse' })
+    await wait(40)
+
+    expect(isOpen()).toBe(true)
+  })
+
   it('drops a pending open when it unmounts', async () => {
     const onOpenChange = mock()
     const trigger = renderClosedCard({ open: false, openDelay: 20, onOpenChange })
@@ -231,6 +254,12 @@ describe('HoverCard disabled', () => {
     rerender(card(true))
 
     expect(onOpenChange.mock.calls).toEqual([[false]])
+    expect(isOpen()).toBe(false)
+  })
+
+  it('stays closed while disabled, though its parent holds it open', () => {
+    renderClosedCard({ open: true, disabled: true })
+
     expect(isOpen()).toBe(false)
   })
 
@@ -648,6 +677,33 @@ describe('HoverCard opened again', () => {
     document.getSelection()?.removeAllRanges()
 
     expect(await reopenAndLeave(trigger)).toEqual([true, false])
+  })
+
+  it('closes as the pointer leaves, after it closed with text in it selected while kept mounted', async () => {
+    render(
+      <HoverCard closeDelay={0} defaultOpen openDelay={0}>
+        <HoverCardTrigger href="#">@duck</HoverCardTrigger>
+        <HoverCardContent data-testid="card" forceMount>
+          <p>Quacks for a living</p>
+        </HoverCardContent>
+      </HoverCard>,
+    )
+    const card = screen.getByTestId('card')
+    const trigger = screen.getByText('@duck')
+    fireEvent.pointerDown(card)
+    document.getSelection()?.selectAllChildren(screen.getByText('Quacks for a living'))
+    fireEvent.pointerUp(document)
+    await wait(0)
+    fireEvent.keyDown(document.body, { key: 'Escape' })
+    document.getSelection()?.removeAllRanges()
+
+    fireEvent.pointerEnter(trigger, { pointerType: 'mouse' })
+    await wait(10)
+    const reopened = card.getAttribute('data-state')
+    fireEvent.pointerLeave(trigger, { pointerType: 'mouse' })
+    await wait(10)
+
+    expect([reopened, card.getAttribute('data-state')]).toEqual(['open', 'closed'])
   })
 })
 

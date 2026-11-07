@@ -42,14 +42,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 61 | `hover-card.radix.test.tsx` 10, `hover-card.test.tsx` 51 |
+| Unit | 65 | `hover-card.radix.test.tsx` 10, `hover-card.test.tsx` 55 |
 | End to end | 30 | `hover-card.e2e.ts` 30 |
 | registry-ui | 9 | `hover-card-force-mount.test.tsx` 1, `hover-card.test.tsx` 8 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>91 behaviours, one per test</summary>
+<summary>95 behaviours, one per test</summary>
 
 **Unit, `hover-card.radix.test.tsx`**
 
@@ -86,11 +86,14 @@ Each test was proven by changing the code and watching a test fail.
 - HoverCard delays
   - opens 700ms after the pointer rests on the trigger, and closes 300ms after it leaves, by default
   - stays open when the pointer comes back before the close delay ends
+  - opens nothing once the pointer leaves, though focus asked it to open as well
+  - stays open when the pointer comes back, though a blur asked it to close as well
   - drops a pending open when it unmounts
   - drops a pending close when it unmounts
 - HoverCard disabled
   - does not open on hover or focus while disabled
   - closes once it is disabled while open
+  - stays closed while disabled, though its parent holds it open
   - drops a pending open when it is disabled
 - HoverCard focus and touch
   - opens when the trigger takes keyboard focus
@@ -122,6 +125,7 @@ Each test was proven by changing the code and watching a test fail.
 - HoverCard opened again
   - closes as the pointer leaves, after it closed while the pointer was down on it
   - closes as the pointer leaves, after it closed with text in it selected
+  - closes as the pointer leaves, after it closed with text in it selected while kept mounted
 - HoverCard text selection beyond the card element
   - gives the page its text selection back after a press on content it holds no element of
   - leaves the page selectable for a press in a portal opened from inside the card
@@ -182,14 +186,17 @@ Each test was proven by changing the code and watching a test fail.
 
 ## Beyond Radix
 
-- `disabled`, as in Ark, keeps the card closed, closes it if open, and drops an open still waiting on
-  `openDelay`.
+- `disabled`, as in Ark, keeps the card closed, even while a parent holds `open`, closes it if open, and drops an
+  open still waiting on `openDelay`.
 
 ## Fixed
 
 - Passes every Radix hover-card test.
 - A pointer that leaves the trigger before the open delay ends, or sweeps across a list of triggers,
-  opens nothing.
+  opens nothing, though a press focused the trigger on the way. A second open or close scheduled over a pending
+  one replaces it, where Radix lost the first timer, so the card opened after the pointer left or closed under it.
+- Content kept mounted with `forceMount` forgets a press and a selection at each close, so it closes for the
+  pointer leaving once it opens again. Radix forgets them only when the content unmounts.
 - A touch no longer opens the card through the focus a tap gives the link. Radix tried to stop it by
   cancelling the touch start, which React makes passive, so it only logged a warning. The trigger leaves
   the touch start alone, so the page still scrolls from it.

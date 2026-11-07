@@ -41,11 +41,13 @@ export const HoverCard: React.FC<IHoverCard.IProps> = (props: IHoverCard.IScoped
   const handleOpen = React.useCallback(() => {
     if (disabled) return
     window.clearTimeout(closeTimerRef.current)
+    window.clearTimeout(openTimerRef.current)
     openTimerRef.current = window.setTimeout(() => setOpen(true), openDelay)
   }, [openDelay, setOpen, disabled])
 
   const handleClose = React.useCallback(() => {
     window.clearTimeout(openTimerRef.current)
+    window.clearTimeout(closeTimerRef.current)
     // Read when the delay ends: a release finds out whether it selected text only a frame after it.
     closeTimerRef.current = window.setTimeout(() => {
       if (!hasSelectionRef.current && !isPointerDownOnContentRef.current) setOpen(false)
@@ -70,7 +72,7 @@ export const HoverCard: React.FC<IHoverCard.IProps> = (props: IHoverCard.IScoped
   return (
     <HoverCardProvider
       scope={__scopeHoverCard}
-      open={open}
+      open={open && !disabled}
       onOpen={handleOpen}
       onClose={handleClose}
       onDismiss={handleDismiss}

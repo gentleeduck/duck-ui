@@ -177,14 +177,7 @@ describe('Slider a11y - axe automated checks', () => {
         <SliderThumb aria-label="Volume" />
       </Slider>,
     )
-    // Disabled slider thumbs have no tabindex, so axe may flag nested-interactive
-    // or missing focusable element. The component intentionally removes tabindex
-    // when disabled; exclude that rule for this edge case in jsdom.
-    const results = await axe.run(container, {
-      rules: {
-        'nested-interactive': { enabled: false },
-      },
-    })
+    const results = await axe.run(container)
     expect(results.violations).toEqual([])
   })
 })
@@ -208,16 +201,8 @@ describe('Dialog a11y - axe automated checks', () => {
         </DialogPortal>
       </Dialog>,
     )
-    // Dialog content is portalled to document.body, so scan baseElement
-    // (which includes the portal target) rather than container.
-    // Disable aria-hidden rule: the modal dialog uses aria-hidden on
-    // siblings via `aria-hidden` package, which can confuse axe in jsdom
-    // when the trigger itself gets hidden.
-    const results = await axe.run(baseElement, {
-      rules: {
-        'aria-hidden-focus': { enabled: false },
-      },
-    })
+    // The content is portalled to document.body, outside container.
+    const results = await axe.run(baseElement)
     expect(results.violations).toEqual([])
   })
 
@@ -315,17 +300,9 @@ describe('Tooltip a11y - axe automated checks', () => {
         </Tooltip>
       </TooltipProvider>,
     )
-    // Tooltip content is portalled to document.body, scan baseElement.
-    // Disable aria-hidden-focus: the tooltip uses aria-hidden on siblings
-    // which can confuse axe in jsdom when the trigger gets hidden.
-    // Disable region: the portalled popper wrapper lives outside any
-    // landmark in jsdom, which is a test-environment artifact.
-    const results = await axe.run(baseElement, {
-      rules: {
-        'aria-hidden-focus': { enabled: false },
-        region: { enabled: false },
-      },
-    })
+    // region is a page-layout rule: any tooltip portalled to body sits outside the page's
+    // landmarks, Radix's too, and only `container` can move it into one.
+    const results = await axe.run(baseElement, { rules: { region: { enabled: false } } })
     expect(results.violations).toEqual([])
   })
 })

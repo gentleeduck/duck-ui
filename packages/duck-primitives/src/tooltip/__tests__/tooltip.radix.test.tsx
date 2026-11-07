@@ -49,7 +49,7 @@ describe('Tooltip rendering', () => {
     const trigger = screen.getByText('Tooltip Trigger')
     expect(screen.queryByText('Tooltip Content')).not.toBeInTheDocument()
 
-    userEvent.hover(trigger)
+    await userEvent.hover(trigger)
     await waitFor(() => {
       expect(screen.getByText('Tooltip Content')).toBeVisible()
     })
@@ -158,7 +158,7 @@ describe('Tooltip rendering', () => {
       </Tooltip.Provider>,
     )
 
-    userEvent.hover(screen.getByText('Tooltip Trigger'))
+    await userEvent.hover(screen.getByText('Tooltip Trigger'))
     await waitFor(() => {
       expect(screen.getByText('Tooltip Content')).toBeVisible()
     })
@@ -191,7 +191,7 @@ describe('Tooltip rendering', () => {
       </Tooltip.Provider>,
     )
 
-    userEvent.hover(screen.getByText('Tooltip Trigger'))
+    await userEvent.hover(screen.getByText('Tooltip Trigger'))
     await waitFor(() => {
       expect(screen.getByText('Tooltip Content')).toBeVisible()
     })
@@ -214,7 +214,7 @@ describe('Tooltip rendering', () => {
     )
 
     const trigger = screen.getByText('Tooltip Trigger')
-    userEvent.hover(trigger)
+    await userEvent.hover(trigger)
     await waitFor(() => {
       expect(trigger).toHaveAttribute('aria-describedby', 'custom-id')
       expect(screen.getByRole('tooltip')).toHaveAttribute('id', 'custom-id')
@@ -237,7 +237,7 @@ describe('Tooltip rendering', () => {
     )
 
     const trigger = screen.getByText('Tooltip Trigger')
-    userEvent.hover(trigger)
+    await userEvent.hover(trigger)
     await waitFor(() => {
       expect(screen.getByText('Tooltip Content')).toBeVisible()
     })
@@ -273,12 +273,12 @@ describe('Tooltip rendering', () => {
     const trigger = screen.getByText('Tooltip Trigger')
     expect(screen.queryByText('Tooltip Content')).not.toBeInTheDocument()
 
-    userEvent.hover(trigger)
+    await userEvent.hover(trigger)
     await waitFor(() => {
       expect(screen.getByText('Tooltip Content')).toBeVisible()
     })
 
-    userEvent.click(trigger)
+    await userEvent.click(trigger)
     await waitFor(() => {
       expect(screen.queryByText('Tooltip Content')).not.toBeInTheDocument()
     })

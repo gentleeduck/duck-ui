@@ -17,6 +17,10 @@ async function hoverOpen(page: Page) {
 
 const leave = (page: Page) => page.mouse.move(600, 500, { steps: 6 })
 
+// The page's timers wait on the test, so a checkpoint inside a delay holds however slow the machine is.
+const CLOCK_START = new Date('2026-01-01T08:00:00Z')
+const CLOCK_PAUSED = new Date('2026-01-01T09:00:00Z')
+
 async function glideTo(page: Page, name: string) {
   const box = await trigger(page, name).boundingBox()
   if (!box) throw new Error(`no ${name}`)
@@ -33,11 +37,16 @@ test.describe('Tooltip', () => {
   test('a hover opens it after the delay, the trigger names it, and the pointer leaving closes it', async ({
     page,
   }) => {
+    await page.clock.install({ time: CLOCK_START })
     await visit(page, 'basic')
+    await page.clock.pauseAt(CLOCK_PAUSED)
     await trigger(page, 'Bold').hover()
-    await page.waitForTimeout(150)
+    await page.clock.runFor(150)
 
     await expect(tip(page)).toHaveCount(0)
+
+    await page.clock.runFor(200)
+    await page.clock.resume()
 
     await expect(tip(page)).toHaveText('Makes the text bold')
     await expect(tip(page)).toHaveAttribute('data-state', 'delayed-open')
@@ -107,12 +116,17 @@ test.describe('Tooltip', () => {
   })
 
   test('closeDelay keeps it open a while after the pointer leaves', async ({ page }) => {
+    await page.clock.install({ time: CLOCK_START })
     await visit(page, 'basic', 'Close delay')
     await hoverOpen(page)
+    await page.clock.pauseAt(CLOCK_PAUSED)
     await leave(page)
-    await page.waitForTimeout(300)
+    await page.clock.runFor(300)
 
     await expect(tip(page)).toBeVisible()
+
+    await page.clock.resume()
+
     await expect(tip(page)).toHaveCount(0)
   })
 

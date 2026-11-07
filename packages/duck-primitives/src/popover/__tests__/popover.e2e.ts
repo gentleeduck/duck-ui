@@ -179,9 +179,10 @@ test.describe('Popover animated', () => {
     await expect(panel).toHaveAttribute('data-state', 'open')
 
     await page.getByRole('button', { name: 'Done' }).click()
-    await page.waitForTimeout(600)
 
     await expect(panel).toHaveAttribute('data-state', 'closed')
+    await expect(panel).toBeHidden()
+    await expect(panel).toHaveCount(1)
   })
 })
 

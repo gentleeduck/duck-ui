@@ -17,7 +17,7 @@ export const WithExtensionOverlay = () => {
       <Popover.Root open={open} onOpenChange={setOpen}>
         <Popover.Trigger className={styles.trigger}>open</Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content className={styles.content}>
+          <Popover.Content aria-label="Overlay test" className={styles.content}>
             <ExternalOverlayTrigger />
             <Popover.Close className={styles.close}>close</Popover.Close>
             <Popover.Arrow className={styles.arrow} width={20} height={10} />
@@ -79,7 +79,7 @@ export const DismissesOnlyPopoverInsideDialog = () => {
             <Popover.Root open={popoverOpen} onOpenChange={setPopoverOpen} modal={isModal}>
               <Popover.Trigger className={styles.trigger}>Open popover</Popover.Trigger>
               <Popover.Portal>
-                <Popover.Content className={styles.content} sideOffset={5}>
+                <Popover.Content aria-label="Nested popover" className={styles.content} sideOffset={5}>
                   <Popover.Close className={styles.close}>Close popover</Popover.Close>
                   <Popover.Arrow className={styles.arrow} width={20} height={10} />
                 </Popover.Content>

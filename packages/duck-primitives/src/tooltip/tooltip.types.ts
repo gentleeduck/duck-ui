@@ -18,7 +18,8 @@ export namespace ITooltip {
     stateAttribute: 'closed' | 'delayed-open' | 'instant-open'
     trigger: TriggerElement | null
     onTriggerChange(trigger: TriggerElement | null): void
-    onTriggerEnter(): void
+    /** Whether the tooltip took the hover, which a disabled one refuses. */
+    onTriggerEnter(): boolean
     onTriggerLeave(): void
     triggerGraceRef: React.RefObject<((event: React.PointerEvent<HTMLElement>) => void) | null>
     onContentEnter(): void

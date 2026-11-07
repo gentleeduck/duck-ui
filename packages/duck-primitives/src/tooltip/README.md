@@ -42,14 +42,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 103 | `tooltip-libs.test.ts` 7, `tooltip.radix.test.tsx` 19, `tooltip.test.tsx` 77 |
+| Unit | 106 | `tooltip-libs.test.ts` 7, `tooltip.radix.test.tsx` 19, `tooltip.test.tsx` 80 |
 | End to end | 12 | `tooltip.e2e.ts` 12 |
 | registry-ui | 7 | `tooltip-force-mount.test.tsx` 1, `tooltip.test.tsx` 6 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>115 behaviours, one per test</summary>
+<summary>118 behaviours, one per test</summary>
 
 **Unit, `tooltip.radix.test.tsx`**
 
@@ -137,6 +137,8 @@ Each test was proven by changing the code and watching a test fail.
   - cancels a pending delayed open when the tooltip unmounts
   - does not open on hover or focus while disabled
   - closes once it is disabled while open
+  - stays closed while disabled, though its parent holds it open
+  - opens for the next move over its trigger once it is enabled again
   - drops a delayed open that was pending when it was disabled
   - closes when an ancestor of the trigger scrolls
 - Tooltip close delay
@@ -165,6 +167,7 @@ Each test was proven by changing the code and watching a test fail.
   - stays open when the pointer comes back within the close delay and the open waits again
   - closes after its close delay with the pointer on content that is not hoverable
   - stays open each time it opens with an id given to its content
+  - names the id a content given through asChild keeps for its own
   - stops hearing scrolls once it closes, so a scroll leaves the next delayed open alone
 - Tooltip parts
   - runs the trigger's own pointer, focus and blur handlers
@@ -202,14 +205,15 @@ Each test was proven by changing the code and watching a test fail.
 - `closeDelay` on `Tooltip` and `Tooltip.Provider`, as in Base UI, Ark and React Aria: how long the
   tooltip stays open after the pointer leaves. A press, a blur, Escape, a scroll or another tooltip still
   closes it at once. It defaults to `0`.
-- `disabled` keeps the tooltip closed, closes it if open, and drops a pending delayed open.
+- `disabled` keeps the tooltip closed, even while a parent holds `open`, closes it if open, and drops a pending
+  delayed open. A hover over the trigger while disabled leaves the next one free to open it.
 
 ## Fixed
 
 - Passes every Radix tooltip test.
 - The content renders its children once and is itself the `role="tooltip"` element the trigger's
-  `aria-describedby` names, so an `id` given to the content is the one the trigger names. Only an
-  `aria-label` renders a visually hidden element.
+  `aria-describedby` names, so an `id` given to the content, or kept by a child given through `asChild`, is the
+  one the trigger names. Only an `aria-label` renders a visually hidden element.
 - While open, the trigger joins its own `aria-describedby` with the content's id.
 - `skipDelayDuration={0}` keeps the delay on every tooltip, where the next one opened at once. So does a
   `skipDelayDuration` turned to `0` while a tooltip is open, where every tooltip after it opened at once.

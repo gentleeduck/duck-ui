@@ -50,9 +50,10 @@ export const Tooltip: React.FC<ITooltip.IProps> = (props: ITooltip.IScoped<ITool
     },
     caller: TOOLTIP_NAME,
   })
+  const shown = open && !disabled
   const stateAttribute = React.useMemo(() => {
-    return open ? (wasOpenDelayedRef.current ? 'delayed-open' : 'instant-open') : 'closed'
-  }, [open])
+    return shown ? (wasOpenDelayedRef.current ? 'delayed-open' : 'instant-open') : 'closed'
+  }, [shown])
 
   const clearTimer = React.useCallback(() => window.clearTimeout(timerRef.current), [])
 
@@ -90,9 +91,11 @@ export const Tooltip: React.FC<ITooltip.IProps> = (props: ITooltip.IScoped<ITool
   React.useEffect(() => clearTimer, [clearTimer])
 
   const onTriggerEnter = React.useCallback(() => {
+    if (disabled) return false
     if (providerContext.isOpenDelayedRef.current) handleDelayedOpen()
     else handleOpen()
-  }, [providerContext.isOpenDelayedRef, handleDelayedOpen, handleOpen])
+    return true
+  }, [disabled, providerContext.isOpenDelayedRef, handleDelayedOpen, handleOpen])
 
   const onTriggerLeave = React.useCallback(() => {
     if (disableHoverableContent) handleDelayedClose()
@@ -105,7 +108,7 @@ export const Tooltip: React.FC<ITooltip.IProps> = (props: ITooltip.IScoped<ITool
         scope={__scopeTooltip}
         contentId={givenContentId ?? generatedContentId}
         setContentId={setContentId}
-        open={open}
+        open={shown}
         stateAttribute={stateAttribute}
         trigger={trigger}
         onTriggerChange={setTrigger}

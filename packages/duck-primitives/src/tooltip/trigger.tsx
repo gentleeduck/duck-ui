@@ -39,8 +39,7 @@ export const TooltipTrigger = React.forwardRef<TooltipTriggerElement, ITooltip.I
         onPointerMove={composeEventHandlers(props.onPointerMove, (event) => {
           if (event.pointerType === 'touch') return
           if (!hasPointerMoveOpenedRef.current && !providerContext.isPointerInTransitRef.current) {
-            context.onTriggerEnter()
-            hasPointerMoveOpenedRef.current = true
+            hasPointerMoveOpenedRef.current = context.onTriggerEnter()
           }
         })}
         onPointerLeave={composeEventHandlers(props.onPointerLeave, (event) => {

@@ -138,7 +138,12 @@ const TooltipContentImpl = React.forwardRef<TooltipContentImplElement, ITooltip.
     useFocusScopeBranch(content)
     const handleContentLeave = useGraceArea(__scopeTooltip, content, !context.disableHoverableContent)
 
-    useLayoutEffect(() => setContentId(idProp), [idProp, setContentId])
+    // A child given through asChild keeps its own id over the one the content passes it.
+    const childId =
+      !ariaLabel && contentProps.asChild && React.isValidElement<{ id?: string }>(children)
+        ? children.props.id
+        : undefined
+    useLayoutEffect(() => setContentId(idProp ?? childId), [idProp, childId, setContentId])
 
     // Closes it when another tooltip opens or its trigger scrolls. Content mounts in the commit that opens it, so it
     // hears its own tooltip's announcement too.

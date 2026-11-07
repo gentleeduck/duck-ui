@@ -645,6 +645,33 @@ describe('Tooltip trigger', () => {
     expect(content()).toBeNull()
   })
 
+  it('stays closed while disabled, though its parent holds it open', () => {
+    renderHoverTooltip({ open: true, disabled: true })
+
+    expect([content(), screen.getByText('Hover me').hasAttribute('aria-describedby')]).toEqual([null, false])
+  })
+
+  it('opens for the next move over its trigger once it is enabled again', async () => {
+    const onOpenChange = mock()
+    const tooltip = (disabled: boolean) => (
+      <TooltipProvider delayDuration={0}>
+        <Tooltip onOpenChange={onOpenChange} disabled={disabled}>
+          <TooltipTrigger>Hover me</TooltipTrigger>
+          <TooltipContent>Tooltip text</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    )
+    const { rerender } = render(tooltip(true))
+    const trigger = screen.getByText('Hover me')
+    fireEvent.pointerMove(trigger)
+
+    rerender(tooltip(false))
+    fireEvent.pointerMove(trigger)
+    await wait(10)
+
+    expect(onOpenChange.mock.calls).toEqual([[true]])
+  })
+
   it('drops a delayed open that was pending when it was disabled', async () => {
     const onOpenChange = mock()
     const tooltip = (disabled: boolean) => (
@@ -1086,6 +1113,24 @@ describe('Tooltip delays', () => {
       [[true], [false], [true]],
       'pond-tip',
     ])
+  })
+
+  it('names the id a content given through asChild keeps for its own', () => {
+    render(
+      <TooltipProvider delayDuration={0}>
+        <Tooltip defaultOpen>
+          <TooltipTrigger>Hover me</TooltipTrigger>
+          <TooltipContent asChild>
+            <p id="pond-tip">Tooltip text</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>,
+    )
+
+    expect([
+      screen.getByText('Hover me').getAttribute('aria-describedby'),
+      document.getElementById('pond-tip')?.getAttribute('role'),
+    ]).toEqual(['pond-tip', 'tooltip'])
   })
 
   it('stops hearing scrolls once it closes, so a scroll leaves the next delayed open alone', () => {

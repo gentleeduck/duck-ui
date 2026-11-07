@@ -3,6 +3,7 @@
 import { cn } from '@gentleduck/libs/cn'
 import * as TooltipPrimitive from '@gentleduck/primitives/tooltip'
 import * as React from 'react'
+import { tooltipContentStyle } from './tooltip.constants'
 
 const TooltipProvider = TooltipPrimitive.Provider
 TooltipProvider.displayName = 'TooltipProvider'
@@ -16,22 +17,17 @@ TooltipTrigger.displayName = 'TooltipTrigger'
 const TooltipContent = React.forwardRef<
   React.ComponentRef<typeof TooltipPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 4, style, ...props }, ref) => (
-  <TooltipPrimitive.Portal>
+>(({ className, sideOffset = 4, ...props }, ref) => (
+  <TooltipPrimitive.Portal forceMount={props.forceMount}>
     <TooltipPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        'fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 origin-(--gentleduck-tooltip-content-transform-origin) animate-in rounded-md border border-(--tooltip-border-color) bg-popover px-3 py-1.5 text-popover-foreground text-sm shadow-md data-[state=closed]:animate-out',
+        'fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 animate-in data-[state=closed]:animate-out',
         'animation-duration-200 data-[state=closed]:animation-duration-150 ease-(--gentleduck-motion-ease)',
+        tooltipContentStyle,
         className,
       )}
-      style={
-        {
-          '--tooltip-border-color': 'var(--border)',
-          ...style,
-        } as React.CSSProperties
-      }
       {...props}
     />
   </TooltipPrimitive.Portal>

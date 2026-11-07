@@ -1,18 +1,24 @@
 'use client'
 
 import { Button } from '@gentleduck/registry-ui/button'
-import { MotionTooltip, MotionTooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'
+import {
+  MotionTooltip,
+  MotionTooltipContent,
+  TooltipArrow,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@gentleduck/registry-ui/tooltip'
 
 export default function Demo() {
   return (
     <TooltipProvider>
       <MotionTooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline">Hover</Button>
+          <Button variant="outline">Share</Button>
         </TooltipTrigger>
-
-        <MotionTooltipContent>
-          <p>Add to library</p>
+        <MotionTooltipContent side="right">
+          <p>Copies a link anyone can open</p>
+          <TooltipArrow />
         </MotionTooltipContent>
       </MotionTooltip>
     </TooltipProvider>

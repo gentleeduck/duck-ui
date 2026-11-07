@@ -8,6 +8,7 @@ import { MotionRootContext, useMotionContent, useMotionMount, useMotionRoot } fr
 import * as TooltipPrimitive from '@gentleduck/primitives/tooltip'
 import { LazyMotion, m } from 'motion/react'
 import * as React from 'react'
+import { tooltipContentStyle } from './tooltip.constants'
 
 function MotionTooltip({
   children,
@@ -42,10 +43,7 @@ const MotionTooltipContent = React.forwardRef<
       <TooltipPrimitive.Portal forceMount>
         <TooltipPrimitive.Content ref={ref} sideOffset={sideOffset} side={side} forceMount asChild {...props}>
           <m.div
-            className={cn(
-              'z-50 origin-(--gentleduck-tooltip-content-transform-origin) overflow-hidden rounded-md border bg-background px-3 py-1.5 text-base text-foreground',
-              className,
-            )}
+            className={cn(tooltipContentStyle, className)}
             initial={preset.initial}
             animate={isOpen ? preset.animate : { ...preset.exit, pointerEvents: 'none' }}
             transition={springBouncy}>

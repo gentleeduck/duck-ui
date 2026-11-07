@@ -168,12 +168,15 @@ describe('Popover with close button', () => {
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
   })
 
-  it('trigger has aria-controls linking to content id', () => {
+  it('trigger points aria-controls at the content once it opens', () => {
     const { container } = renderPopover()
     const trigger = container.querySelector('[data-slot="popover-trigger"]')!
 
+    fireEvent.click(trigger)
+
     const controlsId = trigger.getAttribute('aria-controls')
     expect(controlsId).toBeTruthy()
+    expect(document.getElementById(controlsId!)?.getAttribute('role')).toBe('dialog')
   })
 
   it('fires onOpenChange with correct values across open/close cycle', () => {

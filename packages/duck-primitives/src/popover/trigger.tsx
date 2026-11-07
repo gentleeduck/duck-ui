@@ -25,9 +25,8 @@ export const PopoverTrigger = React.forwardRef<
       type="button"
       aria-haspopup="dialog"
       aria-expanded={context.open}
-      aria-controls={context.contentId}
+      aria-controls={context.open ? context.contentId : undefined}
       data-state={getState(context.open)}
-      dir={context.dir}
       {...triggerProps}
       ref={composedTriggerRef}
       onClick={composeEventHandlers(props.onClick, context.onOpenToggle)}

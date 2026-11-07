@@ -12,7 +12,7 @@ re-exports it, as `roving-focus` does `focusFirst` and `wrapArray`.
 | `createContext` | A context whose reader throws, naming the part and its root, when it has no provider and no default | `dialog` |
 | `createContextScope` | Contexts a primitive can scope, so one built of another reads its own and not those of the same primitive around it | Every primitive with parts |
 | `createScopedPart` | Builds a part of a component made of another that hands its own scope on, as the other's, to the part it renders | `alert-dialog` |
-| `focusOn` | Turns `initialFocus` and `finalFocus` into the focus scope's mount and unmount handlers | `alert-dialog`, `dialog` |
+| `focusOn` | Turns `initialFocus` and `finalFocus` into the focus scope's mount and unmount handlers | `alert-dialog`, `dialog`, `popover` |
 | `getComponentRef` | Reads a child element's ref under React 18 and 19 without the warning either logs | `presence`, `slot` |
 | `getState` | `open` or `closed`, for `data-state` | `dialog`, `popover` |
 | `joinIds` | Joins id lists, dropping blanks, repeats and anything not a string | `dialog`, `slot`, `tooltip` |

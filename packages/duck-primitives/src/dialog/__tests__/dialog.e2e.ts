@@ -55,6 +55,33 @@ test.describe('Dialog', () => {
     await expect.poll(() => scrollY(page)).toBeGreaterThan(0)
   })
 
+  test('a popover opened from it takes focus and typing, scrolls under the lock, and Escape closes only it', async ({
+    page,
+  }) => {
+    await openSettings(page)
+    await page.getByRole('button', { name: 'Find a duck' }).click()
+    const name = page.getByRole('textbox', { name: 'Duck name' })
+
+    await expect(name).toBeFocused()
+
+    await page.keyboard.type('mallard')
+
+    await expect(name).toHaveValue('mallard')
+
+    const ducks = page.getByRole('list', { name: 'Ducks' })
+    await ducks.hover()
+    await page.mouse.wheel(0, 600)
+
+    await expect.poll(() => ducks.evaluate((node) => node.scrollTop)).toBeGreaterThan(0)
+    expect(await scrollY(page)).toBe(0)
+
+    await page.keyboard.press('Escape')
+
+    await expect(page.getByRole('dialog', { name: 'Find a duck' })).toHaveCount(0)
+    await expect(settings(page)).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Find a duck' })).toBeFocused()
+  })
+
   test('non-modal, the page stays usable and scrolls, and a press outside closes it and reaches the page', async ({
     page,
   }) => {

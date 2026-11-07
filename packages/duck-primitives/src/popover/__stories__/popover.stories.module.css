@@ -1,0 +1,96 @@
+/* From Radix UI primitives, apps/storybook/stories/popover.stories.module.css. MIT, see ../../__tests__/radix/LICENSE. */
+
+.trigger {
+}
+
+.content {
+  transform-origin: var(--gentleduck-popover-content-transform-origin);
+  background-color: var(--color-gray300);
+  padding: 20px;
+  border-radius: 5px;
+}
+
+.close {
+}
+
+.arrow {
+  fill: var(--color-gray300);
+}
+
+.page {
+  display: grid;
+  gap: 12px;
+  padding: 40px;
+  justify-items: start;
+}
+
+.anchor {
+  margin-inline-start: 240px;
+  padding: 8px;
+  border: 1px dashed gray;
+}
+
+.panel {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.panel[data-state="closed"] {
+  display: none;
+}
+
+.animated {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.animated[data-state="open"] {
+  animation: fade-in 150ms ease-out;
+}
+
+.animated[data-state="closed"] {
+  animation: fade-out 400ms ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.target {
+  margin: 140px 220px;
+}
+
+.toolbarButton {
+  width: 32px;
+  height: 32px;
+  font-weight: bold;
+}
+
+.scrollBox {
+  height: 120px;
+  width: 260px;
+  overflow: auto;
+  border: 1px solid #ccc;
+}
+
+.filler {
+  height: 400px;
+  margin: 0;
+}

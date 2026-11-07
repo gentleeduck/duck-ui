@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { useDirection } from '../direction'
 import { useControllableState } from '../hooks/use-controllable-state'
 import { useId } from '../hooks/use-id'
 import { createContextScope } from '../libs/create-context'
@@ -21,7 +20,6 @@ export function Popover(props: IPopover.IScoped<IPopover.IProps>) {
   const popperScope = usePopperScope(__scopePopover)
   const triggerRef = React.useRef<HTMLButtonElement>(null)
   const [hasCustomAnchor, setHasCustomAnchor] = React.useState(false)
-  const direction = useDirection(dir)
   const contentId = useId()
 
   const [open, setOpen] = useControllableState({
@@ -47,7 +45,7 @@ export function Popover(props: IPopover.IScoped<IPopover.IProps>) {
         onCustomAnchorAdd={onCustomAnchorAdd}
         onCustomAnchorRemove={onCustomAnchorRemove}
         modal={modal}
-        dir={direction}>
+        dir={dir}>
         {children}
       </PopoverProvider>
     </PopperPrimitive.Popper>

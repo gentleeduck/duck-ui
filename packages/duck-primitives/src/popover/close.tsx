@@ -19,7 +19,6 @@ export const PopoverClose = React.forwardRef<
     <Primitive.button
       data-slot="popover-close"
       type="button"
-      dir={context.dir}
       {...closeProps}
       ref={forwardedRef}
       onClick={composeEventHandlers(closeProps.onClick, () => context.onOpenChange(false))}

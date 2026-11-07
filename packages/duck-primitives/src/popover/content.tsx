@@ -3,41 +3,52 @@
 import { hideOthers } from 'aria-hidden'
 import * as React from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
+import { useDirection } from '../direction'
 import { DismissableLayer } from '../dismissable-layer'
-import { FocusScope } from '../focus-scope'
+import { FocusScope, FocusScopeBranchProvider, useFocusScopeBranch, useFocusScopeBranchRegistry } from '../focus-scope'
 import { useFocusGuards } from '../hooks/use-focus-guard'
 import { composeEventHandlers } from '../libs/compose-event-handler'
 import { useComposedRefs } from '../libs/compose-ref'
+import { focusOn } from '../libs/focus-on'
 import { getState } from '../libs/get-state'
 import * as PopperPrimitive from '../popper'
 import { Presence } from '../presence/presence'
+import { useHeldOpen } from '../presence/presence.libs'
 import { createSlot } from '../slot'
-import { usePopoverContext, usePopperScope } from './popover'
+import { createPopoverContext, usePopoverContext, usePopperScope } from './popover'
 import type { IPopover } from './popover.types'
 import { usePortalContext } from './portal'
 
 const CONTENT_NAME = 'PopoverContent'
 
-type PopoverContentElement = React.ComponentRef<typeof PopperPrimitive.PopperContent>
-type DismissableLayerProps = React.ComponentPropsWithoutRef<typeof DismissableLayer>
+const POPPER_VARIABLES = {
+  '--gentleduck-popover-content-transform-origin': 'var(--gentleduck-popper-transform-origin)',
+  '--gentleduck-popover-content-available-width': 'var(--gentleduck-popper-available-width)',
+  '--gentleduck-popover-content-available-height': 'var(--gentleduck-popper-available-height)',
+  '--gentleduck-popover-trigger-width': 'var(--gentleduck-popper-anchor-width)',
+  '--gentleduck-popover-trigger-height': 'var(--gentleduck-popper-anchor-height)',
+} as React.CSSProperties
 
-type PointerDownOutsideEvent = Parameters<NonNullable<DismissableLayerProps['onPointerDownOutside']>>[0]
-type FocusOutsideEvent = Parameters<NonNullable<DismissableLayerProps['onFocusOutside']>>[0]
-type InteractOutsideEvent = Parameters<NonNullable<DismissableLayerProps['onInteractOutside']>>[0]
+export const [PopoverContentProvider, usePopoverContentContext] =
+  createPopoverContext<IPopover.IContentContext>(CONTENT_NAME)
+
+type PopoverContentElement = React.ComponentRef<typeof PopperPrimitive.PopperContent>
 
 export const PopoverContent = React.forwardRef<PopoverContentElement, IPopover.IContentProps>(
   (props: IPopover.IScoped<IPopover.IContentProps>, forwardedRef) => {
     const portalContext = usePortalContext(CONTENT_NAME, props.__scopePopover)
-    const { forceMount = portalContext.forceMount, ...contentProps } = props
+    const { forceMount = portalContext.forceMount, initialFocus, finalFocus, ...contentProps } = props
     const context = usePopoverContext(CONTENT_NAME, props.__scopePopover)
+    const Content = context.modal ? PopoverContentModal : PopoverContentNonModal
 
     return (
       <Presence present={forceMount || context.open}>
-        {context.modal ? (
-          <PopoverContentModal {...contentProps} ref={forwardedRef} />
-        ) : (
-          <PopoverContentNonModal {...contentProps} ref={forwardedRef} />
-        )}
+        <Content
+          {...contentProps}
+          onOpenAutoFocus={focusOn(contentProps.onOpenAutoFocus, initialFocus)}
+          onCloseAutoFocus={focusOn(contentProps.onCloseAutoFocus, finalFocus)}
+          ref={forwardedRef}
+        />
       </Presence>
     )
   },
@@ -56,60 +67,43 @@ const PopoverContentModal = React.forwardRef<PopoverContentElement, IPopover.ICo
       ...restProps
     } = props
     const context = usePopoverContext(CONTENT_NAME, props.__scopePopover)
+    const held = useHeldOpen(context.open)
 
-    const contentRef = React.useRef<HTMLDivElement>(null)
-    // Track via state so the aria-hide effect retries if Presence delays mount past
-    // the first commit (refs are not reactive; the empty-deps version silently no-oped).
     const [content, setContent] = React.useState<HTMLDivElement | null>(null)
-    const composedRefs = useComposedRefs(forwardedRef, contentRef, (node) => setContent(node))
+    const composedRefs = useComposedRefs(forwardedRef, setContent)
 
     const isRightClickOutsideRef = React.useRef(false)
+    // A portalled layer inside, such as a select's content, takes focus as part of this one.
+    const { nodes: branches, registry: branchRegistry } = useFocusScopeBranchRegistry()
 
     React.useEffect(() => {
-      if (content) return hideOthers(content)
+      if (content && held) return hideOthers(content)
       return
-    }, [content])
+    }, [content, held])
 
     return (
-      <RemoveScroll as={Slot} allowPinchZoom enabled={lockScrollProp ?? context.open}>
+      <RemoveScroll as={Slot} allowPinchZoom enabled={lockScrollProp ?? held}>
         <PopoverContentImpl
           {...restProps}
           ref={composedRefs}
+          branches={branches}
+          branchRegistry={branchRegistry}
           trapFocus={trapFocusProp ?? context.open}
-          disableOutsidePointerEvents={disableOutsidePointerEventsProp ?? context.open}
+          disableOutsidePointerEvents={disableOutsidePointerEventsProp ?? held}
           onCloseAutoFocus={composeEventHandlers(props.onCloseAutoFocus, (event) => {
             event.preventDefault()
             if (!isRightClickOutsideRef.current) context.triggerRef.current?.focus()
           })}
-          onPointerDownOutside={composeEventHandlers(
-            props.onPointerDownOutside,
-            (event: PointerDownOutsideEvent) => {
-              // originalEvent is UA-controlled; narrow before reading button/ctrlKey.
-              // Right-click outside must not re-focus the trigger (would dismiss the context menu).
-              const originalEvent = event.detail.originalEvent as unknown
-
-              if (
-                originalEvent &&
-                typeof originalEvent === 'object' &&
-                'button' in originalEvent &&
-                'ctrlKey' in originalEvent
-              ) {
-                const ev = originalEvent as MouseEvent | PointerEvent
-                const ctrlLeftClick = ev.button === 0 && ev.ctrlKey === true
-                const isRightClick = ev.button === 2 || ctrlLeftClick
-                isRightClickOutsideRef.current = isRightClick
-              } else {
-                isRightClickOutsideRef.current = false
-              }
-            },
-            { checkForDefaultPrevented: false },
-          )}
-          // focus trap can trigger focusout during open; suppress dismiss from that path
-          onFocusOutside={composeEventHandlers(
-            props.onFocusOutside,
-            (event: FocusOutsideEvent) => event.preventDefault(),
-            { checkForDefaultPrevented: false },
-          )}
+          onInteractOutside={composeEventHandlers(props.onInteractOutside, (event) => {
+            // Focusing the trigger after a right click would close the context menu it opened.
+            const press = event.detail.originalEvent
+            isRightClickOutsideRef.current =
+              'button' in press && (press.button === 2 || (press.button === 0 && press.ctrlKey))
+          })}
+          // The trap moving focus in on open reports a focusout, which must not dismiss.
+          onFocusOutside={composeEventHandlers(props.onFocusOutside, (event) => event.preventDefault(), {
+            checkForDefaultPrevented: false,
+          })}
         />
       </RemoveScroll>
     )
@@ -120,14 +114,22 @@ PopoverContentModal.displayName = `${CONTENT_NAME}Modal`
 
 const PopoverContentNonModal = React.forwardRef<PopoverContentElement, IPopover.IContentTypeProps>(
   (props: IPopover.IScoped<IPopover.IContentTypeProps>, forwardedRef) => {
+    const { lockScroll: _lockScroll, ...contentProps } = props
     const context = usePopoverContext(CONTENT_NAME, props.__scopePopover)
 
     const hasInteractedOutsideRef = React.useRef(false)
     const hasPointerDownOutsideRef = React.useRef(false)
 
+    // Content kept mounted never unmounts to drop the last opening's press.
+    React.useEffect(() => {
+      if (!context.open) return
+      hasInteractedOutsideRef.current = false
+      hasPointerDownOutsideRef.current = false
+    }, [context.open])
+
     return (
       <PopoverContentImpl
-        {...props}
+        {...contentProps}
         ref={forwardedRef}
         trapFocus={false}
         disableOutsidePointerEvents={false}
@@ -136,35 +138,19 @@ const PopoverContentNonModal = React.forwardRef<PopoverContentElement, IPopover.
 
           if (!event.defaultPrevented) {
             if (!hasInteractedOutsideRef.current) context.triggerRef.current?.focus()
-            // either we focused manually above, or the UA should keep its current focus
             event.preventDefault()
           }
-
-          hasInteractedOutsideRef.current = false
-          hasPointerDownOutsideRef.current = false
         }}
-        onInteractOutside={(event: InteractOutsideEvent) => {
+        onInteractOutside={(event) => {
           props.onInteractOutside?.(event)
-
           if (!event.defaultPrevented) {
             hasInteractedOutsideRef.current = true
-
-            const originalEvent = event.detail.originalEvent as Event | undefined
-            if (originalEvent?.type === 'pointerdown') {
-              hasPointerDownOutsideRef.current = true
-            }
+            if (event.detail.originalEvent.type === 'pointerdown') hasPointerDownOutsideRef.current = true
           }
-
-          // clicks on the trigger would dismiss then immediately reopen — short-circuit
-          const target = event.target as HTMLElement | null
-          const targetIsTrigger = !!target && !!context.triggerRef.current?.contains(target)
-          if (targetIsTrigger) event.preventDefault()
-
-          // Safari fires focusin outside after pointerdown outside; ignore the follow-up
-          const originalEvent = event.detail.originalEvent as Event | undefined
-          if (originalEvent?.type === 'focusin' && hasPointerDownOutsideRef.current) {
-            event.preventDefault()
-          }
+          // A press on the trigger would close the popover only for the trigger's click to open it again.
+          if (context.triggerRef.current?.contains(event.target as HTMLElement)) event.preventDefault()
+          // Safari reports a focusin outside after the pointer down outside.
+          if (event.detail.originalEvent.type === 'focusin' && hasPointerDownOutsideRef.current) event.preventDefault()
         }}
       />
     )
@@ -185,54 +171,64 @@ const PopoverContentImpl = React.forwardRef<PopoverContentElement, IPopover.ICon
       onPointerDownOutside,
       onFocusOutside,
       onInteractOutside,
+      branches,
+      branchRegistry,
       ...contentProps
     } = props
 
     const context = usePopoverContext(CONTENT_NAME, __scopePopover)
+    // Inside a modal dialog but portalled out of it, the content registers so the dialog lets focus and scroll in.
+    const [content, setContent] = React.useState<PopoverContentElement | null>(null)
+    const composedRefs = useComposedRefs(forwardedRef, setContent)
+    useFocusScopeBranch(content)
     const popperScope = usePopperScope(__scopePopover)
+    const direction = useDirection(context.dir)
+    const [titleId, setTitleId] = React.useState<string>()
+    const [descriptionId, setDescriptionId] = React.useState<string>()
 
     // when portalled to end of document, browser tab would escape the trap;
     // sentinel focus guards re-enter the FocusScope on Tab/Shift+Tab at edges
     useFocusGuards()
 
     return (
-      <FocusScope
-        asChild
-        loop
-        trapped={trapFocus}
-        onMountAutoFocus={onOpenAutoFocus}
-        onUnmountAutoFocus={onCloseAutoFocus}>
-        <DismissableLayer
-          asChild
-          disableOutsidePointerEvents={disableOutsidePointerEvents}
-          onInteractOutside={onInteractOutside}
-          onEscapeKeyDown={onEscapeKeyDown}
-          onPointerDownOutside={onPointerDownOutside}
-          onFocusOutside={onFocusOutside}
-          onDismiss={() => context.onOpenChange(false)}>
-          <PopperPrimitive.PopperContent
-            data-slot="popover-content"
-            data-state={getState(context.open)}
-            role="dialog"
-            id={context.contentId}
-            dir={context.dir}
-            {...popperScope}
-            {...contentProps}
-            ref={forwardedRef}
-            style={{
-              ...contentProps.style,
-              // alias popper CSS vars under the popover namespace for consumer ergonomics
-              ...({
-                '--gentleduck-popover-content-transform-origin': 'var(--gentleduck-popper-transform-origin)',
-                '--gentleduck-popover-content-available-width': 'var(--gentleduck-popper-available-width)',
-                '--gentleduck-popover-content-available-height': 'var(--gentleduck-popper-available-height)',
-                '--gentleduck-popover-trigger-width': 'var(--gentleduck-popper-anchor-width)',
-                '--gentleduck-popover-trigger-height': 'var(--gentleduck-popper-anchor-height)',
-              } as React.CSSProperties),
-            }}
-          />
-        </DismissableLayer>
-      </FocusScope>
+      <PopoverContentProvider
+        scope={__scopePopover}
+        onTitleIdChange={setTitleId}
+        onDescriptionIdChange={setDescriptionId}>
+        <FocusScopeBranchProvider registry={branchRegistry}>
+          <FocusScope
+            asChild
+            loop
+            trapped={trapFocus}
+            branches={branches}
+            onMountAutoFocus={onOpenAutoFocus}
+            onUnmountAutoFocus={onCloseAutoFocus}>
+            <DismissableLayer
+              asChild
+              disableOutsidePointerEvents={disableOutsidePointerEvents}
+              onInteractOutside={onInteractOutside}
+              onEscapeKeyDown={onEscapeKeyDown}
+              onPointerDownOutside={onPointerDownOutside}
+              onFocusOutside={onFocusOutside}
+              onDismiss={() => context.onOpenChange(false)}
+              deferPointerDownOutside>
+              <PopperPrimitive.PopperContent
+                data-slot="popover-content"
+                data-state={getState(context.open)}
+                role="dialog"
+                id={context.contentId}
+                aria-labelledby={titleId}
+                aria-describedby={descriptionId}
+                dir={direction}
+                {...popperScope}
+                {...contentProps}
+                ref={composedRefs}
+                style={{ ...contentProps.style, ...POPPER_VARIABLES }}
+              />
+            </DismissableLayer>
+          </FocusScope>
+        </FocusScopeBranchProvider>
+      </PopoverContentProvider>
     )
   },
 )

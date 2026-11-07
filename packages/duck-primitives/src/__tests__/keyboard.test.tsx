@@ -434,12 +434,14 @@ describe('Popover keyboard', () => {
 
     expect(trigger.getAttribute('aria-haspopup')).toBe('dialog')
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
-    expect(trigger.getAttribute('aria-controls')).toBeTruthy()
+    expect(trigger.hasAttribute('aria-controls')).toBe(false)
 
     fireEvent.click(trigger)
     expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    expect(trigger.getAttribute('aria-controls')).toBeTruthy()
 
     fireEvent.click(trigger)
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(trigger.hasAttribute('aria-controls')).toBe(false)
   })
 })

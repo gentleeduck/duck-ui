@@ -41,13 +41,13 @@ Each test was proven by changing the code and watching a test fail.
 | Suite | Tests | Files |
 |---|--:|---|
 | Unit | 120 | `dialog.radix.test.tsx` 48, `dialog.test.tsx` 72 |
-| End to end | 21 | `dialog.e2e.ts` 11, `dialog.radix.e2e.ts` 10 |
+| End to end | 22 | `dialog.e2e.ts` 12, `dialog.radix.e2e.ts` 10 |
 | registry-ui | 6 | `dialog-responsive.test.tsx` 2, `dialog.test.tsx` 4 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>141 behaviours, one per test</summary>
+<summary>142 behaviours, one per test</summary>
 
 **Unit, `dialog.test.tsx`**
 
@@ -208,6 +208,7 @@ Each test was proven by changing the code and watching a test fail.
   - modal, it hides the page from assistive tech until it closes
   - modal, it locks the page while its own list scrolls
   - modal, an overlay with lockScroll off leaves the page free to scroll
+  - a popover opened from it takes focus and typing, scrolls under the lock, and Escape closes only it
   - non-modal, the page stays usable and scrolls, and a press outside closes it and reaches the page
   - right-to-left, the direction lands on the content and the overlay, not the trigger
 - Dialog focus targets

@@ -814,6 +814,22 @@ describe('Popover modal focus trap', () => {
     )
   }
 
+  it('leaves a branch portalled out of it to screen readers', async () => {
+    render(
+      <Popover modal>
+        <PopoverTrigger>Open</PopoverTrigger>
+        <PopoverContent>
+          <button type="button">Inside</button>
+          <Branch />
+        </PopoverContent>
+      </Popover>,
+    )
+    fireEvent.click(screen.getByText('Open'))
+    await wait(0)
+
+    expect(screen.getByText('Branch').closest('[aria-hidden="true"]')).toBeNull()
+  })
+
   it('lets focus into a branch portalled out of it', async () => {
     render(
       <Popover modal>

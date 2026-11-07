@@ -44,14 +44,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 90 | `popover.radix.test.tsx` 28, `popover.test.tsx` 62 |
+| Unit | 91 | `popover.radix.test.tsx` 28, `popover.test.tsx` 63 |
 | End to end | 28 | `popover.e2e.ts` 25, `popover.radix.e2e.ts` 3 |
 | registry-ui | 8 | `popover-force-mount.test.tsx` 1, `popover.test.tsx` 7 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>118 behaviours, one per test</summary>
+<summary>119 behaviours, one per test</summary>
 
 **Unit, `popover.test.tsx`**
 
@@ -124,6 +124,7 @@ Each test was proven by changing the code and watching a test fail.
   - scrolls when it is portalled out of a modal dialog
   - lets a popover portalled out of a modal one scroll, and nothing else
 - Popover modal focus trap
+  - leaves a branch portalled out of it to screen readers
   - lets focus into a branch portalled out of it
 - Popover kept mounted
   - hides the page from a screen reader only while a modal one is open
@@ -244,7 +245,7 @@ Each test was proven by changing the code and watching a test fail.
   prop.
 - Inside a modal `Dialog` but portalled out of it, the content registers with the dialog, so focus can
   move into it and it scrolls under the dialog's scroll lock. A modal popover does the same for a layer
-  portalled out of it.
+  portalled out of it, and leaves that layer to screen readers when it hides the rest of the page.
 - A press outside dismisses once its click lands, as on a `Dialog`.
 - A press on a scrollbar outside no longer dismisses it.
 - A right click outside that was kept from closing a modal popover no longer stops a later close from handing focus
@@ -279,5 +280,6 @@ Each test was proven by changing the code and watching a test fail.
 ## Later
 
 - Base UI's `openOnHover`, `onOpenChangeComplete` and `Backdrop`.
-- Kept mounted, a popover hands focus back to its trigger only when its content unmounts, as in Radix, so content
-  hidden by CSS on close keeps focus inside it. The fix belongs in `FocusScope`, which every layer shares.
+- Kept mounted, a popover moves focus in only when its content mounts and hands it back only when it unmounts, as in
+  Radix, so `initialFocus` and `finalFocus` act only then, and content hidden by CSS on close keeps focus inside it.
+  The fix belongs in `FocusScope`, which every layer shares.

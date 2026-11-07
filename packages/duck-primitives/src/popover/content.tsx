@@ -77,9 +77,9 @@ const PopoverContentModal = React.forwardRef<PopoverContentElement, IPopover.ICo
     const { nodes: branches, registry: branchRegistry } = useFocusScopeBranchRegistry()
 
     React.useEffect(() => {
-      if (content && held) return hideOthers(content)
+      if (content && held) return hideOthers([content, ...branches])
       return
-    }, [content, held])
+    }, [content, held, branches])
 
     return (
       <RemoveScroll as={Slot} allowPinchZoom enabled={lockScrollProp ?? held}>

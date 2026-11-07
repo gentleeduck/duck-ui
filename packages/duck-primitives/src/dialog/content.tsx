@@ -52,7 +52,7 @@ const DialogContentImpl = React.forwardRef<HTMLDivElement, IDialog.IContentProps
       ...contentProps
     } = props
     const context = useDialogContext(CONTENT_NAME, __scopeDialog)
-    const { modal, open, triggerRef, onContentIdChange } = context
+    const { modal, open, triggerRef, onContentIdChange, branches } = context
     const held = useHeldOpen(open)
     const [titleIds, onTitleIdChange, titles] = useIdRegistry()
     const [descriptionIds, onDescriptionIdChange, descriptions] = useIdRegistry()
@@ -65,8 +65,8 @@ const DialogContentImpl = React.forwardRef<HTMLDivElement, IDialog.IContentProps
     useLayoutEffect(() => onContentIdChange(idProp), [idProp, onContentIdChange])
 
     React.useEffect(() => {
-      if (modal && content) return hideOthers(content)
-    }, [modal, content])
+      if (modal && content) return hideOthers([content, ...branches])
+    }, [modal, content, branches])
 
     // Kept mounted, a non-modal content outlives its close and hears the page while closed, so each opening starts clean.
     React.useEffect(() => {
@@ -90,7 +90,7 @@ const DialogContentImpl = React.forwardRef<HTMLDivElement, IDialog.IContentProps
               asChild
               loop
               trapped={modal && (trapFocus ?? open)}
-              branches={context.branches}
+              branches={branches}
               onMountAutoFocus={focusOn(onOpenAutoFocus, initialFocus)}
               onUnmountAutoFocus={composeEventHandlers(focusOn(onCloseAutoFocus, finalFocus), (event) => {
                 if (modal || !interactedOutsideRef.current) triggerRef.current?.focus()

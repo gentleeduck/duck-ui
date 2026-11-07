@@ -844,6 +844,27 @@ describe('Dialog scroll lock', () => {
     expect(scrolls(screen.getByTestId('branch'))).toBe(true)
     expect(scrolls(screen.getByTestId('stray'))).toBe(false)
   })
+
+  it('leaves a registered branch to screen readers and hides the rest of the page from them', async () => {
+    render(
+      <Dialog defaultOpen>
+        <DialogPortal>
+          <DialogOverlay />
+          <DialogContent>
+            <DialogTitle>Title</DialogTitle>
+            <DialogDescription>Description</DialogDescription>
+            <Branch register testId="branch" />
+            <Branch register={false} testId="stray" />
+          </DialogContent>
+        </DialogPortal>
+      </Dialog>,
+    )
+    await untilScrollLocked()
+
+    expect(
+      ['branch', 'stray'].map((testId) => screen.getByTestId(testId).closest('[aria-hidden="true"]') === null),
+    ).toEqual([true, false])
+  })
 })
 
 describe('Dialog giving the page back on close', () => {

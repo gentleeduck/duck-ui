@@ -25,6 +25,7 @@ import * as slider from '../slider/__stories__/slider.stories'
 import * as slot from '../slot/__stories__/slot.stories'
 import * as toggle from '../toggle/__stories__/toggle.stories'
 import * as toggleGroup from '../toggle-group/__stories__/toggle-group.stories'
+import * as tooltip from '../tooltip/__stories__/tooltip.stories'
 import * as visuallyHidden from '../visibility-hidden/__stories__/visibility-hidden.stories'
 
 type StoryModule = { default: { title: string } } & Record<string, unknown>
@@ -71,6 +72,7 @@ for (const module of [
   slot,
   toggle,
   toggleGroup,
+  tooltip,
   visuallyHidden,
 ] as StoryModule[]) {
   for (const [name, story] of Object.entries(module)) {

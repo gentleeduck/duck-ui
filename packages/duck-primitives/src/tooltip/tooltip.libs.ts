@@ -9,7 +9,72 @@ const usePopperScope = createPopperScope()
 
 const TOOLTIP_OPEN = 'tooltip.open'
 
-export { createTooltipContext, createTooltipScope, TOOLTIP_NAME, TOOLTIP_OPEN, usePopperScope }
+// A focus no input led to, such as a screen reader moving it, counts as a key's.
+const lastInput = { pointer: false, fresh: false }
+const watchedDocuments = new WeakSet<Document>()
+
+function watchInput(ownerDocument: Document) {
+  if (watchedDocuments.has(ownerDocument)) return
+  watchedDocuments.add(ownerDocument)
+  const press = (pointer: boolean) => () => {
+    lastInput.pointer = pointer
+    lastInput.fresh = true
+  }
+  ownerDocument.addEventListener('pointerdown', press(true), true)
+  ownerDocument.addEventListener('keydown', press(false), true)
+  ownerDocument.addEventListener(
+    'focusin',
+    () => {
+      if (!lastInput.fresh) lastInput.pointer = false
+      lastInput.fresh = false
+    },
+    true,
+  )
+}
+
+interface IOpenTooltip {
+  contentId: string
+  trigger: HTMLElement | null
+  onClose(): void
+}
+
+// Every open tooltip shares one listener for another opening and one for scrolls, where each added its own to the
+// document and the window, and removing it searched the lists every other one had grown.
+const openTooltips = new Set<IOpenTooltip>()
+
+function closeOthers(event: Event) {
+  for (const tooltip of openTooltips) if ((event as CustomEvent<string>).detail !== tooltip.contentId) tooltip.onClose()
+}
+
+function closeScrolled(event: Event) {
+  for (const { trigger, onClose } of openTooltips)
+    if (trigger && event.target instanceof Node && event.target.contains(trigger)) onClose()
+}
+
+function watchOpenTooltip(tooltip: IOpenTooltip) {
+  if (openTooltips.size === 0) {
+    document.addEventListener(TOOLTIP_OPEN, closeOthers)
+    window.addEventListener('scroll', closeScrolled, { capture: true })
+  }
+  openTooltips.add(tooltip)
+  return () => {
+    openTooltips.delete(tooltip)
+    if (openTooltips.size > 0) return
+    document.removeEventListener(TOOLTIP_OPEN, closeOthers)
+    window.removeEventListener('scroll', closeScrolled, { capture: true })
+  }
+}
+
+export {
+  createTooltipContext,
+  createTooltipScope,
+  lastInput,
+  TOOLTIP_NAME,
+  TOOLTIP_OPEN,
+  usePopperScope,
+  watchInput,
+  watchOpenTooltip,
+}
 
 type Side = 'top' | 'right' | 'bottom' | 'left'
 

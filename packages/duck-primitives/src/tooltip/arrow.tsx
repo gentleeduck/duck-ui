@@ -1,6 +1,5 @@
 import * as React from 'react'
 import * as PopperPrimitive from '../popper'
-import { useVisuallyHiddenContentContext } from './content'
 import { usePopperScope } from './tooltip.libs'
 import type { ITooltip } from './tooltip.types'
 
@@ -12,10 +11,7 @@ export const TooltipArrow = React.forwardRef<TooltipArrowElement, ITooltip.IArro
   (props: ITooltip.IScoped<ITooltip.IArrowProps>, forwardedRef) => {
     const { __scopeTooltip, ...arrowProps } = props
     const popperScope = usePopperScope(__scopeTooltip)
-    const visuallyHiddenContentContext = useVisuallyHiddenContentContext(ARROW_NAME, __scopeTooltip)
-    return visuallyHiddenContentContext.isInside ? null : (
-      <PopperPrimitive.PopperArrow data-slot="tooltip-arrow" {...popperScope} {...arrowProps} ref={forwardedRef} />
-    )
+    return <PopperPrimitive.PopperArrow data-slot="tooltip-arrow" {...popperScope} {...arrowProps} ref={forwardedRef} />
   },
 )
 

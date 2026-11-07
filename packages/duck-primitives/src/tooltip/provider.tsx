@@ -14,28 +14,26 @@ export const TooltipProvider: React.FC<ITooltip.IProviderProps> = (
   const {
     __scopeTooltip,
     delayDuration = DEFAULT_DELAY_DURATION,
+    closeDelay = 0,
     skipDelayDuration = 300,
     disableHoverableContent = false,
     children,
   } = props
   const isOpenDelayedRef = React.useRef(true)
   const isPointerInTransitRef = React.useRef(false)
-  const skipDelayTimerRef = React.useRef(0)
-
-  React.useEffect(() => {
-    const skipDelayTimer = skipDelayTimerRef.current
-    return () => window.clearTimeout(skipDelayTimer)
-  }, [])
+  const skipDelayTimerRef = React.useRef<number>(undefined)
 
   return (
     <TooltipProviderContextProvider
       scope={__scopeTooltip}
       isOpenDelayedRef={isOpenDelayedRef}
       delayDuration={delayDuration}
+      closeDelay={closeDelay}
       onOpen={React.useCallback(() => {
+        if (skipDelayDuration <= 0) return
         window.clearTimeout(skipDelayTimerRef.current)
         isOpenDelayedRef.current = false
-      }, [])}
+      }, [skipDelayDuration])}
       onClose={React.useCallback(() => {
         window.clearTimeout(skipDelayTimerRef.current)
         skipDelayTimerRef.current = window.setTimeout(() => (isOpenDelayedRef.current = true), skipDelayDuration)

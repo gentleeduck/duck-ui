@@ -23,7 +23,7 @@ export namespace IDialog {
     dir?: IDirection.Kind
     branches: readonly HTMLElement[]
     branchRegistry: IFocusScope.IBranchRegistry
-    /** The contents of the dialogs opened from this one's content, while they are mounted. */
+    /** The contents of the dialogs opened from this one's content, at any depth, while they are mounted. */
     layers: readonly HTMLElement[]
     layerRegistry: IFocusScope.IBranchRegistry
     /** Opened from another dialog's content. */

@@ -36,7 +36,22 @@ const Dialog: React.FC<IDialog.IProps> = (props: IDialog.IScoped<IDialog.IProps>
   })
   const onOpenToggle = React.useCallback(() => setOpen((prevOpen) => !prevOpen), [setOpen])
   const { nodes: branches, registry: branchRegistry } = useFocusScopeBranchRegistry()
-  const { nodes: layers, registry: layerRegistry } = useFocusScopeBranchRegistry()
+  const { nodes: layers, registry: ownLayerRegistry } = useFocusScopeBranchRegistry()
+  const parentLayerRegistry = React.useContext(DialogLayerContext)
+  // A dialog two levels down sits outside its grandparent's content too, so each layer is handed up the chain.
+  const layerRegistry = React.useMemo<IDialog.IContext['layerRegistry']>(
+    () => ({
+      add: (node) => {
+        ownLayerRegistry.add(node)
+        parentLayerRegistry?.add(node)
+      },
+      remove: (node) => {
+        ownLayerRegistry.remove(node)
+        parentLayerRegistry?.remove(node)
+      },
+    }),
+    [ownLayerRegistry, parentLayerRegistry],
+  )
   const onParentNestedCountChange = React.useContext(DialogNestingContext)
   const [nestedCount, setNestedCount] = React.useState(0)
 

@@ -904,6 +904,70 @@ describe('Dialog scroll lock', () => {
       ['nested', 'parent'].map((testId) => screen.getByTestId(testId).closest('[aria-hidden="true"]') === null),
     ).toEqual([true, false])
   })
+
+  it('leaves a dialog two levels down to screen readers when a branch of the first closes', async () => {
+    function Levels() {
+      const [branch, setBranch] = React.useState(true)
+      return (
+        <Dialog defaultOpen>
+          <DialogPortal>
+            <DialogOverlay />
+            <DialogContent aria-label="First" aria-describedby={undefined}>
+              {branch && <Branch register testId="branch" />}
+              <button type="button" onClick={() => setBranch(false)}>
+                Close branch
+              </button>
+              <Dialog defaultOpen>
+                <DialogPortal>
+                  <DialogContent aria-label="Second" aria-describedby={undefined}>
+                    <Dialog defaultOpen>
+                      <DialogPortal>
+                        <DialogContent data-testid="third" aria-label="Third" aria-describedby={undefined} />
+                      </DialogPortal>
+                    </Dialog>
+                  </DialogContent>
+                </DialogPortal>
+              </Dialog>
+            </DialogContent>
+          </DialogPortal>
+        </Dialog>
+      )
+    }
+    render(<Levels />)
+    await untilScrollLocked()
+
+    fireEvent.click(screen.getByText('Close branch'))
+    await wait(0)
+
+    expect(screen.getByTestId('third').closest('[aria-hidden="true"]')).toBeNull()
+  })
+
+  it('leaves the page to screen readers while kept mounted and closed, and hides it while open', async () => {
+    function Kept({ open }: { open: boolean }) {
+      return (
+        <>
+          <button type="button">Outside</button>
+          <Dialog open={open}>
+            <DialogPortal forceMount>
+              <DialogContent forceMount aria-label="Kept" aria-describedby={undefined} />
+            </DialogPortal>
+          </Dialog>
+        </>
+      )
+    }
+    const { rerender } = render(<Kept open={false} />)
+    const hidden = () => screen.getByText('Outside').closest('[aria-hidden="true"]') !== null
+    await wait(0)
+    const closed = hidden()
+
+    rerender(<Kept open />)
+    await wait(0)
+    const opened = hidden()
+    rerender(<Kept open={false} />)
+    await wait(0)
+
+    expect([closed, opened, hidden()]).toEqual([false, true, false])
+  })
 })
 
 describe('Dialog giving the page back on close', () => {

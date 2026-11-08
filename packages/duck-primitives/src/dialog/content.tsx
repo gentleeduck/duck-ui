@@ -66,9 +66,10 @@ const DialogContentImpl = React.forwardRef<HTMLDivElement, IDialog.IContentProps
     useLayoutEffect(() => onContentIdChange(idProp), [idProp, onContentIdChange])
 
     // A dialog opened from this one sits outside its content, and a branch closing hides the page again.
+    // Kept mounted, the content is there while closed, and the page stays to screen readers until it opens.
     React.useEffect(() => {
-      if (modal && content) return hideOthers([content, ...branches, ...layers])
-    }, [modal, content, branches, layers])
+      if (modal && content && held) return hideOthers([content, ...branches, ...layers])
+    }, [modal, content, held, branches, layers])
 
     React.useEffect(() => {
       if (!content || !parentLayerRegistry) return

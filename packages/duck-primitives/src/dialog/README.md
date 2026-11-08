@@ -40,14 +40,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 122 | `dialog.radix.test.tsx` 48, `dialog.test.tsx` 74 |
+| Unit | 124 | `dialog.radix.test.tsx` 48, `dialog.test.tsx` 76 |
 | End to end | 22 | `dialog.e2e.ts` 12, `dialog.radix.e2e.ts` 10 |
 | registry-ui | 6 | `dialog-responsive.test.tsx` 2, `dialog.test.tsx` 4 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>144 behaviours, one per test</summary>
+<summary>146 behaviours, one per test</summary>
 
 **Unit, `dialog.test.tsx`**
 
@@ -121,6 +121,8 @@ Each test was proven by changing the code and watching a test fail.
   - lets a registered branch scroll and keeps the rest of the page locked
   - leaves a registered branch to screen readers and hides the rest of the page from them
   - leaves a dialog opened from it to screen readers when one of its branches closes
+  - leaves a dialog two levels down to screen readers when a branch of the first closes
+  - leaves the page to screen readers while kept mounted and closed, and hides it while open
 - Dialog giving the page back on close
   - removes the content before it gives the page back its pointer events and its scroll
   - gives the page back at once when the content is force mounted to animate out
@@ -272,7 +274,8 @@ Each test was proven by changing the code and watching a test fail.
   first document's dialog first no longer leaves its body locked.
 - A modal dialog leaves a layer portalled out of it, such as a popover's content, to screen readers when it hides
   the rest of the page. It hid every layer that mounted with it. A dialog opened from it stays reachable when one
-  of those layers closes.
+  of those layers closes, however deep it is nested.
+- A modal dialog kept mounted with `forceMount` leaves the page to screen readers while it is closed.
 - A non-modal dialog kept mounted with `forceMount` forgets a press outside when it opens again. A press on the
   page while it was closed, or the one that closed it, kept focus moving outside from closing it, and kept focus
   from going back to the trigger once it unmounted.

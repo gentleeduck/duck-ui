@@ -6,6 +6,14 @@ import type { IDropdownMenu } from './dropdown-menu.types'
 
 const CONTENT_NAME = 'DropdownMenuContent'
 
+export const POPPER_VARIABLES = {
+  '--gentleduck-dropdown-menu-content-transform-origin': 'var(--gentleduck-popper-transform-origin)',
+  '--gentleduck-dropdown-menu-content-available-width': 'var(--gentleduck-popper-available-width)',
+  '--gentleduck-dropdown-menu-content-available-height': 'var(--gentleduck-popper-available-height)',
+  '--gentleduck-dropdown-menu-trigger-width': 'var(--gentleduck-popper-anchor-width)',
+  '--gentleduck-dropdown-menu-trigger-height': 'var(--gentleduck-popper-anchor-height)',
+} as React.CSSProperties
+
 type DropdownMenuContentElement = React.ComponentRef<typeof MenuPrimitive.Content>
 
 const DropdownMenuContent = React.forwardRef<DropdownMenuContentElement, IDropdownMenu.IContentProps>(
@@ -33,16 +41,7 @@ const DropdownMenuContent = React.forwardRef<DropdownMenuContentElement, IDropdo
           const isRightClick = originalEvent.button === 2 || ctrlLeftClick
           if (!context.modal || isRightClick) hasInteractedOutsideRef.current = true
         })}
-        style={{
-          ...props.style,
-          ...{
-            '--gentleduck-dropdown-menu-content-transform-origin': 'var(--gentleduck-popper-transform-origin)',
-            '--gentleduck-dropdown-menu-content-available-width': 'var(--gentleduck-popper-available-width)',
-            '--gentleduck-dropdown-menu-content-available-height': 'var(--gentleduck-popper-available-height)',
-            '--gentleduck-dropdown-menu-trigger-width': 'var(--gentleduck-popper-anchor-width)',
-            '--gentleduck-dropdown-menu-trigger-height': 'var(--gentleduck-popper-anchor-height)',
-          },
-        }}
+        style={{ ...props.style, ...POPPER_VARIABLES }}
       />
     )
   },

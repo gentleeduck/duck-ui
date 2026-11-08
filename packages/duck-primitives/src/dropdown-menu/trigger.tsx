@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { composeEventHandlers } from '../libs/compose-event-handler'
-import { composeRefs } from '../libs/compose-ref'
+import { useComposedRefs } from '../libs/compose-ref'
 import * as MenuPrimitive from '../menu'
 import { Primitive } from '../primitive-elements'
 import { useDropdownMenuContext, useMenuScope } from './dropdown-menu'
@@ -15,12 +15,12 @@ const DropdownMenuTrigger = React.forwardRef<DropdownMenuTriggerElement, IDropdo
     const { __scopeDropdownMenu, disabled = false, ...triggerProps } = props
     const context = useDropdownMenuContext(TRIGGER_NAME, __scopeDropdownMenu)
     const menuScope = useMenuScope(__scopeDropdownMenu)
+    const composedRefs = useComposedRefs(forwardedRef, context.triggerRef)
     return (
       <MenuPrimitive.Anchor asChild {...menuScope}>
         <Primitive.button
           data-slot="dropdown-menu-trigger"
           type="button"
-          dir={context.dir}
           id={context.triggerId}
           aria-haspopup="menu"
           aria-expanded={context.open}
@@ -29,7 +29,7 @@ const DropdownMenuTrigger = React.forwardRef<DropdownMenuTriggerElement, IDropdo
           data-disabled={disabled ? '' : undefined}
           disabled={disabled}
           {...triggerProps}
-          ref={composeRefs(forwardedRef, context.triggerRef)}
+          ref={composedRefs}
           onPointerDown={composeEventHandlers(props.onPointerDown, (event) => {
             if (!disabled && event.button === 0 && event.ctrlKey === false) {
               context.onOpenToggle()

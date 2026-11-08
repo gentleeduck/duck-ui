@@ -7,6 +7,7 @@ import * as checkers from '../checkers/__stories__/checkers.stories'
 import * as dialog from '../dialog/__stories__/dialog.stories'
 import * as direction from '../direction/__stories__/direction.stories'
 import * as dismissableLayer from '../dismissable-layer/__stories__/dismissable-layer.stories'
+import * as dropdownMenu from '../dropdown-menu/__stories__/dropdown-menu.stories'
 import * as focusScope from '../focus-scope/__stories__/focus-scope.stories'
 import * as hooks from '../hooks/__stories__/hooks.stories'
 import * as hoverCard from '../hover-card/__stories__/hover-card.stories'
@@ -56,6 +57,7 @@ for (const module of [
   dialog,
   direction,
   dismissableLayer,
+  dropdownMenu,
   focusScope,
   hooks,
   hoverCard,

@@ -7,7 +7,7 @@ import type { IDropdownMenu } from './dropdown-menu.types'
 const SUB_NAME = 'DropdownMenuSub'
 
 const DropdownMenuSub: React.FC<IDropdownMenu.ISubProps> = (props: IDropdownMenu.IScoped<IDropdownMenu.ISubProps>) => {
-  const { __scopeDropdownMenu, children, onOpenChange, open: openProp, defaultOpen } = props
+  const { __scopeDropdownMenu, open: openProp, defaultOpen, onOpenChange, ...subProps } = props
   const menuScope = useMenuScope(__scopeDropdownMenu)
   const [open, setOpen] = useControllableState({
     prop: openProp,
@@ -16,11 +16,7 @@ const DropdownMenuSub: React.FC<IDropdownMenu.ISubProps> = (props: IDropdownMenu
     caller: SUB_NAME,
   })
 
-  return (
-    <MenuPrimitive.Sub {...menuScope} open={open} onOpenChange={setOpen}>
-      {children}
-    </MenuPrimitive.Sub>
-  )
+  return <MenuPrimitive.Sub {...menuScope} {...subProps} open={open} onOpenChange={setOpen} />
 }
 
 DropdownMenuSub.displayName = SUB_NAME

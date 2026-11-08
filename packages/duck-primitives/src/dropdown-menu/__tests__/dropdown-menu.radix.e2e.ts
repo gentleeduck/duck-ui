@@ -19,6 +19,7 @@ test.describe('DropdownMenu', () => {
     test.describe('when using pointer', () => {
       test('should open submenu and not focus first item when moving pointer over trigger', async ({ page }) => {
         await pointerOver(page, 'Bookmarks →')
+        await expect(page.getByText('Inbox', { exact: true })).toBeVisible()
         await expect(page.getByText('Inbox', { exact: true })).not.toBeFocused()
       })
 

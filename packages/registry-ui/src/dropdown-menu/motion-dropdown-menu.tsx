@@ -9,6 +9,11 @@ import { MotionRootContext, useMotionContent, useMotionMount, useMotionRoot } fr
 import * as DropdownMenuPrimitive from '@gentleduck/primitives/dropdown-menu'
 import { LazyMotion, m } from 'motion/react'
 import * as React from 'react'
+import {
+  dropdownMenuContentStyle,
+  dropdownMenuScrollStyle,
+  dropdownMenuSubContentStyle,
+} from './dropdown-menu.constants'
 
 function MotionDropdownMenu({
   children,
@@ -43,14 +48,11 @@ const MotionDropdownMenuContent = React.forwardRef<
       <DropdownMenuPrimitive.Portal forceMount>
         <DropdownMenuPrimitive.Content ref={ref} sideOffset={sideOffset} forceMount asChild {...props}>
           <m.div
-            className={cn(
-              'z-50 max-h-(--gentleduck-dropdown-menu-content-available-height) min-w-32 origin-(--gentleduck-dropdown-menu-content-transform-origin) overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md',
-              className,
-            )}
+            className={cn(dropdownMenuContentStyle, className)}
             initial={content.initial}
             animate={isOpen ? content.animate : { ...content.exit, pointerEvents: 'none' }}
             transition={content.transition}>
-            {children}
+            <div className={dropdownMenuScrollStyle}>{children}</div>
           </m.div>
         </DropdownMenuPrimitive.Content>
       </DropdownMenuPrimitive.Portal>
@@ -92,10 +94,7 @@ const MotionDropdownMenuSubContent = React.forwardRef<
       <DropdownMenuPrimitive.Portal forceMount>
         <DropdownMenuPrimitive.SubContent ref={ref} forceMount asChild {...props}>
           <m.div
-            className={cn(
-              'z-50 min-w-32 origin-(--gentleduck-dropdown-menu-content-transform-origin) overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg',
-              className,
-            )}
+            className={cn(dropdownMenuSubContentStyle, className)}
             initial={content.initial}
             animate={isOpen ? content.animate : { ...content.exit, pointerEvents: 'none' }}
             transition={content.transition}>

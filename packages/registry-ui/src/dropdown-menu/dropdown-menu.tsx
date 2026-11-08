@@ -2,10 +2,15 @@
 
 import { cn } from '@gentleduck/libs/cn'
 import * as DropdownMenuPrimitive from '@gentleduck/primitives/dropdown-menu'
-import { formatForDisplay } from '@gentleduck/vim/format'
 import { Check, ChevronRight, Circle } from 'lucide-react'
 import * as React from 'react'
+import { useKeysLabel } from '../_internal/keys-label'
 import { ShortcutBinder } from '../_internal/shortcut-binder'
+import {
+  dropdownMenuContentStyle,
+  dropdownMenuScrollStyle,
+  dropdownMenuSubContentStyle,
+} from './dropdown-menu.constants'
 
 const DropdownMenu = DropdownMenuPrimitive.Root
 
@@ -46,8 +51,9 @@ const DropdownMenuSubContent = React.forwardRef<
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-32 origin-(--gentleduck-dropdown-menu-content-transform-origin) overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=closed]:animate-out data-[state=open]:animate-in',
+      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=open]:animate-in',
       'animation-duration-200 data-[state=closed]:animation-duration-150 ease-(--gentleduck-motion-ease)',
+      dropdownMenuSubContentStyle,
       className,
     )}
     {...props}
@@ -58,27 +64,19 @@ DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayNam
 const DropdownMenuContent = React.forwardRef<
   React.ComponentRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, children, style, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
+>(({ className, sideOffset = 4, children, ...props }, ref) => (
+  <DropdownMenuPrimitive.Portal forceMount={props.forceMount}>
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 min-w-32 origin-(--gentleduck-dropdown-menu-content-transform-origin) rounded-md border border-(--dropdown-menu-border-color) bg-popover text-popover-foreground shadow-md data-[state=closed]:animate-out data-[state=open]:animate-in',
+        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=open]:animate-in',
         'animation-duration-200 data-[state=closed]:animation-duration-150 ease-(--gentleduck-motion-ease)',
+        dropdownMenuContentStyle,
         className,
       )}
-      style={
-        {
-          '--dropdown-menu-border-color': 'var(--border)',
-          ...style,
-        } as React.CSSProperties
-      }
       {...props}>
-      {/* Inner scrollable wrapper — separates overflow from the arrow's containing block */}
-      <div className="max-h-(--gentleduck-dropdown-menu-content-available-height) overflow-y-auto overflow-x-hidden p-1">
-        {children}
-      </div>
+      <div className={dropdownMenuScrollStyle}>{children}</div>
     </DropdownMenuPrimitive.Content>
   </DropdownMenuPrimitive.Portal>
 ))
@@ -204,18 +202,21 @@ interface IDropdownMenuShortcutProps extends React.HTMLAttributes<HTMLSpanElemen
 }
 
 const DropdownMenuShortcut = React.forwardRef<HTMLSpanElement, IDropdownMenuShortcutProps>(
-  ({ className, keys, onKeysPressed, children, ...props }, ref) => (
-    <>
-      <span
-        ref={ref}
-        data-slot="dropdown-menu-shortcut"
-        className={cn('ms-auto text-xs tracking-widest opacity-60', className)}
-        {...props}>
-        {children ?? (keys ? formatForDisplay(keys) : null)}
-      </span>
-      {keys && onKeysPressed ? <ShortcutBinder keys={keys} handler={onKeysPressed} /> : null}
-    </>
-  ),
+  ({ className, keys, onKeysPressed, children, ...props }, ref) => {
+    const label = useKeysLabel(keys)
+    return (
+      <>
+        <span
+          ref={ref}
+          data-slot="dropdown-menu-shortcut"
+          className={cn('ms-auto text-xs tracking-widest opacity-60', className)}
+          {...props}>
+          {children ?? label}
+        </span>
+        {keys && onKeysPressed ? <ShortcutBinder keys={keys} handler={onKeysPressed} /> : null}
+      </>
+    )
+  },
 )
 DropdownMenuShortcut.displayName = 'DropdownMenuShortcut'
 

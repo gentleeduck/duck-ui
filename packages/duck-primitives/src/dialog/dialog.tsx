@@ -18,6 +18,8 @@ export const [DialogContentProvider, useDialogContentContext] =
 // Unscoped, so an alert dialog or a sheet opened from a dialog's content counts as nested in it.
 export const DialogNestingContext = React.createContext<IDialog.IContext['onNestedCountChange'] | undefined>(undefined)
 
+export const DialogLayerContext = React.createContext<IDialog.IContext['layerRegistry'] | undefined>(undefined)
+
 const Dialog: React.FC<IDialog.IProps> = (props: IDialog.IScoped<IDialog.IProps>) => {
   const { __scopeDialog, children, open: openProp, defaultOpen, onOpenChange, dir, modal = true } = props
   // Only portalled parts write it, and a portal into the page inherits the page's own.
@@ -34,6 +36,7 @@ const Dialog: React.FC<IDialog.IProps> = (props: IDialog.IScoped<IDialog.IProps>
   })
   const onOpenToggle = React.useCallback(() => setOpen((prevOpen) => !prevOpen), [setOpen])
   const { nodes: branches, registry: branchRegistry } = useFocusScopeBranchRegistry()
+  const { nodes: layers, registry: layerRegistry } = useFocusScopeBranchRegistry()
   const onParentNestedCountChange = React.useContext(DialogNestingContext)
   const [nestedCount, setNestedCount] = React.useState(0)
 
@@ -57,6 +60,8 @@ const Dialog: React.FC<IDialog.IProps> = (props: IDialog.IScoped<IDialog.IProps>
       dir={dir ?? providerDir}
       branches={branches}
       branchRegistry={branchRegistry}
+      layers={layers}
+      layerRegistry={layerRegistry}
       nested={onParentNestedCountChange !== undefined}
       nestedCount={nestedCount}
       onNestedCountChange={setNestedCount}>

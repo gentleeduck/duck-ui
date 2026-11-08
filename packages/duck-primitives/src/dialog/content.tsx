@@ -11,7 +11,7 @@ import { getState } from '../libs/get-state'
 import { joinIds } from '../libs/join-ids'
 import { Presence } from '../presence'
 import { useHeldOpen } from '../presence/presence.libs'
-import { DialogContentProvider, DialogNestingContext, useDialogContext } from './dialog'
+import { DialogContentProvider, DialogLayerContext, DialogNestingContext, useDialogContext } from './dialog'
 import { useIdRegistry } from './dialog.libs'
 import type { IDialog } from './dialog.types'
 import { usePortalContext } from './portal'
@@ -52,7 +52,8 @@ const DialogContentImpl = React.forwardRef<HTMLDivElement, IDialog.IContentProps
       ...contentProps
     } = props
     const context = useDialogContext(CONTENT_NAME, __scopeDialog)
-    const { modal, open, triggerRef, onContentIdChange, branches } = context
+    const { modal, open, triggerRef, onContentIdChange, branches, layers } = context
+    const parentLayerRegistry = React.useContext(DialogLayerContext)
     const held = useHeldOpen(open)
     const [titleIds, onTitleIdChange, titles] = useIdRegistry()
     const [descriptionIds, onDescriptionIdChange, descriptions] = useIdRegistry()
@@ -64,9 +65,16 @@ const DialogContentImpl = React.forwardRef<HTMLDivElement, IDialog.IContentProps
 
     useLayoutEffect(() => onContentIdChange(idProp), [idProp, onContentIdChange])
 
+    // A dialog opened from this one sits outside its content, and a branch closing hides the page again.
     React.useEffect(() => {
-      if (modal && content) return hideOthers([content, ...branches])
-    }, [modal, content, branches])
+      if (modal && content) return hideOthers([content, ...branches, ...layers])
+    }, [modal, content, branches, layers])
+
+    React.useEffect(() => {
+      if (!content || !parentLayerRegistry) return
+      parentLayerRegistry.add(content)
+      return () => parentLayerRegistry.remove(content)
+    }, [content, parentLayerRegistry])
 
     // Kept mounted, a non-modal content outlives its close and hears the page while closed, so each opening starts clean.
     React.useEffect(() => {
@@ -81,66 +89,68 @@ const DialogContentImpl = React.forwardRef<HTMLDivElement, IDialog.IContentProps
 
     return (
       <DialogNestingContext.Provider value={context.onNestedCountChange}>
-        <DialogContentProvider
-          scope={__scopeDialog}
-          onTitleIdChange={onTitleIdChange}
-          onDescriptionIdChange={onDescriptionIdChange}>
-          <FocusScopeBranchProvider registry={context.branchRegistry}>
-            <FocusScope
-              asChild
-              loop
-              trapped={modal && (trapFocus ?? open)}
-              branches={branches}
-              onMountAutoFocus={focusOn(onOpenAutoFocus, initialFocus)}
-              onUnmountAutoFocus={composeEventHandlers(focusOn(onCloseAutoFocus, finalFocus), (event) => {
-                if (modal || !interactedOutsideRef.current) triggerRef.current?.focus()
-                event.preventDefault()
-              })}>
-              <DismissableLayer
-                data-slot="dialog-content"
-                role="dialog"
-                id={idProp || context.contentId}
-                aria-labelledby={titleIds}
-                aria-describedby={joinIds(ariaDescribedBy, descriptionIds)}
-                data-state={getState(open)}
-                data-nested={context.nested ? '' : undefined}
-                data-nested-dialog-open={context.nestedCount > 0 ? '' : undefined}
-                dir={context.dir}
-                {...contentProps}
-                style={{ ...nestingStyle, ...contentProps.style }}
-                ref={composedRefs}
-                disableOutsidePointerEvents={modal && (disableOutsidePointerEvents ?? held)}
-                deferPointerDownOutside
-                onPointerDownOutside={composeEventHandlers(onPointerDownOutside, (event) => {
-                  const { button, ctrlKey } = event.detail.originalEvent
-                  // A right click, or a control click on a Mac, opens a context menu rather than leaving a modal.
-                  if (modal && (button === 2 || (button === 0 && ctrlKey))) event.preventDefault()
-                })}
-                onFocusOutside={composeEventHandlers(onFocusOutside, (event) => {
-                  if (modal) event.preventDefault()
-                })}
-                onInteractOutside={(event) => {
-                  onInteractOutside?.(event)
-                  if (modal) return
-                  const { type } = event.detail.originalEvent
-                  if (!event.defaultPrevented) {
-                    interactedOutsideRef.current = true
-                    if (type === 'pointerdown') pointerDownOutsideRef.current = true
-                  }
-                  if (triggerRef.current?.contains(event.target as Node)) event.preventDefault()
-                  if (type === 'focusin' && pointerDownOutsideRef.current) event.preventDefault()
-                }}
-                onDismiss={() => context.onOpenChange(false)}
-              />
-            </FocusScope>
-          </FocusScopeBranchProvider>
-          {process.env.NODE_ENV !== 'production' && (
-            <>
-              <TitleWarning titles={titles} named={'aria-label' in props || 'aria-labelledby' in props} />
-              <DescriptionWarning descriptions={descriptions} described={'aria-describedby' in props} />
-            </>
-          )}
-        </DialogContentProvider>
+        <DialogLayerContext.Provider value={context.layerRegistry}>
+          <DialogContentProvider
+            scope={__scopeDialog}
+            onTitleIdChange={onTitleIdChange}
+            onDescriptionIdChange={onDescriptionIdChange}>
+            <FocusScopeBranchProvider registry={context.branchRegistry}>
+              <FocusScope
+                asChild
+                loop
+                trapped={modal && (trapFocus ?? open)}
+                branches={branches}
+                onMountAutoFocus={focusOn(onOpenAutoFocus, initialFocus)}
+                onUnmountAutoFocus={composeEventHandlers(focusOn(onCloseAutoFocus, finalFocus), (event) => {
+                  if (modal || !interactedOutsideRef.current) triggerRef.current?.focus()
+                  event.preventDefault()
+                })}>
+                <DismissableLayer
+                  data-slot="dialog-content"
+                  role="dialog"
+                  id={idProp || context.contentId}
+                  aria-labelledby={titleIds}
+                  aria-describedby={joinIds(ariaDescribedBy, descriptionIds)}
+                  data-state={getState(open)}
+                  data-nested={context.nested ? '' : undefined}
+                  data-nested-dialog-open={context.nestedCount > 0 ? '' : undefined}
+                  dir={context.dir}
+                  {...contentProps}
+                  style={{ ...nestingStyle, ...contentProps.style }}
+                  ref={composedRefs}
+                  disableOutsidePointerEvents={modal && (disableOutsidePointerEvents ?? held)}
+                  deferPointerDownOutside
+                  onPointerDownOutside={composeEventHandlers(onPointerDownOutside, (event) => {
+                    const { button, ctrlKey } = event.detail.originalEvent
+                    // A right click, or a control click on a Mac, opens a context menu rather than leaving a modal.
+                    if (modal && (button === 2 || (button === 0 && ctrlKey))) event.preventDefault()
+                  })}
+                  onFocusOutside={composeEventHandlers(onFocusOutside, (event) => {
+                    if (modal) event.preventDefault()
+                  })}
+                  onInteractOutside={(event) => {
+                    onInteractOutside?.(event)
+                    if (modal) return
+                    const { type } = event.detail.originalEvent
+                    if (!event.defaultPrevented) {
+                      interactedOutsideRef.current = true
+                      if (type === 'pointerdown') pointerDownOutsideRef.current = true
+                    }
+                    if (triggerRef.current?.contains(event.target as Node)) event.preventDefault()
+                    if (type === 'focusin' && pointerDownOutsideRef.current) event.preventDefault()
+                  }}
+                  onDismiss={() => context.onOpenChange(false)}
+                />
+              </FocusScope>
+            </FocusScopeBranchProvider>
+            {process.env.NODE_ENV !== 'production' && (
+              <>
+                <TitleWarning titles={titles} named={'aria-label' in props || 'aria-labelledby' in props} />
+                <DescriptionWarning descriptions={descriptions} described={'aria-describedby' in props} />
+              </>
+            )}
+          </DialogContentProvider>
+        </DialogLayerContext.Provider>
       </DialogNestingContext.Provider>
     )
   },

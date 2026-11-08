@@ -865,6 +865,45 @@ describe('Dialog scroll lock', () => {
       ['branch', 'stray'].map((testId) => screen.getByTestId(testId).closest('[aria-hidden="true"]') === null),
     ).toEqual([true, false])
   })
+
+  it('leaves a dialog opened from it to screen readers when one of its branches closes', async () => {
+    function Parent() {
+      const [branch, setBranch] = React.useState(true)
+      const [nested, setNested] = React.useState(false)
+      return (
+        <Dialog defaultOpen>
+          <DialogPortal>
+            <DialogOverlay />
+            <DialogContent data-testid="parent" aria-label="Parent" aria-describedby={undefined}>
+              {branch && <Branch register testId="branch" />}
+              <button type="button" onClick={() => setNested(true)}>
+                Open nested
+              </button>
+              <button type="button" onClick={() => setBranch(false)}>
+                Close branch
+              </button>
+              <Dialog open={nested}>
+                <DialogPortal>
+                  <DialogContent data-testid="nested" aria-label="Nested" aria-describedby={undefined} />
+                </DialogPortal>
+              </Dialog>
+            </DialogContent>
+          </DialogPortal>
+        </Dialog>
+      )
+    }
+    render(<Parent />)
+    await untilScrollLocked()
+
+    fireEvent.click(screen.getByText('Open nested'))
+    await wait(0)
+    fireEvent.click(screen.getByText('Close branch'))
+    await wait(0)
+
+    expect(
+      ['nested', 'parent'].map((testId) => screen.getByTestId(testId).closest('[aria-hidden="true"]') === null),
+    ).toEqual([true, false])
+  })
 })
 
 describe('Dialog giving the page back on close', () => {

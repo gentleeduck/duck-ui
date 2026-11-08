@@ -40,14 +40,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 121 | `dialog.radix.test.tsx` 48, `dialog.test.tsx` 73 |
+| Unit | 122 | `dialog.radix.test.tsx` 48, `dialog.test.tsx` 74 |
 | End to end | 22 | `dialog.e2e.ts` 12, `dialog.radix.e2e.ts` 10 |
 | registry-ui | 6 | `dialog-responsive.test.tsx` 2, `dialog.test.tsx` 4 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>143 behaviours, one per test</summary>
+<summary>144 behaviours, one per test</summary>
 
 **Unit, `dialog.test.tsx`**
 
@@ -120,6 +120,7 @@ Each test was proven by changing the code and watching a test fail.
 - Dialog scroll lock
   - lets a registered branch scroll and keeps the rest of the page locked
   - leaves a registered branch to screen readers and hides the rest of the page from them
+  - leaves a dialog opened from it to screen readers when one of its branches closes
 - Dialog giving the page back on close
   - removes the content before it gives the page back its pointer events and its scroll
   - gives the page back at once when the content is force mounted to animate out
@@ -270,7 +271,8 @@ Each test was proven by changing the code and watching a test fail.
 - A modal dialog in a second document, such as an iframe's, locks that document's body too, and closing the
   first document's dialog first no longer leaves its body locked.
 - A modal dialog leaves a layer portalled out of it, such as a popover's content, to screen readers when it hides
-  the rest of the page. It hid every layer that mounted with it.
+  the rest of the page. It hid every layer that mounted with it. A dialog opened from it stays reachable when one
+  of those layers closes.
 - A non-modal dialog kept mounted with `forceMount` forgets a press outside when it opens again. A press on the
   page while it was closed, or the one that closed it, kept focus moving outside from closing it, and kept focus
   from going back to the trigger once it unmounted.
@@ -296,8 +298,8 @@ Each test was proven by changing the code and watching a test fail.
 - With no `dir` on the root and no `DirectionProvider`, the content and the overlay carry no `dir` attribute and
   take their direction from where they are portalled, where they copied `<html dir>` onto themselves.
 - `Dialog.Title` and `Dialog.Description` must render inside `Dialog.Content`.
-- The context drops `titleId` and `descriptionId` and gains `onContentIdChange`, `branches` and
-  `branchRegistry`. `WarningProvider` takes `descriptionName` and drops `docsSlug`.
+- The context drops `titleId` and `descriptionId` and gains `onContentIdChange`, `branches`,
+  `branchRegistry`, `layers` and `layerRegistry`. `WarningProvider` takes `descriptionName` and drops `docsSlug`.
 - `IDialog.DialogContentElement` is `IDialog.ContentElement`.
 - A `DismissableLayer` whose element never takes its ref joins no stack, so nothing dismisses it. It used
   to dismiss on presses and focus outside it and on Escape.

@@ -10,11 +10,11 @@ const SUB_NAME = 'MenuSub'
 const [MenuSubProvider, useMenuSubContext] = createMenuContext<IMenu.ISubContext>(SUB_NAME)
 
 const MenuSub: React.FC<IMenu.ISubProps> = (props: IMenu.IScoped<IMenu.ISubProps>) => {
-  const { __scopeMenu, children, open = false, onOpenChange } = props
+  const { __scopeMenu, children, open = false, onOpenChange, closeParentOnEsc = true } = props
   const parentMenuContext = useMenuContext(SUB_NAME, __scopeMenu)
   const popperScope = usePopperScope(__scopeMenu)
-  const [trigger, setTrigger] = React.useState<IMenu.MenuSubTriggerElement | null>(null)
-  const [content, setContent] = React.useState<IMenu.MenuContentElement | null>(null)
+  const [trigger, setTrigger] = React.useState<IMenu.SubTriggerElement | null>(null)
+  const [content, setContent] = React.useState<IMenu.ContentElement | null>(null)
   const handleOpenChange = useCallbackRef(onOpenChange)
 
   React.useEffect(() => {
@@ -24,18 +24,16 @@ const MenuSub: React.FC<IMenu.ISubProps> = (props: IMenu.IScoped<IMenu.ISubProps
 
   return (
     <PopperPrimitive.Popper {...popperScope}>
-      <MenuProvider
-        scope={__scopeMenu}
-        open={open}
-        onOpenChange={handleOpenChange}
-        content={content}
-        onContentChange={setContent}>
+      <MenuProvider scope={__scopeMenu} open={open} onOpenChange={handleOpenChange}>
         <MenuSubProvider
           scope={__scopeMenu}
           contentId={useId()}
           triggerId={useId()}
           trigger={trigger}
-          onTriggerChange={setTrigger}>
+          onTriggerChange={setTrigger}
+          content={content}
+          onContentChange={setContent}
+          closeParentOnEsc={closeParentOnEsc}>
           {children}
         </MenuSubProvider>
       </MenuProvider>

@@ -2,7 +2,6 @@ import * as React from 'react'
 import { Presence } from '../presence'
 import { Primitive } from '../primitive-elements'
 import { useItemIndicatorContext } from './checkbox-item'
-import { useMenuRootContext } from './menu'
 import { getCheckedState, isIndeterminate } from './menu.libs'
 import type { IMenu } from './menu.types'
 
@@ -13,7 +12,6 @@ type MenuItemIndicatorElement = React.ComponentRef<typeof Primitive.span>
 const MenuItemIndicator = React.forwardRef<MenuItemIndicatorElement, IMenu.IItemIndicatorProps>(
   (props: IMenu.IScoped<IMenu.IItemIndicatorProps>, forwardedRef) => {
     const { __scopeMenu, forceMount, ...itemIndicatorProps } = props
-    const rootContext = useMenuRootContext(ITEM_INDICATOR_NAME, __scopeMenu)
     const indicatorContext = useItemIndicatorContext(ITEM_INDICATOR_NAME, __scopeMenu)
     return (
       <Presence present={forceMount || isIndeterminate(indicatorContext.checked) || indicatorContext.checked === true}>
@@ -21,7 +19,6 @@ const MenuItemIndicator = React.forwardRef<MenuItemIndicatorElement, IMenu.IItem
           data-slot="menu-item-indicator"
           {...itemIndicatorProps}
           ref={forwardedRef}
-          dir={rootContext.dir}
           data-state={getCheckedState(indicatorContext.checked)}
         />
       </Presence>

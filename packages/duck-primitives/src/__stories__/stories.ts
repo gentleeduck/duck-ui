@@ -11,6 +11,7 @@ import * as focusScope from '../focus-scope/__stories__/focus-scope.stories'
 import * as hooks from '../hooks/__stories__/hooks.stories'
 import * as hoverCard from '../hover-card/__stories__/hover-card.stories'
 import * as inputOtp from '../input-otp/__stories__/input-otp.stories'
+import * as menu from '../menu/__stories__/menu.stories'
 import * as mount from '../mount/__stories__/mount.stories'
 import * as pagination from '../pagination/__stories__/pagination.stories'
 import * as popover from '../popover/__stories__/popover.stories'
@@ -59,6 +60,7 @@ for (const module of [
   hooks,
   hoverCard,
   inputOtp,
+  menu,
   mount,
   pagination,
   popover,

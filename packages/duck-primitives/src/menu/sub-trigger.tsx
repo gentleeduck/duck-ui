@@ -1,11 +1,11 @@
 import * as React from 'react'
 import { composeEventHandlers } from '../libs/compose-event-handler'
-import { composeRefs } from '../libs/compose-ref'
+import { useComposedRefs } from '../libs/compose-ref'
 import { MenuAnchor } from './anchor'
 import { useMenuContentContext } from './content'
 import { MenuItemImpl } from './item'
 import { useMenuContext, useMenuRootContext } from './menu'
-import { getOpenState, isSide, SUB_OPEN_KEYS, whenMouse } from './menu.libs'
+import { getOpenState, SUB_OPEN_KEYS, whenMouse } from './menu.libs'
 import type { IMenu } from './menu.types'
 import { useMenuSubContext } from './sub'
 
@@ -22,6 +22,7 @@ const MenuSubTrigger = React.forwardRef<MenuSubTriggerElement, IMenu.ISubTrigger
     const openTimerRef = React.useRef<number | null>(null)
     const { pointerGraceTimerRef, onPointerGraceIntentChange } = contentContext
     const scope = { __scopeMenu: props.__scopeMenu }
+    const composedRefs = useComposedRefs(forwardedRef, subContext.onTriggerChange)
 
     const clearOpenTimer = React.useCallback(() => {
       if (openTimerRef.current) window.clearTimeout(openTimerRef.current)
@@ -44,10 +45,10 @@ const MenuSubTrigger = React.forwardRef<MenuSubTriggerElement, IMenu.ISubTrigger
           id={subContext.triggerId}
           aria-haspopup="menu"
           aria-expanded={context.open}
-          aria-controls={subContext.contentId}
+          aria-controls={context.open ? subContext.contentId : undefined}
           data-state={getOpenState(context.open)}
           {...props}
-          ref={composeRefs(forwardedRef, subContext.onTriggerChange)}
+          ref={composedRefs}
           onClick={(event) => {
             props.onClick?.(event)
             if (props.disabled || event.defaultPrevented) return
@@ -73,10 +74,9 @@ const MenuSubTrigger = React.forwardRef<MenuSubTriggerElement, IMenu.ISubTrigger
             whenMouse((event) => {
               clearOpenTimer()
 
-              const contentRect = context.content?.getBoundingClientRect()
-              if (contentRect && context.content) {
-                const sideAttr = context.content.getAttribute('data-side')
-                const side = isSide(sideAttr) ? sideAttr : 'right'
+              const contentRect = subContext.content?.getBoundingClientRect()
+              if (contentRect && subContext.content) {
+                const side = subContext.content.getAttribute('data-side') === 'left' ? 'left' : 'right'
 
                 const rightSide = side === 'right'
                 const bleed = rightSide ? -5 : +5
@@ -108,11 +108,11 @@ const MenuSubTrigger = React.forwardRef<MenuSubTriggerElement, IMenu.ISubTrigger
             }),
           )}
           onKeyDown={composeEventHandlers(props.onKeyDown, (event) => {
-            const isTypingAhead = contentContext.searchRef.current !== ''
-            if (props.disabled || (isTypingAhead && event.key === ' ')) return
+            if (props.disabled || event.target !== event.currentTarget) return
+            if (contentContext.searchRef.current !== '' && event.key === ' ') return
             if (SUB_OPEN_KEYS[rootContext.dir].includes(event.key)) {
               context.onOpenChange(true)
-              context.content?.focus()
+              subContext.content?.focus()
               event.preventDefault()
             }
           })}

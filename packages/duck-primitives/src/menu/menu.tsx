@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { useDirection } from '../direction'
 import { useCallbackRef } from '../hooks/use-callback-ref'
-import { createCollection } from '../libs/create-collection'
 import { createContextScope } from '../libs/create-context'
 import * as PopperPrimitive from '../popper'
 import { createPopperScope } from '../popper'
@@ -10,12 +9,7 @@ import type { IMenu } from './menu.types'
 
 const MENU_NAME = 'Menu'
 
-const [Collection, useCollection, createCollectionScope] = createCollection<IMenu.MenuItemElement, IMenu.IItemData>(
-  MENU_NAME,
-)
-
 const [createMenuContext, createMenuScope] = createContextScope(MENU_NAME, [
-  createCollectionScope,
   createPopperScope,
   createRovingFocusGroupScope,
 ])
@@ -26,39 +20,50 @@ const [MenuProvider, useMenuContext] = createMenuContext<IMenu.IContext>(MENU_NA
 
 const [MenuRootProvider, useMenuRootContext] = createMenuContext<IMenu.IRootContext>(MENU_NAME)
 
+const isUsingKeyboardRef = { current: false }
+let keyboardTrackers = 0
+
+function handlePointer() {
+  isUsingKeyboardRef.current = false
+}
+
+function handleKeyDown() {
+  isUsingKeyboardRef.current = true
+  document.addEventListener('pointerdown', handlePointer, { capture: true, once: true })
+  document.addEventListener('pointermove', handlePointer, { capture: true, once: true })
+}
+
+// One listener for every mounted menu: a menubar or a table of row menus mounts a root per menu.
+function trackKeyboard() {
+  if (keyboardTrackers++ === 0) document.addEventListener('keydown', handleKeyDown, true)
+  return () => {
+    if (--keyboardTrackers > 0) return
+    document.removeEventListener('keydown', handleKeyDown, true)
+    isUsingKeyboardRef.current = false
+  }
+}
+
 const Menu: React.FC<IMenu.IProps> = (props: IMenu.IScoped<IMenu.IProps>) => {
   const { __scopeMenu, open = false, children, dir, onOpenChange, modal = true } = props
   const popperScope = usePopperScope(__scopeMenu)
-  const [content, setContent] = React.useState<IMenu.MenuContentElement | null>(null)
-  const isUsingKeyboardRef = React.useRef(false)
   const handleOpenChange = useCallbackRef(onOpenChange)
   const direction = useDirection(dir)
 
+  React.useEffect(trackKeyboard, [])
+
+  // Leaving the window closes the menu, or a submenu is still open when the page gets focus back.
   React.useEffect(() => {
-    const handleKeyDown = () => {
-      isUsingKeyboardRef.current = true
-      document.addEventListener('pointerdown', handlePointer, { capture: true, once: true })
-      document.addEventListener('pointermove', handlePointer, { capture: true, once: true })
-    }
-    const handlePointer = () => (isUsingKeyboardRef.current = false)
-    document.addEventListener('keydown', handleKeyDown, { capture: true })
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown, { capture: true })
-      document.removeEventListener('pointerdown', handlePointer, { capture: true })
-      document.removeEventListener('pointermove', handlePointer, { capture: true })
-    }
-  }, [])
+    if (!open) return
+    const handleBlur = () => handleOpenChange(false)
+    window.addEventListener('blur', handleBlur)
+    return () => window.removeEventListener('blur', handleBlur)
+  }, [open, handleOpenChange])
 
   const onClose = React.useCallback(() => handleOpenChange(false), [handleOpenChange])
 
   return (
     <PopperPrimitive.Root {...popperScope}>
-      <MenuProvider
-        scope={__scopeMenu}
-        open={open}
-        onOpenChange={handleOpenChange}
-        content={content}
-        onContentChange={setContent}>
+      <MenuProvider scope={__scopeMenu} open={open} onOpenChange={handleOpenChange}>
         <MenuRootProvider
           scope={__scopeMenu}
           onClose={onClose}
@@ -75,14 +80,12 @@ const Menu: React.FC<IMenu.IProps> = (props: IMenu.IScoped<IMenu.IProps>) => {
 Menu.displayName = MENU_NAME
 
 export {
-  Collection,
   createMenuContext,
   createMenuScope,
   MENU_NAME,
   Menu,
   MenuProvider,
   MenuRootProvider,
-  useCollection,
   useMenuContext,
   useMenuRootContext,
   usePopperScope,

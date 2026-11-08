@@ -1,0 +1,72 @@
+.page {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+  padding: 50px;
+  font-family: apple-system, BlinkMacSystemFont, helvetica, arial, sans-serif;
+  font-size: 13px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.content {
+  box-sizing: border-box;
+  min-width: 160px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 5px 10px 0 rgb(0 0 0 / 0.1);
+}
+
+.label,
+.item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  height: 25px;
+  padding-inline: 10px;
+  border-radius: 3px;
+  white-space: nowrap;
+  cursor: default;
+  user-select: none;
+}
+
+.label {
+  color: #888;
+}
+
+.item {
+  outline: none;
+
+  &[data-highlighted] {
+    background: #111;
+    color: white;
+  }
+
+  &[data-disabled] {
+    color: #aaa;
+  }
+
+  &[data-state="open"]:not([data-highlighted]) {
+    background: #eee;
+  }
+}
+
+.indicator {
+  display: inline-flex;
+  width: 12px;
+}
+
+.separator {
+  height: 1px;
+  margin: 5px 10px;
+  background: #ccc;
+}
+
+.arrow {
+  fill: white;
+}

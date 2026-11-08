@@ -35,16 +35,11 @@ export function getCheckedState(checked: CheckedState) {
   return isIndeterminate(checked) ? 'indeterminate' : checked ? 'checked' : 'unchecked'
 }
 
-export function isPointerInGraceArea(event: React.PointerEvent, area?: Polygon) {
-  if (!area) return false
+export function isPointerInGraceArea(event: React.PointerEvent, area: Polygon) {
   const cursorPos = { x: event.clientX, y: event.clientY }
   return isPointInPolygon(cursorPos, area)
 }
 
 export function whenMouse<E>(handler: React.PointerEventHandler<E>): React.PointerEventHandler<E> {
   return (event) => (event.pointerType === 'mouse' ? handler(event) : undefined)
-}
-
-export function isSide(value: string | null): value is Side {
-  return value === 'left' || value === 'right'
 }

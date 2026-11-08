@@ -326,7 +326,7 @@ Each test was proven by changing the code and watching a test fail.
 - The items scroll inside whatever height the content is held to, a `max-h` given to it included, where they
   overflowed a content held shorter than the space it had.
 - `DropdownMenuContent` with `asChild` renders the caller's element as the menu, where the scroll wrapper took
-  its place.
+  its place. With no wrapper, that element scrolls its own items when they run past its height.
 - Submenus, plain and motion, scroll when taller than the space they have, where they were cut off.
 - A new example has a submenu that closes on its own on Escape, with `closeParentOnEsc`.
 - New examples open a dialog from an item, handing focus back to the trigger through `finalFocus`, and render

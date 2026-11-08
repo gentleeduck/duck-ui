@@ -40,6 +40,12 @@ export function isPointerInGraceArea(event: React.PointerEvent, area: Polygon) {
   return isPointInPolygon(cursorPos, area)
 }
 
+/** A field typed into, whose letters and arrow keys are its own rather than the menu's. */
+export function isTextEntry(target: EventTarget | null) {
+  const element = target as HTMLElement | null
+  return !!element && (element.isContentEditable || ['INPUT', 'SELECT', 'TEXTAREA'].includes(element.tagName))
+}
+
 export function whenMouse<E>(handler: React.PointerEventHandler<E>): React.PointerEventHandler<E> {
   return (event) => (event.pointerType === 'mouse' ? handler(event) : undefined)
 }

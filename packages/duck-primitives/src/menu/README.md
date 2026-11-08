@@ -37,20 +37,21 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 56 | `menu.test.tsx` 56 |
+| Unit | 62 | `menu.test.tsx` 62 |
 | End to end | 18 | `menu.e2e.ts` 18 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>74 behaviours, one per test</summary>
+<summary>80 behaviours, one per test</summary>
 
 **Unit, `menu.test.tsx`**
 
 - Menu
   - starts closed without open
   - is modal without modal, hiding the rest of the page from assistive technology
+  - leaves the page to assistive technology while kept mounted and closed, and hides it while open
   - gives the rest of the page back to assistive technology once it closes
 - Menu.Sub
   - starts closed without open
@@ -69,12 +70,14 @@ Each test was proven by changing the code and watching a test fail.
 - Menu keys
   - moves from the content to the first or the last enabled item, taking the key
   - leaves an arrow typed in a field inside it to the field
+  - leaves a letter and a jump with G typed in a field inside an item to the field
   - stops at the last item rather than wrapping
   - selects once for each Enter and Space, taking the key
   - leaves Enter and Space on a disabled item to the page
   - jumps with G to the last enabled item
 - Menu typeahead
   - passes over a disabled item
+  - leaves focus where it is when the match is disabled before focus moves to it
   - reads only a character typed without Ctrl, Alt or Meta
   - starts the search over after a jump with G
   - starts the search over once focus leaves the menu
@@ -87,6 +90,7 @@ Each test was proven by changing the code and watching a test fail.
   - leaves the page scrolling while closed, and with disableOutsideScroll false
 - Menu items
   - selects again on a release alone after a select that keeps it open
+  - keeps a disabled item rendered as a link from following it on a middle click
   - calls its own onPointerDown
   - starts a checkbox item unchecked, and toggles it on a select whose own handler keeps the menu open
   - marks the chosen radio item and shows its indicator, and chooses on a select whose own handler keeps the menu open
@@ -102,12 +106,14 @@ Each test was proven by changing the code and watching a test fail.
   - leaves pointer events and scrolling outside alone in a menu that is not modal
   - closes when focus leaves it for anything but its trigger, telling onFocusOutside
   - takes an Escape typed in it, telling onEscapeKeyDown
+  - leaves the arrow away from it typed in a field inside it to the field
   - stays open on the arrow away from it typed in a field portalled out of it, telling onKeyDown
 - Menu sub menu on hover
   - opens 100ms after the mouse comes over its trigger, once however often it moves
   - opens again on hover after it closed
   - does not open once its trigger has unmounted
 - Menu pointer grace toward a sub menu
+  - keeps a sub menu flipped to the left open when the mouse jumps into it before moving over the menu
   - keeps an item inside the path to the sub menu from taking focus
   - lets that item take focus once the mouse heads away from the sub menu
   - keeps heading toward the sub menu through a move straight up or down
@@ -156,15 +162,20 @@ Each test was proven by changing the code and watching a test fail.
 
 - The menu closes, with any open submenu, when the window loses focus.
 - A key typed into a focusable element inside an item or a sub-trigger, even one portalled out of it, is
-  left to that element.
+  left to that element. A letter, a jump with `G` and the arrow that closes a submenu, typed into a field inside
+  the menu, are left to it too, where typeahead moved focus to a matching item.
+- A modal menu kept mounted with `forceMount` leaves the page to screen readers while it is closed, where it hid
+  the page as soon as its content attached.
 - A menu that is closing but still mounted no longer lets its items take focus under the pointer.
 - A submenu flipped to the left stays open when the pointer moves straight into it in one jump, where
-  the click landed on the parent's item underneath.
+  the click landed on the parent's item underneath. It stays open too when the pointer jumps into it before it
+  has moved over the menu at all, which read as moving right.
 - A sub-trigger sets `aria-controls` only while its submenu is open.
-- A disabled item rendered as a link with `asChild` no longer follows the link on a click.
+- A disabled item rendered as a link with `asChild` no longer follows the link on a click or a middle click.
 - Typing the focused item's name keeps focus on it.
 - Every `SubTrigger` keeps one composed ref across renders, so a ref that sets state no longer loops.
-- Typeahead searches the label an item shows now, where it searched the one the item mounted with.
+- Typeahead searches the label an item shows now, where it searched the one the item mounted with, and a match
+  disabled before focus moves to it leaves focus where it was.
 - In development under StrictMode, a letter typed before React ran the menu's mount effects stayed in the
   search, so the next letter, however much later, searched for both. The replayed cleanup cleared the
   timer that empties the search.

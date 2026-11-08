@@ -4,6 +4,7 @@ import { RemoveScroll } from 'react-remove-scroll'
 import { DismissableLayer } from '../dismissable-layer'
 import { FocusScope } from '../focus-scope'
 import { useFocusGuards } from '../hooks/use-focus-guard'
+import { useLayoutEffect } from '../hooks/use-layout-effect'
 import { composeEventHandlers } from '../libs/compose-event-handler'
 import { useComposedRefs } from '../libs/compose-ref'
 import { useTypeaheadListNavigation, useVimNavigation } from '../libs/list-navigation'
@@ -19,6 +20,7 @@ import {
   type GraceIntent,
   getOpenState,
   isPointerInGraceArea,
+  isTextEntry,
   LAST_KEYS,
   type Side,
   whenMouse,
@@ -75,12 +77,28 @@ const MenuRootContentModal = React.forwardRef<MenuRootContentTypeElement, IMenu.
     const held = useHeldOpen(context.open)
     // A ref rather than state for an effect, which would render the whole content again once it attached. Undone when
     // the ref is given null, since React 18 ignores a cleanup a ref returns.
+    const nodeRef = React.useRef<MenuRootContentTypeElement | null>(null)
+    const heldRef = React.useRef(held)
     const shownRef = React.useRef<() => void>(undefined)
-    const hideOthersRef = React.useCallback((node: MenuRootContentTypeElement | null) => {
+    // Kept mounted, the content attaches while closed, and the page stays to screen readers until it opens.
+    const syncHidden = React.useCallback(() => {
       shownRef.current?.()
-      shownRef.current = node ? hideOthers(node) : undefined
+      shownRef.current = nodeRef.current && heldRef.current ? hideOthers(nodeRef.current) : undefined
     }, [])
+    const hideOthersRef = React.useCallback(
+      (node: MenuRootContentTypeElement | null) => {
+        nodeRef.current = node
+        syncHidden()
+      },
+      [syncHidden],
+    )
     const composedRefs = useComposedRefs(forwardedRef, hideOthersRef)
+
+    useLayoutEffect(() => {
+      if (heldRef.current === held) return
+      heldRef.current = held
+      syncHidden()
+    }, [held, syncHidden])
 
     return (
       <MenuContentImpl
@@ -172,7 +190,8 @@ const MenuContentImpl = React.forwardRef<MenuContentImplElement, IMenu.IContentI
     const pointerGraceTimerRef = React.useRef(0)
     const pointerGraceIntentRef = React.useRef<GraceIntent | null>(null)
     const pointerDirRef = React.useRef<Side>('right')
-    const lastPointerXRef = React.useRef(0)
+    // Null until the pointer moves inside the content, since a direction read against a made-up start is a guess.
+    const lastPointerXRef = React.useRef<number | null>(null)
 
     const ScrollLockWrapper = disableOutsideScroll ? RemoveScroll : React.Fragment
     const scrollLockWrapperProps = disableOutsideScroll
@@ -183,8 +202,11 @@ const MenuContentImpl = React.forwardRef<MenuContentImplElement, IMenu.IContentI
       getItems: () => getFocusableItems(items),
       getItemElement: ({ node }) => node,
       getItemTextValue: ({ item, node }) => item.textValue || (node.textContent ?? ''),
+      // Focus moves a task later, by which time the match may have been disabled or removed.
       onMatch: ({ node }) => {
-        setTimeout(() => node.focus())
+        setTimeout(() => {
+          if (getEnabledNodes().includes(node)) node.focus()
+        })
       },
       externalSearchRef: searchRef,
     })
@@ -193,9 +215,12 @@ const MenuContentImpl = React.forwardRef<MenuContentImplElement, IMenu.IContentI
 
     useFocusGuards()
 
-    const isPointerMovingToSubmenu = React.useCallback((event: React.PointerEvent, dir = pointerDirRef.current) => {
+    const isPointerMovingToSubmenu = React.useCallback((event: React.PointerEvent, dir?: Side) => {
       const intent = pointerGraceIntentRef.current
-      return dir === intent?.side && isPointerInGraceArea(event, intent.area)
+      if (!intent) return false
+      // With no move recorded there is no direction to read, so the grace area alone decides.
+      const side = dir ?? (lastPointerXRef.current === null ? intent.side : pointerDirRef.current)
+      return side === intent.side && isPointerInGraceArea(event, intent.area)
     }, [])
 
     return (
@@ -215,7 +240,8 @@ const MenuContentImpl = React.forwardRef<MenuContentImplElement, IMenu.IContentI
               // A single jump into a submenu leaves the item before any move inside the content records
               // which way it went, so a submenu flipped to the other side would read as moving away.
               const lastX = lastPointerXRef.current
-              const dir = event.clientX === lastX ? pointerDirRef.current : event.clientX > lastX ? 'right' : 'left'
+              const dir =
+                lastX === null || event.clientX === lastX ? undefined : event.clientX > lastX ? 'right' : 'left'
               if (!context.open || isPointerMovingToSubmenu(event, dir)) return
               contentRef.current?.focus()
               setCurrentItemId(null)
@@ -264,6 +290,7 @@ const MenuContentImpl = React.forwardRef<MenuContentImplElement, IMenu.IContentI
                     const isCharacterKey = event.key.length === 1
                     if (isKeyDownInside) {
                       if (event.key === 'Tab') event.preventDefault()
+                      if (isTextEntry(target)) return
                       if (handleVimKey(event, getEnabledNodes())) return
 
                       if (!isModifierKey && isCharacterKey) handleTypeaheadSearch(event.key)
@@ -284,11 +311,10 @@ const MenuContentImpl = React.forwardRef<MenuContentImplElement, IMenu.IContentI
                     props.onPointerMove,
                     whenMouse((event) => {
                       const target = event.target as HTMLElement
-                      const pointerXHasChanged = lastPointerXRef.current !== event.clientX
+                      const lastX = lastPointerXRef.current
 
-                      if (event.currentTarget.contains(target) && pointerXHasChanged) {
-                        const newDir = event.clientX > lastPointerXRef.current ? 'right' : 'left'
-                        pointerDirRef.current = newDir
+                      if (event.currentTarget.contains(target) && lastX !== event.clientX) {
+                        if (lastX !== null) pointerDirRef.current = event.clientX > lastX ? 'right' : 'left'
                         lastPointerXRef.current = event.clientX
                       }
                     }),

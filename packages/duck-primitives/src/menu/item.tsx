@@ -42,6 +42,10 @@ const MenuItem = React.forwardRef<MenuItemElement, IMenu.IItemProps>(
         ...itemProps,
         disabled,
         onClick: composeEventHandlers(props.onClick, handleSelect),
+        // A middle click opens a link from auxclick, which onClick never hears.
+        onAuxClick: composeEventHandlers(props.onAuxClick, (event) => {
+          if (disabled) event.preventDefault()
+        }),
         onPointerDown: (event) => {
           props.onPointerDown?.(event)
           isPointerDownRef.current = true

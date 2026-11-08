@@ -4,7 +4,7 @@ import { useComposedRefs } from '../libs/compose-ref'
 import { Presence } from '../presence'
 import { MenuContentImpl } from './content'
 import { useMenuContext, useMenuRootContext } from './menu'
-import { SUB_CLOSE_KEYS } from './menu.libs'
+import { isTextEntry, SUB_CLOSE_KEYS } from './menu.libs'
 import type { IMenu } from './menu.types'
 import { usePortalContext } from './portal'
 import { useMenuSubContext } from './sub'
@@ -55,7 +55,7 @@ const MenuSubContent = React.forwardRef<MenuSubContentElement, IMenu.ISubContent
           onKeyDown={composeEventHandlers(props.onKeyDown, (event) => {
             const isKeyDownInside = event.currentTarget.contains(event.target as HTMLElement)
             const isCloseKey = SUB_CLOSE_KEYS[rootContext.dir].includes(event.key)
-            if (isKeyDownInside && isCloseKey) {
+            if (isKeyDownInside && isCloseKey && !isTextEntry(event.target)) {
               context.onOpenChange(false)
               subContext.trigger?.focus()
               event.preventDefault()

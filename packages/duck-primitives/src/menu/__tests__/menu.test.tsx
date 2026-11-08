@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, mock, spyOn, vi } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import type * as React from 'react'
+import * as React from 'react'
 import { createPortal } from 'react-dom'
 import { freshDom, scrolls, untilScrollLocked, wait } from '../../__tests__/dom'
 import {
@@ -108,6 +108,33 @@ describe('Menu', () => {
     )
 
     expect(screen.getByText('Outside', { ignore: false }).closest('[aria-hidden="true"]')).not.toBeNull()
+  })
+
+  it('leaves the page to assistive technology while kept mounted and closed, and hides it while open', () => {
+    function Kept({ open }: { open: boolean }) {
+      return (
+        <>
+          <button type="button">Outside</button>
+          <Menu open={open}>
+            <MenuAnchor />
+            <MenuPortal forceMount>
+              <MenuContent forceMount>
+                <MenuItem>Apple</MenuItem>
+              </MenuContent>
+            </MenuPortal>
+          </Menu>
+        </>
+      )
+    }
+    const { rerender } = render(<Kept open={false} />)
+    const hidden = () => screen.getByText('Outside', { ignore: false }).closest('[aria-hidden="true"]') !== null
+    const closed = hidden()
+
+    rerender(<Kept open />)
+    const opened = hidden()
+    rerender(<Kept open={false} />)
+
+    expect([closed, opened, hidden()]).toEqual([false, true, false])
   })
 
   it('gives the rest of the page back to assistive technology once it closes', () => {
@@ -364,6 +391,25 @@ describe('Menu keys', () => {
     expect(document.activeElement?.getAttribute('aria-label')).toBe('Filter')
   })
 
+  it('leaves a letter and a jump with G typed in a field inside an item to the field', async () => {
+    renderMenu(
+      <>
+        <MenuItem>
+          <input aria-label="Filter" />
+        </MenuItem>
+        <MenuItem>Banana</MenuItem>
+      </>,
+    )
+    const field = screen.getByLabelText('Filter')
+    act(() => field.focus())
+
+    fireEvent.keyDown(field, { key: 'b' })
+    fireEvent.keyDown(field, { key: 'G', shiftKey: true })
+    await wait(0)
+
+    expect(document.activeElement).toBe(field)
+  })
+
   it('stops at the last item rather than wrapping', async () => {
     renderMenu(
       <>
@@ -431,6 +477,29 @@ describe('Menu typeahead', () => {
     await wait(0)
 
     expect(document.activeElement?.textContent).toBe('Blueberry')
+  })
+
+  it('leaves focus where it is when the match is disabled before focus moves to it', async () => {
+    function Fruits() {
+      const [disabled, setDisabled] = React.useState(false)
+      return (
+        <Menu open>
+          <MenuAnchor />
+          <MenuContent onKeyDown={() => setDisabled(true)}>
+            <MenuItem>Apple</MenuItem>
+            <MenuItem disabled={disabled}>Banana</MenuItem>
+          </MenuContent>
+        </Menu>
+      )
+    }
+    render(<Fruits />)
+    const menu = screen.getByRole('menu')
+    act(() => menu.focus())
+
+    fireEvent.keyDown(menu, { key: 'b' })
+    await wait(0)
+
+    expect(document.activeElement).toBe(menu)
   })
 
   it('reads only a character typed without Ctrl, Alt or Meta', async () => {
@@ -606,6 +675,23 @@ describe('Menu items', () => {
     fireEvent.pointerUp(apple, mouse)
 
     expect(onSelect).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps a disabled item rendered as a link from following it on a middle click', () => {
+    renderMenu(
+      <>
+        <MenuItem asChild disabled>
+          <a href="#off">Off</a>
+        </MenuItem>
+        <MenuItem asChild>
+          <a href="#on">On</a>
+        </MenuItem>
+      </>,
+    )
+    const middleClick = (name: string) =>
+      fireEvent(screen.getByText(name), new MouseEvent('auxclick', { bubbles: true, button: 1, cancelable: true }))
+
+    expect([middleClick('Off'), middleClick('On')]).toEqual([false, true])
   })
 
   it('calls its own onPointerDown', () => {
@@ -808,6 +894,16 @@ describe('Menu.SubContent', () => {
     expect([taken, onEscapeKeyDown.mock.calls.length]).toEqual([true, 1])
   })
 
+  it('leaves the arrow away from it typed in a field inside it to the field', () => {
+    const onOpenChange = mock()
+    render(<SubMenu sub={{ open: true, onOpenChange }} subChildren={<input aria-label="Note" />} />)
+    onOpenChange.mockClear()
+
+    const notPrevented = fireEvent.keyDown(screen.getByLabelText('Note'), { key: 'ArrowLeft' })
+
+    expect([notPrevented, onOpenChange.mock.calls]).toEqual([true, []])
+  })
+
   it('stays open on the arrow away from it typed in a field portalled out of it, telling onKeyDown', () => {
     const onOpenChange = mock()
     const onKeyDown = mock()
@@ -888,6 +984,18 @@ describe('Menu pointer grace toward a sub menu', () => {
     fireEvent.pointerMove(apple, { ...mouse, clientX: 90, clientY: 50 })
     return document.activeElement === apple
   }
+
+  it('keeps a sub menu flipped to the left open when the mouse jumps into it before moving over the menu', () => {
+    render(<SubMenu sub={{ open: true }} />)
+    const subContent = screen.getByTestId('sub-content')
+    subContent.getBoundingClientRect = () => new DOMRect(0, 0, 100, 100)
+    subContent.setAttribute('data-side', 'left')
+    act(() => screen.getByText('Grape').focus())
+
+    fireEvent.pointerLeave(screen.getByText('More'), { ...mouse, clientX: 150, clientY: 10 })
+
+    expect(document.activeElement?.textContent).toBe('Grape')
+  })
 
   it('keeps an item inside the path to the sub menu from taking focus', () => {
     openSubToTheRight()

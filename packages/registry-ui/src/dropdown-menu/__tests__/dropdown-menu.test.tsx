@@ -70,6 +70,37 @@ describe('registry-ui DropdownMenu content', () => {
       expect(scroller.className.split(' ')).toContain('overflow-y-auto')
     },
   )
+
+  test.each(CONTENTS)('%s scrolls its items inside whatever height the content is held to', (_, Root, Content) => {
+    render(
+      <Root defaultOpen>
+        <Content className="max-h-40">Ducks only</Content>
+      </Root>,
+    )
+
+    const content = screen.getByRole('menu').className.split(' ')
+    const scroller = screen.getByText('Ducks only').className.split(' ')
+    expect([content.includes('flex-col'), content.includes('max-h-40'), scroller.includes('min-h-0')]).toEqual([
+      true,
+      true,
+      true,
+    ])
+    expect(scroller.filter((name) => name.startsWith('max-h-'))).toEqual([])
+  })
+
+  test('keeps an element given through asChild as the menu itself', () => {
+    render(
+      <DropdownMenu defaultOpen>
+        <DropdownMenuContent asChild>
+          <section>
+            <DropdownMenuItem>Apple</DropdownMenuItem>
+          </section>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    )
+
+    expect(screen.getByRole('menu').tagName).toBe('SECTION')
+  })
 })
 
 const SUBMENUS = [

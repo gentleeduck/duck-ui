@@ -76,7 +76,8 @@ const DropdownMenuContent = React.forwardRef<
         className,
       )}
       {...props}>
-      <div className={dropdownMenuScrollStyle}>{children}</div>
+      {/* Given through asChild, the caller's element must stay the one the content renders. */}
+      {props.asChild ? children : <div className={dropdownMenuScrollStyle}>{children}</div>}
     </DropdownMenuPrimitive.Content>
   </DropdownMenuPrimitive.Portal>
 ))

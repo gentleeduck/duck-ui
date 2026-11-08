@@ -48,7 +48,7 @@ Each test was proven by changing the code and watching a test fail.
 |---|--:|---|
 | Unit | 115 | `dropdown-menu.radix.test.tsx` 40, `dropdown-menu.test.tsx` 75 |
 | End to end | 50 | `dropdown-menu.e2e.ts` 33, `dropdown-menu.radix.e2e.ts` 17 |
-| registry-ui | 12 | `dropdown-menu-force-mount.test.tsx` 1, `dropdown-menu.test.tsx` 11 |
+| registry-ui | 15 | `dropdown-menu-force-mount.test.tsx` 1, `dropdown-menu.test.tsx` 14 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -323,6 +323,10 @@ Each test was proven by changing the code and watching a test fail.
   `--dropdown-menu-border-color`, with its items scrolling in a wrapper, so a `DropdownMenuArrow` shows
   where the content's overflow clipped it.
 - `DropdownMenuContent` sets the variable with a class.
+- The items scroll inside whatever height the content is held to, a `max-h` given to it included, where they
+  overflowed a content held shorter than the space it had.
+- `DropdownMenuContent` with `asChild` renders the caller's element as the menu, where the scroll wrapper took
+  its place.
 - Submenus, plain and motion, scroll when taller than the space they have, where they were cut off.
 - A new example has a submenu that closes on its own on Escape, with `closeParentOnEsc`.
 - New examples open a dialog from an item, handing focus back to the trigger through `finalFocus`, and render

@@ -45,14 +45,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 93 | `menubar.radix.test.tsx` 30, `menubar.test.tsx` 63 |
+| Unit | 94 | `menubar.radix.test.tsx` 30, `menubar.test.tsx` 64 |
 | End to end | 35 | `menubar.e2e.ts` 17, `menubar.radix.e2e.ts` 18 |
-| registry-ui | 10 | `menubar-force-mount.test.tsx` 1, `menubar.test.tsx` 9 |
+| registry-ui | 11 | `menubar-force-mount.test.tsx` 2, `menubar.test.tsx` 9 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>128 behaviours, one per test</summary>
+<summary>129 behaviours, one per test</summary>
 
 **Unit, `menubar.test.tsx`**
 
@@ -126,6 +126,7 @@ Each test was proven by changing the code and watching a test fail.
 - Menubar disabled
   - opens no menu from the pointer or the keyboard
   - keeps the open menu when the pointer moves onto a disabled trigger
+  - takes a trigger given through asChild out of the tab order once the bar is disabled
   - takes a disabled bar out of the tab order, and marks its triggers
 - Menubar modal
   - locks the page while a menu is open, leaving the menu and the bar usable
@@ -259,6 +260,7 @@ Each test was proven by changing the code and watching a test fail.
 - The pointer moving onto a trigger that has no menu content still focuses it.
 - The pointer moving onto a disabled trigger while a menu is open leaves that menu open. Radix switches the bar
   to the disabled trigger, which closes the open menu.
+- A disabled trigger given through `asChild` as a link leaves the tab order, which a disabled button does on its own.
 
 ## Smaller and faster
 

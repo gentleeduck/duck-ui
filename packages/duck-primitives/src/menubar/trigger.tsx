@@ -46,6 +46,8 @@ const MenubarTrigger = React.forwardRef<IMenubar.TriggerElement, IMenubar.ITrigg
       <MenuPrimitive.Anchor asChild {...menuScope}>
         <Element
           {...item.attributes}
+          // A disabled button leaves the tab order on its own; an element given through asChild may not.
+          tabIndex={disabled ? -1 : item.attributes?.tabIndex}
           data-slot="menubar-trigger"
           type="button"
           role="menuitem"

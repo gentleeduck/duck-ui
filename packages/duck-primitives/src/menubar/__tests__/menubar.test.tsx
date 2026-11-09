@@ -854,6 +854,27 @@ describe('Menubar disabled', () => {
     expect(screen.getByText('New')).toBeTruthy()
   })
 
+  it('takes a trigger given through asChild out of the tab order once the bar is disabled', () => {
+    function Bar({ disabled }: { disabled: boolean }) {
+      return (
+        <Menubar disabled={disabled}>
+          <MenubarMenu value="file">
+            <MenubarTrigger asChild>
+              <a href="#file">File</a>
+            </MenubarTrigger>
+          </MenubarMenu>
+        </Menubar>
+      )
+    }
+    const { rerender } = render(<Bar disabled={false} />)
+    act(() => screen.getByText('File').focus())
+    const enabled = screen.getByText('File').tabIndex
+
+    rerender(<Bar disabled />)
+
+    expect([enabled, screen.getByText('File').tabIndex]).toEqual([0, -1])
+  })
+
   it('takes a disabled bar out of the tab order, and marks its triggers', () => {
     render(
       <Menubar disabled>

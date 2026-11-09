@@ -132,7 +132,8 @@ toolbar ship. 1.2.1, the latest, behaves the same.
 - The group keeps its items in a set it sorts into document order on a key press, where a collection gave the
   group two components and each item a slot of its own.
 - `useRovingFocusGroup` returns the group's context and the props for an element of the caller's own, so Toggle
-  Group and Radio Group render the group's element themselves, with no group component and no slot around it.
+  Group, Radio Group, Menubar and the menus render the group's element themselves, with no group component and no
+  slot around it.
 - The group writes its tab stop to its element when the first item that can take focus mounts or the last one
   goes, so mounting items never renders the group again. It counted them in state, which rendered the group a
   second time after every mount.

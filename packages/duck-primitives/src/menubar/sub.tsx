@@ -7,7 +7,7 @@ import type { IMenubar } from './menubar.types'
 const SUB_NAME = 'MenubarSub'
 
 const MenubarSub: React.FC<IMenubar.ISubProps> = (props: IMenubar.IScoped<IMenubar.ISubProps>) => {
-  const { __scopeMenubar, children, open: openProp, onOpenChange, defaultOpen } = props
+  const { __scopeMenubar, open: openProp, defaultOpen, onOpenChange, ...subProps } = props
   const menuScope = useMenuScope(__scopeMenubar)
   const [open, setOpen] = useControllableState({
     prop: openProp,
@@ -16,11 +16,7 @@ const MenubarSub: React.FC<IMenubar.ISubProps> = (props: IMenubar.IScoped<IMenub
     caller: SUB_NAME,
   })
 
-  return (
-    <MenuPrimitive.Sub {...menuScope} open={open} onOpenChange={setOpen}>
-      {children}
-    </MenuPrimitive.Sub>
-  )
+  return <MenuPrimitive.Sub {...menuScope} {...subProps} open={open} onOpenChange={setOpen} />
 }
 
 MenubarSub.displayName = SUB_NAME

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useCallbackRef } from '../hooks/use-callback-ref'
 import { useId } from '../hooks/use-id'
 import { useLayoutEffect } from '../hooks/use-layout-effect'
 import * as MenuPrimitive from '../menu'
@@ -11,37 +12,36 @@ const [MenubarMenuProvider, useMenubarMenuContext] = createMenubarContext<IMenub
 
 const MenubarMenu = (props: IMenubar.IScoped<IMenubar.IMenuProps>) => {
   const { __scopeMenubar, value: valueProp, onOpenChange: onOpenChangeProp, ...menuProps } = props
-  const autoValue = useId()
-  const value = valueProp || autoValue || 'LEGACY_REACT_AUTO_VALUE'
+  const id = useId()
+  const value = valueProp || id
   const context = useMenubarContext(MENU_NAME, __scopeMenubar)
   const menuScope = useMenuScope(__scopeMenubar)
   const triggerRef = React.useRef<IMenubar.TriggerElement>(null)
   const wasKeyboardTriggerOpenRef = React.useRef(false)
   const open = context.value === value
-
-  React.useEffect(() => {
-    if (!open) wasKeyboardTriggerOpenRef.current = false
-  }, [open])
+  const onOpenChange = useCallbackRef(onOpenChangeProp)
+  const wasOpenRef = React.useRef(open)
 
   useLayoutEffect(() => {
-    onOpenChangeProp?.(open)
-  }, [open, onOpenChangeProp])
+    if (wasOpenRef.current === open) return
+    wasOpenRef.current = open
+    if (!open) wasKeyboardTriggerOpenRef.current = false
+    onOpenChange(open)
+  }, [open, onOpenChange])
 
   return (
     <MenubarMenuProvider
       scope={__scopeMenubar}
       value={value}
-      triggerId={useId()}
+      triggerId={`${id}-trigger`}
       triggerRef={triggerRef}
-      contentId={useId()}
+      contentId={`${id}-content`}
       wasKeyboardTriggerOpenRef={wasKeyboardTriggerOpenRef}>
       <MenuPrimitive.Root
         {...menuScope}
         open={open}
-        onOpenChange={(open) => {
-          if (!open) context.onMenuClose()
-        }}
-        modal={false}
+        onOpenChange={context.onMenuClose}
+        modal={context.modal}
         dir={context.dir}
         {...menuProps}
       />

@@ -275,6 +275,58 @@ describe('Menu.Content', () => {
     container.remove()
   })
 
+  it('mounts no closed submenu while a forceMount portal keeps the menu mounted', () => {
+    render(
+      <Menu open={false}>
+        <MenuAnchor />
+        <MenuPortal forceMount>
+          <MenuContent>
+            <MenuItem>Apple</MenuItem>
+            <MenuSub>
+              <MenuSubTrigger>More</MenuSubTrigger>
+              <MenuSubContent>
+                <MenuItem>Grape</MenuItem>
+              </MenuSubContent>
+            </MenuSub>
+          </MenuContent>
+        </MenuPortal>
+      </Menu>,
+    )
+
+    expect([screen.queryByText('Apple') !== null, screen.queryByText('Grape')]).toEqual([true, null])
+  })
+
+  it('leaves focus where it is when it mounts closed under forceMount, and takes it once it opens', async () => {
+    function Kept({ mounted, open }: { mounted: boolean; open: boolean }) {
+      return (
+        <>
+          <input aria-label="Name" />
+          {mounted && (
+            <Menu open={open} modal={false}>
+              <MenuAnchor />
+              <MenuPortal forceMount>
+                <MenuContent forceMount>
+                  <MenuItem>Apple</MenuItem>
+                </MenuContent>
+              </MenuPortal>
+            </Menu>
+          )}
+        </>
+      )
+    }
+    const { rerender } = render(<Kept mounted={false} open={false} />)
+    const field = screen.getByLabelText('Name')
+    act(() => field.focus())
+
+    rerender(<Kept mounted open={false} />)
+    await wait(0)
+    const whileClosed = document.activeElement
+    rerender(<Kept mounted open />)
+    await wait(0)
+
+    expect([whileClosed === field, document.activeElement?.getAttribute('role')]).toEqual([true, 'menu'])
+  })
+
   it('puts a focus guard at each edge of the page while open', () => {
     renderMenu(<MenuItem>Apple</MenuItem>)
 

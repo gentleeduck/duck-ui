@@ -187,6 +187,14 @@ const MenuContentImpl = React.forwardRef<MenuContentImplElement, IMenu.IContentI
     const { items } = group.context
     const getEnabledNodes = () => getFocusableItems(items).map(({ node }) => node)
     const searchRef = React.useRef('')
+    // Kept mounted, the content mounts closed, where taking focus would pull it off the page into a hidden menu.
+    const focusOnOpenRef = React.useRef(false)
+
+    React.useEffect(() => {
+      if (!context.open || !focusOnOpenRef.current) return
+      focusOnOpenRef.current = false
+      contentRef.current?.focus({ preventScroll: true })
+    }, [context.open])
     const pointerGraceTimerRef = React.useRef(0)
     const pointerGraceIntentRef = React.useRef<GraceIntent | null>(null)
     const pointerDirRef = React.useRef<Side>('right')
@@ -264,7 +272,8 @@ const MenuContentImpl = React.forwardRef<MenuContentImplElement, IMenu.IContentI
               trapped={trapFocus}
               onMountAutoFocus={composeEventHandlers(onOpenAutoFocus, (event) => {
                 event.preventDefault()
-                contentRef.current?.focus({ preventScroll: true })
+                if (context.open) contentRef.current?.focus({ preventScroll: true })
+                else focusOnOpenRef.current = true
               })}
               onUnmountAutoFocus={onCloseAutoFocus}>
               <DismissableLayer

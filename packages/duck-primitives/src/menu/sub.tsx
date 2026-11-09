@@ -4,6 +4,7 @@ import { useId } from '../hooks/use-id'
 import * as PopperPrimitive from '../popper'
 import { createMenuContext, MenuProvider, useMenuContext, usePopperScope } from './menu'
 import type { IMenu } from './menu.types'
+import { PortalProvider } from './portal'
 
 const SUB_NAME = 'MenuSub'
 
@@ -34,7 +35,10 @@ const MenuSub: React.FC<IMenu.ISubProps> = (props: IMenu.IScoped<IMenu.ISubProps
           content={content}
           onContentChange={setContent}
           closeParentOnEsc={closeParentOnEsc}>
-          {children}
+          {/* A portal forcing its menu's content to mount would mount every closed submenu inside it too. */}
+          <PortalProvider scope={__scopeMenu} forceMount={undefined}>
+            {children}
+          </PortalProvider>
         </MenuSubProvider>
       </MenuProvider>
     </PopperPrimitive.Popper>

@@ -37,14 +37,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 62 | `menu.test.tsx` 62 |
+| Unit | 64 | `menu.test.tsx` 64 |
 | End to end | 18 | `menu.e2e.ts` 18 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>80 behaviours, one per test</summary>
+<summary>82 behaviours, one per test</summary>
 
 **Unit, `menu.test.tsx`**
 
@@ -63,6 +63,8 @@ Each test was proven by changing the code and watching a test fail.
 - Menu.Content
   - is a vertical menu drawn without an outline, in the direction of its root
   - stays mounted while closed under a forceMount portal, inside the portal container
+  - mounts no closed submenu while a forceMount portal keeps the menu mounted
+  - leaves focus where it is when it mounts closed under forceMount, and takes it once it opens
   - puts a focus guard at each edge of the page while open
   - focuses itself on open, not a field inside it
   - moves focus without scrolling: to itself on open, to the first item on a keyboard open, to an item under the mouse
@@ -167,6 +169,10 @@ Each test was proven by changing the code and watching a test fail.
 - A modal menu kept mounted with `forceMount` leaves the page to screen readers while it is closed, where it hid
   the page as soon as its content attached.
 - A menu that is closing but still mounted no longer lets its items take focus under the pointer.
+- A menu kept mounted with `forceMount` takes focus when it opens, not when it mounts closed, which pulled focus
+  off the page into a hidden menu.
+- A submenu no longer mounts while closed because its menu's portal is force mounted. It takes `forceMount` from
+  its own prop or a portal of its own, where in Radix every closed submenu mounts with its menu.
 - A submenu flipped to the left stays open when the pointer moves straight into it in one jump, where
   the click landed on the parent's item underneath. It stays open too when the pointer jumps into it before it
   has moved over the menu at all, which read as moving right.

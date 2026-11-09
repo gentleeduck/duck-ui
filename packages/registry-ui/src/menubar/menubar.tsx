@@ -2,27 +2,17 @@
 
 import { cn } from '@gentleduck/libs/cn'
 import * as MenubarPrimitive from '@gentleduck/primitives/menubar'
-import { formatForDisplay } from '@gentleduck/vim/format'
 import { Check, ChevronRight, Circle } from 'lucide-react'
 import * as React from 'react'
+import { useKeysLabel } from '../_internal/keys-label'
 import { ShortcutBinder } from '../_internal/shortcut-binder'
+import { menubarContentStyle, menubarSubContentStyle } from './menubar.constants'
 
-const MenubarMenu: typeof MenubarPrimitive.Menu = MenubarPrimitive.Menu
-MenubarMenu.displayName = 'MenubarMenu'
-
+const MenubarMenu = MenubarPrimitive.Menu
 const MenubarGroup = MenubarPrimitive.Group
-MenubarGroup.displayName = 'MenubarGroup'
-
 const MenubarPortal = MenubarPrimitive.Portal
-MenubarPortal.displayName = 'MenubarPortal'
-
-// MenubarRadioGroup is a zero-op pass-through; re-export the primitive directly.
 const MenubarRadioGroup = MenubarPrimitive.RadioGroup
-
-function MenubarSub({ ...props }: React.ComponentProps<typeof MenubarPrimitive.Sub>) {
-  return <MenubarPrimitive.Sub data-slot="menubar-sub" {...props} />
-}
-MenubarSub.displayName = 'MenubarSub'
+const MenubarSub = MenubarPrimitive.Sub
 
 const Menubar = React.forwardRef<
   React.ComponentRef<typeof MenubarPrimitive.Root>,
@@ -30,7 +20,10 @@ const Menubar = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <MenubarPrimitive.Root
     ref={ref}
-    className={cn('flex h-9 items-center space-x-1 rounded-md border bg-background p-1 shadow-sm', className)}
+    className={cn(
+      'flex h-9 items-center gap-1 rounded-md border bg-background p-1 shadow-sm data-[orientation=vertical]:h-auto data-[orientation=vertical]:flex-col data-[orientation=vertical]:items-stretch',
+      className,
+    )}
     {...props}
   />
 ))
@@ -43,7 +36,7 @@ const MenubarTrigger = React.forwardRef<
   <MenubarPrimitive.Trigger
     ref={ref}
     className={cn(
-      'flex cursor-default select-none items-center rounded-sm px-3 py-1 font-medium text-sm outline-hidden focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
+      'flex cursor-default select-none items-center rounded-sm px-3 py-1 font-medium text-sm outline-hidden focus:bg-accent focus:text-accent-foreground data-disabled:cursor-not-allowed data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-disabled:opacity-50',
       className,
     )}
     {...props}
@@ -79,8 +72,9 @@ const MenubarSubContent = React.forwardRef<
   <MenubarPrimitive.SubContent
     ref={ref}
     className={cn(
-      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-32 origin-(--gentleduck-menubar-content-transform-origin) overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=closed]:animate-out data-[state=open]:animate-in',
+      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=open]:animate-in',
       'animation-duration-200 data-[state=closed]:animation-duration-150 ease-(--gentleduck-motion-ease)',
+      menubarSubContentStyle,
       className,
     )}
     {...props}
@@ -92,15 +86,16 @@ const MenubarContent = React.forwardRef<
   React.ComponentRef<typeof MenubarPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Content>
 >(({ className, align = 'start', alignOffset = -4, sideOffset = 8, ...props }, ref) => (
-  <MenubarPrimitive.Portal>
+  <MenubarPrimitive.Portal forceMount={props.forceMount}>
     <MenubarPrimitive.Content
       ref={ref}
       align={align}
       alignOffset={alignOffset}
       sideOffset={sideOffset}
       className={cn(
-        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-48 origin-(--gentleduck-menubar-content-transform-origin) overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in',
-        'animation-duration-200 data-[state=closed]:animation-duration-150 ease-(--gentleduck-motion-ease)',
+        'data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=open]:animate-in',
+        'animation-duration-200 ease-(--gentleduck-motion-ease)',
+        menubarContentStyle,
         className,
       )}
       {...props}
@@ -198,18 +193,21 @@ interface IMenubarShortcutProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const MenubarShortcut = React.forwardRef<HTMLSpanElement, IMenubarShortcutProps>(
-  ({ className, keys, onKeysPressed, children, ...props }, ref) => (
-    <>
-      <span
-        ref={ref}
-        data-slot="menubar-shortcut"
-        className={cn('ms-auto text-muted-foreground text-xs tracking-widest', className)}
-        {...props}>
-        {children ?? (keys ? formatForDisplay(keys) : null)}
-      </span>
-      {keys && onKeysPressed ? <ShortcutBinder keys={keys} handler={onKeysPressed} /> : null}
-    </>
-  ),
+  ({ className, keys, onKeysPressed, children, ...props }, ref) => {
+    const label = useKeysLabel(keys)
+    return (
+      <>
+        <span
+          ref={ref}
+          data-slot="menubar-shortcut"
+          className={cn('ms-auto text-muted-foreground text-xs tracking-widest', className)}
+          {...props}>
+          {children ?? label}
+        </span>
+        {keys && onKeysPressed ? <ShortcutBinder keys={keys} handler={onKeysPressed} /> : null}
+      </>
+    )
+  },
 )
 MenubarShortcut.displayName = 'MenubarShortcut'
 

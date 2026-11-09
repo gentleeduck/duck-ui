@@ -15,8 +15,13 @@ import {
   MenubarSubTrigger,
   MenubarTrigger,
 } from '@gentleduck/registry-ui/menubar'
+import * as React from 'react'
 
 export default function Demo() {
+  const [showBookmarks, setShowBookmarks] = React.useState(false)
+  const [showFullUrls, setShowFullUrls] = React.useState(true)
+  const [profile, setProfile] = React.useState('benoit')
+
   return (
     <Menubar>
       <MenubarMenu>
@@ -75,8 +80,12 @@ export default function Demo() {
       <MenubarMenu>
         <MenubarTrigger>View</MenubarTrigger>
         <MenubarContent>
-          <MenubarCheckboxItem>Always Show Bookmarks Bar</MenubarCheckboxItem>
-          <MenubarCheckboxItem checked>Always Show Full URLs</MenubarCheckboxItem>
+          <MenubarCheckboxItem checked={showBookmarks} onCheckedChange={setShowBookmarks}>
+            Always Show Bookmarks Bar
+          </MenubarCheckboxItem>
+          <MenubarCheckboxItem checked={showFullUrls} onCheckedChange={setShowFullUrls}>
+            Always Show Full URLs
+          </MenubarCheckboxItem>
           <MenubarSeparator />
           <MenubarItem inset>
             Reload <MenubarShortcut>⌘R</MenubarShortcut>
@@ -93,7 +102,7 @@ export default function Demo() {
       <MenubarMenu>
         <MenubarTrigger>Profiles</MenubarTrigger>
         <MenubarContent>
-          <MenubarRadioGroup value="benoit">
+          <MenubarRadioGroup value={profile} onValueChange={setProfile}>
             <MenubarRadioItem value="andy">Andy</MenubarRadioItem>
             <MenubarRadioItem value="benoit">Benoit</MenubarRadioItem>
             <MenubarRadioItem value="Luis">Luis</MenubarRadioItem>

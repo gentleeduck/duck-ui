@@ -16,8 +16,13 @@ import {
   MenubarSubTrigger,
   MenubarTrigger,
 } from '@gentleduck/registry-ui/menubar'
+import * as React from 'react'
 
 export default function Demo() {
+  const [showBookmarks, setShowBookmarks] = React.useState(false)
+  const [showFullUrls, setShowFullUrls] = React.useState(true)
+  const [profile, setProfile] = React.useState('ahmad')
+
   return (
     <DirectionProvider dir="rtl">
       <Menubar>
@@ -77,8 +82,12 @@ export default function Demo() {
         <MenubarMenu>
           <MenubarTrigger>عرض</MenubarTrigger>
           <MenubarContent>
-            <MenubarCheckboxItem>إظهار شريط الإشارات دائمًا</MenubarCheckboxItem>
-            <MenubarCheckboxItem checked>إظهار الروابط كاملة دائمًا</MenubarCheckboxItem>
+            <MenubarCheckboxItem checked={showBookmarks} onCheckedChange={setShowBookmarks}>
+              إظهار شريط الإشارات دائمًا
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem checked={showFullUrls} onCheckedChange={setShowFullUrls}>
+              إظهار الروابط كاملة دائمًا
+            </MenubarCheckboxItem>
             <MenubarSeparator />
             <MenubarItem inset>
               إعادة التحميل <MenubarShortcut>⌘R</MenubarShortcut>
@@ -95,7 +104,7 @@ export default function Demo() {
         <MenubarMenu>
           <MenubarTrigger>الملفات الشخصية</MenubarTrigger>
           <MenubarContent>
-            <MenubarRadioGroup value="ahmad">
+            <MenubarRadioGroup value={profile} onValueChange={setProfile}>
               <MenubarRadioItem value="ali">علي</MenubarRadioItem>
               <MenubarRadioItem value="ahmad">أحمد</MenubarRadioItem>
               <MenubarRadioItem value="omar">عمر</MenubarRadioItem>

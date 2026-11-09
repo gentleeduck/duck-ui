@@ -1,14 +1,21 @@
 // From Radix UI primitives, e2e/context-menu.spec.ts. MIT, see ../../__tests__/radix/LICENSE.
 
-import { expect, test } from '@playwright/test'
+import { expect, type Page, test } from '@playwright/test'
 import {
   keydown,
   longTouch,
   pointerExitLeftToRight,
   pointerExitRightToLeft,
   pointerOver,
+  touchDown,
   visitStory,
 } from '../../__tests__/e2e-helpers'
+
+// duck: the grace area lapses 300ms after the pointer leaves, so a submenu checked at once would pass before it closed.
+async function staysOpenPastGrace(page: Page, text: string) {
+  await page.clock.runFor(400)
+  await expect(page.getByText(text, { exact: true })).toBeVisible()
+}
 
 test.describe('ContextMenu', () => {
   test.describe('given submenu user', () => {
@@ -39,7 +46,10 @@ test.describe('ContextMenu', () => {
       test('should close open submenus and reopen the root menu when long touching trigger', async ({ page }) => {
         await pointerOver(page, 'Bookmarks →')
         await expect(page.getByText('Inbox', { exact: true })).toBeVisible()
-        await longTouch(page, 'Right Click Here')
+        // duck: the finger closes the open menus as it lands, then the hold opens the root again.
+        await touchDown(page, 'Right Click Here')
+        await expect(page.getByText('New Tab', { exact: true })).toHaveCount(0)
+        await page.waitForTimeout(750)
         await expect(page.getByText('New Tab', { exact: true })).toBeVisible()
         await expect(page.getByText('Inbox', { exact: true })).toHaveCount(0)
       })
@@ -60,6 +70,7 @@ test.describe('ContextMenu', () => {
         test.use({ viewport: { width: 550, height: 768 } })
 
         test('should close submenu when moving pointer away but remain open when moving towards', async ({ page }) => {
+          await page.clock.install()
           // Moving away
           await pointerOver(page, 'Bookmarks →')
           await expect(page.getByText('Inbox', { exact: true })).toBeVisible()
@@ -70,7 +81,7 @@ test.describe('ContextMenu', () => {
           await pointerOver(page, 'Bookmarks →')
           await expect(page.getByText('Inbox', { exact: true })).toBeVisible()
           await pointerExitLeftToRight(page, 'Bookmarks →')
-          await expect(page.getByText('Inbox', { exact: true })).toBeVisible()
+          await staysOpenPastGrace(page, 'Inbox')
 
           // Test at collision edge
           // Moving away
@@ -83,7 +94,7 @@ test.describe('ContextMenu', () => {
           await pointerOver(page, 'WorkOS →')
           await expect(page.getByText('Radix', { exact: true })).toBeVisible()
           await pointerExitRightToLeft(page, 'WorkOS →')
-          await expect(page.getByText('Radix', { exact: true })).toBeVisible()
+          await staysOpenPastGrace(page, 'Radix')
         })
       })
 
@@ -157,6 +168,8 @@ test.describe('ContextMenu', () => {
           const inbox = page.getByText('Inbox', { exact: true })
           await expect(inbox).toBeFocused()
           await keydown(inbox, 'ArrowLeft')
+          // duck: each key starts from a closed submenu, or a key that opened nothing would find Inbox still focused.
+          await expect(inbox).toHaveCount(0)
         }
 
         await shouldOpenOnKeydown(' ')
@@ -193,6 +206,15 @@ test.describe('ContextMenu', () => {
         await page.getByText('Inbox', { exact: true }).press('Escape')
         await expect(page.getByText('Inbox', { exact: true })).toHaveCount(0)
         await expect(page.getByText('New Window', { exact: true })).toHaveCount(0)
+
+        // duck: Enter and Space select the item, which closes every menu too.
+        for (const key of ['Enter', 'Space']) {
+          await page.getByText('Right Click Here', { exact: true }).click({ button: 'right' })
+          await page.getByText('Bookmarks →', { exact: true }).press('Enter')
+          await page.getByText('Inbox', { exact: true }).press(key)
+          await expect(page.getByText('Inbox', { exact: true })).toHaveCount(0)
+          await expect(page.getByText('New Window', { exact: true })).toHaveCount(0)
+        }
       })
 
       test('should scope typeahead behaviour to the active menu', async ({ page }) => {
@@ -223,6 +245,7 @@ test.describe('ContextMenu', () => {
       })
 
       test('should close submenu when pointer moves away but remain open when moving towards', async ({ page }) => {
+        await page.clock.install()
         // Moving away
         await pointerOver(page, 'Bookmarks →')
         await expect(page.getByText('Inbox', { exact: true })).toBeVisible()
@@ -233,7 +256,7 @@ test.describe('ContextMenu', () => {
         await pointerOver(page, 'Bookmarks →')
         await expect(page.getByText('Inbox', { exact: true })).toBeVisible()
         await pointerExitRightToLeft(page, 'Bookmarks →')
-        await expect(page.getByText('Inbox', { exact: true })).toBeVisible()
+        await staysOpenPastGrace(page, 'Inbox')
 
         // Test at collision edge
         // Moving away
@@ -246,7 +269,7 @@ test.describe('ContextMenu', () => {
         await pointerOver(page, 'WorkOS →')
         await expect(page.getByText('Radix', { exact: true })).toBeVisible()
         await pointerExitLeftToRight(page, 'WorkOS →')
-        await expect(page.getByText('Radix', { exact: true })).toBeVisible()
+        await staysOpenPastGrace(page, 'Radix')
       })
     })
 

@@ -76,12 +76,14 @@ test.describe('ContextMenu modal and disabled', () => {
   test('closes on a right click at the trigger while open, modal or not', async ({ page }) => {
     const trigger = page.getByText('Right Click Here', { exact: true })
     await openMenu(page)
+    await expect(page.getByRole('menu')).toBeVisible()
     await trigger.click({ button: 'right', force: true })
 
     await expect(page.getByRole('menu')).toHaveCount(0)
 
     await page.getByLabel('Modal').uncheck()
     await openMenu(page)
+    await expect(page.getByRole('menu')).toBeVisible()
     await trigger.click({ button: 'right', force: true })
 
     await expect(page.getByRole('menu')).toHaveCount(0)

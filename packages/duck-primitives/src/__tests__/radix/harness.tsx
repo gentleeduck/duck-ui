@@ -105,8 +105,8 @@ for (const key of Object.getOwnPropertyNames(window)) {
 }
 Object.assign(globalThis, { EventTarget: window.EventTarget, FormData: window.FormData })
 
-export async function axe(container: Element) {
-  return axeCore.run(container)
+export async function axe(container: Element, options: axeCore.RunOptions = {}) {
+  return axeCore.run(container, options)
 }
 
 // bun's vi lacks the global and env stubs and cannot spy on an accessor. vitest's `window` is `globalThis`, so a

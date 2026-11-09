@@ -139,6 +139,12 @@ export async function pointerExitLeftToRight(page: Page, text: string): Promise<
  * over the element for 750ms to trigger the long-press interaction.
  */
 export async function longTouch(page: Page, text: string): Promise<void> {
+  await touchDown(page, text)
+  await page.waitForTimeout(750)
+}
+
+/** Put a finger down on an element and leave it there, the start of a long touch. */
+export async function touchDown(page: Page, text: string): Promise<void> {
   const locator = page.getByText(text, { exact: true })
   await expect(locator).toBeVisible()
   await locator.dispatchEvent('pointerdown', {
@@ -152,7 +158,6 @@ export async function longTouch(page: Page, text: string): Promise<void> {
     bubbles: true,
     cancelable: true,
   })
-  await page.waitForTimeout(750)
 }
 
 /**

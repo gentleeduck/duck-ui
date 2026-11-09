@@ -70,7 +70,7 @@
 }
 
 .separator {
-  height: 1;
+  height: 1px;
   margin: 5px 10px;
   background-color: var(--color-gray100);
 }

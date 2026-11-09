@@ -52,6 +52,8 @@ describe('rendering and opening', () => {
 
     const wrapper = () => document.querySelector('[data-slot="popper-content-wrapper"]') as HTMLElement
     await waitFor(() => expect(wrapper()).toBeTruthy())
+    // Until Popper places it, the wrapper sits at a placeholder that any first position would replace.
+    await waitFor(() => expect(wrapper().style.transform).not.toEqual('translate(0, -200%)'))
     const initialTransform = wrapper().style.transform
 
     // Right-click again in a different location while the menu is still open.
@@ -72,10 +74,11 @@ describe('rendering and opening', () => {
   })
 
   it('has no accessibility violations when open', async () => {
-    const { container } = render(<ContextMenuTest />)
+    const { baseElement } = render(<ContextMenuTest />)
     fireEvent.contextMenu(screen.getByText(TRIGGER_TEXT))
     await waitFor(() => expect(screen.getByRole('menu')).toBeInTheDocument())
-    expect(await axe(container)).toHaveNoViolations()
+    // region is a page-layout rule, and the menu portalled to the body sits outside any landmark the test page lacks.
+    expect(await axe(baseElement, { rules: { region: { enabled: false } } })).toHaveNoViolations()
   })
 })
 
@@ -1528,7 +1531,8 @@ describe('touch long press with nested triggers', () => {
     )
   }
 
-  const openMenus = () => screen.queryAllByRole('menu').map((menu) => menu.getAttribute('aria-label'))
+  // A modal menu hides the page from role queries, an outer menu still open with it included.
+  const openMenus = () => screen.queryAllByRole('menu', { hidden: true }).map((menu) => menu.getAttribute('aria-label'))
 
   it('opens only the innermost menu on a touch long press', () => {
     render(<NestedContextMenuTest />)
@@ -1547,10 +1551,11 @@ describe('touch long press with nested triggers', () => {
       vi.advanceTimersByTime(520)
     })
     fireEvent.contextMenu(inner)
+    const onContextMenu = openMenus()
     act(() => {
       vi.advanceTimersByTime(300)
     })
-    expect(openMenus()).toEqual(['inner menu'])
+    expect([onContextMenu, openMenus()]).toEqual([['inner menu'], ['inner menu']])
   })
 
   it('opens the menu on a touch long press', () => {

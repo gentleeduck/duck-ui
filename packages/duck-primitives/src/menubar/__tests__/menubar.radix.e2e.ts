@@ -53,7 +53,7 @@ test.describe('Menubar', () => {
       // Disabled item
       await pointerOver(page, 'Find →')
       await pointerOver(page, 'Find Next')
-      await pointerOver(page, 'Redo')
+      await pointerOver(page, 'Undo')
       await expect(page.getByText('Find Next', { exact: true })).toHaveCount(0)
 
       // Trigger item
@@ -255,6 +255,10 @@ test.describe('Menubar', () => {
     })
 
     test.describe('with portals enabled', () => {
+      test.beforeEach(async ({ page }) => {
+        await page.getByText('Portalled', { exact: true }).click()
+      })
+
       test('should move to next menu using right arrow and previous menu with left arrow', async ({ page }) => {
         await shouldSupportArrowKeyNavigation(page, 'ltr')
       })

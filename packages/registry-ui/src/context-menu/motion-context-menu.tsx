@@ -9,16 +9,18 @@ import { MotionRootContext, useMotionContent, useMotionMount, useMotionRoot } fr
 import * as ContextMenuPrimitive from '@gentleduck/primitives/context-menu'
 import { LazyMotion, m } from 'motion/react'
 import * as React from 'react'
+import { contextMenuContentStyle, contextMenuSubContentStyle } from './context-menu.constants'
 
 function MotionContextMenu({
   children,
+  open,
   onOpenChange,
   ...rest
 }: React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Root>) {
-  const { rootProps, contextValue } = useMotionRoot({ onOpenChange })
+  const { rootProps, contextValue } = useMotionRoot({ open, onOpenChange })
   return (
     <MotionRootContext.Provider value={contextValue}>
-      <ContextMenuPrimitive.Root onOpenChange={rootProps.onOpenChange} {...rest}>
+      <ContextMenuPrimitive.Root {...rootProps} {...rest}>
         {children}
       </ContextMenuPrimitive.Root>
     </MotionRootContext.Provider>
@@ -53,10 +55,7 @@ const MotionContextMenuContent = React.forwardRef<
           }}
           {...props}>
           <m.div
-            className={cn(
-              'z-50 max-h-(--gentleduck-context-menu-content-available-height) min-w-32 origin-top-left overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md rtl:origin-top-right',
-              className,
-            )}
+            className={cn(contextMenuContentStyle, className)}
             initial={content.initial}
             animate={isOpen ? content.animate : { ...content.exit, pointerEvents: 'none' }}
             transition={content.transition}>
@@ -102,10 +101,7 @@ const MotionContextMenuSubContent = React.forwardRef<
       <ContextMenuPrimitive.Portal forceMount>
         <ContextMenuPrimitive.SubContent ref={ref} forceMount asChild {...props}>
           <m.div
-            className={cn(
-              'z-50 min-w-32 origin-(--gentleduck-context-menu-content-transform-origin) overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg',
-              className,
-            )}
+            className={cn(contextMenuSubContentStyle, className)}
             initial={content.initial}
             animate={isOpen ? content.animate : { ...content.exit, pointerEvents: 'none' }}
             transition={content.transition}>

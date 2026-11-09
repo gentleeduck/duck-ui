@@ -16,8 +16,13 @@ import {
   ContextMenuTrigger,
 } from '@gentleduck/registry-ui/context-menu'
 import { DirectionProvider } from '@gentleduck/registry-ui/direction'
+import * as React from 'react'
 
 export default function Demo() {
+  const [showBookmarks, setShowBookmarks] = React.useState(true)
+  const [showFullUrls, setShowFullUrls] = React.useState(false)
+  const [person, setPerson] = React.useState('ahmad')
+
   return (
     <DirectionProvider dir="rtl">
       <ContextMenu>
@@ -51,13 +56,15 @@ export default function Demo() {
             </ContextMenuSubContent>
           </ContextMenuSub>
           <ContextMenuSeparator />
-          <ContextMenuCheckboxItem checked>
+          <ContextMenuCheckboxItem checked={showBookmarks} onCheckedChange={setShowBookmarks}>
             إظهار شريط الإشارات
             <ContextMenuShortcut>⌘⇧B</ContextMenuShortcut>
           </ContextMenuCheckboxItem>
-          <ContextMenuCheckboxItem>إظهار الروابط كاملة</ContextMenuCheckboxItem>
+          <ContextMenuCheckboxItem checked={showFullUrls} onCheckedChange={setShowFullUrls}>
+            إظهار الروابط كاملة
+          </ContextMenuCheckboxItem>
           <ContextMenuSeparator />
-          <ContextMenuRadioGroup value="ahmad">
+          <ContextMenuRadioGroup value={person} onValueChange={setPerson}>
             <ContextMenuLabel inset>الأشخاص</ContextMenuLabel>
             <ContextMenuSeparator />
             <ContextMenuRadioItem value="ahmad">أحمد خالد</ContextMenuRadioItem>

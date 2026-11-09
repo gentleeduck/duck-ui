@@ -2,10 +2,11 @@
 
 import { cn } from '@gentleduck/libs/cn'
 import * as ContextMenuPrimitive from '@gentleduck/primitives/context-menu'
-import { formatForDisplay } from '@gentleduck/vim/format'
 import { Check, ChevronRight, Circle } from 'lucide-react'
 import * as React from 'react'
+import { useKeysLabel } from '../_internal/keys-label'
 import { ShortcutBinder } from '../_internal/shortcut-binder'
+import { contextMenuContentStyle, contextMenuSubContentStyle } from './context-menu.constants'
 
 const ContextMenu = ContextMenuPrimitive.Root
 
@@ -46,8 +47,9 @@ const ContextMenuSubContent = React.forwardRef<
   <ContextMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-32 origin-(--gentleduck-context-menu-content-transform-origin) overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=closed]:animate-out data-[state=open]:animate-in',
+      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=open]:animate-in',
       'animation-duration-200 data-[state=closed]:animation-duration-150 ease-(--gentleduck-motion-ease)',
+      contextMenuSubContentStyle,
       className,
     )}
     {...props}
@@ -59,12 +61,13 @@ const ContextMenuContent = React.forwardRef<
   React.ComponentRef<typeof ContextMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Content>
 >(({ className, ...props }, ref) => (
-  <ContextMenuPrimitive.Portal>
+  <ContextMenuPrimitive.Portal forceMount={props.forceMount}>
     <ContextMenuPrimitive.Content
       ref={ref}
       className={cn(
-        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--gentleduck-context-menu-content-available-height) min-w-32 origin-(--gentleduck-context-menu-content-transform-origin) overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=closed]:animate-out data-[state=open]:animate-in',
+        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=open]:animate-in',
         'animation-duration-200 data-[state=closed]:animation-duration-150 ease-(--gentleduck-motion-ease)',
+        contextMenuContentStyle,
         className,
       )}
       {...props}
@@ -162,18 +165,21 @@ interface IContextMenuShortcutProps extends React.HTMLAttributes<HTMLSpanElement
 }
 
 const ContextMenuShortcut = React.forwardRef<HTMLSpanElement, IContextMenuShortcutProps>(
-  ({ className, keys, onKeysPressed, children, ...props }, ref) => (
-    <>
-      <span
-        ref={ref}
-        data-slot="context-menu-shortcut"
-        className={cn('ms-auto text-muted-foreground text-xs tracking-widest', className)}
-        {...props}>
-        {children ?? (keys ? formatForDisplay(keys) : null)}
-      </span>
-      {keys && onKeysPressed ? <ShortcutBinder keys={keys} handler={onKeysPressed} /> : null}
-    </>
-  ),
+  ({ className, keys, onKeysPressed, children, ...props }, ref) => {
+    const label = useKeysLabel(keys)
+    return (
+      <>
+        <span
+          ref={ref}
+          data-slot="context-menu-shortcut"
+          className={cn('ms-auto text-muted-foreground text-xs tracking-widest', className)}
+          {...props}>
+          {children ?? label}
+        </span>
+        {keys && onKeysPressed ? <ShortcutBinder keys={keys} handler={onKeysPressed} /> : null}
+      </>
+    )
+  },
 )
 ContextMenuShortcut.displayName = 'ContextMenuShortcut'
 

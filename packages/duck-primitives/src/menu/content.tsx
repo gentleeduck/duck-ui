@@ -187,11 +187,17 @@ const MenuContentImpl = React.forwardRef<MenuContentImplElement, IMenu.IContentI
     const { items } = group.context
     const getEnabledNodes = () => getFocusableItems(items).map(({ node }) => node)
     const searchRef = React.useRef('')
-    // Kept mounted, the content mounts closed, where taking focus would pull it off the page into a hidden menu.
+    // Kept mounted, the content is there while closed, so it takes focus as it opens rather than as it mounts. A
+    // submenu opened by the pointer moves no focus, which its own onOpenAutoFocus says by preventing ours.
+    const takesFocusRef = React.useRef(false)
     const focusOnOpenRef = React.useRef(false)
 
     React.useEffect(() => {
-      if (!context.open || !focusOnOpenRef.current) return
+      if (!context.open) {
+        focusOnOpenRef.current = true
+        return
+      }
+      if (!focusOnOpenRef.current || !takesFocusRef.current) return
       focusOnOpenRef.current = false
       contentRef.current?.focus({ preventScroll: true })
     }, [context.open])
@@ -272,8 +278,8 @@ const MenuContentImpl = React.forwardRef<MenuContentImplElement, IMenu.IContentI
               trapped={trapFocus}
               onMountAutoFocus={composeEventHandlers(onOpenAutoFocus, (event) => {
                 event.preventDefault()
+                takesFocusRef.current = true
                 if (context.open) contentRef.current?.focus({ preventScroll: true })
-                else focusOnOpenRef.current = true
               })}
               onUnmountAutoFocus={onCloseAutoFocus}>
               <DismissableLayer

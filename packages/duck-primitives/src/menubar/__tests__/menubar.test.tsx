@@ -854,12 +854,12 @@ describe('Menubar disabled', () => {
     expect(screen.getByText('New')).toBeTruthy()
   })
 
-  it('takes a trigger given through asChild out of the tab order once the bar is disabled', () => {
+  it('takes a trigger given through asChild out of the tab order once the bar is disabled, its own tabIndex too', () => {
     function Bar({ disabled }: { disabled: boolean }) {
       return (
         <Menubar disabled={disabled}>
           <MenubarMenu value="file">
-            <MenubarTrigger asChild>
+            <MenubarTrigger asChild tabIndex={0}>
               <a href="#file">File</a>
             </MenubarTrigger>
           </MenubarMenu>

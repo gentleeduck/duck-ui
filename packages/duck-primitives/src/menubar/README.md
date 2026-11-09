@@ -126,7 +126,7 @@ Each test was proven by changing the code and watching a test fail.
 - Menubar disabled
   - opens no menu from the pointer or the keyboard
   - keeps the open menu when the pointer moves onto a disabled trigger
-  - takes a trigger given through asChild out of the tab order once the bar is disabled
+  - takes a trigger given through asChild out of the tab order once the bar is disabled, its own tabIndex too
   - takes a disabled bar out of the tab order, and marks its triggers
 - Menubar modal
   - locks the page while a menu is open, leaving the menu and the bar usable

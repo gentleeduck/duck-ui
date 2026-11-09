@@ -296,7 +296,7 @@ describe('Menu.Content', () => {
     expect([screen.queryByText('Apple') !== null, screen.queryByText('Grape')]).toEqual([true, null])
   })
 
-  it('leaves focus where it is when it mounts closed under forceMount, and takes it once it opens', async () => {
+  it('leaves focus where it is when it mounts closed under forceMount, and takes it each time it opens', async () => {
     function Kept({ mounted, open }: { mounted: boolean; open: boolean }) {
       return (
         <>
@@ -323,8 +323,17 @@ describe('Menu.Content', () => {
     const whileClosed = document.activeElement
     rerender(<Kept mounted open />)
     await wait(0)
+    const firstOpen = document.activeElement?.getAttribute('role')
+    rerender(<Kept mounted open={false} />)
+    act(() => field.focus())
+    rerender(<Kept mounted open />)
+    await wait(0)
 
-    expect([whileClosed === field, document.activeElement?.getAttribute('role')]).toEqual([true, 'menu'])
+    expect([whileClosed === field, firstOpen, document.activeElement?.getAttribute('role')]).toEqual([
+      true,
+      'menu',
+      'menu',
+    ])
   })
 
   it('puts a focus guard at each edge of the page while open', () => {

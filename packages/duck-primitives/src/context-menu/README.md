@@ -44,14 +44,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 112 | `context-menu.radix.test.tsx` 56, `context-menu.test.tsx` 56 |
+| Unit | 114 | `context-menu.radix.test.tsx` 56, `context-menu.test.tsx` 58 |
 | End to end | 25 | `context-menu.e2e.ts` 6, `context-menu.radix.e2e.ts` 19 |
 | registry-ui | 12 | `context-menu-force-mount.test.tsx` 1, `context-menu.test.tsx` 11 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>137 behaviours, one per test</summary>
+<summary>139 behaviours, one per test</summary>
 
 **Unit, `context-menu.test.tsx`**
 
@@ -83,6 +83,8 @@ Each test was proven by changing the code and watching a test fail.
 - ContextMenu right-click mark
   - opens on the next right click after one closed it, when the trigger stops the contextmenu going further
   - moves to a right click on its trigger that onPointerDownOutside kept from closing it
+  - moves to a right click on its trigger that onInteractOutside kept from closing it
+  - opens on a right click after a control press elsewhere closed it without a contextmenu, as on Windows
   - clears the mark when a right click elsewhere lands on the root element, as it does under a modal menu
   - leaves no listener behind once the contextmenu after a right click lands
   - hands a press outside to the content's own onPointerDownOutside
@@ -270,7 +272,10 @@ Each test was proven by changing the code and watching a test fail.
 - With triggers nested inside each other, a long press opens only the innermost.
 - A long press while the menu is open closes it and any submenu, then opens it again where you pressed.
 - A right click on a menu that is still mounted moves it to where the click landed: one kept by `forceMount`, or one
-  open whose press the page stopped inside the trigger. The menu stayed where it was first placed.
+  open whose press the page stopped inside the trigger. The menu stayed where it was first placed. One that
+  `onInteractOutside` kept open moves too.
+- A right click on the trigger opens the menu after a Control press elsewhere closed it, which on Windows sends no
+  `contextmenu` and left the trigger thinking the next right click was the one that closed it.
 - A non-modal menu kept mounted with `forceMount` forgets a press outside when it opens again, where one on the
   page while it was closed, or the one that closed it, kept focus from going back to where it was once the menu
   unmounted.

@@ -39,25 +39,23 @@ const ContextMenuContent = React.forwardRef<ContextMenuContentElement, IContextM
           props.onCloseAutoFocus?.(event)
           if (hasInteractedOutsideRef.current) event.preventDefault()
         }}
-        onPointerDownOutside={(event) => {
-          props.onPointerDownOutside?.(event)
-          const press = event.detail.originalEvent
-          if (event.defaultPrevented || !(press.button === 2 || press.ctrlKey)) return
-          // A modal menu leaves the page no pointer events, so only the layer sees a press that lands on the trigger.
-          // The contextmenu after it clears the mark wherever it goes, so one elsewhere leaves none for the keyboard.
-          context.rightClickClosesRef.current = true
-          window.addEventListener(
-            'contextmenu',
-            () => {
-              context.rightClickClosesRef.current = false
-            },
-            { once: true },
-          )
-        }}
         onInteractOutside={(event) => {
           props.onInteractOutside?.(event)
-
-          if (!event.defaultPrevented && !context.modal) hasInteractedOutsideRef.current = true
+          if (event.defaultPrevented) return
+          if (!context.modal) hasInteractedOutsideRef.current = true
+          const press = event.detail.originalEvent
+          if (!('button' in press) || !(press.button === 2 || press.ctrlKey)) return
+          // A modal menu leaves the page no pointer events, so only the layer sees a press that lands on the trigger.
+          // The contextmenu after it clears the mark wherever it goes, or the next press does where none follows.
+          const closes = context.rightClickClosesRef
+          closes.current = true
+          const clear = () => {
+            closes.current = false
+            window.removeEventListener('contextmenu', clear)
+            window.removeEventListener('pointerdown', clear, true)
+          }
+          window.addEventListener('contextmenu', clear, { once: true })
+          window.addEventListener('pointerdown', clear, { capture: true, once: true })
         }}
         style={{ ...props.style, ...POPPER_VARIABLES }}
       />

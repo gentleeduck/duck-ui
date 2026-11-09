@@ -303,6 +303,38 @@ describe('ContextMenu right-click mark', () => {
     )
   })
 
+  it('moves to a right click on its trigger that onInteractOutside kept from closing it', async () => {
+    const trigger = renderStopping({
+      avoidCollisions: false,
+      updatePositionStrategy: 'always',
+      onInteractOutside: (event) => event.preventDefault(),
+    })
+    fireEvent.contextMenu(trigger, { clientX: 10, clientY: 10 })
+    await wait(20)
+
+    fireEvent.pointerDown(trigger, { button: 2, pointerType: 'mouse' })
+    fireEvent.contextMenu(trigger, { clientX: 200, clientY: 120 })
+    await wait(50)
+
+    expect(document.querySelector<HTMLElement>('[data-slot="popper-content-wrapper"]')?.style.transform).toBe(
+      'translate(202px, 120px)',
+    )
+  })
+
+  it('opens on a right click after a control press elsewhere closed it without a contextmenu, as on Windows', async () => {
+    const trigger = renderStopping()
+    fireEvent.contextMenu(trigger)
+    await wait(0)
+    fireEvent.pointerDown(document.body, { button: 0, ctrlKey: true, pointerType: 'mouse' })
+    await wait(0)
+    const afterClosing = screen.queryByRole('menu')
+
+    fireEvent.pointerDown(trigger, { button: 2, pointerType: 'mouse' })
+    fireEvent.contextMenu(trigger)
+
+    expect([afterClosing, screen.queryByRole('menu')?.getAttribute('role')]).toEqual([null, 'menu'])
+  })
+
   it('clears the mark when a right click elsewhere lands on the root element, as it does under a modal menu', async () => {
     const trigger = renderStopping()
     fireEvent.contextMenu(trigger)

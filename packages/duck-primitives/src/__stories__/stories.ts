@@ -4,6 +4,7 @@ import * as alertDialog from '../alert-dialog/__stories__/alert-dialog.stories'
 import * as arrow from '../arrow/__stories__/arrow.stories'
 import * as avatar from '../avatar/__stories__/avatar.stories'
 import * as checkers from '../checkers/__stories__/checkers.stories'
+import * as contextMenu from '../context-menu/__stories__/context-menu.stories'
 import * as dialog from '../dialog/__stories__/dialog.stories'
 import * as direction from '../direction/__stories__/direction.stories'
 import * as dismissableLayer from '../dismissable-layer/__stories__/dismissable-layer.stories'
@@ -54,6 +55,7 @@ for (const module of [
   arrow,
   avatar,
   checkers,
+  contextMenu,
   dialog,
   direction,
   dismissableLayer,

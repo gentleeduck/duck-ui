@@ -8,21 +8,27 @@ import type { IContextMenu } from './context-menu.types'
 
 const TRIGGER_NAME = 'ContextMenuTrigger'
 
-type ContextMenuTriggerElement = React.ComponentRef<typeof Primitive.span>
+// Nested triggers all receive one bubbling pointerdown, and only the innermost may start a long press.
+const claimedLongPressEvents = new WeakSet<Event>()
 
-const ContextMenuTrigger = React.forwardRef<ContextMenuTriggerElement, IContextMenu.ITriggerProps>(
+const ContextMenuTrigger = React.forwardRef<HTMLSpanElement, IContextMenu.ITriggerProps>(
   (props: IContextMenu.IScoped<IContextMenu.ITriggerProps>, forwardedRef) => {
     const { __scopeContextMenu, disabled = false, ...triggerProps } = props
     const context = useContextMenuContext(TRIGGER_NAME, __scopeContextMenu)
     const menuScope = useMenuScope(__scopeContextMenu)
     const pointRef = React.useRef<IPoint>({ x: 0, y: 0 })
-    const virtualRef = React.useRef({
-      getBoundingClientRect: () => DOMRect.fromRect({ width: 0, height: 0, ...pointRef.current }),
+    const atPoint = () => ({
+      current: { getBoundingClientRect: () => DOMRect.fromRect({ width: 0, height: 0, ...pointRef.current }) },
     })
+    // The popper places the menu again only for a new anchor, which a menu still mounted needs to move to the point.
+    const [virtualRef, setVirtualRef] = React.useState(atPoint)
     const longPressTimerRef = React.useRef(0)
+    const pressRef = React.useRef<IPoint>({ x: 0, y: 0 })
     const clearLongPress = React.useCallback(() => window.clearTimeout(longPressTimerRef.current), [])
     const handleOpen = (event: React.MouseEvent | React.PointerEvent) => {
+      context.hasInteractedRef.current = true
       pointRef.current = { x: event.clientX, y: event.clientY }
+      setVirtualRef(atPoint())
       context.onOpenChange(true)
     }
 
@@ -36,7 +42,6 @@ const ContextMenuTrigger = React.forwardRef<ContextMenuTriggerElement, IContextM
           data-slot="context-menu-trigger"
           data-state={context.open ? 'open' : 'closed'}
           data-disabled={disabled ? '' : undefined}
-          dir={context.dir}
           {...triggerProps}
           ref={forwardedRef}
           style={{ WebkitTouchCallout: 'none', ...props.style }}
@@ -45,32 +50,38 @@ const ContextMenuTrigger = React.forwardRef<ContextMenuTriggerElement, IContextM
               ? props.onContextMenu
               : composeEventHandlers(props.onContextMenu, (event) => {
                   clearLongPress()
-                  handleOpen(event)
                   event.preventDefault()
+                  if (context.rightClickClosesRef.current) {
+                    context.rightClickClosesRef.current = false
+                    return
+                  }
+                  handleOpen(event)
                 })
           }
           onPointerDown={
             disabled
               ? props.onPointerDown
-              : composeEventHandlers(
-                  props.onPointerDown,
-                  whenTouchOrPen((event) => {
-                    clearLongPress()
-                    longPressTimerRef.current = window.setTimeout(() => handleOpen(event), 700)
-                  }),
-                )
+              : composeEventHandlers(props.onPointerDown, (event) => {
+                  if (event.pointerType === 'mouse') return
+                  clearLongPress()
+                  if (claimedLongPressEvents.has(event.nativeEvent)) return
+                  claimedLongPressEvents.add(event.nativeEvent)
+                  context.onOpenChange(false)
+                  pressRef.current = { x: event.clientX, y: event.clientY }
+                  longPressTimerRef.current = window.setTimeout(() => handleOpen(event), 700)
+                })
           }
-          onPointerMove={
-            disabled ? props.onPointerMove : composeEventHandlers(props.onPointerMove, whenTouchOrPen(clearLongPress))
-          }
-          onPointerCancel={
-            disabled
-              ? props.onPointerCancel
-              : composeEventHandlers(props.onPointerCancel, whenTouchOrPen(clearLongPress))
-          }
-          onPointerUp={
-            disabled ? props.onPointerUp : composeEventHandlers(props.onPointerUp, whenTouchOrPen(clearLongPress))
-          }
+          onPointerMove={composeEventHandlers(
+            props.onPointerMove,
+            whenTouchOrPen((event) => {
+              // A held finger drifts, so only a move past 10px gives up the press.
+              if (Math.hypot(event.clientX - pressRef.current.x, event.clientY - pressRef.current.y) > 10) {
+                clearLongPress()
+              }
+            }),
+          )}
+          onPointerCancel={composeEventHandlers(props.onPointerCancel, whenTouchOrPen(clearLongPress))}
+          onPointerUp={composeEventHandlers(props.onPointerUp, whenTouchOrPen(clearLongPress))}
         />
       </>
     )

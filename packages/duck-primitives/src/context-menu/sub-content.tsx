@@ -1,5 +1,6 @@
 import * as React from 'react'
 import * as MenuPrimitive from '../menu'
+import { POPPER_VARIABLES } from './content'
 import { useMenuScope } from './context-menu'
 import type { IContextMenu } from './context-menu.types'
 
@@ -17,16 +18,7 @@ const ContextMenuSubContent = React.forwardRef<ContextMenuSubContentElement, ICo
         {...menuScope}
         {...subContentProps}
         ref={forwardedRef}
-        style={{
-          ...props.style,
-          ...{
-            '--gentleduck-context-menu-content-transform-origin': 'var(--gentleduck-popper-transform-origin)',
-            '--gentleduck-context-menu-content-available-width': 'var(--gentleduck-popper-available-width)',
-            '--gentleduck-context-menu-content-available-height': 'var(--gentleduck-popper-available-height)',
-            '--gentleduck-context-menu-trigger-width': 'var(--gentleduck-popper-anchor-width)',
-            '--gentleduck-context-menu-trigger-height': 'var(--gentleduck-popper-anchor-height)',
-          },
-        }}
+        style={{ ...props.style, ...POPPER_VARIABLES }}
       />
     )
   },

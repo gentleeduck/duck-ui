@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { type FocusableElement, getTabbableCandidates } from '../focus-scope/focus-scope.libs'
+import { activeElement, type FocusableElement, getTabbableCandidates } from '../focus-scope/focus-scope.libs'
 import { useCallbackRef } from '../hooks/use-callback-ref'
 import { useLayoutEffect } from '../hooks/use-layout-effect'
 import { composeEventHandlers } from '../libs/compose-event-handler'
@@ -29,12 +29,13 @@ function whenMouse<E>(handler: React.PointerEventHandler<E>): React.PointerEvent
   return (event) => (event.pointerType === 'mouse' ? handler(event) : undefined)
 }
 
+// A link inside a shadow root leaves its host as the document's active element, so focus is read through the root.
 function focusFirst(candidates: FocusableElement[]) {
-  const previouslyFocusedElement = document.activeElement
+  const previouslyFocusedElement = activeElement(document)
   return candidates.some((candidate) => {
     if (candidate === previouslyFocusedElement) return true
     candidate.focus()
-    return document.activeElement !== previouslyFocusedElement
+    return activeElement(document) !== previouslyFocusedElement
   })
 }
 
@@ -129,6 +130,7 @@ function getTriggers(triggers: Set<INavigationMenu.ITrigger>) {
 }
 
 export {
+  activeElement,
   FocusGroupContext,
   focusFirst,
   getOpenState,

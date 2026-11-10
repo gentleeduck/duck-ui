@@ -6,6 +6,7 @@ import { useComposedRefs } from '../libs/compose-ref'
 import { Presence } from '../presence'
 import { useNavigationMenuContext, useNavigationMenuItemContext } from './navigation-menu'
 import {
+  activeElement,
   FocusGroupContext,
   focusFirst,
   getOpenState,
@@ -188,7 +189,8 @@ const NavigationMenuContentImpl = React.forwardRef<
           const isTabKey = event.key === 'Tab' && !isMetaKey
           if (isTabKey) {
             const candidates = getTabbableCandidates(event.currentTarget)
-            const index = candidates.findIndex((candidate) => candidate === document.activeElement)
+            const focused = activeElement(event.currentTarget.ownerDocument)
+            const index = candidates.findIndex((candidate) => candidate === focused)
             const isMovingBackwards = event.shiftKey
             const nextCandidates = isMovingBackwards
               ? candidates.slice(0, index).reverse()

@@ -86,12 +86,15 @@ describe('NavigationMenu', () => {
       </NavigationMenu>
     )
 
+    const inViewport = (element: HTMLElement) => element.closest('[data-slot="navigation-menu-viewport"]') !== null
     const inline = render(menu(false))
     expect(inline.getByText('Docs').parentElement?.getAttribute('data-slot')).toBe('navigation-menu-content')
+    expect(inViewport(inline.getByText('Docs'))).toBe(false)
     inline.unmount()
 
     const viewport = render(menu(true))
     expect(viewport.getByText('Docs').parentElement?.getAttribute('data-slot')).toBe('navigation-menu-content')
+    expect(inViewport(viewport.getByText('Docs'))).toBe(true)
   })
 
   it('link sets data-active when active', () => {
@@ -579,6 +582,36 @@ describe('NavigationMenu link select', () => {
 })
 
 describe('NavigationMenu manual activation', () => {
+  it('drops an open the pointer scheduled once the menu turns manual', async () => {
+    function Switching() {
+      const [mode, setMode] = React.useState<'automatic' | 'manual'>('automatic')
+      return (
+        <>
+          <button type="button" onClick={() => setMode('manual')}>
+            Manual
+          </button>
+          <NavigationMenu delayDuration={100} activationMode={mode}>
+            <NavigationMenuList>
+              <NavigationMenuItem value="learn">
+                <NavigationMenuTrigger>Learn</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <NavigationMenuLink href="#docs">Docs</NavigationMenuLink>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+        </>
+      )
+    }
+    render(<Switching />)
+    await hover('Learn')
+
+    fireEvent.click(screen.getByText('Manual'))
+    await wait(200)
+
+    expect(screen.queryByText('Docs')).toBeNull()
+  })
+
   it('keeps a clicked item open after the pointer leaves its trigger and the viewport', async () => {
     renderSiteNavigation({ activationMode: 'manual' })
     fireEvent.click(screen.getByText('Learn'))
@@ -774,6 +807,42 @@ describe('NavigationMenu content tab order', () => {
     act(() => {
       fireEvent.keyDown(screen.getByText('Guides'), { key: 'Tab' })
     })
+    expect(document.activeElement).toBe(focusProxy())
+  })
+
+  it('hands a Tab from a link inside a shadow root on to the focus proxy, not back to the first link', () => {
+    function ShadowLink() {
+      const ref = React.useRef<HTMLDivElement>(null)
+      React.useLayoutEffect(() => {
+        const host = ref.current
+        if (!host || host.shadowRoot) return
+        const link = document.createElement('a')
+        link.href = '#shadow'
+        link.textContent = 'Shadow'
+        host.attachShadow({ mode: 'open' }).append(link)
+      }, [])
+      return <div data-testid="host" ref={ref} />
+    }
+    render(
+      <NavigationMenu defaultValue="learn">
+        <NavigationMenuList>
+          <NavigationMenuItem value="learn">
+            <NavigationMenuTrigger>Shadowed</NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <NavigationMenuLink href="#light">Light</NavigationMenuLink>
+              <ShadowLink />
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>,
+    )
+    const shadowLink = screen.getByTestId('host').shadowRoot?.querySelector('a') as HTMLElement
+    act(() => shadowLink.focus())
+
+    act(() => {
+      fireEvent.keyDown(shadowLink, { key: 'Tab', composed: true })
+    })
+
     expect(document.activeElement).toBe(focusProxy())
   })
 
@@ -1413,7 +1482,8 @@ describe('NavigationMenu keyboard edges', () => {
     )
     act(() => screen.getByText('Build').focus())
 
-    fireEvent.keyDown(screen.getByText('Build'), { key: 'Home' })
+    // The arrow walks past Blog's entry, which Home could jump over.
+    fireEvent.keyDown(screen.getByText('Build'), { key: 'ArrowLeft' })
 
     expect(document.activeElement).toBe(screen.getByText('Learn'))
   })
@@ -1502,6 +1572,8 @@ describe('NavigationMenu keyboard edges', () => {
         </button>
       </>,
     )
+    act(() => screen.getByText('Docs').focus())
+    const focusedBefore = document.activeElement === screen.getByText('Docs')
 
     rerender(
       <>
@@ -1515,7 +1587,7 @@ describe('NavigationMenu keyboard edges', () => {
     )
     stop()
 
-    expect([document.activeElement?.textContent, errors]).toEqual(['After', []])
+    expect([focusedBefore, document.activeElement?.textContent, errors]).toEqual([true, 'After', []])
   })
 })
 
@@ -1630,12 +1702,13 @@ describe('NavigationMenu viewport contents', () => {
       handed.push(node && node.getAttribute('data-slot'))
     }
     const { rerender } = render(<ViewportMenu learnRef={learnRef} value="learn" />)
+    const first = handed.at(-1)
     handed.length = 0
 
     rerender(<ViewportMenu learnRef={learnRef} value="build" />)
     rerender(<ViewportMenu learnRef={learnRef} value="learn" />)
 
-    expect(handed).toEqual([])
+    expect([first, handed]).toEqual(['navigation-menu-content', []])
   })
 
   it('closes once on Escape under StrictMode', () => {

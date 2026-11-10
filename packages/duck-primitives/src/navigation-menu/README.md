@@ -34,21 +34,22 @@ children, with and without `asChild`; and a sub-menu in each activation mode, cl
 The end-to-end suite runs each in Chromium, Firefox and WebKit.
 
 Each test was proven by changing the code and watching a test fail. One change has no test to fail: the viewport
-keeping the element of a content that has unmounted. It reads only the open content's element, which is set
-again whenever that content mounts, so a stale one is never measured in place of a live one, and dropping it
-only lets it be collected.
+dropping the element of a content that has unmounted. When another item opens, the viewport moves to that
+item's element, so a stale one is never measured in place of a live one, and dropping it only lets it be
+collected. When the open item unmounts and a controlled `value` keeps naming it, nothing replaces the old
+element, and the viewport keeps measuring it until the value changes.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 142 | `navigation-menu.radix.test.tsx` 40, `navigation-menu.test.tsx` 102 |
+| Unit | 144 | `navigation-menu.radix.test.tsx` 40, `navigation-menu.test.tsx` 104 |
 | End to end | 25 | `navigation-menu.e2e.ts` 25 |
 | registry-ui | 7 | `navigation-menu.test.tsx` 7 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>167 behaviours, one per test</summary>
+<summary>169 behaviours, one per test</summary>
 
 **Unit, `navigation-menu.test.tsx`**
 
@@ -100,6 +101,7 @@ only lets it be collected.
   - stays open after a link is clicked with Shift held, which opens it outside the page
   - stays open after a link is clicked with Alt held, which opens it outside the page
 - NavigationMenu manual activation
+  - drops an open the pointer scheduled once the menu turns manual
   - keeps a clicked item open after the pointer leaves its trigger and the viewport
 - NavigationMenu viewport size
   - takes the size of the open content, not of another one kept mounted
@@ -114,6 +116,7 @@ only lets it be collected.
   - reads ArrowLeft as the next trigger right to left
 - NavigationMenu content tab order
   - tabs through its links and hands the last Tab to the focus proxy
+  - hands a Tab from a link inside a shadow root on to the focus proxy, not back to the first link
   - tabs backwards through its links with Shift+Tab
   - takes its links out of the tab order when focus moves back to the trigger
   - takes the links of a content kept mounted out of the tab order when Escape closes it
@@ -293,6 +296,9 @@ only lets it be collected.
   `navigation-menu-group`.
 - A link taken out of the tab order while its content is closed gets its own `tabindex` back, or none if
   it had none, where it was left with an empty `tabindex` and a `data-tabindex` copy.
+- A Tab from a link inside a shadow root moves on through the content, where the content read the shadow host as
+  focused, found no link, and sent focus back to the first one.
+- Turning `activationMode` to `manual` drops an open or close a hover had already scheduled.
 - A link clicked with Ctrl, Shift or Alt held leaves the menu open, as one clicked with Cmd did, since it
   opens in another tab or window, or downloads, and the page stays.
 - A click on a trigger cancels the open its pointer started, so an item a double-click closed no longer
@@ -337,6 +343,8 @@ only lets it be collected.
 - The exported prop types are the primitive's own, so `closeDelay` and `closeOnSelect` reach the styled
   parts, and the parts stop repeating the `data-slot` the primitive already sets.
 - `MotionNavigationMenu` renders `NavigationMenu` inside its animation rather than a copy of it.
+- `MotionNavigationMenu` keeps the viewport mounted until its exit spring settles, where a short exit from the
+  motion provider removed it mid-animation.
 - The sidebar examples size their dropdown menus from `--gentleduck-dropdown-menu-trigger-width`, where
   they read a Radix variable nothing sets.
 

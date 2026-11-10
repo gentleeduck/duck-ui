@@ -99,6 +99,13 @@ const NavigationMenu = React.forwardRef<INavigationMenu.RootElement, INavigation
       }
     }, [])
 
+    // A hover's open or close scheduled before the menu turned manual would still fire after it.
+    React.useEffect(() => {
+      if (activationMode === 'automatic') return
+      window.clearTimeout(openTimerRef.current)
+      window.clearTimeout(closeTimerRef.current)
+    }, [activationMode])
+
     const isAutomatic = activationMode === 'automatic'
 
     return (

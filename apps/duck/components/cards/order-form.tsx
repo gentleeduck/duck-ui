@@ -201,7 +201,7 @@ export function OrderForm() {
             <Label>What radio technologies are you using?</Label>
             <RadioGroup
               className="flex flex-row gap-6"
-              onValueChange={(value) => handleInputChange('radioTech', value)}
+              onValueChange={(value) => handleInputChange('radioTech', value ?? '')}
               value={formData.radioTech}>
               <RadioGroupItem value="2g">2G</RadioGroupItem>
               <RadioGroupItem value="3g">3G</RadioGroupItem>
@@ -214,7 +214,7 @@ export function OrderForm() {
             <Label>How much data do you expect to use each month?</Label>
             <RadioGroup
               className="flex flex-row gap-6"
-              onValueChange={(value) => handleInputChange('dataUsage', value)}
+              onValueChange={(value) => handleInputChange('dataUsage', value ?? '')}
               value={formData.dataUsage}>
               <RadioGroupItem value="0-50mb">0-50 MB</RadioGroupItem>
               <RadioGroupItem value="50-250mb">50 MB-250 MB</RadioGroupItem>

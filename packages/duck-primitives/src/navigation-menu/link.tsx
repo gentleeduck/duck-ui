@@ -1,60 +1,49 @@
 import * as React from 'react'
-import { flushSync } from 'react-dom'
 import { composeEventHandlers } from '../libs/compose-event-handler'
 import { Primitive } from '../primitive-elements'
-import { FocusGroupItem, LINK_SELECT, ROOT_CONTENT_DISMISS } from './navigation-menu.libs'
+import { LINK_SELECT, ROOT_CONTENT_DISMISS, useFocusGroupItem } from './navigation-menu.libs'
 import type { INavigationMenu } from './navigation-menu.types'
 
 const LINK_NAME = 'NavigationMenuLink'
 
-type NavigationMenuLinkElement = React.ComponentRef<typeof Primitive.a>
-type PrimitiveLinkProps = React.ComponentPropsWithoutRef<typeof Primitive.a>
-interface INavigationMenuLinkProps extends Omit<PrimitiveLinkProps, 'onSelect'> {
-  active?: boolean
-  onSelect?: (event: Event) => void
-}
-
-const NavigationMenuLink = React.forwardRef<NavigationMenuLinkElement, INavigationMenuLinkProps>(
-  (props: INavigationMenu.IScoped<INavigationMenuLinkProps>, forwardedRef) => {
-    const { __scopeNavigationMenu, active, onSelect, ...linkProps } = props
+const NavigationMenuLink = React.forwardRef<HTMLAnchorElement, INavigationMenu.ILinkProps>(
+  (props: INavigationMenu.IScoped<INavigationMenu.ILinkProps>, forwardedRef) => {
+    const { __scopeNavigationMenu, active, onSelect, closeOnSelect = true, onKeyDown, ...linkProps } = props
+    const focusGroupItem = useFocusGroupItem(__scopeNavigationMenu, onKeyDown, forwardedRef)
 
     return (
-      <FocusGroupItem asChild>
-        <Primitive.a
-          data-slot="navigation-menu-link"
-          data-active={active ? '' : undefined}
-          aria-current={active ? 'page' : undefined}
-          {...linkProps}
-          ref={forwardedRef}
-          // biome-ignore lint/a11y/useValidAnchor: navigation-menu link is a primitive that composes anchor semantics  -  consumers provide href
-          onClick={composeEventHandlers(
-            props.onClick,
-            (event) => {
-              const target = event.target as HTMLElement
-              const linkSelectEvent = new CustomEvent(LINK_SELECT, {
+      <Primitive.a
+        data-slot="navigation-menu-link"
+        data-active={active ? '' : undefined}
+        aria-current={active ? 'page' : undefined}
+        {...linkProps}
+        {...focusGroupItem}
+        // biome-ignore lint/a11y/useValidAnchor: navigation-menu link is a primitive that composes anchor semantics  -  consumers provide href
+        onClick={composeEventHandlers(
+          props.onClick,
+          (event) => {
+            const target = event.target as HTMLElement
+            const linkSelectEvent = new CustomEvent(LINK_SELECT, { cancelable: true })
+            target.addEventListener(LINK_SELECT, (event) => onSelect?.(event), { once: true })
+            target.dispatchEvent(linkSelectEvent)
+
+            // A held key opens the link in another tab or window, or downloads it, so the page stays and the menu with it.
+            const opensElsewhere = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
+            if (closeOnSelect && !linkSelectEvent.defaultPrevented && !opensElsewhere) {
+              const rootContentDismissEvent = new CustomEvent(ROOT_CONTENT_DISMISS, {
                 bubbles: true,
                 cancelable: true,
               })
-              target.addEventListener(LINK_SELECT, (event) => onSelect?.(event), { once: true })
-              flushSync(() => target.dispatchEvent(linkSelectEvent))
-
-              if (!linkSelectEvent.defaultPrevented && !event.metaKey) {
-                const rootContentDismissEvent = new CustomEvent(ROOT_CONTENT_DISMISS, {
-                  bubbles: true,
-                  cancelable: true,
-                })
-                flushSync(() => target.dispatchEvent(rootContentDismissEvent))
-              }
-            },
-            { checkForDefaultPrevented: false },
-          )}
-        />
-      </FocusGroupItem>
+              target.dispatchEvent(rootContentDismissEvent)
+            }
+          },
+          { checkForDefaultPrevented: false },
+        )}
+      />
     )
   },
 )
 
 NavigationMenuLink.displayName = LINK_NAME
 
-export type { INavigationMenuLinkProps }
 export { NavigationMenuLink }

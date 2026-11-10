@@ -1,12 +1,13 @@
 import * as React from 'react'
+import { type FocusableElement, getTabbableCandidates } from '../focus-scope/focus-scope.libs'
 import { useCallbackRef } from '../hooks/use-callback-ref'
 import { useLayoutEffect } from '../hooks/use-layout-effect'
 import { composeEventHandlers } from '../libs/compose-event-handler'
-import { Primitive } from '../primitive-elements'
-import { FocusGroupCollection, useFocusGroupCollection, useNavigationMenuContext } from './navigation-menu'
+import { useComposedRefs } from '../libs/compose-ref'
+import type { Scope } from '../libs/create-context'
+import { byDocumentPosition } from '../libs/shared-utils'
+import { useNavigationMenuContext } from './navigation-menu'
 import type { INavigationMenu } from './navigation-menu.types'
-
-type PrimitiveDivProps = React.ComponentPropsWithoutRef<typeof Primitive.div>
 
 const ROOT_CONTENT_DISMISS = 'navigationMenu.rootContentDismiss'
 const LINK_SELECT = 'navigationMenu.linkSelect'
@@ -28,27 +29,7 @@ function whenMouse<E>(handler: React.PointerEventHandler<E>): React.PointerEvent
   return (event) => (event.pointerType === 'mouse' ? handler(event) : undefined)
 }
 
-/**
- * Approximate tabbable candidates. Does NOT consider CSS visibility (computed styles);
- * handled elsewhere. https://github.com/discord/focus-layers/blob/master/src/util/wrapFocus.tsx#L1
- */
-function getTabbableCandidates(container: HTMLElement) {
-  const nodes: HTMLElement[] = []
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, {
-    acceptNode: (node: Node) => {
-      const el = node as HTMLElement
-      const isHiddenInput = el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'hidden'
-      if (el.hidden || (el as HTMLInputElement).disabled || isHiddenInput) return NodeFilter.FILTER_SKIP
-      // `.tabIndex` property (not attribute) covers contenteditable, summary, etc.
-      return el.tabIndex >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
-    },
-  })
-  while (walker.nextNode()) nodes.push(walker.currentNode as HTMLElement)
-  // positive tabIndex ordering intentionally ignored: visual order is the a11y contract
-  return nodes
-}
-
-function focusFirst(candidates: HTMLElement[]) {
+function focusFirst(candidates: FocusableElement[]) {
   const previouslyFocusedElement = document.activeElement
   return candidates.some((candidate) => {
     if (candidate === previouslyFocusedElement) return true
@@ -57,118 +38,109 @@ function focusFirst(candidates: HTMLElement[]) {
   })
 }
 
-function removeFromTabOrder(candidates: HTMLElement[]) {
-  candidates.forEach((candidate) => {
-    candidate.setAttribute('data-tabindex', candidate.getAttribute('tabindex') ?? '')
-    candidate.setAttribute('tabindex', '-1')
-  })
+function removeFromTabOrder(candidates: FocusableElement[]) {
+  const tabIndexes = candidates.map((candidate) => candidate.getAttribute('tabindex'))
+  for (const candidate of candidates) candidate.setAttribute('tabindex', '-1')
   return () => {
-    candidates.forEach((candidate) => {
-      const prevTabIndex = candidate.getAttribute('data-tabindex') ?? ''
-      candidate.setAttribute('tabindex', prevTabIndex)
+    candidates.forEach((candidate, index) => {
+      const tabIndex = tabIndexes[index]
+      if (tabIndex === null) candidate.removeAttribute('tabindex')
+      else candidate.setAttribute('tabindex', tabIndex)
     })
   }
 }
 
-function useResizeObserver(element: HTMLElement | null, onResize: () => void) {
+function useResizeObserver(element: HTMLElement | null, onResize: (element: HTMLElement) => void) {
   const handleResize = useCallbackRef(onResize)
   useLayoutEffect(() => {
+    if (!element) return
     let rAF = 0
-    if (element) {
-      // coalesce into one rAF to dodge "ResizeObserver loop completed with undelivered
-      // notifications". https://github.com/WICG/resize-observer/issues/38
-      const resizeObserver = new ResizeObserver(() => {
-        cancelAnimationFrame(rAF)
-        rAF = window.requestAnimationFrame(handleResize)
-      })
-      resizeObserver.observe(element)
-      return () => {
-        window.cancelAnimationFrame(rAF)
-        resizeObserver.unobserve(element)
+    let reported = false
+    // The first report arrives before the first paint, so it is acted on at once and nothing is painted unmeasured.
+    // Later ones are coalesced into a frame to dodge "ResizeObserver loop completed with undelivered
+    // notifications". https://github.com/WICG/resize-observer/issues/38
+    const resizeObserver = new ResizeObserver(() => {
+      cancelAnimationFrame(rAF)
+      if (reported) rAF = window.requestAnimationFrame(() => handleResize(element))
+      else {
+        reported = true
+        handleResize(element)
       }
+    })
+    resizeObserver.observe(element)
+    return () => {
+      window.cancelAnimationFrame(rAF)
+      resizeObserver.unobserve(element)
     }
   }, [element, handleResize])
 }
 
-const FOCUS_GROUP_NAME = 'FocusGroup'
-
-type FocusGroupElement = React.ComponentRef<typeof Primitive.div>
-interface IFocusGroupProps extends PrimitiveDivProps {}
-
-const FocusGroup = React.forwardRef<FocusGroupElement, IFocusGroupProps>(
-  (props: INavigationMenu.IScoped<IFocusGroupProps>, forwardedRef) => {
-    const { __scopeNavigationMenu, ...groupProps } = props
-    const context = useNavigationMenuContext(FOCUS_GROUP_NAME, __scopeNavigationMenu)
-
-    return (
-      <FocusGroupCollection.Provider scope={__scopeNavigationMenu}>
-        <FocusGroupCollection.Slot scope={__scopeNavigationMenu}>
-          <Primitive.div data-slot="navigation-menu-group" dir={context.dir} {...groupProps} ref={forwardedRef} />
-        </FocusGroupCollection.Slot>
-      </FocusGroupCollection.Provider>
-    )
-  },
-)
-
-FocusGroup.displayName = FOCUS_GROUP_NAME
-
 const FOCUS_GROUP_ITEM_NAME = 'FocusGroupItem'
 
-type PrimitiveButtonProps = React.ComponentPropsWithoutRef<typeof Primitive.button>
-interface IFocusGroupItemProps extends PrimitiveButtonProps {}
+type FocusGroup = Set<React.RefObject<HTMLElement | null>>
 
-const FocusGroupItem = React.forwardRef<INavigationMenu.FocusGroupItemElement, IFocusGroupItemProps>(
-  (props: INavigationMenu.IScoped<IFocusGroupItemProps>, forwardedRef) => {
-    const { __scopeNavigationMenu, ...groupProps } = props
-    const getItems = useFocusGroupCollection(__scopeNavigationMenu)
-    const context = useNavigationMenuContext(FOCUS_GROUP_ITEM_NAME, __scopeNavigationMenu)
+// The list of triggers, or one content's links: what the arrow keys move between.
+const FocusGroupContext = React.createContext<FocusGroup | null>(null)
 
-    return (
-      <FocusGroupCollection.ItemSlot scope={__scopeNavigationMenu}>
-        <Primitive.button
-          {...groupProps}
-          ref={forwardedRef}
-          onKeyDown={composeEventHandlers(props.onKeyDown, (event) => {
-            const isFocusNavigationKey = ['Home', 'End', ...ARROW_KEYS].includes(event.key)
-            if (isFocusNavigationKey) {
-              let candidateNodes: HTMLElement[] = []
-              for (const item of getItems()) {
-                const node = item.ref.current
-                if (node) candidateNodes.push(node)
-              }
-              const prevItemKey = context.dir === 'rtl' ? 'ArrowRight' : 'ArrowLeft'
-              const prevKeys = [prevItemKey, 'ArrowUp', 'End']
-              if (prevKeys.includes(event.key)) candidateNodes.reverse()
-              if (ARROW_KEYS.includes(event.key)) {
-                const currentIndex = candidateNodes.indexOf(event.currentTarget)
-                candidateNodes = candidateNodes.slice(currentIndex + 1)
-              }
-              // defer past React's batched commit; imperative focus inside keydown can fight
-              // rerenders. https://github.com/facebook/react/issues/20332
-              setTimeout(() => focusFirst(candidateNodes))
+function useFocusGroup(): FocusGroup {
+  return React.useState<FocusGroup>(() => new Set())[0]
+}
 
-              // suppress page scroll on arrow keys
-              event.preventDefault()
-            }
-          })}
-        />
-      </FocusGroupCollection.ItemSlot>
-    )
-  },
-)
-FocusGroupItem.displayName = FOCUS_GROUP_ITEM_NAME
+/** An element the arrow keys, Home and End move focus to and from, in document order within its group. */
+function useFocusGroupItem<E extends HTMLElement>(
+  scope: Scope,
+  onKeyDown: React.KeyboardEventHandler<E> | undefined,
+  forwardedRef: React.Ref<E> | undefined,
+): { ref: React.RefCallback<E>; onKeyDown: React.KeyboardEventHandler<E> } {
+  const group = React.useContext(FocusGroupContext)
+  const context = useNavigationMenuContext(FOCUS_GROUP_ITEM_NAME, scope)
+  const ref = React.useRef<E>(null)
+
+  useLayoutEffect(() => {
+    if (!group) return
+    group.add(ref)
+    return () => void group.delete(ref)
+  }, [group])
+
+  return {
+    ref: useComposedRefs(forwardedRef, ref),
+    onKeyDown: composeEventHandlers(onKeyDown, (event: React.KeyboardEvent<E>) => {
+      if (!['Home', 'End', ...ARROW_KEYS].includes(event.key)) return
+      let candidateNodes: HTMLElement[] = []
+      for (const item of group ?? []) if (item.current) candidateNodes.push(item.current)
+      candidateNodes.sort(byDocumentPosition)
+      const prevItemKey = context.dir === 'rtl' ? 'ArrowRight' : 'ArrowLeft'
+      if ([prevItemKey, 'ArrowUp', 'End'].includes(event.key)) candidateNodes.reverse()
+      if (ARROW_KEYS.includes(event.key)) {
+        const currentIndex = candidateNodes.indexOf(event.currentTarget)
+        candidateNodes = candidateNodes.slice(currentIndex + 1)
+      }
+      focusFirst(candidateNodes)
+      event.preventDefault()
+    }),
+  }
+}
+
+/** The menu's triggers with an element, in document order. */
+function getTriggers(triggers: Set<INavigationMenu.ITrigger>) {
+  const found: { value: string; node: INavigationMenu.TriggerElement }[] = []
+  for (const { value, ref } of triggers) if (ref.current) found.push({ value, node: ref.current })
+  return found.sort((a, b) => byDocumentPosition(a.node, b.node))
+}
 
 export {
-  FocusGroup,
-  FocusGroupItem,
+  FocusGroupContext,
   focusFirst,
   getOpenState,
   getTabbableCandidates,
+  getTriggers,
   LINK_SELECT,
   makeContentId,
   makeTriggerId,
   ROOT_CONTENT_DISMISS,
   removeFromTabOrder,
+  useFocusGroup,
+  useFocusGroupItem,
   useResizeObserver,
   whenMouse,
 }

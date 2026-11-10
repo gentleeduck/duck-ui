@@ -4,29 +4,25 @@ import { useLayoutEffect } from '../hooks/use-layout-effect'
 import { composeEventHandlers } from '../libs/compose-event-handler'
 import { useComposedRefs } from '../libs/compose-ref'
 import { Presence } from '../presence'
-import { useCollection, useNavigationMenuContext, useNavigationMenuItemContext } from './navigation-menu'
+import { useNavigationMenuContext, useNavigationMenuItemContext } from './navigation-menu'
 import {
-  FocusGroup,
+  FocusGroupContext,
   focusFirst,
   getOpenState,
   getTabbableCandidates,
+  getTriggers,
   makeContentId,
   makeTriggerId,
   ROOT_CONTENT_DISMISS,
+  useFocusGroup,
   whenMouse,
 } from './navigation-menu.libs'
 import type { INavigationMenu } from './navigation-menu.types'
 
 const CONTENT_NAME = 'NavigationMenuContent'
 
-type NavigationMenuContentElement = INavigationMenu.NavigationMenuContentImplElement
-interface INavigationMenuContentProps
-  extends Omit<INavigationMenu.IContentImplProps, keyof INavigationMenu.IContentImplPrivateProps> {
-  forceMount?: true
-}
-
-const NavigationMenuContent = React.forwardRef<NavigationMenuContentElement, INavigationMenuContentProps>(
-  (props: INavigationMenu.IScoped<INavigationMenuContentProps>, forwardedRef) => {
+const NavigationMenuContent = React.forwardRef<INavigationMenu.ContentImplElement, INavigationMenu.IContentProps>(
+  (props: INavigationMenu.IScoped<INavigationMenu.IContentProps>, forwardedRef) => {
     const { forceMount, ...contentProps } = props
     const context = useNavigationMenuContext(CONTENT_NAME, props.__scopeNavigationMenu)
     const itemContext = useNavigationMenuItemContext(CONTENT_NAME, props.__scopeNavigationMenu)
@@ -34,6 +30,7 @@ const NavigationMenuContent = React.forwardRef<NavigationMenuContentElement, INa
     const open = itemContext.value === context.value
 
     const commonProps = {
+      'data-state': getOpenState(open),
       value: itemContext.value,
       triggerRef: itemContext.triggerRef,
       focusProxyRef: itemContext.focusProxyRef,
@@ -46,7 +43,6 @@ const NavigationMenuContent = React.forwardRef<NavigationMenuContentElement, INa
     return !context.viewport ? (
       <Presence present={forceMount || open}>
         <NavigationMenuContentImpl
-          data-state={getOpenState(open)}
           {...commonProps}
           ref={composedRefs}
           onPointerEnter={composeEventHandlers(props.onPointerEnter, context.onContentEnter)}
@@ -92,7 +88,7 @@ ViewportContentMounter.displayName = 'ViewportContentMounter'
 type MotionAttribute = 'to-start' | 'to-end' | 'from-start' | 'from-end'
 
 const NavigationMenuContentImpl = React.forwardRef<
-  INavigationMenu.NavigationMenuContentImplElement,
+  INavigationMenu.ContentImplElement,
   INavigationMenu.IContentImplProps
 >((props: INavigationMenu.IScoped<INavigationMenu.IContentImplProps>, forwardedRef) => {
   const {
@@ -106,11 +102,11 @@ const NavigationMenuContentImpl = React.forwardRef<
     ...contentProps
   } = props
   const context = useNavigationMenuContext(CONTENT_NAME, __scopeNavigationMenu)
-  const ref = React.useRef<INavigationMenu.NavigationMenuContentImplElement>(null)
+  const ref = React.useRef<INavigationMenu.ContentImplElement>(null)
   const composedRefs = useComposedRefs(ref, forwardedRef)
   const triggerId = makeTriggerId(context.baseId, value)
   const contentId = makeContentId(context.baseId, value)
-  const getItems = useCollection(__scopeNavigationMenu)
+  const focusGroup = useFocusGroup()
   const prevMotionAttributeRef = React.useRef<MotionAttribute | null>(null)
 
   const { onItemDismiss } = context
@@ -131,9 +127,9 @@ const NavigationMenuContentImpl = React.forwardRef<
   }, [context.isRootMenu, triggerRef, onItemDismiss, onRootContentClose])
 
   const motionAttribute = React.useMemo(() => {
-    const items = getItems()
-    const values = items.map((item) => item.value)
-    if (context.dir === 'rtl') values.reverse()
+    const values = getTriggers(context.triggers).map((trigger) => trigger.value)
+    // Right to left reverses a row on screen, and leaves a column top to bottom.
+    if (context.dir === 'rtl' && context.orientation === 'horizontal') values.reverse()
     const index = values.indexOf(context.value)
     const prevIndex = values.indexOf(context.previousValue)
     const isSelected = value === context.value
@@ -153,11 +149,13 @@ const NavigationMenuContentImpl = React.forwardRef<
 
     prevMotionAttributeRef.current = attribute
     return attribute
-  }, [context.previousValue, context.value, context.dir, getItems, value])
+  }, [context.previousValue, context.value, context.dir, context.orientation, context.triggers, value])
 
   return (
-    <FocusGroup asChild>
+    <FocusGroupContext.Provider value={focusGroup}>
       <DismissableLayer
+        dir={context.dir}
+        data-slot="navigation-menu-content"
         id={contentId}
         aria-labelledby={triggerId}
         data-motion={motionAttribute}
@@ -174,13 +172,14 @@ const NavigationMenuContentImpl = React.forwardRef<
         }}
         onFocusOutside={composeEventHandlers(props.onFocusOutside, (event) => {
           onContentFocusOutside()
-          const target = event.target as HTMLElement
-          // only dismiss when focus leaves the entire menu (not just this content)
-          if (context.rootNavigationMenu?.contains(target)) event.preventDefault()
+          const menu = context.rootNavigationMenu
+          // Focus arriving from outside the menu, such as a dialog focusing itself on open, keeps the content open.
+          const focusCameFromMenu = menu?.contains(event.detail.originalEvent.relatedTarget as Node | null)
+          if (menu?.contains(event.target as Node) || !focusCameFromMenu) event.preventDefault()
         })}
         onPointerDownOutside={composeEventHandlers(props.onPointerDownOutside, (event) => {
           const target = event.target as HTMLElement
-          const isTrigger = getItems().some((item) => item.ref.current?.contains(target))
+          const isTrigger = [...context.triggers].some((trigger) => trigger.ref.current?.contains(target))
           const isRootViewport = context.isRootMenu && context.viewport?.contains(target)
           if (isTrigger || isRootViewport || !context.isRootMenu) event.preventDefault()
         })}
@@ -189,8 +188,7 @@ const NavigationMenuContentImpl = React.forwardRef<
           const isTabKey = event.key === 'Tab' && !isMetaKey
           if (isTabKey) {
             const candidates = getTabbableCandidates(event.currentTarget)
-            const focusedElement = document.activeElement as HTMLElement | null
-            const index = focusedElement ? candidates.indexOf(focusedElement) : -1
+            const index = candidates.findIndex((candidate) => candidate === document.activeElement)
             const isMovingBackwards = event.shiftKey
             const nextCandidates = isMovingBackwards
               ? candidates.slice(0, index).reverse()
@@ -210,10 +208,9 @@ const NavigationMenuContentImpl = React.forwardRef<
           wasEscapeCloseRef.current = true
         })}
       />
-    </FocusGroup>
+    </FocusGroupContext.Provider>
   )
 })
 NavigationMenuContentImpl.displayName = 'NavigationMenuContentImpl'
 
-export type { INavigationMenuContentProps }
 export { NavigationMenuContent, NavigationMenuContentImpl }

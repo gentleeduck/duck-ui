@@ -7,20 +7,11 @@ import type { INavigationMenu } from './navigation-menu.types'
 
 const ITEM_NAME = 'NavigationMenuItem'
 
-type NavigationMenuItemElement = React.ComponentRef<typeof Primitive.li>
-type PrimitiveListItemProps = React.ComponentPropsWithoutRef<typeof Primitive.li>
-interface INavigationMenuItemProps extends PrimitiveListItemProps {
-  value?: string
-}
-
-const NavigationMenuItem = React.forwardRef<NavigationMenuItemElement, INavigationMenuItemProps>(
-  (props: INavigationMenu.IScoped<INavigationMenuItemProps>, forwardedRef) => {
+const NavigationMenuItem = React.forwardRef<HTMLLIElement, INavigationMenu.IItemProps>(
+  (props: INavigationMenu.IScoped<INavigationMenu.IItemProps>, forwardedRef) => {
     const { __scopeNavigationMenu, value: valueProp, ...itemProps } = props
-    const autoValue = useId()
-    // useId returns '' on first render; fall back to a sentinel so we never
-    // collide with the internal "closed" state value
-    const value = valueProp || autoValue || 'LEGACY_REACT_AUTO_VALUE'
-    const contentRef = React.useRef<INavigationMenu.NavigationMenuContentImplElement>(null)
+    const value = useId(valueProp)
+    const contentRef = React.useRef<INavigationMenu.ContentImplElement>(null)
     const triggerRef = React.useRef<HTMLButtonElement>(null)
     const focusProxyRef = React.useRef<HTMLSpanElement>(null)
     const restoreContentTabOrderRef = React.useRef(() => {})
@@ -30,7 +21,7 @@ const NavigationMenuItem = React.forwardRef<NavigationMenuItemElement, INavigati
       if (contentRef.current) {
         restoreContentTabOrderRef.current()
         const candidates = getTabbableCandidates(contentRef.current)
-        if (candidates.length) focusFirst(side === 'start' ? candidates : candidates.reverse())
+        focusFirst(side === 'start' ? candidates : candidates.reverse())
       }
     }, [])
 
@@ -61,5 +52,4 @@ const NavigationMenuItem = React.forwardRef<NavigationMenuItemElement, INavigati
 
 NavigationMenuItem.displayName = ITEM_NAME
 
-export type { INavigationMenuItemProps }
 export { NavigationMenuItem }

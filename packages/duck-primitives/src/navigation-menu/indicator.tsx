@@ -2,22 +2,14 @@ import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import { Presence } from '../presence'
 import { Primitive } from '../primitive-elements'
-import { useCollection, useNavigationMenuContext } from './navigation-menu'
-import type { INavigationMenu } from './navigation-menu.types'
-
-type PrimitiveDivProps = React.ComponentPropsWithoutRef<typeof Primitive.div>
-
+import { useNavigationMenuContext } from './navigation-menu'
 import { useResizeObserver } from './navigation-menu.libs'
+import type { INavigationMenu } from './navigation-menu.types'
 
 const INDICATOR_NAME = 'NavigationMenuIndicator'
 
-type NavigationMenuIndicatorElement = NavigationMenuIndicatorImplElement
-interface INavigationMenuIndicatorProps extends INavigationMenuIndicatorImplProps {
-  forceMount?: true
-}
-
-const NavigationMenuIndicator = React.forwardRef<NavigationMenuIndicatorElement, INavigationMenuIndicatorProps>(
-  (props: INavigationMenu.IScoped<INavigationMenuIndicatorProps>, forwardedRef) => {
+const NavigationMenuIndicator = React.forwardRef<HTMLDivElement, INavigationMenu.IIndicatorProps>(
+  (props: INavigationMenu.IScoped<INavigationMenu.IIndicatorProps>, forwardedRef) => {
     const { forceMount, ...indicatorProps } = props
     const context = useNavigationMenuContext(INDICATOR_NAME, props.__scopeNavigationMenu)
     const isVisible = Boolean(context.value)
@@ -35,33 +27,31 @@ const NavigationMenuIndicator = React.forwardRef<NavigationMenuIndicatorElement,
 
 NavigationMenuIndicator.displayName = INDICATOR_NAME
 
-type NavigationMenuIndicatorImplElement = React.ComponentRef<typeof Primitive.div>
-interface INavigationMenuIndicatorImplProps extends PrimitiveDivProps {}
-
 const NavigationMenuIndicatorImpl = React.forwardRef<
-  NavigationMenuIndicatorImplElement,
-  INavigationMenuIndicatorImplProps
->((props: INavigationMenu.IScoped<INavigationMenuIndicatorImplProps>, forwardedRef) => {
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<typeof Primitive.div>
+>((props: INavigationMenu.IScoped<React.ComponentPropsWithoutRef<typeof Primitive.div>>, forwardedRef) => {
   const { __scopeNavigationMenu, ...indicatorProps } = props
   const context = useNavigationMenuContext(INDICATOR_NAME, __scopeNavigationMenu)
-  const getItems = useCollection(__scopeNavigationMenu)
-  const [activeTrigger, setActiveTrigger] = React.useState<INavigationMenu.NavigationMenuTriggerElement | null>(null)
+  const [activeTrigger, setActiveTrigger] = React.useState<INavigationMenu.TriggerElement | null>(null)
   const [position, setPosition] = React.useState<{ size: number; offset: number } | null>(null)
   const isHorizontal = context.orientation === 'horizontal'
   const isVisible = Boolean(context.value)
 
   React.useEffect(() => {
-    const items = getItems()
-    const triggerNode = items.find((item) => item.value === context.value)?.ref.current
+    const triggerNode = [...context.triggers].find((trigger) => trigger.value === context.value)?.ref.current
     if (triggerNode) setActiveTrigger(triggerNode)
-  }, [getItems, context.value])
+  }, [context.triggers, context.value])
 
   const handlePositionChange = () => {
     if (activeTrigger) {
-      setPosition({
-        size: isHorizontal ? activeTrigger.offsetWidth : activeTrigger.offsetHeight,
-        offset: isHorizontal ? activeTrigger.offsetLeft : activeTrigger.offsetTop,
-      })
+      // A positioned item around the trigger is its offset parent, so the offsets are added up to the track.
+      let offset = 0
+      for (let node: Element | null = activeTrigger; node instanceof HTMLElement && node !== context.indicatorTrack; ) {
+        offset += isHorizontal ? node.offsetLeft : node.offsetTop
+        node = node.offsetParent
+      }
+      setPosition({ size: isHorizontal ? activeTrigger.offsetWidth : activeTrigger.offsetHeight, offset })
     }
   }
   useResizeObserver(activeTrigger, handlePositionChange)
@@ -98,5 +88,4 @@ const NavigationMenuIndicatorImpl = React.forwardRef<
 
 NavigationMenuIndicatorImpl.displayName = 'NavigationMenuIndicatorImpl'
 
-export type { INavigationMenuIndicatorProps }
 export { NavigationMenuIndicator }

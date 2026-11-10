@@ -16,6 +16,7 @@ import * as inputOtp from '../input-otp/__stories__/input-otp.stories'
 import * as menu from '../menu/__stories__/menu.stories'
 import * as menubar from '../menubar/__stories__/menubar.stories'
 import * as mount from '../mount/__stories__/mount.stories'
+import * as navigationMenu from '../navigation-menu/__stories__/navigation-menu.stories'
 import * as pagination from '../pagination/__stories__/pagination.stories'
 import * as popover from '../popover/__stories__/popover.stories'
 import * as popper from '../popper/__stories__/popper.stories'
@@ -68,6 +69,7 @@ for (const module of [
   menu,
   menubar,
   mount,
+  navigationMenu,
   pagination,
   popover,
   popper,

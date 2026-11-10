@@ -1,0 +1,138 @@
+.page {
+  display: grid;
+  gap: 20px;
+  padding: 50px;
+  justify-items: start;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.root {
+  position: relative;
+  display: flex;
+  font-family: apple-system, BlinkMacSystemFont, helvetica, arial, sans-serif;
+  font-size: 13px;
+}
+
+.root[data-orientation="vertical"] {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.list {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+}
+
+.list[data-orientation="vertical"] {
+  flex-direction: column;
+}
+
+.item {
+  position: relative;
+}
+
+.trigger,
+.link {
+  display: block;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  &:focus-visible {
+    outline: 2px solid var(--color-black);
+  }
+  &[data-state="open"],
+  &[data-active] {
+    background-color: var(--gray-4);
+  }
+  &[data-disabled] {
+    opacity: 0.5;
+  }
+}
+
+.content {
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+}
+
+/* Force mounted, a closed part stays in the document, so its data-state hides it. */
+.content[data-state="closed"],
+.viewport[data-state="closed"] {
+  display: none;
+}
+
+.content[data-wide] {
+  grid-template-columns: repeat(2, 160px);
+}
+
+.inViewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.inline {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid var(--gray-6);
+  border-radius: 6px;
+}
+
+.viewport {
+  position: relative;
+  overflow: hidden;
+  width: var(--gentleduck-navigation-menu-viewport-width);
+  height: var(--gentleduck-navigation-menu-viewport-height);
+  background: white;
+  border: 1px solid var(--gray-6);
+  border-radius: 6px;
+}
+
+.viewportPosition {
+  position: absolute;
+  top: 100%;
+  left: 0;
+}
+
+.vertical .viewportPosition {
+  top: 0;
+  left: 100%;
+}
+
+.indicator {
+  bottom: 0;
+  height: 3px;
+  background: var(--color-black);
+}
+
+.indicator[data-orientation="vertical"] {
+  right: 0;
+  bottom: auto;
+  width: 3px;
+  height: auto;
+}
+
+.indicator[data-state="hidden"] {
+  opacity: 0;
+}
+
+.viewportBar {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--color-black);
+}

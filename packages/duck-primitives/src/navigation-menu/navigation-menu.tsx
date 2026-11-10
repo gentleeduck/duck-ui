@@ -5,27 +5,13 @@ import { useControllableState } from '../hooks/use-controllable-state'
 import { useId } from '../hooks/use-id'
 import { usePrevious } from '../hooks/use-previous'
 import { useComposedRefs } from '../libs/compose-ref'
-import { createCollection } from '../libs/create-collection'
 import { createContextScope } from '../libs/create-context'
 import { Primitive } from '../primitive-elements'
 import type { INavigationMenu } from './navigation-menu.types'
 
 const NAVIGATION_MENU_NAME = 'NavigationMenu'
 
-const [Collection, useCollection, createCollectionScope] = createCollection<
-  INavigationMenu.NavigationMenuTriggerElement,
-  { value: string }
->(NAVIGATION_MENU_NAME)
-
-const [FocusGroupCollection, useFocusGroupCollection, createFocusGroupCollectionScope] = createCollection<
-  INavigationMenu.FocusGroupItemElement,
-  {}
->(NAVIGATION_MENU_NAME)
-
-const [createNavigationMenuContext, createNavigationMenuScope] = createContextScope(NAVIGATION_MENU_NAME, [
-  createCollectionScope,
-  createFocusGroupCollectionScope,
-])
+const [createNavigationMenuContext, createNavigationMenuScope] = createContextScope(NAVIGATION_MENU_NAME)
 
 const [NavigationMenuProviderImpl, useNavigationMenuContext] =
   createNavigationMenuContext<INavigationMenu.IContext>(NAVIGATION_MENU_NAME)
@@ -37,7 +23,7 @@ const [ViewportContentProvider, useViewportContentContext] = createNavigationMen
 const [NavigationMenuItemContextProvider, useNavigationMenuItemContext] =
   createNavigationMenuContext<INavigationMenu.IItemContext>('NavigationMenuItem')
 
-const NavigationMenu = React.forwardRef<INavigationMenu.NavigationMenuElement, INavigationMenu.IProps>(
+const NavigationMenu = React.forwardRef<INavigationMenu.RootElement, INavigationMenu.IProps>(
   (props: INavigationMenu.IScoped<INavigationMenu.IProps>, forwardedRef) => {
     const {
       __scopeNavigationMenu,
@@ -46,29 +32,30 @@ const NavigationMenu = React.forwardRef<INavigationMenu.NavigationMenuElement, I
       defaultValue,
       delayDuration = 200,
       skipDelayDuration = 300,
+      closeDelay = 150,
       orientation = 'horizontal',
       dir,
+      activationMode = 'automatic',
       ...NavigationMenuProps
     } = props
-    const [navigationMenu, setNavigationMenu] = React.useState<INavigationMenu.NavigationMenuElement | null>(null)
-    const composedRef = useComposedRefs(forwardedRef, (node) => setNavigationMenu(node))
+    const [navigationMenu, setNavigationMenu] = React.useState<INavigationMenu.RootElement | null>(null)
+    const composedRef = useComposedRefs(forwardedRef, setNavigationMenu)
     const direction = useDirection(dir)
     const openTimerRef = React.useRef(0)
     const closeTimerRef = React.useRef(0)
     const skipDelayTimerRef = React.useRef(0)
-    const [isOpenDelayed, setIsOpenDelayed] = React.useState(true)
+    // Read only when a trigger is entered, so it is a ref: as state, the delay running out rerendered the menu.
+    const isOpenDelayedRef = React.useRef(true)
     const [value, setValue] = useControllableState({
       prop: valueProp,
       onChange: (value) => {
-        const isOpen = value !== ''
-        const hasSkipDelayDuration = skipDelayDuration > 0
-
-        if (isOpen) {
-          window.clearTimeout(skipDelayTimerRef.current)
-          if (hasSkipDelayDuration) setIsOpenDelayed(false)
-        } else {
-          window.clearTimeout(skipDelayTimerRef.current)
-          skipDelayTimerRef.current = window.setTimeout(() => setIsOpenDelayed(true), skipDelayDuration)
+        window.clearTimeout(skipDelayTimerRef.current)
+        if (value === '') {
+          skipDelayTimerRef.current = window.setTimeout(() => {
+            isOpenDelayedRef.current = true
+          }, skipDelayDuration)
+        } else if (skipDelayDuration > 0) {
+          isOpenDelayedRef.current = false
         }
 
         onValueChange?.(value)
@@ -79,8 +66,8 @@ const NavigationMenu = React.forwardRef<INavigationMenu.NavigationMenuElement, I
 
     const startCloseTimer = React.useCallback(() => {
       window.clearTimeout(closeTimerRef.current)
-      closeTimerRef.current = window.setTimeout(() => setValue(''), 150)
-    }, [setValue])
+      closeTimerRef.current = window.setTimeout(() => setValue(''), closeDelay)
+    }, [setValue, closeDelay])
 
     const handleOpen = React.useCallback(
       (itemValue: string) => {
@@ -109,9 +96,10 @@ const NavigationMenu = React.forwardRef<INavigationMenu.NavigationMenuElement, I
       return () => {
         window.clearTimeout(openTimerRef.current)
         window.clearTimeout(closeTimerRef.current)
-        window.clearTimeout(skipDelayTimerRef.current)
       }
     }, [])
+
+    const isAutomatic = activationMode === 'automatic'
 
     return (
       <NavigationMenuProvider
@@ -120,19 +108,26 @@ const NavigationMenu = React.forwardRef<INavigationMenu.NavigationMenuElement, I
         value={value}
         dir={direction}
         orientation={orientation}
+        activationMode={activationMode}
         rootNavigationMenu={navigationMenu}
         onTriggerEnter={(itemValue) => {
+          if (!isAutomatic) return
           window.clearTimeout(openTimerRef.current)
-          if (isOpenDelayed) handleDelayedOpen(itemValue)
+          if (isOpenDelayedRef.current) handleDelayedOpen(itemValue)
           else handleOpen(itemValue)
         }}
-        onTriggerLeave={() => {
-          window.clearTimeout(openTimerRef.current)
-          startCloseTimer()
-        }}
+        onTriggerLeave={
+          isAutomatic
+            ? () => {
+                window.clearTimeout(openTimerRef.current)
+                startCloseTimer()
+              }
+            : undefined
+        }
         onContentEnter={() => window.clearTimeout(closeTimerRef.current)}
-        onContentLeave={startCloseTimer}
+        onContentLeave={isAutomatic ? startCloseTimer : undefined}
         onItemSelect={(itemValue) => {
+          window.clearTimeout(openTimerRef.current)
           setValue((prevValue) => (prevValue === itemValue ? '' : itemValue))
         }}
         onItemDismiss={() => setValue('')}>
@@ -153,19 +148,19 @@ NavigationMenu.displayName = NAVIGATION_MENU_NAME
 
 const SUB_NAME = 'NavigationMenuSub'
 
-type NavigationMenuSubElement = React.ComponentRef<typeof Primitive.div>
-
-const NavigationMenuSub = React.forwardRef<NavigationMenuSubElement, INavigationMenu.ISubProps>(
+const NavigationMenuSub = React.forwardRef<HTMLDivElement, INavigationMenu.ISubProps>(
   (props: INavigationMenu.IScoped<INavigationMenu.ISubProps>, forwardedRef) => {
+    const context = useNavigationMenuContext(SUB_NAME, props.__scopeNavigationMenu)
     const {
       __scopeNavigationMenu,
       value: valueProp,
       onValueChange,
       defaultValue,
       orientation = 'horizontal',
+      activationMode = context.activationMode,
+      disableToggle = true,
       ...subProps
     } = props
-    const context = useNavigationMenuContext(SUB_NAME, __scopeNavigationMenu)
     const [value, setValue] = useControllableState({
       prop: valueProp,
       onChange: onValueChange,
@@ -180,10 +175,14 @@ const NavigationMenuSub = React.forwardRef<NavigationMenuSubElement, INavigation
         value={value}
         dir={context.dir}
         orientation={orientation}
+        activationMode={activationMode}
         rootNavigationMenu={context.rootNavigationMenu}
-        onTriggerEnter={(itemValue) => setValue(itemValue)}
-        onItemSelect={(itemValue) => setValue(itemValue)}
-        onItemDismiss={() => setValue('')}>
+        onTriggerEnter={(itemValue) => {
+          if (activationMode === 'automatic') setValue(itemValue)
+        }}
+        onItemSelect={(itemValue) => {
+          setValue((prevValue) => (disableToggle || prevValue !== itemValue ? itemValue : ''))
+        }}>
         <Primitive.div
           data-slot="navigation-menu-sub"
           data-orientation={orientation}
@@ -206,6 +205,7 @@ const NavigationMenuProvider: React.FC<INavigationMenu.IProviderProps> = (
     rootNavigationMenu,
     dir,
     orientation,
+    activationMode,
     children,
     value,
     onItemSelect,
@@ -215,9 +215,10 @@ const NavigationMenuProvider: React.FC<INavigationMenu.IProviderProps> = (
     onContentEnter,
     onContentLeave,
   } = props
-  const [viewport, setViewport] = React.useState<INavigationMenu.NavigationMenuViewportElement | null>(null)
+  const [viewport, setViewport] = React.useState<INavigationMenu.ViewportElement | null>(null)
   const [viewportContent, setViewportContent] = React.useState<Map<string, INavigationMenu.IContentData>>(new Map())
   const [indicatorTrack, setIndicatorTrack] = React.useState<HTMLDivElement | null>(null)
+  const [triggers] = React.useState(() => new Set<INavigationMenu.ITrigger>())
 
   return (
     <NavigationMenuProviderImpl
@@ -229,9 +230,11 @@ const NavigationMenuProvider: React.FC<INavigationMenu.IProviderProps> = (
       baseId={useId()}
       dir={dir}
       orientation={orientation}
+      activationMode={activationMode}
       viewport={viewport}
       onViewportChange={setViewport}
       indicatorTrack={indicatorTrack}
+      triggers={triggers}
       onIndicatorTrackChange={setIndicatorTrack}
       onTriggerEnter={useCallbackRef(onTriggerEnter)}
       onTriggerLeave={useCallbackRef(onTriggerLeave)}
@@ -240,38 +243,29 @@ const NavigationMenuProvider: React.FC<INavigationMenu.IProviderProps> = (
       onItemSelect={useCallbackRef(onItemSelect)}
       onItemDismiss={useCallbackRef(onItemDismiss)}
       onViewportContentChange={React.useCallback((contentValue, contentData) => {
-        setViewportContent((prevContent) => {
-          prevContent.set(contentValue, contentData)
-          return new Map(prevContent)
-        })
+        setViewportContent((prevContent) => new Map(prevContent).set(contentValue, contentData))
       }, [])}
       onViewportContentRemove={React.useCallback((contentValue) => {
         setViewportContent((prevContent) => {
-          if (!prevContent.has(contentValue)) return prevContent
-          prevContent.delete(contentValue)
-          return new Map(prevContent)
+          const nextContent = new Map(prevContent)
+          nextContent.delete(contentValue)
+          return nextContent
         })
       }, [])}>
-      <Collection.Provider scope={scope}>
-        <ViewportContentProvider scope={scope} items={viewportContent}>
-          {children}
-        </ViewportContentProvider>
-      </Collection.Provider>
+      <ViewportContentProvider scope={scope} items={viewportContent}>
+        {children}
+      </ViewportContentProvider>
     </NavigationMenuProviderImpl>
   )
 }
 
 export {
-  Collection,
   createNavigationMenuContext,
   createNavigationMenuScope,
-  FocusGroupCollection,
   NAVIGATION_MENU_NAME,
   NavigationMenu,
   NavigationMenuItemContextProvider,
   NavigationMenuSub,
-  useCollection,
-  useFocusGroupCollection,
   useNavigationMenuContext,
   useNavigationMenuItemContext,
   useViewportContentContext,

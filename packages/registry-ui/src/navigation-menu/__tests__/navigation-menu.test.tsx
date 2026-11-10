@@ -107,9 +107,12 @@ describe('registry-ui navigation menu', () => {
     expect(slot('navigation-menu-viewport').getAttribute('data-state')).toBe('closed')
     expect(screen.getByText('Docs')).toBeTruthy()
 
+    // The viewport waits out its 320ms exit spring.
     await act(() => new Promise((resolve) => setTimeout(resolve, 250)))
+    const midExit = slot('navigation-menu-viewport') !== null
+    await act(() => new Promise((resolve) => setTimeout(resolve, 120)))
 
-    expect(slot('navigation-menu-viewport')).toBeNull()
+    expect([midExit, slot('navigation-menu-viewport')]).toEqual([true, null])
 
     rerender(tree('learn'))
 

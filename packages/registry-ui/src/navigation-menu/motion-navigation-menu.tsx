@@ -21,7 +21,8 @@ const VIEWPORT_OPTIONS = { transition: springBouncy } as const
 
 function MotionNavigationMenuViewport({ open }: { open: boolean }) {
   const viewport = useMotionPreset(scaleIn, VIEWPORT_OPTIONS)
-  const shouldRender = useMotionMount(open)
+  // springBouncy settles in about 300ms, past a short exit the motion provider may set.
+  const shouldRender = useMotionMount(open, 320)
 
   return (
     <div className={navigationMenuViewportPositionStyle}>

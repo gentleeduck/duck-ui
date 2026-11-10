@@ -54,7 +54,7 @@
   }
   &[data-state="open"],
   &[data-active] {
-    background-color: var(--gray-4);
+    background-color: var(--color-gray100);
   }
   &[data-disabled] {
     opacity: 0.5;
@@ -80,15 +80,15 @@
 .inViewport {
   position: absolute;
   top: 0;
-  left: 0;
+  inset-inline-start: 0;
 }
 
 .inline {
   position: absolute;
   top: 100%;
-  left: 0;
+  inset-inline-start: 0;
   background: white;
-  border: 1px solid var(--gray-6);
+  border: 1px solid var(--color-gray300);
   border-radius: 6px;
 }
 
@@ -98,19 +98,21 @@
   width: var(--gentleduck-navigation-menu-viewport-width);
   height: var(--gentleduck-navigation-menu-viewport-height);
   background: white;
-  border: 1px solid var(--gray-6);
+  /* A border would take its width out of the size the variables measured for the content. */
+  box-shadow: 0 0 0 1px var(--color-gray300);
   border-radius: 6px;
 }
 
 .viewportPosition {
   position: absolute;
   top: 100%;
-  left: 0;
+  inset-inline-start: 0;
 }
 
-.vertical .viewportPosition {
+.vertical .viewportPosition,
+.vertical .inline {
   top: 0;
-  left: 100%;
+  inset-inline-start: 100%;
 }
 
 .indicator {

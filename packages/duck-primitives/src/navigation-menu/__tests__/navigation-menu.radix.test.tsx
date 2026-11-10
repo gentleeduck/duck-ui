@@ -343,6 +343,9 @@ describe('focus outside', () => {
         <button type="button" data-testid="outside">
           Outside
         </button>
+        <button type="button" data-testid="elsewhere">
+          Elsewhere
+        </button>
       </div>,
     )
     await waitFor(() => expect(screen.getByText(CONTENT_TEXT)).toBeInTheDocument())
@@ -352,6 +355,10 @@ describe('focus outside', () => {
     const outside = screen.getByTestId('outside')
     outside.focus()
     fireEvent.focusIn(outside)
+    // duck: and from one outside element to another, which carries a focus origin outside the menu too.
+    const elsewhere = screen.getByTestId('elsewhere')
+    elsewhere.focus()
+    fireEvent.focusIn(elsewhere, { relatedTarget: outside })
 
     expect(onValueChange).not.toHaveBeenCalledWith('')
     expect(screen.getByText(CONTENT_TEXT)).toBeInTheDocument()
@@ -968,14 +975,14 @@ describe('NavigationMenu.Viewport', () => {
             </NavigationMenu.Content>
           </NavigationMenu.Item>
         </NavigationMenu.List>
-        <NavigationMenu.Viewport asChild>
-          <section
-            ref={ref}
-            data-testid="viewport"
-            className="custom-class"
-            style={{ outlineColor: 'rgb(1, 2, 3)' }}
-            onClick={onClick}
-          />
+        {/* duck: the probe props go on the viewport, so the test fails if the slot drops the caller's own. */}
+        <NavigationMenu.Viewport
+          asChild
+          ref={ref}
+          className="custom-class"
+          style={{ outlineColor: 'rgb(1, 2, 3)' }}
+          onClick={onClick}>
+          <section data-testid="viewport" />
         </NavigationMenu.Viewport>
       </NavigationMenu.Root>,
     )

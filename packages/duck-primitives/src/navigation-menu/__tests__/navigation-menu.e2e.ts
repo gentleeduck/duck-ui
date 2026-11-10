@@ -2,6 +2,8 @@ import { expect, type Page, test } from '@playwright/test'
 import { visitStory } from '../../__tests__/e2e-helpers'
 
 const trigger = (page: Page, name: string) => page.getByRole('button', { exact: true, name })
+const CLOCK_START = new Date('2026-01-01T08:00:00Z')
+const CLOCK_PAUSED = new Date('2026-01-01T09:00:00Z')
 const link = (page: Page, name: string) => page.getByRole('link', { exact: true, name })
 const viewport = (page: Page) => page.locator('[data-slot="navigation-menu-viewport"]')
 const indicator = (page: Page) => page.locator('[data-slot="navigation-menu-indicator"]')
@@ -20,6 +22,7 @@ test.describe('NavigationMenu', () => {
   test('opens on hover, sizes the viewport to the open content, and moves to the next item at once', async ({
     page,
   }) => {
+    await page.clock.install({ time: CLOCK_START })
     await trigger(page, 'Learn').hover()
 
     await expect(link(page, 'Stitches')).toBeVisible()
@@ -27,9 +30,12 @@ test.describe('NavigationMenu', () => {
     const learn = await box(page, page.locator('[data-slot="navigation-menu-content"]'))
     await expect.poll(async () => (await box(page, viewport(page))).width).toBeCloseTo(learn.width, 0)
 
+    // The page clock holds still across the hover, so only a switch that waits for no delay can pass.
+    await page.clock.pauseAt(CLOCK_PAUSED)
     await trigger(page, 'Overview').hover()
 
     await expect(page.getByLabel('Open item')).toHaveText('overview')
+    await page.clock.resume()
     await expect(link(page, 'Releases')).toBeVisible()
     await expect.poll(async () => (await box(page, viewport(page))).width).toBeGreaterThan(learn.width)
   })
@@ -316,6 +322,8 @@ test.describe('NavigationMenu sub menu', () => {
     await trigger(page, 'Extensibility').click()
 
     await expect(link(page, 'Plugins')).toHaveCount(0)
+    await expect(trigger(page, 'Products')).toHaveAttribute('aria-expanded', 'true')
+    await expect(trigger(page, 'Security')).toBeVisible()
   })
 
   test('closes the whole menu on Escape inside the sub menu and hands focus to the top trigger', async ({ page }) => {

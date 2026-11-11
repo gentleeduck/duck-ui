@@ -1,3 +1,4 @@
+export { fuzzyFilter, useCommandSearch, useCommandState } from '@gentleduck/primitives/command'
 export {
   Command,
   CommandDialog,
@@ -6,9 +7,10 @@ export {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandLoading,
   CommandSeparator,
   CommandShortcut,
-  useCommandListContext,
+  CommandStatus,
 } from './command'
-export type { ICommandBadgeProps } from './command.types'
-export { MotionCommandItem } from './motion-command'
+export type { ICommandBadgeProps, ICommandDialogProps } from './command.types'
+export { MotionCommandDialog, MotionCommandItem } from './motion-command'

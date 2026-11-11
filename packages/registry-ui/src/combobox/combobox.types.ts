@@ -9,31 +9,14 @@ export interface IComboboxItemType {
   value: string
 }
 
-/**
- * Props for the Combobox component.
- *
- * @template TData - The tuple of combobox items.
- * @template TType - Selection mode: `'single'` (default) or `'multiple'`.
- */
-export interface IComboboxProps<
-  TData extends readonly IComboboxItemType[],
-  TType extends 'single' | 'multiple' = 'single',
-> {
+interface IComboboxBaseProps {
   /** List of items to display in the combobox. */
-  items: TData
-  /** Callback fired when the selected value(s) change. */
-  onValueChange?: TType extends 'single'
-    ? (value: TData[number]['value']) => void
-    : (value: TData[number]['value'][]) => void
+  items: readonly IComboboxItemType[]
   /** Whether to show a search input inside the popover. */
   withSearch?: boolean
-  /** Whether to display the selected value(s) in the trigger button. */
+  /** Whether to display the labels of the picked items in the trigger button. */
   showSelected?: boolean
-  /** Initial value(s) for uncontrolled usage. */
-  defaultValue?: TType extends 'single' ? TData[number]['value'] : TData[number]['value'][]
-  /** Controlled value(s). */
-  value?: TType extends 'single' ? TData[number]['value'] : TData[number]['value'][]
-  /** Props forwarded to the Popover root. */
+  /** Props forwarded to the Popover root, its `open`, `defaultOpen` and `onOpenChange` included. */
   popover?: React.ComponentPropsWithoutRef<typeof Popover>
   /** Props forwarded to the trigger Button. */
   popoverTrigger?: React.ComponentPropsWithoutRef<typeof Button>
@@ -43,25 +26,47 @@ export interface IComboboxProps<
   command?: React.ComponentPropsWithoutRef<typeof Command>
   /** Props forwarded to CommandInput. */
   commandInput?: React.ComponentPropsWithoutRef<typeof CommandInput>
-  /** Placeholder text for the search input. */
+  /** Text in the trigger while nothing is picked. */
   commandTriggerPlaceholder?: string
   /** Message shown when no items match the search query. */
   commandEmpty?: string
-  /** Render function for each item in the list. */
-  children: (item: TData) => React.ReactNode
+  /** Renders the list from the items, as `ComboboxItem` elements. */
+  children: (items: readonly IComboboxItemType[]) => React.ReactNode
 }
+
+/** Picks one item and closes. Picking it again clears the value to an empty string. */
+export interface IComboboxSingleProps extends IComboboxBaseProps {
+  type?: 'single'
+  /** Controlled value, an empty string when nothing is picked. */
+  value?: string
+  /** Initial value for uncontrolled usage. */
+  defaultValue?: string
+  onValueChange?: (value: string) => void
+}
+
+/** Picks any number of items, and stays open while it does. */
+export interface IComboboxMultipleProps extends IComboboxBaseProps {
+  type: 'multiple'
+  /** Controlled values. */
+  value?: string[]
+  /** Initial values for uncontrolled usage. */
+  defaultValue?: string[]
+  onValueChange?: (value: string[]) => void
+}
+
+export type IComboboxProps = IComboboxSingleProps | IComboboxMultipleProps
 
 /**
  * Props for an individual combobox item (CommandItem wrapper).
  *
  * @template T - The item type extending `IComboboxItemType`.
  */
-export interface IComboboxItemProps<T extends IComboboxItemType>
+export interface IComboboxItemProps<T extends IComboboxItemType = IComboboxItemType>
   extends Omit<React.ComponentPropsWithoutRef<typeof CommandItem>, 'onSelect'> {
   /** The combobox item data. */
   item: T
-  /** Callback fired when this item is selected. */
+  /** Called with the item's value when it is picked. */
   onSelect?: (value: T['value']) => void
-  /** Whether the item is checked (for multiple selection). */
+  /** Whether the item shows as picked. Inside a `Combobox` it follows the combobox's value unless given. */
   checked?: React.ComponentPropsWithoutRef<typeof Checkbox>['checked']
 }

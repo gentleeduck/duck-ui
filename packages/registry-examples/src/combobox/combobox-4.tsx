@@ -32,7 +32,7 @@ export default function Demo() {
   return (
     <div className="flex w-full flex-col items-start justify-between rounded-md border px-4 py-3 sm:flex-row sm:items-center">
       <p className="font-medium text-sm leading-none">
-        <span className="mr-2 rounded-lg bg-primary px-2 py-1 text-primary-foreground text-xs">{label}</span>
+        <span className="me-2 rounded-lg bg-primary px-2 py-1 text-primary-foreground text-xs">{label}</span>
         <span className="text-muted-foreground">Create a new project</span>
       </p>
       <DropdownMenu onOpenChange={setOpen} open={open}>

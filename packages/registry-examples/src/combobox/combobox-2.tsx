@@ -62,7 +62,7 @@ export default function Demo() {
                   }}
                   value={framework.value}>
                   {framework.label}
-                  <Check className={cn('ml-auto', value === framework.value ? 'opacity-100' : 'opacity-0')} />
+                  <Check className={cn('ms-auto', value === framework.value ? 'opacity-100' : 'opacity-0')} />
                 </CommandItem>
               ))}
             </CommandGroup>

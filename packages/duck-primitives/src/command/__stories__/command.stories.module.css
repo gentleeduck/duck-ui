@@ -1,0 +1,96 @@
+.command {
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  border: 1px solid #888;
+  border-radius: 8px;
+  font:
+    14px / 1.5 system-ui,
+    sans-serif;
+}
+
+.command input {
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid #888;
+  outline: none;
+  font: inherit;
+}
+
+.command ul {
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+}
+
+.command li {
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: default;
+}
+
+.command li[data-highlighted] {
+  background: #2563eb;
+  color: white;
+}
+
+.command li[data-disabled] {
+  opacity: 0.5;
+}
+
+.command [data-slot="command-group-heading"] {
+  padding: 4px 8px;
+  color: #666;
+  font-size: 12px;
+}
+
+.command [data-slot="command-separator"] {
+  height: 1px;
+  margin: 4px 0;
+  background: #888;
+}
+
+.command [data-slot="command-empty"] {
+  padding: 8px;
+  color: #666;
+}
+
+.command a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.command [data-slot="command-loading"],
+.status {
+  padding: 4px 10px;
+  color: #666;
+  font-size: 12px;
+}
+
+.command ul.scroll {
+  max-height: 150px;
+  padding: 0;
+  overflow-y: auto;
+}
+
+.scroll li {
+  box-sizing: border-box;
+  height: 30px;
+}
+
+.viewport {
+  height: 196px;
+  overflow-y: auto;
+}
+
+.viewport ul {
+  position: relative;
+  padding: 0;
+}
+
+.viewport li {
+  position: absolute;
+  inset-inline: 4px;
+  box-sizing: border-box;
+  height: 28px;
+}

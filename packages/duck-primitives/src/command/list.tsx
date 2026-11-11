@@ -105,6 +105,7 @@ export const CommandList = React.forwardRef<CommandListElement, ICommand.IListPr
     const [order] = React.useState<IOrder>(() => ({ rank: new WeakMap(), moved: new Set() }))
     const [filteredOut] = React.useState(() => new WeakSet<HTMLElement>())
     const lastSearch = React.useRef(search)
+    const lastValue = React.useRef(value)
     const mounted = React.useRef(false)
     const { highlight, markHighlighted, highlightedRef, itemsChangeRef, forcedGroups, inputRef, store } = context
     const { virtualRef, pendingRef } = context
@@ -118,10 +119,17 @@ export const CommandList = React.forwardRef<CommandListElement, ICommand.IListPr
       virtualRef.current = virtual ?? null
     })
 
-    // Set after the items' own effects on mount, so the items a command mounts with do not filter it twice.
+    // Set after the items' own effects on mount, so the items a command mounts with do not filter it twice. A list
+    // leaving takes its virtualizer and its pending move with it, unless another list has replaced them.
     useLayoutEffect(() => {
       itemsChangeRef.current = onItemsChange
-    }, [itemsChangeRef])
+      return () => {
+        if (itemsChangeRef.current !== onItemsChange) return
+        itemsChangeRef.current = null
+        virtualRef.current = null
+        pendingRef.current = null
+      }
+    }, [itemsChangeRef, virtualRef, pendingRef])
 
     // The list's own height may follow the variable, so its rows are measured instead: each one the observer reports,
     // and each one added since, which the mutation observer hands it.
@@ -229,7 +237,9 @@ export const CommandList = React.forwardRef<CommandListElement, ICommand.IListPr
         pendingRef.current = null
         const held = named(value)
         markHighlighted(held)
-        if (searched || !held) highlight(first)
+        // An owner clearing the highlight to '' means none, where a value naming no shown row asks for the first.
+        const cleared = value === '' && mounted.current && lastValue.current !== ''
+        if (searched || (!held && !cleared)) highlight(first)
       } else {
         pendingRef.current = null
         const current = highlightedRef.current
@@ -238,6 +248,7 @@ export const CommandList = React.forwardRef<CommandListElement, ICommand.IListPr
         }
       }
       mounted.current = true
+      lastValue.current = value
     }, [
       search,
       shouldFilter,

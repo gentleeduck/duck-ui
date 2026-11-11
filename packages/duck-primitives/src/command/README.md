@@ -42,14 +42,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 160 | `command.test.tsx` 160 |
+| Unit | 167 | `command.test.tsx` 167 |
 | End to end | 22 | `command.e2e.ts` 22 |
 | registry-ui | 14 | `command.test.tsx` 14 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>182 behaviours, one per test</summary>
+<summary>189 behaviours, one per test</summary>
 
 **Unit, `command.test.tsx`**
 
@@ -85,7 +85,9 @@ Each test was proven by changing the code and watching a test fail.
   - selects the highlighted item on Enter
   - selects the item the mouse highlighted on Enter
   - leaves the keys to an input method that is composing text
-  - keeps Tab from leaving
+  - lets Tab and Shift+Tab leave, so an inline command traps no keyboard user
+  - selects nothing on the Enter Safari sends after composition, with keyCode 229
+  - leaves Enter on a button inside it to the button
   - moves down on Ctrl+N and Ctrl+J and up on Ctrl+P and Ctrl+K
   - leaves Ctrl+N, Ctrl+J, Ctrl+P and Ctrl+K to the input with vimBindings off, and N to typing
   - jumps to the first item of the next group on Alt+ArrowDown and of the group before on Alt+ArrowUp
@@ -120,6 +122,7 @@ Each test was proven by changing the code and watching a test fail.
   - is found by its textValue rather than what it shows
   - selects with an empty value when it names none
 - Command input state
+  - keeps every item when a controlled search refuses an edit
   - filters again when a controlled search is cleared without typing
   - names the highlighted option as the active descendant of the input
   - highlights the first match before the keystroke that filtered returns
@@ -133,6 +136,7 @@ Each test was proven by changing the code and watching a test fail.
   - stays quiet when the highlight moves between items of the same value
   - highlights the defaultValue item first, and the first item when it names none shown
   - highlights the item a controlled value names, and moves only once the owner takes the change
+  - leaves the highlight empty when the owner clears it to an empty value
   - asks for the first match when a search hides the controlled item, and for none when nothing matches
   - asks for the first match on a search, keeping the controlled item highlighted until the owner moves it
   - asks for the first item when a controlled value names none, and highlights nothing for an empty one
@@ -182,6 +186,7 @@ Each test was proven by changing the code and watching a test fail.
   - leaves the variable unset where there is no ResizeObserver
   - writes the height of the rows the list shows to --gentleduck-command-list-height as they change
 - useCommandState
+  - settles on a selector that returns a new object, where each read made a fresh one
   - reads the search, the highlighted value and how many items match
   - renders a reader only when what it picks changes
 - Command.Status
@@ -193,6 +198,8 @@ Each test was proven by changing the code and watching a test fail.
   - leaves the items alone with shouldFilter off
 - Command virtual list
   - moves past the rows drawn, bringing each one in through scrollToIndex
+  - leaves Enter alone once the highlighted row has scrolled out of the DOM
+  - stops asking a virtual list to scroll once it unmounts
   - wraps by index with loop
   - stops at the ends without loop
   - skips a disabled row whether it is drawn or brought in
@@ -339,6 +346,16 @@ Each test was proven by changing the code and watching a test fail.
 
 ## Fixed
 
+- Tab and Shift+Tab leave the command, which cancelled both, so a keyboard user could not get past an inline
+  palette. A dialog around one still holds focus inside it.
+- The Enter Safari sends to confirm an input method's text, after `compositionend` with `keyCode` 229, selects
+  nothing, and Enter on a button or a field inside the command is left to it.
+- A controlled input searches by the value its owner commits, so an edit the owner refuses no longer filters the
+  list on text the input does not show. An owner clearing the highlight to `''` keeps none highlighted.
+- `useCommandState` keeps what its selector returned until the state changes, so a selector returning an object no
+  longer makes a fresh one on every read, which React reads as a store that never settles.
+- A virtual row scrolled out of the DOM is not clicked by Enter, and a virtual list that unmounts takes its
+  virtualizer and its pending move with it.
 - The input names the highlighted option in `aria-activedescendant`. Focus stays in the input, so a screen
   reader announced nothing as the arrow keys moved.
 - A controlled `value` on the input filters the list whenever it changes. Clearing it from outside the input

@@ -31,12 +31,21 @@ export function useCommandSearch(__scopeCommand?: Scope) {
 }
 
 /**
- * Reads what `selector` picks from the command's state, and renders again only when that changes. Return a value, not a
- * new object, which would differ on every read.
+ * Reads what `selector` picks from the command's state, and renders again only when that changes. A selector returning
+ * a new object renders again on every change of the state, rather than only when what it picks changes.
  */
 export function useCommandState<T>(selector: (state: ICommand.IState) => T, __scopeCommand?: Scope) {
   const { store } = useCommandContext('useCommandState', __scopeCommand)
-  const read = () => selector(store.get())
+  // React reads the snapshot more than once per change, and an object made fresh each read would never settle.
+  const cacheRef = React.useRef<{ state: ICommand.IState; selector: typeof selector; picked: T } | null>(null)
+  const read = () => {
+    const state = store.get()
+    const cache = cacheRef.current
+    if (cache && cache.state === state && cache.selector === selector) return cache.picked
+    const picked = selector(state)
+    cacheRef.current = { state, selector, picked }
+    return picked
+  }
   return React.useSyncExternalStore(store.subscribe, read, read)
 }
 
@@ -284,16 +293,19 @@ const CommandInner = React.forwardRef<
       {...commandProps}
       ref={forwardedRef}
       onKeyDown={composeEventHandlers(commandProps.onKeyDown, (event) => {
-        // An input method picks its text with these same keys while it composes.
-        if (event.nativeEvent.isComposing) return
-
-        if (event.key === 'Tab') event.preventDefault()
+        // An input method picks its text with these same keys while it composes. Safari sends the Enter that confirms
+        // it after compositionend, with isComposing false and keyCode 229.
+        if (event.nativeEvent.isComposing || event.keyCode === 229) return
 
         const key = (vimBindings && event.ctrlKey && VIM_KEYS[event.key]) || event.key
         const highlighted = context.highlightedRef.current
 
         if (key === 'Enter') {
-          if (!highlighted) return
+          // A control beside the list, such as a button, takes its own Enter.
+          const target = event.target as HTMLElement
+          if (target !== context.inputRef.current && target.closest('button, a[href], input, textarea, select')) return
+          // A virtual row scrolled out of the DOM stays the highlight to find again, but there is nothing to click.
+          if (!highlighted?.isConnected) return
           event.preventDefault()
           highlighted.click()
           return

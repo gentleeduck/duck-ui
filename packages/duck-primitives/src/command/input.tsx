@@ -26,8 +26,8 @@ export const CommandInput = React.forwardRef<CommandInputElement, ICommand.IInpu
 
     // The list highlights its first item in a layout effect, which runs before this one when the input comes after it.
     useLayoutEffect(() => {
-      const id = highlightedRef.current?.id
-      if (id) inputRef.current?.setAttribute('aria-activedescendant', id)
+      const highlighted = highlightedRef.current
+      if (highlighted?.isConnected) inputRef.current?.setAttribute('aria-activedescendant', highlighted.id)
     }, [highlightedRef, inputRef])
 
     return (
@@ -39,8 +39,9 @@ export const CommandInput = React.forwardRef<CommandInputElement, ICommand.IInpu
         aria-autocomplete="list"
         {...inputProps}
         ref={composedRef}
+        // A controlled input searches by the value its owner commits, which may refuse the edit; the effect above sends it.
         onChange={composeEventHandlers(inputProps.onChange, (e: React.ChangeEvent<HTMLInputElement>) => {
-          context.onSearchChange(e.target.value)
+          if (value === undefined) context.onSearchChange(e.target.value)
         })}
       />
     )

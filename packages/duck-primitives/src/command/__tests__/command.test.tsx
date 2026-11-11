@@ -350,10 +350,26 @@ describe('Command keyboard', () => {
     expect(onSelect).not.toHaveBeenCalled()
   })
 
-  it('keeps Tab from leaving', () => {
+  it('lets Tab and Shift+Tab leave, so an inline command traps no keyboard user', () => {
     const { root } = renderGroupedCommand()
 
-    expect(press(root, 'Tab')).toEqual([false])
+    expect([press(root, 'Tab'), fireEvent.keyDown(root, { key: 'Tab', shiftKey: true })]).toEqual([[true], true])
+  })
+
+  it('selects nothing on the Enter Safari sends after composition, with keyCode 229', () => {
+    const { input, onSelect } = renderGroupedCommand()
+
+    fireEvent.keyDown(input, { key: 'Enter', keyCode: 229 })
+
+    expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  it('leaves Enter on a button inside it to the button', () => {
+    const { onSelect } = renderGroupedCommand(<button type="button">Help</button>)
+
+    const notPrevented = fireEvent.keyDown(screen.getByText('Help'), { key: 'Enter' })
+
+    expect([notPrevented, onSelect.mock.calls.length]).toEqual([true, 0])
   })
 
   it('moves down on Ctrl+N and Ctrl+J and up on Ctrl+P and Ctrl+K', () => {
@@ -833,6 +849,22 @@ describe('Command input state', () => {
     )
   }
 
+  it('keeps every item when a controlled search refuses an edit', () => {
+    render(
+      <Command>
+        <CommandInput aria-label="Search" value="" onChange={() => {}} />
+        <CommandList>
+          <CommandItem value="apple">Apple</CommandItem>
+          <CommandItem value="banana">Banana</CommandItem>
+        </CommandList>
+      </Command>,
+    )
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'b' } })
+
+    expect(option('Apple').closest('[hidden]')).toBeNull()
+  })
+
   it('filters again when a controlled search is cleared without typing', async () => {
     render(<ControlledSearch />)
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'ban' } })
@@ -1012,6 +1044,25 @@ describe('Command highlight value', () => {
     press(screen.getByRole('combobox'), 'ArrowDown')
 
     expect([ignored, highlighted(), asked]).toEqual(['Banana', 'Cherry', ['cherry', 'cherry']])
+  })
+
+  it('leaves the highlight empty when the owner clears it to an empty value', () => {
+    function Owned() {
+      const [value, setValue] = React.useState('apple')
+      return (
+        <Fruits value={value} onValueChange={setValue}>
+          <button type="button" onClick={() => setValue('')}>
+            Clear
+          </button>
+        </Fruits>
+      )
+    }
+    render(<Owned />)
+    const before = highlighted()
+
+    fireEvent.click(screen.getByText('Clear'))
+
+    expect([before, highlighted()]).toEqual(['Apple', null])
   })
 
   it('asks for the first match when a search hides the controlled item, and for none when nothing matches', () => {
@@ -1667,6 +1718,23 @@ describe('Command list height', () => {
 })
 
 describe('useCommandState', () => {
+  it('settles on a selector that returns a new object, where each read made a fresh one', () => {
+    const errors = spyOn(console, 'error').mockImplementation(() => {})
+    function Count() {
+      const picked = useCommandState((state) => ({ count: state.count }))
+      return <output data-testid="count">{picked.count}</output>
+    }
+    render(
+      <Fruits>
+        <Count />
+      </Fruits>,
+    )
+    const logged = errors.mock.calls.length
+    errors.mockRestore()
+
+    expect([screen.getByTestId('count').textContent, logged]).toEqual(['3', 0])
+  })
+
   it('reads the search, the highlighted value and how many items match', () => {
     let state = {}
     function Read() {
@@ -1864,6 +1932,45 @@ describe('Command virtual list', () => {
       'Row 0',
       'Row 5',
     ])
+  })
+
+  it('leaves Enter alone once the highlighted row has scrolled out of the DOM', () => {
+    render(<Virtual />)
+    keys('ArrowDown')
+
+    fireEvent.click(screen.getByText('Scroll away'))
+    const notPrevented = fireEvent.keyDown(screen.getByRole('combobox'), { key: 'Enter' })
+
+    expect(notPrevented).toBe(true)
+  })
+
+  it('stops asking a virtual list to scroll once it unmounts', () => {
+    const scrollToIndex = mock()
+    function Toggle() {
+      const [shown, setShown] = React.useState(true)
+      return (
+        <Command shouldFilter={false}>
+          <CommandInput aria-label="Search" />
+          <button type="button" onClick={() => setShown(false)}>
+            Hide
+          </button>
+          {shown && (
+            <CommandList virtual={{ count: 3, scrollToIndex }}>
+              <CommandItem index={0} value="zero">
+                Zero
+              </CommandItem>
+            </CommandList>
+          )}
+        </Command>
+      )
+    }
+    render(<Toggle />)
+    fireEvent.click(screen.getByText('Hide'))
+    scrollToIndex.mockClear()
+
+    fireEvent.keyDown(screen.getByRole('combobox'), { key: 'ArrowDown' })
+
+    expect(scrollToIndex).not.toHaveBeenCalled()
   })
 
   it('wraps by index with loop', () => {

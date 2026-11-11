@@ -249,6 +249,8 @@ export function CommandMenu() {
         }}
         open={open}
         shouldFilter={false}
+        // The menu moves its own selection on the arrow keys, which the primitive's Ctrl+N, P, J and K would bypass.
+        vimBindings={false}
         contentClassName={aiMode ? 'lg:w-[800px] h-[550px]' : ''}
         description={aiMode ? 'Ask a question about the docs.' : 'Find a page in the docs and go to it.'}
         title={aiMode ? 'Ask AI' : 'Search docs'}>

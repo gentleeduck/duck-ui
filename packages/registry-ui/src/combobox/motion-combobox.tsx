@@ -87,7 +87,13 @@ const MotionComboboxItem = React.forwardRef<
 >(({ item, onSelect, checked, index = 0, ...props }, ref) => {
   const state = useComboboxItem({ checked, item, onSelect })
   return (
-    <MotionCommandItem ref={ref} index={index} value={item.value} {...props} onSelect={state.select}>
+    <MotionCommandItem
+      ref={ref}
+      index={index}
+      value={item.value}
+      aria-checked={state.checked === 'indeterminate' ? 'mixed' : state.checked}
+      {...props}
+      onSelect={state.select}>
       <MotionCheckbox
         aria-hidden="true"
         checked={state.checked}

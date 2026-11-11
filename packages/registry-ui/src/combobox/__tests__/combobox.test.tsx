@@ -73,6 +73,21 @@ describe.each([
     expect(trigger().textContent).toBe('Pick a pond')
   })
 
+  test('tells assistive technology which ponds are picked, apart from the highlight', async () => {
+    render(
+      <Root defaultValue={['mill', 'marsh']} items={ponds} type="multiple">
+        {(items) => items.map((pond) => <Item item={pond} key={pond.value} />)}
+      </Root>,
+    )
+    await open()
+
+    expect(
+      ['Mill pond', 'Lake', 'Marsh'].map((label) =>
+        screen.getByRole('option', { name: label }).getAttribute('aria-checked'),
+      ),
+    ).toEqual(['true', 'false', 'true'])
+  })
+
   test('picks several ponds, staying open, and folds them into a count past two', async () => {
     const onValueChange = mock()
     render(

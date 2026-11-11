@@ -91,7 +91,12 @@ const ComboboxItem = React.forwardRef<React.ComponentRef<typeof CommandItem>, IC
   ({ item, onSelect, checked, ...props }, ref) => {
     const state = useComboboxItem({ checked, item, onSelect })
     return (
-      <CommandItem ref={ref} value={item.value} {...props} onSelect={state.select}>
+      <CommandItem
+        ref={ref}
+        value={item.value}
+        aria-checked={state.checked === 'indeterminate' ? 'mixed' : state.checked}
+        {...props}
+        onSelect={state.select}>
         <Checkbox
           aria-hidden="true"
           checked={state.checked}

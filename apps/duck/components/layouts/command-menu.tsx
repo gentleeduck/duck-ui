@@ -10,7 +10,7 @@ import {
   CommandItem,
   CommandList,
   CommandShortcut,
-  useCommandListContext,
+  useCommandSearch,
 } from '@gentleduck/registry-ui/command'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'
 import { Separator } from '@gentleduck/registry-ui/separator'
@@ -347,7 +347,7 @@ function VirtualCommandList({
   onSelectedLabelChange: (label: string) => void
   searchIndex: lunr.Index | null
 }) {
-  const { search } = useCommandListContext({})
+  const search = useCommandSearch()
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const [selectedIndex, setSelectedIndex] = React.useState(0)
 

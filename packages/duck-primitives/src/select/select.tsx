@@ -4,7 +4,9 @@ import * as React from 'react'
 import { useDirection } from '../direction'
 import { useControllableState } from '../hooks/use-controllable-state'
 import { useId } from '../hooks/use-id'
+import { useLayoutEffect } from '../hooks/use-layout-effect'
 import { getAssociatedForm } from '../libs/associated-form'
+import { composeEventHandlers } from '../libs/compose-event-handler'
 import { useComposedRefs } from '../libs/compose-ref'
 import { createCollection } from '../libs/create-collection'
 import { createContextScope } from '../libs/create-context'
@@ -119,12 +121,16 @@ export const SelectProvider: React.FC<ISelect.IProps> = (props: ISelect.IScoped<
 
   const initialValueRef = React.useRef(value)
   React.useEffect(() => {
-    const associatedForm = getAssociatedForm(trigger, form)
-    if (associatedForm) {
-      const reset = () => setValue(initialValueRef.current)
-      associatedForm.addEventListener('reset', reset)
-      return () => associatedForm.removeEventListener('reset', reset)
+    if (!trigger) return
+    const root = trigger.getRootNode()
+    // Heard once the reset has bubbled up, so a handler that cancels it has run, and matched to the form the select
+    // belongs to then, which may have mounted after it.
+    const reset = (event: Event) => {
+      if (!event.defaultPrevented && event.target === getAssociatedForm(trigger, form))
+        setValue(initialValueRef.current)
     }
+    root.addEventListener('reset', reset)
+    return () => root.removeEventListener('reset', reset)
   }, [form, trigger, setValue])
 
   const [nativeOptions, setNativeOptions] = React.useState(new Set<ISelect.INativeOption>())
@@ -174,6 +180,7 @@ export const SelectProvider: React.FC<ISelect.IProps> = (props: ISelect.IScoped<
               onNativeOptionRemove={onNativeOptionRemove}>
               <SelectBubbleInputContextProvider
                 scope={__scopeSelect}
+                initialValue={initialValueRef.current}
                 nativeOptions={nativeOptions}
                 userSelection={userSelection}>
                 {children}
@@ -197,11 +204,17 @@ export const Select: React.FC<ISelect.IProps> = (props: ISelect.IScoped<ISelect.
 
 Select.displayName = SELECT_NAME
 
+function selectNative(select: HTMLSelectElement, value: ISelect.IValue) {
+  if (typeof value === 'string') {
+    Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value')?.set?.call(select, value)
+  } else for (const option of select.options) option.selected = value.includes(option.value)
+}
+
 export const SelectBubbleInput = React.forwardRef<HTMLSelectElement, ISelect.IScoped<ISelect.IBubbleInputProps>>(
   (props, forwardedRef) => {
     const { __scopeSelect, ...selectProps } = props
     const context = useSelectContext(BUBBLE_INPUT_NAME, __scopeSelect)
-    const { userSelection, nativeOptions } = useSelectBubbleInputContext(BUBBLE_INPUT_NAME, __scopeSelect)
+    const { userSelection, nativeOptions, initialValue } = useSelectBubbleInputContext(BUBBLE_INPUT_NAME, __scopeSelect)
     const { onValueChange } = context
     const ref = React.useRef<HTMLSelectElement>(null)
     const composedRefs = useComposedRefs(forwardedRef, ref)
@@ -209,6 +222,8 @@ export const SelectBubbleInput = React.forwardRef<HTMLSelectElement, ISelect.ISc
     const prevValueRef = React.useRef(value)
     const handledSelectionRef = React.useRef(userSelection)
     const isDispatchingRef = React.useRef(false)
+    // Bumped by a change the browser makes itself, such as autofill, which a controlled owner may refuse.
+    const [nativeChange, onNativeChange] = React.useReducer((count: number) => count + 1, 0)
     const options = context.items
       ? context.items.map((item) => (
           <option key={item.value} value={item.value} disabled={item.disabled}>
@@ -228,10 +243,7 @@ export const SelectBubbleInput = React.forwardRef<HTMLSelectElement, ISelect.ISc
       handledSelectionRef.current = userSelection
       prevValueRef.current = value
       if (!select || !setNativeValue) return
-      const setNative = (nextValue: ISelect.IValue) => {
-        if (typeof nextValue === 'string') setNativeValue.call(select, nextValue)
-        else for (const option of select.options) option.selected = nextValue.includes(option.value)
-      }
+      const setNative = (nextValue: ISelect.IValue) => selectNative(select, nextValue)
       const dispatch = (nextValue: ISelect.IValue, bubbles: boolean) => {
         setNative(nextValue)
         isDispatchingRef.current = true
@@ -250,10 +262,17 @@ export const SelectBubbleInput = React.forwardRef<HTMLSelectElement, ISelect.ISc
       }
     }, [value, userSelection])
 
+    // The native select resets to its default, which stays the starting value, so the live value is set apart from it:
+    // after the select remounts with new options, and after a browser change the owner may not have taken.
+    const optionsKey = options.map((option) => option.props.value).join(';')
+    useLayoutEffect(() => {
+      if (ref.current) selectNative(ref.current, value)
+    }, [optionsKey, nativeChange])
+
     return context.isFormControl ? (
       <VisuallyHidden asChild>
         <select
-          key={options.map((option) => option.props.value).join(';')}
+          key={optionsKey}
           aria-hidden
           tabIndex={-1}
           required={context.required}
@@ -262,17 +281,18 @@ export const SelectBubbleInput = React.forwardRef<HTMLSelectElement, ISelect.ISc
           disabled={context.disabled}
           form={context.form}
           multiple={context.multiple}
-          // enable form autofill
-          onChange={({ target }) => {
-            if (!isDispatchingRef.current)
-              onValueChange(
-                context.multiple ? Array.from(target.selectedOptions, (option) => option.value) : target.value,
-              )
-          }}
           {...selectProps}
+          // enable form autofill
+          onChange={composeEventHandlers(selectProps.onChange, ({ target }) => {
+            if (isDispatchingRef.current) return
+            onValueChange(
+              context.multiple ? Array.from(target.selectedOptions, (option) => option.value) : target.value,
+            )
+            onNativeChange()
+          })}
           ref={composedRefs}
           // A `value` would make React swallow the change event dispatched above.
-          defaultValue={value}>
+          defaultValue={initialValue ?? ''}>
           {shouldShowPlaceholder(context.value) && !options.some((option) => !option.props.value) ? (
             <option value="" />
           ) : null}

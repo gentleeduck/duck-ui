@@ -57,6 +57,8 @@ export namespace ISelect {
   }
 
   export interface IBubbleInputContext {
+    /** The value the select started with, which a form reset puts back. */
+    initialValue: IValue | undefined
     nativeOptions: Set<INativeOption>
     userSelection: IUserSelection | null
   }

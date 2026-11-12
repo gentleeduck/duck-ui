@@ -49,14 +49,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 200 | `select.radix.test.tsx` 65, `select.test.tsx` 135 |
+| Unit | 205 | `select.radix.test.tsx` 65, `select.test.tsx` 140 |
 | End to end | 34 | `select.e2e.ts` 25, `select.radix.e2e.ts` 9 |
 | registry-ui | 10 | `select.test.tsx` 10 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>234 behaviours, one per test</summary>
+<summary>239 behaviours, one per test</summary>
 
 **Unit, `select.radix.test.tsx`**
 
@@ -305,6 +305,12 @@ Each test was proven by changing the code and watching a test fail.
   - calls onValueChange once for each pick when its parent holds the value
   - sends the form no change when its parent passes an equal array afresh
   - gives back the picks it started with on a form reset
+- Select and its native select in a form
+  - restores its starting value on a reset of a form named by form that mounts after it
+  - keeps its value when a handler cancels the reset
+  - puts the native select back when a controlled owner refuses an autofilled value
+  - hands an autofilled value to the select as well as to the native select's own onChange
+  - resets the native select to its starting value after new options remount it
 
 **End to end, `select.e2e.ts`**
 
@@ -392,6 +398,11 @@ fieldset defect under Fixed.
 
 ## Fixed
 
+- A form reset is heard once it has bubbled, from the form the select belongs to then, so a form named by `form`
+  that mounts after the select resets it, and a reset a handler cancels leaves it alone.
+- The hidden native select resets to the starting value even after new options remount it, and goes back to the
+  owner's value when the browser changes it, as autofill does, and a controlled owner refuses the change. An
+  `onChange` given to `Select.BubbleInput` runs beside its own handler, where it replaced it.
 - Passes every Radix select test.
 - A form reset restores the starting value, including a form named by `form` that does not contain the
   trigger.

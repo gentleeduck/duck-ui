@@ -6,11 +6,13 @@ import { freshDom, pageChangesOnClose, wait } from '../../__tests__/dom'
 import {
   Select,
   SelectArrow,
+  SelectBubbleInput,
   SelectContent,
   SelectItem,
   SelectItemIndicator,
   SelectItemText,
   SelectPortal,
+  SelectProvider,
   SelectScrollDownButton,
   SelectScrollUpButton,
   SelectTrigger,
@@ -2050,5 +2052,113 @@ describe('Select with multiple', () => {
     act(() => container.querySelector('form')!.reset())
 
     expect([picked, shown()]).toEqual(['Apple, Cherry', 'Apple'])
+  })
+})
+
+describe('Select and its native select in a form', () => {
+  const PICKS = [
+    { value: 'apple', label: 'Apple' },
+    { value: 'banana', label: 'Banana' },
+    { value: 'cherry', label: 'Cherry' },
+  ]
+  function Fruit(props: React.ComponentProps<typeof Select>) {
+    return (
+      <Select name="fruit" items={PICKS} {...props}>
+        <SelectTrigger>
+          <SelectValue data-testid="value" placeholder="Choose" />
+        </SelectTrigger>
+      </Select>
+    )
+  }
+  const shownValue = () => screen.getByTestId('value').textContent
+  // What autofill does: the browser picks an option on the native select and tells it so.
+  function autofill(select: HTMLSelectElement, value: string) {
+    act(() => {
+      select.value = value
+      fireEvent.change(select)
+    })
+  }
+
+  it('restores its starting value on a reset of a form named by form that mounts after it', () => {
+    function Page({ withForm }: { withForm: boolean }) {
+      return (
+        <>
+          <Fruit form="checkout" defaultValue="apple" />
+          {withForm && <form id="checkout" />}
+        </>
+      )
+    }
+    const { container, rerender } = render(<Page withForm={false} />)
+    rerender(<Page withForm />)
+    autofill(container.querySelector('select') as HTMLSelectElement, 'banana')
+
+    act(() => (container.querySelector('#checkout') as HTMLFormElement).reset())
+
+    expect(shownValue()).toBe('Apple')
+  })
+
+  it('keeps its value when a handler cancels the reset', () => {
+    const { container } = render(
+      <form onReset={(event) => event.preventDefault()}>
+        <Fruit defaultValue="apple" />
+      </form>,
+    )
+    autofill(container.querySelector('select') as HTMLSelectElement, 'banana')
+
+    act(() => (container.querySelector('form') as HTMLFormElement).reset())
+
+    expect(shownValue()).toBe('Banana')
+  })
+
+  it('puts the native select back when a controlled owner refuses an autofilled value', () => {
+    const { container } = render(
+      <form>
+        <Fruit value="apple" onValueChange={() => {}} />
+      </form>,
+    )
+    const select = container.querySelector('select') as HTMLSelectElement
+
+    autofill(select, 'cherry')
+
+    expect([select.value, shownValue()]).toEqual(['apple', 'Apple'])
+  })
+
+  it("hands an autofilled value to the select as well as to the native select's own onChange", () => {
+    const onChange = mock()
+    const onValueChange = mock()
+    const { container } = render(
+      <form>
+        <SelectProvider name="fruit" items={PICKS} defaultValue="apple" onValueChange={onValueChange}>
+          <SelectBubbleInput onChange={onChange} />
+        </SelectProvider>
+      </form>,
+    )
+
+    autofill(container.querySelector('select') as HTMLSelectElement, 'banana')
+
+    expect([onChange.mock.calls.length, onValueChange.mock.calls]).toEqual([1, [['banana']]])
+  })
+
+  it('resets the native select to its starting value after new options remount it', () => {
+    function Growing() {
+      const [items, setItems] = React.useState(PICKS)
+      return (
+        <form>
+          <Fruit defaultValue="apple" items={items} />
+          <button type="button" onClick={() => setItems([...PICKS, { value: 'date', label: 'Date' }])}>
+            Add
+          </button>
+        </form>
+      )
+    }
+    const { container } = render(<Growing />)
+    const native = () => container.querySelector('select') as HTMLSelectElement
+    autofill(native(), 'banana')
+    fireEvent.click(screen.getByText('Add'))
+    autofill(native(), 'apple')
+
+    act(() => (container.querySelector('form') as HTMLFormElement).reset())
+
+    expect([native().value, shownValue()]).toEqual(['apple', 'Apple'])
   })
 })

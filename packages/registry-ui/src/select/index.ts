@@ -1,5 +1,4 @@
 export { MotionSelect, MotionSelectContent, MotionSelectTrigger } from './motion-select'
-export type { ISelectTriggerProps } from './select'
 export {
   Select,
   SelectContent,
@@ -12,3 +11,4 @@ export {
   SelectTrigger,
   SelectValue,
 } from './select'
+export type { ISelectTriggerProps } from './select.types'

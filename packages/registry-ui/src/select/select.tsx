@@ -4,6 +4,7 @@ import { cn } from '@gentleduck/libs/cn'
 import * as SelectPrimitive from '@gentleduck/primitives/select'
 import { Check, ChevronDown, ChevronUp } from 'lucide-react'
 import * as React from 'react'
+import type { ISelectTriggerProps } from './select.types'
 
 const Select = SelectPrimitive.Root
 Select.displayName = 'Select'
@@ -13,8 +14,6 @@ SelectGroup.displayName = 'SelectGroup'
 
 const SelectValue = SelectPrimitive.Value
 SelectValue.displayName = 'SelectValue'
-
-export type ISelectTriggerProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
 
 const SelectTrigger = React.forwardRef<React.ComponentRef<typeof SelectPrimitive.Trigger>, ISelectTriggerProps>(
   ({ className, children, ...props }, ref) => (
@@ -61,6 +60,49 @@ const SelectScrollDownButton = React.forwardRef<
 ))
 SelectScrollDownButton.displayName = SelectPrimitive.ScrollDownButton.displayName
 
+// One highlight slides to each item that takes focus, so a fast pointer still passes over the items it skips.
+function SelectHighlight() {
+  const ref = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    const highlight = ref.current
+    const viewport = highlight?.parentElement
+    if (!highlight || !viewport) return
+    const itemOf = (node: EventTarget | null) =>
+      node instanceof HTMLElement ? node.closest<HTMLElement>('[role="option"]') : null
+
+    const show = (event: FocusEvent) => {
+      const item = itemOf(event.target)
+      if (!item) return
+      // Appearing, it lands on the item; it slides only from one item to the next.
+      highlight.toggleAttribute('data-instant', !highlight.hasAttribute('data-visible'))
+      highlight.toggleAttribute('data-visible', true)
+      highlight.style.transform = `translate(${item.offsetLeft}px, ${item.offsetTop}px)`
+      highlight.style.width = `${item.offsetWidth}px`
+      highlight.style.height = `${item.offsetHeight}px`
+    }
+    const hide = (event: FocusEvent) => {
+      if (!itemOf(event.relatedTarget)) highlight.removeAttribute('data-visible')
+    }
+
+    viewport.addEventListener('focusin', show)
+    viewport.addEventListener('focusout', hide)
+    return () => {
+      viewport.removeEventListener('focusin', show)
+      viewport.removeEventListener('focusout', hide)
+    }
+  }, [])
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute top-0 left-0 rounded-sm bg-accent opacity-0 transition-[opacity,transform,height] duration-150 ease-(--gentleduck-motion-ease) data-visible:opacity-100 data-instant:transition-opacity motion-reduce:transition-none"
+      data-slot="select-highlight"
+      ref={ref}
+    />
+  )
+}
+
 const SelectContent = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
@@ -84,6 +126,7 @@ const SelectContent = React.forwardRef<
           position === 'popper' &&
             'h-(--gentleduck-select-trigger-height) w-full min-w-(--gentleduck-select-trigger-width)',
         )}>
+        <SelectHighlight />
         {children}
       </SelectPrimitive.Viewport>
       <SelectScrollDownButton />
@@ -105,7 +148,7 @@ const SelectItem = React.forwardRef<HTMLDivElement, React.ComponentPropsWithoutR
     <SelectPrimitive.Item
       ref={ref}
       className={cn(
-        'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 ps-2 pe-8 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground data-disabled:cursor-not-allowed data-disabled:opacity-50',
+        'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 ps-2 pe-8 text-sm outline-hidden focus:text-accent-foreground data-disabled:cursor-not-allowed data-disabled:opacity-50',
         className,
       )}
       {...props}>
@@ -132,6 +175,7 @@ export {
   Select,
   SelectContent,
   SelectGroup,
+  SelectHighlight,
   SelectItem,
   SelectLabel,
   SelectScrollDownButton,

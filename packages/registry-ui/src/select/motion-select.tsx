@@ -10,8 +10,8 @@ import * as SelectPrimitive from '@gentleduck/primitives/select'
 import { ChevronDown } from 'lucide-react'
 import { motion } from 'motion/react'
 import * as React from 'react'
-import type { ISelectTriggerProps } from './select'
-import { SelectScrollDownButton, SelectScrollUpButton } from './select'
+import { SelectHighlight, SelectScrollDownButton, SelectScrollUpButton } from './select'
+import type { ISelectTriggerProps } from './select.types'
 
 function MotionSelect({
   children,
@@ -68,6 +68,7 @@ const MotionSelectContent = React.forwardRef<
               position === 'popper' &&
                 'h-(--gentleduck-select-trigger-height) w-full min-w-(--gentleduck-select-trigger-width)',
             )}>
+            <SelectHighlight />
             {children}
           </SelectPrimitive.Viewport>
           <SelectScrollDownButton />

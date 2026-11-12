@@ -1,10 +1,10 @@
 import type * as React from 'react'
 import type { IDirection } from '../direction'
-import type { DismissableLayer } from '../dismissable-layer'
-import type { FocusScope } from '../focus-scope'
+import type { IDismissableLayer } from '../dismissable-layer'
+import type { IFocusScope } from '../focus-scope'
 import type { Scope } from '../libs/create-context'
-import type * as PopperPrimitive from '../popper'
-import type { Portal as PortalPrimitive } from '../portal'
+import type { IPopper } from '../popper'
+import type { IPortal } from '../portal'
 import type { Primitive } from '../primitive-elements'
 
 export namespace ISelect {
@@ -12,10 +12,20 @@ export namespace ISelect {
 
   export type INativeOption = React.ReactElement<React.ComponentProps<'option'>>
 
+  /** One value, or every value a `multiple` select holds, in the order they were picked. */
+  export type IValue = string | readonly string[]
+
+  export interface IItem {
+    value: string
+    label: string
+    disabled?: boolean
+  }
+
   export interface IItemData {
     value: string
     disabled: boolean
-    textValue: string
+    textValue: string | undefined
+    textRef: React.RefObject<HTMLSpanElement | null>
   }
 
   export interface IContext {
@@ -26,14 +36,34 @@ export namespace ISelect {
     valueNodeHasChildren: boolean
     onValueNodeHasChildrenChange(hasChildren: boolean): void
     contentId: string
-    value: string | undefined
-    onValueChange(value: string): void
-    open: boolean
+    value: IValue | undefined
+    onValueChange(value: IValue | undefined): void
+    onUserSelect(value: string, stoppedPropagation: boolean): void
+    multiple: boolean
     required?: boolean | undefined
     onOpenChange(open: boolean): void
     dir: IDirection.Kind
     triggerPointerDownPosRef: React.RefObject<{ x: number; y: number } | null>
     disabled?: boolean | undefined
+    name?: string | undefined
+    autoComplete?: string | undefined
+    form?: string | undefined
+    isFormControl: boolean
+    items: readonly IItem[] | undefined
+  }
+
+  export interface IOpenContext {
+    open: boolean
+  }
+
+  export interface IBubbleInputContext {
+    nativeOptions: Set<INativeOption>
+    userSelection: IUserSelection | null
+  }
+
+  export interface IUserSelection {
+    value: IValue
+    stoppedPropagation: boolean
   }
 
   export interface INativeOptionsContext {
@@ -42,19 +72,20 @@ export namespace ISelect {
   }
 
   export interface IContentContext {
-    content?: HTMLDivElement | null
-    viewport?: HTMLDivElement | null
     onViewportChange?: (node: HTMLDivElement | null) => void
     itemRefCallback?: (node: HTMLDivElement | null, value: string, disabled: boolean) => void
-    selectedItem?: HTMLDivElement | null
     onItemLeave?: () => void
     itemTextRefCallback?: (node: HTMLSpanElement | null, value: string, disabled: boolean) => void
-    focusSelectedItem?: () => void
-    selectedItemText?: HTMLSpanElement | null
     position?: 'item-aligned' | 'popper'
-    isPositioned?: boolean
     searchRef?: React.RefObject<string>
-    allowTextPortal?: boolean
+  }
+
+  export interface IContentLayoutContext {
+    viewport?: HTMLDivElement | null
+    selectedItem?: HTMLDivElement | null
+    selectedItemText?: HTMLSpanElement | null
+    focusSelectedItem?: () => void
+    isPositioned?: boolean
   }
 
   export interface IViewportContext {
@@ -68,7 +99,7 @@ export namespace ISelect {
     disabled: boolean
     textId: string
     isSelected: boolean
-    onItemTextChange(node: HTMLSpanElement | null): void
+    textRef: React.RefObject<HTMLSpanElement | null>
   }
 
   export interface IGroupContext {
@@ -78,11 +109,6 @@ export namespace ISelect {
   type PrimitiveDivProps = React.ComponentPropsWithRef<typeof Primitive.div>
   type PrimitiveButtonProps = React.ComponentPropsWithRef<typeof Primitive.button>
   type PrimitiveSpanProps = React.ComponentPropsWithRef<typeof Primitive.span>
-  type PopperArrowProps = React.ComponentPropsWithRef<typeof PopperPrimitive.Arrow>
-  type PopperContentProps = React.ComponentPropsWithoutRef<typeof PopperPrimitive.Content>
-  type DismissableLayerProps = React.ComponentPropsWithoutRef<typeof DismissableLayer>
-  type FocusScopeProps = React.ComponentPropsWithoutRef<typeof FocusScope>
-  type PortalProps = React.ComponentPropsWithoutRef<typeof PortalPrimitive>
 
   export interface ISharedProps {
     children?: React.ReactNode
@@ -95,15 +121,27 @@ export namespace ISelect {
     disabled?: boolean
     required?: boolean
     form?: string
+    items?: readonly IItem[]
   }
 
-  export type IProps = ISharedProps & {
+  export interface ISingleProps {
+    multiple?: false
     value?: string
     defaultValue?: string
     onValueChange?(value: string): void
   }
 
-  export interface IArrowProps extends PopperArrowProps {}
+  export interface IMultipleProps {
+    multiple: true
+    value?: readonly string[]
+    defaultValue?: readonly string[]
+    onValueChange?(value: string[]): void
+  }
+
+  export type IProps = ISharedProps & (ISingleProps | IMultipleProps)
+
+  export interface IBubbleInputProps extends Omit<React.ComponentPropsWithRef<'select'>, 'value'> {}
+  export interface IArrowProps extends IPopper.IArrowProps {}
   export interface IGroupProps extends PrimitiveDivProps {}
   export interface IIconProps extends PrimitiveSpanProps {}
   export interface IItemIndicatorProps extends PrimitiveSpanProps {}
@@ -115,8 +153,10 @@ export namespace ISelect {
     nonce?: string
   }
 
-  export interface IValueProps extends Omit<PrimitiveSpanProps, 'placeholder'> {
+  export interface IValueProps extends Omit<PrimitiveSpanProps, 'placeholder' | 'children'> {
     placeholder?: React.ReactNode
+    /** A function is given the picked values, one long in a single select, and is not called while none is. */
+    children?: React.ReactNode | ((value: string[]) => React.ReactNode)
   }
 
   export interface IItemProps extends PrimitiveDivProps {
@@ -127,7 +167,7 @@ export namespace ISelect {
 
   export interface IPortalProps {
     children?: React.ReactNode | undefined
-    container?: PortalProps['container'] | undefined
+    container?: IPortal.IProps['container'] | undefined
   }
 
   export interface IScrollUpButtonProps extends Omit<PrimitiveDivProps, 'onAutoScroll'> {}
@@ -138,24 +178,24 @@ export namespace ISelect {
   }
 
   export interface IPopperPrivateProps {
-    onPlaced?: PopperContentProps['onPlaced']
+    onPlaced?: IPopper.IContentProps['onPlaced']
   }
 
   export interface IItemAlignedPositionProps extends PrimitiveDivProps {
     onPlaced?: () => void
   }
 
-  export interface IPopperPositionProps extends PopperContentProps {
+  export interface IPopperPositionProps extends IPopper.IContentProps {
     onPlaced?: () => void
   }
 
   export interface IContentImplProps
     extends Omit<IPopperPositionProps, keyof IPopperPrivateProps>,
       Omit<IItemAlignedPositionProps, keyof IPopperPrivateProps> {
-    onCloseAutoFocus?: FocusScopeProps['onUnmountAutoFocus']
-    onEscapeKeyDown?: DismissableLayerProps['onEscapeKeyDown']
-    onPointerDownOutside?: DismissableLayerProps['onPointerDownOutside']
-    onFocusOutside?: DismissableLayerProps['onFocusOutside']
+    onCloseAutoFocus?: IFocusScope.IProps['onUnmountAutoFocus']
+    onEscapeKeyDown?: IDismissableLayer.IProps['onEscapeKeyDown']
+    onPointerDownOutside?: IDismissableLayer.IProps['onPointerDownOutside']
+    onFocusOutside?: IDismissableLayer.IProps['onFocusOutside']
     position?: 'item-aligned' | 'popper'
     disableOutsidePointerEvents?: boolean
     trapFocus?: boolean

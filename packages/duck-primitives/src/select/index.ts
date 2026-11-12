@@ -13,7 +13,15 @@ export {
   SelectScrollUpButton,
   SelectScrollUpButton as ScrollUpButton,
 } from './scroll-buttons'
-export { createSelectScope, Select, Select as Root } from './select'
+export {
+  createSelectScope,
+  Select,
+  Select as Root,
+  SelectBubbleInput,
+  SelectBubbleInput as BubbleInput,
+  SelectProvider,
+  SelectProvider as Provider,
+} from './select'
 export type { ISelect } from './select.types'
 export { SelectSeparator, SelectSeparator as Separator } from './separator'
 export { SelectTrigger, SelectTrigger as Trigger } from './trigger'

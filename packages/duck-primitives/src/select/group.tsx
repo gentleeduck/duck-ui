@@ -6,9 +6,7 @@ import type { ISelect } from './select.types'
 
 const GROUP_NAME = 'SelectGroup'
 
-type SelectGroupElement = React.ComponentRef<typeof Primitive.div>
-
-export const SelectGroup = React.forwardRef<SelectGroupElement, ISelect.IGroupProps>(
+export const SelectGroup = React.forwardRef<HTMLDivElement, ISelect.IGroupProps>(
   (props: ISelect.IScoped<ISelect.IGroupProps>, forwardedRef) => {
     const { __scopeSelect, ...groupProps } = props
     const context = useSelectContext(GROUP_NAME, __scopeSelect)

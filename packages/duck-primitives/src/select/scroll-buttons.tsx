@@ -2,17 +2,22 @@ import * as React from 'react'
 import { useLayoutEffect } from '../hooks/use-layout-effect'
 import { composeEventHandlers } from '../libs/compose-event-handler'
 import { useComposedRefs } from '../libs/compose-ref'
+import { getRootActiveElement } from '../libs/shared-utils'
 import { Primitive } from '../primitive-elements'
-import { useCollection, useSelectContentContext, useSelectContext, useSelectViewportContext } from './select'
+import {
+  useCollection,
+  useSelectContentContext,
+  useSelectContentLayoutContext,
+  useSelectContext,
+  useSelectViewportContext,
+} from './select'
 import type { ISelect } from './select.types'
 
 const SCROLL_UP_BUTTON_NAME = 'SelectScrollUpButton'
 
-type SelectScrollButtonImplElement = React.ComponentRef<typeof Primitive.div>
-
-export const SelectScrollUpButton = React.forwardRef<SelectScrollButtonImplElement, ISelect.IScrollUpButtonProps>(
+export const SelectScrollUpButton = React.forwardRef<HTMLDivElement, ISelect.IScrollUpButtonProps>(
   (props: ISelect.IScoped<ISelect.IScrollUpButtonProps>, forwardedRef) => {
-    const contentContext = useSelectContentContext(SCROLL_UP_BUTTON_NAME, props.__scopeSelect)
+    const contentContext = useSelectContentLayoutContext(SCROLL_UP_BUTTON_NAME, props.__scopeSelect)
     const viewportContext = useSelectViewportContext(SCROLL_UP_BUTTON_NAME, props.__scopeSelect)
     const [canScrollUp, setCanScrollUp] = React.useState(false)
     const composedRefs = useComposedRefs(forwardedRef, viewportContext.onScrollButtonChange)
@@ -49,9 +54,9 @@ export const SelectScrollUpButton = React.forwardRef<SelectScrollButtonImplEleme
 SelectScrollUpButton.displayName = SCROLL_UP_BUTTON_NAME
 const SCROLL_DOWN_BUTTON_NAME = 'SelectScrollDownButton'
 
-export const SelectScrollDownButton = React.forwardRef<SelectScrollButtonImplElement, ISelect.IScrollDownButtonProps>(
+export const SelectScrollDownButton = React.forwardRef<HTMLDivElement, ISelect.IScrollDownButtonProps>(
   (props: ISelect.IScoped<ISelect.IScrollDownButtonProps>, forwardedRef) => {
-    const contentContext = useSelectContentContext(SCROLL_DOWN_BUTTON_NAME, props.__scopeSelect)
+    const contentContext = useSelectContentLayoutContext(SCROLL_DOWN_BUTTON_NAME, props.__scopeSelect)
     const viewportContext = useSelectViewportContext(SCROLL_DOWN_BUTTON_NAME, props.__scopeSelect)
     const [canScrollDown, setCanScrollDown] = React.useState(false)
     const composedRefs = useComposedRefs(forwardedRef, viewportContext.onScrollButtonChange)
@@ -111,7 +116,9 @@ const SelectScrollButtonImpl = React.forwardRef<HTMLDivElement, ISelect.IScoped<
     // Scroll button mounting alters viewport size (push/shrink) and may partially hide the active
     // item; re-run scrollIntoView to keep focus visible.
     useLayoutEffect(() => {
-      const activeItem = getItems().find((item) => item.ref.current === document.activeElement)
+      const activeItem = getItems().find(
+        (item) => item.ref.current && item.ref.current === getRootActiveElement(item.ref.current),
+      )
       activeItem?.ref.current?.scrollIntoView({ block: 'nearest' })
     }, [getItems])
 

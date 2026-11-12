@@ -5,9 +5,7 @@ import type { ISelect } from './select.types'
 
 const LABEL_NAME = 'SelectLabel'
 
-type SelectLabelElement = React.ComponentRef<typeof Primitive.div>
-
-export const SelectLabel = React.forwardRef<SelectLabelElement, ISelect.ILabelProps>(
+export const SelectLabel = React.forwardRef<HTMLDivElement, ISelect.ILabelProps>(
   (props: ISelect.IScoped<ISelect.ILabelProps>, forwardedRef) => {
     const { __scopeSelect, ...labelProps } = props
     const context = useSelectContext(LABEL_NAME, __scopeSelect)

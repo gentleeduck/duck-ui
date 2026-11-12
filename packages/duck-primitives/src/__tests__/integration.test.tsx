@@ -795,12 +795,11 @@ describe('Select compound', () => {
     expect(trigger.hasAttribute('data-placeholder')).toBe(true)
   })
 
-  it('trigger aria-controls points to content id', () => {
+  it('trigger names no aria-controls while the content is closed', () => {
     const { container } = renderSelect()
     const trigger = container.querySelector('[data-slot="select-trigger"]')!
 
-    const controlsId = trigger.getAttribute('aria-controls')
-    expect(controlsId).toBeTruthy()
+    expect(trigger.hasAttribute('aria-controls')).toBe(false)
   })
 
   it('fires onOpenChange(true) when trigger is activated via keyboard', () => {

@@ -5,9 +5,7 @@ import type { ISelect } from './select.types'
 
 const ICON_NAME = 'SelectIcon'
 
-type SelectIconElement = React.ComponentRef<typeof Primitive.span>
-
-export const SelectIcon = React.forwardRef<SelectIconElement, ISelect.IIconProps>(
+export const SelectIcon = React.forwardRef<HTMLSpanElement, ISelect.IIconProps>(
   (props: ISelect.IScoped<ISelect.IIconProps>, forwardedRef) => {
     const { __scopeSelect, children, ...iconProps } = props
     const context = useSelectContext(ICON_NAME, __scopeSelect)

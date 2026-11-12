@@ -9,44 +9,41 @@ import {
   useSelectItemContext,
   useSelectNativeOptionsContext,
 } from './select'
+import { shouldShowPlaceholder } from './select.libs'
 import type { ISelect } from './select.types'
 
 const ITEM_TEXT_NAME = 'SelectItemText'
 
-type SelectItemTextElement = React.ComponentRef<typeof Primitive.span>
-
-export const SelectItemText = React.forwardRef<SelectItemTextElement, ISelect.IScoped<ISelect.IItemTextProps>>(
+export const SelectItemText = React.forwardRef<HTMLSpanElement, ISelect.IScoped<ISelect.IItemTextProps>>(
   (props, forwardedRef) => {
-    // We ignore `className` and `style` as this part shouldn't be styled.
-    const { __scopeSelect, className, style, ...itemTextProps } = props
+    const { __scopeSelect, ...itemTextProps } = props
     const context = useSelectContext(ITEM_TEXT_NAME, __scopeSelect)
     const contentContext = useSelectContentContext(ITEM_TEXT_NAME, __scopeSelect)
     const itemContext = useSelectItemContext(ITEM_TEXT_NAME, __scopeSelect)
     const nativeOptionsContext = useSelectNativeOptionsContext(ITEM_TEXT_NAME, __scopeSelect)
-    const [itemTextNode, setItemTextNode] = React.useState<SelectItemTextElement | null>(null)
+    const { itemTextRefCallback } = contentContext
+    const { value, disabled, textRef } = itemContext
     const composedRefs = useComposedRefs(
       forwardedRef,
-      (node: HTMLSpanElement | null) => setItemTextNode(node),
-      itemContext.onItemTextChange,
-      (node: HTMLSpanElement | null) =>
-        contentContext.itemTextRefCallback?.(node, itemContext.value, itemContext.disabled),
-    )
-
-    const textContent = itemTextNode?.textContent
-    const nativeOption = React.useMemo(
-      () => (
-        <option key={itemContext.value} value={itemContext.value} disabled={itemContext.disabled}>
-          {textContent}
-        </option>
+      textRef,
+      React.useCallback(
+        (node: HTMLSpanElement | null) => itemTextRefCallback?.(node, value, disabled),
+        [itemTextRefCallback, value, disabled],
       ),
-      [itemContext.disabled, itemContext.value, textContent],
     )
 
     const { onNativeOptionAdd, onNativeOptionRemove } = nativeOptionsContext
+    const { children } = itemTextProps
+    // Read after the commit, so the option holds the text the span shows now, with no second render to read it.
     useLayoutEffect(() => {
-      onNativeOptionAdd(nativeOption)
-      return () => onNativeOptionRemove(nativeOption)
-    }, [onNativeOptionAdd, onNativeOptionRemove, nativeOption])
+      const option = (
+        <option key={value} value={value} disabled={disabled}>
+          {textRef.current?.textContent}
+        </option>
+      )
+      onNativeOptionAdd(option)
+      return () => onNativeOptionRemove(option)
+    }, [onNativeOptionAdd, onNativeOptionRemove, value, disabled, children])
 
     return (
       <>
@@ -58,13 +55,12 @@ export const SelectItemText = React.forwardRef<SelectItemTextElement, ISelect.IS
           ref={composedRefs}
         />
 
-        {/* Portal the select item text into the trigger value node.
-           Skip when allowTextPortal is false (content is animating out) to avoid
-           duplicating the portal that the fragment copy already provides. */}
         {itemContext.isSelected &&
+        !context.multiple &&
+        !shouldShowPlaceholder(context.value) &&
         context.valueNode &&
         !context.valueNodeHasChildren &&
-        contentContext.allowTextPortal !== false
+        !context.items
           ? ReactDOM.createPortal(itemTextProps.children, context.valueNode)
           : null}
       </>

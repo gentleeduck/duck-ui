@@ -13,9 +13,7 @@ import type { ISelect } from './select.types'
 
 const VIEWPORT_NAME = 'SelectViewport'
 
-type SelectViewportElement = React.ComponentRef<typeof Primitive.div>
-
-export const SelectViewport = React.forwardRef<SelectViewportElement, ISelect.IViewportProps>(
+export const SelectViewport = React.forwardRef<HTMLDivElement, ISelect.IViewportProps>(
   (props: ISelect.IScoped<ISelect.IViewportProps>, forwardedRef) => {
     const { __scopeSelect, nonce, ...viewportProps } = props
     const context = useSelectContext(VIEWPORT_NAME, __scopeSelect)
@@ -55,7 +53,8 @@ export const SelectViewport = React.forwardRef<SelectViewportElement, ISelect.IV
               if (shouldExpandOnScrollRef?.current && contentWrapper) {
                 const scrolledBy = Math.abs(prevScrollTopRef.current - viewport.scrollTop)
                 if (scrolledBy > 0) {
-                  const availableHeight = window.innerHeight - CONTENT_MARGIN * 2
+                  const availableHeight =
+                    (viewport.ownerDocument.defaultView ?? window).innerHeight - CONTENT_MARGIN * 2
                   const cssMinHeight = parseFloat(contentWrapper.style.minHeight)
                   const cssHeight = parseFloat(contentWrapper.style.height)
                   const prevHeight = Math.max(cssMinHeight, cssHeight)

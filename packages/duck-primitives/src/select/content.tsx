@@ -6,49 +6,64 @@ import * as ReactDOM from 'react-dom'
 import { RemoveScroll } from 'react-remove-scroll'
 import { DismissableLayer } from '../dismissable-layer'
 import { FocusScope } from '../focus-scope'
+import { useCallbackRef } from '../hooks/use-callback-ref'
 import { useFocusGuards } from '../hooks/use-focus-guard'
 import { useLayoutEffect } from '../hooks/use-layout-effect'
 import { clamp } from '../libs/clamp'
 import { composeEventHandlers } from '../libs/compose-event-handler'
 import { useComposedRefs } from '../libs/compose-ref'
 import { getNavigationCandidates, NAVIGATION_KEYS, useVimNavigation } from '../libs/list-navigation'
+import { getRootActiveElement } from '../libs/shared-utils'
 import * as PopperPrimitive from '../popper'
 import { Presence } from '../presence/presence'
+import { useHeldOpen } from '../presence/presence.libs'
 import { Primitive } from '../primitive-elements'
 import { createSlot } from '../slot'
 import {
   CONTENT_MARGIN,
   Collection,
+  SelectContentLayoutProvider,
   SelectContentProvider,
   SelectViewportProvider,
   useCollection,
   usePopperScope,
-  useSelectContentContext,
+  useSelectContentLayoutContext,
   useSelectContext,
+  useSelectOpenContext,
 } from './select'
-import { useTypeaheadListNavigation } from './select.libs'
+import { getItemText, useTypeaheadListNavigation } from './select.libs'
 import type { ISelect } from './select.types'
 
 const CONTENT_NAME = 'SelectContent'
 
-type SelectContentImplElement = HTMLDivElement
-
-export const SelectContent = React.forwardRef<SelectContentImplElement, ISelect.IContentProps>(
+export const SelectContent = React.forwardRef<HTMLDivElement, ISelect.IContentProps>(
   (props: ISelect.IScoped<ISelect.IContentProps>, forwardedRef) => {
     const { forceMount, ...contentProps } = props
     const context = useSelectContext(CONTENT_NAME, props.__scopeSelect)
+    const { open } = useSelectOpenContext(CONTENT_NAME, props.__scopeSelect)
     const [fragment, setFragment] = React.useState<DocumentFragment>()
+    const hasItems = context.items !== undefined
+    const shown = forceMount || open
+    // The closed copy waits until the content has left, through any exit animation, so the two never register their
+    // items, or show the picked one in the trigger, side by side.
+    const [contentGone, setContentGone] = React.useState(!shown)
+    if (shown && contentGone) setContentGone(false)
+    const composedRefs = useComposedRefs(
+      forwardedRef,
+      React.useCallback((node: HTMLDivElement | null) => setContentGone(!node), []),
+    )
 
     // DocumentFragment is not available on the server
     useLayoutEffect(() => {
-      setFragment(new DocumentFragment())
-    }, [])
+      setFragment(hasItems ? undefined : new DocumentFragment())
+    }, [hasItems])
 
-    // Render closed items into a hidden fragment so the collection (and native <select>/SSR) can read values.
+    // Without items, closed items render into a hidden fragment so the trigger, the typeahead and the native
+    // select can read them.
     // createPortal's TS type accepts Element, but DocumentFragment is a valid runtime
     // target. The cast is here to surface that React's types are narrower than the runtime.
     const fragmentPortal =
-      !context.open && fragment
+      contentGone && fragment
         ? ReactDOM.createPortal(
             <SelectContentProvider scope={props.__scopeSelect}>
               <Collection.Slot scope={props.__scopeSelect}>
@@ -62,8 +77,8 @@ export const SelectContent = React.forwardRef<SelectContentImplElement, ISelect.
     return (
       <>
         {fragmentPortal}
-        <Presence present={forceMount || context.open}>
-          <SelectContentImpl {...contentProps} ref={forwardedRef} />
+        <Presence present={shown}>
+          <SelectContentImpl {...contentProps} ref={composedRefs} />
         </Presence>
       </>
     )
@@ -75,7 +90,7 @@ const CONTENT_IMPL_NAME = 'SelectContentImpl'
 
 const Slot = createSlot('SelectContent.RemoveScroll')
 
-const SelectContentImpl = React.forwardRef<SelectContentImplElement, ISelect.IContentImplProps>(
+const SelectContentImpl = React.forwardRef<HTMLDivElement, ISelect.IContentImplProps>(
   (props: ISelect.IScoped<ISelect.IContentImplProps>, forwardedRef) => {
     const {
       __scopeSelect,
@@ -101,17 +116,27 @@ const SelectContentImpl = React.forwardRef<SelectContentImplElement, ISelect.ICo
       ...contentProps
     } = props
     const context = useSelectContext(CONTENT_NAME, __scopeSelect)
-    const resolvedTrapFocus = trapFocusProp ?? context.open
-    const resolvedDisableOutsidePointerEvents = disableOutsidePointerEventsProp ?? context.open
-    const resolvedLockScroll = lockScrollProp ?? context.open
-    const [content, setContent] = React.useState<SelectContentImplElement | null>(null)
+    const { open } = useSelectOpenContext(CONTENT_NAME, __scopeSelect)
+    const resolvedTrapFocus = trapFocusProp ?? open
+    const held = useHeldOpen(open)
+    const resolvedDisableOutsidePointerEvents = disableOutsidePointerEventsProp ?? held
+    const resolvedLockScroll = lockScrollProp ?? held
+    const [content, setContent] = React.useState<HTMLDivElement | null>(null)
     const [viewport, setViewport] = React.useState<HTMLDivElement | null>(null)
-    const composedRefs = useComposedRefs(forwardedRef, (node: HTMLDivElement | null) => setContent(node))
+    const composedRefs = useComposedRefs(forwardedRef, setContent)
     const [selectedItem, setSelectedItem] = React.useState<HTMLDivElement | null>(null)
     const [selectedItemText, setSelectedItemText] = React.useState<HTMLSpanElement | null>(null)
     const getItems = useCollection(__scopeSelect)
     const [isPositioned, setIsPositioned] = React.useState(false)
     const firstValidItemFoundRef = React.useRef(false)
+    const firstItemFoundRef = React.useRef(false)
+    const firstItemTextFoundRef = React.useRef(false)
+    // A multiple select opens on its first pick and keeps it while open, so no pick moves the list under the pointer
+    // or focus off the item just picked.
+    const firstPick = [context.value].flat()[0]
+    const [openFirstPick, setOpenFirstPick] = React.useState(firstPick)
+    if (!open && openFirstPick !== firstPick) setOpenFirstPick(firstPick)
+    const anchorValue = context.multiple ? openFirstPick : context.value
 
     // aria-hide everything except content (better-supported than aria-modal)
     React.useEffect(() => {
@@ -128,17 +153,17 @@ const SelectContentImpl = React.forwardRef<SelectContentImplElement, ISelect.ICo
 
         // Viewport may have padding; force scroll to its edges when focusing first/last items
         // so padding doesn't leave focused items partially obscured.
-        const previouslyFocused = document.activeElement
+        const previouslyFocused = content && getRootActiveElement(content)
         for (const candidate of candidates) {
           if (candidate === previouslyFocused) return
           candidate?.scrollIntoView({ block: 'nearest' })
           if (candidate === firstItem && viewport) viewport.scrollTop = 0
           if (candidate === lastItem && viewport) viewport.scrollTop = viewport.scrollHeight
           candidate?.focus()
-          if (document.activeElement !== previouslyFocused) return
+          if (content && getRootActiveElement(content) !== previouslyFocused) return
         }
       },
-      [getItems, viewport],
+      [getItems, viewport, content],
     )
 
     const focusSelectedItem = React.useCallback(
@@ -157,52 +182,53 @@ const SelectContentImpl = React.forwardRef<SelectContentImplElement, ISelect.ICo
     // pointerup outside the content closes the menu.
     const { onOpenChange, triggerPointerDownPosRef } = context
     React.useEffect(() => {
-      if (content) {
-        let pointerMoveDelta = { x: 0, y: 0 }
+      const start = triggerPointerDownPosRef.current
+      if (!content || !start) return
+      const ownerDocument = content.ownerDocument
+      let pointerMoveDelta = { x: 0, y: 0 }
 
-        const handlePointerMove = (event: PointerEvent) => {
-          pointerMoveDelta = {
-            x: Math.abs(Math.round(event.pageX) - (triggerPointerDownPosRef.current?.x ?? 0)),
-            y: Math.abs(Math.round(event.pageY) - (triggerPointerDownPosRef.current?.y ?? 0)),
-          }
+      const handlePointerMove = (event: PointerEvent) => {
+        pointerMoveDelta = {
+          x: Math.abs(Math.round(event.pageX) - start.x),
+          y: Math.abs(Math.round(event.pageY) - start.y),
         }
-        const handlePointerUp = (event: PointerEvent) => {
-          // Under 10px movement: treat as click-open, not drag-select
-          if (pointerMoveDelta.x <= 10 && pointerMoveDelta.y <= 10) {
-            event.preventDefault()
-          } else if (!content.contains(event.target as HTMLElement)) {
-            onOpenChange(false)
-          }
-          document.removeEventListener('pointermove', handlePointerMove)
-          triggerPointerDownPosRef.current = null
+      }
+      const handlePointerUp = (event: PointerEvent) => {
+        // Under 10px movement: treat as click-open, not drag-select. Past it, the composed path decides
+        // outside, since a document listener sees a shadow root's host as the target.
+        if (pointerMoveDelta.x <= 10 && pointerMoveDelta.y <= 10) {
+          event.preventDefault()
+        } else if (!event.composedPath().includes(content)) {
+          onOpenChange(false)
         }
+        ownerDocument.removeEventListener('pointermove', handlePointerMove)
+        triggerPointerDownPosRef.current = null
+      }
 
-        if (triggerPointerDownPosRef.current !== null) {
-          document.addEventListener('pointermove', handlePointerMove)
-          document.addEventListener('pointerup', handlePointerUp, { capture: true, once: true })
-        }
-
-        return () => {
-          document.removeEventListener('pointermove', handlePointerMove)
-          document.removeEventListener('pointerup', handlePointerUp, { capture: true })
-        }
+      ownerDocument.addEventListener('pointermove', handlePointerMove)
+      ownerDocument.addEventListener('pointerup', handlePointerUp, { capture: true, once: true })
+      return () => {
+        ownerDocument.removeEventListener('pointermove', handlePointerMove)
+        ownerDocument.removeEventListener('pointerup', handlePointerUp, { capture: true })
       }
     }, [content, onOpenChange, triggerPointerDownPosRef])
 
     React.useEffect(() => {
+      const view = content?.ownerDocument.defaultView
+      if (!view) return
       const close = () => onOpenChange(false)
-      window.addEventListener('blur', close)
-      window.addEventListener('resize', close)
+      view.addEventListener('blur', close)
+      view.addEventListener('resize', close)
       return () => {
-        window.removeEventListener('blur', close)
-        window.removeEventListener('resize', close)
+        view.removeEventListener('blur', close)
+        view.removeEventListener('resize', close)
       }
-    }, [onOpenChange])
+    }, [content, onOpenChange])
 
     const [searchRef, handleTypeaheadSearch, resetTypeaheadState] = useTypeaheadListNavigation({
       getItems: () => getItems().filter((item) => !item.disabled),
       getItemElement: (item) => item.ref.current as HTMLElement | null,
-      getItemTextValue: (item) => item.textValue || (item.ref.current?.textContent ?? '').trim(),
+      getItemTextValue: getItemText,
       onMatch: (item) => {
         const node = item.ref.current as HTMLElement | null
         if (node) setTimeout(() => node.focus())
@@ -213,25 +239,30 @@ const SelectContentImpl = React.forwardRef<SelectContentImplElement, ISelect.ICo
 
     const itemRefCallback = React.useCallback(
       (node: HTMLDivElement | null, value: string, disabled: boolean) => {
+        const isFirstItem = !firstItemFoundRef.current
+        firstItemFoundRef.current = true
         const isFirstValidItem = !firstValidItemFoundRef.current && !disabled
-        const isSelectedItem = context.value !== undefined && context.value === value
-        if (isSelectedItem || isFirstValidItem) {
+        const isSelectedItem = anchorValue !== undefined && anchorValue === value
+        // Positioning aligns to this item, so with every item disabled the first stands in.
+        if (isSelectedItem || isFirstValidItem || isFirstItem) {
           setSelectedItem(node)
           if (isFirstValidItem) firstValidItemFoundRef.current = true
         }
       },
-      [context.value],
+      [anchorValue],
     )
-    const handleItemLeave = React.useCallback(() => content?.focus(), [content])
+    const handleItemLeave = useCallbackRef(() => content?.focus())
     const itemTextRefCallback = React.useCallback(
       (node: HTMLSpanElement | null, value: string, disabled: boolean) => {
+        const isFirstItem = !firstItemTextFoundRef.current
+        firstItemTextFoundRef.current = true
         const isFirstValidItem = !firstValidItemFoundRef.current && !disabled
-        const isSelectedItem = context.value !== undefined && context.value === value
-        if (isSelectedItem || isFirstValidItem) {
+        const isSelectedItem = anchorValue !== undefined && anchorValue === value
+        if (isSelectedItem || isFirstValidItem || isFirstItem) {
           setSelectedItemText(node)
         }
       },
-      [context.value],
+      [anchorValue],
     )
 
     const SelectPosition = position === 'popper' ? SelectPopperPosition : SelectItemAlignedPosition
@@ -256,88 +287,90 @@ const SelectContentImpl = React.forwardRef<SelectContentImplElement, ISelect.ICo
     return (
       <SelectContentProvider
         scope={__scopeSelect}
-        content={content}
-        viewport={viewport}
         onViewportChange={setViewport}
         itemRefCallback={itemRefCallback}
-        selectedItem={selectedItem}
         onItemLeave={handleItemLeave}
         itemTextRefCallback={itemTextRefCallback}
-        focusSelectedItem={focusSelectedItem}
-        selectedItemText={selectedItemText}
         position={position}
-        isPositioned={isPositioned}
-        searchRef={searchRef}
-        allowTextPortal={context.open}>
-        <RemoveScroll as={Slot} allowPinchZoom enabled={resolvedLockScroll}>
-          <FocusScope
-            asChild
-            // release trap once closed (closed !== unmounted during exit animation)
-            trapped={resolvedTrapFocus}
-            onMountAutoFocus={(event) => {
-              // suppress default autofocus; we focus the selected item manually
-              event.preventDefault()
-            }}
-            onUnmountAutoFocus={composeEventHandlers(onCloseAutoFocus, (event) => {
-              context.trigger?.focus({ preventScroll: true })
-              event.preventDefault()
-            })}>
-            <DismissableLayer
+        searchRef={searchRef}>
+        <SelectContentLayoutProvider
+          scope={__scopeSelect}
+          viewport={viewport}
+          selectedItem={selectedItem}
+          focusSelectedItem={focusSelectedItem}
+          selectedItemText={selectedItemText}
+          isPositioned={isPositioned}>
+          <RemoveScroll as={Slot} allowPinchZoom enabled={resolvedLockScroll}>
+            <FocusScope
               asChild
-              disableOutsidePointerEvents={resolvedDisableOutsidePointerEvents}
-              onEscapeKeyDown={onEscapeKeyDown}
-              onPointerDownOutside={onPointerDownOutside}
-              onFocusOutside={onFocusOutsideProp ?? ((event) => event.preventDefault())}
-              onDismiss={() => context.onOpenChange(false)}>
-              <SelectPosition
-                data-slot="select-content"
-                role="listbox"
-                id={context.contentId}
-                data-state={context.open ? 'open' : 'closed'}
-                dir={context.dir}
-                onContextMenu={(event) => event.preventDefault()}
-                {...contentProps}
-                {...popperContentProps}
-                onPlaced={() => setIsPositioned(true)}
-                ref={composedRefs}
-                style={{
-                  // flex column so scroll buttons can sit above/below the viewport
-                  display: 'flex',
-                  flexDirection: 'column',
-                  // content may receive focus; suppress the default outline
-                  outline: 'none',
-                  ...contentProps.style,
-                }}
-                onKeyDown={composeEventHandlers(contentProps.onKeyDown, (event) => {
-                  const isModifierKey = event.ctrlKey || event.altKey || event.metaKey
+              // release trap once closed (closed !== unmounted during exit animation)
+              trapped={resolvedTrapFocus}
+              onMountAutoFocus={(event) => {
+                // suppress default autofocus; we focus the selected item manually
+                event.preventDefault()
+              }}
+              onUnmountAutoFocus={composeEventHandlers(onCloseAutoFocus, (event) => {
+                context.trigger?.focus({ preventScroll: true })
+                event.preventDefault()
+              })}>
+              <DismissableLayer
+                asChild
+                disableOutsidePointerEvents={resolvedDisableOutsidePointerEvents}
+                onEscapeKeyDown={onEscapeKeyDown}
+                onPointerDownOutside={onPointerDownOutside}
+                onFocusOutside={onFocusOutsideProp ?? ((event) => event.preventDefault())}
+                onDismiss={() => context.onOpenChange(false)}>
+                <SelectPosition
+                  data-slot="select-content"
+                  role="listbox"
+                  aria-multiselectable={context.multiple || undefined}
+                  id={context.contentId}
+                  data-state={open ? 'open' : 'closed'}
+                  dir={context.dir}
+                  onContextMenu={(event) => event.preventDefault()}
+                  {...contentProps}
+                  {...popperContentProps}
+                  onPlaced={() => setIsPositioned(true)}
+                  ref={composedRefs}
+                  style={{
+                    // flex column so scroll buttons can sit above/below the viewport
+                    display: 'flex',
+                    flexDirection: 'column',
+                    // content may receive focus; suppress the default outline
+                    outline: 'none',
+                    ...contentProps.style,
+                  }}
+                  onKeyDown={composeEventHandlers(contentProps.onKeyDown, (event) => {
+                    const isModifierKey = event.ctrlKey || event.altKey || event.metaKey
 
-                  // Tab must not move focus inside the listbox
-                  if (event.key === 'Tab') event.preventDefault()
+                    // Tab must not move focus inside the listbox
+                    if (event.key === 'Tab') event.preventDefault()
 
-                  const enabledItems = getItems().filter((item) => !item.disabled)
-                  // Filter mounted refs before mapping. A Presence boundary may unmount an
-                  // item mid-keydown, leaving its ref.current null; the previous code asserted
-                  // non-null and would throw in that race.
-                  const nodes = enabledItems
-                    .filter(
-                      (item): item is typeof item & { ref: { current: HTMLDivElement } } => item.ref.current !== null,
-                    )
-                    .map((item) => item.ref.current)
-                  if (handleVimKey(event, nodes)) return
+                    const enabledItems = getItems().filter((item) => !item.disabled)
+                    // Filter mounted refs before mapping. A Presence boundary may unmount an
+                    // item mid-keydown, leaving its ref.current null; the previous code asserted
+                    // non-null and would throw in that race.
+                    const nodes = enabledItems
+                      .filter(
+                        (item): item is typeof item & { ref: { current: HTMLDivElement } } => item.ref.current !== null,
+                      )
+                      .map((item) => item.ref.current)
+                    if (handleVimKey(event, nodes)) return
 
-                  if (!isModifierKey && event.key.length === 1) handleTypeaheadSearch(event.key)
+                    if (!isModifierKey && event.key.length === 1) handleTypeaheadSearch(event.key)
 
-                  if ((NAVIGATION_KEYS as readonly string[]).includes(event.key)) {
-                    const candidateNodes = getNavigationCandidates(nodes, event.key, event.target as HTMLElement)
+                    if ((NAVIGATION_KEYS as readonly string[]).includes(event.key)) {
+                      const candidateNodes = getNavigationCandidates(nodes, event.key, event.target as HTMLElement)
 
-                    setTimeout(() => focusFirstItem(candidateNodes))
-                    event.preventDefault()
-                  }
-                })}
-              />
-            </DismissableLayer>
-          </FocusScope>
-        </RemoveScroll>
+                      setTimeout(() => focusFirstItem(candidateNodes))
+                      event.preventDefault()
+                    }
+                  })}
+                />
+              </DismissableLayer>
+            </FocusScope>
+          </RemoveScroll>
+        </SelectContentLayoutProvider>
       </SelectContentProvider>
     )
   },
@@ -346,16 +379,14 @@ const SelectContentImpl = React.forwardRef<SelectContentImplElement, ISelect.ICo
 SelectContentImpl.displayName = CONTENT_IMPL_NAME
 const ITEM_ALIGNED_POSITION_NAME = 'SelectItemAlignedPosition'
 
-type SelectItemAlignedPositionElement = React.ComponentRef<typeof Primitive.div>
-
-const SelectItemAlignedPosition = React.forwardRef<SelectItemAlignedPositionElement, ISelect.IItemAlignedPositionProps>(
+const SelectItemAlignedPosition = React.forwardRef<HTMLDivElement, ISelect.IItemAlignedPositionProps>(
   (props: ISelect.IScoped<ISelect.IItemAlignedPositionProps>, forwardedRef) => {
     const { __scopeSelect, onPlaced, ...popperProps } = props
     const context = useSelectContext(CONTENT_NAME, __scopeSelect)
-    const contentContext = useSelectContentContext(CONTENT_NAME, __scopeSelect)
+    const contentContext = useSelectContentLayoutContext(CONTENT_NAME, __scopeSelect)
     const [contentWrapper, setContentWrapper] = React.useState<HTMLDivElement | null>(null)
-    const [content, setContent] = React.useState<SelectItemAlignedPositionElement | null>(null)
-    const composedRefs = useComposedRefs(forwardedRef, (node: HTMLDivElement | null) => setContent(node))
+    const [content, setContent] = React.useState<HTMLDivElement | null>(null)
+    const composedRefs = useComposedRefs(forwardedRef, setContent)
     const getItems = useCollection(__scopeSelect)
     const shouldExpandOnScrollRef = React.useRef(false)
     const shouldRepositionRef = React.useRef(true)
@@ -371,6 +402,7 @@ const SelectItemAlignedPosition = React.forwardRef<SelectItemAlignedPositionElem
         selectedItem &&
         selectedItemText
       ) {
+        const view = content.ownerDocument.defaultView ?? window
         const triggerRect = context.trigger.getBoundingClientRect()
 
         const contentRect = content.getBoundingClientRect()
@@ -383,18 +415,18 @@ const SelectItemAlignedPosition = React.forwardRef<SelectItemAlignedPositionElem
           const leftDelta = triggerRect.left - left
           const minContentWidth = triggerRect.width + leftDelta
           const contentWidth = Math.max(minContentWidth, contentRect.width)
-          const rightEdge = window.innerWidth - CONTENT_MARGIN
+          const rightEdge = view.innerWidth - CONTENT_MARGIN
           const clampedLeft = clamp(left, [CONTENT_MARGIN, Math.max(CONTENT_MARGIN, rightEdge - contentWidth)])
 
           contentWrapper.style.minWidth = `${minContentWidth}px`
           contentWrapper.style.left = `${clampedLeft}px`
         } else {
           const itemTextOffset = contentRect.right - itemTextRect.right
-          const right = window.innerWidth - valueNodeRect.right - itemTextOffset
-          const rightDelta = window.innerWidth - triggerRect.right - right
+          const right = view.innerWidth - valueNodeRect.right - itemTextOffset
+          const rightDelta = view.innerWidth - triggerRect.right - right
           const minContentWidth = triggerRect.width + rightDelta
           const contentWidth = Math.max(minContentWidth, contentRect.width)
-          const leftEdge = window.innerWidth - CONTENT_MARGIN
+          const leftEdge = view.innerWidth - CONTENT_MARGIN
           const clampedRight = clamp(right, [CONTENT_MARGIN, Math.max(CONTENT_MARGIN, leftEdge - contentWidth)])
 
           contentWrapper.style.minWidth = `${minContentWidth}px`
@@ -402,7 +434,7 @@ const SelectItemAlignedPosition = React.forwardRef<SelectItemAlignedPositionElem
         }
 
         const items = getItems()
-        const availableHeight = window.innerHeight - CONTENT_MARGIN * 2
+        const availableHeight = view.innerHeight - CONTENT_MARGIN * 2
         const itemsHeight = viewport.scrollHeight
 
         const contentStyles = window.getComputedStyle(content)
@@ -537,9 +569,7 @@ const SelectItemAlignedPosition = React.forwardRef<SelectItemAlignedPositionElem
 SelectItemAlignedPosition.displayName = ITEM_ALIGNED_POSITION_NAME
 const POPPER_POSITION_NAME = 'SelectPopperPosition'
 
-type SelectPopperPositionElement = React.ComponentRef<typeof PopperPrimitive.Content>
-
-const SelectPopperPosition = React.forwardRef<SelectPopperPositionElement, ISelect.IPopperPositionProps>(
+const SelectPopperPosition = React.forwardRef<HTMLDivElement, ISelect.IPopperPositionProps>(
   (props: ISelect.IScoped<ISelect.IPopperPositionProps>, forwardedRef) => {
     const { __scopeSelect, align = 'start', collisionPadding = CONTENT_MARGIN, ...popperProps } = props
     const popperScope = usePopperScope(__scopeSelect)

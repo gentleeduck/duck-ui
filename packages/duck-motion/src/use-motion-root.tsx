@@ -67,19 +67,23 @@ export function useMotionRoot(props: {
 
   const [showContent, setShowContent] = React.useState(!!isOpen)
   const prevOpenRef = React.useRef(!!isOpen)
-  // Re-opening during an exit: DismissableLayer treats the trigger's
-  // pointerdown as an outside-click and fires a close on the same frame.
-  // Swallow that one close.
+  const { exitTransition } = useMotionConfig()
+  const exitMs = getTransitionDurationMs(exitTransition)
+  const closedAtRef = React.useRef(Number.NEGATIVE_INFINITY)
+  // Re-opening while the exit plays: the leaving content's DismissableLayer reads the trigger's pointerdown as an
+  // outside click and sends a close in the same frame. Only that close is swallowed; from closed nothing sends one.
   const ignoreNextCloseRef = React.useRef(false)
 
   const handleOpenChange = React.useCallback(
     (next: boolean) => {
       if (next) {
         setShowContent(true)
-        ignoreNextCloseRef.current = true
-        requestAnimationFrame(() => {
-          ignoreNextCloseRef.current = false
-        })
+        if (performance.now() - closedAtRef.current < exitMs) {
+          ignoreNextCloseRef.current = true
+          requestAnimationFrame(() => {
+            ignoreNextCloseRef.current = false
+          })
+        }
       } else {
         if (ignoreNextCloseRef.current) {
           ignoreNextCloseRef.current = false
@@ -95,11 +99,12 @@ export function useMotionRoot(props: {
       if (!isControlled) setInternalOpen(next)
       onOpenChange?.(next)
     },
-    [isControlled, onOpenChange],
+    [isControlled, onOpenChange, exitMs],
   )
 
   React.useEffect(() => {
     if (isOpen && !prevOpenRef.current) setShowContent(true)
+    if (!isOpen && prevOpenRef.current) closedAtRef.current = performance.now()
     prevOpenRef.current = !!isOpen
   }, [isOpen])
 

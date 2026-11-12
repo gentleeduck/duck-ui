@@ -207,7 +207,10 @@ Select.displayName = SELECT_NAME
 function selectNative(select: HTMLSelectElement, value: ISelect.IValue) {
   if (typeof value === 'string') {
     Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value')?.set?.call(select, value)
-  } else for (const option of select.options) option.selected = value.includes(option.value)
+  } else {
+    const picked = new Set(value)
+    for (const option of select.options) option.selected = picked.has(option.value)
+  }
 }
 
 export const SelectBubbleInput = React.forwardRef<HTMLSelectElement, ISelect.IScoped<ISelect.IBubbleInputProps>>(

@@ -10,7 +10,7 @@
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { gzipSync } from 'node:zlib'
 import { HebrewAdapter } from '../src/adapter/hebrew-adapter'
 import { IslamicAdapter } from '../src/adapter/islamic-adapter'
@@ -127,6 +127,10 @@ const measuredKB = (name: string) => {
 
 const rdpStyleSheet = createRequire(PRIMITIVES_RESULTS).resolve('react-day-picker/style.css')
 const rdpCssKB = +(gzipSync(readFileSync(rdpStyleSheet)).length / 1024).toFixed(1)
+// The row is named for the copy measured, which is whichever major the workspace resolves.
+let rdpPackage = dirname(rdpStyleSheet)
+while (!existsSync(join(rdpPackage, 'package.json'))) rdpPackage = dirname(rdpPackage)
+const rdpMajor = JSON.parse(readFileSync(join(rdpPackage, 'package.json'), 'utf-8')).version.split('.')[0]
 
 // The last two are published sizes from bundlephobia; the rest are measured.
 const bundleSize = [
@@ -135,7 +139,7 @@ const bundleSize = [
   { name: 'React Aria Calendar', sizeKB: measuredKB('React Aria'), cssKB: 0, calendars: 13, measured: true },
   { name: 'Ark UI DatePicker', sizeKB: measuredKB('Ark UI'), cssKB: 0, calendars: 13, measured: true },
   {
-    name: 'react-day-picker v10',
+    name: `react-day-picker v${rdpMajor}`,
     sizeKB: measuredKB('react-day-picker'),
     cssKB: rdpCssKB,
     calendars: 1,
@@ -162,7 +166,7 @@ const vsReactDayPicker = {
     {
       metric: 'Calendar component',
       gentleduck: kb('@gentleduck/primitives Calendar'),
-      competitor: kb('react-day-picker v10'),
+      competitor: kb(`react-day-picker v${rdpMajor}`),
       winner: 'gentleduck',
     },
     { metric: 'Dependencies', gentleduck: '0', competitor: '2 (date-fns, @date-fns/tz)', winner: 'gentleduck' },

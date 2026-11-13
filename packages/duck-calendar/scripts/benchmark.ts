@@ -1,15 +1,17 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 /**
  * Benchmark script for @gentleduck/calendar.
  * Measures real performance and outputs JSON data for chart visualization.
  *
  * Output: public/benchmarks/results.json + docs public/data/benchmarks/calendar.json
- * Usage: bun run benchmark
+ * Usage: bun run build, then bun run benchmark in duck-primitives (it measures React Aria, Ark and react-day-picker), then bun run benchmark
  */
 
-import { execSync } from 'node:child_process'
-import { mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { gzipSync } from 'node:zlib'
 import { HebrewAdapter } from '../src/adapter/hebrew-adapter'
 import { IslamicAdapter } from '../src/adapter/islamic-adapter'
 import { NativeAdapter } from '../src/adapter/native-adapter'
@@ -17,8 +19,13 @@ import { PersianAdapter } from '../src/adapter/persian-adapter'
 import { buildCalendarMonth, buildMultiMonth } from '../src/grid'
 import { applySelection } from '../src/selection'
 
-const OUT_DIR = join(import.meta.dirname, '..', 'public', 'benchmarks')
-const DOCS_DIR = join(import.meta.dirname, '..', '..', '..', 'apps', 'duck-ui-docs', 'public', 'data', 'benchmarks')
+const PACKAGE_DIR = join(import.meta.dirname, '..')
+const DIST_DIR = join(PACKAGE_DIR, 'dist')
+const OUT_DIR = join(PACKAGE_DIR, 'public', 'benchmarks')
+const DOCS_DIR = join(PACKAGE_DIR, '..', '..', 'apps', 'duck', 'public', 'data', 'benchmarks')
+const PRIMITIVES_RESULTS = join(PACKAGE_DIR, '..', 'duck-primitives', 'public', 'benchmarks', 'results.json')
+if (!existsSync(DIST_DIR)) throw new Error('dist/ is missing: run `bun run build` first')
+if (!existsSync(PRIMITIVES_RESULTS)) throw new Error('run `bun run benchmark` in packages/duck-primitives first')
 mkdirSync(OUT_DIR, { recursive: true })
 mkdirSync(DOCS_DIR, { recursive: true })
 
@@ -92,19 +99,58 @@ const adapterPerformance = adapterList.map(({ name, adapter }) => {
   }
 })
 
+const workDir = mkdtempSync(join(tmpdir(), 'duck-calendar-benchmark-'))
+let entryCount = 0
+// Minified with react external, then gzipped, the way the primitives benchmark measures its libraries.
+async function gzippedKB(source: string) {
+  const entry = join(workDir, `entry-${entryCount++}.ts`)
+  writeFileSync(entry, source)
+  const build = await Bun.build({
+    entrypoints: [entry],
+    minify: true,
+    target: 'browser',
+    external: ['react', 'react-dom', 'react/jsx-runtime', 'date-fns', 'dayjs', 'luxon'],
+  })
+  if (!build.success) throw new AggregateError(build.logs, `${source} failed to bundle`)
+  return +(gzipSync(Buffer.from(await build.outputs[0].arrayBuffer())).length / 1024).toFixed(1)
+}
+
+const engineKB = await gzippedKB(`export { useCalendar, NativeAdapter } from '${join(DIST_DIR, 'index.js')}'\n`)
+const primitivesCalendar: { name: string; sizeKB: number }[] = JSON.parse(
+  readFileSync(PRIMITIVES_RESULTS, 'utf-8'),
+).calendarComparison
+const measuredKB = (name: string) => {
+  const found = primitivesCalendar.find((c) => c.name === name)
+  if (!found) throw new Error(`${name} is missing from the primitives calendar comparison`)
+  return found.sizeKB
+}
+
+const rdpStyleSheet = createRequire(PRIMITIVES_RESULTS).resolve('react-day-picker/style.css')
+const rdpCssKB = +(gzipSync(readFileSync(rdpStyleSheet)).length / 1024).toFixed(1)
+
+// The last two are published sizes from bundlephobia; the rest are measured.
 const bundleSize = [
-  { name: '@gentleduck/calendar', sizeKB: 4.9, deps: 0, cssKB: 0, calendars: 4 },
-  { name: 'react-day-picker v9', sizeKB: 20.0, deps: 1, cssKB: 3.0, calendars: 1 },
-  { name: 'react-aria (DatePicker)', sizeKB: 45.0, deps: 8, cssKB: 0, calendars: 1 },
-  { name: 'react-datepicker', sizeKB: 32.0, deps: 3, cssKB: 8.0, calendars: 1 },
-  { name: 'react-calendar', sizeKB: 15.0, deps: 0, cssKB: 5.0, calendars: 1 },
+  { name: '@gentleduck/calendar (hook)', sizeKB: engineKB, cssKB: 0, calendars: 4, measured: true },
+  { name: '@gentleduck/primitives Calendar', sizeKB: measuredKB('gentleduck'), cssKB: 0, calendars: 4, measured: true },
+  { name: 'React Aria Calendar', sizeKB: measuredKB('React Aria'), cssKB: 0, calendars: 13, measured: true },
+  { name: 'Ark UI DatePicker', sizeKB: measuredKB('Ark UI'), cssKB: 0, calendars: 13, measured: true },
+  {
+    name: 'react-day-picker v10',
+    sizeKB: measuredKB('react-day-picker'),
+    cssKB: rdpCssKB,
+    calendars: 1,
+    measured: true,
+  },
+  { name: 'react-datepicker', sizeKB: 32.0, cssKB: 8.0, calendars: 1, measured: false },
+  { name: 'react-calendar', sizeKB: 15.0, cssKB: 5.0, calendars: 1, measured: false },
 ]
+const kb = (name: string) => `${bundleSize.find((b) => b.name === name)?.sizeKB} KB`
 
 const features = [
-  { feature: 'Tree-shakeable', gentleduck: true, rdp: false, reactAria: false, datepicker: false, reactCal: false },
+  { feature: 'Tree-shakeable', gentleduck: true, rdp: true, reactAria: true, datepicker: false, reactCal: false },
   { feature: 'Zero CSS', gentleduck: true, rdp: false, reactAria: true, datepicker: false, reactCal: false },
   { feature: 'Date Adapter', gentleduck: true, rdp: false, reactAria: false, datepicker: false, reactCal: false },
-  { feature: 'Multi-Calendar', gentleduck: '4', rdp: '1', reactAria: '1', datepicker: '1', reactCal: '1' },
+  { feature: 'Multi-Calendar', gentleduck: '4', rdp: '1', reactAria: '13', datepicker: '1', reactCal: '1' },
   { feature: 'SSR Safe', gentleduck: true, rdp: true, reactAria: true, datepicker: false, reactCal: true },
   { feature: 'ARIA Compliant', gentleduck: true, rdp: true, reactAria: true, datepicker: false, reactCal: false },
   { feature: 'Keyboard Nav', gentleduck: true, rdp: true, reactAria: true, datepicker: false, reactCal: false },
@@ -113,28 +159,38 @@ const features = [
 const vsReactDayPicker = {
   name: 'react-day-picker',
   comparison: [
-    { metric: 'Bundle size', gentleduck: '4.9 KB', competitor: '20 KB', winner: 'gentleduck' },
-    { metric: 'Dependencies', gentleduck: '0', competitor: '1 (date-fns)', winner: 'gentleduck' },
-    { metric: 'CSS required', gentleduck: 'None', competitor: '3 KB', winner: 'gentleduck' },
+    {
+      metric: 'Calendar component',
+      gentleduck: kb('@gentleduck/primitives Calendar'),
+      competitor: kb('react-day-picker v10'),
+      winner: 'gentleduck',
+    },
+    { metric: 'Dependencies', gentleduck: '0', competitor: '2 (date-fns, @date-fns/tz)', winner: 'gentleduck' },
+    { metric: 'Default stylesheet', gentleduck: 'None', competitor: `${rdpCssKB} KB`, winner: 'gentleduck' },
     { metric: 'Calendar systems', gentleduck: '4', competitor: '1', winner: 'gentleduck' },
-    { metric: 'Date adapters', gentleduck: '7', competitor: '0', winner: 'gentleduck' },
+    { metric: 'Date adapters', gentleduck: '7', competitor: 'dateLib override', winner: 'gentleduck' },
     { metric: 'Selection modes', gentleduck: '4', competitor: '3', winner: 'gentleduck' },
     { metric: 'Headless hook', gentleduck: 'useCalendar', competitor: 'None', winner: 'gentleduck' },
     { metric: 'Compound primitives', gentleduck: 'Yes', competitor: 'No', winner: 'gentleduck' },
-    { metric: 'RTL support', gentleduck: 'Yes', competitor: 'Partial', winner: 'gentleduck' },
+    { metric: 'RTL support', gentleduck: 'Yes', competitor: 'Yes (dir)', winner: 'tie' },
     { metric: 'Maturity', gentleduck: 'New', competitor: 'Established', winner: 'competitor' },
-    { metric: 'React 18', gentleduck: 'No (19+)', competitor: 'Yes', winner: 'competitor' },
+    { metric: 'React 18', gentleduck: 'Yes', competitor: 'Yes', winner: 'tie' },
   ],
 }
 
 const vsReactAria = {
   name: 'react-aria',
   comparison: [
-    { metric: 'Bundle size', gentleduck: '4.9 KB', competitor: '45 KB', winner: 'gentleduck' },
-    { metric: 'Dependencies', gentleduck: '0', competitor: '8', winner: 'gentleduck' },
+    {
+      metric: 'Calendar component',
+      gentleduck: kb('@gentleduck/primitives Calendar'),
+      competitor: kb('React Aria Calendar'),
+      winner: 'gentleduck',
+    },
     { metric: 'Architecture', gentleduck: 'Headless hook', competitor: 'Hooks + Components', winner: 'tie' },
-    { metric: 'Calendar systems', gentleduck: '4', competitor: '1', winner: 'gentleduck' },
+    { metric: 'Calendar systems', gentleduck: '4', competitor: '13', winner: 'competitor' },
     { metric: 'Date adapters', gentleduck: '7 (pluggable)', competitor: '0 (built-in)', winner: 'gentleduck' },
+    { metric: 'Typed date field', gentleduck: 'No', competitor: 'DateField', winner: 'competitor' },
     { metric: 'ARIA compliance', gentleduck: 'Full', competitor: 'Full', winner: 'tie' },
     { metric: 'Keyboard nav', gentleduck: 'Full', competitor: 'Full', winner: 'tie' },
     { metric: 'Internationalization', gentleduck: 'Via adapters', competitor: 'Built-in', winner: 'competitor' },
@@ -145,7 +201,12 @@ const vsReactAria = {
 const vsReactDatepicker = {
   name: 'react-datepicker',
   comparison: [
-    { metric: 'Bundle size', gentleduck: '4.9 KB', competitor: '32 KB', winner: 'gentleduck' },
+    {
+      metric: 'Calendar component',
+      gentleduck: kb('@gentleduck/primitives Calendar'),
+      competitor: kb('react-datepicker'),
+      winner: 'gentleduck',
+    },
     { metric: 'Dependencies', gentleduck: '0', competitor: '3', winner: 'gentleduck' },
     { metric: 'CSS required', gentleduck: 'None', competitor: '8 KB', winner: 'gentleduck' },
     { metric: 'Headless', gentleduck: 'Yes', competitor: 'No (styled)', winner: 'gentleduck' },
@@ -160,13 +221,18 @@ const vsReactDatepicker = {
 const vsReactCalendar = {
   name: 'react-calendar',
   comparison: [
-    { metric: 'Bundle size', gentleduck: '4.9 KB', competitor: '15 KB', winner: 'gentleduck' },
+    {
+      metric: 'Calendar component',
+      gentleduck: kb('@gentleduck/primitives Calendar'),
+      competitor: kb('react-calendar'),
+      winner: 'gentleduck',
+    },
     { metric: 'CSS required', gentleduck: 'None', competitor: '5 KB', winner: 'gentleduck' },
     { metric: 'Headless', gentleduck: 'Yes', competitor: 'No (styled)', winner: 'gentleduck' },
     { metric: 'Calendar systems', gentleduck: '4', competitor: '1', winner: 'gentleduck' },
     { metric: 'Selection modes', gentleduck: '4', competitor: '1', winner: 'gentleduck' },
     { metric: 'ARIA compliance', gentleduck: 'Full', competitor: 'Partial', winner: 'gentleduck' },
-    { metric: 'React 18', gentleduck: 'No (19+)', competitor: 'Yes', winner: 'competitor' },
+    { metric: 'React 18', gentleduck: 'Yes', competitor: 'Yes', winner: 'tie' },
     { metric: 'Simplicity', gentleduck: 'Hook-based', competitor: 'Drop-in', winner: 'competitor' },
   ],
 }
@@ -181,34 +247,14 @@ const totalCost = bundleSize.map((b) => ({
   total: +(b.sizeKB + b.cssKB).toFixed(1),
 }))
 
-function getModuleSizes(): { name: string; sizeKB: number }[] {
-  const distDir = join(import.meta.dirname, '..', 'dist')
-  const sizes: { name: string; sizeKB: number }[] = []
-  for (const name of readdirSync(distDir)) {
-    const dir = join(distDir, name)
-    if (!statSync(dir).isDirectory()) continue
-    try {
-      statSync(join(dir, 'index.js'))
-    } catch {
-      continue
-    }
-    const jsFiles = readdirSync(dir)
-      .filter((f) => f.endsWith('.js') && !f.endsWith('.map'))
-      .map((f) => join(dir, f))
-    if (jsFiles.length === 0) continue
-    try {
-      const gz = execSync(`cat ${jsFiles.map((f) => `"${f}"`).join(' ')} | gzip -c | wc -c`, {
-        encoding: 'utf-8',
-      }).trim()
-      sizes.push({ name, sizeKB: +(Number.parseInt(gz, 10) / 1024).toFixed(1) })
-    } catch {
-      /* skip */
-    }
-  }
-  return sizes.sort((a, b) => b.sizeKB - a.sizeKB)
+const moduleSizes: { name: string; sizeKB: number }[] = []
+for (const entry of readdirSync(DIST_DIR, { withFileTypes: true })) {
+  const index = join(DIST_DIR, entry.name, 'index.js')
+  if (entry.isDirectory() && existsSync(index))
+    moduleSizes.push({ name: entry.name, sizeKB: await gzippedKB(`export * from '${index}'\n`) })
 }
-
-const moduleSizes = getModuleSizes()
+moduleSizes.sort((a, b) => b.sizeKB - a.sizeKB)
+rmSync(workDir, { recursive: true, force: true })
 
 const results = {
   corePerformance: Object.values(corePerformance),
@@ -233,6 +279,9 @@ console.log('Core Performance:')
 for (const p of Object.values(corePerformance)) {
   console.log(`  ${p.label}: ${p.us} us`)
 }
+console.log()
+console.log('Bundle size:')
+for (const b of bundleSize) console.log(`  ${b.name}: ${b.sizeKB} KB${b.measured ? '' : ' (published)'}`)
 console.log()
 console.log('Adapter Performance (buildCalendarMonth):')
 for (const a of adapterPerformance) {

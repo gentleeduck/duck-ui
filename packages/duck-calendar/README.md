@@ -23,17 +23,19 @@
 
 ---
 
-**75% smaller than react-day-picker**  -  ~5 KB gzipped vs ~20 KB. Zero dependencies. Full keyboard navigation and ARIA compliance.
+**About half the size of react-day-picker**  -  9.5 KB gzipped for a whole calendar against 20.0 KB, and 5.8 KB for the `useCalendar` hook alone. Zero dependencies. Full keyboard navigation and ARIA compliance.
 
 ## Benchmarks
 
-| Library | Size (gzipped) | Dependencies |
-|---|---|---|
-| **@gentleduck/calendar** | **~5 KB** | **0** |
-| react-day-picker | ~20 KB | date-fns |
-| react-calendar | ~18 KB | 0 |
-| react-datepicker | ~38 KB | date-fns, react-popper |
-| react-aria (DatePicker) | ~45 KB | @internationalized/date + 5 more |
+| Library | Size (gzipped) | Dependencies | Source |
+|---|---|---|---|
+| **@gentleduck/calendar** (`useCalendar` + `NativeAdapter`) | **5.8 KB** | **0** | Measured |
+| **@gentleduck/primitives** Calendar | **9.5 KB** | **0** | Measured |
+| react-day-picker 10, date-fns included | 20.0 KB | date-fns, @date-fns/tz | Measured |
+| React Aria Calendar | 36.9 KB | 8 | Measured |
+| Ark UI DatePicker, inline | 43.3 KB | 69 | Measured |
+| react-calendar | ~15 KB | 4 | Published |
+| react-datepicker | ~32 KB | date-fns, @floating-ui/react, clsx | Published |
 
 4 calendar systems (Gregorian, Islamic, Persian, Hebrew). 7 date adapters (Native, date-fns, dayjs, luxon + 3 calendar-specific). See the [full benchmarks](https://gentleduck.org/docs/packages/duck-calendar/benchmarks) for feature comparisons.
 

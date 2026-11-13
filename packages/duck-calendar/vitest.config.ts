@@ -8,5 +8,11 @@ export default defineConfig({
       enabled: true,
       include: ['src/**/*.test-d.ts'],
     },
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/__test__/**'],
+      thresholds: { 100: true },
+    },
   },
 })

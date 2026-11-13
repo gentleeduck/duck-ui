@@ -702,3 +702,13 @@ describe('grid', () => {
     })
   })
 })
+
+describe('getLocaleWeekInfo copies', () => {
+  it('hands each caller its own week, so changing one changes no other calendar', () => {
+    const before = getLocaleWeekInfo('en-US').weekend
+    getLocaleWeekInfo(undefined).weekend.push(5)
+    getLocaleWeekInfo('en-US').weekend.push(5)
+
+    expect([getLocaleWeekInfo(undefined).weekend, getLocaleWeekInfo('en-US').weekend]).toEqual([[0, 6], before])
+  })
+})

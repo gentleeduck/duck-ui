@@ -177,3 +177,21 @@ describe('hebrew conversion', () => {
     })
   })
 })
+
+describe('Hebrew years far from the epoch', () => {
+  it('reads the weekday of a day before the epoch the right way round, so year 0 keeps its 384 days', () => {
+    expect([hebrewYearLength(0), hebrewYearLength(1)]).toEqual([384, 355])
+  })
+
+  it('finds the year of a day where Tishrei has drifted far from September, either way', () => {
+    const roundTrip = (gy: number) => {
+      const { hy, hm, hd } = toHebrew(gy, 1, 1)
+      return hebrewToGregorian(hy, hm, hd)
+    }
+
+    expect([roundTrip(100000), roundTrip(-200000)]).toEqual([
+      { gy: 100000, gm: 1, gd: 1 },
+      { gy: -200000, gm: 1, gd: 1 },
+    ])
+  })
+})

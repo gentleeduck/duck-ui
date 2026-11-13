@@ -27,7 +27,8 @@ function period<TDate>(adapter: Adapter.IDateAdapter<TDate>, date: TDate, unit: 
   if (unit === 'month') return [adapter.startOfMonth(date), adapter.endOfMonth(date)]
   const year = adapter.getYear(date)
   const first = unit === 'year' ? year : Math.floor(year / 10) * 10
-  const last = unit === 'year' ? year : first + 9
+  // The decade of an adapter's last year runs past it, and a year past it cannot be made.
+  const last = Math.min(unit === 'year' ? year : first + 9, adapter.maxYear ?? Number.POSITIVE_INFINITY)
   const lastYear = adapter.create(last, 0, 1)
   const lastMonth = adapter.create(last, (adapter.getMonthsInYear?.(lastYear) ?? 12) - 1, 1)
   return [adapter.create(first, 0, 1), adapter.endOfMonth(lastMonth)]

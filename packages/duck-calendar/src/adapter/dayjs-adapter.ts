@@ -26,12 +26,13 @@ export class DayjsAdapter implements Adapter.IDateAdapter<Dayjs> {
     return date.isValid()
   }
 
+  // Day.js compares by unit through Date, which turns a year under 100 into 1900 and on, so the fields are compared.
   isSameDay(a: Dayjs, b: Dayjs): boolean {
-    return a.isSame(b, 'day')
+    return a.year() === b.year() && a.month() === b.month() && a.date() === b.date()
   }
 
   isSameMonth(a: Dayjs, b: Dayjs): boolean {
-    return a.isSame(b, 'month')
+    return a.year() === b.year() && a.month() === b.month()
   }
 
   isBefore(a: Dayjs, b: Dayjs): boolean {

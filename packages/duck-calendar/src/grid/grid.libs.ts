@@ -12,9 +12,11 @@ const WEEK_INFO = new Map<string, Grid.IWeekInfo>()
  * runtime that cannot describe it, the week starts on Sunday and its weekend is Saturday and Sunday.
  */
 export function getLocaleWeekInfo(locale: string | undefined): Grid.IWeekInfo {
-  if (!locale) return DEFAULT_WEEK
+  // A copy each time, so a caller changing its weekend changes no other calendar's.
+  const copy = ({ firstDay, weekend }: Grid.IWeekInfo) => ({ firstDay, weekend: [...weekend] })
+  if (!locale) return copy(DEFAULT_WEEK)
   let info = WEEK_INFO.get(locale)
-  if (info) return info
+  if (info) return copy(info)
   info = DEFAULT_WEEK
   try {
     const intl = new Intl.Locale(locale) as Intl.Locale & { getWeekInfo?: () => IntlWeekInfo; weekInfo?: IntlWeekInfo }
@@ -28,7 +30,7 @@ export function getLocaleWeekInfo(locale: string | undefined): Grid.IWeekInfo {
     // An invalid tag throws here; it keeps the default week, as the formatters fall back too.
   }
   WEEK_INFO.set(locale, info)
-  return info
+  return copy(info)
 }
 
 /**

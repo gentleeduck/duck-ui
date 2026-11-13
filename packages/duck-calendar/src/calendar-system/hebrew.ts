@@ -67,7 +67,8 @@ function hebrewCalendarElapsedDays(hy: number): number {
   const monthsElapsed = Math.floor((235 * hy - 234) / 19)
   const partsElapsed = 12084 + 13753 * monthsElapsed
   const days = 29 * monthsElapsed + Math.floor(partsElapsed / 25920)
-  return (3 * (days + 1)) % 7 < 3 ? days + 1 : days
+  // A remainder keeps the sign of a negative day count, before the epoch, so it is brought into 0 to 6 first.
+  return (((3 * (days + 1)) % 7) + 7) % 7 < 3 ? days + 1 : days
 }
 
 // The two remaining postponements, read off the lengths they would otherwise leave: a common year of 356 days
@@ -177,8 +178,11 @@ export function toHebrew(gy: number, gm: number, gd: number): { hy: number; hm: 
     throw new RangeError(`Invalid Gregorian date: ${gy}-${gm}-${gd}`)
   }
   const rd = gregorianToFixed(gy, gm, gd)
-  // Tishrei falls in September or October, so a day before it is still in the previous Hebrew year.
-  const hy = hebrewNewYear(gy + 3761) > rd ? gy + 3760 : gy + 3761
+  // Tishrei falls in September or October in modern years, but drifts across the range a date may take, so the
+  // year is moved until its New Year is the last one on or before the day.
+  let hy = gy + 3761
+  while (hebrewNewYear(hy) > rd) hy--
+  while (hebrewNewYear(hy + 1) <= rd) hy++
 
   // Find month - use <= so the last month (Elul) is reachable
   let hm = 1

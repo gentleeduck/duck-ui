@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { NativeAdapter } from '../../adapter'
+import { NativeAdapter, PersianAdapter } from '../../adapter'
 import { canNavigate, goToMonth, goToNextMonth, goToPrevMonth, goToYear, navigate } from '../navigation'
 
 describe('navigation', () => {
@@ -459,5 +459,15 @@ describe('navigation', () => {
       expect(back.getFullYear()).toBe(original.getFullYear())
       expect(back.getMonth()).toBe(original.getMonth())
     })
+  })
+})
+
+describe("canNavigate near an adapter's last year", () => {
+  it('moves a decade toward the last year without making a year past it', () => {
+    const persian = new PersianAdapter()
+
+    expect(
+      canNavigate(persian, persian.create(3165, 0, 1), 'next', 'decade', { toDate: persian.create(3176, 0, 1) }),
+    ).toBe(true)
   })
 })

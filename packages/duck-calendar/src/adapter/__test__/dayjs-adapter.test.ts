@@ -432,3 +432,17 @@ describe('DayjsAdapter', () => {
     })
   })
 })
+
+describe('DayjsAdapter in a year under 100', () => {
+  it('compares a day and a month by its own fields, where Day.js moved the year to 1900 and on', () => {
+    const adapter = new DayjsAdapter()
+    const day = adapter.create(48, 0, 1)
+
+    expect([
+      adapter.isSameDay(day, adapter.create(48, 0, 1)),
+      adapter.isSameMonth(day, adapter.create(48, 0, 20)),
+      adapter.isSameMonth(day, adapter.create(48, 1, 1)),
+      adapter.isSameDay(day, adapter.create(48, 0, 2)),
+    ]).toEqual([true, true, false, false])
+  })
+})

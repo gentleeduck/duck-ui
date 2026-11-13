@@ -1,9 +1,40 @@
-import { act, renderHook } from '@testing-library/react'
+import { act, fireEvent, render, renderHook, screen, within } from '@testing-library/react'
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
 import { NativeAdapter } from '../../../adapter'
 import type { Selection } from '../../../selection'
 import { useCalendar } from '../use-calendar'
+import type { UseCalendar } from '../use-calendar.types'
 
 const march2026 = new Date(2026, 2, 1)
+
+function tabStops<M extends Selection.SelectionMode>(calendar: UseCalendar.IUseCalendarReturn<Date, M>) {
+  return calendar.state.months
+    .flatMap((month) => month.weeks.flatMap((week) => week.days))
+    .filter((day) => calendar.getDayProps(day).tabIndex === 0)
+    .map((day) => day.date)
+}
+
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(resolve))
+}
+
+function Days({ config }: { config: Partial<UseCalendar.IUseCalendarConfig<Date, 'single'>> }) {
+  const calendar = useCalendar({
+    adapter: new NativeAdapter(),
+    mode: 'single' as const,
+    defaultMonth: new Date(2020, 5, 1),
+    ...config,
+  })
+  return calendar.state.months
+    .flatMap((month) => month.weeks.flatMap((week) => week.days))
+    .filter((day) => !day.isOutside)
+    .map((day) => (
+      <button key={day.date.getTime()} type="button" {...calendar.getDayProps(day)}>
+        {day.date.getDate()}
+      </button>
+    ))
+}
 
 describe('useCalendar', () => {
   let adapter: NativeAdapter
@@ -333,23 +364,6 @@ describe('useCalendar', () => {
         expect(props['aria-disabled']).toBe(true)
       })
 
-      it('returns tabIndex 0 for focused date and -1 for others', () => {
-        const { result } = renderHook(() => useCalendar({ adapter, mode: 'single' as const, defaultMonth: march2026 }))
-
-        const focusedDate = result.current.state.focusedDate
-        const allDays = result.current.state.weeks.flatMap((w) => w.days)
-
-        const focusedDay = allDays.find((d) => adapter.isSameDay(d.date, focusedDate))
-        const otherDay = allDays.find((d) => !adapter.isSameDay(d.date, focusedDate))
-
-        if (focusedDay) {
-          expect(result.current.getDayProps(focusedDay).tabIndex).toBe(0)
-        }
-        if (otherDay) {
-          expect(result.current.getDayProps(otherDay).tabIndex).toBe(-1)
-        }
-      })
-
       it('returns data-calendar-day attribute', () => {
         const { result } = renderHook(() => useCalendar({ adapter, mode: 'single' as const, defaultMonth: march2026 }))
 
@@ -543,12 +557,6 @@ describe('useCalendar', () => {
       expect(result.current.getDayProps(otherDay).tabIndex).toBe(-1)
     })
 
-    it('focusedDate defaults to today even when defaultMonth is provided', () => {
-      const { result } = renderHook(() => useCalendar({ adapter, mode: 'single' as const, defaultMonth: march2026 }))
-      const today = adapter.today()
-      expect(adapter.isSameDay(result.current.state.focusedDate, today)).toBe(true)
-    })
-
     it('focusedDate defaults to selected date when provided', () => {
       const selected = new Date(2026, 2, 15)
       const { result } = renderHook(() =>
@@ -562,6 +570,228 @@ describe('useCalendar', () => {
 
       const today = adapter.today()
       expect(adapter.isSameDay(result.current.state.focusedDate, today)).toBe(true)
+    })
+  })
+
+  describe('the tab stop', () => {
+    const june2020 = new Date(2020, 5, 1)
+
+    it('sits on the first day of the shown month when today is not in it', () => {
+      const { result } = renderHook(() => useCalendar({ adapter, mode: 'single' as const, defaultMonth: june2020 }))
+
+      expect(tabStops(result.current)).toEqual([june2020])
+      expect(result.current.state.focusedDate).toEqual(june2020)
+    })
+
+    it('sits on today when today is shown', () => {
+      const { result } = renderHook(() => useCalendar({ adapter, mode: 'single' as const }))
+
+      const stops = tabStops(result.current)
+      expect(stops).toHaveLength(1)
+      expect(adapter.isSameDay(stops[0]!, adapter.today())).toBe(true)
+    })
+
+    it('goes back to today when the focused day leaves the view', () => {
+      const { result } = renderHook(() => useCalendar({ adapter, mode: 'single' as const }))
+
+      act(() => {
+        result.current.actions.focusDate(new Date(2000, 0, 1))
+      })
+
+      const stops = tabStops(result.current)
+      expect(stops).toHaveLength(1)
+      expect(adapter.isSameDay(stops[0]!, adapter.today())).toBe(true)
+    })
+
+    it('prefers a shown selection to today', () => {
+      const today = adapter.today()
+      const other = new Date(today.getFullYear(), today.getMonth(), today.getDate() === 1 ? 2 : 1)
+      const { result } = renderHook(() => useCalendar({ adapter, mode: 'single' as const, defaultSelected: other }))
+
+      act(() => {
+        result.current.actions.focusDate(new Date(2000, 0, 1))
+      })
+
+      expect(tabStops(result.current)).toEqual([other])
+    })
+
+    it('skips days that cannot be picked', () => {
+      const disabled = [new Date(2020, 5, 1), new Date(2020, 5, 2)]
+      const { result } = renderHook(() =>
+        useCalendar({ adapter, mode: 'single' as const, defaultMonth: june2020, disabled }),
+      )
+
+      expect(tabStops(result.current)).toEqual([new Date(2020, 5, 3)])
+    })
+
+    it('sits on the earliest shown selection in multi mode', () => {
+      const { result } = renderHook(() =>
+        useCalendar({
+          adapter,
+          mode: 'multi' as const,
+          defaultMonth: june2020,
+          defaultSelected: [new Date(2020, 5, 20), new Date(2020, 5, 5)],
+        }),
+      )
+
+      expect(tabStops(result.current)).toEqual([new Date(2020, 5, 5)])
+    })
+
+    it('moves into the month a nav button shows', () => {
+      const { result } = renderHook(() =>
+        useCalendar({
+          adapter,
+          mode: 'single' as const,
+          defaultMonth: june2020,
+          defaultSelected: new Date(2020, 5, 15),
+        }),
+      )
+
+      act(() => {
+        result.current.actions.goToNext()
+      })
+
+      expect(tabStops(result.current)).toEqual([new Date(2020, 6, 1)])
+    })
+
+    it('is one day when two shown months both draw it', () => {
+      const july1 = new Date(2020, 6, 1)
+      const { result } = renderHook(() =>
+        useCalendar({ adapter, mode: 'single' as const, defaultMonth: june2020, numberOfMonths: 2 }),
+      )
+
+      act(() => {
+        result.current.actions.focusDate(july1)
+      })
+
+      expect(tabStops(result.current)).toEqual([july1])
+    })
+
+    it('never sits on a day drawn from the next month', () => {
+      const { result } = renderHook(() => useCalendar({ adapter, mode: 'single' as const, defaultMonth: june2020 }))
+
+      act(() => {
+        result.current.actions.focusDate(new Date(2020, 6, 1))
+      })
+
+      expect(tabStops(result.current)).toEqual([june2020])
+    })
+  })
+
+  describe('moving focus with the keys', () => {
+    function DaysWithoutGrid() {
+      const calendar = useCalendar({ adapter, mode: 'single' as const, defaultMonth: new Date(2020, 5, 1) })
+      return calendar.state.weeks
+        .flatMap((week) => week.days)
+        .map((day) => (
+          <button key={day.date.getTime()} type="button" {...calendar.getDayProps(day)}>
+            {day.date.getDate()}
+          </button>
+        ))
+    }
+
+    it('finds the focused day on the page when the grid props are not spread', async () => {
+      render(<DaysWithoutGrid />)
+
+      fireEvent.keyDown(screen.getByLabelText(/June 1,/), { key: 'ArrowRight' })
+      await new Promise((resolve) => requestAnimationFrame(resolve))
+
+      expect(document.activeElement?.getAttribute('aria-label')).toMatch(/June 2,/)
+    })
+
+    it('turns to the next month when the keys leave the last day', async () => {
+      render(<Days config={{ defaultSelected: new Date(2020, 5, 30) }} />)
+
+      fireEvent.keyDown(screen.getByLabelText(/June 30,/), { key: 'ArrowRight' })
+      await nextFrame()
+
+      expect(document.activeElement?.getAttribute('aria-label')).toMatch(/July 1,/)
+      expect(screen.queryByLabelText(/June 30,/)).toBeNull()
+    })
+
+    it('turns to the previous month when the keys leave the first day', async () => {
+      render(<Days config={{}} />)
+
+      fireEvent.keyDown(screen.getByLabelText(/June 1,/), { key: 'ArrowLeft' })
+      await nextFrame()
+
+      expect(document.activeElement?.getAttribute('aria-label')).toMatch(/May 31,/)
+      expect(screen.queryByLabelText(/June 1,/)).toBeNull()
+    })
+
+    it('turns two shown months by one when the keys leave the second', async () => {
+      render(<Days config={{ numberOfMonths: 2, defaultSelected: new Date(2020, 6, 31) }} />)
+
+      fireEvent.keyDown(screen.getByLabelText(/July 31,/), { key: 'ArrowRight' })
+      await nextFrame()
+
+      expect(document.activeElement?.getAttribute('aria-label')).toMatch(/August 1,/)
+      expect(screen.getByLabelText(/July 31,/)).toBeTruthy()
+      expect(screen.queryByLabelText(/June 30,/)).toBeNull()
+    })
+
+    it('lands on the last of two keys pressed within one frame', async () => {
+      render(<Days config={{}} />)
+
+      fireEvent.keyDown(screen.getByLabelText(/June 1,/), { key: 'ArrowRight' })
+      fireEvent.keyDown(screen.getByLabelText(/June 2,/), { key: 'ArrowRight' })
+      await nextFrame()
+
+      expect(document.activeElement?.getAttribute('aria-label')).toMatch(/June 3,/)
+    })
+
+    it('moves focus for a key pressed before strict mode replays the mount effects', async () => {
+      const environment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+      const wasActEnvironment = environment.IS_REACT_ACT_ENVIRONMENT
+      environment.IS_REACT_ACT_ENVIRONMENT = false
+      const container = document.body.appendChild(document.createElement('div'))
+      const root = createRoot(container)
+      const committed = new Promise<void>((resolve) => {
+        const observer = new MutationObserver(() => {
+          observer.disconnect()
+          resolve()
+        })
+        observer.observe(container, { childList: true })
+      })
+      // A render past the scheduler's 5ms slice leaves the mount effects to a later task, as a busy page does.
+      function Busy() {
+        const end = performance.now() + 10
+        let spins = 0
+        while (performance.now() < end) spins++
+        return spins < 0 ? spins : null
+      }
+
+      try {
+        root.render(
+          <StrictMode>
+            <Busy />
+            <Days config={{}} />
+          </StrictMode>,
+        )
+        await committed
+        within(container)
+          .getByLabelText(/June 1,/)
+          .dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowRight' }))
+        await nextFrame()
+        await nextFrame()
+
+        expect(document.activeElement?.getAttribute('aria-label')).toMatch(/June 2,/)
+      } finally {
+        root.unmount()
+        container.remove()
+        environment.IS_REACT_ACT_ENVIRONMENT = wasActEnvironment
+      }
+    })
+
+    it('moves no focus once it unmounts before the frame does', async () => {
+      const first = render(<Days config={{}} />)
+      render(<Days config={{ defaultMonth: new Date(2021, 0, 1) }} />)
+
+      fireEvent.keyDown(within(first.container).getByLabelText(/June 1,/), { key: 'ArrowRight' })
+      first.unmount()
+      await nextFrame()
+
+      expect(document.activeElement).toBe(document.body)
     })
   })
 
@@ -1165,6 +1395,297 @@ describe('useCalendar', () => {
 
       expect(result.current.state.month.getMonth()).toBe(11) // December
       expect(result.current.state.month.getFullYear()).toBe(2025)
+    })
+  })
+
+  describe('the week follows the locale', () => {
+    const june2020 = new Date(2020, 5, 1)
+
+    it('names the weekdays from the first day of the locale', () => {
+      const { result } = renderHook(() =>
+        useCalendar({ adapter, mode: 'single' as const, defaultMonth: june2020, locale: { locale: 'de-DE' } }),
+      )
+
+      expect(result.current.state.weekdays[0]).toBe(
+        new Intl.DateTimeFormat('de-DE', { weekday: 'short' }).format(june2020),
+      )
+    })
+
+    it('moves Home to the first day of the locale', async () => {
+      render(<Days config={{ locale: { locale: 'de-DE' } }} />)
+
+      fireEvent.keyDown(screen.getByLabelText(/, 1\. Juni/), { key: 'ArrowRight' })
+      await nextFrame()
+      fireEvent.keyDown(screen.getByLabelText(/, 2\. Juni/), { key: 'Home' })
+      await nextFrame()
+
+      expect(document.activeElement?.getAttribute('aria-label')).toMatch(/^Montag, 1\. Juni/)
+    })
+  })
+
+  describe('paging by the shown months', () => {
+    const june2020 = new Date(2020, 5, 1)
+    const twoMonths = { mode: 'single' as const, defaultMonth: june2020, numberOfMonths: 2 }
+
+    it('moves the view a whole page with the nav buttons', () => {
+      const { result } = renderHook(() => useCalendar({ ...twoMonths, adapter, pageBehavior: 'visible' as const }))
+
+      act(() => result.current.actions.goToNext())
+      expect(result.current.state.month).toEqual(new Date(2020, 7, 1))
+
+      act(() => result.current.actions.goToPrevious())
+      act(() => result.current.actions.goToPrevious())
+      expect(result.current.state.month).toEqual(new Date(2020, 3, 1))
+    })
+
+    it('moves the view one month by default', () => {
+      const { result } = renderHook(() => useCalendar({ ...twoMonths, adapter }))
+
+      act(() => result.current.actions.goToNext())
+
+      expect(result.current.state.month).toEqual(new Date(2020, 6, 1))
+    })
+
+    it('cannot page to a page that starts after toDate', () => {
+      const toDate = new Date(2020, 6, 20)
+      const paged = renderHook(() => useCalendar({ ...twoMonths, adapter, toDate, pageBehavior: 'visible' as const }))
+      const single = renderHook(() => useCalendar({ ...twoMonths, adapter, toDate }))
+
+      expect(paged.result.current.state.canGoNext).toBe(false)
+      expect(single.result.current.state.canGoNext).toBe(true)
+    })
+
+    it('stops the last page at toDate rather than past it', () => {
+      const { result } = renderHook(() =>
+        useCalendar({ ...twoMonths, adapter, toDate: new Date(2020, 7, 20), pageBehavior: 'visible' as const }),
+      )
+
+      act(() => result.current.actions.goToNext())
+
+      expect(result.current.state.months.map((m) => m.month.getMonth())).toEqual([6, 7])
+    })
+
+    it('stops the first page at fromDate, and cannot page back from it', () => {
+      const { result } = renderHook(() =>
+        useCalendar({ ...twoMonths, adapter, fromDate: new Date(2020, 4, 10), pageBehavior: 'visible' as const }),
+      )
+
+      act(() => result.current.actions.goToPrevious())
+
+      expect(result.current.state.months.map((m) => m.month.getMonth())).toEqual([4, 5])
+      expect(result.current.state.canGoPrevious).toBe(false)
+    })
+
+    it('moves focus and the view a whole page with PageDown', async () => {
+      render(<Days config={{ numberOfMonths: 2, pageBehavior: 'visible' }} />)
+
+      fireEvent.keyDown(screen.getByLabelText(/June 1,/), { key: 'PageDown' })
+      await nextFrame()
+
+      expect(document.activeElement?.getAttribute('aria-label')).toMatch(/August 1,/)
+      expect(screen.queryByLabelText(/June 1,/)).toBeNull()
+      expect(screen.getByLabelText(/September 30,/)).toBeTruthy()
+    })
+
+    it('turns a whole page when the keys leave the shown months', async () => {
+      render(<Days config={{ numberOfMonths: 2, pageBehavior: 'visible' }} />)
+
+      fireEvent.keyDown(screen.getByLabelText(/June 1,/), { key: 'PageDown' })
+      await nextFrame()
+      fireEvent.keyDown(screen.getByLabelText(/August 1,/), { key: 'ArrowLeft' })
+      await nextFrame()
+
+      expect(document.activeElement?.getAttribute('aria-label')).toMatch(/July 31,/)
+      expect(screen.getByLabelText(/June 1,/)).toBeTruthy()
+    })
+
+    it('moves focus and the view back a whole page with PageUp', async () => {
+      render(<Days config={{ numberOfMonths: 2, pageBehavior: 'visible' }} />)
+
+      fireEvent.keyDown(screen.getByLabelText(/June 1,/), { key: 'PageUp' })
+      await nextFrame()
+
+      expect(document.activeElement?.getAttribute('aria-label')).toMatch(/April 1,/)
+      expect(screen.getByLabelText(/May 31,/)).toBeTruthy()
+      expect(screen.queryByLabelText(/June 1,/)).toBeNull()
+    })
+  })
+
+  describe('unavailable days', () => {
+    const june2020 = new Date(2020, 5, 1)
+    const june5 = new Date(2020, 5, 5)
+    const june10 = new Date(2020, 5, 10)
+    const day = <M extends Selection.SelectionMode>(calendar: UseCalendar.IUseCalendarReturn<Date, M>, date: Date) =>
+      calendar.state.weeks.flatMap((week) => week.days).find((d) => adapter.isSameDay(d.date, date))!
+
+    it('marks an unavailable day without disabling it', () => {
+      const { result } = renderHook(() =>
+        useCalendar({ adapter, mode: 'single' as const, defaultMonth: june2020, unavailable: [june10] }),
+      )
+      const props = result.current.getDayProps(day(result.current, june10))
+
+      expect(day(result.current, june10)).toMatchObject({ isUnavailable: true, isDisabled: false })
+      expect(props['aria-disabled']).toBe(true)
+      expect(props['data-unavailable']).toBe('true')
+    })
+
+    it('refuses to select an unavailable day', () => {
+      const { result } = renderHook(() =>
+        useCalendar({ adapter, mode: 'single' as const, defaultMonth: june2020, unavailable: () => true }),
+      )
+
+      act(() => result.current.actions.selectDate(june10))
+
+      expect(result.current.state.value).toBeNull()
+    })
+
+    it('lets the arrow keys land on an unavailable day', async () => {
+      render(<Days config={{ unavailable: [new Date(2020, 5, 2)] }} />)
+
+      fireEvent.keyDown(screen.getByLabelText(/June 1,/), { key: 'ArrowRight' })
+      await nextFrame()
+
+      expect(document.activeElement?.getAttribute('aria-label')).toMatch(/June 2,/)
+    })
+
+    it('refuses a range that would span an unavailable day', () => {
+      const { result } = renderHook(() =>
+        useCalendar({ adapter, mode: 'range' as const, defaultMonth: june2020, unavailable: [june5] }),
+      )
+
+      act(() => result.current.actions.selectDate(june2020))
+      act(() => result.current.actions.selectDate(june10))
+      expect(result.current.state.value).toEqual({ from: june2020, to: null })
+
+      act(() => result.current.actions.selectDate(new Date(2020, 5, 4)))
+      expect(result.current.state.value).toEqual({ from: june2020, to: new Date(2020, 5, 4) })
+    })
+
+    it('refuses a range that would span an unavailable day in multi-range mode', () => {
+      const { result } = renderHook(() =>
+        useCalendar({ adapter, mode: 'multi-range' as const, defaultMonth: june2020, unavailable: [june5] }),
+      )
+
+      act(() => result.current.actions.selectDate(june10))
+      act(() => result.current.actions.selectDate(june2020))
+
+      expect(result.current.state.value).toEqual([{ from: june10, to: null }])
+    })
+  })
+
+  describe('read only', () => {
+    const june2020 = new Date(2020, 5, 1)
+    const june3 = new Date(2020, 5, 3)
+
+    it('keeps the selection when a day is picked', () => {
+      const { result } = renderHook(() =>
+        useCalendar({
+          adapter,
+          mode: 'single' as const,
+          defaultMonth: june2020,
+          defaultSelected: june3,
+          readOnly: true,
+        }),
+      )
+
+      act(() => result.current.actions.selectDate(new Date(2020, 5, 5)))
+
+      expect(result.current.state.value).toEqual(june3)
+    })
+
+    it('still moves focus with the keys', async () => {
+      render(<Days config={{ readOnly: true }} />)
+
+      fireEvent.keyDown(screen.getByLabelText(/June 1,/), { key: 'ArrowRight' })
+      await nextFrame()
+
+      expect(document.activeElement?.getAttribute('aria-label')).toMatch(/June 2,/)
+    })
+
+    it('marks the grid read only', () => {
+      const readOnly = renderHook(() => useCalendar({ adapter, mode: 'single' as const, readOnly: true }))
+      const editable = renderHook(() => useCalendar({ adapter, mode: 'single' as const }))
+
+      expect(readOnly.result.current.getGridProps()).toMatchObject({ 'aria-readonly': true, 'data-readonly': 'true' })
+      expect(editable.result.current.getGridProps()['aria-readonly']).toBeUndefined()
+    })
+  })
+
+  describe('an invalid selection', () => {
+    const june2020 = new Date(2020, 5, 1)
+    const june3 = new Date(2020, 5, 3)
+    const propsOf = <M extends Selection.SelectionMode>(
+      calendar: UseCalendar.IUseCalendarReturn<Date, M>,
+      date: Date,
+    ) =>
+      calendar.getDayProps(
+        calendar.state.weeks.flatMap((week) => week.days).find((d) => adapter.isSameDay(d.date, date))!,
+      )
+
+    it('marks the selected days invalid when asked', () => {
+      const { result } = renderHook(() =>
+        useCalendar({ adapter, mode: 'single' as const, defaultMonth: june2020, selected: june3, invalid: true }),
+      )
+
+      expect(result.current.state.isInvalid).toBe(true)
+      expect(propsOf(result.current, june3)).toMatchObject({ 'aria-invalid': true, 'data-invalid': 'true' })
+      expect(propsOf(result.current, new Date(2020, 5, 4))['aria-invalid']).toBeUndefined()
+      expect(result.current.getGridProps()['data-invalid']).toBe('true')
+    })
+
+    it('is invalid when the selected day cannot be picked', () => {
+      const unavailable = renderHook(() =>
+        useCalendar({
+          adapter,
+          mode: 'single' as const,
+          defaultMonth: june2020,
+          selected: june3,
+          unavailable: [june3],
+        }),
+      )
+      const disabled = renderHook(() =>
+        useCalendar({ adapter, mode: 'single' as const, defaultMonth: june2020, selected: june3, disabled: [june3] }),
+      )
+
+      expect(unavailable.result.current.state.isInvalid).toBe(true)
+      expect(disabled.result.current.state.isInvalid).toBe(true)
+    })
+
+    it('is invalid when a selected range spans an unavailable day', () => {
+      const selected = { from: june2020, to: new Date(2020, 5, 10) }
+      const { result } = renderHook(() =>
+        useCalendar({ adapter, mode: 'range' as const, defaultMonth: june2020, selected, unavailable: [june3] }),
+      )
+
+      expect(result.current.state.isInvalid).toBe(true)
+      expect(propsOf(result.current, new Date(2020, 5, 5))['aria-invalid']).toBe(true)
+    })
+
+    it('is invalid when a selected range ends on a disabled day', () => {
+      const selected = { from: june2020, to: june3 }
+      const { result } = renderHook(() =>
+        useCalendar({ adapter, mode: 'range' as const, defaultMonth: june2020, selected, disabled: [june3] }),
+      )
+
+      expect(result.current.state.isInvalid).toBe(true)
+    })
+
+    it('is invalid when one of several picked days cannot be picked', () => {
+      const selected = [new Date(2020, 5, 2), june3]
+      const { result } = renderHook(() =>
+        useCalendar({ adapter, mode: 'multi' as const, defaultMonth: june2020, selected, disabled: [june3] }),
+      )
+
+      expect(result.current.state.isInvalid).toBe(true)
+    })
+
+    it('is valid otherwise', () => {
+      const { result } = renderHook(() =>
+        useCalendar({ adapter, mode: 'single' as const, defaultMonth: june2020, selected: june3 }),
+      )
+
+      expect(result.current.state.isInvalid).toBe(false)
+      expect(propsOf(result.current, june3)['aria-invalid']).toBeUndefined()
     })
   })
 })

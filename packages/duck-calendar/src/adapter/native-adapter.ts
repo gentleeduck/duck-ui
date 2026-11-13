@@ -1,5 +1,5 @@
 import type { Adapter } from './adapter.types'
-import { nativeToday } from './adapter.utils'
+import { localDate, nativeToday, startOfDay, withTime } from './adapter.utils'
 import { getCachedFormatter } from './formatter-cache'
 
 /** Native `Date` + `Intl.DateTimeFormat`. Zero external dependencies. */
@@ -9,7 +9,7 @@ export class NativeAdapter implements Adapter.IDateAdapter<Date> {
   }
 
   create(year: number, month: number, day: number): Date {
-    return new Date(year, month, day)
+    return localDate(year, month, day)
   }
 
   isValid(date: Date): boolean {
@@ -33,17 +33,17 @@ export class NativeAdapter implements Adapter.IDateAdapter<Date> {
   }
 
   startOfMonth(date: Date): Date {
-    return new Date(date.getFullYear(), date.getMonth(), 1)
+    return localDate(date.getFullYear(), date.getMonth(), 1)
   }
 
   endOfMonth(date: Date): Date {
-    // day 0 of next month = last day of current month
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0)
+    // Day 0 of the next month is the last day of this one.
+    return localDate(date.getFullYear(), date.getMonth() + 1, 0)
   }
 
   /** Walks backward to the given weekStartDay (0=Sunday). */
   startOfWeek(date: Date, weekStartDay: Adapter.WeekStartDay): Date {
-    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    const d = startOfDay(date)
     const diff = (d.getDay() - weekStartDay + 7) % 7
     d.setDate(d.getDate() - diff)
     return d
@@ -61,7 +61,7 @@ export class NativeAdapter implements Adapter.IDateAdapter<Date> {
     const originalDay = d.getDate()
     d.setDate(1)
     d.setMonth(d.getMonth() + count)
-    const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
+    const lastDay = localDate(d.getFullYear(), d.getMonth() + 1, 0).getDate()
     d.setDate(Math.min(originalDay, lastDay))
     return d
   }
@@ -72,7 +72,7 @@ export class NativeAdapter implements Adapter.IDateAdapter<Date> {
     const originalDay = d.getDate()
     d.setDate(1)
     d.setFullYear(d.getFullYear() + count)
-    const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
+    const lastDay = localDate(d.getFullYear(), d.getMonth() + 1, 0).getDate()
     d.setDate(Math.min(originalDay, lastDay))
     return d
   }
@@ -98,7 +98,7 @@ export class NativeAdapter implements Adapter.IDateAdapter<Date> {
   }
 
   fromDate(date: Date): Date {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    return startOfDay(date)
   }
 
   format(date: Date, options: Intl.DateTimeFormatOptions, locale?: string): string {
@@ -118,6 +118,6 @@ export class NativeAdapter implements Adapter.IDateAdapter<Date> {
   }
 
   setTime(date: Date, hour: number, minute: number, second?: number): Date {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, minute, second ?? 0)
+    return withTime(date, hour, minute, second)
   }
 }

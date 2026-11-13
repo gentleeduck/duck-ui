@@ -128,4 +128,53 @@ describe('jalaali conversion', () => {
       expect(g.gd).toBeLessThanOrEqual(22)
     })
   })
+
+  describe('refusals and the supported years', () => {
+    it('refuses a Gregorian date that does not exist', () => {
+      expect(() => toJalaali(2025, 2, 29)).toThrow('Invalid Gregorian date: 2025-2-29')
+      expect(() => toJalaali(2025, 13, 1)).toThrow(RangeError)
+    })
+
+    it('refuses a Jalaali month or day that does not exist', () => {
+      expect(() => toGregorian(1404, 12, 30)).toThrow('Invalid Jalaali date: 1404-12-30')
+      expect(() => toGregorian(1404, 0, 1)).toThrow(RangeError)
+      expect(() => toGregorian(1404, 7, 31)).toThrow(RangeError)
+      expect(jalaaliMonthLength(1404, 0)).toBe(0)
+      expect(jalaaliMonthLength(1404, 13)).toBe(0)
+    })
+
+    it('ends every supported year the day before the next one starts, and reads both days back', () => {
+      const wrong: number[] = []
+      for (let jy = -61; jy < 3177; jy++) {
+        const length = jalaaliMonthLength(jy, 12)
+        const last = toGregorian(jy, 12, length)
+        const next = toGregorian(jy + 1, 1, 1)
+        const after = new Date(0)
+        after.setUTCFullYear(last.gy, last.gm - 1, last.gd + 1)
+        const start = new Date(0)
+        start.setUTCFullYear(next.gy, next.gm - 1, next.gd)
+        const readBack = [toJalaali(last.gy, last.gm, last.gd), toJalaali(next.gy, next.gm, next.gd)]
+        if (
+          after.getTime() !== start.getTime() ||
+          JSON.stringify(readBack) !==
+            JSON.stringify([
+              { jy, jm: 12, jd: length },
+              { jy: jy + 1, jm: 1, jd: 1 },
+            ])
+        ) {
+          wrong.push(jy)
+        }
+      }
+
+      expect(wrong).toEqual([])
+    })
+
+    it('refuses a year outside -61 to 3177 with a RangeError, as it refuses a date', () => {
+      expect(() => isLeapJalaaliYear(3178)).toThrow(new RangeError('Invalid Jalaali year 3178'))
+      expect(() => isLeapJalaaliYear(-62)).toThrow(RangeError)
+      expect(() => toJalaali(3800, 6, 1)).toThrow(RangeError)
+      expect(isLeapJalaaliYear(-61)).toBe(true)
+      expect(toGregorian(3177, 1, 1)).toEqual({ gy: 3798, gm: 3, gd: 20 })
+    })
+  })
 })

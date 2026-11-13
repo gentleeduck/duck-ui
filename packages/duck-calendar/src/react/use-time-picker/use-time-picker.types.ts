@@ -10,8 +10,11 @@ export namespace UseTimePicker {
     'aria-valuemax': number
     'aria-valuenow': number
     'aria-valuetext': string
-    tabIndex: 0 | -1
+    tabIndex: 0
     'data-slot': string
+    /** The picker this field belongs to, which moving focus between fields looks up. */
+    'data-time-picker': string
+    'data-time-field': Time.TimeField
     'data-focused': 'true' | undefined
     onKeyDown: React.KeyboardEventHandler
     onFocus: () => void

@@ -16,6 +16,7 @@ export {
   buildCalendarYear,
   buildDecadeView,
   buildMultiMonth,
+  getLocaleWeekInfo,
   getLocalizedMonthNames,
   getLocalizedWeekdays,
   getWeekNumber,
@@ -34,7 +35,7 @@ export { useAnnouncer, useCalendar, useDateTime, useKeyboard, useTimePicker } fr
 
 // Selection
 export type { Selection } from './selection'
-export { applySelection, isDateDisabled, isInRange, selectDay } from './selection'
+export { applySelection, isDateDisabled, isDateUnavailable, isInRange, selectDay } from './selection'
 
 // Time
 export type { Time } from './time'

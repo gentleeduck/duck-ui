@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import type { Adapter } from './adapter.types'
+import type { Adapter } from '../adapter.types'
 
 /**
  * Shared parameterized test suite for any DateAdapter implementation.

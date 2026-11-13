@@ -1,16 +1,25 @@
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { Adapter } from './adapter.types'
+import { localDate } from './adapter.utils'
 import { getCachedFormatter } from './formatter-cache'
 
-/** Backed by `dayjs`. See {@link Adapter.IDateAdapter} for the contract. */
+function daysInMonth(year: number, month: number): number {
+  return localDate(year, month + 1, 0).getDate()
+}
+
+/**
+ * Backed by `dayjs`. See {@link Adapter.IDateAdapter} for the contract.
+ * dayjs builds month boundaries with `new Date(year, ...)`, which reads a year from 0 to 99 as 1900 to 1999,
+ * so the month arithmetic here is its own.
+ */
 export class DayjsAdapter implements Adapter.IDateAdapter<Dayjs> {
   today(): Dayjs {
     return dayjs().startOf('day')
   }
 
   create(year: number, month: number, day: number): Dayjs {
-    return dayjs(new Date(year, month, day)).startOf('day')
+    return dayjs(localDate(year, month, day)).startOf('day')
   }
 
   isValid(date: Dayjs): boolean {
@@ -34,12 +43,11 @@ export class DayjsAdapter implements Adapter.IDateAdapter<Dayjs> {
   }
 
   startOfMonth(date: Dayjs): Dayjs {
-    return date.startOf('month')
+    return date.date(1).startOf('day')
   }
 
-  /** Strips time so the boundary stays comparable with other adapters' midnight dates. */
   endOfMonth(date: Dayjs): Dayjs {
-    return date.endOf('month').startOf('day')
+    return date.date(daysInMonth(date.year(), date.month())).startOf('day')
   }
 
   startOfWeek(date: Dayjs, weekStartDay: Adapter.WeekStartDay): Dayjs {
@@ -52,11 +60,16 @@ export class DayjsAdapter implements Adapter.IDateAdapter<Dayjs> {
   }
 
   addMonths(date: Dayjs, count: number): Dayjs {
-    return date.add(count, 'month')
+    const months = date.month() + count
+    const year = date.year() + Math.floor(months / 12)
+    const month = ((months % 12) + 12) % 12
+    const moved = date.toDate()
+    moved.setFullYear(year, month, Math.min(date.date(), daysInMonth(year, month)))
+    return dayjs(moved)
   }
 
   addYears(date: Dayjs, count: number): Dayjs {
-    return date.add(count, 'year')
+    return this.addMonths(date, count * 12)
   }
 
   getYear(date: Dayjs): number {

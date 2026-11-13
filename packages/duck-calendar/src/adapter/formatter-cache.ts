@@ -63,8 +63,8 @@ export function getCachedFormatter(
   f = new Intl.DateTimeFormat(locale, options)
   if (FORMATTER_CACHE.size >= MAX_SIZE) {
     // Evict the least-recently-used entry (first key in insertion order)
-    const firstKey = FORMATTER_CACHE.keys().next().value
-    if (firstKey !== undefined) FORMATTER_CACHE.delete(firstKey)
+    const [oldest] = FORMATTER_CACHE.keys()
+    FORMATTER_CACHE.delete(oldest)
   }
   FORMATTER_CACHE.set(key, f)
   return f

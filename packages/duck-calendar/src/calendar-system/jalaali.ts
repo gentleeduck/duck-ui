@@ -9,38 +9,50 @@
  *   - Months 7-11 have 30 days
  *   - Month 12 has 29 days (30 in a leap year)
  *
- * Leap years follow a 2820-year cycle.
+ * Leap years follow 33-year cycles, broken at the years in `BREAKS`.
  */
 
 import { gregorianMonthLength } from './gregorian'
 
-/*
- * Jalaali years forming a 2820-year cycle start here.
- * The breaks array encodes the positions of leap years within each sub-cycle.
- */
+const FIRST_YEAR = -61
+const PAST_LAST_YEAR = 3178
 const BREAKS = [
-  -61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210, 1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178,
+  9,
+  38,
+  199,
+  426,
+  686,
+  756,
+  818,
+  1111,
+  1181,
+  1210,
+  1635,
+  2060,
+  2097,
+  2192,
+  2262,
+  2324,
+  2394,
+  2456,
+  PAST_LAST_YEAR,
 ]
 
 /**
  * Calculate Jalaali calendar constants for a given Jalaali year.
  *
  * @param jy - Jalaali year (-61 to 3177)
- * @returns An object with `leap` (-1, 0, 1, 2, 3  -  where 0 means leap),
+ * @returns An object with `leap` (0 to 3, where 0 means leap),
  *   `gy` (Gregorian year of the Nowruz), and `march` (March day of Nowruz).
  */
 function jalCal(jy: number): { leap: number; gy: number; march: number } {
-  const bl = BREAKS.length
+  if (jy < FIRST_YEAR || jy >= PAST_LAST_YEAR) throw new RangeError(`Invalid Jalaali year ${jy}`)
   const gy = jy + 621
   let leapJ = -14
-  let jp = BREAKS[0] ?? 0
-
-  if (jy < jp || jy >= (BREAKS[bl - 1] ?? 0)) throw new Error(`Invalid Jalaali year ${jy}`)
+  let jp = FIRST_YEAR
 
   let jump = 0
-  let leap = 0
-  for (let i = 1; i < bl; i += 1) {
-    const jm = BREAKS[i] ?? 0
+  for (const jm of BREAKS) {
     jump = jm - jp
     if (jy < jm) break
     leapJ = leapJ + div(jump, 33) * 8 + div(mod(jump, 33), 4)
@@ -57,8 +69,7 @@ function jalCal(jy: number): { leap: number; gy: number; march: number } {
 
   // Find how many single years have passed since the last leap.
   if (jump - n < 6) n = n - jump + div(jump + 4, 33) * 33
-  leap = mod(mod(n + 1, 33) - 1, 4)
-  if (leap === -1) leap = 4
+  const leap = mod(mod(n + 1, 33) - 1, 4)
 
   return { leap, gy, march }
 }

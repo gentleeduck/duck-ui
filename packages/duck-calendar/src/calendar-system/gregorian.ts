@@ -18,9 +18,9 @@ export function isGregorianLeap(y: number): boolean {
  *
  * @param gy - Gregorian year
  * @param gm - 1-indexed Gregorian month (1 = January, 12 = December)
- * @returns Days in the month (28-31), or 31 as a defensive fallback for out-of-range `gm`.
+ * @returns Days in the month (28-31)
  */
 export function gregorianMonthLength(gy: number, gm: number): number {
-  const lengths = [31, isGregorianLeap(gy) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-  return lengths[gm - 1] ?? 31
+  if (gm === 2) return isGregorianLeap(gy) ? 29 : 28
+  return gm === 4 || gm === 6 || gm === 9 || gm === 11 ? 30 : 31
 }

@@ -5,6 +5,25 @@ function dateToOrdinal(d: Date): number {
   return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()
 }
 
+// `new Date` reads a year from 0 to 99 as 1900 to 1999.
+export function localDate(year: number, month: number, day: number): Date {
+  const date = new Date(year, month, day)
+  if (year >= 0 && year < 100) date.setFullYear(year, month, day)
+  return date
+}
+
+export function startOfDay(date: Date): Date {
+  const day = new Date(date.getTime())
+  day.setHours(0, 0, 0, 0)
+  return day
+}
+
+export function withTime(date: Date, hour: number, minute: number, second = 0): Date {
+  const day = new Date(date.getTime())
+  day.setHours(hour, minute, second, 0)
+  return day
+}
+
 /**
  * Shared `today()` helper for adapters whose date type is the native `Date`.
  * Returns midnight local time (year/month/day with no time component) so that

@@ -486,24 +486,24 @@ describe('time', () => {
       expect(result.second).toBe(59)
     })
 
-    it('minute with step wraps: 50 + step(15) wraps to 5', () => {
+    it('minute with step wraps: 50 + step(15) goes to the next step, 0', () => {
       const result = incrementField({ hour: 10, minute: 50 }, 'minute', 1, { minuteStep: 15 })
-      expect(result.minute).toBe(5)
+      expect(result.minute).toBe(0)
     })
 
-    it('minute with step wraps backward: 5 - step(15) wraps to 50', () => {
-      const result = incrementField({ hour: 10, minute: 5 }, 'minute', -1, { minuteStep: 15 })
-      expect(result.minute).toBe(50)
+    it('minute with step wraps backward: 0 - step(15) wraps to 45', () => {
+      const result = incrementField({ hour: 10, minute: 0 }, 'minute', -1, { minuteStep: 15 })
+      expect(result.minute).toBe(45)
     })
 
-    it('second with step wraps: 50 + step(15) wraps to 5', () => {
+    it('second with step wraps: 50 + step(15) goes to the next step, 0', () => {
       const result = incrementField({ hour: 10, minute: 0, second: 50 }, 'second', 1, { secondStep: 15 })
-      expect(result.second).toBe(5)
+      expect(result.second).toBe(0)
     })
 
-    it('second with step wraps backward: 5 - step(15) wraps to 50', () => {
-      const result = incrementField({ hour: 10, minute: 0, second: 5 }, 'second', -1, { secondStep: 15 })
-      expect(result.second).toBe(50)
+    it('second with step wraps backward: 0 - step(15) wraps to 45', () => {
+      const result = incrementField({ hour: 10, minute: 0, second: 0 }, 'second', -1, { secondStep: 15 })
+      expect(result.second).toBe(45)
     })
 
     it('multiple increments: hour wraps correctly with delta > 1', () => {
@@ -575,22 +575,22 @@ describe('time', () => {
       expect(result.minute).toBe(0)
     })
 
-    it('minute increment past max clamps to max minute', () => {
+    it('minute wrapping past the hour lands inside maxTime', () => {
       const result = incrementField({ hour: 17, minute: 55 }, 'minute', 1, {
         minuteStep: 10,
         maxTime: { hour: 17, minute: 59 },
       })
-      // 55 + 10 = 65 % 60 = 5, but 17:05 is within range; wrapping happens first, then clamp
-      expect(result.minute).toBe(5)
+      // 55 goes to the next step, 60, which wraps to 0; 17:00 is within range
+      expect(result.minute).toBe(0)
     })
 
-    it('second increment past max clamps to max second', () => {
+    it('second wrapping past the minute lands inside maxTime', () => {
       const result = incrementField({ hour: 17, minute: 0, second: 50 }, 'second', 1, {
         secondStep: 15,
         maxTime: { hour: 17, minute: 0, second: 59 },
       })
-      // 50 + 15 = 65 % 60 = 5, 17:00:05 is within range
-      expect(result.second).toBe(5)
+      // 50 goes to the next step, 60, which wraps to 0; 17:00:00 is within range
+      expect(result.second).toBe(0)
     })
   })
 
@@ -666,8 +666,15 @@ describe('time', () => {
       expect(parseTimeInput('   ', 'hour', '24')).toBeNull()
     })
 
-    it('decimal "10.5" parses as 10 (parseInt behavior)', () => {
-      expect(parseTimeInput('10.5', 'hour', '24')).toBe(10)
+    it('refuses anything but digits', () => {
+      expect(['10.5', '1a', ' 5', '+5', '1e1', '5.'].map((input) => parseTimeInput(input, 'hour', '24'))).toEqual([
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ])
     })
 
     it('leading zeros "07" returns 7 for hour (24h)', () => {
@@ -752,6 +759,42 @@ describe('time', () => {
 
     it('large positive hour is invalid', () => {
       expect(isValidTime({ hour: 100, minute: 0 })).toBe(false)
+    })
+  })
+
+  describe('values a picker cannot hold', () => {
+    it('refuses a fraction or NaN in any field', () => {
+      const times = [
+        { hour: Number.NaN, minute: 0 },
+        { hour: 9.5, minute: 0 },
+        { hour: 9, minute: Number.NaN },
+        { hour: 9, minute: 0, second: 1.5 },
+      ]
+
+      expect(times.map(isValidTime)).toEqual([false, false, false, false])
+    })
+
+    it('keeps the seconds of a time with seconds clamped to a bound without them', () => {
+      expect(clampTime({ hour: 8, minute: 0, second: 30 }, { hour: 9, minute: 0 })).toEqual({
+        hour: 9,
+        minute: 0,
+        second: 0,
+      })
+    })
+
+    it('steps an off-step value to the next or previous step, as a time input does', () => {
+      const from = { hour: 10, minute: 7, second: 7 }
+
+      expect([
+        incrementField(from, 'minute', 1, { minuteStep: 5 }).minute,
+        incrementField(from, 'minute', -1, { minuteStep: 5 }).minute,
+        incrementField(from, 'second', 1, { secondStep: 15 }).second,
+        incrementField(from, 'second', -1, { secondStep: 15 }).second,
+      ]).toEqual([10, 5, 15, 0])
+    })
+
+    it('steps the seconds of a time that has none from 0', () => {
+      expect(incrementField({ hour: 10, minute: 0 }, 'second', 1)).toEqual({ hour: 10, minute: 0, second: 1 })
     })
   })
 })

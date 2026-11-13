@@ -1,10 +1,31 @@
-import { hebrewMonthLength, hebrewMonthsInYear, hebrewToGregorian, toHebrew } from '../calendar-system/hebrew'
+import {
+  hebrewMonthLength,
+  hebrewMonthsInYear,
+  hebrewToGregorian,
+  isLeapHebrewYear,
+  toHebrew,
+} from '../calendar-system/hebrew'
 import type { Adapter } from './adapter.types'
-import { createConversionCache, formatWithCalendar, nativeToday } from './adapter.utils'
+import {
+  createConversionCache,
+  formatWithCalendar,
+  localDate,
+  nativeToday,
+  startOfDay,
+  withTime,
+} from './adapter.utils'
 
 const hebrewCache = createConversionCache((date: Date) =>
   toHebrew(date.getFullYear(), date.getMonth() + 1, date.getDate()),
 )
+
+// The month a place in one year names, at its place in another. A leap year's Adar I and Adar II are both Adar
+// in a common year, a common year's Adar is Adar II in a leap year, and the months after Adar move one place.
+function sameMonthPlace(hy: number, hm: number, year: number): number {
+  const leap = isLeapHebrewYear(hy)
+  if (hm <= 5 || leap === isLeapHebrewYear(year)) return hm
+  return leap ? Math.max(6, hm - 1) : hm + 1
+}
 
 /**
  * Hebrew calendar-aware adapter backed by native `Date`.
@@ -26,7 +47,7 @@ export class HebrewAdapter implements Adapter.IDateAdapter<Date> {
   /** Build a native Date from Hebrew parts (month is 1-indexed internally). */
   private fromHebrew(hy: number, hm: number, hd: number): Date {
     const { gy, gm, gd } = hebrewToGregorian(hy, hm, hd)
-    return new Date(gy, gm - 1, gd)
+    return localDate(gy, gm - 1, gd)
   }
 
   today(): Date {
@@ -77,14 +98,14 @@ export class HebrewAdapter implements Adapter.IDateAdapter<Date> {
   }
 
   startOfWeek(date: Date, weekStartDay: Adapter.WeekStartDay): Date {
-    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    const d = startOfDay(date)
     const diff = (d.getDay() - weekStartDay + 7) % 7
     d.setDate(d.getDate() - diff)
     return d
   }
 
   addDays(date: Date, count: number): Date {
-    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    const d = startOfDay(date)
     d.setDate(d.getDate() + count)
     return d
   }
@@ -124,9 +145,7 @@ export class HebrewAdapter implements Adapter.IDateAdapter<Date> {
   addYears(date: Date, count: number): Date {
     const { hy, hm, hd } = this.hebrew(date)
     const newYear = hy + count
-    // Clamp month if moving from leap to non-leap year
-    const newMonths = hebrewMonthsInYear(newYear)
-    const newMonth = Math.min(hm, newMonths)
+    const newMonth = sameMonthPlace(hy, hm, newYear)
     const maxDay = hebrewMonthLength(newYear, newMonth)
     return this.fromHebrew(newYear, newMonth, Math.min(hd, maxDay))
   }
@@ -156,7 +175,7 @@ export class HebrewAdapter implements Adapter.IDateAdapter<Date> {
   }
 
   fromDate(date: Date): Date {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    return startOfDay(date)
   }
 
   format(date: Date, options: Intl.DateTimeFormatOptions, locale?: string): string {
@@ -176,6 +195,6 @@ export class HebrewAdapter implements Adapter.IDateAdapter<Date> {
   }
 
   setTime(date: Date, hour: number, minute: number, second?: number): Date {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, minute, second ?? 0)
+    return withTime(date, hour, minute, second)
   }
 }

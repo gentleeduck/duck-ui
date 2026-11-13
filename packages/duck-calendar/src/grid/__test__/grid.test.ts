@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { NativeAdapter } from '../../adapter'
 import { buildCalendarMonth, buildCalendarYear, buildDecadeView, buildMultiMonth } from '../grid'
-import { getLocalizedMonthNames, getLocalizedWeekdays, getWeekNumber } from '../grid.libs'
+import { getLocaleWeekInfo, getLocalizedMonthNames, getLocalizedWeekdays, getWeekNumber } from '../grid.libs'
 
 describe('grid', () => {
   let adapter: NativeAdapter
@@ -326,6 +326,13 @@ describe('grid', () => {
       }
     })
 
+    it('counts the weeks of a leap year before Jan 1 by its 366 days', () => {
+      // Both fall on a Saturday; only 2004 has the day that makes a week 53
+      expect([getWeekNumber(adapter, new Date(2005, 0, 1)), getWeekNumber(adapter, new Date(2022, 0, 1))]).toEqual([
+        53, 52,
+      ])
+    })
+
     it('Jan 1 on a Sunday belongs to week 52 of prior year (ISO rule)', () => {
       // 2023-01-01 is a Sunday. ISO week: the Thursday of that week is Dec 29 2022 -> week 52
       expect(getWeekNumber(adapter, new Date(2023, 0, 1))).toBe(52)
@@ -625,6 +632,73 @@ describe('grid', () => {
       for (let i = 1; i < weeks.length; i++) {
         expect(weeks[i]!).toBeGreaterThanOrEqual(weeks[i - 1]!)
       }
+    })
+  })
+
+  describe('the week follows the locale', () => {
+    const june2020 = new Date(2020, 5, 1)
+    const firstDay = (locale?: string) =>
+      buildCalendarMonth(adapter, june2020, { locale: { locale } }).weeks[0]!.days[0]!.date.getDay()
+    const weekend = (locale?: string) =>
+      new Set(
+        buildCalendarMonth(adapter, june2020, { locale: { locale } })
+          .weeks.flatMap((week) => week.days)
+          .filter((day) => day.isWeekend)
+          .map((day) => day.date.getDay()),
+      )
+
+    it('starts on the first day of the locale when no weekStartDay is given', () => {
+      expect([firstDay('en-US'), firstDay('de-DE'), firstDay('fa-IR')]).toEqual([0, 1, 6])
+    })
+
+    it('starts on Sunday with no locale', () => {
+      expect(firstDay()).toBe(0)
+    })
+
+    it('keeps a weekStartDay it is given over the locale', () => {
+      const month = buildCalendarMonth(adapter, june2020, { locale: { locale: 'de-DE', weekStartDay: 0 } })
+
+      expect(month.weeks[0]!.days[0]!.date.getDay()).toBe(0)
+    })
+
+    it('marks the weekend of the locale', () => {
+      expect(weekend('fa-IR')).toEqual(new Set([5]))
+    })
+
+    it('marks Saturday and Sunday with no locale', () => {
+      expect(weekend()).toEqual(new Set([0, 6]))
+    })
+
+    it('numbers Sunday 0, as the adapter does, where Intl numbers it 7', () => {
+      expect(getLocaleWeekInfo('en-US')).toEqual({ firstDay: 0, weekend: [6, 0] })
+    })
+
+    it('reads the week from a runtime that has only the older weekInfo getter', () => {
+      const own = Object.getOwnPropertyDescriptor(Intl.Locale.prototype, 'getWeekInfo')
+      Object.defineProperty(Intl.Locale.prototype, 'getWeekInfo', { value: undefined, configurable: true })
+      try {
+        expect(getLocaleWeekInfo('en-AU')).toEqual({ firstDay: 1, weekend: [6, 0] })
+      } finally {
+        if (own) Object.defineProperty(Intl.Locale.prototype, 'getWeekInfo', own)
+      }
+    })
+
+    it('keeps the default week for a tag Intl refuses', () => {
+      expect(getLocaleWeekInfo('not a locale')).toEqual({ firstDay: 0, weekend: [0, 6] })
+    })
+  })
+
+  describe('week numbers', () => {
+    it('numbers a week that starts on Sunday by the ISO week of its Thursday', () => {
+      const month = buildCalendarMonth(adapter, new Date(2020, 5, 1), { locale: { weekStartDay: 0 } })
+
+      expect(month.weeks.map((week) => week.weekNumber)).toEqual([23, 24, 25, 26, 27])
+    })
+
+    it('numbers a week that starts on Saturday by the ISO week of its Thursday', () => {
+      const month = buildCalendarMonth(adapter, new Date(2020, 5, 1), { locale: { weekStartDay: 6 } })
+
+      expect(month.weeks.map((week) => week.weekNumber)).toEqual([23, 24, 25, 26, 27])
     })
   })
 })

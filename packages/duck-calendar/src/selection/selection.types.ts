@@ -51,5 +51,7 @@ export namespace Selection {
     fromDate?: TDate | undefined
     /** Maximum selectable date (inclusive). Days after this are disabled. */
     toDate?: TDate | undefined
+    /** Dates that stay focusable but cannot be picked. */
+    unavailable?: TDate[] | ((date: TDate) => boolean) | undefined
   }
 }

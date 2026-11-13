@@ -1,6 +1,6 @@
 export {
-  HEBREW_MONTHS,
   hebrewMonthLength,
+  hebrewMonthName,
   hebrewMonthsInYear,
   hebrewToGregorian,
   hebrewYearLength,

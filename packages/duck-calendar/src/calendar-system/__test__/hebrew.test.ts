@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   hebrewMonthLength,
+  hebrewMonthName,
   hebrewMonthsInYear,
   hebrewToGregorian,
   hebrewYearLength,
@@ -61,6 +62,17 @@ describe('hebrew conversion', () => {
       expect(hebrewMonthLength(5786, 0)).toBe(0)
       expect(hebrewMonthLength(5786, 13)).toBe(0)
       expect(hebrewMonthLength(5784, 14)).toBe(0)
+    })
+  })
+
+  describe('hebrewMonthName', () => {
+    it('names a month by its place in a common year or a leap year', () => {
+      expect([5, 6, 7].map((hm) => hebrewMonthName(5786, hm))).toEqual(['Shevat', 'Adar', 'Nisan'])
+      expect([6, 7, 8, 13].map((hm) => hebrewMonthName(5784, hm))).toEqual(['Adar I', 'Adar II', 'Nisan', 'Elul'])
+    })
+
+    it('names no month the year lacks', () => {
+      expect([0, 13].map((hm) => hebrewMonthName(5786, hm))).toEqual([undefined, undefined])
     })
   })
 
@@ -133,6 +145,35 @@ describe('hebrew conversion', () => {
         if (h.hd !== intlDay) failures++
       }
       expect(failures).toBe(0)
+    })
+  })
+
+  describe('refusals and the years around the epoch', () => {
+    it('refuses a Gregorian date that does not exist', () => {
+      expect(() => toHebrew(2025, 2, 29)).toThrow('Invalid Gregorian date: 2025-2-29')
+      expect(() => toHebrew(2025, 0, 1)).toThrow(RangeError)
+    })
+
+    it('refuses a Hebrew month the year lacks, or a day past its month', () => {
+      expect(() => hebrewToGregorian(5786, 13, 1)).toThrow('Invalid Hebrew date: 5786-13-1')
+      expect(() => hebrewToGregorian(5786, 0, 1)).toThrow(RangeError)
+      expect(() => hebrewToGregorian(5786, 4, 30)).toThrow(RangeError)
+      expect(() => hebrewToGregorian(5786, 1, 0)).toThrow(RangeError)
+    })
+
+    it('adds up the months of every year to its length, from 100 years before the epoch to year 10000', () => {
+      const wrong: number[] = []
+      for (let hy = -100; hy <= 10_000; hy++) {
+        let days = 0
+        for (let hm = 1; hm <= hebrewMonthsInYear(hy); hm++) days += hebrewMonthLength(hy, hm)
+        if (days !== hebrewYearLength(hy)) wrong.push(hy)
+      }
+
+      expect(wrong).toEqual([])
+    })
+
+    it('keeps the 19-year leap pattern before the first year', () => {
+      expect([-2, -1, 0, 1, 3].map(isLeapHebrewYear)).toEqual([true, false, true, false, true])
     })
   })
 })

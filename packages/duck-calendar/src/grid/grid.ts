@@ -1,6 +1,6 @@
 import type { Adapter } from '../adapter'
 import type { Calendar } from '../index.types'
-import { getLocalizedMonthNames, getWeekNumber } from './grid.libs'
+import { getLocaleWeekInfo, getLocalizedMonthNames, getWeekNumber } from './grid.libs'
 import type { Grid } from './grid.types'
 
 /**
@@ -12,7 +12,8 @@ export function buildCalendarMonth<TDate>(
   viewDate: TDate,
   config: Pick<Calendar.ICalendarConfig<TDate, 'single'>, 'showOutsideDays' | 'fixedWeeks' | 'locale'>,
 ): Grid.ICalendarMonth<TDate> {
-  const weekStartDay = config.locale?.weekStartDay ?? 0
+  const week = getLocaleWeekInfo(config.locale?.locale)
+  const weekStartDay = config.locale?.weekStartDay ?? week.firstDay
   const showOutsideDays = config.showOutsideDays ?? true
   const today = adapter.today()
 
@@ -45,12 +46,13 @@ export function buildCalendarMonth<TDate>(
         isToday: !isOutside && adapter.isSameDay(cursor, today),
         isOutside,
         isHidden: isOutside && !showOutsideDays,
-        isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
+        isWeekend: week.weekend.includes(dayOfWeek),
         // `isDisabled` only encodes the "hidden outside day" case here; constraints
         // (`disabled`/`fromDate`/`toDate`) are layered in by `applySelection`. Pipe
         // the grid through `applySelection` to get the final per-cell flags.
         isSelected: false,
         isDisabled: isOutside && !showOutsideDays,
+        isUnavailable: false,
         isRangeStart: false,
         isRangeEnd: false,
         isRangeMiddle: false,
@@ -60,8 +62,9 @@ export function buildCalendarMonth<TDate>(
     }
 
     weeks.push({
+      // ISO numbers a week by its Thursday, which a row starting on Sunday or Saturday holds too.
       // biome-ignore lint/style/noNonNullAssertion: days always has exactly 7 elements from the inner loop
-      weekNumber: getWeekNumber(adapter, days[0]!.date),
+      weekNumber: getWeekNumber(adapter, days[(11 - weekStartDay) % 7]!.date),
       days,
     })
   }

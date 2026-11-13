@@ -260,6 +260,47 @@ describe('useDateTime', () => {
     })
   })
 
+  describe('a time picked before a date', () => {
+    it('shows in the time picker, and goes onto the date picked next', () => {
+      const onChange = vi.fn()
+      const { result } = renderHook(() => useDateTime({ adapter, defaultMonth: new Date(2026, 2, 1), onChange }))
+
+      act(() => result.current.timePicker.actions.setValue({ hour: 9, minute: 30 }))
+      const shown = result.current.timePicker.state.value
+      const changes = onChange.mock.calls.length
+      act(() => result.current.calendar.actions.selectDate(new Date(2026, 2, 22)))
+
+      expect([shown, changes, result.current.state.value]).toEqual([
+        { hour: 9, minute: 30, second: 0 },
+        0,
+        new Date(2026, 2, 22, 9, 30, 0),
+      ])
+    })
+  })
+
+  describe('a controlled value', () => {
+    it('reports a change and keeps showing the value it is given', () => {
+      const onChange = vi.fn()
+      const { result } = renderHook(() => useDateTime({ adapter, value: march15At1430, onChange }))
+
+      act(() => result.current.timePicker.actions.setValue({ hour: 18, minute: 5, second: 0 }))
+
+      expect([onChange.mock.calls, result.current.state.value]).toEqual([
+        [[new Date(2026, 2, 15, 18, 5, 0)]],
+        march15At1430,
+      ])
+    })
+
+    it('keeps a time without seconds at 0 seconds', () => {
+      const onChange = vi.fn()
+      const { result } = renderHook(() => useDateTime({ adapter, value: march15At1430, onChange }))
+
+      act(() => result.current.timePicker.actions.setValue({ hour: 18, minute: 5 }))
+
+      expect(onChange.mock.calls).toEqual([[new Date(2026, 2, 15, 18, 5, 0)]])
+    })
+  })
+
   describe('clearing selection', () => {
     it('deselecting in calendar (toggle) keeps the last known value since onSelect ignores null', () => {
       const { result } = renderHook(() =>

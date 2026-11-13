@@ -780,6 +780,47 @@ describe('selection', () => {
       expect(ranges[0]!.to!.getDate()).toBe(5)
     })
 
+    it('puts the ranges in date order once a range before another is completed', () => {
+      const ranges = selectDay(
+        adapter,
+        'multi-range',
+        [
+          { from: new Date(2026, 2, 20), to: new Date(2026, 2, 22) },
+          { from: new Date(2026, 2, 1), to: null },
+        ],
+        new Date(2026, 2, 3),
+      )
+
+      expect(ranges.map((r) => [r.from.getDate(), r.to?.getDate()])).toEqual([
+        [1, 3],
+        [20, 22],
+      ])
+    })
+
+    it('keeps the further end when a range is completed inside another, or from the same start', () => {
+      const days = (ranges: Selection.DateRange<Date>[]) => ranges.map((r) => [r.from.getDate(), r.to?.getDate()])
+      const inside = selectDay(
+        adapter,
+        'multi-range',
+        [
+          { from: new Date(2026, 2, 1), to: new Date(2026, 2, 20) },
+          { from: new Date(2026, 2, 5), to: null },
+        ],
+        new Date(2026, 2, 10),
+      )
+      const sameStart = selectDay(
+        adapter,
+        'multi-range',
+        [
+          { from: new Date(2026, 2, 5), to: new Date(2026, 2, 15) },
+          { from: new Date(2026, 2, 10), to: null },
+        ],
+        new Date(2026, 2, 5),
+      )
+
+      expect([days(inside), days(sameStart)]).toEqual([[[1, 20]], [[5, 15]]])
+    })
+
     it('shift+click splitting preserves other ranges', () => {
       const ranges: Selection.DateRange<Date>[] = [
         { from: new Date(2026, 2, 1), to: new Date(2026, 2, 5) },

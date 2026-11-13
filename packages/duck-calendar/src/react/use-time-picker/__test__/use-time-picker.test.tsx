@@ -1,5 +1,29 @@
-import { act, renderHook } from '@testing-library/react'
+import { act, fireEvent, render, renderHook, screen } from '@testing-library/react'
+import type { Time } from '../../../time'
 import { useTimePicker } from '../use-time-picker'
+import type { UseTimePicker } from '../use-time-picker.types'
+
+type PickerProps = UseTimePicker.IUseTimePickerConfig & {
+  onPicker?: (picker: UseTimePicker.IUseTimePickerReturn) => void
+}
+
+function Picker({ onPicker, ...config }: PickerProps) {
+  const picker = useTimePicker(config)
+  onPicker?.(picker)
+  const fields: Time.TimeField[] = ['hour', 'minute']
+  if (config.showSeconds) fields.push('second')
+  if (config.hourCycle === '12') fields.push('ampm')
+  return fields.map((field) => <span key={field} {...picker.getFieldProps(field)} />)
+}
+
+const field = (name: string) => screen.getByRole('spinbutton', { name })
+const text = (name: string) => field(name).getAttribute('aria-valuetext')
+const focused = () => document.activeElement?.getAttribute('aria-label')
+
+function press(name: string, ...keys: string[]) {
+  act(() => field(name).focus())
+  for (const key of keys) fireEvent.keyDown(document.activeElement as HTMLElement, { key })
+}
 
 describe('useTimePicker', () => {
   it('default value is { hour: 0, minute: 0 }', () => {
@@ -162,21 +186,6 @@ describe('useTimePicker', () => {
       expect(props['aria-valuenow']).toBe(1) // PM
       expect(props['aria-valuetext']).toBe('PM')
     })
-  })
-
-  it('focusField changes which field has tabIndex=0', () => {
-    const { result } = renderHook(() => useTimePicker())
-
-    // Default focus is on hour
-    expect(result.current.getFieldProps('hour').tabIndex).toBe(0)
-    expect(result.current.getFieldProps('minute').tabIndex).toBe(-1)
-
-    act(() => {
-      result.current.actions.focusField('minute')
-    })
-
-    expect(result.current.getFieldProps('hour').tabIndex).toBe(-1)
-    expect(result.current.getFieldProps('minute').tabIndex).toBe(0)
   })
 
   it('focusField sets data-focused', () => {
@@ -617,6 +626,197 @@ describe('useTimePicker', () => {
     it('state.hourCycle defaults to 24', () => {
       const { result } = renderHook(() => useTimePicker())
       expect(result.current.state.hourCycle).toBe('24')
+    })
+  })
+
+  describe('the keyboard', () => {
+    it('puts every field in the tab order', () => {
+      render(<Picker hourCycle="12" showSeconds />)
+
+      expect(screen.getAllByRole('spinbutton').map((element) => element.tabIndex)).toEqual([0, 0, 0, 0])
+    })
+
+    it('moves between the fields with ArrowLeft and ArrowRight', () => {
+      render(<Picker hourCycle="12" />)
+
+      press('Hour', 'ArrowRight', 'ArrowRight')
+      const last = focused()
+      fireEvent.keyDown(field('AM/PM'), { key: 'ArrowRight' })
+      fireEvent.keyDown(field('AM/PM'), { key: 'ArrowLeft' })
+
+      expect([last, focused()]).toEqual(['AM/PM', 'Minute'])
+    })
+
+    it('moves focus to a field through focusField', () => {
+      let picker: UseTimePicker.IUseTimePickerReturn | undefined
+      render(<Picker onPicker={(p) => (picker = p)} />)
+
+      act(() => picker?.actions.focusField('minute'))
+
+      expect(focused()).toBe('Minute')
+    })
+
+    it('shows a digit as it is typed, and moves on once no further digit fits', () => {
+      render(<Picker />)
+
+      press('Hour', '1')
+      const afterOne = [text('Hour'), focused()]
+      fireEvent.keyDown(field('Hour'), { key: '5' })
+
+      expect([afterOne, [text('Hour'), focused()]]).toEqual([
+        ['01', 'Hour'],
+        ['15', 'Minute'],
+      ])
+    })
+
+    it('moves on at once from a digit no second digit could follow', () => {
+      render(<Picker showSeconds />)
+
+      press('Hour', '3')
+      fireEvent.keyDown(field('Minute'), { key: '7' })
+
+      expect([text('Hour'), text('Minute'), focused()]).toEqual(['03', '07', 'Second'])
+    })
+
+    it('starts the number over when two digits make no time', () => {
+      render(<Picker />)
+
+      press('Hour', '2', '5')
+
+      expect([text('Hour'), focused()]).toEqual(['05', 'Minute'])
+    })
+
+    it('keeps a digit typed just before focus moves on', () => {
+      render(<Picker />)
+
+      press('Hour', '1')
+      press('Minute', '4')
+
+      expect([text('Hour'), text('Minute')]).toEqual(['01', '04'])
+    })
+
+    it('types a 12-hour hour within its half of the day', () => {
+      render(<Picker hourCycle="12" defaultValue={{ hour: 14, minute: 0 }} />)
+
+      press('Hour', '0', '7')
+      const seven = [text('Hour'), text('AM/PM')]
+      press('Hour', '1', '2')
+
+      expect([seven, [text('Hour'), text('AM/PM')]]).toEqual([
+        ['07', 'PM'],
+        ['12', 'PM'],
+      ])
+    })
+
+    it('sets AM or PM with the A and P keys and toggles it with the arrows', () => {
+      render(<Picker hourCycle="12" defaultValue={{ hour: 9, minute: 0 }} />)
+
+      press('AM/PM', 'p')
+      const pm = text('AM/PM')
+      press('AM/PM', 'P', '5', 'ArrowUp')
+      const am = text('AM/PM')
+      press('AM/PM', 'a', 'A', 'ArrowDown')
+      const toggled = text('AM/PM')
+      press('AM/PM', 'a')
+
+      expect([pm, am, toggled, text('AM/PM'), text('Hour')]).toEqual(['PM', 'AM', 'PM', 'AM', '09'])
+    })
+
+    it('leaves Tab and letters to the browser', () => {
+      render(<Picker defaultValue={{ hour: 9, minute: 0 }} />)
+      act(() => field('Hour').focus())
+
+      const passed = [fireEvent.keyDown(field('Hour'), { key: 'Tab' }), fireEvent.keyDown(field('Hour'), { key: 'x' })]
+
+      expect([passed, text('Hour')]).toEqual([[true, true], '09'])
+    })
+
+    it('steps a number field with ArrowUp and ArrowDown', () => {
+      render(<Picker defaultValue={{ hour: 9, minute: 0 }} />)
+
+      press('Hour', 'ArrowUp', 'ArrowUp')
+      press('Minute', 'ArrowDown')
+
+      expect([text('Hour'), text('Minute')]).toEqual(['11', '59'])
+    })
+  })
+
+  describe('the hour range in 12-hour time', () => {
+    it('spans the hours minTime and maxTime leave in the half of the day shown', () => {
+      const range = (value: Time.ITimeValue, minTime?: Time.ITimeValue, maxTime?: Time.ITimeValue) => {
+        const { result } = renderHook(() => useTimePicker({ hourCycle: '12', value, minTime, maxTime }))
+        const props = result.current.getFieldProps('hour')
+        return [props['aria-valuemin'], props['aria-valuemax']]
+      }
+
+      expect([
+        range({ hour: 9, minute: 0 }, { hour: 0, minute: 30 }),
+        range({ hour: 12, minute: 30 }, undefined, { hour: 13, minute: 0 }),
+        range({ hour: 10, minute: 0 }, { hour: 9, minute: 0 }, { hour: 11, minute: 30 }),
+        range({ hour: 15, minute: 0 }, { hour: 14, minute: 0 }, { hour: 18, minute: 0 }),
+        range({ hour: 9, minute: 0 }, { hour: 14, minute: 0 }),
+      ]).toEqual([
+        [1, 12],
+        [1, 12],
+        [9, 11],
+        [2, 6],
+        [1, 12],
+      ])
+    })
+
+    it('spans every hour in 24-hour time when minTime is after maxTime', () => {
+      const { result } = renderHook(() =>
+        useTimePicker({
+          value: { hour: 9, minute: 0 },
+          minTime: { hour: 18, minute: 0 },
+          maxTime: { hour: 9, minute: 0 },
+        }),
+      )
+      const props = result.current.getFieldProps('hour')
+
+      expect([props['aria-valuemin'], props['aria-valuemax']]).toEqual([0, 23])
+    })
+  })
+
+  describe('setValue', () => {
+    it('refuses a time no clock shows, and holds one past a bound at the bound', () => {
+      const { result } = renderHook(() =>
+        useTimePicker({ defaultValue: { hour: 10, minute: 0 }, minTime: { hour: 9, minute: 0 } }),
+      )
+
+      act(() => result.current.actions.setValue({ hour: 30, minute: 0 }))
+      const refused = result.current.state.value
+      act(() => result.current.actions.setValue({ hour: 6, minute: 0 }))
+
+      expect([refused, result.current.state.value]).toEqual([
+        { hour: 10, minute: 0 },
+        { hour: 9, minute: 0 },
+      ])
+    })
+  })
+
+  describe('setField', () => {
+    it('refuses a number the field cannot hold', () => {
+      const { result } = renderHook(() => useTimePicker({ defaultValue: { hour: 9, minute: 30, second: 0 } }))
+
+      act(() => {
+        result.current.actions.setField('minute', 75)
+        result.current.actions.setField('hour', 24)
+        result.current.actions.setField('second', -1)
+        result.current.actions.setField('minute', 1.5)
+      })
+
+      expect(result.current.state.value).toEqual({ hour: 9, minute: 30, second: 0 })
+    })
+
+    it('sets AM or PM as 0 or 1', () => {
+      const { result } = renderHook(() => useTimePicker({ hourCycle: '12', defaultValue: { hour: 9, minute: 0 } }))
+
+      act(() => result.current.actions.setField('ampm', 1))
+      const pm = result.current.state.value.hour
+      act(() => result.current.actions.setField('ampm', 0))
+
+      expect([pm, result.current.state.value.hour]).toEqual([21, 9])
     })
   })
 })

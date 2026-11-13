@@ -1,6 +1,13 @@
 import { jalaaliMonthLength, toGregorian, toJalaali } from '../calendar-system'
 import type { Adapter } from './adapter.types'
-import { createConversionCache, formatWithCalendar, nativeToday } from './adapter.utils'
+import {
+  createConversionCache,
+  formatWithCalendar,
+  localDate,
+  nativeToday,
+  startOfDay,
+  withTime,
+} from './adapter.utils'
 
 const persianCache = createConversionCache((date: Date) =>
   toJalaali(date.getFullYear(), date.getMonth() + 1, date.getDate()),
@@ -8,6 +15,7 @@ const persianCache = createConversionCache((date: Date) =>
 
 /** Persian (Jalaali / Solar Hijri) calendar-aware adapter backed by native `Date`. */
 export class PersianAdapter implements Adapter.IDateAdapter<Date> {
+  readonly maxYear = 3176
   private readonly locale: string
 
   constructor(locale = 'fa-IR') {
@@ -27,7 +35,7 @@ export class PersianAdapter implements Adapter.IDateAdapter<Date> {
    */
   create(year: number, month: number, day: number): Date {
     const { gy, gm, gd } = toGregorian(year, month + 1, day)
-    return new Date(gy, gm - 1, gd)
+    return localDate(gy, gm - 1, gd)
   }
 
   isValid(date: Date): boolean {
@@ -75,7 +83,7 @@ export class PersianAdapter implements Adapter.IDateAdapter<Date> {
   startOfMonth(date: Date): Date {
     const { jy, jm } = this.persian(date)
     const { gy, gm, gd } = toGregorian(jy, jm, 1)
-    return new Date(gy, gm - 1, gd)
+    return localDate(gy, gm - 1, gd)
   }
 
   /** Last Gregorian day of the Persian month that contains `date`. */
@@ -83,18 +91,18 @@ export class PersianAdapter implements Adapter.IDateAdapter<Date> {
     const { jy, jm } = this.persian(date)
     const len = jalaaliMonthLength(jy, jm)
     const { gy, gm, gd } = toGregorian(jy, jm, len)
-    return new Date(gy, gm - 1, gd)
+    return localDate(gy, gm - 1, gd)
   }
 
   startOfWeek(date: Date, weekStartDay: Adapter.WeekStartDay): Date {
-    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    const d = startOfDay(date)
     const diff = (d.getDay() - weekStartDay + 7) % 7
     d.setDate(d.getDate() - diff)
     return d
   }
 
   addDays(date: Date, count: number): Date {
-    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    const d = startOfDay(date)
     d.setDate(d.getDate() + count)
     return d
   }
@@ -109,7 +117,7 @@ export class PersianAdapter implements Adapter.IDateAdapter<Date> {
     const maxDay = jalaaliMonthLength(newJy, newJm)
     const newJd = Math.min(jd, maxDay)
     const { gy, gm, gd } = toGregorian(newJy, newJm, newJd)
-    return new Date(gy, gm - 1, gd)
+    return localDate(gy, gm - 1, gd)
   }
 
   /** Esfand 30 in a leap year clamps to 29 in a non-leap year. */
@@ -119,7 +127,7 @@ export class PersianAdapter implements Adapter.IDateAdapter<Date> {
     const maxDay = jalaaliMonthLength(newJy, jm)
     const newJd = Math.min(jd, maxDay)
     const { gy, gm, gd } = toGregorian(newJy, jm, newJd)
-    return new Date(gy, gm - 1, gd)
+    return localDate(gy, gm - 1, gd)
   }
 
   getDayOfWeek(date: Date): Adapter.WeekStartDay {
@@ -131,7 +139,7 @@ export class PersianAdapter implements Adapter.IDateAdapter<Date> {
   }
 
   fromDate(date: Date): Date {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    return startOfDay(date)
   }
 
   /**
@@ -155,6 +163,6 @@ export class PersianAdapter implements Adapter.IDateAdapter<Date> {
   }
 
   setTime(date: Date, hour: number, minute: number, second?: number): Date {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, minute, second ?? 0)
+    return withTime(date, hour, minute, second)
   }
 }

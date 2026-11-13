@@ -84,6 +84,26 @@ describe('navigation', () => {
       ).toBe(true)
     })
 
+    describe('a year or a decade', () => {
+      it('goes to a year with any day inside the bounds, not only its month', () => {
+        expect([
+          canNavigate(adapter, adapter.create(2026, 2, 1), 'prev', 'year', { fromDate: adapter.create(2025, 5, 15) }),
+          canNavigate(adapter, adapter.create(2026, 8, 1), 'next', 'year', { toDate: adapter.create(2027, 2, 15) }),
+        ]).toEqual([true, true])
+      })
+
+      it('goes to a decade with any year inside the bounds, and no further', () => {
+        const date = adapter.create(2026, 2, 1)
+
+        expect([
+          canNavigate(adapter, date, 'prev', 'decade', { fromDate: adapter.create(2019, 5, 1) }),
+          canNavigate(adapter, date, 'prev', 'decade', { fromDate: adapter.create(2020, 0, 1) }),
+          canNavigate(adapter, date, 'next', 'decade', { toDate: adapter.create(2030, 0, 1) }),
+          canNavigate(adapter, date, 'next', 'decade', { toDate: adapter.create(2029, 11, 31) }),
+        ]).toEqual([true, false, true, false])
+      })
+    })
+
     describe('fromDate constraint (prev direction)', () => {
       it('can navigate prev when target month still has days >= fromDate', () => {
         // current: March 2026, fromDate: Feb 15  -  going to Feb is fine (Feb has days after the 15th)
@@ -113,7 +133,7 @@ describe('navigation', () => {
         const result = canNavigate(adapter, adapter.create(2026, 6, 1), 'prev', 'year', {
           fromDate: adapter.create(2025, 6, 1),
         })
-        // going to July 2025, July 31 >= July 1 2025
+        // going to 2025, Dec 31 2025 >= July 1 2025
         expect(result).toBe(true)
       })
     })
@@ -329,15 +349,15 @@ describe('navigation', () => {
       const result = canNavigate(adapter, adapter.create(2026, 6, 1), 'prev', 'decade', {
         fromDate: adapter.create(2020, 0, 1),
       })
-      // target is July 2016; end of Jul 2016 (Jul 31) is still after Jan 1 2020? No: Jul 31 2016 < Jan 1 2020
+      // the previous decade, 2010 to 2019, ends before Jan 1 2020
       expect(result).toBe(false)
     })
 
     it('canNavigate next decade blocked by toDate', () => {
       const result = canNavigate(adapter, adapter.create(2026, 6, 1), 'next', 'decade', {
-        toDate: adapter.create(2030, 0, 1),
+        toDate: adapter.create(2029, 11, 31),
       })
-      // target is July 2036; start of Jul 2036 (Jul 1) is after Jan 1 2030
+      // the next decade, 2030 to 2039, starts after Dec 31 2029
       expect(result).toBe(false)
     })
 

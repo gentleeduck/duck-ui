@@ -324,4 +324,42 @@ describe('IslamicAdapter', () => {
       expect(adapter.getSeconds(result)).toBe(0)
     })
   })
+
+  // 7 Dhu al-Hijjah 593 before the Hijra in Intl's islamic-civil, which counts no year 0.
+  it('keeps a day in Gregorian year 48 through every method that returns a date', () => {
+    const native = new Date(0)
+    native.setFullYear(48, 1, 10)
+    native.setHours(0, 0, 0, 0)
+    const date = adapter.fromDate(native)
+
+    const results = {
+      fromDate: date,
+      startOfMonth: adapter.startOfMonth(date),
+      endOfMonth: adapter.endOfMonth(date),
+      startOfWeek: adapter.startOfWeek(date, 0),
+      addDays: adapter.addDays(date, 1),
+      addMonths: adapter.addMonths(date, 1),
+      addYears: adapter.addYears(date, 1),
+      setTime: adapter.setTime(date, 9, 5),
+    }
+
+    expect([adapter.getYear(date), adapter.getMonth(date), adapter.getDate(date)]).toEqual([-592, 11, 7])
+    expect(
+      Object.fromEntries(
+        Object.entries(results).map(([method, day]) => [
+          method,
+          [day.getFullYear(), day.getMonth() + 1, day.getDate()].join('-'),
+        ]),
+      ),
+    ).toEqual({
+      fromDate: '48-2-10',
+      startOfMonth: '48-2-4',
+      endOfMonth: '48-3-3',
+      startOfWeek: '48-2-9',
+      addDays: '48-2-11',
+      addMonths: '48-3-10',
+      addYears: '49-1-29',
+      setTime: '48-2-10',
+    })
+  })
 })

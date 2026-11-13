@@ -15,12 +15,15 @@ export namespace UseCalendar {
     'aria-label': string
     'aria-selected': boolean
     'aria-disabled': boolean
+    'aria-invalid': true | undefined
     'aria-current': 'date' | undefined
     tabIndex: 0 | -1
     'data-calendar-day': ''
     'data-selected': 'true' | undefined
     'data-today': 'true' | undefined
     'data-disabled': 'true' | undefined
+    'data-unavailable': 'true' | undefined
+    'data-invalid': 'true' | undefined
     'data-outside-month': 'true' | undefined
     'data-hidden': 'true' | undefined
     'data-range-middle': 'true' | undefined
@@ -37,6 +40,9 @@ export namespace UseCalendar {
     role: 'grid'
     'aria-labelledby': string
     'aria-roledescription': string
+    'aria-readonly': true | undefined
+    'data-readonly': 'true' | undefined
+    'data-invalid': 'true' | undefined
     /**
      * Stable per-instance grid id. `useCalendar` uses this to scope DOM focus queries
      * to its own grid, so multi-calendar pages don't grab the first match across the
@@ -62,7 +68,7 @@ export namespace UseCalendar {
       month: TDate
       /** The current selection value. Shape depends on mode. */
       value: Selection.CalendarValue<TDate, M>
-      /** The date that currently has keyboard focus. */
+      /** The day that holds the grid's tab stop and that arrow keys move from. */
       focusedDate: TDate
       /** Whether we're showing the day grid, month picker, or year picker. */
       viewMode: Calendar.ViewMode
@@ -76,6 +82,8 @@ export namespace UseCalendar {
       canGoNext: boolean
       /** Whether backward navigation is possible (respects fromDate). */
       canGoPrevious: boolean
+      /** Whether the selection is invalid: `invalid` was passed, or it holds a day that cannot be picked. */
+      isInvalid: boolean
     }
     actions: {
       setMonth: (month: TDate) => void

@@ -9,6 +9,8 @@ export namespace UseKeyboard {
     isDisabled: (date: TDate) => boolean
     adapter: Adapter.IDateAdapter<TDate>
     weekStartDay?: Adapter.WeekStartDay | undefined
+    /** Months PageUp and PageDown move. Default `1`. */
+    pageSize?: number | undefined
     /** Text direction. In `rtl` the grid runs right-to-left, so ArrowLeft/ArrowRight swap to follow it. */
     direction?: 'ltr' | 'rtl' | undefined
   }

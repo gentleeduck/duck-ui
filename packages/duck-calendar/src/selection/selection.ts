@@ -1,10 +1,12 @@
 import type { Adapter } from '../adapter'
 import type { Grid } from '../grid'
-import { isDateDisabled, isInRange } from './selection.libs'
+import { isDateDisabled, isDateUnavailable, isInRange } from './selection.libs'
 import type { Selection } from './selection.types'
 
 /** Min range length splittable by shift+click; below this it's a no-op to avoid sliver fragmentation. */
 const MIN_SPLIT_RANGE_DAYS = 5
+
+type CompletedRange<TDate> = { from: TDate; to: TDate }
 
 /**
  * Compute the next selection state when a day is clicked.
@@ -37,10 +39,6 @@ export function selectDay<TDate, M extends Selection.SelectionMode>(
         clickedDay,
         options?.shiftKey,
       ) as Selection.CalendarValue<TDate, M>
-    default: {
-      const _exhaustive: never = mode
-      return _exhaustive
-    }
   }
 }
 
@@ -98,17 +96,13 @@ function selectMultiRange<TDate>(
 ): Selection.DateRange<TDate>[] {
   // Shift+Click: split a range to exclude the clicked day (only for ranges > 5 days)
   if (shiftKey) {
-    const idx = current.findIndex((range) => {
-      if (range.to === null) return false
-      return (
-        (adapter.isSameDay(clicked, range.from) || adapter.isAfter(clicked, range.from)) &&
-        (adapter.isSameDay(clicked, range.to) || adapter.isBefore(clicked, range.to))
-      )
-    })
-    if (idx < 0) return current
-
-    const range = current[idx]
-    if (!range || range.to === null) return current
+    const range = current.find(
+      (candidate): candidate is CompletedRange<TDate> =>
+        candidate.to !== null &&
+        (adapter.isSameDay(clicked, candidate.from) || adapter.isAfter(clicked, candidate.from)) &&
+        (adapter.isSameDay(clicked, candidate.to) || adapter.isBefore(clicked, candidate.to)),
+    )
+    if (range === undefined) return current
 
     // Count days in range (O(1) via native Date diff)
     const fromMs = adapter.toDate(range.from).getTime()
@@ -116,7 +110,7 @@ function selectMultiRange<TDate>(
     const dayCount = Math.round((toMs - fromMs) / 86_400_000) + 1
     if (dayCount <= MIN_SPLIT_RANGE_DAYS) return current
 
-    const result = current.filter((_, i) => i !== idx)
+    const result = current.filter((candidate) => candidate !== range)
 
     // Clicking on range start: shrink from the left (exclude first day)
     if (adapter.isSameDay(clicked, range.from)) {
@@ -138,12 +132,8 @@ function selectMultiRange<TDate>(
     return result
   }
 
-  if (current.length === 0) {
-    return [{ from: clicked, to: null }]
-  }
-
-  const last = current[current.length - 1]
-  if (!last) return [{ from: clicked, to: null }]
+  const last = current.at(-1)
+  if (last === undefined) return [{ from: clicked, to: null }]
 
   // Still selecting end of last range
   if (last.to === null) {
@@ -170,30 +160,23 @@ function mergeRanges<TDate>(
   adapter: Adapter.IDateAdapter<TDate>,
   ranges: Selection.DateRange<TDate>[],
 ): Selection.DateRange<TDate>[] {
-  const completed = ranges.filter((r) => r.to !== null) as { from: TDate; to: TDate }[]
+  const completed = ranges.filter((r): r is CompletedRange<TDate> => r.to !== null)
   const inProgress = ranges.filter((r) => r.to === null)
-
-  if (completed.length <= 1) return [...completed, ...inProgress]
 
   // Sort by start date
   completed.sort((a, b) => (adapter.isBefore(a.from, b.from) ? -1 : adapter.isAfter(a.from, b.from) ? 1 : 0))
 
-  const first = completed[0]
-  if (!first) return [...inProgress]
-  const merged: Selection.DateRange<TDate>[] = [first]
-
-  for (let i = 1; i < completed.length; i++) {
-    const prev = merged[merged.length - 1] as { from: TDate; to: TDate }
-    const curr = completed[i] as { from: TDate; to: TDate }
-
-    // Check if curr overlaps or is adjacent (prev.to + 1 day >= curr.from)
-    const prevEndPlusOne = adapter.addDays(prev.to, 1)
-    const overlaps = adapter.isSameDay(curr.from, prevEndPlusOne) || adapter.isBefore(curr.from, prevEndPlusOne)
-
-    if (overlaps) {
-      // Merge: extend prev to the further end
-      const newTo = adapter.isAfter(curr.to, prev.to) ? curr.to : prev.to
-      merged[merged.length - 1] = { from: prev.from, to: newTo }
+  const merged: CompletedRange<TDate>[] = []
+  for (const curr of completed) {
+    const prev = merged.at(-1)
+    if (prev === undefined) {
+      merged.push(curr)
+      continue
+    }
+    // Overlapping prev, or starting the day after it ends: extend prev to the further end
+    const dayAfter = adapter.addDays(prev.to, 1)
+    if (adapter.isSameDay(curr.from, dayAfter) || adapter.isBefore(curr.from, dayAfter)) {
+      merged[merged.length - 1] = { from: prev.from, to: adapter.isAfter(curr.to, prev.to) ? curr.to : prev.to }
     } else {
       merged.push(curr)
     }
@@ -220,6 +203,7 @@ export function applySelection<TDate, M extends Selection.SelectionMode>(
     days: week.days.map((day) => ({
       ...day,
       isDisabled: day.isDisabled || isDateDisabled(adapter, day.date, constraints),
+      isUnavailable: isDateUnavailable(adapter, day.date, constraints),
       ...resolveSelectionFlags(adapter, mode, selected, day.date),
     })),
   }))
@@ -287,11 +271,6 @@ function resolveSelectionFlags<TDate, M extends Selection.SelectionMode>(
         }
       }
       return UNSELECTED
-    }
-
-    default: {
-      const _exhaustive: never = mode
-      return _exhaustive
     }
   }
 }

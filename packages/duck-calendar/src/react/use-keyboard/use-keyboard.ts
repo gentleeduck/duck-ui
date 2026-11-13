@@ -30,9 +30,11 @@ function buildActionMap<TDate>(): Record<string, Action<TDate>> {
 
     ArrowDown: (focused, config) => stepUntilEnabled(focused, config, (d) => config.adapter.addDays(d, 7)),
 
-    PageUp: (focused, config) => stepUntilEnabled(focused, config, (d) => config.adapter.addMonths(d, -1)),
+    PageUp: (focused, config) =>
+      stepUntilEnabled(focused, config, (d) => config.adapter.addMonths(d, -(config.pageSize ?? 1))),
 
-    PageDown: (focused, config) => stepUntilEnabled(focused, config, (d) => config.adapter.addMonths(d, 1)),
+    PageDown: (focused, config) =>
+      stepUntilEnabled(focused, config, (d) => config.adapter.addMonths(d, config.pageSize ?? 1)),
 
     'Shift+PageUp': (focused, config) => stepUntilEnabled(focused, config, (d) => config.adapter.addYears(d, -1)),
 

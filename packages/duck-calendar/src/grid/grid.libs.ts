@@ -1,5 +1,35 @@
 import type { Adapter } from '../adapter'
 import { isGregorianLeap } from '../calendar-system/gregorian'
+import type { Grid } from './grid.types'
+
+type IntlWeekInfo = { firstDay: number; weekend: number[] }
+
+const DEFAULT_WEEK: Grid.IWeekInfo = { firstDay: 0, weekend: [0, 6] }
+const WEEK_INFO = new Map<string, Grid.IWeekInfo>()
+
+/**
+ * The first day and the weekend of `locale`'s week, read from `Intl.Locale`. With no locale, or a
+ * runtime that cannot describe it, the week starts on Sunday and its weekend is Saturday and Sunday.
+ */
+export function getLocaleWeekInfo(locale: string | undefined): Grid.IWeekInfo {
+  if (!locale) return DEFAULT_WEEK
+  let info = WEEK_INFO.get(locale)
+  if (info) return info
+  info = DEFAULT_WEEK
+  try {
+    const intl = new Intl.Locale(locale) as Intl.Locale & { getWeekInfo?: () => IntlWeekInfo; weekInfo?: IntlWeekInfo }
+    const week = intl.getWeekInfo?.() ?? intl.weekInfo
+    if (week)
+      info = {
+        firstDay: (week.firstDay % 7) as Grid.IWeekInfo['firstDay'],
+        weekend: week.weekend.map((day) => day % 7),
+      }
+  } catch {
+    // An invalid tag throws here; it keeps the default week, as the formatters fall back too.
+  }
+  WEEK_INFO.set(locale, info)
+  return info
+}
 
 /**
  * Returns 7 localized weekday names starting from `weekStartDay`.
@@ -78,7 +108,7 @@ export function getWeekNumber<TDate>(adapter: Adapter.IDateAdapter<TDate>, date:
 
   // Ordinal day-of-year for the current date.
   const offsets = isGregorianLeap(y) ? LEAP_OFFSETS : NON_LEAP_OFFSETS
-  const dayOfYear = (offsets[m] ?? 0) + d
+  const dayOfYear = offsets[m] + d
 
   // Day-of-year of the nearest Thursday (same ISO week as `date`).
   // This may land in y-1 (week 52/53) or y+1 (week 1).

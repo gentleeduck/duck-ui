@@ -16,18 +16,68 @@ export function isDateDisabled<TDate>(
 ): boolean {
   const { disabled, fromDate, toDate } = constraints
 
-  if (disabled) {
-    if (typeof disabled === 'function') {
-      if (disabled(date)) return true
-    } else {
-      if (disabled.some((d: TDate) => adapter.isSameDay(d, date))) return true
-    }
-  }
-
+  if (matches(adapter, date, disabled)) return true
   if (fromDate && adapter.isBefore(date, fromDate)) return true
   if (toDate && adapter.isAfter(date, toDate)) return true
 
   return false
+}
+
+/** Returns `true` when `date` stays focusable but cannot be picked. */
+export function isDateUnavailable<TDate>(
+  adapter: Adapter.IDateAdapter<TDate>,
+  date: TDate,
+  constraints: Selection.ISelectionConstraints<TDate>,
+): boolean {
+  return matches(adapter, date, constraints.unavailable)
+}
+
+/** The first unavailable day from `from` to `to`, both included, or `null`. */
+export function findUnavailableDay<TDate>(
+  adapter: Adapter.IDateAdapter<TDate>,
+  from: TDate,
+  to: TDate,
+  constraints: Selection.ISelectionConstraints<TDate>,
+): TDate | null {
+  if (!constraints.unavailable) return null
+  const [start, end] = adapter.isBefore(to, from) ? [to, from] : [from, to]
+  for (let day = start; !adapter.isAfter(day, end); day = adapter.addDays(day, 1)) {
+    if (isDateUnavailable(adapter, day, constraints)) return day
+  }
+  return null
+}
+
+/** Returns `true` when the selection holds a day that cannot be picked, or a range spanning an unavailable one. */
+export function isSelectionInvalid<TDate, M extends Selection.SelectionMode>(
+  adapter: Adapter.IDateAdapter<TDate>,
+  mode: M,
+  value: Selection.CalendarValue<TDate, M>,
+  constraints: Selection.ISelectionConstraints<TDate>,
+): boolean {
+  if (value === null) return false
+  const unpickable = (from: TDate, to: TDate) =>
+    isDateDisabled(adapter, from, constraints) ||
+    isDateDisabled(adapter, to, constraints) ||
+    findUnavailableDay(adapter, from, to, constraints) !== null
+  switch (mode) {
+    case 'single':
+      return unpickable(value as TDate, value as TDate)
+    case 'multi':
+      return (value as TDate[]).some((date) => unpickable(date, date))
+    default: {
+      const ranges = (mode === 'range' ? [value] : value) as Selection.DateRange<TDate>[]
+      return ranges.some((range) => unpickable(range.from, range.to ?? range.from))
+    }
+  }
+}
+
+function matches<TDate>(
+  adapter: Adapter.IDateAdapter<TDate>,
+  date: TDate,
+  matcher: TDate[] | ((date: TDate) => boolean) | undefined,
+): boolean {
+  if (!matcher) return false
+  return typeof matcher === 'function' ? matcher(date) : matcher.some((d) => adapter.isSameDay(d, date))
 }
 
 /**

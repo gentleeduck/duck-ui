@@ -163,4 +163,39 @@ describe('hijri conversion', () => {
       }
     })
   })
+
+  describe('refusals and years before the first', () => {
+    it('refuses a Gregorian date that does not exist', () => {
+      expect(() => toHijri(2025, 2, 29)).toThrow(RangeError)
+      expect(() => toHijri(2025, 13, 1)).toThrow(RangeError)
+      expect(() => toHijri(2025, 1, 0)).toThrow(RangeError)
+    })
+
+    it('refuses a Hijri month or day that does not exist', () => {
+      expect(() => toGregorian(1447, 0, 1)).toThrow('Invalid Hijri date: 1447-0-1')
+      expect(() => toGregorian(1447, 13, 1)).toThrow(RangeError)
+      expect(() => toGregorian(1447, 2, 30)).toThrow('Invalid Hijri date: 1447-2-30')
+      expect(() => toGregorian(1446, 12, 30)).toThrow(RangeError)
+    })
+
+    it('ends every year from 100 years before the first the day before the next one starts', () => {
+      const gaps: number[] = []
+      for (let hy = -100; hy <= 1500; hy++) {
+        const last = toGregorian(hy, 12, hijriMonthLength(hy, 12))
+        const next = toGregorian(hy + 1, 1, 1)
+        const after = new Date(0)
+        after.setUTCFullYear(last.gy, last.gm - 1, last.gd + 1)
+        const start = new Date(0)
+        start.setUTCFullYear(next.gy, next.gm - 1, next.gd)
+        if (after.getTime() !== start.getTime()) gaps.push(hy)
+      }
+
+      expect(gaps).toEqual([])
+    })
+
+    it('keeps the 30-year leap pattern before the first year', () => {
+      expect([-1, 0, 1, 2].map(isLeapHijriYear)).toEqual([true, false, false, true])
+      expect(hijriYearLength(-28)).toBe(355)
+    })
+  })
 })

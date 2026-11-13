@@ -1,3 +1,5 @@
+import type { Adapter } from '../adapter'
+
 export namespace Grid {
   /** A single day cell in the calendar grid. */
   export interface ICalendarDay<TDate> {
@@ -9,6 +11,8 @@ export namespace Grid {
     isSelected: boolean
     /** Whether this date is disabled (constraints). Filled by `applySelection()`. */
     isDisabled: boolean
+    /** Whether this date stays focusable but cannot be picked. Filled by `applySelection()`. */
+    isUnavailable: boolean
     /** Whether this date belongs to the previous or next month. */
     isOutside: boolean
     /** Whether this day should be hidden (outside day when `showOutsideDays` is false). */
@@ -37,6 +41,12 @@ export namespace Grid {
     month: TDate
     /** The weeks in this month (5 or 6 depending on `fixedWeeks`). */
     weeks: ICalendarWeek<TDate>[]
+  }
+
+  /** How a locale's week runs, Sunday = 0. */
+  export interface IWeekInfo {
+    firstDay: Adapter.WeekStartDay
+    weekend: number[]
   }
 
   /** A month entry for the year picker view. */

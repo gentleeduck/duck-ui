@@ -9,7 +9,7 @@ export namespace Calendar {
   export interface ICalendarLocaleConfig {
     /** BCP 47 language tag, e.g. `'en-US'`, `'ar-SA'`, `'fa-IR'`. */
     locale?: string | undefined
-    /** Which day starts the week. 0 = Sunday (default), 1 = Monday, etc. */
+    /** Which day starts the week, 0 for Sunday. Defaults to the locale's first day, or Sunday with no locale. */
     weekStartDay?: Adapter.WeekStartDay | undefined
     /** Text direction. */
     direction?: 'ltr' | 'rtl' | undefined
@@ -51,6 +51,14 @@ export namespace Calendar {
     fromDate?: TDate | undefined
     /** Latest selectable date. */
     toDate?: TDate | undefined
+    /** Dates that stay focusable but cannot be picked, such as a booked day. A range cannot span one. */
+    unavailable?: TDate[] | ((date: TDate) => boolean) | undefined
+    /** Lets focus move but keeps any day from being picked. */
+    readOnly?: boolean | undefined
+    /** Marks the selection invalid. It is also invalid while it holds a day that cannot be picked. */
+    invalid?: boolean | undefined
+    /** How far the nav buttons and PageUp/PageDown move: one month (`'single'`, the default) or every shown month (`'visible'`). */
+    pageBehavior?: 'single' | 'visible' | undefined
 
     /** Called when the user presses Escape. */
     onDismiss?: (() => void) | undefined

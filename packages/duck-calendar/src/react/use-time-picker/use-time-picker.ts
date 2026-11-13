@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { clampTime, incrementField, parseTimeInput } from '../../time/time'
+import { useCallback, useId, useRef, useState } from 'react'
+import { clampTime, incrementField, isValidTime, parseTimeInput } from '../../time/time'
 import { formatTimeField, getAmPm, to12Hour, to24Hour } from '../../time/time.libs'
 import type { Time } from '../../time/time.types'
 import { useControllableState } from '../utils/use-controllable-state'
@@ -16,14 +16,6 @@ const FIELD_ORDERS: Record<FieldOrderKey, Time.TimeField[]> = {
   '12_true': ['hour', 'minute', 'second', 'ampm'],
 }
 
-function nextField(current: Time.TimeField, showSeconds: boolean, hourCycle: Time.HourCycle): Time.TimeField | null {
-  const key: FieldOrderKey = `${hourCycle}_${showSeconds}`
-  const available = FIELD_ORDERS[key]
-  const idx = available.indexOf(current)
-  if (idx < 0 || idx >= available.length - 1) return null
-  return available[idx + 1] ?? null
-}
-
 const FIELD_LABELS: Record<Time.TimeField, string> = {
   hour: 'Hour',
   minute: 'Minute',
@@ -31,20 +23,32 @@ const FIELD_LABELS: Record<Time.TimeField, string> = {
   ampm: 'AM/PM',
 }
 
+/** The greatest number `setField` and typing take for a field; a 12-hour hour takes 0 for 12. */
+function fieldTop(field: Time.TimeField, hourCycle: Time.HourCycle): number {
+  if (field === 'hour') return hourCycle === '12' ? 12 : 23
+  return field === 'ampm' ? 1 : 59
+}
+
 function getFieldRange(
   field: Time.TimeField,
   hourCycle: '12' | '24',
+  value: Time.ITimeValue,
   minTime?: Time.ITimeValue,
   maxTime?: Time.ITimeValue,
 ): { min: number; max: number } {
   switch (field) {
     case 'hour': {
-      const base = hourCycle === '12' ? { min: 1, max: 12 } : { min: 0, max: 23 }
-      if (minTime) base.min = Math.max(base.min, hourCycle === '12' ? to12Hour(minTime.hour) : minTime.hour)
-      if (maxTime) base.max = Math.min(base.max, hourCycle === '12' ? to12Hour(maxTime.hour) : maxTime.hour)
-      // Guard against contradictory constraints
-      if (base.min > base.max) return hourCycle === '12' ? { min: 1, max: 12 } : { min: 0, max: 23 }
-      return base
+      // A 12-hour hour runs 12, 1 to 11 in the half of the day the value is in, so its range is that
+      // half's hours left by minTime and maxTime, as they are shown.
+      const pm = hourCycle === '12' && value.hour >= 12
+      const first = pm ? 12 : 0
+      const last = hourCycle === '12' && !pm ? 11 : 23
+      const lo = Math.max(first, minTime?.hour ?? first)
+      const hi = Math.min(last, maxTime?.hour ?? last)
+      if (lo > hi) return hourCycle === '12' ? { min: 1, max: 12 } : { min: 0, max: 23 }
+      if (hourCycle === '24') return { min: lo, max: hi }
+      const shown = Array.from({ length: hi - lo + 1 }, (_, i) => to12Hour(lo + i))
+      return { min: Math.min(...shown), max: Math.max(...shown) }
     }
     case 'minute':
       return { min: 0, max: 59 }
@@ -99,29 +103,24 @@ export function useTimePicker(config: UseTimePicker.IUseTimePickerConfig = {}): 
   const [value, setValueRaw] = useControllableState<Time.ITimeValue>(controlledValue, initialValue, onChange)
 
   const [focusedField, setFocusedField] = useState<Time.TimeField>('hour')
+  const pickerId = useId()
 
-  // Digit-input buffer for typing 2-char field values; flushed on timeout or on length 2.
-  const inputBuffer = useRef<string>('')
-  const inputTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    return () => {
-      if (inputTimeout.current) clearTimeout(inputTimeout.current)
-    }
-  }, [])
+  // The digits typed into the focused field so far, which a next digit extends.
+  const typed = useRef('')
 
   const displayHour = hourCycle === '12' ? to12Hour(value.hour) : value.hour
   const displayAmPm = getAmPm(value.hour)
 
   const setValue = useCallback(
     (next: Time.ITimeValue) => {
-      setValueRaw(next)
+      if (isValidTime(next)) setValueRaw(clampTime(next, minTime, maxTime))
     },
-    [setValueRaw],
+    [setValueRaw, minTime, maxTime],
   )
 
   const setField = useCallback(
     (field: Time.TimeField, fieldValue: number) => {
+      if (!Number.isInteger(fieldValue) || fieldValue < 0 || fieldValue > fieldTop(field, hourCycle)) return
       const next = { ...value }
       switch (field) {
         case 'hour':
@@ -169,30 +168,52 @@ export function useTimePicker(config: UseTimePicker.IUseTimePickerConfig = {}): 
     setValueRaw(next)
   }, [value, setValueRaw, minTime, maxTime])
 
-  const focusField = useCallback((field: Time.TimeField) => {
-    setFocusedField(field)
-  }, [])
-
-  const commitBuffer = useCallback(
-    (field: Time.TimeField, buffer: string) => {
-      const parsed = parseTimeInput(buffer, field, hourCycle)
-      if (parsed !== null) {
-        setField(field, parsed)
-      }
-      inputBuffer.current = ''
-      const next = nextField(field, showSeconds, hourCycle)
-      if (next) setFocusedField(next)
+  const focusField = useCallback(
+    (field: Time.TimeField) => {
+      setFocusedField(field)
+      document.querySelector<HTMLElement>(`[data-time-picker="${pickerId}"][data-time-field="${field}"]`)?.focus()
     },
-    [hourCycle, showSeconds, setField],
+    [pickerId],
+  )
+
+  const moveFocus = useCallback(
+    (from: Time.TimeField, offset: 1 | -1) => {
+      const order = FIELD_ORDERS[`${hourCycle}_${showSeconds}` satisfies FieldOrderKey]
+      const next = order[order.indexOf(from) + offset]
+      if (next) focusField(next)
+    },
+    [hourCycle, showSeconds, focusField],
+  )
+
+  const typeDigit = useCallback(
+    (field: Time.TimeField, digit: string) => {
+      // Two digits that make no time start the number over from the second.
+      let digits = typed.current + digit
+      if (parseTimeInput(digits, field, hourCycle) === null) digits = digit
+      const parsed = parseTimeInput(digits, field, hourCycle)
+      if (parsed !== null) setField(field, parsed)
+      typed.current = digits
+      if (digits.length === 2 || Number(digits) * 10 > fieldTop(field, hourCycle)) {
+        typed.current = ''
+        moveFocus(field, 1)
+      }
+    },
+    [hourCycle, setField, moveFocus],
   )
 
   const getFieldProps = useCallback(
     (field: Time.TimeField): UseTimePicker.ITimeFieldProps => {
-      const range = getFieldRange(field, hourCycle, minTime, maxTime)
+      const range = getFieldRange(field, hourCycle, value, minTime, maxTime)
       const now = getFieldNow(field, value, hourCycle)
       const text = getFieldText(field, value, hourCycle)
 
       const onKeyDown: React.KeyboardEventHandler = (e) => {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          e.preventDefault()
+          moveFocus(field, e.key === 'ArrowRight' ? 1 : -1)
+          return
+        }
+
         if (field === 'ampm') {
           if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
             e.preventDefault()
@@ -223,28 +244,15 @@ export function useTimePicker(config: UseTimePicker.IUseTimePickerConfig = {}): 
           return
         }
 
-        // Digit input buffering
         if (/^[0-9]$/.test(e.key)) {
           e.preventDefault()
-          if (inputTimeout.current) clearTimeout(inputTimeout.current)
-          inputBuffer.current += e.key
-
-          if (inputBuffer.current.length >= 2) {
-            commitBuffer(field, inputBuffer.current)
-          } else {
-            inputTimeout.current = setTimeout(() => {
-              inputTimeout.current = null
-              commitBuffer(field, inputBuffer.current)
-            }, 500)
-          }
+          typeDigit(field, e.key)
         }
       }
 
       const onFocus = () => {
         setFocusedField(field)
-        // Clear any pending buffer from previous field
-        if (inputTimeout.current) clearTimeout(inputTimeout.current)
-        inputBuffer.current = ''
+        typed.current = ''
       }
 
       return {
@@ -254,14 +262,29 @@ export function useTimePicker(config: UseTimePicker.IUseTimePickerConfig = {}): 
         'aria-valuemax': range.max,
         'aria-valuenow': now,
         'aria-valuetext': text,
-        tabIndex: focusedField === field ? 0 : -1,
+        tabIndex: 0,
         'data-slot': 'time-picker-field',
+        'data-time-picker': pickerId,
+        'data-time-field': field,
         'data-focused': focusedField === field ? 'true' : undefined,
         onKeyDown,
         onFocus,
       }
     },
-    [value, focusedField, hourCycle, increment, decrement, toggleAmPm, commitBuffer, displayAmPm, minTime, maxTime],
+    [
+      value,
+      focusedField,
+      hourCycle,
+      increment,
+      decrement,
+      toggleAmPm,
+      moveFocus,
+      typeDigit,
+      displayAmPm,
+      minTime,
+      maxTime,
+      pickerId,
+    ],
   )
 
   return {

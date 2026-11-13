@@ -51,20 +51,21 @@ export function useDateTime<TDate>(
     [isControlled],
   )
 
-  // Memoised to avoid new Time objects each render.
-  const extractTime = useCallback(
-    (date: TDate | null): Time.ITimeValue => {
-      if (date == null) return DEFAULT_TIME
-      return {
-        hour: adapter.getHours(date),
-        minute: adapter.getMinutes(date),
-        second: adapter.getSeconds(date),
-      }
-    },
-    [adapter],
-  )
+  // The time picked while no date is, shown in the time picker and put on the date picked next.
+  const [pendingTime, setPendingTime] = useState<Time.ITimeValue>(DEFAULT_TIME)
 
-  const timeValue = useMemo(() => extractTime(currentValue), [currentValue, extractTime])
+  // Memoised to avoid new Time objects each render.
+  const timeValue = useMemo(
+    () =>
+      currentValue == null
+        ? pendingTime
+        : {
+            hour: adapter.getHours(currentValue),
+            minute: adapter.getMinutes(currentValue),
+            second: adapter.getSeconds(currentValue),
+          },
+    [adapter, currentValue, pendingTime],
+  )
 
   // Keep a ref of the latest time so calendar selection can read it synchronously
   const timeRef = useRef<Time.ITimeValue>(timeValue)
@@ -84,19 +85,17 @@ export function useDateTime<TDate>(
       if (selected == null) return
       const date = selected as TDate
       const t = timeRef.current
-      const merged = adapter.setTime(date, t.hour, t.minute, t.second ?? 0)
-      setDateTime(merged)
+      setDateTime(adapter.setTime(date, t.hour, t.minute, t.second))
     },
     [adapter, setDateTime],
   )
 
   const handleTimeChange = useCallback(
     (newTime: Time.ITimeValue) => {
-      timeRef.current = newTime
-      if (currentValueRef.current != null) {
-        const merged = adapter.setTime(currentValueRef.current, newTime.hour, newTime.minute, newTime.second ?? 0)
-        setDateTime(merged)
-      }
+      const time = { hour: newTime.hour, minute: newTime.minute, second: newTime.second ?? 0 }
+      timeRef.current = time
+      if (currentValueRef.current == null) setPendingTime(time)
+      else setDateTime(adapter.setTime(currentValueRef.current, time.hour, time.minute, time.second))
     },
     [adapter, setDateTime],
   )

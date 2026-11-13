@@ -169,6 +169,14 @@ describe('useKeyboard', () => {
       expect(result.getDate()).toBe(21)
     })
 
+    it('Home and End take a week from Sunday when no weekStartDay is given', () => {
+      const wednesday = new Date(2026, 2, 18)
+      pressKey(makeConfig({ focusedDate: wednesday, weekStartDay: undefined }), 'Home')
+      pressKey(makeConfig({ focusedDate: wednesday, weekStartDay: undefined }), 'End')
+
+      expect(onFocusChange.mock.calls).toEqual([[new Date(2026, 2, 15)], [new Date(2026, 2, 21)]])
+    })
+
     it('End moves to end of week (weekStartDay=1)', () => {
       // weekStartDay=1 (Monday). Week: Mon Mar 9 - Sun Mar 15. End = Mar 15 (Sunday)
       pressKey(makeConfig({ weekStartDay: 1 }), 'End')

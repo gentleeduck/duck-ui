@@ -31,6 +31,14 @@ describe('PersianAdapter', () => {
       expect(adapter.getMinutes(d)).toBe(0)
       expect(adapter.getSeconds(d)).toBe(0)
     })
+
+    it('reads every date up to the end of maxYear, and fails in the year after it', () => {
+      const lastDay = adapter.create(adapter.maxYear, 11, 29)
+      const past = adapter.create(adapter.maxYear + 1, 9, 30)
+
+      expect(adapter.getYear(lastDay)).toBe(3176)
+      expect(() => adapter.getYear(past)).toThrow('Invalid Jalaali year 3178')
+    })
   })
 
   describe('known conversions', () => {

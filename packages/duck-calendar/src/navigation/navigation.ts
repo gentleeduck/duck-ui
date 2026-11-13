@@ -18,14 +18,22 @@ export function navigate<TDate>(
       return adapter.addYears(date, sign)
     case 'decade':
       return adapter.addYears(date, sign * 10)
-    default: {
-      const _exhaustive: never = unit
-      return _exhaustive
-    }
   }
 }
 
-/** Check if navigation in the given direction is within fromDate/toDate bounds. */
+// The first and last day of the month, year or decade a date falls in. A decade runs from a year ending in 0,
+// as the decade view draws it.
+function period<TDate>(adapter: Adapter.IDateAdapter<TDate>, date: TDate, unit: Navigation.Unit): [TDate, TDate] {
+  if (unit === 'month') return [adapter.startOfMonth(date), adapter.endOfMonth(date)]
+  const year = adapter.getYear(date)
+  const first = unit === 'year' ? year : Math.floor(year / 10) * 10
+  const last = unit === 'year' ? year : first + 9
+  const lastYear = adapter.create(last, 0, 1)
+  const lastMonth = adapter.create(last, (adapter.getMonthsInYear?.(lastYear) ?? 12) - 1, 1)
+  return [adapter.create(first, 0, 1), adapter.endOfMonth(lastMonth)]
+}
+
+/** Check if the month, year or decade one step away has a day within fromDate/toDate. */
 export function canNavigate<TDate>(
   adapter: Adapter.IDateAdapter<TDate>,
   date: TDate,
@@ -33,24 +41,10 @@ export function canNavigate<TDate>(
   unit: Navigation.Unit,
   constraints: Pick<Selection.ISelectionConstraints<TDate>, 'fromDate' | 'toDate'> = {},
 ): boolean {
-  const { fromDate, toDate } = constraints
-
-  if (direction === 'prev' && fromDate === undefined) return true
-  if (direction === 'next' && toDate === undefined) return true
-
-  const target = navigate(adapter, date, direction, unit)
-
-  if (direction === 'prev' && fromDate !== undefined) {
-    const targetEnd = adapter.endOfMonth(target)
-    return !adapter.isBefore(targetEnd, fromDate)
-  }
-
-  if (direction === 'next' && toDate !== undefined) {
-    const targetStart = adapter.startOfMonth(target)
-    return !adapter.isAfter(targetStart, toDate)
-  }
-
-  return true
+  const bound = direction === 'prev' ? constraints.fromDate : constraints.toDate
+  if (bound === undefined) return true
+  const [start, end] = period(adapter, navigate(adapter, date, direction, unit), unit)
+  return direction === 'prev' ? !adapter.isBefore(end, bound) : !adapter.isAfter(start, bound)
 }
 
 export function goToNextMonth<TDate>(adapter: Adapter.IDateAdapter<TDate>, current: TDate): TDate {

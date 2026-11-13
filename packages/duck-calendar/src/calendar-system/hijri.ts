@@ -2,7 +2,7 @@
  * Pure math functions for Gregorian <-> Islamic (Hijri) calendar conversion.
  *
  * Uses the **tabular Islamic calendar** algorithm  -  algorithmic and deterministic,
- * not observation-based. This is the civil tabular calendar (Type II-A, Thursday epoch).
+ * not observation-based. This is the civil tabular calendar (Type II, Friday epoch), Intl's `islamic-civil`.
  *
  * Islamic epoch: July 16, 622 CE (Julian) = July 19, 622 CE (proleptic Gregorian).
  *
@@ -42,7 +42,7 @@ export const HIJRI_MONTHS = [
  * @returns `true` if the year is a leap year
  */
 export function isLeapHijriYear(hy: number): boolean {
-  return LEAP_YEARS.includes(((hy - 1) % 30) + 1)
+  return LEAP_YEARS.includes(((((hy - 1) % 30) + 30) % 30) + 1)
 }
 
 /**
@@ -124,7 +124,7 @@ function hijriToJdn(hy: number, hm: number, hd: number): number {
 /**
  * Convert a Julian Day Number (JDN) to a Hijri date.
  *
- * Implements the closed-form tabular Islamic algorithm (Type II-A, Thursday epoch).
+ * Implements the closed-form tabular Islamic algorithm (Type II, Friday epoch).
  * The constants 10631, 354, 10985, 5316, 17719, 5670, 15238, 709 encode the 30-year
  * leap cycle (10631 days per cycle = 19 * 354 + 11 * 355) and Karl Palmen's tabular
  * month-length formula.
@@ -137,7 +137,6 @@ function hijriToJdn(hy: number, hm: number, hd: number): number {
  * @returns Hijri year, month (1-indexed), and day
  */
 function jdnToHijri(jdn: number): { hy: number; hm: number; hd: number } {
-  // Constants encode the 30-year leap cycle (10631 days) — see Hatcher (1986) eq. 6.7-6.9.
   const l = jdn - 1948440 + 10632
   const n = Math.floor((l - 1) / 10631)
   const remainder = l - 10631 * n + 354
@@ -165,7 +164,7 @@ function jdnToHijri(jdn: number): { hy: number; hm: number; hd: number } {
  *
  * @example
  * ```ts
- * toHijri(2026, 6, 27) // -> { hy: 1448, hm: 1, hd: 1 }
+ * toHijri(2026, 6, 27) // -> { hy: 1448, hm: 1, hd: 11 }
  * ```
  */
 export function toHijri(gy: number, gm: number, gd: number): { hy: number; hm: number; hd: number } {
@@ -186,7 +185,7 @@ export function toHijri(gy: number, gm: number, gd: number): { hy: number; hm: n
  *
  * @example
  * ```ts
- * toGregorian(1448, 1, 1) // -> { gy: 2026, gm: 6, gd: 27 }
+ * toGregorian(1448, 1, 1) // -> { gy: 2026, gm: 6, gd: 17 }
  * ```
  */
 export function toGregorian(hy: number, hm: number, hd: number): { gy: number; gm: number; gd: number } {

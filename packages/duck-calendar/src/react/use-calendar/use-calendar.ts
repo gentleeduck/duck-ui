@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { Grid } from '../../grid'
-import { buildCalendarMonth, buildMultiMonth, getLocalizedWeekdays } from '../../grid'
+import { buildCalendarMonth, buildMultiMonth, getLocaleWeekInfo, getLocalizedWeekdays } from '../../grid'
 import type { Calendar } from '../../index.types'
 import { canNavigate, navigate } from '../../navigation'
 import type { Selection } from '../../selection'
-import { applySelection, isDateDisabled, selectDay } from '../../selection'
+import {
+  applySelection,
+  findUnavailableDay,
+  isDateDisabled,
+  isDateUnavailable,
+  isSelectionInvalid,
+  selectDay,
+} from '../../selection'
 import {
   buildDateDisabledMessage,
   buildDateSelectedMessage,
@@ -21,6 +28,9 @@ import {
   buildNavProps,
   emptySelectionValue,
   initialFocusFromSelected,
+  pageHolding,
+  pageTarget,
+  resolveFocusTarget,
 } from './use-calendar.libs'
 import type { UseCalendar } from './use-calendar.types'
 
@@ -43,7 +53,12 @@ export function useCalendar<TDate, M extends Selection.SelectionMode = 'single'>
     disabled,
     fromDate,
     toDate,
+    unavailable,
+    readOnly = false,
+    invalid = false,
+    pageBehavior = 'single',
   } = config
+  const pageSize = pageBehavior === 'visible' ? Math.max(1, numberOfMonths) : 1
 
   const headerId = useId()
   const gridId = useId()
@@ -64,32 +79,30 @@ export function useCalendar<TDate, M extends Selection.SelectionMode = 'single'>
     onSelect,
   )
 
-  const [focusedDate, setFocusedDate] = useState<TDate>(
+  const [lastFocused, setFocusedDate] = useState<TDate>(
     () => initialFocusFromSelected(mode, controlledSelected ?? defaultSelected) ?? adapter.today(),
   )
   const [viewMode, setViewMode] = useState<Calendar.ViewMode>('days')
 
   // Callers MUST stabilize `disabled` — inline predicate/literal forces months memo recompute.
   const constraints: Selection.ISelectionConstraints<TDate> = useMemo(
-    () => ({ disabled, fromDate, toDate }),
-    [fromDate, toDate, disabled],
+    () => ({ disabled, fromDate, toDate, unavailable }),
+    [fromDate, toDate, disabled, unavailable],
   )
 
   const isDisabledFn = useCallback((date: TDate) => isDateDisabled(adapter, date, constraints), [adapter, constraints])
 
   // Primitives extracted so memo deps stay stable.
   const localeTag = locale?.locale
-  // Raw preserves "not provided" vs explicit `0` so weekStartDay: 0 (Sunday) is still forwarded.
-  const rawWeekStartDay = locale?.weekStartDay
-  const weekStartDay = rawWeekStartDay ?? 0
+  const weekStartDay = locale?.weekStartDay ?? getLocaleWeekInfo(localeTag).firstDay
   const localeDirection = locale?.direction
 
   const months: Grid.ICalendarMonth<TDate>[] = useMemo(() => {
-    const resolvedLocale =
-      localeTag !== undefined || localeDirection !== undefined || rawWeekStartDay !== undefined
-        ? { locale: localeTag, weekStartDay, direction: localeDirection }
-        : undefined
-    const gridConfig = { showOutsideDays, fixedWeeks, locale: resolvedLocale }
+    const gridConfig = {
+      showOutsideDays,
+      fixedWeeks,
+      locale: { locale: localeTag, weekStartDay, direction: localeDirection },
+    }
     const rawMonths =
       numberOfMonths <= 1
         ? [buildCalendarMonth(adapter, month, gridConfig)]
@@ -108,50 +121,76 @@ export function useCalendar<TDate, M extends Selection.SelectionMode = 'single'>
     showOutsideDays,
     fixedWeeks,
     localeTag,
-    rawWeekStartDay,
+    weekStartDay,
     localeDirection,
     numberOfMonths,
   ])
 
+  const focusedDate = useMemo(() => resolveFocusTarget(adapter, months, lastFocused), [adapter, months, lastFocused])
+
   // First month's weeks for backward compat
-  const weeks = months[0]?.weeks ?? []
+  const weeks = months[0].weeks
 
   const weekdays = useMemo(
     () => getLocalizedWeekdays(adapter, localeTag, weekStartDay, 'short'),
     [adapter, localeTag, weekStartDay],
   )
 
-  const canGoNext = useMemo(
-    () => canNavigate(adapter, month, 'next', 'month', { fromDate, toDate }),
-    [adapter, month, fromDate, toDate],
+  const nextPage = useMemo(
+    () =>
+      pageSize === 1
+        ? canNavigate(adapter, month, 'next', 'month', { fromDate, toDate })
+          ? navigate(adapter, month, 'next', 'month')
+          : null
+        : pageTarget(adapter, month, 'next', pageSize, { fromDate, toDate }),
+    [adapter, month, pageSize, fromDate, toDate],
   )
-  const canGoPrevious = useMemo(
-    () => canNavigate(adapter, month, 'prev', 'month', { fromDate, toDate }),
-    [adapter, month, fromDate, toDate],
+  const previousPage = useMemo(
+    () =>
+      pageSize === 1
+        ? canNavigate(adapter, month, 'prev', 'month', { fromDate, toDate })
+          ? navigate(adapter, month, 'prev', 'month')
+          : null
+        : pageTarget(adapter, month, 'prev', pageSize, { fromDate, toDate }),
+    [adapter, month, pageSize, fromDate, toDate],
   )
+  const canGoNext = nextPage !== null
+  const canGoPrevious = previousPage !== null
 
   const goToNext = useCallback(() => {
-    if (!canGoNext) return
-    setMonthState(navigate(adapter, month, 'next', 'month'))
-  }, [adapter, month, canGoNext, setMonthState])
+    if (nextPage !== null) setMonthState(nextPage)
+  }, [nextPage, setMonthState])
 
   const goToPrevious = useCallback(() => {
-    if (!canGoPrevious) return
-    setMonthState(navigate(adapter, month, 'prev', 'month'))
-  }, [adapter, month, canGoPrevious, setMonthState])
+    if (previousPage !== null) setMonthState(previousPage)
+  }, [previousPage, setMonthState])
 
   const setMonth = useCallback((next: TDate) => setMonthState(next), [setMonthState])
 
   const selectDate = useCallback(
     (date: TDate, options?: { shiftKey?: boolean }) => {
-      if (isDisabledFn(date)) {
-        announce(buildDateDisabledMessage(adapter.format(date, { month: 'long', day: 'numeric' }, localeTag)))
-        return
+      if (readOnly) return
+      const refuse = (day: TDate) =>
+        announce(buildDateDisabledMessage(adapter.format(day, { month: 'long', day: 'numeric' }, localeTag)))
+      if (isDisabledFn(date) || isDateUnavailable(adapter, date, constraints)) return refuse(date)
+      const open =
+        mode === 'range'
+          ? (value as Selection.DateRange<TDate> | null)
+          : mode === 'multi-range'
+            ? (value as Selection.DateRange<TDate>[]).at(-1)
+            : undefined
+      if (open && open.to === null && !options?.shiftKey) {
+        const blocked = findUnavailableDay(adapter, open.from, date, constraints)
+        if (blocked !== null) return refuse(blocked)
       }
-      const next = selectDay(adapter, mode, value, date, options)
-      setValue(next)
+      setValue(selectDay(adapter, mode, value, date, options))
     },
-    [adapter, mode, value, setValue, isDisabledFn, localeTag, announce],
+    [adapter, mode, value, setValue, isDisabledFn, constraints, readOnly, localeTag, announce],
+  )
+
+  const isInvalid = useMemo(
+    () => invalid || isSelectionInvalid(adapter, mode, value, constraints),
+    [invalid, adapter, mode, value, constraints],
   )
 
   // Announce on month change.
@@ -188,37 +227,45 @@ export function useCalendar<TDate, M extends Selection.SelectionMode = 'single'>
     }
   }, [value, mode, adapter, announce, localeTag])
 
-  // Focus management: auto-advance month when focus leaves the visible month.
-  // RAF id is cancelled on unmount to avoid leaks.
   const rafRef = useRef<number>(0)
+  // Read when the frame runs rather than cancelled on unmount: StrictMode replays the cleanup on a calendar that
+  // stays mounted, and a key pressed before that replay would lose its focus.
+  const mountedRef = useRef(true)
   useEffect(() => {
+    mountedRef.current = true
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      mountedRef.current = false
     }
   }, [])
 
   const handleFocusChange = useCallback(
     (date: TDate) => {
       setFocusedDate(date)
-      if (!adapter.isSameMonth(date, month)) {
-        setMonthState(adapter.startOfMonth(date))
+      const first = months[0].month
+      const last = months[months.length - 1].month
+      if (adapter.isBefore(date, adapter.startOfMonth(first)) || adapter.isAfter(date, adapter.endOfMonth(last))) {
+        setMonthState(
+          pageSize > 1
+            ? pageHolding(adapter, first, pageSize, date)
+            : adapter.isBefore(date, first)
+              ? adapter.startOfMonth(date)
+              : adapter.addMonths(adapter.startOfMonth(date), 1 - months.length),
+        )
       }
-      // Move DOM focus after React re-render (keyboard nav only). Scope the query
-      // by `data-calendar-grid="<gridId>"` so multi-calendar pages don't grab the
-      // focused cell from a sibling calendar.
+      // Keyboard moves only. Every grid of this calendar carries the same id and a sibling
+      // calendar's grids do not; a calendar whose grid lacks the id searches the page.
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = 0
-        // Use attribute selector with CSS.escape-equivalent for safety on
-        // useId-generated values that contain `:` (which is invalid in CSS ids).
-        const root = document.querySelector<HTMLElement>(`[data-calendar-grid="${gridId}"]`)
-        const el = (root ?? document).querySelector<HTMLElement>('[data-calendar-day][data-focused="true"]')
-        if (el && document.activeElement !== el) {
-          el.focus({ preventScroll: true })
-        }
+        if (!mountedRef.current) return
+        const day = '[data-calendar-day][data-focused="true"]'
+        const el =
+          document.querySelector<HTMLElement>(`[data-calendar-grid="${gridId}"] ${day}`) ??
+          document.querySelector<HTMLElement>(day)
+        el?.focus({ preventScroll: true })
       })
     },
-    [adapter, month, setMonthState, gridId],
+    [adapter, months, pageSize, setMonthState, gridId],
   )
 
   const keyboard = useKeyboard({
@@ -228,17 +275,21 @@ export function useCalendar<TDate, M extends Selection.SelectionMode = 'single'>
     onDismiss: config.onDismiss,
     isDisabled: isDisabledFn,
     adapter,
-    weekStartDay: locale?.weekStartDay ?? 0,
+    weekStartDay,
+    pageSize,
     direction: localeDirection,
   })
 
   const getDayProps = useCallback(
     (day: Grid.ICalendarDay<TDate>) =>
-      buildDayProps(day, focusedDate, adapter, selectDate, setFocusedDate, keyboard.onKeyDown, localeTag),
-    [focusedDate, adapter, selectDate, keyboard.onKeyDown, localeTag],
+      buildDayProps(day, focusedDate, adapter, selectDate, setFocusedDate, keyboard.onKeyDown, localeTag, isInvalid),
+    [focusedDate, adapter, selectDate, keyboard.onKeyDown, localeTag, isInvalid],
   )
 
-  const getGridProps = useCallback(() => buildGridProps(headerId, gridId), [headerId, gridId])
+  const getGridProps = useCallback(
+    () => buildGridProps(headerId, gridId, readOnly, isInvalid),
+    [headerId, gridId, readOnly, isInvalid],
+  )
 
   const getNavProps = useCallback(
     (direction: 'prev' | 'next') => buildNavProps(direction, canGoPrevious, canGoNext, goToPrevious, goToNext),
@@ -248,7 +299,7 @@ export function useCalendar<TDate, M extends Selection.SelectionMode = 'single'>
   const getHeaderProps = useCallback(() => buildHeaderProps(headerId), [headerId])
 
   return {
-    state: { month, value, focusedDate, viewMode, weeks, months, weekdays, canGoNext, canGoPrevious },
+    state: { month, value, focusedDate, viewMode, weeks, months, weekdays, canGoNext, canGoPrevious, isInvalid },
     actions: {
       setMonth,
       setViewMode,

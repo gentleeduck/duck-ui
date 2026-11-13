@@ -134,6 +134,9 @@ export namespace Adapter {
      */
     getMonthsInYear?(date: TDate): number
 
+    /** The last year `create` makes a date in, when that is before 9999. The Persian adapter's ends at 3176. */
+    readonly maxYear?: number
+
     /** Day of the month (1-31). @example adapter.getDate(2026-03-17) -> 17 */
     getDate(date: TDate): number
 

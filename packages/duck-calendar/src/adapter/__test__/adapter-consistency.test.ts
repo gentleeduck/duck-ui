@@ -68,6 +68,82 @@ const ref = new NativeAdapter()
 // Only run cross-adapter tests when at least one non-native adapter is loaded.
 const others = adapters.filter((e) => e.name !== 'NativeAdapter')
 
+describe('create()', () => {
+  // `new Date(2, 0, 1)` is 1902: a date field passes through these years while one is typed.
+  for (const entry of adapters) {
+    it(`${entry.name} keeps a year under 100 as given`, () => {
+      const adapter = entry.create()
+
+      const dates = [adapter.create(2, 0, 1), adapter.create(99, 11, 31), adapter.create(0, 1, 29)]
+
+      expect(dates.map((date) => triple(adapter, date))).toEqual([
+        [2, 0, 1],
+        [99, 11, 31],
+        [0, 1, 29],
+      ])
+    })
+
+    it(`${entry.name} makes a date in year 1 and in its last year, the range a date field takes`, () => {
+      const adapter = entry.create()
+      const last = adapter.maxYear ?? 9999
+
+      const dates = [adapter.create(1, 0, 1), adapter.create(last, 0, 1)]
+
+      expect(dates.map((date) => triple(adapter, date))).toEqual([
+        [1, 0, 1],
+        [last, 0, 1],
+      ])
+    })
+  }
+})
+
+describe('a year under 100 after create()', () => {
+  for (const entry of adapters) {
+    it(`${entry.name} keeps year 48 through every method that returns a date`, () => {
+      const adapter = entry.create()
+      const date = adapter.create(48, 1, 10)
+
+      const results = {
+        fromDate: adapter.fromDate(adapter.toDate(date)),
+        startOfMonth: adapter.startOfMonth(date),
+        endOfMonth: adapter.endOfMonth(date),
+        startOfWeek: adapter.startOfWeek(date, 0),
+        addDays: adapter.addDays(date, 1),
+        addMonths: adapter.addMonths(date, 1),
+        addYears: adapter.addYears(date, 1),
+        setTime: adapter.setTime(date, 9, 5),
+      }
+
+      expect(Object.fromEntries(Object.entries(results).map(([name, d]) => [name, label(triple(adapter, d))]))).toEqual(
+        {
+          fromDate: '48-02-10',
+          startOfMonth: '48-02-01',
+          endOfMonth: '48-02-29',
+          startOfWeek: '48-02-09',
+          addDays: '48-02-11',
+          addMonths: '48-03-10',
+          addYears: '49-02-10',
+          setTime: '48-02-10',
+        },
+      )
+      expect([adapter.getHours(results.setTime), adapter.getMinutes(results.setTime)]).toEqual([9, 5])
+    })
+
+    // 1900 is a common year and year 0 a leap year, so only February of year 0 tells the two apart.
+    it(`${entry.name} gives February of year 0 its leap day`, () => {
+      const adapter = entry.create()
+
+      const days = [
+        adapter.endOfMonth(adapter.create(0, 1, 1)),
+        adapter.addMonths(adapter.create(0, 0, 31), 1),
+        adapter.addYears(adapter.create(4, 1, 29), -4),
+      ]
+
+      expect(days.map((day) => label(triple(adapter, day)))).toEqual(['0-02-29', '0-02-29', '0-02-29'])
+    })
+  }
+})
+
 describe('Cross-adapter consistency', () => {
   if (others.length === 0) {
     it.skip('no peer-dep adapters available - skipping consistency checks', () => {})

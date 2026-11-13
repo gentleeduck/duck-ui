@@ -23,17 +23,13 @@ import { gregorianMonthLength, isGregorianLeap } from './gregorian'
 /** Leap years within the 19-year Metonic cycle. */
 const LEAP_CYCLE = [3, 6, 8, 11, 14, 17, 19]
 
-/**
- * Hebrew month names (1-indexed by position).
- */
-export const HEBREW_MONTHS = [
+const COMMON_MONTHS = [
   'Tishrei',
   'Cheshvan',
   'Kislev',
   'Tevet',
   'Shevat',
   'Adar',
-  'Adar II',
   'Nisan',
   'Iyar',
   'Sivan',
@@ -41,12 +37,21 @@ export const HEBREW_MONTHS = [
   'Av',
   'Elul',
 ]
+const LEAP_MONTHS = [...COMMON_MONTHS.slice(0, 5), 'Adar I', 'Adar II', ...COMMON_MONTHS.slice(6)]
+
+/**
+ * The name of a Hebrew month, by its 1-indexed place in the year. A leap year puts Adar I before Adar, which it
+ * calls Adar II, so the months after it move one place on.
+ */
+export function hebrewMonthName(hy: number, hm: number): string | undefined {
+  return (isLeapHebrewYear(hy) ? LEAP_MONTHS : COMMON_MONTHS)[hm - 1]
+}
 
 /**
  * Check if a Hebrew year is a leap year (has 13 months).
  */
 export function isLeapHebrewYear(hy: number): boolean {
-  return LEAP_CYCLE.includes(((hy - 1) % 19) + 1)
+  return LEAP_CYCLE.includes(((((hy - 1) % 19) + 19) % 19) + 1)
 }
 
 /**
@@ -56,47 +61,24 @@ export function hebrewMonthsInYear(hy: number): number {
   return isLeapHebrewYear(hy) ? 13 : 12
 }
 
-/**
- * Compute the number of elapsed days from the Hebrew epoch to 1 Tishrei of year `hy`.
- * Uses the classic molad-based computation with postponement rules.
- */
-function hebrewElapsedDays(hy: number): number {
-  // Months elapsed before this year
+// The molad of Tishrei, already 6 hours late so that a molad at or after noon carries to the next day,
+// then put off a day when that day is Sunday, Wednesday or Friday.
+function hebrewCalendarElapsedDays(hy: number): number {
   const monthsElapsed = Math.floor((235 * hy - 234) / 19)
-
-  // Compute the molad (new moon) in parts (1 hour = 1080 parts)
   const partsElapsed = 12084 + 13753 * monthsElapsed
-  const day = 1 + 29 * monthsElapsed + Math.floor(partsElapsed / 25920)
-  const remainingParts = partsElapsed % 25920
+  const days = 29 * monthsElapsed + Math.floor(partsElapsed / 25920)
+  return (3 * (days + 1)) % 7 < 3 ? days + 1 : days
+}
 
-  // Apply dehiyot (postponement rules)
-  const dayOfWeek = day % 7
-
-  // Dehiyah 1: Lo ADU Rosh  -  if day is Sun(0), Wed(3), or Fri(5), postpone by 1
-  if (dayOfWeek === 0 || dayOfWeek === 3 || dayOfWeek === 5) {
-    return day + 1
-  }
-
-  // Dehiyah 2: Molad Zaken  -  if molad is >= 18 hours (=19440 parts), postpone
-  if (remainingParts >= 19440) {
-    const next = day + 1
-    const nextDow = next % 7
-    return nextDow === 0 || nextDow === 3 || nextDow === 5 ? next + 1 : next
-  }
-
-  // Dehiyah 3: In a non-leap year, if molad of Tishrei falls on Tuesday
-  // at or after 9h 204p, postpone to Thursday
-  if (dayOfWeek === 2 && remainingParts >= 9924 && !isLeapHebrewYear(hy)) {
-    return day + 2
-  }
-
-  // Dehiyah 4: In the year after a leap year, if molad of Tishrei falls on Monday
-  // at or after 15h 589p, postpone to Tuesday
-  if (dayOfWeek === 1 && remainingParts >= 16789 && isLeapHebrewYear(hy - 1)) {
-    return day + 1
-  }
-
-  return day
+// The two remaining postponements, read off the lengths they would otherwise leave: a common year of 356 days
+// or a leap year of 382.
+function hebrewElapsedDays(hy: number): number {
+  const previous = hebrewCalendarElapsedDays(hy - 1)
+  const current = hebrewCalendarElapsedDays(hy)
+  const next = hebrewCalendarElapsedDays(hy + 1)
+  if (next - current === 356) return current + 2
+  if (current - previous === 382) return current + 1
+  return current
 }
 
 /**
@@ -142,7 +124,7 @@ export function hebrewMonthLength(hy: number, hm: number): number {
 }
 
 /** R.D. date of Hebrew epoch (1 Tishrei, year 1). */
-const HEBREW_EPOCH = -1373428
+const HEBREW_EPOCH = -1373427
 
 /** Convert Gregorian to R.D. (rata die) fixed day number. */
 function gregorianToFixed(gy: number, gm: number, gd: number): number {
@@ -195,17 +177,8 @@ export function toHebrew(gy: number, gm: number, gd: number): { hy: number; hm: 
     throw new RangeError(`Invalid Gregorian date: ${gy}-${gm}-${gd}`)
   }
   const rd = gregorianToFixed(gy, gm, gd)
-  // Approximate Hebrew year (Tishrei falls in Sep/Oct, so before that we're still in the previous Hebrew year)
-  let hy = gy + 3761
-
-  // Search downward - the approximation can overshoot.
-  // The offset is at most 1 year, but we allow a generous bound and throw if exhausted.
-  let i: number
-  for (i = 0; i < 100 && hebrewNewYear(hy) > rd; i++) hy--
-  if (i === 100) throw new RangeError(`Hebrew year search failed for Gregorian date: ${gy}-${gm}-${gd}`)
-  // Then search upward to find the correct year
-  for (i = 0; i < 100 && hebrewNewYear(hy + 1) <= rd; i++) hy++
-  if (i === 100) throw new RangeError(`Hebrew year search failed for Gregorian date: ${gy}-${gm}-${gd}`)
+  // Tishrei falls in September or October, so a day before it is still in the previous Hebrew year.
+  const hy = hebrewNewYear(gy + 3761) > rd ? gy + 3760 : gy + 3761
 
   // Find month - use <= so the last month (Elul) is reachable
   let hm = 1

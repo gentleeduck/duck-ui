@@ -21,6 +21,7 @@ import {
   startOfDay,
 } from 'date-fns'
 import type { Adapter } from './adapter.types'
+import { localDate } from './adapter.utils'
 import { getCachedFormatter } from './formatter-cache'
 
 /** Backed by `date-fns`. See {@link Adapter.IDateAdapter} for the contract. */
@@ -30,7 +31,7 @@ export class DateFnsAdapter implements Adapter.IDateAdapter<Date> {
   }
 
   create(year: number, month: number, day: number): Date {
-    return new Date(year, month, day)
+    return localDate(year, month, day)
   }
 
   isValid(date: Date): boolean {

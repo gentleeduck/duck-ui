@@ -233,14 +233,12 @@ export function useTimePicker(config: UseTimePicker.IUseTimePickerConfig = {}): 
           return
         }
 
-        if (e.key === 'ArrowUp') {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
           e.preventDefault()
-          increment(field)
-          return
-        }
-        if (e.key === 'ArrowDown') {
-          e.preventDefault()
-          decrement(field)
+          // A step ends any number being typed, so the next digit starts a new one.
+          typed.current = ''
+          if (e.key === 'ArrowUp') increment(field)
+          else decrement(field)
           return
         }
 

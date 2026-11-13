@@ -678,6 +678,14 @@ describe('useTimePicker', () => {
       expect([text('Hour'), text('Minute'), focused()]).toEqual(['03', '07', 'Second'])
     })
 
+    it('starts a new number after an arrow step, not on the digit typed before it', () => {
+      render(<Picker />)
+
+      press('Hour', '1', 'ArrowUp', '3')
+
+      expect(text('Hour')).toBe('03')
+    })
+
     it('starts the number over when two digits make no time', () => {
       render(<Picker />)
 

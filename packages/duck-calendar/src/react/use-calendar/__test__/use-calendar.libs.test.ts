@@ -45,6 +45,12 @@ describe('resolveFocusTarget', () => {
 
     expect(resolveFocusTarget(adapter, shown, focused)).toBe(focused)
   })
+
+  it('falls back to today when no shown day can be picked and none has taken focus', () => {
+    const shown = [month([day(new Date(2026, 2, 1), { isDisabled: true })])]
+
+    expect(adapter.isSameDay(resolveFocusTarget(adapter, shown, null), adapter.today())).toBe(true)
+  })
 })
 
 describe('buildDayProps', () => {

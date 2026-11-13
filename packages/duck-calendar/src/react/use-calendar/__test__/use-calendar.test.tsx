@@ -637,6 +637,14 @@ describe('useCalendar', () => {
       expect(tabStops(result.current)).toEqual([new Date(2020, 5, 5)])
     })
 
+    it('sits on a shown selection in multi mode even when today is shown too', () => {
+      const today = adapter.today()
+      const other = new Date(today.getFullYear(), today.getMonth(), today.getDate() === 1 ? 2 : 1)
+      const { result } = renderHook(() => useCalendar({ adapter, mode: 'multi' as const, defaultSelected: [other] }))
+
+      expect(tabStops(result.current)).toEqual([other])
+    })
+
     it('moves into the month a nav button shows', () => {
       const { result } = renderHook(() =>
         useCalendar({
@@ -1487,6 +1495,51 @@ describe('useCalendar', () => {
       expect(screen.getByLabelText(/September 30,/)).toBeTruthy()
     })
 
+    it('keeps a page turned from the keyboard inside toDate, as the nav buttons do', async () => {
+      render(
+        <Days
+          config={{
+            numberOfMonths: 2,
+            pageBehavior: 'visible',
+            fromDate: new Date(2020, 0, 1),
+            toDate: new Date(2020, 7, 20),
+          }}
+        />,
+      )
+
+      fireEvent.keyDown(screen.getByLabelText(/June 1,/), { key: 'PageDown' })
+      await nextFrame()
+
+      expect(document.activeElement?.getAttribute('aria-label')).toMatch(/August 1,/)
+      expect([screen.queryByLabelText(/July 1,/) !== null, screen.queryByLabelText(/September 1,/)]).toEqual([
+        true,
+        null,
+      ])
+    })
+
+    it('keeps a page turned back from the keyboard inside fromDate', async () => {
+      render(
+        <Days
+          config={{
+            numberOfMonths: 2,
+            pageBehavior: 'visible',
+            defaultMonth: new Date(2020, 7, 1),
+            fromDate: new Date(2020, 6, 10),
+            toDate: new Date(2020, 11, 31),
+          }}
+        />,
+      )
+
+      fireEvent.keyDown(screen.getByLabelText(/August 1,/), { key: 'ArrowLeft' })
+      await nextFrame()
+
+      expect(document.activeElement?.getAttribute('aria-label')).toMatch(/July 31,/)
+      expect([screen.queryByLabelText(/August 31,/) !== null, screen.queryByLabelText(/June 30,/)]).toEqual([
+        true,
+        null,
+      ])
+    })
+
     it('turns a whole page when the keys leave the shown months', async () => {
       render(<Days config={{ numberOfMonths: 2, pageBehavior: 'visible' }} />)
 
@@ -1559,6 +1612,17 @@ describe('useCalendar', () => {
 
       act(() => result.current.actions.selectDate(new Date(2020, 5, 4)))
       expect(result.current.state.value).toEqual({ from: june2020, to: new Date(2020, 5, 4) })
+    })
+
+    it('refuses a range a Shift-click would complete across an unavailable day', () => {
+      const { result } = renderHook(() =>
+        useCalendar({ adapter, mode: 'range' as const, defaultMonth: june2020, unavailable: [june5] }),
+      )
+
+      act(() => result.current.actions.selectDate(june2020))
+      act(() => result.current.actions.selectDate(june10, { shiftKey: true }))
+
+      expect(result.current.state.value).toEqual({ from: june2020, to: null })
     })
 
     it('refuses a range that would span an unavailable day in multi-range mode', () => {

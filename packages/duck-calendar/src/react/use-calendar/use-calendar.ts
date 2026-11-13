@@ -26,6 +26,7 @@ import {
   buildGridProps,
   buildHeaderProps,
   buildNavProps,
+  clampPage,
   emptySelectionValue,
   initialFocusFromSelected,
   pageHolding,
@@ -79,8 +80,9 @@ export function useCalendar<TDate, M extends Selection.SelectionMode = 'single'>
     onSelect,
   )
 
-  const [lastFocused, setFocusedDate] = useState<TDate>(
-    () => initialFocusFromSelected(mode, controlledSelected ?? defaultSelected) ?? adapter.today(),
+  // Null until a day takes focus, so the first tab stop can prefer a shown selection over today.
+  const [lastFocused, setFocusedDate] = useState<TDate | null>(() =>
+    initialFocusFromSelected(mode, controlledSelected ?? defaultSelected),
   )
   const [viewMode, setViewMode] = useState<Calendar.ViewMode>('days')
 
@@ -179,7 +181,8 @@ export function useCalendar<TDate, M extends Selection.SelectionMode = 'single'>
           : mode === 'multi-range'
             ? (value as Selection.DateRange<TDate>[]).at(-1)
             : undefined
-      if (open && open.to === null && !options?.shiftKey) {
+      // Only a multi-range Shift-click splits a range; in a range one completes it, past any day between.
+      if (open && open.to === null && !(options?.shiftKey && mode === 'multi-range')) {
         const blocked = findUnavailableDay(adapter, open.from, date, constraints)
         if (blocked !== null) return refuse(blocked)
       }
@@ -246,7 +249,7 @@ export function useCalendar<TDate, M extends Selection.SelectionMode = 'single'>
       if (adapter.isBefore(date, adapter.startOfMonth(first)) || adapter.isAfter(date, adapter.endOfMonth(last))) {
         setMonthState(
           pageSize > 1
-            ? pageHolding(adapter, first, pageSize, date)
+            ? clampPage(adapter, pageHolding(adapter, first, pageSize, date), pageSize, { fromDate, toDate })
             : adapter.isBefore(date, first)
               ? adapter.startOfMonth(date)
               : adapter.addMonths(adapter.startOfMonth(date), 1 - months.length),

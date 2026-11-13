@@ -49,7 +49,7 @@ export function initialFocusFromSelected<TDate, M extends Selection.SelectionMod
 export function resolveFocusTarget<TDate>(
   adapter: Adapter.IDateAdapter<TDate>,
   months: Grid.ICalendarMonth<TDate>[],
-  focused: TDate,
+  focused: TDate | null,
 ): TDate {
   let selected: TDate | undefined
   let today: TDate | undefined
@@ -58,14 +58,28 @@ export function resolveFocusTarget<TDate>(
     for (const week of month.weeks) {
       for (const day of week.days) {
         if (day.isOutside || day.isDisabled) continue
-        if (adapter.isSameDay(day.date, focused)) return focused
+        if (focused !== null && adapter.isSameDay(day.date, focused)) return focused
         if (day.isSelected) selected ??= day.date
         if (day.isToday) today ??= day.date
         first ??= day.date
       }
     }
   }
-  return selected ?? today ?? first ?? focused
+  return selected ?? today ?? first ?? focused ?? adapter.today()
+}
+
+/** `page` moved, if it must be, so its `size` months stay inside `fromDate` and `toDate`, as the nav buttons keep it. */
+export function clampPage<TDate>(
+  adapter: Adapter.IDateAdapter<TDate>,
+  page: TDate,
+  size: number,
+  { fromDate, toDate }: { fromDate?: TDate | undefined; toDate?: TDate | undefined },
+): TDate {
+  const last = toDate === undefined ? undefined : adapter.addMonths(adapter.startOfMonth(toDate), 1 - size)
+  if (last !== undefined && adapter.isAfter(page, last)) page = last
+  const first = fromDate === undefined ? undefined : adapter.startOfMonth(fromDate)
+  if (first !== undefined && adapter.isBefore(page, first)) page = first
+  return page
 }
 
 export function buildDayProps<TDate>(

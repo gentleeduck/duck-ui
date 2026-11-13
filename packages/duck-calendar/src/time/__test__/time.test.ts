@@ -798,3 +798,12 @@ describe('time', () => {
     })
   })
 })
+
+describe('incrementField with a step that does not divide the field', () => {
+  it('wraps on the steps that fit, so 7 minutes from 56 lands on 0 and back from 0 on 56', () => {
+    expect([
+      incrementField({ hour: 0, minute: 56 }, 'minute', 1, { minuteStep: 7 }).minute,
+      incrementField({ hour: 0, minute: 0 }, 'minute', -1, { minuteStep: 7 }).minute,
+    ]).toEqual([0, 56])
+  })
+})

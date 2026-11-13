@@ -37,10 +37,14 @@ export function clampTime(time: Time.ITimeValue, min?: Time.ITimeValue, max?: Ti
   return hasSeconds ? { ...rest, second: second ?? 0 } : rest
 }
 
-/** `value` moved `delta` steps of `step`, an off-step value first landing on the step in that direction. */
+/**
+ * `value` moved `delta` steps of `step`, an off-step value first landing on the step in that direction. It wraps on
+ * the steps that fit in the field, so a step that does not divide it, as 7 minutes does not, stays on its grid.
+ */
 function stepWithin(value: number, delta: number, step: number, size: number): number {
-  const base = delta > 0 ? Math.floor(value / step) * step : Math.ceil(value / step) * step
-  return (((base + delta * step) % size) + size) % size
+  const base = delta > 0 ? Math.floor(value / step) : Math.ceil(value / step)
+  const count = Math.floor((size - 1) / step) + 1
+  return ((((base + delta) % count) + count) % count) * step
 }
 
 /** Increment or decrement a specific field, wrapping at boundaries. */

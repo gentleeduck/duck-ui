@@ -1,46 +1,35 @@
 'use client'
 
-import { NativeAdapter } from '@gentleduck/calendar'
 import { Calendar } from '@gentleduck/registry-ui/calendar'
 import * as React from 'react'
 
-const adapter = new NativeAdapter()
+const BOOKED_DAYS = [3, 4, 10, 11, 17, 24, 25]
 
-const BOOKED_DATES = [
-  new Date(2026, 2, 3),
-  new Date(2026, 2, 4),
-  new Date(2026, 2, 10),
-  new Date(2026, 2, 11),
-  new Date(2026, 2, 17),
-  new Date(2026, 2, 24),
-  new Date(2026, 2, 25),
-]
-
-function isBooked(date: Date) {
-  return BOOKED_DATES.some((d) => adapter.isSameDay(d, date))
+function thisMonthsDates() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth()
+  return {
+    today: new Date(year, month, now.getDate()),
+    thisMonth: new Date(year, month, 1),
+    booked: BOOKED_DAYS.map((day) => new Date(year, month, day)),
+  }
 }
 
 export default function Demo() {
+  const [{ today, thisMonth, booked }] = React.useState(thisMonthsDates)
   const [date, setDate] = React.useState<Date | null>(null)
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
   return (
     <Calendar
       className="rounded-md border shadow-sm"
       mode="single"
-      defaultMonth={new Date(2026, 2, 1)}
+      defaultMonth={thisMonth}
       selected={date}
       onSelect={setDate}
-      disabled={(d) => isBooked(d)}
+      unavailable={booked}
       fromDate={today}
       showDropdowns={false}
-      renderDay={(day, children) => {
-        if (day.isDisabled && isBooked(day.date)) {
-          return <span className="text-muted-foreground/40 line-through">{children}</span>
-        }
-        return children
-      }}
       renderFooter={() => (
         <div className="flex items-center gap-4 px-0 pt-2 text-muted-foreground text-xs">
           <div className="flex items-center gap-1.5">

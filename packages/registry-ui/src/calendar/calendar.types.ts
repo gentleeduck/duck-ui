@@ -88,6 +88,21 @@ export namespace ICalendarProps {
     toDate?: Date
     /** Called when the user presses Escape. */
     onDismiss?: () => void
+    /** First day of the week, 0 for Sunday. Defaults to the locale's first day, or Sunday with no locale. */
+    weekStartDay?: Adapter.WeekStartDay
+    /** Starts each week with its ISO week number. Default `false`. */
+    showWeekNumber?: boolean
+    /**
+     * With several months shown, whether the nav buttons and PageUp/PageDown move one month (`'single'`)
+     * or the whole view (`'visible'`). Default `'single'`.
+     */
+    pageBehavior?: 'single' | 'visible'
+    /** Dates that stay focusable but cannot be picked, such as booked days. A range cannot span one. */
+    unavailable?: Date[] | ((date: Date) => boolean)
+    /** Keeps the selection as it is, while the keys still move focus. */
+    readOnly?: boolean
+    /** Marks the selection invalid. A selection holding a day that cannot be picked is invalid without it. */
+    invalid?: boolean
     /**
      * Show month and year dropdowns in the header.
      * Default `true`. Set to `false` for a minimal caption.

@@ -62,6 +62,9 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
     'data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground',
     day.isOutside && 'text-muted-foreground/50',
     'data-[today=true]:font-semibold',
+    'data-[unavailable=true]:text-muted-foreground data-[unavailable=true]:line-through',
+    dayProps['data-invalid'] &&
+      'data-[range-end=true]:bg-destructive data-[range-middle=true]:bg-destructive/15 data-[range-start=true]:bg-destructive data-[selected-single=true]:bg-destructive data-[range-middle=true]:text-destructive',
     'group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:rounded-md group-data-[focused=true]/day:border group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-1 group-data-[focused=true]/day:ring-ring/50',
     '[&>span]:text-xs [&>span]:opacity-70',
   )
@@ -70,7 +73,6 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
     disabled: day.isDisabled,
     tabIndex: day.isDisabled ? -1 : dayProps.tabIndex,
     onClick: (e: React.MouseEvent) => {
-      if (day.isDisabled) return
       dayProps.onClick({ shiftKey: e.shiftKey })
       onFocusDate(day.date)
       ;(e.currentTarget as HTMLElement).blur()
@@ -101,6 +103,7 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
         day.isRangeStart && 'rounded-s-md bg-accent',
         day.isRangeEnd && 'rounded-e-md bg-accent',
         day.isRangeMiddle && 'bg-accent',
+        isInRange && dayProps['data-invalid'] && 'bg-destructive/15',
         isInRange && isFirstInRow && !day.isRangeStart && 'rounded-s-md',
         isInRange && isLastInRow && !day.isRangeEnd && 'rounded-e-md',
         day.isOutside && !day.isHidden && 'text-muted-foreground',

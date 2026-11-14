@@ -34,7 +34,7 @@ export default function Demo() {
       </Label>
       <div className="relative flex gap-2">
         <Input
-          className="bg-background pr-10"
+          className="bg-background pe-10"
           id="date"
           onChange={(e) => {
             setValue(e.currentTarget.value)
@@ -57,7 +57,7 @@ export default function Demo() {
           <PopoverTrigger asChild>
             <Button
               variant="nothing"
-              className="absolute top-1/2 right-1 h-fit -translate-y-1/2 p-1 px-1.5 [&_svg]:w-4"
+              className="absolute end-1 top-1/2 h-fit -translate-y-1/2 p-1 px-1.5 [&_svg]:w-4"
               id="date-picker">
               <CalendarIcon />
               <span className="sr-only">Select date</span>

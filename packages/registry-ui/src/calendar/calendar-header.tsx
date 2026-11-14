@@ -109,15 +109,7 @@ function DropdownTrigger({ label, open, onClick }: { label: string; open: boolea
   )
 }
 
-function NavButton({
-  className,
-  children,
-  onDrag: _d,
-  onDragStart: _ds,
-  onDragEnd: _de,
-  onAnimationStart: _as,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+function NavButton({ className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button type="button" className={className} {...props}>
       {children}

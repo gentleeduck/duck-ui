@@ -6,7 +6,7 @@ import { useDirection } from '@gentleduck/primitives/direction'
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import * as React from 'react'
 import { buttonVariants } from '../button'
-import { callCalendarSelectHandler } from './calendar.libs'
+import { callCalendarSelectHandler, getCachedNumberFormat } from './calendar.libs'
 import type { ICalendarProps } from './calendar.types'
 import { CalendarDayCell } from './calendar-day'
 import { CalendarHeader } from './calendar-header'
@@ -34,6 +34,12 @@ const Calendar = React.forwardRef<HTMLDivElement, ICalendarProps>(
       fromDate,
       toDate,
       onDismiss,
+      weekStartDay,
+      showWeekNumber = false,
+      pageBehavior,
+      unavailable,
+      readOnly,
+      invalid,
       showDropdowns = true,
       yearRange,
       renderDay,
@@ -52,7 +58,7 @@ const Calendar = React.forwardRef<HTMLDivElement, ICalendarProps>(
     const calendar = useCalendar({
       adapter,
       mode,
-      locale: locale ? { locale, weekStartDay: 0, direction } : { weekStartDay: 0, direction },
+      locale: { locale, weekStartDay, direction },
       month: controlledMonth,
       defaultMonth,
       selected,
@@ -65,6 +71,10 @@ const Calendar = React.forwardRef<HTMLDivElement, ICalendarProps>(
       fromDate,
       toDate,
       onDismiss,
+      pageBehavior,
+      unavailable,
+      readOnly,
+      invalid,
     })
 
     const { state, getDayProps, getGridProps, getNavProps, getHeaderProps, announcer } = calendar
@@ -154,6 +164,7 @@ const Calendar = React.forwardRef<HTMLDivElement, ICalendarProps>(
                     {/* biome-ignore lint/a11y/useSemanticElements: role="row" on div per WAI-ARIA grid pattern */}
                     {/* biome-ignore lint/a11y/useFocusableInteractive: weekday header row is not interactive */}
                     <div role="row" className="flex">
+                      {showWeekNumber && <div aria-hidden="true" className="w-(--gentleduck-calendar-cell) shrink-0" />}
                       {state.weekdays.map((day, index) => (
                         // biome-ignore lint/a11y/useSemanticElements: columnheader on div per WAI-ARIA grid pattern
                         // biome-ignore lint/a11y/useFocusableInteractive: weekday headers are not interactive
@@ -177,6 +188,18 @@ const Calendar = React.forwardRef<HTMLDivElement, ICalendarProps>(
                       // biome-ignore lint/a11y/useSemanticElements: role="row" on div per WAI-ARIA grid pattern
                       // biome-ignore lint/a11y/useFocusableInteractive: grid rows are not interactive
                       <div key={week.weekNumber} role="row" className="mt-2 flex w-full">
+                        {showWeekNumber && (
+                          // biome-ignore lint/a11y/useSemanticElements: rowheader on div per WAI-ARIA grid pattern
+                          // biome-ignore lint/a11y/useFocusableInteractive: a week number is read, never focused
+                          <div
+                            role="rowheader"
+                            aria-label={`Week ${week.weekNumber}`}
+                            className="flex w-(--gentleduck-calendar-cell) shrink-0 select-none items-center justify-center text-[0.8rem] text-muted-foreground">
+                            {formatLocale
+                              ? getCachedNumberFormat(formatLocale).format(week.weekNumber)
+                              : week.weekNumber}
+                          </div>
+                        )}
                         {week.days.map((day, dayIdx) => {
                           const {
                             onMouseEnter: _,
@@ -186,7 +209,7 @@ const Calendar = React.forwardRef<HTMLDivElement, ICalendarProps>(
                           } = getDayProps(day)
                           const isSelectedSingle =
                             day.isSelected && !day.isRangeStart && !day.isRangeEnd && !day.isRangeMiddle
-                          const isFocused = keyboardActive && day.date.getTime() === state.focusedDate.getTime()
+                          const isFocused = keyboardActive && dayProps['data-focused'] === 'true'
                           return (
                             <CalendarDayCell
                               key={day.date.getTime()}

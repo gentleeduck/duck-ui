@@ -45,7 +45,7 @@ export default function Demo() {
                 <PopoverTrigger asChild>
                   <Button
                     id="form-rhf-calendar-dob"
-                    className={cn('w-[240px] px-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                    className={cn('w-[240px] px-3 text-start font-normal', !field.value && 'text-muted-foreground')}
                     variant="outline"
                     aria-invalid={fieldState.invalid}>
                     <div className="flex w-full items-center justify-between">

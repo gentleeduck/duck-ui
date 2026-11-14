@@ -47,7 +47,7 @@ export default function Demo() {
                   <Button
                     id="form-rhf-date-picker-dob"
                     className={cn(
-                      'w-60 px-2 text-left font-normal [&_svg]:w-4',
+                      'w-60 px-2 text-start font-normal [&_svg]:w-4',
                       !field.value && 'text-muted-foreground',
                     )}
                     variant="outline"

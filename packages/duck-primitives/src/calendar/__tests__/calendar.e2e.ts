@@ -123,6 +123,7 @@ test.describe('Calendar', () => {
     await visitStory(page, 'calendar--views')
     const calendar = page.getByTestId('calendar')
 
+    await page.getByRole('button', { name: 'Pick a year' }).click()
     await page.getByRole('gridcell', { name: '2028', exact: true }).click()
     await expect(calendar).toHaveAttribute('data-view', 'months')
     await expect(header(page)).toHaveText('March 2028')
@@ -130,6 +131,26 @@ test.describe('Calendar', () => {
     await page.getByRole('gridcell', { name: /^Jul/ }).click()
     await expect(calendar).toHaveAttribute('data-view', 'days')
     await expect(header(page)).toHaveText('July 2028')
+    await page.getByRole('gridcell', { name: /July 14, 2028/ }).click()
+    await expect(page.getByRole('gridcell', { name: /July 14, 2028/ })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  test('shows only the picker or the days its view names', async ({ page }) => {
+    await visitStory(page, 'calendar--views')
+
+    const shown = () =>
+      Promise.all(
+        ['calendar-year-view', 'calendar-month-view', 'calendar-grid'].map((slot) =>
+          page.locator(`[data-slot="${slot}"]`).first().isVisible(),
+        ),
+      )
+    const days = await shown()
+    await page.getByRole('button', { name: 'Pick a year' }).click()
+
+    expect([days, await shown()]).toEqual([
+      [false, false, true],
+      [true, false, false],
+    ])
   })
 
   test('opens the view its trigger names', async ({ page }) => {

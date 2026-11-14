@@ -155,10 +155,9 @@ export const Views = () => (
     <Calendar.Header />
     <Calendar.ViewTrigger view="years">Pick a year</Calendar.ViewTrigger>
     <Calendar.ViewTrigger view="months">Pick a month</Calendar.ViewTrigger>
-    <div className={styles.months}>
-      <Calendar.YearView />
-      <Calendar.MonthView />
-    </div>
+    <Calendar.YearView />
+    <Calendar.MonthView />
+    <Calendar.Grid />
   </Calendar.Root>
 )
 

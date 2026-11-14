@@ -73,3 +73,9 @@
 .calendar [data-invalid] {
   outline: 2px solid crimson;
 }
+
+.calendar:not([data-view="years"]) [data-slot="calendar-year-view"],
+.calendar:not([data-view="months"]) [data-slot="calendar-month-view"],
+.calendar:not([data-view="days"]) [data-slot="calendar-grid"] {
+  display: none;
+}

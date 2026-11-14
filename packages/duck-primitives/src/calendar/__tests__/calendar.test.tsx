@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock } from 'bun:test'
+import { beforeEach, describe, expect, it, mock, setSystemTime } from 'bun:test'
 import { NativeAdapter } from '@gentleduck/calendar'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import * as React from 'react'
@@ -883,11 +883,14 @@ describe('CalendarMonthView', () => {
   })
 
   it('tells assistive technology which month is the current one', () => {
-    const { container } = renderCalendar({}, <CalendarMonthView />)
+    setSystemTime(new Date(2026, 4, 15))
+    try {
+      const { container } = renderCalendar({}, <CalendarMonthView />)
 
-    expect(container.querySelector('[aria-current="date"]')?.getAttribute('data-month')).toBe(
-      String(new Date().getMonth()),
-    )
+      expect(container.querySelector('[aria-current="date"]')?.getAttribute('data-month')).toBe('4')
+    } finally {
+      setSystemTime()
+    }
   })
 })
 

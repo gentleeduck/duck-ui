@@ -40,7 +40,7 @@ export function CalendarGrid({
           <div
             key={d}
             role="columnheader"
-            className="border-border border-r px-2 py-2.5 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wide last:border-r-0">
+            className="border-border border-e px-2 py-2.5 text-center font-semibold text-muted-foreground text-xs uppercase tracking-wide last:border-e-0">
             {d}
           </div>
         ))}

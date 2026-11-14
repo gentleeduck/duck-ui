@@ -63,7 +63,7 @@ export function CalendarDayCell({
       role="gridcell"
       tabIndex={inMonth ? 0 : -1}
       className={cn(
-        'flex min-h-28 flex-col overflow-hidden border-border border-r p-1.5 transition-colors last:border-r-0',
+        'flex min-h-28 flex-col overflow-hidden border-border border-e p-1.5 transition-colors last:border-e-0',
         today && 'bg-primary/10 ring-1 ring-primary/30 ring-inset',
         wkend && !today && 'bg-muted/20',
         !inMonth && 'opacity-40',

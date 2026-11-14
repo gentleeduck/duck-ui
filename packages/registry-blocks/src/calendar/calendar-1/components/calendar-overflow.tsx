@@ -53,7 +53,7 @@ export function CalendarOverflow({
         <button
           type="button"
           tabIndex={0}
-          className="w-full cursor-pointer rounded bg-muted/60 px-1.5 py-0.5 text-left font-medium text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="w-full cursor-pointer rounded bg-muted/60 px-1.5 py-0.5 text-start font-medium text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           onClick={(e) => e.stopPropagation()}>
           +{hiddenCount} more
         </button>

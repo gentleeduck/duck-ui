@@ -30,7 +30,7 @@ function WeekEventBlock({
       <button
         type="button"
         className={cn(
-          'absolute inset-x-0.5 z-10 rounded-md px-1.5 py-0.5 text-left text-[10px] leading-tight shadow-sm transition-shadow hover:shadow-md',
+          'absolute inset-x-0.5 z-10 rounded-md px-1.5 py-0.5 text-start text-[10px] leading-tight shadow-sm transition-shadow hover:shadow-md',
           colors.bg,
           colors.text,
         )}
@@ -72,13 +72,13 @@ export function CalendarWeekView({
         <div />
         {days.map((d, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: days order is stable within a week
-          <div key={i} className={cn('border-l px-2 py-2 text-center', isWeekend(d) && 'bg-muted/30')}>
+          <div key={i} className={cn('border-s px-2 py-2 text-center', isWeekend(d) && 'bg-muted/30')}>
             <span className="font-semibold text-[11px] text-muted-foreground uppercase tracking-wide">
               {WEEKDAYS[i]}
             </span>
             <span
               className={cn(
-                'ml-1.5 inline-flex size-6 items-center justify-center rounded-full font-medium text-xs',
+                'ms-1.5 inline-flex size-6 items-center justify-center rounded-full font-medium text-xs',
                 isToday(d) && 'bg-primary font-bold text-primary-foreground',
               )}>
               {d.getDate()}
@@ -93,7 +93,7 @@ export function CalendarWeekView({
           <div>
             {HOURS.map((hour) => (
               <div key={hour} className="relative border-border/50 border-b" style={{ height: HOUR_HEIGHT }}>
-                <span className="absolute -top-2.5 right-2 text-[10px] text-muted-foreground">
+                <span className="absolute end-2 -top-2.5 text-[10px] text-muted-foreground">
                   {hour > 0 ? formatHour(hour) : ''}
                 </span>
               </div>
@@ -107,7 +107,7 @@ export function CalendarWeekView({
               // biome-ignore lint/a11y/useSemanticElements: WAI-ARIA grid pattern requires div with role="gridcell"
               <div
                 key={d.getTime()}
-                className={cn('relative border-l', isWeekend(d) && 'bg-muted/10')}
+                className={cn('relative border-s', isWeekend(d) && 'bg-muted/10')}
                 onClick={() => onDayClick(dateStr)}
                 role="gridcell"
                 tabIndex={0}

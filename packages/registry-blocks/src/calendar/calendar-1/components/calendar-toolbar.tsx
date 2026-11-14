@@ -83,9 +83,9 @@ export function CalendarToolbar({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
-              <FilterIcon className="mr-1.5 size-3.5" />
+              <FilterIcon className="me-1.5 size-3.5" />
               {FILTER_LABELS[filterMode]}
-              <ChevronDownIcon className="ml-1 size-3" />
+              <ChevronDownIcon className="ms-1 size-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -116,9 +116,9 @@ export function CalendarToolbar({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
-              <CalendarIcon className="mr-1.5 size-3.5" />
+              <CalendarIcon className="me-1.5 size-3.5" />
               {VIEW_LABELS[calendarView]}
-              <ChevronDownIcon className="ml-1 size-3" />
+              <ChevronDownIcon className="ms-1 size-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -130,7 +130,7 @@ export function CalendarToolbar({
         </DropdownMenu>
 
         <Button size="sm" onClick={onAddEvent}>
-          <PlusIcon className="mr-1.5 size-3.5" />
+          <PlusIcon className="me-1.5 size-3.5" />
           Add event
         </Button>
       </div>

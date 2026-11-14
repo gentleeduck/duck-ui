@@ -16,7 +16,7 @@ export function CalendarEventChip({ event, onSelect }: ICalendarEventChipProps) 
       type="button"
       tabIndex={0}
       className={cn(
-        'flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[11px] leading-tight',
+        'flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-start text-[11px] leading-tight',
         'cursor-pointer transition-all hover:shadow-sm',
         colors.bg,
       )}
@@ -37,7 +37,7 @@ export function CalendarEventChip({ event, onSelect }: ICalendarEventChipProps) 
         <span className={cn('size-1.5 shrink-0 rounded-full', colors.dot)} />
       )}
       <span className={cn('truncate font-medium', colors.text)}>{event.title}</span>
-      <span className="ml-auto shrink-0 text-muted-foreground/70 tabular-nums">{event.time}</span>
+      <span className="ms-auto shrink-0 text-muted-foreground/70 tabular-nums">{event.time}</span>
     </button>
   )
 }

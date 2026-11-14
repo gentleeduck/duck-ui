@@ -40,7 +40,7 @@ export function CalendarYearView({ viewedDate, events, onMonthClick }: ICalendar
             key={MONTH_NAMES[month]}
             type="button"
             onClick={() => onMonthClick(month)}
-            className="flex flex-col gap-1 rounded-lg border p-3 text-left transition-colors hover:bg-accent/50">
+            className="flex flex-col gap-1 rounded-lg border p-3 text-start transition-colors hover:bg-accent/50">
             <span className="mb-1 font-semibold text-sm">{MONTH_NAMES[month]}</span>
             <div className="grid grid-cols-7 gap-px text-center text-[10px]">
               {WEEKDAY_LETTERS.map((l) => (

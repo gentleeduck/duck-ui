@@ -37,7 +37,7 @@ function EventBlock({
       <button
         type="button"
         className={cn(
-          'absolute right-4 left-1 z-10 rounded-lg px-3 py-1.5 text-left text-xs shadow-sm transition-shadow hover:shadow-md',
+          'absolute start-1 end-4 z-10 rounded-lg px-3 py-1.5 text-start text-xs shadow-sm transition-shadow hover:shadow-md',
           colors.bg,
           colors.text,
         )}
@@ -70,14 +70,14 @@ export function CalendarDayView({
           <div className="w-16 shrink-0">
             {HOURS.map((hour) => (
               <div key={hour} className="relative border-border/50 border-b" style={{ height: HOUR_HEIGHT }}>
-                <span className="absolute -top-3 right-2 text-[11px] text-muted-foreground">
+                <span className="absolute end-2 -top-3 text-[11px] text-muted-foreground">
                   {hour > 0 ? formatHour(hour) : ''}
                 </span>
               </div>
             ))}
           </div>
           {/* Timeline */}
-          <div className="relative flex-1 border-l">
+          <div className="relative flex-1 border-s">
             {HOURS.map((hour) => (
               <div key={hour} className="border-border/50 border-b" style={{ height: HOUR_HEIGHT }} />
             ))}

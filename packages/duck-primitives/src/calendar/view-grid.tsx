@@ -3,7 +3,8 @@ import { Primitive } from '../primitive-elements'
 import type { ICalendar } from './calendar.types'
 
 export const ViewGrid = React.forwardRef<HTMLDivElement, ICalendar.IViewGridProps>((props, forwardedRef) => {
-  const { cells, columns, selected, rtl, cellSlot, onPage, ...gridProps } = props
+  const { cells, columns: asked, selected, rtl, cellSlot, onPage, ...gridProps } = props
+  const columns = Number.isInteger(asked) && asked > 0 ? asked : 3
   const [focused, setFocused] = React.useState(Math.max(selected, 0))
   const buttons = React.useRef<(HTMLButtonElement | null)[]>([])
   const rows = Array.from({ length: Math.ceil(cells.length / columns) }, (_, row) =>

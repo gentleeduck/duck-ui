@@ -19,6 +19,7 @@ const Calendar = React.forwardRef<HTMLDivElement, ICalendar.IRootProps>(
       adapter,
       mode,
       locale,
+      dir,
       month,
       defaultMonth,
       selected,
@@ -41,7 +42,7 @@ const Calendar = React.forwardRef<HTMLDivElement, ICalendar.IRootProps>(
       ...divProps
     } = props
 
-    const direction = useDirection(locale?.direction)
+    const direction = useDirection(dir === 'ltr' || dir === 'rtl' ? dir : locale?.direction)
     const config: UseCalendar.IUseCalendarConfig<Date, Selection.SelectionMode> = {
       adapter,
       mode,

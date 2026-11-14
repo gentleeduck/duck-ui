@@ -87,6 +87,26 @@ describe('Calendar (root)', () => {
 
     expect(container.querySelector('[data-slot="calendar"]')?.getAttribute('dir')).toBe('ltr')
   })
+
+  it('takes a dir given to it over the provider, for the arrow keys as well as the layout', async () => {
+    const { container } = render(
+      <DirectionProvider dir="ltr">
+        <Calendar adapter={adapter} mode="single" defaultMonth={march2026} dir="rtl">
+          <CalendarGrid />
+        </Calendar>
+      </DirectionProvider>,
+    )
+    const first = within(container).getByRole('gridcell', { name: 'Sunday, March 1, 2026' })
+    act(() => first.focus())
+
+    fireEvent.keyDown(first, { key: 'ArrowLeft' })
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    expect([
+      container.querySelector('[data-slot="calendar"]')?.getAttribute('dir'),
+      document.activeElement?.getAttribute('aria-label'),
+    ]).toEqual(['rtl', 'Monday, March 2, 2026'])
+  })
 })
 
 describe('CalendarHeader', () => {
@@ -699,6 +719,21 @@ describe('CalendarMonthView', () => {
     expect(rowsOf(four.container.querySelector('[data-slot="calendar-month-view"]'))).toEqual(
       Array(3).fill(Array(4).fill('gridcell')),
     )
+  })
+
+  it('lays out three columns when the count it is given cannot make a row', () => {
+    const rowsOf = (view: Element | null) =>
+      Array.from(view?.querySelectorAll('[role="row"]') ?? [], (row) =>
+        Array.from(row.children, (cell) => cell.getAttribute('role')),
+      )
+    const counts = [0, -2, 2.5].map((columns) => {
+      const { container, unmount } = renderCalendar({}, <CalendarMonthView columns={columns} />)
+      const rows = rowsOf(container.querySelector('[data-slot="calendar-month-view"]'))
+      unmount()
+      return rows
+    })
+
+    expect(counts).toEqual(Array(3).fill(Array(4).fill(Array(3).fill('gridcell'))))
   })
 
   it('marks the shown month selected and gives it the one tab stop', () => {

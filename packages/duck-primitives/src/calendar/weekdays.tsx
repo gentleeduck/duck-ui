@@ -5,9 +5,7 @@ import type { ICalendar } from './calendar.types'
 
 const WEEKDAYS_NAME = 'CalendarWeekdays'
 
-type CalendarWeekdaysElement = React.ComponentRef<typeof Primitive.div>
-
-export const CalendarWeekdays = React.forwardRef<CalendarWeekdaysElement, ICalendar.IWeekdaysProps>(
+export const CalendarWeekdays = React.forwardRef<HTMLDivElement, ICalendar.IWeekdaysProps>(
   (props: ICalendar.IScoped<ICalendar.IWeekdaysProps>, forwardedRef) => {
     const { __scopeCalendar, renderWeekday, children, ...weekdayProps } = props
     const context = useCalendarContext(WEEKDAYS_NAME, __scopeCalendar)
@@ -15,8 +13,14 @@ export const CalendarWeekdays = React.forwardRef<CalendarWeekdaysElement, ICalen
 
     return (
       <Primitive.div role="row" data-slot="calendar-weekdays" {...weekdayProps} ref={forwardedRef}>
-        {children ??
-          weekdays.map((day, i) => <WeekdayCell key={day} day={day} index={i} renderWeekday={renderWeekday} />)}
+        {children ?? (
+          <>
+            {context.showWeekNumber && <span aria-hidden="true" data-slot="calendar-week-number-header" />}
+            {weekdays.map((day, i) => (
+              <WeekdayCell key={day} day={day} index={i} renderWeekday={renderWeekday} />
+            ))}
+          </>
+        )}
       </Primitive.div>
     )
   },

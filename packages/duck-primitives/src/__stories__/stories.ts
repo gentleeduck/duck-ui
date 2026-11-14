@@ -3,6 +3,7 @@ import * as accordion from '../accordion/__stories__/accordion.stories'
 import * as alertDialog from '../alert-dialog/__stories__/alert-dialog.stories'
 import * as arrow from '../arrow/__stories__/arrow.stories'
 import * as avatar from '../avatar/__stories__/avatar.stories'
+import * as calendar from '../calendar/__stories__/calendar.stories'
 import * as checkers from '../checkers/__stories__/checkers.stories'
 import * as command from '../command/__stories__/command.stories'
 import * as contextMenu from '../context-menu/__stories__/context-menu.stories'
@@ -58,6 +59,7 @@ for (const module of [
   alertDialog,
   arrow,
   avatar,
+  calendar,
   checkers,
   command,
   contextMenu,

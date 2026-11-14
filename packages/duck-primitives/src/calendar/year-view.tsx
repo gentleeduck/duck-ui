@@ -3,46 +3,50 @@ import * as React from 'react'
 import { Primitive } from '../primitive-elements'
 import { useCalendarContext } from './calendar'
 import type { ICalendar } from './calendar.types'
+import { ViewGrid } from './view-grid'
 
 const YEAR_VIEW_NAME = 'CalendarYearView'
 
-type CalendarYearViewElement = React.ComponentRef<typeof Primitive.div>
-
-export const CalendarYearView = React.forwardRef<CalendarYearViewElement, ICalendar.IYearViewProps>(
+export const CalendarYearView = React.forwardRef<HTMLDivElement, ICalendar.IYearViewProps>(
   (props: ICalendar.IScoped<ICalendar.IYearViewProps>, forwardedRef) => {
-    const { __scopeCalendar, children, ...viewProps } = props
+    const { __scopeCalendar, columns = 3, children, ...viewProps } = props
     const context = useCalendarContext(YEAR_VIEW_NAME, __scopeCalendar)
-    const { adapter } = context
+    const { adapter, locale, actions } = context
     const { month } = context.state
 
     const years = React.useMemo(() => buildDecadeView(adapter, month), [adapter, month])
-
-    const handleYearSelect = React.useCallback(
-      (year: number) => {
-        context.actions.setMonth(goToYear(adapter, month, year))
-        context.actions.setViewMode('months')
+    const cells = years.map((entry) => ({
+      label: String(entry.year),
+      isCurrent: entry.isCurrent,
+      data: { 'data-year': entry.year },
+      onPick: () => {
+        actions.setMonth(goToYear(adapter, month, entry.year))
+        actions.setViewMode('months')
       },
-      [adapter, month, context.actions],
-    )
+    }))
 
+    if (children !== undefined) {
+      return (
+        <Primitive.div data-slot="calendar-year-view" {...viewProps} ref={forwardedRef}>
+          {children}
+        </Primitive.div>
+      )
+    }
+
+    const shown = adapter.getYear(month)
     return (
-      <Primitive.div role="grid" data-slot="calendar-year-view" {...viewProps} ref={forwardedRef}>
-        {children ??
-          years.map((entry) => (
-            <Primitive.button
-              key={entry.year}
-              type="button"
-              role="gridcell"
-              aria-label={`${entry.year}`}
-              aria-current={entry.isCurrent ? 'date' : undefined}
-              data-slot="calendar-year"
-              data-current={entry.isCurrent ? 'true' : undefined}
-              data-year={entry.year}
-              onClick={() => handleYearSelect(entry.year)}>
-              {entry.year}
-            </Primitive.button>
-          ))}
-      </Primitive.div>
+      <ViewGrid
+        data-slot="calendar-year-view"
+        aria-label={`${years[0]?.year} - ${years[years.length - 1]?.year}`}
+        cells={cells}
+        columns={columns}
+        selected={years.findIndex((entry) => entry.year === shown)}
+        rtl={locale?.direction === 'rtl'}
+        cellSlot="calendar-year"
+        onPage={(step) => actions.setMonth(adapter.addYears(month, step * 10))}
+        {...viewProps}
+        ref={forwardedRef}
+      />
     )
   },
 )

@@ -3,8 +3,8 @@ import { buildCalendarMonth, NativeAdapter } from '@gentleduck/calendar'
 import { render } from '@testing-library/react'
 import axe from 'axe-core'
 import * as React from 'react'
-import type { ICalendarRootProps } from '../calendar'
 import { Calendar } from '../calendar'
+import type { ICalendar } from '../calendar.types'
 import { CalendarDay } from '../day'
 import { CalendarGrid } from '../grid'
 import { CalendarHeader } from '../header'
@@ -28,7 +28,7 @@ function getWeeks(viewDate: Date = march2026) {
  * Full calendar with all sub-components rendered,
  * including actual day cells from buildCalendarMonth.
  */
-function FullDaysCalendar(props: Partial<ICalendarRootProps> & { weeks?: ReturnType<typeof getWeeks> }) {
+function FullDaysCalendar(props: Partial<ICalendar.IRootProps> & { weeks?: ReturnType<typeof getWeeks> }) {
   const { weeks: weeksProp, ...rest } = props
   const weeks = weeksProp ?? getWeeks()
   return (
@@ -72,11 +72,7 @@ describe('Calendar a11y  -  axe automated checks', () => {
     expect(results.violations).toEqual([])
   })
 
-  // MonthView and YearView render gridcells directly inside the grid without
-  // row wrappers. We exclude the aria-required-children and aria-required-parent
-  // rules here so the remaining rules are validated. The missing row structure
-  // is tracked as a known component limitation.
-  it('month view has no axe violations (excluding row-structure rules)', async () => {
+  it('month view has no axe violations', async () => {
     const { container } = render(
       <Calendar adapter={adapter} mode="single" defaultMonth={march2026}>
         <CalendarHeader />
@@ -84,16 +80,30 @@ describe('Calendar a11y  -  axe automated checks', () => {
         <CalendarMonthView />
       </Calendar>,
     )
-    const results = await axe.run(container, {
-      rules: {
-        'aria-required-children': { enabled: false },
-        'aria-required-parent': { enabled: false },
-      },
-    })
+    const results = await axe.run(container)
     expect(results.violations).toEqual([])
   })
 
-  it('year view has no axe violations (excluding row-structure rules)', async () => {
+  it('days view with week numbers, unavailable days and an invalid selection has no axe violations', async () => {
+    const { container } = render(
+      <Calendar
+        adapter={adapter}
+        mode="single"
+        defaultMonth={march2026}
+        selected={new Date(2026, 2, 10)}
+        unavailable={[new Date(2026, 2, 10)]}
+        readOnly
+        showWeekNumber>
+        <CalendarHeader />
+        <CalendarNav />
+        <CalendarGrid />
+      </Calendar>,
+    )
+    const results = await axe.run(container)
+    expect(results.violations).toEqual([])
+  })
+
+  it('year view has no axe violations', async () => {
     const { container } = render(
       <Calendar adapter={adapter} mode="single" defaultMonth={march2026}>
         <CalendarHeader />
@@ -101,12 +111,7 @@ describe('Calendar a11y  -  axe automated checks', () => {
         <CalendarYearView />
       </Calendar>,
     )
-    const results = await axe.run(container, {
-      rules: {
-        'aria-required-children': { enabled: false },
-        'aria-required-parent': { enabled: false },
-      },
-    })
+    const results = await axe.run(container)
     expect(results.violations).toEqual([])
   })
 
@@ -160,7 +165,7 @@ describe('Calendar a11y  -  structural assertions', () => {
     expect(grid?.getAttribute('aria-roledescription')).toBe('calendar')
   })
 
-  it.skip('exactly one tabIndex=0 in the grid (roving tabindex)', () => {
+  it('exactly one tabIndex=0 in the grid (roving tabindex)', () => {
     const { container } = render(<FullDaysCalendar />)
     const grid = container.querySelector('[data-slot="calendar-grid"]')
     expect(grid).not.toBeNull()
@@ -170,7 +175,7 @@ describe('Calendar a11y  -  structural assertions', () => {
     expect(focusable.length).toBe(1)
   })
 
-  it.skip('all other day buttons have tabIndex=-1', () => {
+  it('all other day buttons have tabIndex=-1', () => {
     const { container } = render(<FullDaysCalendar />)
     const grid = container.querySelector('[data-slot="calendar-grid"]')
     const dayButtons = grid!.querySelectorAll('[data-slot="calendar-day"]')

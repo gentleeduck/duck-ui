@@ -7,10 +7,7 @@ import type { ICalendar } from './calendar.types'
 const NAV_NAME = 'CalendarNav'
 const NAV_BUTTON_NAME = 'CalendarNavButton'
 
-type CalendarNavElement = React.ComponentRef<typeof Primitive.div>
-type CalendarNavButtonElement = React.ComponentRef<typeof Primitive.button>
-
-export const CalendarNav = React.forwardRef<CalendarNavElement, ICalendar.INavProps>(
+export const CalendarNav = React.forwardRef<HTMLDivElement, ICalendar.INavProps>(
   (props: ICalendar.IScoped<ICalendar.INavProps>, forwardedRef) => {
     const { __scopeCalendar, children, ...navProps } = props
     useCalendarContext(NAV_NAME, __scopeCalendar)
@@ -35,7 +32,7 @@ export const CalendarNav = React.forwardRef<CalendarNavElement, ICalendar.INavPr
 
 CalendarNav.displayName = NAV_NAME
 
-export const CalendarPrevButton = React.forwardRef<CalendarNavButtonElement, ICalendar.IPrevButtonProps>(
+export const CalendarPrevButton = React.forwardRef<HTMLButtonElement, ICalendar.IPrevButtonProps>(
   (props: ICalendar.IScoped<ICalendar.IPrevButtonProps>, forwardedRef) => {
     const { __scopeCalendar, ...buttonProps } = props
     const context = useCalendarContext(NAV_BUTTON_NAME, __scopeCalendar)
@@ -58,7 +55,7 @@ export const CalendarPrevButton = React.forwardRef<CalendarNavButtonElement, ICa
 
 CalendarPrevButton.displayName = 'CalendarPrevButton'
 
-export const CalendarNextButton = React.forwardRef<CalendarNavButtonElement, ICalendar.INextButtonProps>(
+export const CalendarNextButton = React.forwardRef<HTMLButtonElement, ICalendar.INextButtonProps>(
   (props: ICalendar.IScoped<ICalendar.INextButtonProps>, forwardedRef) => {
     const { __scopeCalendar, ...buttonProps } = props
     const context = useCalendarContext(NAV_BUTTON_NAME, __scopeCalendar)
@@ -80,3 +77,25 @@ export const CalendarNextButton = React.forwardRef<CalendarNavButtonElement, ICa
 )
 
 CalendarNextButton.displayName = 'CalendarNextButton'
+
+const VIEW_TRIGGER_NAME = 'CalendarViewTrigger'
+
+export const CalendarViewTrigger = React.forwardRef<HTMLButtonElement, ICalendar.IViewTriggerProps>(
+  (props: ICalendar.IScoped<ICalendar.IViewTriggerProps>, forwardedRef) => {
+    const { __scopeCalendar, view, ...buttonProps } = props
+    const { state, actions } = useCalendarContext(VIEW_TRIGGER_NAME, __scopeCalendar)
+
+    return (
+      <Primitive.button
+        type="button"
+        data-slot="calendar-view-trigger"
+        data-state={state.viewMode === view ? 'active' : 'inactive'}
+        {...buttonProps}
+        ref={forwardedRef}
+        onClick={composeEventHandlers(props.onClick, () => actions.setViewMode(view))}
+      />
+    )
+  },
+)
+
+CalendarViewTrigger.displayName = VIEW_TRIGGER_NAME

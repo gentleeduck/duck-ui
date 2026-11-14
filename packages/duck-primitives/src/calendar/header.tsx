@@ -5,9 +5,7 @@ import type { ICalendar } from './calendar.types'
 
 const HEADER_NAME = 'CalendarHeader'
 
-type CalendarHeaderElement = React.ComponentRef<typeof Primitive.div>
-
-export const CalendarHeader = React.forwardRef<CalendarHeaderElement, ICalendar.IHeaderProps>(
+export const CalendarHeader = React.forwardRef<HTMLDivElement, ICalendar.IHeaderProps>(
   (props: ICalendar.IScoped<ICalendar.IHeaderProps>, forwardedRef) => {
     const { __scopeCalendar, formatMonth, children, ...headerProps } = props
     const context = useCalendarContext(HEADER_NAME, __scopeCalendar)

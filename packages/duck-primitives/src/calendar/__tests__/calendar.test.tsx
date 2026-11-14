@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { NativeAdapter } from '@gentleduck/calendar'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import * as React from 'react'
+import { DirectionProvider } from '../../direction'
 import { Calendar } from '../calendar'
 import { CalendarDay } from '../day'
 import { CalendarGrid } from '../grid'
 import { CalendarHeader } from '../header'
 import { CalendarMonthView } from '../month-view'
-import { CalendarNav, CalendarNextButton, CalendarPrevButton } from '../nav'
+import { CalendarNav, CalendarNextButton, CalendarPrevButton, CalendarViewTrigger } from '../nav'
 import { CalendarWeekdays } from '../weekdays'
 import { CalendarYearView } from '../year-view'
 
@@ -45,6 +46,46 @@ describe('Calendar (root)', () => {
   it('renders children', () => {
     const { container } = renderCalendar({}, <span data-testid="child">hello</span>)
     expect(container.querySelector('[data-testid="child"]')?.textContent).toBe('hello')
+  })
+
+  it("writes the locale's direction on the root, so the grid lays out the way its arrow keys move", async () => {
+    const { container } = renderCalendar({ locale: { direction: 'rtl' } }, <CalendarGrid />)
+    const first = within(container).getByRole('gridcell', { name: 'Sunday, March 1, 2026' })
+    act(() => first.focus())
+
+    fireEvent.keyDown(first, { key: 'ArrowLeft' })
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    expect(container.querySelector('[data-slot="calendar"]')?.getAttribute('dir')).toBe('rtl')
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Monday, March 2, 2026')
+  })
+
+  it('reads its direction from a DirectionProvider, and moves the arrow keys with it', async () => {
+    const { container } = render(
+      <DirectionProvider dir="rtl">
+        <Calendar adapter={adapter} mode="single" defaultMonth={march2026}>
+          <CalendarGrid />
+        </Calendar>
+      </DirectionProvider>,
+    )
+    const first = within(container).getByRole('gridcell', { name: 'Sunday, March 1, 2026' })
+    act(() => first.focus())
+
+    fireEvent.keyDown(first, { key: 'ArrowLeft' })
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    expect(container.querySelector('[data-slot="calendar"]')?.getAttribute('dir')).toBe('rtl')
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Monday, March 2, 2026')
+  })
+
+  it('takes the locale direction over the provider', () => {
+    const { container } = render(
+      <DirectionProvider dir="rtl">
+        <Calendar adapter={adapter} mode="single" defaultMonth={march2026} locale={{ direction: 'ltr' }} />
+      </DirectionProvider>,
+    )
+
+    expect(container.querySelector('[data-slot="calendar"]')?.getAttribute('dir')).toBe('ltr')
   })
 })
 
@@ -84,6 +125,12 @@ describe('CalendarHeader', () => {
     )
     const header = container.querySelector('[data-slot="calendar-header"]')
     expect(header?.textContent).toBe('Override')
+  })
+
+  it("names the month in the calendar's locale", () => {
+    const { container } = renderCalendar({ locale: { locale: 'de-DE' } }, <CalendarHeader />)
+
+    expect(container.querySelector('[data-slot="calendar-header"]')?.textContent).toBe('M\u00e4rz 2026')
   })
 })
 
@@ -154,6 +201,12 @@ describe('CalendarNav', () => {
     expect(header?.textContent).toContain('April')
     expect(header?.textContent).toContain('2026')
   })
+
+  it('is named as the calendar navigation', () => {
+    const { container } = renderCalendar({}, <CalendarNav />)
+
+    expect(within(container).getByRole('navigation').getAttribute('aria-label')).toBe('Calendar navigation')
+  })
 })
 
 describe('CalendarPrevButton / CalendarNextButton', () => {
@@ -168,9 +221,124 @@ describe('CalendarPrevButton / CalendarNextButton', () => {
     const btn = container.querySelector('[data-slot="calendar-nav-button"][data-direction="next"]')
     expect(btn).not.toBeNull()
   })
+
+  it('calls its own onClick and still turns the month', () => {
+    const onClick = mock()
+    const { container } = renderCalendar(
+      {},
+      <>
+        <CalendarHeader />
+        <CalendarPrevButton onClick={onClick} />
+      </>,
+    )
+
+    fireEvent.click(within(container).getByRole('button', { name: 'Go to previous month' }))
+
+    expect([onClick.mock.calls.length, container.querySelector('[data-slot="calendar-header"]')?.textContent]).toEqual([
+      1,
+      'February 2026',
+    ])
+  })
+})
+
+describe('CalendarViewTrigger', () => {
+  it('opens the view it names, marking itself active while that view shows', () => {
+    const { container } = renderCalendar(
+      {},
+      <>
+        <CalendarViewTrigger view="years">Year</CalendarViewTrigger>
+        <CalendarViewTrigger view="months">Month</CalendarViewTrigger>
+      </>,
+    )
+    const { getAllByRole, getByText } = within(container)
+    const read = () => [
+      container.querySelector('[data-slot="calendar"]')?.getAttribute('data-view'),
+      ...getAllByRole('button').map((button) => button.getAttribute('data-state')),
+    ]
+    const shown = [read()]
+
+    fireEvent.click(getByText('Year'))
+    shown.push(read())
+    fireEvent.click(getByText('Month'))
+    shown.push(read())
+
+    expect(shown).toEqual([
+      ['days', 'inactive', 'inactive'],
+      ['years', 'active', 'inactive'],
+      ['months', 'inactive', 'active'],
+    ])
+  })
+
+  it('is a button of its own type that leaves a click it was given a chance to cancel', () => {
+    const { container } = renderCalendar(
+      {},
+      <CalendarViewTrigger view="years" onClick={(event) => event.preventDefault()}>
+        Year
+      </CalendarViewTrigger>,
+    )
+
+    const trigger = within(container).getByText('Year')
+    fireEvent.click(trigger)
+
+    expect([
+      trigger.getAttribute('type'),
+      trigger.getAttribute('data-slot'),
+      container.querySelector('[data-slot="calendar"]')?.getAttribute('data-view'),
+    ]).toEqual(['button', 'calendar-view-trigger', 'days'])
+  })
 })
 
 describe('CalendarGrid', () => {
+  it('starts each week with its ISO week number when asked', () => {
+    const { container } = renderCalendar({ showWeekNumber: true }, <CalendarGrid />)
+    const weeks = Array.from(container.querySelectorAll('[data-slot="calendar-week"]'), (row) => {
+      const cell = row.firstElementChild
+      return [cell?.getAttribute('role'), cell?.getAttribute('aria-label'), cell?.textContent]
+    })
+
+    expect(weeks).toEqual([10, 11, 12, 13, 14].map((n) => ['rowheader', `Week ${n}`, String(n)]))
+    expect(
+      container.querySelector('[data-slot="calendar-weekdays"]')?.firstElementChild?.getAttribute('aria-hidden'),
+    ).toBe('true')
+  })
+
+  it('draws no week numbers by default', () => {
+    const { container } = renderCalendar({}, <CalendarGrid />)
+
+    expect(container.querySelectorAll('[data-slot^="calendar-week-number"]').length).toBe(0)
+  })
+
+  it('hands readOnly, invalid, unavailable and pageBehavior to the calendar, not the element', () => {
+    const { container } = renderCalendar(
+      {
+        readOnly: true,
+        invalid: true,
+        unavailable: [new Date(2026, 2, 10)],
+        pageBehavior: 'visible',
+        numberOfMonths: 2,
+      },
+      <>
+        <CalendarHeader />
+        <CalendarNextButton />
+        <CalendarGrid />
+      </>,
+    )
+    const root = container.querySelector('[data-slot="calendar"]')
+    const grid = container.querySelector('[data-slot="calendar-grid"]')
+    const tenth = container.querySelector('[aria-label^="Tuesday, March 10"]')
+
+    expect(['readonly', 'invalid', 'unavailable', 'pagebehavior'].map((name) => root?.hasAttribute(name))).toEqual([
+      false,
+      false,
+      false,
+      false,
+    ])
+    expect([grid?.getAttribute('aria-readonly'), grid?.getAttribute('data-invalid')]).toEqual(['true', 'true'])
+    expect(tenth?.getAttribute('data-unavailable')).toBe('true')
+    fireEvent.click(container.querySelector('[data-direction="next"]') as HTMLButtonElement)
+    expect(container.querySelector('[data-slot="calendar-header"]')?.textContent).toContain('May')
+  })
+
   it('has role="grid"', () => {
     const { container } = renderCalendar({}, <CalendarGrid />)
     const grid = container.querySelector('[data-slot="calendar-grid"]')
@@ -196,6 +364,57 @@ describe('CalendarGrid', () => {
     expect(headerId).not.toBeNull()
     expect(headerId!.length).toBeGreaterThan(0)
     expect(grid?.getAttribute('aria-labelledby')).toBe(headerId)
+  })
+
+  it('draws its weekdays and a day for every day of the shown month', () => {
+    const { container } = renderCalendar({}, <CalendarGrid />)
+    const days = container.querySelectorAll('[data-slot="calendar-day"]')
+
+    expect(container.querySelectorAll('[data-slot="calendar-weekday"]').length).toBe(7)
+    expect(container.querySelectorAll('[data-slot="calendar-grid"] > [role="row"]').length).toBe(6)
+    expect(days.length).toBe(35)
+    expect(days[0]?.getAttribute('aria-label')).toContain('March 1,')
+  })
+
+  it('marks the selected day on the days it draws', () => {
+    const { container } = renderCalendar({ defaultSelected: new Date(2026, 2, 15) }, <CalendarGrid />)
+    const selected = container.querySelectorAll('[data-slot="calendar-day"][aria-selected="true"]')
+
+    expect(Array.from(selected, (day) => day.textContent)).toEqual(['15'])
+  })
+
+  it('draws each day through a function child', () => {
+    renderCalendar({}, <CalendarGrid>{(day) => <span data-testid="cell">{day.date.getDate()}</span>}</CalendarGrid>)
+    const cells = screen.getAllByTestId('cell')
+
+    expect(cells.length).toBe(35)
+    expect(cells[0]?.textContent).toBe('1')
+  })
+
+  it('draws the month it is given when several are shown', () => {
+    const { container } = renderCalendar({ numberOfMonths: 2 }, <CalendarGrid month={1} />)
+    const inMonth = container.querySelectorAll('[data-slot="calendar-day"]:not([data-outside-month])')
+
+    expect(inMonth.length).toBe(30)
+    expect(inMonth[0]?.getAttribute('aria-label')).toContain('April 1,')
+  })
+
+  it('keeps the content it is given', () => {
+    const { container } = renderCalendar(
+      {},
+      <CalendarGrid>
+        <span data-testid="own" />
+      </CalendarGrid>,
+    )
+
+    expect(screen.getByTestId('own')).not.toBeNull()
+    expect(container.querySelector('[data-slot="calendar-day"]')).toBeNull()
+  })
+
+  it('takes the props it is given over the ones the calendar sets', () => {
+    const { container } = renderCalendar({}, <CalendarGrid aria-labelledby="days" />)
+
+    expect(container.querySelector('[data-slot="calendar-grid"]')?.getAttribute('aria-labelledby')).toBe('days')
   })
 })
 
@@ -231,6 +450,26 @@ describe('CalendarWeekdays', () => {
     const { container } = renderCalendar({}, <CalendarWeekdays renderWeekday={(name) => name.toUpperCase()} />)
     const first = container.querySelector('[data-slot="calendar-weekday"]')
     expect(first?.textContent).toBe(first?.textContent?.toUpperCase())
+  })
+
+  it('draws the children it is given in place of the weekdays', () => {
+    const { container } = renderCalendar(
+      {},
+      <CalendarWeekdays>
+        <span>Week</span>
+      </CalendarWeekdays>,
+    )
+    const row = container.querySelector('[data-slot="calendar-weekdays"]')
+
+    expect([row?.textContent, row?.querySelectorAll('[data-slot="calendar-weekday"]').length]).toEqual(['Week', 0])
+  })
+
+  it('hands renderWeekday the position of each weekday', () => {
+    const { container } = renderCalendar({}, <CalendarWeekdays renderWeekday={(_, index) => index} />)
+
+    expect(
+      Array.from(container.querySelectorAll('[data-slot="calendar-weekday"]'), (cell) => cell.textContent),
+    ).toEqual(['0', '1', '2', '3', '4', '5', '6'])
   })
 })
 
@@ -385,6 +624,42 @@ describe('CalendarDay', () => {
     expect(selectedDate.getMonth()).toBe(2)
     expect(selectedDate.getDate()).toBe(15)
   })
+
+  it('takes the props, handlers and children it is given, and still selects', () => {
+    const onClick = mock()
+    const onKeyDown = mock()
+    const onSelect = mock()
+    const { container } = renderCalendar(
+      { onSelect },
+      <CalendarGrid>
+        {(day) => (
+          <CalendarDay day={day} aria-label={`Day ${day.date.getDate()}`} onClick={onClick} onKeyDown={onKeyDown}>
+            {`(${day.date.getDate()})`}
+          </CalendarDay>
+        )}
+      </CalendarGrid>,
+    )
+    const fifteenth = within(container).getByRole('gridcell', { name: 'Day 15' })
+
+    fireEvent.click(fifteenth)
+    fireEvent.keyDown(fifteenth, { key: 'a' })
+
+    expect([
+      fifteenth.textContent,
+      onClick.mock.calls.length,
+      onKeyDown.mock.calls.length,
+      onSelect.mock.calls.length,
+    ]).toEqual(['(15)', 1, 1, 1])
+  })
+
+  it('moves the tab stop to the day under the mouse', () => {
+    const { container } = renderCalendar({}, <CalendarGrid />)
+    const twentieth = within(container).getByRole('gridcell', { name: 'Friday, March 20, 2026' })
+
+    fireEvent.mouseEnter(twentieth)
+
+    expect(twentieth.getAttribute('tabindex')).toBe('0')
+  })
 })
 
 describe('CalendarMonthView', () => {
@@ -399,12 +674,6 @@ describe('CalendarMonthView', () => {
     expect(container.querySelector('[data-slot="calendar-month-view"]')).not.toBeNull()
   })
 
-  it('has role="grid"', () => {
-    const { container } = renderCalendar({}, <CalendarMonthView />)
-    const view = container.querySelector('[data-slot="calendar-month-view"]')
-    expect(view?.getAttribute('role')).toBe('grid')
-  })
-
   it('month buttons have data-slot="calendar-month"', () => {
     const { container } = renderCalendar({}, <CalendarMonthView />)
     const months = container.querySelectorAll('[data-slot="calendar-month"]')
@@ -413,12 +682,118 @@ describe('CalendarMonthView', () => {
     }
   })
 
-  it('month buttons have role="gridcell"', () => {
+  it('draws a grid of rows, three months to a row unless told otherwise', () => {
+    const three = renderCalendar({}, <CalendarMonthView />)
+    const rowsOf = (view: Element | null) =>
+      Array.from(view?.querySelectorAll('[role="row"]') ?? [], (row) =>
+        Array.from(row.children, (cell) => cell.getAttribute('role')),
+      )
+
+    const view = three.container.querySelector('[data-slot="calendar-month-view"]')
+    expect(view?.getAttribute('role')).toBe('grid')
+    expect(view?.getAttribute('aria-label')).toBe('2026')
+    expect(rowsOf(view)).toEqual(Array(4).fill(Array(3).fill('gridcell')))
+    three.unmount()
+
+    const four = renderCalendar({}, <CalendarMonthView columns={4} />)
+    expect(rowsOf(four.container.querySelector('[data-slot="calendar-month-view"]'))).toEqual(
+      Array(3).fill(Array(4).fill('gridcell')),
+    )
+  })
+
+  it('marks the shown month selected and gives it the one tab stop', () => {
     const { container } = renderCalendar({}, <CalendarMonthView />)
-    const months = container.querySelectorAll('[data-slot="calendar-month"]')
-    for (const m of months) {
-      expect(m.getAttribute('role')).toBe('gridcell')
-    }
+    const cells = Array.from(container.querySelectorAll('[data-slot="calendar-month"]'))
+
+    expect(cells.map((cell) => [cell.getAttribute('aria-selected'), cell.getAttribute('data-selected')])).toEqual(
+      cells.map((_, i) => (i === 2 ? ['true', 'true'] : ['false', null])),
+    )
+    expect(cells.map((cell) => cell.getAttribute('tabindex'))).toEqual(cells.map((_, i) => (i === 2 ? '0' : '-1')))
+  })
+
+  it('moves focus with the arrow keys, Home and End, and stops at the edges', () => {
+    const { container } = renderCalendar({}, <CalendarMonthView />)
+    const focused = () => document.activeElement?.getAttribute('data-month')
+    const press = (key: string) => fireEvent.keyDown(document.activeElement as Element, { key })
+    ;(container.querySelector('[data-month="2"]') as HTMLButtonElement).focus()
+
+    const path = ['ArrowLeft', 'ArrowDown', 'End', 'Home', 'ArrowUp', 'ArrowUp', 'ArrowLeft'].map((key) => {
+      press(key)
+      return focused()
+    })
+
+    expect(path).toEqual(['1', '4', '5', '3', '0', '0', '0'])
+    expect(container.querySelector('[data-month="0"]')?.getAttribute('tabindex')).toBe('0')
+  })
+
+  it('ends a short last row at its last month', () => {
+    const { container } = renderCalendar({}, <CalendarMonthView columns={5} />)
+    const november = container.querySelector('[data-month="10"]') as HTMLButtonElement
+    november.focus()
+
+    fireEvent.keyDown(november, { key: 'End' })
+
+    expect(document.activeElement?.getAttribute('data-month')).toBe('11')
+  })
+
+  it('moves the tab stop to a month focused another way', () => {
+    const { container } = renderCalendar({}, <CalendarMonthView />)
+
+    act(() => (container.querySelector('[data-month="8"]') as HTMLButtonElement).focus())
+
+    expect(container.querySelector('[data-month="8"]')?.getAttribute('tabindex')).toBe('0')
+    expect(container.querySelector('[data-month="2"]')?.getAttribute('tabindex')).toBe('-1')
+  })
+
+  it('swaps left and right in a right-to-left calendar', () => {
+    const { container } = renderCalendar({ locale: { direction: 'rtl' } }, <CalendarMonthView />)
+    const march = container.querySelector('[data-month="2"]') as HTMLButtonElement
+    march.focus()
+
+    fireEvent.keyDown(march, { key: 'ArrowLeft' })
+
+    expect(document.activeElement?.getAttribute('data-month')).toBe('3')
+  })
+
+  it('turns the year with PageUp and PageDown, keeping focus on the month', () => {
+    const { container } = renderCalendar({}, <CalendarMonthView />)
+    const march = container.querySelector('[data-month="2"]') as HTMLButtonElement
+    march.focus()
+
+    fireEvent.keyDown(march, { key: 'PageDown' })
+    fireEvent.keyDown(document.activeElement as Element, { key: 'PageDown' })
+    fireEvent.keyDown(document.activeElement as Element, { key: 'PageUp' })
+
+    expect(container.querySelector('[data-slot="calendar-month-view"]')?.getAttribute('aria-label')).toBe('2027')
+    expect(document.activeElement?.getAttribute('data-month')).toBe('2')
+  })
+
+  it('leaves a key it does not use to the page, focus included', () => {
+    const { container } = renderCalendar({}, <CalendarMonthView />)
+    const march = container.querySelector('[data-month="2"]') as HTMLButtonElement
+    march.focus()
+
+    const handled = ['Tab', 'a'].map((key) => fireEvent.keyDown(march, { key }))
+
+    expect([handled, document.activeElement === march]).toEqual([[true, true], true])
+  })
+
+  it('draws the children it is given in place of the months, keeping its slot, props and ref', () => {
+    const ref = React.createRef<HTMLDivElement>()
+    const { container } = renderCalendar(
+      {},
+      <CalendarMonthView ref={ref} className="quarters">
+        <p>Pick a quarter</p>
+      </CalendarMonthView>,
+    )
+    const view = container.querySelector('[data-slot="calendar-month-view"]')
+
+    expect([
+      view?.textContent,
+      view?.className,
+      ref.current === view,
+      container.querySelectorAll('[data-slot="calendar-month"]').length,
+    ]).toEqual(['Pick a quarter', 'quarters', true, 0])
   })
 
   it('current month is marked with data-current', () => {
@@ -444,6 +819,41 @@ describe('CalendarMonthView', () => {
     const header = container.querySelector('[data-slot="calendar-header"]')
     expect(header?.textContent).toContain('June')
   })
+
+  it("names the months in the calendar's locale", () => {
+    const { container } = renderCalendar({ locale: { locale: 'de-DE' } }, <CalendarMonthView />)
+
+    expect(container.querySelector('[data-month="2"]')?.textContent).toBe('M\u00e4rz')
+  })
+
+  it('takes ArrowRight to the month before in a right-to-left calendar', () => {
+    const { container } = renderCalendar({ locale: { direction: 'rtl' } }, <CalendarMonthView />)
+    const march = container.querySelector('[data-month="2"]') as HTMLButtonElement
+    act(() => march.focus())
+
+    fireEvent.keyDown(march, { key: 'ArrowRight' })
+
+    expect(document.activeElement?.getAttribute('data-month')).toBe('1')
+  })
+
+  it('takes the arrow keys, PageUp and PageDown from the page', () => {
+    const { container } = renderCalendar({}, <CalendarMonthView />)
+    act(() => (container.querySelector('[data-month="2"]') as HTMLButtonElement).focus())
+
+    const taken = ['ArrowRight', 'PageDown', 'PageUp'].map(
+      (key) => !fireEvent.keyDown(document.activeElement as Element, { key }),
+    )
+
+    expect(taken).toEqual([true, true, true])
+  })
+
+  it('tells assistive technology which month is the current one', () => {
+    const { container } = renderCalendar({}, <CalendarMonthView />)
+
+    expect(container.querySelector('[aria-current="date"]')?.getAttribute('data-month')).toBe(
+      String(new Date().getMonth()),
+    )
+  })
 })
 
 describe('CalendarYearView', () => {
@@ -458,12 +868,6 @@ describe('CalendarYearView', () => {
     expect(container.querySelector('[data-slot="calendar-year-view"]')).not.toBeNull()
   })
 
-  it('has role="grid"', () => {
-    const { container } = renderCalendar({}, <CalendarYearView />)
-    const view = container.querySelector('[data-slot="calendar-year-view"]')
-    expect(view?.getAttribute('role')).toBe('grid')
-  })
-
   it('year buttons have data-slot="calendar-year"', () => {
     const { container } = renderCalendar({}, <CalendarYearView />)
     const years = container.querySelectorAll('[data-slot="calendar-year"]')
@@ -472,12 +876,61 @@ describe('CalendarYearView', () => {
     }
   })
 
-  it('year buttons have role="gridcell"', () => {
+  it('draws a grid of rows of three years, named by the years it holds', () => {
     const { container } = renderCalendar({}, <CalendarYearView />)
-    const years = container.querySelectorAll('[data-slot="calendar-year"]')
-    for (const y of years) {
-      expect(y.getAttribute('role')).toBe('gridcell')
-    }
+    const view = container.querySelector('[data-slot="calendar-year-view"]')
+
+    expect(view?.getAttribute('role')).toBe('grid')
+    expect(view?.getAttribute('aria-label')).toBe('2019 - 2030')
+    expect(
+      Array.from(view?.querySelectorAll('[role="row"]') ?? [], (row) =>
+        Array.from(row.children, (cell) => cell.getAttribute('data-year')),
+      ),
+    ).toEqual([
+      ['2019', '2020', '2021'],
+      ['2022', '2023', '2024'],
+      ['2025', '2026', '2027'],
+      ['2028', '2029', '2030'],
+    ])
+  })
+
+  it('marks the shown year selected and gives it the one tab stop', () => {
+    const { container } = renderCalendar({}, <CalendarYearView />)
+    const year = container.querySelector('[data-year="2026"]')
+
+    expect([year?.getAttribute('aria-selected'), year?.getAttribute('tabindex')]).toEqual(['true', '0'])
+    expect(container.querySelectorAll('[data-slot="calendar-year"][tabindex="0"]').length).toBe(1)
+  })
+
+  it('moves focus with the arrow keys and turns a decade with PageDown', () => {
+    const { container } = renderCalendar({}, <CalendarYearView />)
+    const year = container.querySelector('[data-year="2026"]') as HTMLButtonElement
+    year.focus()
+
+    fireEvent.keyDown(year, { key: 'ArrowRight' })
+    const moved = document.activeElement?.getAttribute('data-year')
+    fireEvent.keyDown(document.activeElement as Element, { key: 'PageDown' })
+
+    expect([moved, document.activeElement?.getAttribute('data-year')]).toEqual(['2027', '2037'])
+    expect(container.querySelector('[data-slot="calendar-year-view"]')?.getAttribute('aria-label')).toBe('2029 - 2040')
+  })
+
+  it('draws the children it is given in place of the years, keeping its slot, props and ref', () => {
+    const ref = React.createRef<HTMLDivElement>()
+    const { container } = renderCalendar(
+      {},
+      <CalendarYearView ref={ref} className="decades">
+        <p>Pick a decade</p>
+      </CalendarYearView>,
+    )
+    const view = container.querySelector('[data-slot="calendar-year-view"]')
+
+    expect([
+      view?.textContent,
+      view?.className,
+      ref.current === view,
+      container.querySelectorAll('[data-slot="calendar-year"]').length,
+    ]).toEqual(['Pick a decade', 'decades', true, 0])
   })
 
   it('current year is marked with data-current', () => {
@@ -503,6 +956,16 @@ describe('CalendarYearView', () => {
     const header = container.querySelector('[data-slot="calendar-header"]')
     expect(header?.textContent).toContain('2028')
   })
+
+  it('takes ArrowLeft to the next year in a right-to-left calendar', () => {
+    const { container } = renderCalendar({ locale: { direction: 'rtl' } }, <CalendarYearView />)
+    const shown = container.querySelector('[data-year="2026"]') as HTMLButtonElement
+    act(() => shown.focus())
+
+    fireEvent.keyDown(shown, { key: 'ArrowLeft' })
+
+    expect(document.activeElement?.getAttribute('data-year')).toBe('2027')
+  })
 })
 
 describe('Calendar integration', () => {
@@ -517,26 +980,74 @@ describe('Calendar integration', () => {
       <Calendar adapter={adapter} mode="single" defaultMonth={defaultMonth} onSelect={onSelect} {...rest}>
         <CalendarHeader />
         <CalendarNav />
-        <CalendarGrid>
-          <CalendarWeekdays />
-          <WeeksRenderer />
-        </CalendarGrid>
+        <CalendarGrid />
       </Calendar>
     )
   }
 
-  function WeeksRenderer() {
-    // Access weeks from CalendarProvider context
-    // We use the exported useCalendarContext but it requires scope param.
-    // Instead, we'll wrap this at the component tree level.
-    return <WeeksRendererInner />
-  }
+  it('keeps the shown months in view when the keys move inside them', async () => {
+    const { container } = render(
+      <Calendar adapter={adapter} mode="single" defaultMonth={new Date(2020, 5, 1)} numberOfMonths={3}>
+        <CalendarHeader />
+        <CalendarGrid />
+        <CalendarGrid month={1} />
+        <CalendarGrid month={2} />
+      </Calendar>,
+    )
+    const [june, july] = Array.from(container.querySelectorAll('[data-slot="calendar-grid"]'))
 
-  function WeeksRendererInner() {
-    // We cannot easily access the context from outside. We use a workaround:
-    // Render CalendarDay for each day using the context hook from the calendar module.
-    return null
-  }
+    fireEvent.keyDown(june!.querySelector('[tabindex="0"]')!, { key: 'PageDown' })
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+
+    expect(container.querySelector('[data-slot="calendar-header"]')?.textContent).toContain('June')
+    expect(july!.querySelector('[tabindex="0"]')?.getAttribute('aria-label')).toContain('July 1,')
+    expect(july!.contains(document.activeElement)).toBe(true)
+    expect(document.activeElement?.getAttribute('tabindex')).toBe('0')
+  })
+
+  it('moves the view one month when the keys leave the last month shown', () => {
+    const { container } = render(
+      <Calendar adapter={adapter} mode="single" defaultMonth={new Date(2020, 5, 1)} numberOfMonths={2}>
+        <CalendarHeader />
+        <CalendarGrid />
+        <CalendarGrid month={1} />
+      </Calendar>,
+    )
+    const stop = () => container.querySelector('[data-slot="calendar-day"][tabindex="0"]')!
+
+    fireEvent.keyDown(stop(), { key: 'PageDown' })
+    fireEvent.keyDown(stop(), { key: 'PageDown' })
+
+    expect(container.querySelector('[data-slot="calendar-header"]')?.textContent).toContain('July')
+    expect(stop().getAttribute('aria-label')).toContain('August 1,')
+  })
+
+  it('moves the view back when the keys leave the first month shown', () => {
+    const { container } = render(
+      <Calendar adapter={adapter} mode="single" defaultMonth={new Date(2020, 5, 1)} numberOfMonths={2}>
+        <CalendarHeader />
+        <CalendarGrid />
+        <CalendarGrid month={1} />
+      </Calendar>,
+    )
+    const stop = () => container.querySelector('[data-slot="calendar-day"][tabindex="0"]')!
+
+    fireEvent.keyDown(stop(), { key: 'ArrowLeft' })
+
+    expect(container.querySelector('[data-slot="calendar-header"]')?.textContent).toContain('May')
+    expect(stop().getAttribute('aria-label')).toContain('May 31,')
+  })
+
+  it('moves the tab stop with the arrow keys from the first day shown', () => {
+    const { container } = render(<FullCalendar defaultMonth={new Date(2020, 5, 1)} />)
+    const stops = () => Array.from(container.querySelectorAll('[data-slot="calendar-day"][tabindex="0"]'))
+
+    expect(stops().map((day) => day.getAttribute('aria-label'))).toEqual([expect.stringContaining('June 1,')])
+
+    fireEvent.keyDown(stops()[0]!, { key: 'ArrowRight' })
+
+    expect(stops().map((day) => day.getAttribute('aria-label'))).toEqual([expect.stringContaining('June 2,')])
+  })
 
   it('full calendar with header, nav, grid, weekdays renders', () => {
     const { container } = render(<FullCalendar />)
@@ -673,5 +1184,24 @@ describe('Calendar integration', () => {
     const root = container.querySelector('[data-slot="calendar"]')
     expect(root?.getAttribute('class')).toBe('my-calendar')
     expect(root?.getAttribute('data-custom')).toBe('yes')
+  })
+
+  it('submits no form it sits in from its buttons', () => {
+    const onSubmit = mock((event: React.FormEvent) => event.preventDefault())
+    const { container } = render(
+      <form onSubmit={onSubmit}>
+        <Calendar adapter={adapter} mode="single" defaultMonth={march2026}>
+          <CalendarPrevButton />
+          <CalendarGrid />
+          <CalendarMonthView />
+        </Calendar>
+      </form>,
+    )
+
+    fireEvent.click(within(container).getByRole('button', { name: 'Go to previous month' }))
+    fireEvent.click(within(container).getByRole('gridcell', { name: 'Sunday, February 15, 2026' }))
+    fireEvent.click(container.querySelector('[data-month="5"]') as HTMLElement)
+
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 })

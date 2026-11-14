@@ -3,47 +3,48 @@ import * as React from 'react'
 import { Primitive } from '../primitive-elements'
 import { useCalendarContext } from './calendar'
 import type { ICalendar } from './calendar.types'
+import { ViewGrid } from './view-grid'
 
 const MONTH_VIEW_NAME = 'CalendarMonthView'
 
-type CalendarMonthViewElement = React.ComponentRef<typeof Primitive.div>
-
-export const CalendarMonthView = React.forwardRef<CalendarMonthViewElement, ICalendar.IMonthViewProps>(
+export const CalendarMonthView = React.forwardRef<HTMLDivElement, ICalendar.IMonthViewProps>(
   (props: ICalendar.IScoped<ICalendar.IMonthViewProps>, forwardedRef) => {
-    const { __scopeCalendar, children, ...viewProps } = props
+    const { __scopeCalendar, columns = 3, children, ...viewProps } = props
     const context = useCalendarContext(MONTH_VIEW_NAME, __scopeCalendar)
-    const { adapter, locale } = context
+    const { adapter, locale, actions } = context
     const { month } = context.state
 
-    const localeTag = locale?.locale
-    const months = React.useMemo(() => buildCalendarYear(adapter, month, localeTag), [adapter, month, localeTag])
-
-    const handleMonthSelect = React.useCallback(
-      (monthIndex: number) => {
-        context.actions.setMonth(goToMonth(adapter, month, monthIndex))
-        context.actions.setViewMode('days')
+    const cells = buildCalendarYear(adapter, month, locale?.locale).map((entry) => ({
+      label: entry.label,
+      isCurrent: entry.isCurrent,
+      data: { 'data-month': entry.month },
+      onPick: () => {
+        actions.setMonth(goToMonth(adapter, month, entry.month))
+        actions.setViewMode('days')
       },
-      [adapter, month, context.actions],
-    )
+    }))
+
+    if (children !== undefined) {
+      return (
+        <Primitive.div data-slot="calendar-month-view" {...viewProps} ref={forwardedRef}>
+          {children}
+        </Primitive.div>
+      )
+    }
 
     return (
-      <Primitive.div role="grid" data-slot="calendar-month-view" {...viewProps} ref={forwardedRef}>
-        {children ??
-          months.map((entry) => (
-            <Primitive.button
-              key={entry.month}
-              type="button"
-              role="gridcell"
-              aria-label={entry.label}
-              aria-current={entry.isCurrent ? 'date' : undefined}
-              data-slot="calendar-month"
-              data-current={entry.isCurrent ? 'true' : undefined}
-              data-month={entry.month}
-              onClick={() => handleMonthSelect(entry.month)}>
-              {entry.label}
-            </Primitive.button>
-          ))}
-      </Primitive.div>
+      <ViewGrid
+        data-slot="calendar-month-view"
+        aria-label={String(adapter.getYear(month))}
+        cells={cells}
+        columns={columns}
+        selected={adapter.getMonth(month)}
+        rtl={locale?.direction === 'rtl'}
+        cellSlot="calendar-month"
+        onPage={(step) => actions.setMonth(adapter.addYears(month, step))}
+        {...viewProps}
+        ref={forwardedRef}
+      />
     )
   },
 )

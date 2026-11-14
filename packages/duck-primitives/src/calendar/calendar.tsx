@@ -1,6 +1,7 @@
 import type { Selection, UseCalendar } from '@gentleduck/calendar'
 import { useCalendar } from '@gentleduck/calendar'
 import * as React from 'react'
+import { useDirection } from '../direction'
 import { createContextScope } from '../libs/create-context'
 import { Primitive } from '../primitive-elements'
 import type { ICalendar } from './calendar.types'
@@ -11,9 +12,7 @@ export const [createCalendarContext, createCalendarScope] = createContextScope(C
 
 export const [CalendarProvider, useCalendarContext] = createCalendarContext<ICalendar.IContext>(CALENDAR_NAME)
 
-type CalendarElement = React.ComponentRef<typeof Primitive.div>
-
-const Calendar = React.forwardRef<CalendarElement, ICalendar.IRootProps>(
+const Calendar = React.forwardRef<HTMLDivElement, ICalendar.IRootProps>(
   (props: ICalendar.IScoped<ICalendar.IRootProps>, forwardedRef) => {
     const {
       __scopeCalendar,
@@ -33,14 +32,20 @@ const Calendar = React.forwardRef<CalendarElement, ICalendar.IRootProps>(
       disabled,
       fromDate,
       toDate,
+      unavailable,
+      readOnly,
+      invalid,
+      pageBehavior,
+      showWeekNumber = false,
       children,
       ...divProps
     } = props
 
+    const direction = useDirection(locale?.direction)
     const config: UseCalendar.IUseCalendarConfig<Date, Selection.SelectionMode> = {
       adapter,
       mode,
-      locale,
+      locale: { ...locale, direction },
       month,
       defaultMonth,
       selected,
@@ -54,55 +59,27 @@ const Calendar = React.forwardRef<CalendarElement, ICalendar.IRootProps>(
       disabled,
       fromDate,
       toDate,
+      unavailable,
+      readOnly,
+      invalid,
+      pageBehavior,
     }
 
     const calendar = useCalendar(config)
 
-    const localeTag = locale?.locale
-    const weekStartDay = locale?.weekStartDay
-    const localeDirection = locale?.direction
-
-    const { state, actions, getDayProps, getGridProps, getNavProps, getHeaderProps, announcer } = calendar
-
-    const contextValue = React.useMemo<ICalendar.IContext>(() => {
-      const resolvedLocale =
-        localeTag || localeDirection || weekStartDay !== undefined
-          ? { locale: localeTag, weekStartDay, direction: localeDirection }
-          : undefined
-      return {
-        state,
-        actions,
-        getDayProps,
-        getGridProps,
-        getNavProps,
-        getHeaderProps,
-        announcer,
-        adapter,
-        mode,
-        locale: resolvedLocale,
-      }
-    }, [
-      state,
-      actions,
-      getDayProps,
-      getGridProps,
-      getNavProps,
-      getHeaderProps,
-      announcer,
-      adapter,
-      mode,
-      localeTag,
-      weekStartDay,
-      localeDirection,
-    ])
-
     return (
-      <CalendarProvider scope={__scopeCalendar} {...contextValue}>
+      <CalendarProvider
+        scope={__scopeCalendar}
+        {...calendar}
+        adapter={adapter}
+        locale={config.locale}
+        showWeekNumber={showWeekNumber}>
         <Primitive.div
           role="application"
           aria-label="Calendar"
           data-slot="calendar"
           data-view={calendar.state.viewMode}
+          dir={direction}
           {...divProps}
           ref={forwardedRef}>
           {children}

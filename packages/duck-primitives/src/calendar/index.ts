@@ -11,6 +11,8 @@ export {
   CalendarNextButton as NextButton,
   CalendarPrevButton,
   CalendarPrevButton as PrevButton,
+  CalendarViewTrigger,
+  CalendarViewTrigger as ViewTrigger,
 } from './nav'
 export { CalendarWeekdays, CalendarWeekdays as Weekdays } from './weekdays'
 export { CalendarYearView, CalendarYearView as YearView } from './year-view'

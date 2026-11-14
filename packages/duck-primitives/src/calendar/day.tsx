@@ -6,9 +6,7 @@ import type { ICalendar } from './calendar.types'
 
 const DAY_NAME = 'CalendarDay'
 
-type CalendarDayElement = React.ComponentRef<typeof Primitive.button>
-
-export const CalendarDay = React.forwardRef<CalendarDayElement, ICalendar.IDayProps>(
+export const CalendarDay = React.forwardRef<HTMLButtonElement, ICalendar.IDayProps>(
   (props: ICalendar.IScoped<ICalendar.IDayProps>, forwardedRef) => {
     const { __scopeCalendar, day, children, ...buttonProps } = props
     const context = useCalendarContext(DAY_NAME, __scopeCalendar)

@@ -8,8 +8,8 @@ export namespace ICalendar {
 
   export type IContext = UseCalendar.IUseCalendarReturn<Date, Selection.SelectionMode> & {
     adapter: Adapter.IDateAdapter<Date>
-    mode: Selection.SelectionMode
     locale?: CalendarTypes.ICalendarLocaleConfig | undefined
+    showWeekNumber: boolean
   }
 
   type PrimitiveDivProps = React.ComponentPropsWithoutRef<typeof Primitive.div>
@@ -20,20 +20,31 @@ export namespace ICalendar {
   export interface IRootProps
     extends Omit<PrimitiveDivProps, ConflictingProps>,
       UseCalendar.IUseCalendarConfig<Date, Selection.SelectionMode> {
+    /** Draws each week's ISO week number at the start of its row. */
+    showWeekNumber?: boolean | undefined
     children?: React.ReactNode
   }
 
   export interface IDayProps extends PrimitiveButtonProps {
+    __scopeCalendar?: Scope
     day: Grid.ICalendarDay<Date>
   }
 
-  export interface IGridProps extends PrimitiveDivProps {}
+  export interface IGridProps extends Omit<PrimitiveDivProps, 'children'> {
+    /** Which of the shown months the grid draws, counting from 0. */
+    month?: number | undefined
+    /** Content in place of the days, or a function drawing each day. Without either, the grid draws its weekdays and a `Calendar.Day` per day. */
+    children?: React.ReactNode | ((day: Grid.ICalendarDay<Date>) => React.ReactNode)
+  }
 
   export interface IHeaderProps extends PrimitiveDivProps {
     formatMonth?: (month: Date, adapter: Adapter.IDateAdapter<Date>) => string
   }
 
-  export interface IMonthViewProps extends PrimitiveDivProps {}
+  export interface IMonthViewProps extends PrimitiveDivProps {
+    /** Months to a row, 3 by default. The arrow keys move along and between the rows. */
+    columns?: number | undefined
+  }
 
   export interface INavProps extends PrimitiveDivProps {}
 
@@ -45,9 +56,35 @@ export namespace ICalendar {
     __scopeCalendar?: Scope
   }
 
+  export interface IViewTriggerProps extends PrimitiveButtonProps {
+    __scopeCalendar?: Scope
+    /** The view a click opens. The trigger reads `data-state="active"` while it shows. */
+    view: CalendarTypes.ViewMode
+  }
+
   export interface IWeekdaysProps extends PrimitiveDivProps {
+    __scopeCalendar?: Scope
     renderWeekday?: ((weekday: string, index: number) => React.ReactNode) | undefined
   }
 
-  export interface IYearViewProps extends PrimitiveDivProps {}
+  export interface IYearViewProps extends PrimitiveDivProps {
+    /** Years to a row, 3 by default. The arrow keys move along and between the rows. */
+    columns?: number | undefined
+  }
+
+  export interface IViewCell {
+    label: string
+    isCurrent: boolean
+    data: Record<`data-${string}`, number>
+    onPick: () => void
+  }
+
+  export interface IViewGridProps extends PrimitiveDivProps {
+    cells: IViewCell[]
+    columns: number
+    selected: number
+    rtl: boolean
+    cellSlot: string
+    onPage: (step: -1 | 1) => void
+  }
 }

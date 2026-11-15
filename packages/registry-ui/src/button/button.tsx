@@ -12,6 +12,16 @@ export function stopClick(event: React.MouseEvent) {
   event.stopPropagation()
 }
 
+/** Slot lets its child's own props win, and runs the child's handler first, so the child itself is told it is held. */
+export function holdChild(children: React.ReactNode, loading: boolean) {
+  if (!React.isValidElement<React.HTMLAttributes<HTMLElement>>(children)) return children
+  return React.cloneElement(children, {
+    'aria-disabled': true,
+    onClickCapture: stopClick,
+    ...(loading ? { 'aria-busy': true } : {}),
+  })
+}
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
@@ -51,7 +61,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           className={buttonClass}
           onClickCapture={isDisabled ? stopClick : props.onClickCapture}
           ref={ref}>
-          {children}
+          {isDisabled ? holdChild(children, Boolean(loading)) : children}
         </Slot>
       )
     }

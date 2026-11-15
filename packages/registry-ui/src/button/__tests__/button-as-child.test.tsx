@@ -56,4 +56,48 @@ describe.each([
     expect(rivers.hasAttribute('aria-disabled')).toBe(false)
     expect(rivers.hasAttribute('aria-busy')).toBe(false)
   })
+
+  test("a loading link's own capture handler and aria state give way, and an enabled link's capture still runs", () => {
+    const onLakesCapture = mock()
+    const onRiversCapture = mock()
+    render(
+      <>
+        <Component asChild loading>
+          <a aria-busy={false} aria-disabled={false} href="/lakes" onClickCapture={onLakesCapture}>
+            Lakes
+          </a>
+        </Component>
+        <Component asChild>
+          <a href="/rivers" onClickCapture={onRiversCapture}>
+            Rivers
+          </a>
+        </Component>
+      </>,
+    )
+    const lakes = screen.getByRole('link', { name: 'Lakes' })
+
+    expect(press(lakes).defaultPrevented).toBe(true)
+    expect(onLakesCapture).not.toHaveBeenCalled()
+    expect([lakes.getAttribute('aria-disabled'), lakes.getAttribute('aria-busy')]).toEqual(['true', 'true'])
+
+    expect(press(screen.getByRole('link', { name: 'Rivers' })).defaultPrevented).toBe(false)
+    expect(onRiversCapture).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('registry-ui MotionButton asChild', () => {
+  test('a disabled link stops a click that lands on the wrapper, where the pointer goes', () => {
+    const onClick = mock()
+    render(
+      <div onClick={onClick}>
+        <MotionButton asChild disabled>
+          <a href="/lakes">Lakes</a>
+        </MotionButton>
+      </div>,
+    )
+    const wrapper = screen.getByRole('link', { name: 'Lakes' }).parentElement as HTMLElement
+
+    expect(press(wrapper).defaultPrevented).toBe(true)
+    expect(onClick).not.toHaveBeenCalled()
+  })
 })

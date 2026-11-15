@@ -1,6 +1,8 @@
-import { describe, expect, test } from 'bun:test'
-import { renderHook } from '@testing-library/react'
-import type { MotionPresetName } from '../motion-presets'
+import { afterEach, describe, expect, test } from 'bun:test'
+import { act, cleanup, fireEvent, render, renderHook } from '@testing-library/react'
+import { LazyMotion, m } from 'motion/react'
+import { loadDomAnimation } from '../motion-features'
+import type { IUseMotionPresetOptions, MotionPresetName } from '../motion-presets'
 import { useMotionPreset } from '../motion-presets'
 import { createDirectionalPreset, createSlidePreset } from '../presets/directional'
 import { fadeIn } from '../presets/fade-in'
@@ -11,6 +13,7 @@ import { slideDown } from '../presets/slide-down'
 import { slideFromLeft } from '../presets/slide-from-left'
 import { slideFromRight } from '../presets/slide-from-right'
 import { slideUp } from '../presets/slide-up'
+import { springBouncy, springDefault } from '../transitions/springs'
 
 const ALL_PRESETS: MotionPresetName[] = [
   'fadeIn',
@@ -49,14 +52,14 @@ describe('individual preset exports (tree-shakeable)', () => {
     expect(slideDown.exit.y).toBe(-30)
   })
 
-  test('slideFromLeft enters from 8 and exits to 30', () => {
-    expect(slideFromLeft.initial.x).toBe(8)
-    expect(slideFromLeft.exit.x).toBe(30)
+  test('slideFromLeft enters from 8px to the left and exits 30px back to the left', () => {
+    expect(slideFromLeft.initial.x).toBe(-8)
+    expect(slideFromLeft.exit.x).toBe(-30)
   })
 
-  test('slideFromRight enters from -8 and exits to -30', () => {
-    expect(slideFromRight.initial.x).toBe(-8)
-    expect(slideFromRight.exit.x).toBe(-30)
+  test('slideFromRight enters from 8px to the right and exits 30px back to the right', () => {
+    expect(slideFromRight.initial.x).toBe(8)
+    expect(slideFromRight.exit.x).toBe(30)
   })
 
   test('slide presets have light blur', () => {
@@ -191,4 +194,93 @@ describe('useMotionPreset', () => {
     const { result } = renderHook(() => useMotionPreset('fadeIn'))
     expect(result.current.transition).toHaveProperty('type', 'spring')
   })
+})
+
+describe('useMotionPreset on an element', () => {
+  afterEach(cleanup)
+
+  function Box(options: IUseMotionPresetOptions) {
+    const content = useMotionPreset(scaleIn, options)
+    return (
+      <LazyMotion features={loadDomAnimation}>
+        <m.div animate={content.animate} data-testid="box" initial={content.initial} transition={content.transition} />
+      </LazyMotion>
+    )
+  }
+
+  const transformAfter = async (ms: number, options: IUseMotionPresetOptions) => {
+    const { getByTestId } = render(<Box {...options} />)
+    for (let step = 0; step < ms / 100; step++) await act(() => new Promise((resolve) => setTimeout(resolve, 100)))
+    return getByTestId('box').style.transform
+  }
+
+  test('the delay holds the scale back with the rest of the entrance', async () => {
+    expect(await transformAfter(300, { delay: 1 })).toBe('scale(0.95)')
+  })
+
+  test('tap keeps the entrance scale, held back by the delay, on scaleX and scaleY', async () => {
+    expect(await transformAfter(300, { delay: 1, tap: true })).toBe('scaleX(0.95) scaleY(0.95)')
+  })
+
+  test('tap lets a press on scale release at once, apart from the entrance', async () => {
+    function Pressable() {
+      const content = useMotionPreset(scaleIn, { delay: 0.4, tap: true })
+      return (
+        <LazyMotion features={loadDomAnimation}>
+          <m.button
+            animate={content.animate}
+            initial={content.initial}
+            transition={content.transition}
+            type="button"
+            whileTap={{ scale: 0.5, transition: { duration: 0 } }}
+          />
+        </LazyMotion>
+      )
+    }
+    const { getByRole } = render(<Pressable />)
+    const button = getByRole('button')
+    const wait = (ms: number) => act(() => new Promise((resolve) => setTimeout(resolve, ms)))
+    // LazyMotion loads the press gesture after the first render.
+    await wait(100)
+
+    fireEvent.pointerDown(button, { button: 0, isPrimary: true, pointerType: 'mouse' })
+    await wait(50)
+
+    expect(button.style.transform).toBe('scale(0.5) scaleX(0.95) scaleY(0.95)')
+
+    fireEvent.pointerUp(window, { button: 0, isPrimary: true, pointerType: 'mouse' })
+    await wait(80)
+
+    expect(button.style.transform).toBe('scaleX(0.95) scaleY(0.95)')
+  })
+
+  test.each([
+    ['springBouncy', springBouncy],
+    ['springDefault', springDefault],
+  ])(
+    '%s brings the blur to rest at zero without passing it, as a negative blur is no filter at all',
+    async (_, transition) => {
+      const radii: number[] = []
+      function Blurred() {
+        const content = useMotionPreset(scaleIn, { transition })
+        return (
+          <LazyMotion features={loadDomAnimation}>
+            <m.div
+              animate={content.animate}
+              initial={content.initial}
+              onUpdate={(latest) => radii.push(Number.parseFloat(String(latest.filter).slice('blur('.length)))}
+              transition={content.transition}
+            />
+          </LazyMotion>
+        )
+      }
+
+      render(<Blurred />)
+      for (let step = 0; step < 8; step++) await act(() => new Promise((resolve) => setTimeout(resolve, 100)))
+
+      expect(radii.length).toBeGreaterThan(5)
+      expect(radii.filter((radius) => radius < 0)).toEqual([])
+      expect(radii.at(-1)).toBe(0)
+    },
+  )
 })

@@ -44,21 +44,52 @@ const presetMap: Record<MotionPresetName, IMotionPreset> = {
 
 export interface IUseMotionPresetOptions extends IDuckMotion.IPresetOptions {}
 
+// A spring carries the blur past blur(0px) to a negative radius, which is invalid CSS, so that frame keeps the last
+// blur. The blur takes the same spring, critically damped.
+function withSettledBlur(transition: MotionTransitionConfig): MotionTransitionConfig {
+  if (transition.type !== 'spring') return transition
+  const { damping, mass, stiffness } = transition
+  const filter =
+    damping === undefined && mass === undefined && stiffness === undefined
+      ? { ...transition, bounce: 0 }
+      : { ...transition, damping: Math.max(damping ?? 10, 2 * Math.sqrt((stiffness ?? 100) * (mass ?? 1))) }
+  return { ...transition, filter }
+}
+
+// The entrance scales on scaleX and scaleY, which motion multiplies with scale, and leaves scale to the press.
+function scaleOnAxes(target: MotionAnimationState): MotionAnimationState {
+  const { scale, ...rest } = target
+  return scale === undefined ? target : { ...rest, scale: 1, scaleX: scale, scaleY: scale }
+}
+
 function buildResult(preset: IMotionPreset, reduced: boolean, options?: IUseMotionPresetOptions): IMotionPresetResult {
   const baseTransition: MotionTransitionConfig = options?.transition ?? springDefault
   const enterTransition: MotionTransitionConfig = reduced
     ? { duration: 0 }
-    : { ...(options?.enterTransition ?? baseTransition), ...(options?.delay ? { delay: options.delay } : {}) }
-  const exitTransition: MotionTransitionConfig = reduced ? { duration: 0 } : (options?.exitTransition ?? baseTransition)
+    : withSettledBlur({
+        ...(options?.enterTransition ?? baseTransition),
+        ...(options?.delay ? { delay: options.delay } : {}),
+      })
+  const exitTransition: MotionTransitionConfig = reduced
+    ? { duration: 0 }
+    : withSettledBlur(options?.exitTransition ?? baseTransition)
 
-  // Scale-only override keeps tap press snappy regardless of base spring.
-  const enterWithTapScale = reduced ? enterTransition : { ...enterTransition, scale: TAP_SCALE_TRANSITION }
+  // motion releases a whileTap through the animate target's transition, delay and all.
+  if (options?.tap && !reduced) {
+    const enter = { ...enterTransition, scale: TAP_SCALE_TRANSITION }
+    return {
+      initial: scaleOnAxes(preset.initial),
+      animate: { ...scaleOnAxes(preset.animate), transition: enter },
+      exit: { ...scaleOnAxes(preset.exit), transition: exitTransition },
+      transition: enter,
+    }
+  }
 
   return {
     initial: { ...preset.initial },
-    animate: { ...preset.animate, transition: enterWithTapScale },
+    animate: { ...preset.animate, transition: enterTransition },
     exit: { ...preset.exit, transition: exitTransition },
-    transition: enterWithTapScale,
+    transition: enterTransition,
   }
 }
 
@@ -68,21 +99,14 @@ export function useMotionPreset(
   options?: IUseMotionPresetOptions,
 ): IMotionPresetResult {
   const reduced = useDuckReducedMotion()
-  const preset = options?.direction
-    ? createDirectionalPreset(options.direction)
+  const { delay, direction, enterTransition, exitTransition, tap, transition } = options ?? {}
+  const preset = direction
+    ? createDirectionalPreset(direction)
     : typeof nameOrPreset === 'string'
       ? presetMap[nameOrPreset]
       : nameOrPreset
   return React.useMemo(
-    () => buildResult(preset, reduced, options),
-    [
-      reduced,
-      preset,
-      options?.delay,
-      options?.transition,
-      options?.enterTransition,
-      options?.exitTransition,
-      options?.direction,
-    ],
+    () => buildResult(preset, reduced, { delay, enterTransition, exitTransition, tap, transition }),
+    [reduced, preset, delay, enterTransition, exitTransition, tap, transition],
   )
 }

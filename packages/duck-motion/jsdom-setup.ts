@@ -6,6 +6,11 @@ const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
 })
 
 Object.assign(globalThis, {
+  // motion's gestures take a target only if it is an EventTarget and listen with an AbortSignal. Bun's own are not
+  // jsdom's, so without these no press would ever start.
+  AbortController: dom.window.AbortController,
+  AbortSignal: dom.window.AbortSignal,
+  EventTarget: dom.window.EventTarget,
   CustomEvent: dom.window.CustomEvent,
   document: dom.window.document,
   Element: dom.window.Element,

@@ -17,6 +17,8 @@ export namespace IDuckMotion {
     exitTransition?: ITransitionConfig
     delay?: number
     direction?: IDirection
+    /** The element also takes `whileTap`: `scale` gets the 15ms tap tween so a press releases at once, and the entrance does not scale. */
+    tap?: boolean
   }
   export type IPresetName =
     | 'fadeIn'

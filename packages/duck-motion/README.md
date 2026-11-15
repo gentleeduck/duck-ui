@@ -48,7 +48,7 @@ function Fade() {
 - **Spring transitions** -- `springDefault`, `springSnappy`, `springGentle`, `springBouncy`, `springStiff`, `springSmooth`, `springInstant`
 - **CSS custom properties** -- `--gentleduck-motion-dur`, `--gentleduck-motion-ease` via `@gentleduck/motion/css`
 - **Reduced motion** -- `useDuckReducedMotion()`, `motionTransition()`
-- **Animation presets** -- tree-shakeable presets like `fadeIn`, `scaleIn`, `slideUp` with blur and asymmetric exits
+- **Animation presets** -- tree-shakeable presets like `fadeIn`, `scaleIn`, `slideUp` with blur and asymmetric exits; under a spring the blur settles at zero without bouncing past it
 - **Directional presets** -- `createDirectionalPreset('bottom')` for menu/popover animations; `createSlidePreset` for pure slides
 - **Motion library integration** -- `MotionProvider`, `LazyMotion` feature loaders, `useMotionPreset` hook
 

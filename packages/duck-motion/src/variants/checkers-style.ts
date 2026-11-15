@@ -3,7 +3,7 @@ import { cva } from '@gentleduck/variants'
 
 /** Checkbox/radio/switch input styling: indicator masks, checked state, LTR/RTL toggle positioning. */
 export const checkersStylePattern = cva(
-  `appearance-none relative p-2 size-[1em] flex items-center m-0
+  `peer appearance-none relative p-2 size-[1em] flex items-center m-0
   border bg-border border-border checked:bg-primary checked:border-primary text-primary-foreground
   ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
   disabled:cursor-not-allowed disabled:opacity-50

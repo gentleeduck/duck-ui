@@ -360,8 +360,6 @@ const _Breadcrumb3 = dynamic(() => import('@gentleduck/registry-examples/breadcr
 const _Breadcrumb4 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-4'), { ssr: false })
 const _Breadcrumb5 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-5'), { ssr: false })
 const _Breadcrumb6 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-6'), { ssr: false })
-const _Breadcrumb7 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-7'), { ssr: false })
-const _Breadcrumb8 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-8'), { ssr: false })
 const _Breadcrumb9 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-9'), { ssr: false })
 const _Dialog1 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-1'), { ssr: false })
 const _Dialog2 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-2'), { ssr: false })
@@ -3633,38 +3631,6 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _Breadcrumb6,
-    source: '/registry-examples/src/breadcrumb',
-    categories: [],
-    root_folder: 'breadcrumb',
-  },
-  'breadcrumb-7': {
-    name: 'breadcrumb-7',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['breadcrumb'],
-    files: [
-      {
-        path: 'breadcrumb/breadcrumb-7.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _Breadcrumb7,
-    source: '/registry-examples/src/breadcrumb',
-    categories: [],
-    root_folder: 'breadcrumb',
-  },
-  'breadcrumb-8': {
-    name: 'breadcrumb-8',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['breadcrumb'],
-    files: [
-      {
-        path: 'breadcrumb/breadcrumb-8.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _Breadcrumb8,
     source: '/registry-examples/src/breadcrumb',
     categories: [],
     root_folder: 'breadcrumb',

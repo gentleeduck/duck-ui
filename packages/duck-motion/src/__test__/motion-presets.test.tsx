@@ -194,6 +194,33 @@ describe('useMotionPreset', () => {
     const { result } = renderHook(() => useMotionPreset('fadeIn'))
     expect(result.current.transition).toHaveProperty('type', 'spring')
   })
+
+  test("a blur transition of the caller's own is kept, and only a spring one is damped", () => {
+    const instant = { type: 'tween', duration: 0 } as const
+    const springy = { type: 'spring', bounce: 0.6 } as const
+    const { result: kept } = renderHook(() =>
+      useMotionPreset('scaleIn', { transition: { ...springBouncy, filter: instant } }),
+    )
+    const { result: damped } = renderHook(() =>
+      useMotionPreset('scaleIn', { transition: { ...springBouncy, filter: springy } }),
+    )
+
+    expect(kept.current.transition).toMatchObject({ filter: instant })
+    expect(damped.current.transition).toMatchObject({ filter: { ...springy, bounce: 0 } })
+  })
+
+  test('tap keeps an axis a preset scales on its own, times the scale', () => {
+    const mirrored = {
+      initial: { scale: 0.5, scaleX: -1 },
+      animate: { scale: 1, scaleX: -1 },
+      exit: { scale: 0.5, scaleY: 2 },
+    }
+    const { result } = renderHook(() => useMotionPreset(mirrored, { tap: true }))
+
+    expect(result.current.initial).toEqual({ scale: 1, scaleX: -0.5, scaleY: 0.5 })
+    expect(result.current.animate).toMatchObject({ scale: 1, scaleX: -1, scaleY: 1 })
+    expect(result.current.exit).toMatchObject({ scale: 1, scaleX: 0.5, scaleY: 1 })
+  })
 })
 
 describe('useMotionPreset on an element', () => {

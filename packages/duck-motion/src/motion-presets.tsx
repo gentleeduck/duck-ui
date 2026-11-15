@@ -45,21 +45,28 @@ const presetMap: Record<MotionPresetName, IMotionPreset> = {
 export interface IUseMotionPresetOptions extends IDuckMotion.IPresetOptions {}
 
 // A spring carries the blur past blur(0px) to a negative radius, which is invalid CSS, so that frame keeps the last
-// blur. The blur takes the same spring, critically damped.
+// blur. The blur's spring, its own or the transition's, is critically damped.
 function withSettledBlur(transition: MotionTransitionConfig): MotionTransitionConfig {
-  if (transition.type !== 'spring') return transition
-  const { damping, mass, stiffness } = transition
+  const blur: MotionTransitionConfig = ('filter' in transition ? transition.filter : undefined) ?? transition
+  if (blur.type !== 'spring') return transition
+  const { damping, mass, stiffness } = blur
   const filter =
     damping === undefined && mass === undefined && stiffness === undefined
-      ? { ...transition, bounce: 0 }
-      : { ...transition, damping: Math.max(damping ?? 10, 2 * Math.sqrt((stiffness ?? 100) * (mass ?? 1))) }
+      ? { ...blur, bounce: 0 }
+      : { ...blur, damping: Math.max(damping ?? 10, 2 * Math.sqrt((stiffness ?? 100) * (mass ?? 1))) }
   return { ...transition, filter }
 }
 
-// The entrance scales on scaleX and scaleY, which motion multiplies with scale, and leaves scale to the press.
+// The entrance scales on scaleX and scaleY, which motion multiplies with scale, and leaves scale to the press. An
+// axis the target scales on its own takes the product, which only numbers have.
 function scaleOnAxes(target: MotionAnimationState): MotionAnimationState {
-  const { scale, ...rest } = target
-  return scale === undefined ? target : { ...rest, scale: 1, scaleX: scale, scaleY: scale }
+  const { scale, scaleX, scaleY, ...rest } = target
+  if (scale === undefined) return target
+  if (scaleX === undefined && scaleY === undefined) return { ...rest, scale: 1, scaleX: scale, scaleY: scale }
+  if (typeof scale !== 'number') return target
+  const times = (axis: unknown) => (axis === undefined ? scale : typeof axis === 'number' ? scale * axis : undefined)
+  const [x, y] = [times(scaleX), times(scaleY)]
+  return x === undefined || y === undefined ? target : { ...rest, scale: 1, scaleX: x, scaleY: y }
 }
 
 function buildResult(preset: IMotionPreset, reduced: boolean, options?: IUseMotionPresetOptions): IMotionPresetResult {

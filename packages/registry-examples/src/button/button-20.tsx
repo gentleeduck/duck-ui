@@ -1,47 +1,43 @@
 'use client'
 
 import { Button } from '@gentleduck/registry-ui/button'
-import { CommandShortcut } from '@gentleduck/registry-ui/command'
-import { DirectionProvider } from '@gentleduck/registry-ui/direction'
+import { Toggle } from '@gentleduck/registry-ui/toggle'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'
-import { ArrowBigUpDash, Command } from 'lucide-react'
-import React from 'react'
-import { toast } from 'sonner'
+import { Archive, Inbox, Send } from 'lucide-react'
+import * as React from 'react'
+
+const actions = [
+  { icon: <Inbox />, label: 'Inbox' },
+  { icon: <Send />, label: 'Sent' },
+  { icon: <Archive />, label: 'Archive' },
+]
 
 export default function Demo() {
-  const [open, setOpen] = React.useState<boolean>(false)
+  const [collapsed, setCollapsed] = React.useState(true)
 
   return (
-    <DirectionProvider dir="rtl">
+    <div className="flex flex-col items-start gap-4">
+      <Toggle onPressedChange={(pressed) => setCollapsed(!pressed)} pressed={!collapsed} size="sm" variant="outline">
+        Show labels
+      </Toggle>
       <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              aria-expanded={open}
-              aria-label={'زر متقدم'}
-              icon={<ArrowBigUpDash />}
-              isCollapsed={open}
-              loading={false}
-              onClick={() => setOpen((prev) => !prev)}
-              size="default">
-              زر
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent forceMount side="top" className="flex items-center gap-2">
-            <CommandShortcut
-              keys="mod+i"
-              onKeysPressed={() => {
-                setOpen((prev) => !prev)
-                toast.success('زر متقدم')
-              }}
-              variant="secondary">
-              <Command />
-              +i
-            </CommandShortcut>
-            <p>زر متقدم</p>
-          </TooltipContent>
-        </Tooltip>
+        <div className="flex gap-2">
+          {actions.map(({ icon, label }) => (
+            <Tooltip key={label}>
+              <TooltipTrigger asChild>
+                <Button
+                  aria-label={collapsed ? label : undefined}
+                  icon={icon}
+                  isCollapsed={collapsed}
+                  variant="outline">
+                  {label}
+                </Button>
+              </TooltipTrigger>
+              {collapsed ? <TooltipContent>{label}</TooltipContent> : null}
+            </Tooltip>
+          ))}
+        </div>
       </TooltipProvider>
-    </DirectionProvider>
+    </div>
   )
 }

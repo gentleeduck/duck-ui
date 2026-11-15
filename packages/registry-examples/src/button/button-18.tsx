@@ -7,12 +7,12 @@ export default function Demo() {
 
   return (
     <Button
-      aria-label="Inbox button with 23 notifications"
+      aria-label={open ? 'Inbox' : undefined}
       icon={<Inbox />}
       isCollapsed={open}
       onClick={() => setOpen(!open)}
       type="button">
-      Button
+      Inbox
     </Button>
   )
 }

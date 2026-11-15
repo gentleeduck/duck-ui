@@ -57,7 +57,6 @@ const ButtonGroupSeparator = React.forwardRef<
   return (
     <Separator
       className={cn('relative m-0! self-stretch bg-input data-[orientation=vertical]:h-auto', className)}
-      data-slot="button-group-separator"
       orientation={orientation}
       ref={ref}
       {...props}

@@ -27,7 +27,7 @@ export default function Demo() {
       <Button variant="outline">Follow</Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button aria-label="More options" className="!pl-2" variant="outline">
+          <Button aria-label="More options" className="!ps-2" variant="outline">
             <ChevronDownIcon aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>

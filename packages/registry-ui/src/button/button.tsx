@@ -6,6 +6,12 @@ import * as React from 'react'
 import { buttonVariants } from './button.constants'
 import type { AnimationIconProps, ButtonProps } from './button.types'
 
+/** A link cannot be disabled, so its click is stopped before anyone hears it. Enter on a link is a click too. */
+export function stopClick(event: React.MouseEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+}
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
@@ -35,8 +41,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     )
 
     if (asChild) {
+      const isDisabled = Boolean(loading) || Boolean(disabled)
       return (
-        <Slot data-slot="button" {...props} className={buttonClass} ref={ref}>
+        <Slot
+          data-slot="button"
+          {...props}
+          aria-busy={loading ? true : undefined}
+          aria-disabled={isDisabled ? true : props['aria-disabled']}
+          className={buttonClass}
+          onClickCapture={isDisabled ? stopClick : props.onClickCapture}
+          ref={ref}>
           {children}
         </Slot>
       )

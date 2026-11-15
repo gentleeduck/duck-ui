@@ -10,8 +10,11 @@ import { Slot } from '@gentleduck/primitives/slot'
 import { Loader } from 'lucide-react'
 import { AnimatePresence, LazyMotion, m } from 'motion/react'
 import * as React from 'react'
+import { stopClick } from './button'
 import { buttonVariants } from './button.constants'
 import type { ButtonProps } from './button.types'
+
+const TAP_PRESET = { tap: true, transition: springBouncy }
 
 const MotionButton = React.forwardRef<
   HTMLButtonElement,
@@ -35,7 +38,7 @@ const MotionButton = React.forwardRef<
     },
     ref,
   ) => {
-    const content = useMotionPreset(scaleIn, { transition: springBouncy })
+    const content = useMotionPreset(scaleIn, TAP_PRESET)
     const isDisabled = Boolean(loading) || Boolean(disabled)
     const animateState = isDisabled
       ? { ...(content.animate as Record<string, unknown>), opacity: 0.5 }
@@ -47,14 +50,16 @@ const MotionButton = React.forwardRef<
           <m.span
             data-slot="button"
             initial={content.initial}
-            animate={animateState}
+            animate={content.animate}
             whileTap={isDisabled ? undefined : tapScale}
             transition={content.transition}
             className={cn('inline-flex', isDisabled && 'cursor-not-allowed [&>*]:pointer-events-none')}>
             <Slot
               {...(props as React.HTMLAttributes<HTMLElement>)}
-              aria-disabled={isDisabled || undefined}
+              aria-busy={loading ? true : undefined}
+              aria-disabled={isDisabled ? true : props['aria-disabled']}
               className={cn(buttonVariants({ border, className, size: isCollapsed ? 'icon' : size, variant }))}
+              onClickCapture={isDisabled ? stopClick : props.onClickCapture}
               ref={ref as React.Ref<HTMLElement>}>
               {children}
             </Slot>

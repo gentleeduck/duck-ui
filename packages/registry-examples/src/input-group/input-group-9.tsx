@@ -32,7 +32,7 @@ export default function Demo() {
         <InputGroupAddon align="inline-end">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <InputGroupButton className="!pr-1.5 text-xs" variant="ghost">
+              <InputGroupButton className="!pe-1.5 text-xs" variant="ghost">
                 Scope... <ChevronDownIcon className="size-3" />
               </InputGroupButton>
             </DropdownMenuTrigger>

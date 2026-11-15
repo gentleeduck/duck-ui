@@ -13,7 +13,7 @@ export default function Demo() {
           placeholder="Share your feedback..."
         />
         <InputGroupAddon align="block-end">
-          <InputGroupButton className="ml-auto" size="sm" variant="default">
+          <InputGroupButton className="ms-auto" size="sm" variant="default">
             Send
           </InputGroupButton>
         </InputGroupAddon>

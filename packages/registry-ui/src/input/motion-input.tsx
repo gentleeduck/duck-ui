@@ -10,7 +10,7 @@ const MotionInput = withMotion<React.ComponentProps<'input'> & { index?: number 
   Input,
   scaleIn,
   { transition: springBouncy },
-  { optionsFromProps: ({ index = 0 }) => ({ delay: index * 0.05 }) },
+  { stagger: 0.05 },
 )
 
 export { MotionInput }

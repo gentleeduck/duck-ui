@@ -60,7 +60,7 @@ const inputGroupAddonVariants = cva(
 const InputGroupAddon = React.forwardRef<
   HTMLDivElement,
   React.ComponentPropsWithoutRef<'div'> & Variants.VariantProps<typeof inputGroupAddonVariants>
->(({ className, align = 'inline-start', ...props }, ref) => {
+>(({ className, align = 'inline-start', onClick, ...props }, ref) => {
   return (
     // biome-ignore lint/a11y/useSemanticElements: group role is semantically correct for addon grouping
     // biome-ignore lint/a11y/useKeyWithClickEvents: click handler delegates focus to input, not interactive itself
@@ -68,11 +68,13 @@ const InputGroupAddon = React.forwardRef<
       className={cn(inputGroupAddonVariants({ align }), className)}
       data-align={align}
       data-slot="input-group-addon"
-      onClick={(e) => {
-        if ((e.target as HTMLElement).closest('button')) {
-          return
-        }
-        e.currentTarget.parentElement?.querySelector('input')?.focus()
+      onClick={(event) => {
+        onClick?.(event)
+        if (event.defaultPrevented || (event.target as HTMLElement).closest('button')) return
+        const group = event.currentTarget.parentElement
+        ;(
+          group?.querySelector<HTMLElement>('[data-slot="input-group-control"]') ?? group?.querySelector('input')
+        )?.focus()
       }}
       ref={ref}
       role="group"

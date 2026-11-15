@@ -40,7 +40,7 @@ export default function Demo() {
             <p>Connection to this site is encrypted and verified.</p>
           </PopoverContent>
         </Popover>
-        <InputGroupAddon className="pl-1.5 text-muted-foreground">https://</InputGroupAddon>
+        <InputGroupAddon className="ps-1.5 text-muted-foreground">https://</InputGroupAddon>
         <InputGroupInput id="input-secure-19" />
         <InputGroupAddon align="inline-end">
           <InputGroupButton

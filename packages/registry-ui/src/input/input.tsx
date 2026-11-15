@@ -10,7 +10,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'>>(
     const direction = useDirection(toDirection(dir))
     return (
       <input
-        dir={direction}
+        dir={dir === 'auto' ? dir : direction}
         type={type}
         className={cn(
           'h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-hidden transition-colors',

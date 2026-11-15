@@ -18,7 +18,7 @@ export default function Demo() {
         />
         <InputGroupAddon align="block-end" className="border-t">
           <InputGroupText>Row 1, Col 1</InputGroupText>
-          <InputGroupButton className="ml-auto" size="sm" variant="default">
+          <InputGroupButton className="ms-auto" size="sm" variant="default">
             Execute <IconCornerDownLeft />
           </InputGroupButton>
         </InputGroupAddon>
@@ -27,7 +27,7 @@ export default function Demo() {
             <IconDatabase />
             production.sql
           </InputGroupText>
-          <InputGroupButton aria-label="Refresh" className="ml-auto" size="icon-xs">
+          <InputGroupButton aria-label="Refresh" className="ms-auto" size="icon-xs">
             <IconRefresh aria-hidden="true" />
           </InputGroupButton>
           <InputGroupButton aria-label="Copy" size="icon-xs" variant="ghost">

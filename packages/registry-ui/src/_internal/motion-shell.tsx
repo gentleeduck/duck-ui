@@ -49,30 +49,33 @@ MotionShell.displayName = 'MotionShell'
 
 /**
  * HOC: wraps `Component` in `MotionShell` with `preset`. Fourth arg accepts a `wrapperClassName`
- * string OR `{ wrapperClassName?, optionsFromProps? }` (per-instance overrides for stagger).
+ * string OR `{ wrapperClassName?, stagger? }`.
  * Use bespoke `motion-*.tsx` when motion element must be the component root.
  * @example withMotion(Avatar, scaleIn, { transition: springBouncy })
  */
-export interface IWithMotionConfig<TProps> {
+export interface IWithMotionConfig {
   wrapperClassName?: string
-  optionsFromProps?: (props: TProps) => IUseMotionPresetOptions | undefined
+  /** Seconds each step of an `index` prop holds the entrance back. The `index` never reaches `Component`. */
+  stagger?: number
 }
 
 export function withMotion<TProps extends object, TRef>(
   Component: React.ForwardRefExoticComponent<TProps & React.RefAttributes<TRef>>,
   preset: IMotionPreset,
   options?: IUseMotionPresetOptions,
-  config?: string | IWithMotionConfig<TProps>,
+  config?: string | IWithMotionConfig,
 ): React.ForwardRefExoticComponent<TProps & React.RefAttributes<TRef>> {
   const displayName = `Motion(${Component.displayName ?? Component.name ?? 'Component'})`
   const wrapperClassName = typeof config === 'string' ? config : config?.wrapperClassName
-  const optionsFromProps = typeof config === 'object' ? config?.optionsFromProps : undefined
+  const stagger = typeof config === 'object' ? config.stagger : undefined
   const Motionised = React.forwardRef<TRef, TProps>((props, ref) => {
-    const dynamic = optionsFromProps?.(props as TProps)
-    const mergedOptions = dynamic ? { ...options, ...dynamic } : options
+    const { index = 0, ...others } = props as TProps & { index?: number }
     return (
-      <MotionShell preset={preset} options={mergedOptions} wrapperClassName={wrapperClassName}>
-        <Component {...(props as TProps)} ref={ref} />
+      <MotionShell
+        preset={preset}
+        options={stagger === undefined ? options : { ...options, delay: index * stagger }}
+        wrapperClassName={wrapperClassName}>
+        <Component {...((stagger === undefined ? props : others) as TProps)} ref={ref} />
       </MotionShell>
     )
   }) as React.ForwardRefExoticComponent<TProps & React.RefAttributes<TRef>>

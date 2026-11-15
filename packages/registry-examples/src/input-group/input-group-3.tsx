@@ -19,7 +19,7 @@ export default function Demo() {
         <InputGroupAddon>
           <InputGroupText>EUR</InputGroupText>
         </InputGroupAddon>
-        <InputGroupInput className="!pl-0.5" placeholder="0.00" />
+        <InputGroupInput className="!ps-0.5" placeholder="0.00" />
         <InputGroupAddon align="inline-end">
           <InputGroupText>.00</InputGroupText>
         </InputGroupAddon>
@@ -28,7 +28,7 @@ export default function Demo() {
         <InputGroupAddon>
           <InputGroupText>@</InputGroupText>
         </InputGroupAddon>
-        <InputGroupInput className="!pl-0.5" placeholder="handle" />
+        <InputGroupInput className="!ps-0.5" placeholder="handle" />
       </InputGroup>
       <InputGroup>
         <InputGroupTextarea placeholder="Write release notes..." />

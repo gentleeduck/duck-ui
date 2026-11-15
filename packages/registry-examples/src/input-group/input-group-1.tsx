@@ -31,7 +31,7 @@ export default function Demo() {
           <InputGroupAddon align="inline-end">24 entries</InputGroupAddon>
         </InputGroup>
         <InputGroup>
-          <InputGroupInput className="!pl-1" placeholder="github.com/acme/repo" />
+          <InputGroupInput className="!ps-1" placeholder="github.com/acme/repo" />
           <InputGroupAddon>
             <InputGroupText>git clone </InputGroupText>
           </InputGroupAddon>
@@ -62,7 +62,7 @@ export default function Demo() {
                 <DropdownMenuItem>High</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <InputGroupText className="ml-auto">3 attachments</InputGroupText>
+            <InputGroupText className="ms-auto">3 attachments</InputGroupText>
             <Separator className="!h-4" orientation="vertical" />
             <InputGroupButton className="rounded-full" disabled size="icon-xs" variant="default">
               <ArrowUpIcon aria-hidden="true" />

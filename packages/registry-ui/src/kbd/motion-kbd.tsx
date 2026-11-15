@@ -8,13 +8,13 @@ import { Kbd } from './kbd'
 
 const MOTION_KBD_STAGGER = 0.03
 
-const MotionKbd = withMotion<React.ComponentPropsWithoutRef<'kbd'> & { index?: number }, HTMLElement>(
+const MotionKbd = withMotion<React.ComponentPropsWithoutRef<typeof Kbd> & { index?: number }, HTMLElement>(
   Kbd,
   scaleIn,
   { transition: springBouncy },
   {
     wrapperClassName: 'inline-flex',
-    optionsFromProps: ({ index = 0 }) => ({ delay: index * MOTION_KBD_STAGGER }),
+    stagger: MOTION_KBD_STAGGER,
   },
 )
 

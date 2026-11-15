@@ -10,7 +10,7 @@ const MotionSkeleton = withMotion<React.HTMLAttributes<HTMLDivElement> & { index
   Skeleton,
   scaleIn,
   { transition: springBouncy },
-  { optionsFromProps: ({ index = 0 }) => ({ delay: index * 0.05 }) },
+  { stagger: 0.05 },
 )
 
 export { MotionSkeleton }

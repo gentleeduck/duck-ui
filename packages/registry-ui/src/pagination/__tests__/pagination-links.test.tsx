@@ -102,7 +102,7 @@ describe('registry-ui motion pagination', () => {
     const current = screen.getByRole('link', { name: '3' })
 
     expect((nav.parentElement as HTMLElement).style.transform).toContain('scale(')
-    expect(current.style.transform).toBe('scale(0.95)')
+    expect(current.style.transform).toBe('scaleX(0.95) scaleY(0.95)')
     expect(current.getAttribute('aria-current')).toBe('page')
     expect(current.hasAttribute('index')).toBe(false)
     expect(screen.getByRole('link', { name: '4' }).hasAttribute('aria-current')).toBe(false)

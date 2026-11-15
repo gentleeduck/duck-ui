@@ -36,7 +36,7 @@ const MotionPaginationLink = React.forwardRef<
   HTMLAnchorElement,
   Omit<IPaginationLinkProps, 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart'> & { index?: number }
 >(({ className, isActive, size = 'icon', index = 0, ...props }, ref) => {
-  const options = React.useMemo(() => ({ transition: springBouncy, delay: index * 0.05 }), [index])
+  const options = React.useMemo(() => ({ delay: index * 0.05, tap: true, transition: springBouncy }), [index])
   const content = useMotionPreset(scaleIn, options)
   return (
     <LazyMotion features={loadDomAnimation}>

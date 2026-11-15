@@ -26,13 +26,14 @@ const MotionSeparator = React.forwardRef<
         ref={ref}
         role="separator"
         aria-orientation={orientation}
+        data-orientation={orientation}
         className={cn('shrink-0 bg-border', isHorizontal ? 'h-px w-full' : 'min-h-full w-px', className)}
         dir={direction}
         initial={isHorizontal ? MOTION_SEPARATOR_INITIAL_HORIZONTAL : MOTION_SEPARATOR_INITIAL_VERTICAL}
         animate={MOTION_SEPARATOR_ANIMATE}
         transition={springBouncy}
-        {...props}
         data-slot="separator"
+        {...props}
       />
     </LazyMotion>
   )

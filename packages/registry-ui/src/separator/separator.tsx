@@ -16,10 +16,15 @@ const Separator = React.forwardRef<
     <hr
       ref={ref}
       aria-orientation={orientation}
-      className={cn('shrink-0 bg-border', orientation === 'horizontal' ? 'h-px w-full' : 'min-h-full w-px', className)}
+      data-orientation={orientation}
+      className={cn(
+        'shrink-0 border-0 bg-border',
+        orientation === 'horizontal' ? 'h-px w-full' : 'min-h-full w-px',
+        className,
+      )}
       dir={direction}
-      {...props}
       data-slot="separator"
+      {...props}
     />
   )
 })

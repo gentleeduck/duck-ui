@@ -59,7 +59,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
   ({ className, scope = 'col', ...props }, ref) => (
     <th
       className={cn(
-        'px-4 text-start align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pe-0',
+        'px-4 py-2 text-start align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pe-0 [&:has([type=checkbox])]:pe-0',
         className,
       )}
       data-slot="table-head"
@@ -74,7 +74,7 @@ TableHead.displayName = 'TableHead'
 const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
     <td
-      className={cn('p-4 align-middle [&:has([role=checkbox])]:pe-0', className)}
+      className={cn('p-4 align-middle [&:has([role=checkbox])]:pe-0 [&:has([type=checkbox])]:pe-0', className)}
       data-slot="table-cell"
       ref={ref}
       {...props}

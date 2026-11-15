@@ -190,10 +190,8 @@ const MotionTypographyList = React.forwardRef<
         transition={content.transition}
         {...props}>
         {React.Children.map(children, (child, i) =>
-          React.isValidElement(child) ? (
-            <MotionTypographyListItem key={(child as React.ReactElement).key ?? i} index={index + i + 1}>
-              {(child as React.ReactElement<{ children?: React.ReactNode }>).props.children}
-            </MotionTypographyListItem>
+          React.isValidElement<React.ComponentProps<typeof MotionTypographyListItem>>(child) ? (
+            <MotionTypographyListItem {...child.props} index={index + i + 1} />
           ) : (
             child
           ),

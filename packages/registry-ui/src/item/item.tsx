@@ -10,19 +10,23 @@ import { toDirection } from '../direction/direction.libs'
 import { Separator } from '../separator'
 import { itemVariants } from './item.constants'
 
+const ItemGroupContext = React.createContext(false)
+
 const ItemGroup = React.forwardRef<HTMLDivElement, React.ComponentPropsWithoutRef<'div'>>(
   ({ className, dir, ...props }, ref) => {
     const direction = useDirection(toDirection(dir))
     return (
-      // biome-ignore lint/a11y/useSemanticElements: list role on div is intentional for composed item patterns
-      <div
-        className={cn('group/item-group flex flex-col', className)}
-        dir={direction}
-        data-slot="item-group"
-        ref={ref}
-        role="list"
-        {...props}
-      />
+      <ItemGroupContext.Provider value={true}>
+        {/* biome-ignore lint/a11y/useSemanticElements: list role on div is intentional for composed item patterns */}
+        <div
+          className={cn('group/item-group flex flex-col', className)}
+          dir={direction}
+          data-slot="item-group"
+          ref={ref}
+          role="list"
+          {...props}
+        />
+      </ItemGroupContext.Provider>
     )
   },
 )
@@ -32,12 +36,15 @@ const ItemSeparator = React.forwardRef<
   React.ComponentRef<typeof Separator>,
   React.ComponentPropsWithoutRef<typeof Separator>
 >(({ className, ...props }, ref) => {
+  const listed = React.useContext(ItemGroupContext)
   return (
     <Separator
       className={cn('my-0', className)}
       data-slot="item-separator"
       orientation="horizontal"
       ref={ref}
+      // A list holds only list items, so in a group the line is drawn and not announced.
+      role={listed ? 'none' : undefined}
       {...props}
     />
   )
@@ -48,17 +55,26 @@ const Item = React.forwardRef<
   HTMLDivElement,
   React.ComponentPropsWithoutRef<'div'> & Variants.VariantProps<typeof itemVariants> & { asChild?: boolean }
 >(({ className, variant = 'default', size = 'default', asChild = false, ...props }, ref) => {
+  const listed = React.useContext(ItemGroupContext)
   const Comp = asChild ? Slot : 'div'
-  return (
+  const item = (
     <Comp
       className={cn(itemVariants({ className, size, variant }))}
       data-size={size}
       data-slot="item"
       data-variant={variant}
       ref={ref}
-      role="listitem"
+      role={listed && !asChild ? 'listitem' : undefined}
       {...props}
     />
+  )
+  return listed && asChild ? (
+    // biome-ignore lint/a11y/useSemanticElements: the group is a div list, and the child keeps its own role, a link's included
+    <div className="contents" role="listitem">
+      {item}
+    </div>
+  ) : (
+    item
   )
 })
 Item.displayName = 'Item'

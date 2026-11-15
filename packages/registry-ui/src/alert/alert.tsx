@@ -10,7 +10,7 @@ import { alertVariants } from './alert.constants'
 const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & Variants.VariantProps<typeof alertVariants>
->(({ className, variant, dir, ...props }, ref) => {
+>(({ className, variant = 'default', dir, ...props }, ref) => {
   const direction = useDirection(toDirection(dir))
   return (
     <div

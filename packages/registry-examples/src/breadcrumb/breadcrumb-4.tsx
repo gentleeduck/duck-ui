@@ -20,7 +20,7 @@ export default function Demo() {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbEllipsis />
+          <BreadcrumbEllipsis text="Hidden pages" />
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>

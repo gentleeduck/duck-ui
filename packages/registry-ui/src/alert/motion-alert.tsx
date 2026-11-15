@@ -18,7 +18,7 @@ const MotionAlert = React.forwardRef<
     React.HTMLAttributes<HTMLDivElement> & Variants.VariantProps<typeof alertVariants>,
     'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart'
   >
->(({ className, variant, dir, ...props }, ref) => {
+>(({ className, variant = 'default', dir, ...props }, ref) => {
   const direction = useDirection(toDirection(dir))
   const content = useMotionPreset(scaleIn, { transition: springBouncy })
   return (

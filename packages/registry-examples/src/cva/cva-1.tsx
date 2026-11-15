@@ -66,7 +66,7 @@ export default function Demo() {
 
   return (
     <div className="relative flex h-full w-full flex-col items-center justify-center gap-6 p-6">
-      <div className="absolute top-0 left-0 flex flex-col gap-4">
+      <div className="absolute start-0 top-0 flex flex-col gap-4">
         {/* Variant Select */}
         <Select onValueChange={(val) => setVariant(val as ButtonVariantProps['variant'])}>
           <SelectTrigger className="w-[200px]">

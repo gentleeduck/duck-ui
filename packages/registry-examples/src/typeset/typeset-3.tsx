@@ -27,7 +27,7 @@ export default function Demo() {
 
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
-      <div className="self-end rounded-2xl rounded-br-md bg-primary px-3.5 py-2 text-primary-foreground text-sm">
+      <div className="self-end rounded-2xl rounded-ee-md bg-primary px-3.5 py-2 text-primary-foreground text-sm">
         How do I style chat answers?
       </div>
       <Typeset aria-live="polite" size="sm">

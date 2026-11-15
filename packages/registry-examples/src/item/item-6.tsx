@@ -27,7 +27,7 @@ export default function Demo() {
     <div className="flex w-full max-w-md flex-col gap-6">
       <ItemGroup className="gap-4">
         {articles.map((article) => (
-          <Item asChild key={article.title} role="listitem" variant="outline">
+          <Item asChild key={article.title} variant="outline">
             {/* biome-ignore lint/a11y/useValidAnchor: placeholder href in demo component */}
             <a href="#">
               <ItemMedia variant="image">

@@ -1,5 +1,6 @@
 import { ScrollArea } from '@gentleduck/registry-ui/scroll-area'
 import { Separator } from '@gentleduck/registry-ui/separator'
+import * as React from 'react'
 
 const tags = Array.from({ length: 50 }).map((_, i, a) => `v1.2.0-beta.${a.length - i}`)
 
@@ -9,12 +10,10 @@ export default function Demo() {
       <div className="p-4">
         <h4 className="mb-4 font-medium text-sm leading-none">Tags</h4>
         {tags.map((tag) => (
-          <>
-            <div className="text-sm" key={tag}>
-              {tag}
-            </div>
+          <React.Fragment key={tag}>
+            <div className="text-sm">{tag}</div>
             <Separator className="my-2" />
-          </>
+          </React.Fragment>
         ))}
       </div>
     </ScrollArea>

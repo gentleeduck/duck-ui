@@ -59,7 +59,7 @@ export default function Demo() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side="bottom" align="start">
                     {items.slice(1, -2).map((item) => (
-                      <DropdownMenuItem key={item.label}>
+                      <DropdownMenuItem asChild key={item.label}>
                         <Link href={item.href ? item.href : '#'}>{item.label}</Link>
                       </DropdownMenuItem>
                     ))}
@@ -71,7 +71,7 @@ export default function Demo() {
                     <BreadcrumbEllipsis className="h-4 w-4" />
                   </DrawerTrigger>
                   <DrawerContent>
-                    <DrawerHeader className="text-left">
+                    <DrawerHeader className="text-start">
                       <DrawerTitle>Navigate to</DrawerTitle>
                       <DrawerDescription>Select a page to navigate to.</DrawerDescription>
                     </DrawerHeader>
@@ -95,18 +95,18 @@ export default function Demo() {
           </>
         ) : null}
         {items.slice(-ITEMS_TO_DISPLAY + 1).map((item) => (
-          <BreadcrumbItem key={item.label}>
-            {item.href ? (
-              <>
+          <React.Fragment key={item.label}>
+            <BreadcrumbItem>
+              {item.href ? (
                 <BreadcrumbLink asChild className="max-w-20 truncate md:max-w-none">
                   <Link href={item.href}>{item.label}</Link>
                 </BreadcrumbLink>
-                <BreadcrumbSeparator />
-              </>
-            ) : (
-              <BreadcrumbPage className="max-w-20 truncate md:max-w-none">{item.label}</BreadcrumbPage>
-            )}
-          </BreadcrumbItem>
+              ) : (
+                <BreadcrumbPage className="max-w-20 truncate md:max-w-none">{item.label}</BreadcrumbPage>
+              )}
+            </BreadcrumbItem>
+            {item.href ? <BreadcrumbSeparator /> : null}
+          </React.Fragment>
         ))}
       </BreadcrumbList>
     </Breadcrumb>

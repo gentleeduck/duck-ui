@@ -24,11 +24,11 @@ export default function Demo() {
     <MotionTable>
       <TableCaption>A list of your recent invoices.</TableCaption>
       <TableHeader>
-        <MotionTableRow className="[&_th]:py-2" index={0}>
+        <MotionTableRow index={0}>
           <TableHead className="w-[100px]">Invoice</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Method</TableHead>
-          <TableHead className="text-right">Amount</TableHead>
+          <TableHead className="text-end">Amount</TableHead>
         </MotionTableRow>
       </TableHeader>
       <TableBody>
@@ -37,14 +37,14 @@ export default function Demo() {
             <TableCell className="font-medium">{invoice.invoice}</TableCell>
             <TableCell>{invoice.paymentStatus}</TableCell>
             <TableCell>{invoice.paymentMethod}</TableCell>
-            <TableCell className="text-right">{invoice.totalAmount}</TableCell>
+            <TableCell className="text-end">{invoice.totalAmount}</TableCell>
           </MotionTableRow>
         ))}
       </TableBody>
       <TableFooter>
         <MotionTableRow className="[&_td]:py-2" index={invoices.length + 1}>
           <TableCell colSpan={3}>Total</TableCell>
-          <TableCell className="text-right">$2,500.00</TableCell>
+          <TableCell className="text-end">$2,500.00</TableCell>
         </MotionTableRow>
       </TableFooter>
     </MotionTable>

@@ -61,7 +61,7 @@ export default function Demo() {
       <Table>
         <TableCaption>{'قائمة بأحدث فواتيرك.'}</TableCaption>
         <TableHeader>
-          <TableRow className="[&_th]:py-2">
+          <TableRow>
             <TableHead className="w-[100px]">{'الفاتورة'}</TableHead>
             <TableHead>{'الحالة'}</TableHead>
             <TableHead>{'طريقة الدفع'}</TableHead>

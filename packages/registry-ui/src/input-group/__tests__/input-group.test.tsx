@@ -128,11 +128,12 @@ describe('registry-ui InputGroup', () => {
     expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Pond' }))
   })
 
-  test('takes its direction from a provider, from its own dir before that', () => {
+  test('takes its direction from a provider, from its own dir before that, and keeps auto for the text to decide', () => {
     render(
       <DirectionProvider dir="rtl">
         <InputGroup data-testid="inherited">
           <InputGroupInput aria-label="Inherited" />
+          <InputGroupInput aria-label="Auto" dir="auto" />
         </InputGroup>
         <InputGroup data-testid="own" dir="ltr">
           <InputGroupInput aria-label="Own" dir="ltr" />
@@ -144,6 +145,7 @@ describe('registry-ui InputGroup', () => {
     expect(screen.getByRole('textbox', { name: 'Inherited' }).getAttribute('dir')).toBe('rtl')
     expect(screen.getByTestId('own').getAttribute('dir')).toBe('ltr')
     expect(screen.getByRole('textbox', { name: 'Own' }).getAttribute('dir')).toBe('ltr')
+    expect(screen.getByRole('textbox', { name: 'Auto' }).getAttribute('dir')).toBe('auto')
   })
 
   test('MotionInputGroup scales the group in', () => {

@@ -132,15 +132,13 @@ const InputGroupText = React.forwardRef<HTMLSpanElement, React.ComponentPropsWit
 InputGroupText.displayName = 'InputGroupText'
 
 const InputGroupInput = React.forwardRef<HTMLInputElement, React.ComponentPropsWithoutRef<'input'>>(
-  ({ className, dir, ...props }, ref) => {
-    const direction = useDirection(toDirection(dir))
+  ({ className, ...props }, ref) => {
     return (
       <Input
         className={cn(
           'flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent',
           className,
         )}
-        dir={direction}
         data-slot="input-group-control"
         ref={ref}
         {...props}

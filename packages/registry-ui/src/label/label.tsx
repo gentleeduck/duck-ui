@@ -15,7 +15,7 @@ const Label = React.forwardRef<HTMLLabelElement, ILabelProps>(
       // biome-ignore lint/a11y/noLabelWithoutControl: label is composed with form controls externally via htmlFor
       <label
         className={cn(
-          'text-balance font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 has-disabled:cursor-not-allowed has-disabled:opacity-70',
+          'text-balance font-medium text-sm leading-none has-disabled:cursor-not-allowed has-disabled:opacity-70 [:where(.peer):disabled+&]:cursor-not-allowed [:where(.peer):disabled+&]:opacity-70',
           className,
         )}
         data-slot="label"

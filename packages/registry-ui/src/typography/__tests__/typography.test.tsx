@@ -57,7 +57,7 @@ const inBody = (node: React.ReactNode) => (
 const alone = (node: React.ReactNode) => node
 
 // Each part, the element it renders, its slot, and a class only its level carries.
-const PARTS: [string, unknown, string, string, (node: React.ReactNode) => React.ReactNode][] = [
+const PARTS: [string, unknown, string, string, string, (node: React.ReactNode) => React.ReactNode][] = [
   ['TypographyH1', TypographyH1, 'H1', 'typography-h1', 'text-4xl', alone],
   ['TypographyH2', TypographyH2, 'H2', 'typography-h2', 'border-b', alone],
   ['TypographyH3', TypographyH3, 'H3', 'typography-h3', 'text-2xl', alone],
@@ -92,7 +92,7 @@ const PARTS: [string, unknown, string, string, (node: React.ReactNode) => React.
   ['MotionTypographySmall', MotionTypographySmall, 'SMALL', 'typography-small', 'leading-none', alone],
   ['MotionTypographyMuted', MotionTypographyMuted, 'P', 'typography-muted', 'text-muted-foreground', alone],
   ['MotionTypographyListItem', MotionTypographyListItem, 'LI', 'typography-list-item', 'custom', alone],
-].map(([name, part, tag, slot, level, wrap]) => [name, part, tag, slot, level, wrap] as never)
+]
 
 describe('registry-ui Typography parts', () => {
   test.each(PARTS)(
@@ -220,6 +220,19 @@ describe('registry-ui MotionTypographyList', () => {
 
     expect(Number(screen.getByText('Item 1').style.opacity)).toBeGreaterThan(0)
     expect(Number(screen.getByText('Item 25').style.opacity)).toBe(0)
+  })
+
+  test("leaves an item's animation start handler off, since motion would call it with its own arguments", async () => {
+    const onAnimationStart = mock()
+    render(
+      <MotionTypographyList>
+        <li onAnimationStart={onAnimationStart}>One</li>
+      </MotionTypographyList>,
+    )
+    for (let step = 0; step < 2; step++) await wait(100)
+
+    expect(screen.getByText('One').style.opacity).not.toBe('')
+    expect(onAnimationStart).not.toHaveBeenCalled()
   })
 })
 

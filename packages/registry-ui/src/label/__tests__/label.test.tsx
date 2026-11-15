@@ -9,8 +9,8 @@ import { MotionLabel } from '../motion-label'
 
 afterEach(cleanup)
 
-// The selectors Tailwind's peer-disabled: and has-disabled: variants compile to.
-const AFTER_DISABLED_PEER = ':where(.peer):disabled ~ *'
+// The selectors the label's has-disabled: and [:where(.peer):disabled+&]: variants compile to.
+const AFTER_DISABLED_PEER = ':where(.peer):disabled + *'
 const AROUND_DISABLED = ':has(:disabled)'
 
 describe('registry-ui Label', () => {
@@ -36,20 +36,18 @@ describe('registry-ui Label', () => {
     expect(screen.getByText('Code').getAttribute('dir')).toBe('ltr')
   })
 
-  test('dims after a disabled checkbox or switch, and around a disabled control', () => {
+  test('dims right after a disabled checkbox or switch, and around a disabled control', () => {
     render(
       <>
         <div>
           <Checkbox disabled id="a" />
           <Label htmlFor="a">After a checkbox</Label>
+          <Checkbox id="c" />
+          <Label htmlFor="c">After an enabled checkbox</Label>
         </div>
         <div>
           <Switch disabled id="b" />
           <Label htmlFor="b">After a switch</Label>
-        </div>
-        <div>
-          <Checkbox id="c" />
-          <Label htmlFor="c">After an enabled checkbox</Label>
         </div>
         <Label>
           <input disabled /> Around an input
@@ -62,7 +60,7 @@ describe('registry-ui Label', () => {
     expect(label('After a switch').matches(AFTER_DISABLED_PEER)).toBe(true)
     expect(label('After an enabled checkbox').matches(AFTER_DISABLED_PEER)).toBe(false)
     expect(label('Around an input').matches(AROUND_DISABLED)).toBe(true)
-    for (const variant of ['peer-disabled:opacity-70', 'has-disabled:opacity-70']) {
+    for (const variant of ['[:where(.peer):disabled+&]:opacity-70', 'has-disabled:opacity-70']) {
       expect(label('Around an input').className.split(' ')).toContain(variant)
     }
   })

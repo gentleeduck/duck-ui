@@ -189,13 +189,12 @@ const MotionTypographyList = React.forwardRef<
         animate={content.animate}
         transition={content.transition}
         {...props}>
-        {React.Children.map(children, (child, i) =>
-          React.isValidElement<React.ComponentProps<typeof MotionTypographyListItem>>(child) ? (
-            <MotionTypographyListItem {...child.props} index={index + i + 1} />
-          ) : (
-            child
-          ),
-        )}
+        {React.Children.map(children, (child, i) => {
+          if (!React.isValidElement<React.LiHTMLAttributes<HTMLLIElement>>(child)) return child
+          // motion calls these with its own arguments, where a DOM handler of the same name expects an event.
+          const { onAnimationStart, onDrag, onDragEnd, onDragStart, ...item } = child.props
+          return <MotionTypographyListItem {...item} index={index + i + 1} />
+        })}
       </m.ul>
     </LazyMotion>
   )

@@ -46,10 +46,13 @@ describe('registry-ui Kbd', () => {
   test("hydrates the keys a server drew, then shows the browser's own", async () => {
     const { container, errors, html, unmount } = await hydrateOnMac(<Kbd keys="mod+k" />)
 
-    expect(html).toContain('>Ctrl+K</kbd>')
-    expect(errors).toEqual([])
-    expect(container.textContent).toBe('Cmd+K')
-    unmount()
+    try {
+      expect(html).toContain('>Ctrl+K</kbd>')
+      expect(errors).toEqual([])
+      expect(container.textContent).toBe('Cmd+K')
+    } finally {
+      unmount()
+    }
   })
 })
 

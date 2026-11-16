@@ -12,6 +12,7 @@ import {
   type ITabsProps,
   type ITabsTriggerProps,
   TabsContext,
+  useDefaultChecked,
   useTabStop,
   useTabs,
   useTabsListKeyDown,
@@ -119,10 +120,7 @@ const MotionTabsTrigger = React.forwardRef<
   const [shake, setShake] = React.useState(false)
 
   registerTrigger(value)
-
-  React.useEffect(() => {
-    if (defaultChecked) setActiveItem(value)
-  }, [defaultChecked, setActiveItem, value])
+  useDefaultChecked(defaultChecked, value)
 
   return (
     <m.button

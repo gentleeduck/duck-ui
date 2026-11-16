@@ -193,6 +193,18 @@ describe.each([
     expect(selected()).toBe('Gamma')
   })
 
+  test('a defaultChecked trigger does not pull a controlled value back once it moves', () => {
+    function Owner() {
+      const [value, setValue] = React.useState('c')
+      return <Demo gamma={{ defaultChecked: true }} onValueChange={setValue} value={value} />
+    }
+    render(<Owner />)
+
+    fireEvent.click(tab('Beta'))
+
+    expect(selected()).toBe('Beta')
+  })
+
   test('a tab and its panel name each other, only the selected tab is in the tab order, and the panel is', () => {
     render(<Demo defaultValue="b" />)
     const panel = screen.getByRole('tabpanel')
@@ -395,5 +407,37 @@ describe('registry-ui MotionTabs parts', () => {
 
     expect(box.style.height).toBe('44px')
     Reflect.deleteProperty(globalThis, 'ResizeObserver')
+  })
+})
+
+describe.each([
+  ['Tabs', Tabs, TabsList, TabsTrigger],
+  ['MotionTabs', MotionTabs, MotionTabsList, MotionTabsTrigger],
+] as const)('registry-ui %s tab stop', (_, Root, List, Trigger) => {
+  test('with no tab selected, the stop moves on when the first tab turns disabled without its siblings rendering', async () => {
+    let disableAlpha = () => {}
+    function Alpha() {
+      const [disabled, setDisabled] = React.useState(false)
+      disableAlpha = () => setDisabled(true)
+      return (
+        <Trigger disabled={disabled} value="a">
+          Alpha
+        </Trigger>
+      )
+    }
+    render(
+      <Root>
+        <List aria-label="Sections">
+          <Alpha />
+          <Trigger value="b">Beta</Trigger>
+        </List>
+      </Root>,
+    )
+    const stops = () => ['Alpha', 'Beta'].map((name) => screen.getByRole('tab', { name }).tabIndex)
+    expect(stops()).toEqual([0, -1])
+
+    await act(async () => disableAlpha())
+
+    expect(stops()).toEqual([-1, 0])
   })
 })

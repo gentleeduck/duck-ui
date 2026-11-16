@@ -115,13 +115,36 @@ export function useTabStop(isActive: boolean, forwardedRef: React.ForwardedRef<H
   const ref = React.useRef<HTMLButtonElement>(null)
   const [isFirstOfNone, setIsFirstOfNone] = React.useState(false)
   React.useImperativeHandle(forwardedRef, () => ref.current as HTMLButtonElement, [])
-  // Every trigger renders again when the selection moves, so each one reads its list again after that commit.
-  useLayoutEffect(() => {
+  const read = React.useCallback(() => {
     const list = ref.current?.closest('[role="tablist"]')
     const first = list?.querySelector(`${TAB}:not(:disabled):not([aria-disabled="true"])`)
     setIsFirstOfNone(first === ref.current && !list?.querySelector(`${TAB}[aria-selected="true"]`))
-  })
+  }, [])
+  useLayoutEffect(read)
+  // A sibling can be disabled, enabled or added without this trigger rendering again.
+  useLayoutEffect(() => {
+    const list = ref.current?.closest('[role="tablist"]')
+    if (!list) return
+    const observer = new MutationObserver(read)
+    observer.observe(list, {
+      attributeFilter: ['aria-disabled', 'aria-selected', 'disabled'],
+      childList: true,
+      subtree: true,
+    })
+    return () => observer.disconnect()
+  }, [read])
   return { ref, tabIndex: isActive || isFirstOfNone ? 0 : -1 }
+}
+
+/** Selects the trigger once, when it mounts. A controlled value moving later is not pulled back to it. */
+export function useDefaultChecked(defaultChecked: boolean | undefined, value: string) {
+  const { setActiveItem } = useTabs()
+  const done = React.useRef(false)
+  React.useEffect(() => {
+    if (done.current) return
+    done.current = true
+    if (defaultChecked) setActiveItem(value)
+  }, [defaultChecked, setActiveItem, value])
 }
 
 export interface ITabsListProps extends Omit<React.HTMLProps<HTMLDivElement>, 'ref' | 'role'> {}
@@ -158,10 +181,7 @@ const TabsTrigger = React.forwardRef<HTMLButtonElement, ITabsTriggerProps>(
     const { setActiveItem, activeItem, tabsId } = useTabs()
     const isActive = value === activeItem
     const tabStop = useTabStop(isActive, ref)
-
-    React.useEffect(() => {
-      if (defaultChecked) setActiveItem(value)
-    }, [defaultChecked, setActiveItem, value])
+    useDefaultChecked(defaultChecked, value)
 
     return (
       <button

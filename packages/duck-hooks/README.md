@@ -65,7 +65,7 @@ function Search() {
 | `useCopyToClipboard` | `@gentleduck/hooks/use-copy-to-clipboard` | Copy text to clipboard |
 | `useDebounce` | `@gentleduck/hooks/use-debounce` | Debounce a callback (real hook with unmount cleanup) |
 | `useIsMobile` | `@gentleduck/hooks/use-is-mobile` | Detect mobile viewport |
-| `useMediaQuery` | `@gentleduck/hooks/use-media-query` | Subscribe to media queries |
+| `useMediaQuery` | `@gentleduck/hooks/use-media-query` | Subscribe to media queries; `false` where there is no `matchMedia` |
 | `useOnOpenChange` | `@gentleduck/hooks/use-on-open-change` | Handle open/close state with body scroll-lock |
 | `useStableId` | `@gentleduck/hooks/use-stable-id` | Generate a stable, SSR-safe ID with a prefix |
 

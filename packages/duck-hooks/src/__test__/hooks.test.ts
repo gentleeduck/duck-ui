@@ -952,6 +952,17 @@ describe('useMediaQuery + useIsMobile', () => {
 
     harness.restore()
   })
+
+  test('useMediaQuery answers false where there is no matchMedia, as in a test DOM', async () => {
+    const original = globalThis.matchMedia
+    Reflect.deleteProperty(globalThis, 'matchMedia')
+    const { useMediaQuery } = await import('../use-media-query')
+
+    const { result } = renderHook(() => useMediaQuery('(max-width: 767px)'))
+
+    expect(result.current).toBe(false)
+    globalThis.matchMedia = original
+  })
 })
 
 // ─── useOnOpenChange ───────────────────────────────────────────────────────

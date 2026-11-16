@@ -42,6 +42,7 @@ export function JsonEditorView({
   dir,
   lang,
   onKeyDown,
+  ...textareaProps
 }: IJsonEditorViewProps) {
   const direction = useDirection(toDirection(dir))
   const lineCount = React.useMemo(() => {
@@ -54,19 +55,10 @@ export function JsonEditorView({
       return Array.from({ length: lineCount }, (_, i) => String(i + 1)).join('\n')
     }
 
-    // Build formatter; if the locale already includes a -u-nu- extension, use as-is.
-    // Otherwise append the native numbering system for known locales so that
-    // environments defaulting to latn still produce locale-appropriate digits.
-    let localeTag = lang
-    if (!lang.includes('-u-') || !lang.includes('-nu-')) {
-      const [base = ''] = lang.toLowerCase().split('-')
-      const numberingSystem = LOCALE_NUMBERING_SYSTEMS[base]
-      if (numberingSystem) {
-        localeTag = `${lang}-u-nu-${numberingSystem}`
-      }
-    }
-
-    const fmt = new Intl.NumberFormat(localeTag, { useGrouping: false })
+    // Some engines default these locales to latn digits, so their own are asked for unless the tag names a system.
+    const [base = ''] = lang.toLowerCase().split('-')
+    const numberingSystem = lang.toLowerCase().includes('-nu-') ? undefined : LOCALE_NUMBERING_SYSTEMS[base]
+    const fmt = new Intl.NumberFormat(lang, { numberingSystem, useGrouping: false })
     return Array.from({ length: lineCount }, (_, i) => fmt.format(i + 1)).join('\n')
   }, [lineCount, lang])
 
@@ -90,6 +82,7 @@ export function JsonEditorView({
         ) : null}
 
         <Textarea
+          {...textareaProps}
           className={cn(
             'w-full resize-y bg-transparent px-3 py-2 font-mono text-sm outline-hidden placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring',
             lineNumbers ? 'ps-14' : '',

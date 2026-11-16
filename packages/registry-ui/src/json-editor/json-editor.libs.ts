@@ -1,9 +1,10 @@
 import type { IJsonParseResult } from './json-editor.types'
 
 export function safeStringify(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  // A string holding JSON text edits as that text; any other string is a JSON string, quoted.
+  if (typeof value === 'string' && tryParseJson(value).ok) return value
   try {
-    if (value === null || value === undefined) return ''
-    if (typeof value === 'string') return value
     return JSON.stringify(value, null, 2)
   } catch {
     return ''

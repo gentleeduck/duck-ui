@@ -57,13 +57,21 @@ export interface IJsonEditorText {
   unsavedChanges?: string
   saved?: string
   nullPreview?: string
+  /** Opens a refusal of text that is not JSON, ahead of what the parser says. */
+  invalidJson?: string
+  /** The refusal of a value other than an object, while `allowArray` is off. */
+  notAnObject?: string
 }
 export type JsonEditorText = IJsonEditorText
 
 export type IJsonParseResult = { ok: true; value: unknown } | { ok: false; message: string }
 export type JsonParseResult = IJsonParseResult
 
-export interface IJsonEditorViewProps {
+export interface IJsonEditorViewProps
+  extends Pick<
+    React.ComponentPropsWithoutRef<'textarea'>,
+    'id' | 'aria-describedby' | 'aria-invalid' | 'aria-labelledby'
+  > {
   value: string
   onChange: (value: string) => void
   onScroll?: (scrollTop: number) => void

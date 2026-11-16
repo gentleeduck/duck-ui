@@ -7,7 +7,6 @@ import { Maximize } from 'lucide-react'
 import * as React from 'react'
 import type { FieldValues } from 'react-hook-form'
 import { useController } from 'react-hook-form'
-import { toast } from 'sonner'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -85,13 +84,24 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
     unsavedChanges: textProp?.unsavedChanges ?? 'Unsaved changes',
     saved: textProp?.saved ?? 'Saved',
     nullPreview: textProp?.nullPreview ?? 'NULL',
+    invalidJson: textProp?.invalidJson ?? 'Enter valid JSON.',
+    notAnObject: textProp?.notAnObject ?? 'Enter a JSON object.',
   }
+
+  const id = React.useId()
+  const labelId = `${id}-label`
+  const editorId = `${id}-editor`
+  const previewId = `${id}-preview`
+  const errorId = `${id}-error`
+  const sheetErrorId = `${id}-sheet-error`
+  const fieldErrorId = `${id}-field-error`
 
   const { field, fieldState } = useController({ control, name })
   const committedText = React.useMemo(() => safeStringify(field.value), [field.value])
 
   const [draft, setDraft] = React.useState(committedText)
   const [dirty, setDirty] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
   const [scrollTop, setScrollTop] = React.useState(0)
 
   React.useEffect(() => {
@@ -110,68 +120,44 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
   const [sheetOpen, setSheetOpen] = React.useState(false)
   const [sheetDraft, setSheetDraft] = React.useState('')
   const [sheetDirty, setSheetDirty] = React.useState(false)
+  const [sheetError, setSheetError] = React.useState<string | null>(null)
   const [sheetScrollTop, setSheetScrollTop] = React.useState(0)
   const [confirmDiscardOpen, setConfirmDiscardOpen] = React.useState(false)
 
-  const validateAndCommitValue = React.useCallback(
-    (text: string): boolean => {
-      if (!isEditable) return false
+  const draftParsed = tryParseJson(draft)
+  const sheetParsed = tryParseJson(sheetDraft)
 
-      const parsed = tryParseJson(text)
-      if (!parsed.ok) {
-        toast.error(parsed.message || 'Please enter valid JSON')
-        return false
-      }
+  // Commits the text when the field takes its value, and answers why when it does not.
+  const commit = (text: string): string | null => {
+    const parsed = tryParseJson(text)
+    if (!parsed.ok) return `${t.invalidJson} ${parsed.message}`
+    if (!allowArray && parsed.value !== null && !isObjectLike(parsed.value)) return t.notAnObject
+    field.onChange(parsed.value)
+    return null
+  }
 
-      if (parsed.value === null) {
-        field.onChange(null)
-        return true
-      }
-
-      if (!allowArray && Array.isArray(parsed.value)) {
-        toast.error('Value must be a JSON object (arrays are not allowed).')
-        return false
-      }
-
-      if (!allowArray && !isObjectLike(parsed.value)) {
-        toast.error('Value must be a JSON object.')
-        return false
-      }
-
-      field.onChange(parsed.value)
-      return true
-    },
-    [allowArray, field, isEditable],
-  )
-
-  const cancelInline = React.useCallback(() => {
+  const cancelInline = () => {
     setDraft(committedText)
     setDirty(false)
-    if (mode === 'popover') {
-      setPopoverOpen(false)
-    }
-  }, [committedText, mode])
+    setError(null)
+    setPopoverOpen(false)
+  }
 
-  const saveInline = React.useCallback(() => {
-    if (!validateAndCommitValue(draft)) return
-    setDirty(false)
-    if (mode === 'popover') {
-      setPopoverOpen(false)
-    }
-  }, [draft, mode, validateAndCommitValue])
-
-  const formatInline = React.useCallback(() => {
+  const saveInline = () => {
     if (!isEditable) return
+    const refusal = commit(draft)
+    setError(refusal)
+    if (refusal) return
+    setDirty(false)
+    setPopoverOpen(false)
+  }
 
+  const formatInline = () => {
     const result = formatJson(draft)
-    if (!result.ok) {
-      toast.error(result.message || 'Please enter valid JSON to format')
-      return
-    }
-
+    if (!result.ok) return
     setDraft(result.formatted)
     setDirty(true)
-  }, [draft, isEditable])
+  }
 
   const inlineHotkeys = useJsonEditorHotkeys({
     enabled: mode === 'inline' || popoverOpen,
@@ -179,49 +165,42 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
     onSave: saveInline,
   })
 
-  const openSheet = React.useCallback(() => {
+  const openSheet = () => {
     setSheetDraft(draft)
     setSheetDirty(false)
+    setSheetError(null)
     setSheetScrollTop(0)
     setSheetOpen(true)
-  }, [draft])
+  }
 
-  const requestCloseSheet = React.useCallback(() => {
-    if (!sheetDirty) {
-      setSheetOpen(false)
-      return
-    }
+  const requestCloseSheet = () => {
+    if (sheetDirty) setConfirmDiscardOpen(true)
+    else setSheetOpen(false)
+  }
 
-    setConfirmDiscardOpen(true)
-  }, [sheetDirty])
-
-  const discardSheetChanges = React.useCallback(() => {
+  const discardSheetChanges = () => {
     setConfirmDiscardOpen(false)
     setSheetDirty(false)
     setSheetOpen(false)
-  }, [])
+  }
 
-  const saveSheet = React.useCallback(() => {
-    if (!validateAndCommitValue(sheetDraft)) return
-
-    setDraft(sheetDraft)
+  const saveSheet = () => {
+    if (!isEditable) return
+    const refusal = commit(sheetDraft)
+    setSheetError(refusal)
+    if (refusal) return
     setDirty(false)
+    setError(null)
     setSheetDirty(false)
     setSheetOpen(false)
-  }, [sheetDraft, validateAndCommitValue])
+  }
 
-  const formatSheet = React.useCallback(() => {
-    if (!isEditable) return
-
+  const formatSheet = () => {
     const result = formatJson(sheetDraft)
-    if (!result.ok) {
-      toast.error(result.message || 'Please enter valid JSON to format')
-      return
-    }
-
+    if (!result.ok) return
     setSheetDraft(result.formatted)
     setSheetDirty(true)
-  }, [isEditable, sheetDraft])
+  }
 
   const sheetHotkeys = useJsonEditorHotkeys({
     enabled: sheetOpen,
@@ -229,49 +208,34 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
     onSave: saveSheet,
   })
 
-  const handleExpand = React.useCallback(() => {
-    if (expandMode === 'none') return
-
-    if (expandMode === 'callback') {
-      const parsed = tryParseJson(draft)
-      onExpandEditor?.({
-        name,
-        rawText: draft,
-        value: parsed.ok ? parsed.value : field.value,
-      })
+  const handleExpand = () => {
+    if (expandMode === 'sheet') {
+      openSheet()
       return
     }
+    onExpandEditor?.({ name, rawText: draft, value: draftParsed.ok ? draftParsed.value : field.value })
+  }
 
-    openSheet()
-  }, [draft, expandMode, field.value, name, onExpandEditor, openSheet])
+  let preview = committedText.replace(/\s+/g, ' ').trim() || t.nullPreview
+  if (preview.length > 120) preview = `${preview.slice(0, 117)}...`
 
-  const canFormatDraft = React.useMemo(() => {
-    const parsed = tryParseJson(draft)
-    return parsed.ok && parsed.value !== null
-  }, [draft])
-
-  const canFormatSheet = React.useMemo(() => {
-    const parsed = tryParseJson(sheetDraft)
-    return parsed.ok && parsed.value !== null
-  }, [sheetDraft])
-
-  const preview = React.useMemo(() => {
-    if (!committedText.trim()) return t.nullPreview
-
-    const oneLine = committedText.replace(/\s+/g, ' ').trim()
-    return oneLine.length > 120 ? `${oneLine.slice(0, 117)}...` : oneLine
-  }, [committedText, t.nullPreview])
+  const fieldError = fieldState.error?.message
+  const describedBy = (...ids: Array<string | false>) => ids.filter(Boolean).join(' ') || undefined
 
   const inlineEditor = (
     <div className="space-y-2" data-slot="json-editor-inline">
       <JsonEditorView
+        aria-describedby={describedBy(!!error && errorId, !!fieldError && fieldErrorId)}
+        aria-invalid={!!(error || fieldState.error)}
         dir={direction}
+        id={editorId}
         lang={lang}
         lineHeightPx={lineHeightPx}
         lineNumbers={lineNumbers}
         onChange={(value) => {
           setDraft(value)
           setDirty(true)
+          setError(null)
         }}
         onKeyDown={inlineHotkeys}
         onScroll={setScrollTop}
@@ -288,20 +252,30 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
         <span>{t.statusHint}</span>
         {dirty ? <span className="text-foreground">{t.unsavedChanges}</span> : <span>{t.saved}</span>}
       </div>
+
+      <FieldError data-slot="json-editor-error" id={errorId}>
+        {error}
+      </FieldError>
     </div>
   )
 
   return (
-    <Field className={cn('space-y-3', className)} data-slot="json-editor-field" dir={direction}>
+    <Field
+      className={cn('space-y-3', className)}
+      data-invalid={!!(error || fieldState.error) || undefined}
+      data-slot="json-editor-field"
+      dir={direction}>
       <div className="mb-1 flex items-start justify-between gap-4" data-slot="json-editor-header">
         <div className="space-y-1">
-          <FieldLabel className="font-semibold text-base">{label}</FieldLabel>
+          <FieldLabel className="font-semibold text-base" htmlFor={editorId} id={labelId}>
+            {label}
+          </FieldLabel>
           {description ? <FieldDescription>{description}</FieldDescription> : null}
         </div>
 
         <div className={cn('flex items-center gap-2', actionsClassName)} data-slot="json-editor-actions">
           <C.Button
-            disabled={!isEditable || !canFormatDraft}
+            disabled={!isEditable || !draftParsed.ok || draftParsed.value === null}
             onClick={formatInline}
             size="sm"
             type="button"
@@ -337,10 +311,11 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
             <C.Popover dir={direction} onOpenChange={setPopoverOpen} open={popoverOpen}>
               <PopoverTrigger asChild>
                 <C.Button
+                  aria-labelledby={`${labelId} ${previewId}`}
                   className="w-full justify-start overflow-hidden text-start font-mono text-xs"
                   type="button"
                   variant="outline">
-                  <span className="truncate" dir="ltr">
+                  <span className="truncate" dir="ltr" id={previewId}>
                     {preview}
                   </span>
                 </C.Button>
@@ -351,27 +326,20 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
         )}
       </div>
 
-      {fieldState.error ? <FieldError errors={[fieldState.error]} /> : null}
+      <FieldError errors={[fieldState.error]} id={fieldErrorId} />
 
       {expandMode === 'sheet' ? (
-        <C.Sheet
-          dir={direction}
-          onOpenChange={(nextOpen) => {
-            if (nextOpen) {
-              openSheet()
-              return
-            }
-
-            requestCloseSheet()
-          }}
-          open={sheetOpen}>
-          <C.SheetContent className="w-full sm:max-w-3xl" side={sheetSide ?? 'right'}>
+        <C.Sheet dir={direction} onOpenChange={requestCloseSheet} open={sheetOpen}>
+          <C.SheetContent className="w-full sm:max-w-3xl" hideClose side={sheetSide ?? 'right'}>
             <SheetHeader>
               <SheetTitle>{sheetTitle}</SheetTitle>
             </SheetHeader>
 
             <div className="mt-4 space-y-3" data-slot="json-editor-sheet-content">
               <JsonEditorView
+                aria-describedby={describedBy(!!sheetError && sheetErrorId)}
+                aria-invalid={!!sheetError}
+                aria-labelledby={labelId}
                 dir={direction}
                 lang={lang}
                 lineHeightPx={lineHeightPx}
@@ -379,6 +347,7 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
                 onChange={(value) => {
                   setSheetDraft(value)
                   setSheetDirty(true)
+                  setSheetError(null)
                 }}
                 onKeyDown={sheetHotkeys}
                 onScroll={setSheetScrollTop}
@@ -389,12 +358,16 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
                 value={sheetDraft}
               />
 
+              <FieldError data-slot="json-editor-sheet-error" id={sheetErrorId}>
+                {sheetError}
+              </FieldError>
+
               <div className="flex items-center justify-between gap-2" data-slot="json-editor-sheet-actions">
                 <div className="text-muted-foreground text-xs">{t.sheetStatusHint}</div>
 
                 <div className="flex items-center gap-2">
                   <C.Button
-                    disabled={!isEditable || !canFormatSheet}
+                    disabled={!isEditable || !sheetParsed.ok || sheetParsed.value === null}
                     onClick={formatSheet}
                     size="sm"
                     type="button"

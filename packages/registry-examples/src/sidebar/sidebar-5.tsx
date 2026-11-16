@@ -84,8 +84,8 @@ export default function Demo() {
         </Sidebar>
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="ml-auto flex items-center gap-2">
+            <SidebarTrigger className="-ms-1" />
+            <div className="ms-auto flex items-center gap-2">
               <span className="text-muted-foreground text-sm">Sidebar is {open ? 'open' : 'closed'}</span>
               <Button variant="outline" size="sm" onClick={() => setOpen(!open)}>
                 Toggle

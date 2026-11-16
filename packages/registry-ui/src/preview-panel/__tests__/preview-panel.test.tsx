@@ -85,7 +85,7 @@ describe('registry-ui preview-panel', () => {
   test('starts locked, so the wheel over it scrolls the page', () => {
     for (const html of [renderToStaticMarkup(<PreviewPanel />), renderToStaticMarkup(<MotionPreviewPanel />)]) {
       expect(html).toContain('aria-label="Unlock the view"')
-      expect(html).toContain('aria-pressed="true"')
+      expect(html).not.toContain('aria-pressed')
       expect(html).toContain('cursor:default;touch-action:auto')
     }
   })
@@ -96,7 +96,7 @@ describe('registry-ui preview-panel', () => {
       renderToStaticMarkup(<MotionPreviewPanel defaultLocked={false} />),
     ]) {
       expect(html).toContain('aria-label="Lock the view"')
-      expect(html).toContain('aria-pressed="false"')
+      expect(html).not.toContain('aria-pressed')
       expect(html).toContain('cursor:grab;touch-action:none')
     }
   })

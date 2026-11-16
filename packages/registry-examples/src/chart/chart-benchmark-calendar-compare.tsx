@@ -42,14 +42,14 @@ export default function CalendarComparisonTables() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">Metric</th>
-                <th className="px-3 py-2.5 text-left font-medium">
+                <th className="px-3 py-2.5 text-start font-medium text-muted-foreground">Metric</th>
+                <th className="px-3 py-2.5 text-start font-medium">
                   <span className="inline-flex items-center gap-1.5">
                     <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
                     gentleduck
                   </span>
                 </th>
-                <th className="px-3 py-2.5 text-left font-medium">
+                <th className="px-3 py-2.5 text-start font-medium">
                   <span className="inline-flex items-center gap-1.5">
                     <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
                     {comp.name}

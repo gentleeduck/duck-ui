@@ -123,19 +123,19 @@ export default function VariantsBenchmarkDashboard() {
               <table className="w-full text-xs">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-3 py-2 text-left font-medium">library</th>
+                    <th className="px-3 py-2 text-start font-medium">library</th>
                     <th
-                      className="px-3 py-2 text-right font-medium"
+                      className="px-3 py-2 text-end font-medium"
                       title="Gzipped raw file from node_modules — excludes transitive deps, not a fair comparison.">
                       shipped
                     </th>
                     <th
-                      className="px-3 py-2 text-right font-medium"
+                      className="px-3 py-2 text-end font-medium"
                       title="Bundle `export *` with deps, minified, gzipped — full surface-area cost.">
                       full API
                     </th>
                     <th
-                      className="px-3 py-2 text-right font-medium"
+                      className="px-3 py-2 text-end font-medium"
                       title="Bundle a single import with deps, minified, gzipped — what an app actually pays.">
                       real import
                     </th>
@@ -145,13 +145,9 @@ export default function VariantsBenchmarkDashboard() {
                   {bundleRows.map((r) => (
                     <tr key={r.name} className="border-t">
                       <td className="px-3 py-2">{r.name}</td>
-                      <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">
-                        {r.shippedKB ?? 'n/a'}
-                      </td>
-                      <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">
-                        {r.fullApiKB ?? 'n/a'}
-                      </td>
-                      <td className="px-3 py-2 text-right font-medium tabular-nums">{r.realImportKB ?? 'n/a'}</td>
+                      <td className="px-3 py-2 text-end text-muted-foreground tabular-nums">{r.shippedKB ?? 'n/a'}</td>
+                      <td className="px-3 py-2 text-end text-muted-foreground tabular-nums">{r.fullApiKB ?? 'n/a'}</td>
+                      <td className="px-3 py-2 text-end font-medium tabular-nums">{r.realImportKB ?? 'n/a'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -169,7 +165,7 @@ export default function VariantsBenchmarkDashboard() {
               <select
                 value={scenarioId}
                 onChange={(e) => setScenarioId(e.target.value)}
-                className="ml-auto rounded-md border border-input bg-background px-2 py-1 text-xs">
+                className="ms-auto rounded-md border border-input bg-background px-2 py-1 text-xs">
                 {runtimeScenarios.map((s) => (
                   <option key={s.scenario} value={s.scenario}>
                     {s.label}
@@ -192,13 +188,13 @@ export default function VariantsBenchmarkDashboard() {
               <table className="w-full text-xs">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-3 py-2 text-left font-medium">library</th>
-                    <th className="px-3 py-2 text-left font-medium">mode</th>
-                    <th className="px-3 py-2 text-right font-medium">median (ns)</th>
-                    <th className="px-3 py-2 text-right font-medium">p95</th>
-                    <th className="px-3 py-2 text-right font-medium">p99</th>
-                    <th className="px-3 py-2 text-right font-medium">rme%</th>
-                    <th className="px-3 py-2 text-right font-medium">ops/sec</th>
+                    <th className="px-3 py-2 text-start font-medium">library</th>
+                    <th className="px-3 py-2 text-start font-medium">mode</th>
+                    <th className="px-3 py-2 text-end font-medium">median (ns)</th>
+                    <th className="px-3 py-2 text-end font-medium">p95</th>
+                    <th className="px-3 py-2 text-end font-medium">p99</th>
+                    <th className="px-3 py-2 text-end font-medium">rme%</th>
+                    <th className="px-3 py-2 text-end font-medium">ops/sec</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -209,11 +205,11 @@ export default function VariantsBenchmarkDashboard() {
                         <tr key={`${r.library}-${mode}`} className="border-t">
                           <td className="px-3 py-2">{i === 0 ? r.library : ''}</td>
                           <td className="px-3 py-2 text-muted-foreground">{mode}</td>
-                          <td className="px-3 py-2 text-right font-medium tabular-nums">{s.medianNs}</td>
-                          <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">{s.p95Ns}</td>
-                          <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">{s.p99Ns}</td>
-                          <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">{s.rmeP}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">
+                          <td className="px-3 py-2 text-end font-medium tabular-nums">{s.medianNs}</td>
+                          <td className="px-3 py-2 text-end text-muted-foreground tabular-nums">{s.p95Ns}</td>
+                          <td className="px-3 py-2 text-end text-muted-foreground tabular-nums">{s.p99Ns}</td>
+                          <td className="px-3 py-2 text-end text-muted-foreground tabular-nums">{s.rmeP}</td>
+                          <td className="px-3 py-2 text-end tabular-nums">
                             {s.opsPerSec ? s.opsPerSec.toLocaleString() : '—'}
                           </td>
                         </tr>
@@ -233,11 +229,11 @@ export default function VariantsBenchmarkDashboard() {
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-xs">
                   <tr>
-                    <th className="px-3 py-2 text-left font-medium">feature</th>
-                    <th className="px-3 py-2 text-left font-medium">gentleduck</th>
-                    <th className="px-3 py-2 text-left font-medium">cva</th>
-                    <th className="px-3 py-2 text-left font-medium">tv</th>
-                    <th className="px-3 py-2 text-left font-medium">clsx</th>
+                    <th className="px-3 py-2 text-start font-medium">feature</th>
+                    <th className="px-3 py-2 text-start font-medium">gentleduck</th>
+                    <th className="px-3 py-2 text-start font-medium">cva</th>
+                    <th className="px-3 py-2 text-start font-medium">tv</th>
+                    <th className="px-3 py-2 text-start font-medium">clsx</th>
                   </tr>
                 </thead>
                 <tbody>

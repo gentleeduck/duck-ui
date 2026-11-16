@@ -261,7 +261,7 @@ const ChartTooltipItem = React.memo(function ChartTooltipItem({
               {nestLabel ? tooltipLabel : null}
               <span className="text-muted-foreground">{itemConfig?.label || item.name}</span>
             </div>
-            {item.value && (
+            {item.value !== undefined && item.value !== null && (
               <span className="font-medium font-mono text-foreground tabular-nums">{item.value.toLocaleString()}</span>
             )}
           </div>

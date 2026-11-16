@@ -67,13 +67,13 @@ export default function Demo() {
                         <span className="font-semibold">Documentation</span>
                         <span className="">v{selectedVersion}</span>
                       </div>
-                      <ChevronsUpDown aria-hidden="true" className="ml-auto" />
+                      <ChevronsUpDown aria-hidden="true" className="ms-auto" />
                     </SidebarMenuButton>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-(--radix-dropdown-menu-trigger-width)">
+                  <DropdownMenuContent align="start" className="w-(--gentleduck-dropdown-menu-trigger-width)">
                     {data.versions.map((version) => (
                       <DropdownMenuItem key={version} onSelect={() => setSelectedVersion(version)}>
-                        v{version} {version === selectedVersion && <Check aria-hidden="true" className="ml-auto" />}
+                        v{version} {version === selectedVersion && <Check aria-hidden="true" className="ms-auto" />}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
@@ -106,7 +106,7 @@ export default function Demo() {
         </Sidebar>
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
+            <SidebarTrigger className="-ms-1" />
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4">
             <div className="grid auto-rows-min gap-4 md:grid-cols-3">

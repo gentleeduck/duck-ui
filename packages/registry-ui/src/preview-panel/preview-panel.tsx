@@ -10,6 +10,7 @@ import { ButtonGroup } from '../button-group'
 import { toDirection } from '../direction/direction.libs'
 import { Separator } from '../separator'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../tooltip'
+import { warnOnSuspiciousUnsafeHtml } from './preview-panel.libs'
 import type { IPreviewPanelProps } from './preview-panel.types'
 
 const ZOOM_STEP_BUTTON = 0.25
@@ -102,7 +103,6 @@ const ZoomControls = memo(function ZoomControls({
                   onClick={onToggleLock}
                   icon={locked ? <Lock aria-hidden="true" /> : <LockOpen aria-hidden="true" />}
                   aria-label={locked ? unlockText : lockText}
-                  aria-pressed={locked}
                 />
               </TooltipTrigger>
               <TooltipContent>{locked ? unlockText : lockText}</TooltipContent>
@@ -158,6 +158,7 @@ const PreviewPanel = React.forwardRef<HTMLDivElement, IPreviewPanelProps>(
       posStartX: 0,
       posStartY: 0,
       rafId: 0,
+      pointerId: 0,
       emitPending: false,
       pinchDist: 0,
       pinchZoom: initialZoom,
@@ -267,11 +268,11 @@ const PreviewPanel = React.forwardRef<HTMLDivElement, IPreviewPanelProps>(
       if (!el) return
 
       const onDown = (e: PointerEvent) => {
-        if (lockedRef.current || e.button !== 0) return
-        if ((e.target as HTMLElement).closest('[data-slot="preview-panel-toolbar"]')) return
+        if (lockedRef.current || e.button !== 0 || s.current.dragging) return
         e.preventDefault()
         el.setPointerCapture(e.pointerId)
         s.current.dragging = true
+        s.current.pointerId = e.pointerId
         s.current.dragStartX = e.clientX
         s.current.dragStartY = e.clientY
         s.current.posStartX = s.current.x
@@ -280,7 +281,7 @@ const PreviewPanel = React.forwardRef<HTMLDivElement, IPreviewPanelProps>(
       }
 
       const onMove = (e: PointerEvent) => {
-        if (!s.current.dragging) return
+        if (!s.current.dragging || e.pointerId !== s.current.pointerId) return
         s.current.x = s.current.posStartX + (e.clientX - s.current.dragStartX)
         s.current.y = s.current.posStartY + (e.clientY - s.current.dragStartY)
         markDirty()
@@ -288,7 +289,7 @@ const PreviewPanel = React.forwardRef<HTMLDivElement, IPreviewPanelProps>(
       }
 
       const onUp = (e: PointerEvent) => {
-        if (!s.current.dragging) return
+        if (!s.current.dragging || e.pointerId !== s.current.pointerId) return
         s.current.dragging = false
         el.releasePointerCapture(e.pointerId)
         el.style.cursor = 'grab'
@@ -376,12 +377,7 @@ const PreviewPanel = React.forwardRef<HTMLDivElement, IPreviewPanelProps>(
       }
     }, [])
 
-    // Dev-only: warn (don't throw) when `unsafeHtml` contains obvious XSS
-    // markers. Production builds skip the scan so prop-drilling sanitised
-    // build-time HTML stays zero-cost.
-    if (IS_DEV && unsafeHtml) {
-      warnOnSuspiciousUnsafeHtml(unsafeHtml)
-    }
+    warnOnSuspiciousUnsafeHtml('PreviewPanel', unsafeHtml)
 
     const containerStyle = useMemo(
       () => ({ maxHeight, cursor: locked ? 'default' : 'grab', touchAction: locked ? 'auto' : 'none' }) as const,
@@ -441,30 +437,5 @@ const PreviewPanel = React.forwardRef<HTMLDivElement, IPreviewPanelProps>(
   },
 )
 PreviewPanel.displayName = 'PreviewPanel'
-
-const SUSPICIOUS_HTML_PATTERN = /<script\b|on\w+\s*=/i
-let didWarnUnsafeHtml = false
-
-declare const process: { env?: { NODE_ENV?: string } } | undefined
-
-/** Inlined `__DEV__`-style flag. Dead-code-eliminated by bundlers when `process.env.NODE_ENV === 'production'`. */
-const IS_DEV: boolean = typeof process !== 'undefined' && process?.env?.NODE_ENV !== 'production'
-
-/**
- * Dev-only sentinel that warns once per session if `unsafeHtml` looks like
- * it might contain a `<script>` tag or an inline event handler. Not a
- * sanitiser — the prop's contract is still caller-owns-sanitisation.
- */
-function warnOnSuspiciousUnsafeHtml(html: string): void {
-  if (didWarnUnsafeHtml) return
-  if (!SUSPICIOUS_HTML_PATTERN.test(html)) return
-  didWarnUnsafeHtml = true
-  // eslint-disable-next-line no-console
-  console.warn(
-    '[PreviewPanel] `unsafeHtml` contains a <script> tag or an inline event handler. ' +
-      'This prop is rendered without sanitisation; you MUST only pass markup you fully trust. ' +
-      'For untrusted content, pass React children instead.',
-  )
-}
 
 export { PreviewPanel, ZoomControls }

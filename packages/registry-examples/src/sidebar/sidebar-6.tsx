@@ -169,7 +169,7 @@ function TeamSwitcher({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--gentleduck-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             align="start"
             side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}>
@@ -356,7 +356,7 @@ function NavUser({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--gentleduck-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={isMobile ? 'bottom' : 'right'}
             align="end"
             sideOffset={4}>

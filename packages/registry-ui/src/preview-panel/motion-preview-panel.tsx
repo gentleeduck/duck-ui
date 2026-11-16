@@ -15,6 +15,7 @@ import { MotionButtonGroup } from '../button-group'
 import { toDirection } from '../direction/direction.libs'
 import { MotionSeparator } from '../separator'
 import { MotionTooltip, MotionTooltipContent, TooltipProvider, TooltipTrigger } from '../tooltip'
+import { warnOnSuspiciousUnsafeHtml } from './preview-panel.libs'
 import type { IPreviewPanelProps } from './preview-panel.types'
 
 const ZOOM_STEP_BUTTON = 0.25
@@ -109,7 +110,6 @@ const MotionZoomControls = memo(function MotionZoomControls({
                   onClick={onToggleLock}
                   icon={locked ? <Lock aria-hidden="true" /> : <LockOpen aria-hidden="true" />}
                   aria-label={locked ? unlockText : lockText}
-                  aria-pressed={locked}
                 />
               </TooltipTrigger>
               <MotionTooltipContent>{locked ? unlockText : lockText}</MotionTooltipContent>
@@ -164,6 +164,7 @@ const MotionPreviewPanel = React.forwardRef<
       posStartX: 0,
       posStartY: 0,
       rafId: 0,
+      pointerId: 0,
       emitPending: false,
       pinchDist: 0,
       pinchZoom: initialZoom,
@@ -258,11 +259,11 @@ const MotionPreviewPanel = React.forwardRef<
       const el = containerRef.current
       if (!el) return
       const onDown = (e: PointerEvent) => {
-        if (lockedRef.current || e.button !== 0) return
-        if ((e.target as HTMLElement).closest('[data-slot="preview-panel-toolbar"]')) return
+        if (lockedRef.current || e.button !== 0 || s.current.dragging) return
         e.preventDefault()
         el.setPointerCapture(e.pointerId)
         s.current.dragging = true
+        s.current.pointerId = e.pointerId
         s.current.dragStartX = e.clientX
         s.current.dragStartY = e.clientY
         s.current.posStartX = s.current.x
@@ -270,14 +271,14 @@ const MotionPreviewPanel = React.forwardRef<
         el.style.cursor = 'grabbing'
       }
       const onMove = (e: PointerEvent) => {
-        if (!s.current.dragging) return
+        if (!s.current.dragging || e.pointerId !== s.current.pointerId) return
         s.current.x = s.current.posStartX + (e.clientX - s.current.dragStartX)
         s.current.y = s.current.posStartY + (e.clientY - s.current.dragStartY)
         markDirty()
         scheduleApply()
       }
       const onUp = (e: PointerEvent) => {
-        if (!s.current.dragging) return
+        if (!s.current.dragging || e.pointerId !== s.current.pointerId) return
         s.current.dragging = false
         el.releasePointerCapture(e.pointerId)
         el.style.cursor = 'grab'
@@ -355,6 +356,8 @@ const MotionPreviewPanel = React.forwardRef<
         clearTimeout(s.current.willChangeTimer)
       }
     }, [])
+
+    warnOnSuspiciousUnsafeHtml('MotionPreviewPanel', unsafeHtml)
 
     const containerStyle = useMemo(
       () => ({ maxHeight, cursor: locked ? 'default' : 'grab', touchAction: locked ? 'auto' : 'none' }) as const,

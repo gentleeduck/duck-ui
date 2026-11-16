@@ -36,11 +36,7 @@ const Carousel = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLDivEleme
     const [canScrollPrev, setCanScrollPrev] = React.useState(false)
     const [canScrollNext, setCanScrollNext] = React.useState(false)
 
-    const onSelect = React.useCallback((api: CarouselApi) => {
-      if (!api) {
-        return
-      }
-
+    const onSelect = React.useCallback((api: NonNullable<CarouselApi>) => {
       setCanScrollPrev(api.canScrollPrev())
       setCanScrollNext(api.canScrollNext())
     }, [])
@@ -99,7 +95,7 @@ const Carousel = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLDivEleme
           canScrollPrev,
           carouselRef,
           opts,
-          orientation: orientation || (opts?.axis === 'y' ? 'vertical' : 'horizontal'),
+          orientation,
           scrollNext,
           scrollPrev,
         }}>

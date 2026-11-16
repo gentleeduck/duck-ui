@@ -12,7 +12,10 @@ import { getPhysicalSidebarSide, SIDEBAR_WIDTH_MOBILE } from './sidebar.constant
 import { useSidebar } from './sidebar.hooks'
 import type { ISidebarProps } from './sidebar.types'
 
-const MotionSidebar = React.forwardRef<HTMLDivElement, ISidebarProps>(
+// motion takes these four names for its own animation and gesture callbacks.
+type IMotionSidebarProps = Omit<ISidebarProps, 'onAnimationStart' | 'onDrag' | 'onDragEnd' | 'onDragStart'>
+
+const MotionSidebar = React.forwardRef<HTMLDivElement, IMotionSidebarProps>(
   (
     {
       side = 'left',
@@ -52,7 +55,7 @@ const MotionSidebar = React.forwardRef<HTMLDivElement, ISidebarProps>(
             data-sidebar="sidebar"
             data-slot="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+            className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
             style={{ '--sidebar-width': SIDEBAR_WIDTH_MOBILE } as React.CSSProperties}
             side={side}>
             <SheetHeader className="sr-only">
@@ -72,15 +75,16 @@ const MotionSidebar = React.forwardRef<HTMLDivElement, ISidebarProps>(
       ? 0
       : isIcon
         ? variant === 'floating' || variant === 'inset'
-          ? 'calc(3rem + 1rem)'
-          : '3rem'
-        : '16rem'
+          ? 'calc(var(--sidebar-width-icon) + 1rem)'
+          : 'var(--sidebar-width-icon)'
+        : 'var(--sidebar-width)'
 
     const containerWidth = isIcon
       ? variant === 'floating' || variant === 'inset'
-        ? 'calc(3rem + 1rem + 2px)'
-        : '3rem'
-      : '16rem'
+        ? 'calc(var(--sidebar-width-icon) + 1rem + 2px)'
+        : 'var(--sidebar-width-icon)'
+      : 'var(--sidebar-width)'
+    const offcanvas = 'calc(var(--sidebar-width) * -1)'
 
     return (
       <LazyMotion features={loadDomAnimation}>
@@ -106,8 +110,8 @@ const MotionSidebar = React.forwardRef<HTMLDivElement, ISidebarProps>(
               width: containerWidth,
               ...(isOffcanvas
                 ? physicalSide === 'left'
-                  ? { left: 'calc(-16rem)' }
-                  : { right: 'calc(-16rem)' }
+                  ? { left: offcanvas }
+                  : { right: offcanvas }
                 : physicalSide === 'left'
                   ? { left: 0 }
                   : { right: 0 }),
@@ -120,7 +124,8 @@ const MotionSidebar = React.forwardRef<HTMLDivElement, ISidebarProps>(
                 ? 'p-2'
                 : cn(physicalSide === 'left' && 'border-r', physicalSide === 'right' && 'border-l'),
               className,
-            )}>
+            )}
+            {...props}>
             <div
               data-sidebar="sidebar"
               data-slot="sidebar-inner"

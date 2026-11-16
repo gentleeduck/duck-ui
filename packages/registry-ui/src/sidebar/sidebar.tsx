@@ -14,7 +14,7 @@ import { Input } from '../input'
 import { Separator } from '../separator'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../sheet'
 import { Skeleton } from '../skeleton'
-import { Tooltip, TooltipContent, TooltipTrigger } from '../tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../tooltip'
 import {
   persistSidebarOpen,
   SIDEBAR_KEYBOARD_SHORTCUT,
@@ -87,20 +87,22 @@ function SidebarProvider({
 
   return (
     <SidebarContext.Provider value={contextValue}>
-      <div
-        data-slot="sidebar-wrapper"
-        style={
-          {
-            '--sidebar-width': SIDEBAR_WIDTH,
-            '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
-            ...style,
-          } as React.CSSProperties
-        }
-        dir={direction}
-        className={cn('group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]:bg-sidebar', className)}
-        {...props}>
-        {children}
-      </div>
+      <TooltipProvider delayDuration={0}>
+        <div
+          data-slot="sidebar-wrapper"
+          style={
+            {
+              '--sidebar-width': SIDEBAR_WIDTH,
+              '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
+              ...style,
+            } as React.CSSProperties
+          }
+          dir={direction}
+          className={cn('group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]:bg-sidebar', className)}
+          {...props}>
+          {children}
+        </div>
+      </TooltipProvider>
     </SidebarContext.Provider>
   )
 }
@@ -145,7 +147,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, ISidebarProps>(
             data-sidebar="sidebar"
             data-slot="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+            className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
             style={
               {
                 '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
@@ -524,6 +526,7 @@ const SidebarMenuButton = React.forwardRef<
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive || undefined}
+        dir={direction}
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
         {...props}
       />

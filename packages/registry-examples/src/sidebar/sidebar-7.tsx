@@ -160,15 +160,15 @@ function TeamSwitcher({
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                 <activeTeam.logo aria-hidden="true" className="size-4" />
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-start text-sm leading-tight">
                 <span className="truncate font-medium">{activeTeam.name}</span>
                 <span className="truncate text-xs">{activeTeam.plan}</span>
               </div>
-              <ChevronsUpDown aria-hidden="true" className="ml-auto" />
+              <ChevronsUpDown aria-hidden="true" className="ms-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--gentleduck-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             align="start"
             side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}>
@@ -231,7 +231,7 @@ function NavMain({
                       <span>{item.title}</span>
                       <ChevronRight
                         aria-hidden="true"
-                        className="ml-auto transition-transform duration-200 group-data-[open=true]/collapsible:rotate-90"
+                        className="ms-auto transition-transform duration-200 group-data-[open=true]/collapsible:rotate-90"
                       />{' '}
                     </>
                   )}
@@ -347,26 +347,26 @@ function NavUser({
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback className="rounded-lg">AM</AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-start text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
-              <ChevronsUpDown aria-hidden="true" className="ml-auto size-4" />
+              <ChevronsUpDown aria-hidden="true" className="ms-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--gentleduck-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={isMobile ? 'bottom' : 'right'}
             align="end"
             sideOffset={4}>
             <DropdownMenuGroup>
               <DropdownMenuLabel className="p-0 font-normal">
-                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback className="rounded-lg">AM</AvatarFallback>
                   </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
+                  <div className="grid flex-1 text-start text-sm leading-tight">
                     <span className="truncate font-medium">{user.name}</span>
                     <span className="truncate text-xs">{user.email}</span>
                   </div>
@@ -429,7 +429,7 @@ export default function Demo() {
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
+              <SidebarTrigger className="-ms-1" />
             </div>
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4">

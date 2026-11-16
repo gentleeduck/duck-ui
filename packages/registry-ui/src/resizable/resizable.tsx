@@ -34,6 +34,8 @@ const ResizableHandle = React.forwardRef<
   }
 >(({ withHandle = true, className, ...props }, ref) => (
   <ResizablePrimitive.Separator
+    // The group pairs a separator with its panels only when it mounts, and leaves out one that mounts disabled.
+    key={props.disabled ? 'disabled' : 'enabled'}
     elementRef={ref}
     aria-label="Resize panels"
     className={cn(
@@ -43,6 +45,7 @@ const ResizableHandle = React.forwardRef<
       'aria-[orientation=horizontal]:h-px aria-[orientation=horizontal]:w-full',
       'aria-[orientation=horizontal]:after:left-0 aria-[orientation=horizontal]:after:h-1 aria-[orientation=horizontal]:after:w-full aria-[orientation=horizontal]:after:translate-x-0 aria-[orientation=horizontal]:after:-translate-y-1/2',
       'aria-[orientation=horizontal]:[&>div]:rotate-90',
+      'aria-disabled:opacity-50',
       className,
     )}
     data-slot="panel-resize-handle"

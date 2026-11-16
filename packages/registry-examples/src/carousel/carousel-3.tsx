@@ -11,10 +11,10 @@ import {
 export default function Demo() {
   return (
     <Carousel className="w-full max-w-sm">
-      <CarouselContent className="-ml-1">
+      <CarouselContent className="-ms-1">
         {Array.from({ length: 5 }).map((_, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: static list generated from Array.from
-          <CarouselItem className="pl-1 md:basis-1/2 lg:basis-1/3" key={`item-${index + 1}`}>
+          <CarouselItem className="ps-1 md:basis-1/2 lg:basis-1/3" key={`item-${index + 1}`}>
             <div className="p-1">
               <Card>
                 <CardContent className="flex aspect-square items-center justify-center p-6">

@@ -8,13 +8,13 @@ export default function Demo() {
   return (
     <Button
       onClick={() =>
-        toast('Actions have been triggered', {
+        toast('Your session expires in 5 minutes', {
           action: {
-            label: 'Undo',
-            onClick: () => console.log('Undo'),
+            label: 'Stay signed in',
+            onClick: () => toast.success('Session extended'),
           },
           className: 'gap-3',
-          description: `you have clicked the 'super button' button, and btw i can be loading.`,
+          description: 'Save your work to keep it.',
           icon: <ShieldAlert />,
         })
       }

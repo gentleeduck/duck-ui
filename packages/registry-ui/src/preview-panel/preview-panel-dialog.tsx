@@ -34,17 +34,18 @@ const PreviewPanelDialog = React.forwardRef<HTMLDivElement, IPreviewPanelDialogP
   ) => {
     const [sharedState, setSharedState] = useState<IPreviewPanelState | undefined>(undefined)
 
-    // Coalesces simultaneous emissions from both panels into one setState/frame
-    const pendingRef = useRef(false)
+    // One update a frame, carrying the last state emitted in it.
+    const pendingRef = useRef<IPreviewPanelState | null>(null)
 
     const handleStateChange = useCallback(
       (state: IPreviewPanelState) => {
         if (!syncPanels) return
-        if (pendingRef.current) return
-        pendingRef.current = true
+        const scheduled = pendingRef.current !== null
+        pendingRef.current = state
+        if (scheduled) return
         requestAnimationFrame(() => {
-          pendingRef.current = false
-          setSharedState(state)
+          setSharedState(pendingRef.current ?? undefined)
+          pendingRef.current = null
         })
       },
       [syncPanels],

@@ -16,7 +16,7 @@ function mirrorPosition(position: NonNullable<ToasterProps['position']>, dir: 'l
 }
 
 const Toaster = React.forwardRef<React.ComponentRef<typeof Sonner>, ToasterProps>(
-  ({ dir, className, position, ...props }, ref) => {
+  ({ dir, className, position, style, ...props }, ref) => {
     const { theme = 'system' } = useTheme()
     const direction = useDirection(toDirection(dir))
 
@@ -31,6 +31,7 @@ const Toaster = React.forwardRef<React.ComponentRef<typeof Sonner>, ToasterProps
             '--normal-bg': 'var(--popover)',
             '--normal-border': 'var(--border)',
             '--normal-text': 'var(--popover-foreground)',
+            ...style,
           } as React.CSSProperties
         }
         theme={theme as ToasterProps['theme']}

@@ -1,4 +1,3 @@
-import { cn } from '@gentleduck/libs/cn'
 import { CircleCheck, Loader } from 'lucide-react'
 import type React from 'react'
 import { toast } from 'sonner'
@@ -7,70 +6,56 @@ import { Progress } from '../progress'
 import { formatTime } from './sonner.libs'
 import type { IUploadSonnerProps } from './sonner.types'
 
+const dismiss = (id: string) => {
+  toast.dismiss(id)
+}
+
 const SonnerUpload = ({
   progress,
   attachments,
-  remainingTime,
+  remainingTime = 0,
   onCancel,
   onComplete,
 }: IUploadSonnerProps): React.JSX.Element => {
+  const done = progress >= 100
+  const percent = Math.min(100, Math.max(0, progress))
+  const showRemaining = !done && remainingTime > 0 && Number.isFinite(remainingTime)
+
   return (
     <div className="flex w-full gap-3" data-slot="content">
-      <CircleCheck
-        aria-hidden="true"
-        className={cn(
-          '!size-[18px] mt-2 hidden fill-primary [&_path]:stroke-primary-foreground',
-          progress >= 100 && 'flex',
-        )}
-      />
-      <Loader
-        aria-hidden="true"
-        className={cn(
-          '!size-[18px] mt-2 hidden animate-spin text-foreground-muted opacity-70',
-          progress < 100 && 'flex',
-        )}
-      />
+      {done ? (
+        <CircleCheck aria-hidden="true" className="mt-2 size-[18px]! fill-primary [&_path]:stroke-primary-foreground" />
+      ) : (
+        <Loader aria-hidden="true" className="mt-2 size-[18px]! animate-spin text-muted-foreground" />
+      )}
       <div className="flex w-full flex-col gap-2">
-        <div className="flex w-full justify-between" role="status">
+        <div className="flex w-full justify-between">
           <p className="text-foreground text-sm">
-            {progress >= 100
-              ? `Upload complete`
+            {done
+              ? 'Upload complete'
               : attachments
                 ? `Uploading ${attachments} file${attachments > 1 ? 's' : ''}...`
-                : `Uploading...`}
+                : 'Uploading...'}
           </p>
           <div className="flex items-center gap-2">
-            {progress <= 100 && (
-              <p className="font-mono text-foreground-light text-sm">{`${remainingTime && !Number.isNaN(remainingTime) && Number.isFinite(remainingTime) && remainingTime !== 0 ? `${formatTime(remainingTime)} remaining -` : ''}`}</p>
+            {showRemaining && (
+              <p className="font-mono text-muted-foreground text-sm">{`${formatTime(remainingTime)} remaining -`}</p>
             )}
-            <p className="font-mono text-foreground-light text-sm">{`${progress}%`}</p>
+            <p className="font-mono text-muted-foreground text-sm">{`${percent}%`}</p>
           </div>
         </div>
-        <Progress className="h-1 w-full" value={progress} />
+        <Progress aria-label="Upload progress" className="h-1 w-full" value={percent} />
         <div className="flex w-full items-center justify-between gap-2">
-          <small className="w-full text-foreground-muted text-xs">
-            {progress < 100 ? 'Please do not close the browser until completed' : 'Upload complete'}
+          <small className="w-full text-muted-foreground text-xs">
+            {done ? 'It is safe to close the browser now' : 'Please do not close the browser until completed'}
           </small>
-
-          {progress === 100 && (
-            <Button
-              border="default"
-              onClick={(_: React.MouseEvent<HTMLButtonElement>) => onComplete?.(_, (id: string) => toast.dismiss(id))}
-              size="sm"
-              variant="default">
-              Complete
-            </Button>
-          )}
-
-          {progress < 100 && (
-            <Button
-              border="default"
-              onClick={(_: React.MouseEvent<HTMLButtonElement>) => onCancel?.(_, (id: string) => toast.dismiss(id))}
-              size="sm"
-              variant="default">
-              Cancel
-            </Button>
-          )}
+          <Button
+            border="default"
+            onClick={(event: React.MouseEvent<HTMLButtonElement>) => (done ? onComplete : onCancel)?.(event, dismiss)}
+            size="sm"
+            variant="default">
+            {done ? 'Complete' : 'Cancel'}
+          </Button>
         </div>
       </div>
     </div>

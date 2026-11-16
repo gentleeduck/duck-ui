@@ -32,19 +32,20 @@ export default function Demo() {
       progressRef.current = Math.min(progressRef.current + step, 100)
       updateToast(progressRef.current)
 
-      if (progressRef.current >= 100 && intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
+      if (progressRef.current >= 100) stop()
     }, 600)
   }
 
+  const stop = React.useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    intervalRef.current = null
+  }, [])
+
+  React.useEffect(() => stop, [stop])
+
   const handleCancel = () => {
     toast.dismiss(toastId)
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
+    stop()
   }
 
   const handleComplete = () => {

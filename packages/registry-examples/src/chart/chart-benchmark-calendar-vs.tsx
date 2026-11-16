@@ -17,7 +17,6 @@ type Tab = (typeof tabs)[number]
 
 const bundleConfig = {
   sizeKB: { label: 'JS Size (KB)', color: 'var(--chart-1)' },
-  deps: { label: 'Dependencies', color: 'var(--chart-3)' },
 } satisfies ChartConfig
 
 const totalCostConfig = {
@@ -47,7 +46,9 @@ export default function CalendarBenchmarkVs() {
       <div className="h-[320px]">
         {tab === 'Bundle Size' && (
           <div>
-            <p className="mb-3 text-muted-foreground text-xs">Gzipped JS bundle size + dependency count.</p>
+            <p className="mb-3 text-muted-foreground text-xs">
+              Gzipped JS. The first five are measured; react-datepicker and react-calendar are published sizes.
+            </p>
             <ChartContainer className="aspect-[2/1] min-h-[250px] w-full" config={bundleConfig}>
               <BarChart data={data.bundleSize} layout="vertical" margin={{ left: 10, right: 30, top: 5, bottom: 5 }}>
                 <CartesianGrid horizontal={false} />
@@ -56,7 +57,6 @@ export default function CalendarBenchmarkVs() {
                 <ChartTooltip content={<ChartTooltipContent indicator="dashed" />} />
                 <ChartLegend content={<ChartLegendContent />} />
                 <Bar dataKey="sizeKB" fill="var(--color-sizeKB)" radius={[0, 4, 4, 0]} barSize={14} />
-                <Bar dataKey="deps" fill="var(--color-deps)" radius={[0, 4, 4, 0]} barSize={14} />
               </BarChart>
             </ChartContainer>
           </div>

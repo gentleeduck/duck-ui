@@ -160,7 +160,7 @@ function TooltipDemo({
               key={item.name}>
               {!hideIndicator && (
                 <div
-                  className={cn('shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]', {
+                  className={cn('shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg)', {
                     'h-2.5 w-2.5': indicator === 'dot',
                     'my-0.5': nestLabel && indicator === 'dashed',
                     'w-0 border-[1.5px] border-dashed bg-transparent': indicator === 'dashed',

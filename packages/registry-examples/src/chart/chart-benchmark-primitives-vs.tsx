@@ -26,7 +26,7 @@ export default function PrimitivesVsRadix() {
   return (
     <div className="w-full">
       <p className="mb-3 text-muted-foreground text-xs">
-        {chartData.length} components with verified bundlephobia data. Per-component gzipped size (KB).
+        {chartData.length} components both libraries ship, each bundled the same way. Per-component gzipped size (KB).
       </p>
       <ChartContainer className="aspect-[3/2] min-h-[450px] w-full" config={config}>
         <BarChart data={chartData} layout="vertical" margin={{ left: 20, right: 20, top: 10, bottom: 10 }}>

@@ -168,9 +168,9 @@ describe.each(panels)('registry-ui %s gestures', (_, Panel) => {
     const { content, viewport } = parts()
 
     fireEvent(viewport, pointer('pointerdown', 1, 0, 0))
-    fireEvent(viewport, new MouseEvent('pointerleave'))
+    fireEvent(viewport, pointer('pointerleave', 1, 0, 0))
     fireEvent(viewport, pointer('pointermove', 1, 50, 50))
-    fireEvent(viewport, new MouseEvent('pointerleave'))
+    fireEvent(viewport, pointer('pointerleave', 1, 50, 50))
     fireEvent(viewport, pointer('pointerdown', 1, 0, 0, 2))
     fireEvent(viewport, pointer('pointermove', 1, 50, 50))
     await frame()
@@ -179,7 +179,7 @@ describe.each(panels)('registry-ui %s gestures', (_, Panel) => {
     expect(content.style.transform).toBe('')
   })
 
-  test('a second finger landing does not take the drag over from the first', async () => {
+  test('a second finger landing, or lifting and leaving, does not take the drag over from the first', async () => {
     render(<Panel defaultLocked={false} />)
     const { content, viewport } = parts()
 
@@ -192,6 +192,12 @@ describe.each(panels)('registry-ui %s gestures', (_, Panel) => {
 
     expect(content.style.transform).toBe('translate3d(10px,0px,0) scale(1)')
     expect(viewport.style.cursor).toBe('grabbing')
+
+    fireEvent(viewport, pointer('pointerleave', 2, 130, 0))
+    fireEvent(viewport, pointer('pointermove', 1, 20, 0))
+    await frame()
+
+    expect(content.style.transform).toBe('translate3d(20px,0px,0) scale(1)')
   })
 
   test('unlocked, a pinch zooms by how far the two fingers spread, up to the limit', async () => {

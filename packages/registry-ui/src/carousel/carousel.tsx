@@ -36,7 +36,9 @@ const Carousel = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLDivEleme
     const [canScrollPrev, setCanScrollPrev] = React.useState(false)
     const [canScrollNext, setCanScrollNext] = React.useState(false)
 
-    const onSelect = React.useCallback((api: NonNullable<CarouselApi>) => {
+    // Embla hands its listeners no api while it is inactive, as a reInit for new options does.
+    const onSelect = React.useCallback((api: CarouselApi) => {
+      if (!api) return
       setCanScrollPrev(api.canScrollPrev())
       setCanScrollNext(api.canScrollNext())
     }, [])

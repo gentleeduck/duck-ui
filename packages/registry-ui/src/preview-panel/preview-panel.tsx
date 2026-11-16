@@ -295,8 +295,8 @@ const PreviewPanel = React.forwardRef<HTMLDivElement, IPreviewPanelProps>(
         el.style.cursor = 'grab'
       }
 
-      const onLeave = () => {
-        if (!s.current.dragging) return
+      const onLeave = (e: PointerEvent) => {
+        if (!s.current.dragging || e.pointerId !== s.current.pointerId) return
         s.current.dragging = false
         el.style.cursor = 'grab'
       }

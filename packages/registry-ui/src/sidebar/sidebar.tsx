@@ -2,7 +2,7 @@
 
 import { useIsMobile } from '@gentleduck/hooks/use-is-mobile'
 import { cn } from '@gentleduck/libs/cn'
-import { useDirection } from '@gentleduck/primitives/direction'
+import { DirectionContext, useDirection } from '@gentleduck/primitives/direction'
 import { Slot } from '@gentleduck/primitives/slot'
 import type { Variants } from '@gentleduck/variants'
 import { useKeyBind } from '@gentleduck/vim/react'
@@ -85,25 +85,28 @@ function SidebarProvider({
     [state, open, setOpen, isMobile, openMobile, toggleSidebar, direction],
   )
 
+  // Every part reads its direction through useDirection, so the provider's own dir reaches them as context.
   return (
-    <SidebarContext.Provider value={contextValue}>
-      <TooltipProvider delayDuration={0}>
-        <div
-          data-slot="sidebar-wrapper"
-          style={
-            {
-              '--sidebar-width': SIDEBAR_WIDTH,
-              '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
-              ...style,
-            } as React.CSSProperties
-          }
-          dir={direction}
-          className={cn('group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]:bg-sidebar', className)}
-          {...props}>
-          {children}
-        </div>
-      </TooltipProvider>
-    </SidebarContext.Provider>
+    <DirectionContext.Provider value={direction}>
+      <SidebarContext.Provider value={contextValue}>
+        <TooltipProvider delayDuration={0}>
+          <div
+            data-slot="sidebar-wrapper"
+            style={
+              {
+                '--sidebar-width': SIDEBAR_WIDTH,
+                '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
+                ...style,
+              } as React.CSSProperties
+            }
+            dir={direction}
+            className={cn('group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]:bg-sidebar', className)}
+            {...props}>
+            {children}
+          </div>
+        </TooltipProvider>
+      </SidebarContext.Provider>
+    </DirectionContext.Provider>
   )
 }
 SidebarProvider.displayName = 'SidebarProvider'

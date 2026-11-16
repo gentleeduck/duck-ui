@@ -170,6 +170,7 @@ describe('registry-ui SidebarProvider', () => {
     render(
       <SidebarProvider className="min-h-0" dir="rtl" style={{ '--sidebar-width': '20rem' } as React.CSSProperties}>
         <State />
+        <SidebarMenuButton>Home</SidebarMenuButton>
       </SidebarProvider>,
     )
     const wrapper = part('sidebar-wrapper')
@@ -180,6 +181,7 @@ describe('registry-ui SidebarProvider', () => {
     expect(wrapper?.className.split(' ')).toEqual(expect.arrayContaining(['min-h-0', 'w-full']))
     expect(wrapper?.className.split(' ')).not.toContain('min-h-svh')
     expect(screen.getByLabelText('state').textContent).toBe('expanded rtl true false')
+    expect(screen.getByRole('button', { name: 'Home' }).dir).toBe('rtl')
   })
 
   test('on a phone the trigger opens the sidebar in a sheet named by mobileTitle, and Escape closes it', async () => {

@@ -102,6 +102,24 @@ describe('registry-ui Carousel in a DOM', () => {
     expect(api?.selectedScrollSnap()).toBe(1)
   })
 
+  test('takes new options while inactive, when embla hands its listeners no api', async () => {
+    const Inactive = ({ loop }: { loop: boolean }) => (
+      <Carousel aria-label="Ponds" opts={{ active: false, loop }}>
+        <CarouselContent>
+          <CarouselItem>Mill</CarouselItem>
+          <CarouselItem>Lake</CarouselItem>
+        </CarouselContent>
+      </Carousel>
+    )
+    const { rerender } = render(<Inactive loop={false} />)
+    await act(async () => {})
+
+    rerender(<Inactive loop />)
+    await act(async () => {})
+
+    expect(screen.getByText('Lake')).toBeTruthy()
+  })
+
   test('moves with the arrow keys, the way the reading runs', async () => {
     let api: CarouselApi
     render(

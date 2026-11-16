@@ -18,7 +18,14 @@ export default function Demo() {
     intervalRef.current = null
   }, [])
 
-  React.useEffect(() => stop, [stop])
+  // The toaster outlives the demo, so the toast it owns goes with it.
+  React.useEffect(
+    () => () => {
+      stop()
+      toast.dismiss(TOAST_ID)
+    },
+    [stop],
+  )
 
   const show = (progress: number) => {
     toast(

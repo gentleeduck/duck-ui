@@ -95,6 +95,7 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
   const errorId = `${id}-error`
   const sheetErrorId = `${id}-sheet-error`
   const fieldErrorId = `${id}-field-error`
+  const sheetFieldErrorId = `${id}-sheet-field-error`
 
   const { field, fieldState } = useController({ control, name })
   const committedText = React.useMemo(() => safeStringify(field.value), [field.value])
@@ -337,8 +338,8 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
 
             <div className="mt-4 space-y-3" data-slot="json-editor-sheet-content">
               <JsonEditorView
-                aria-describedby={describedBy(!!sheetError && sheetErrorId)}
-                aria-invalid={!!sheetError}
+                aria-describedby={describedBy(!!sheetError && sheetErrorId, !!fieldError && sheetFieldErrorId)}
+                aria-invalid={!!(sheetError || fieldState.error)}
                 aria-labelledby={labelId}
                 dir={direction}
                 lang={lang}
@@ -361,6 +362,8 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
               <FieldError data-slot="json-editor-sheet-error" id={sheetErrorId}>
                 {sheetError}
               </FieldError>
+              {/* The sheet hides the page behind it, the field's own error with it. */}
+              <FieldError errors={[fieldState.error]} id={sheetFieldErrorId} />
 
               <div className="flex items-center justify-between gap-2" data-slot="json-editor-sheet-actions">
                 <div className="text-muted-foreground text-xs">{t.sheetStatusHint}</div>

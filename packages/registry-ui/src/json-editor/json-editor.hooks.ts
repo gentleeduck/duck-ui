@@ -4,7 +4,8 @@ import type { IUseJsonEditorHotkeysOptions } from './json-editor.types'
 export function useJsonEditorHotkeys({ enabled, onEscape, onSave }: IUseJsonEditorHotkeysOptions) {
   return React.useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (!enabled) return
+      // A key that confirms or cancels an IME composition belongs to the composition.
+      if (!enabled || event.nativeEvent.isComposing) return
 
       if (event.key === 'Escape') {
         event.preventDefault()

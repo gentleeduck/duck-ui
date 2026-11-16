@@ -72,6 +72,9 @@ describe('registry-ui JsonTextareaField', () => {
     expect(screen.queryByRole('button', { name: 'Save' })).toBeNull()
 
     type(editor(), '{"theme":"blue"}')
+    fireEvent.keyDown(editor(), { isComposing: true, key: 'Escape' })
+    fireEvent.keyDown(editor(), { ctrlKey: true, isComposing: true, key: 'Enter' })
+    expect([editor().value, committed()]).toEqual(['{"theme":"blue"}', '{"theme":"light"}'])
     fireEvent.keyDown(editor(), { key: 'Escape' })
     expect(editor().value).toBe('{\n  "theme": "light"\n}')
 
@@ -179,6 +182,14 @@ describe('registry-ui JsonTextareaField', () => {
     expect(editor().getAttribute('aria-invalid')).toBe('true')
     expect(editor().getAttribute('aria-describedby')).toContain(alert.id)
     expect(document.querySelector('[data-slot="json-editor-field"]')?.getAttribute('data-invalid')).toBe('true')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Full' }))
+    const sheet = screen.getByRole('dialog', { name: 'Edit JSON' })
+    const inSheet = within(sheet).getByRole('alert')
+    const sheetEditor = within(sheet).getByRole('textbox', { name: 'Settings' })
+    expect(inSheet.textContent).toBe('Settings are required.')
+    expect(sheetEditor.getAttribute('aria-invalid')).toBe('true')
+    expect(sheetEditor.getAttribute('aria-describedby')).toContain(inSheet.id)
   })
 
   test('translates every string it shows, a refusal included', () => {
@@ -418,7 +429,11 @@ describe('registry-ui json editor libs', () => {
 
 describe('registry-ui useJsonEditorHotkeys', () => {
   const keyDown = (init: Partial<React.KeyboardEvent<HTMLTextAreaElement>>) =>
-    ({ preventDefault: mock(), ...init }) as unknown as React.KeyboardEvent<HTMLTextAreaElement>
+    ({
+      nativeEvent: { isComposing: false },
+      preventDefault: mock(),
+      ...init,
+    }) as unknown as React.KeyboardEvent<HTMLTextAreaElement>
 
   test('calls onSave on Ctrl or Cmd and Enter and onEscape on Escape, only while enabled', () => {
     const onEscape = mock()

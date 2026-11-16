@@ -85,16 +85,16 @@ export default function Demo() {
               <div className="rounded-md border">
                 <div className="grid grid-cols-4 border-b px-2.5 py-1.5 font-medium text-[10px] text-muted-foreground">
                   <span>Page</span>
-                  <span className="text-right">Views</span>
-                  <span className="text-right">Uniques</span>
-                  <span className="text-right">Bounce</span>
+                  <span className="text-end">Views</span>
+                  <span className="text-end">Uniques</span>
+                  <span className="text-end">Bounce</span>
                 </div>
                 {visitors.map((row) => (
                   <div key={row.page} className="grid grid-cols-4 border-b px-2.5 py-1.5 text-xs last:border-0">
                     <span className="truncate font-mono text-[10px]">{row.page}</span>
-                    <span className="text-right">{row.views.toLocaleString()}</span>
-                    <span className="text-right">{row.uniques.toLocaleString()}</span>
-                    <span className="text-right">{row.bounce}</span>
+                    <span className="text-end">{row.views.toLocaleString()}</span>
+                    <span className="text-end">{row.uniques.toLocaleString()}</span>
+                    <span className="text-end">{row.bounce}</span>
                   </div>
                 ))}
               </div>

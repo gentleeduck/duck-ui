@@ -5,79 +5,75 @@ import { loadDomMax } from '@gentleduck/motion/motion-features'
 import { blurLight } from '@gentleduck/motion/transitions/blur'
 import { springSmooth } from '@gentleduck/motion/transitions/springs'
 import { shakeKeyframes, tweenExpand, tweenShake } from '@gentleduck/motion/transitions/tweens'
-import { useDirection } from '@gentleduck/primitives/direction'
 import { AnimatePresence, LayoutGroup, LazyMotion, m } from 'motion/react'
 import * as React from 'react'
-import { toDirection } from '../direction/direction.libs'
 import {
   type ITabsListProps,
   type ITabsProps,
   type ITabsTriggerProps,
   TabsContext,
+  useTabStop,
   useTabs,
   useTabsListKeyDown,
+  useTabsRoot,
 } from './tabs'
 
 const BLUR = `blur(${blurLight}px)`
+interface ISlide {
+  vertical: boolean
+  step: number
+}
+
+const offset = ({ vertical, step }: ISlide) => (vertical ? { y: `${step * 8}%` } : { x: `${step * 8}%` })
 const MOTION_TABS_VARIANTS = {
-  enter: (dir: number) => ({ opacity: 0, x: `${dir * 8}%`, scale: 0.98, filter: BLUR }),
-  center: { opacity: 1, x: 0, scale: 1, filter: 'blur(0px)' },
-  exit: (dir: number) => ({ opacity: 0, x: `${dir * -8}%`, scale: 0.98, filter: BLUR }),
+  enter: (slide: ISlide) => ({ opacity: 0, ...offset(slide), scale: 0.98, filter: BLUR }),
+  center: { opacity: 1, x: 0, y: 0, scale: 1, filter: 'blur(0px)' },
+  exit: (slide: ISlide) => ({ opacity: 0, ...offset({ ...slide, step: -slide.step }), scale: 0.98, filter: BLUR }),
 } as const
 
-const MotionTabsContext = React.createContext<{
-  direction: number
+interface IMotionTabsContext {
+  slide: ISlide
   registerTrigger: (value: string) => void
-}>({
-  direction: 1,
-  registerTrigger: () => {},
-})
+}
+
+const MotionTabsContext = React.createContext<IMotionTabsContext | null>(null)
+
+function useMotionTabs() {
+  const context = React.useContext(MotionTabsContext)
+  if (context === null) {
+    throw new Error('MotionTabs parts must be used within MotionTabs')
+  }
+  return context
+}
 
 const MotionTabs = React.forwardRef<HTMLDivElement, ITabsProps>(
-  ({ value, defaultValue, onValueChange, dir, children, ...props }, ref) => {
-    const resolvedDir = useDirection(toDirection(dir))
-    const [activeItem, setActiveItem] = React.useState<string>(defaultValue ?? value ?? '')
-    const tabsId = React.useId()
-    const [motionDir, setMotionDir] = React.useState(1)
-    const triggerOrderRef = React.useRef<string[]>([])
-
-    const registeredRef = React.useRef(new Set<string>())
-    const registerTrigger = React.useCallback((triggerValue: string) => {
-      if (!registeredRef.current.has(triggerValue)) {
-        registeredRef.current.add(triggerValue)
-        triggerOrderRef.current.push(triggerValue)
-      }
+  ({ value, defaultValue, onValueChange, orientation, dir, children, ...props }, ref) => {
+    const tabs = useTabsRoot({ caller: 'MotionTabs', defaultValue, dir, onValueChange, orientation, value })
+    const orderRef = React.useRef<string[]>([])
+    const registerTrigger = React.useCallback((trigger: string) => {
+      if (!orderRef.current.includes(trigger)) orderRef.current.push(trigger)
     }, [])
 
-    const wrappedSetActiveItem: React.Dispatch<React.SetStateAction<string>> = React.useCallback((val) => {
-      setActiveItem((prev) => {
-        const next = typeof val === 'function' ? val(prev) : val
-        const prevIdx = triggerOrderRef.current.indexOf(prev)
-        const nextIdx = triggerOrderRef.current.indexOf(next)
-        if (prevIdx !== -1 && nextIdx !== -1 && prevIdx !== nextIdx) {
-          setMotionDir(nextIdx > prevIdx ? 1 : -1)
-        }
-        return next
-      })
-    }, [])
-
-    React.useEffect(() => {
-      if (onValueChange) onValueChange(activeItem)
-    }, [activeItem, onValueChange])
-
-    const tabsValue = React.useMemo(
-      () => ({ activeItem, dir: resolvedDir, setActiveItem: wrappedSetActiveItem, tabsId }),
-      [activeItem, resolvedDir, wrappedSetActiveItem, tabsId],
+    // Worked out while rendering, so a value set from outside slides the right way too.
+    const [slide, setSlide] = React.useState({ from: tabs.activeItem, step: 1 })
+    if (slide.from !== tabs.activeItem) {
+      const before = orderRef.current.indexOf(slide.from)
+      const after = orderRef.current.indexOf(tabs.activeItem)
+      setSlide({ from: tabs.activeItem, step: before === -1 || after === -1 ? slide.step : after > before ? 1 : -1 })
+    }
+    const vertical = tabs.orientation === 'vertical'
+    // Later tabs sit on the left in RTL, so content slides in from the opposite side. A column reads down either way.
+    const step = tabs.dir === 'rtl' && !vertical ? -slide.step : slide.step
+    const motion = React.useMemo(
+      () => ({ slide: { vertical, step }, registerTrigger }),
+      [vertical, step, registerTrigger],
     )
-    // Later tabs sit on the left in RTL, so content slides in from the opposite side.
-    const slideDir = resolvedDir === 'rtl' ? -motionDir : motionDir
-    const motionCtx = React.useMemo(() => ({ direction: slideDir, registerTrigger }), [slideDir, registerTrigger])
 
     return (
-      <TabsContext.Provider value={tabsValue}>
-        <MotionTabsContext.Provider value={motionCtx}>
+      <TabsContext.Provider value={tabs}>
+        <MotionTabsContext.Provider value={motion}>
           <LazyMotion features={loadDomMax}>
-            <div {...props} data-slot="tabs" dir={resolvedDir} ref={ref}>
+            <div {...props} data-orientation={tabs.orientation} data-slot="tabs" dir={tabs.dir} ref={ref}>
               {children}
             </div>
           </LazyMotion>
@@ -89,15 +85,18 @@ const MotionTabs = React.forwardRef<HTMLDivElement, ITabsProps>(
 MotionTabs.displayName = 'MotionTabs'
 
 const MotionTabsList = React.forwardRef<HTMLDivElement, ITabsListProps>(({ className, onKeyDown, ...props }, ref) => {
-  const { tabsId } = useTabs()
+  const { orientation, tabsId } = useTabs()
   const handleKeyDown = useTabsListKeyDown(onKeyDown)
   return (
     <LayoutGroup id={`tabs-${tabsId}`}>
       <div
+        aria-orientation={orientation}
         className={cn(
           'inline-flex w-fit items-center justify-center gap-2 rounded-md bg-muted p-1 text-muted-foreground',
+          orientation === 'vertical' && 'h-fit flex-col items-stretch',
           className,
         )}
+        data-orientation={orientation}
         onKeyDown={handleKeyDown}
         ref={ref}
         role="tablist"
@@ -114,8 +113,9 @@ const MotionTabsTrigger = React.forwardRef<
   Omit<ITabsTriggerProps, 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart'>
 >(({ className, children, defaultChecked, onClick, value, disabled, ...props }, ref) => {
   const { setActiveItem, activeItem, tabsId } = useTabs()
-  const { registerTrigger } = React.useContext(MotionTabsContext)
+  const { registerTrigger } = useMotionTabs()
   const isActive = value === activeItem
+  const tabStop = useTabStop(isActive, ref)
   const [shake, setShake] = React.useState(false)
 
   registerTrigger(value)
@@ -139,17 +139,17 @@ const MotionTabsTrigger = React.forwardRef<
       )}
       data-value={value}
       id={`${tabsId}-trigger-${value}`}
-      onClick={(e) => {
+      onClick={(event) => {
         if (disabled) {
           setShake(true)
           return
         }
         setActiveItem(value)
-        onClick?.(e as React.MouseEvent<HTMLButtonElement>)
+        onClick?.(event)
       }}
-      ref={ref}
+      ref={tabStop.ref}
       role="tab"
-      tabIndex={isActive ? 0 : -1}
+      tabIndex={tabStop.tabIndex}
       {...props}
       type="button"
       data-slot="tabs-trigger">
@@ -170,53 +170,45 @@ const MotionTabsContents = React.forwardRef<
   HTMLDivElement,
   Omit<React.HTMLProps<HTMLDivElement>, 'ref' | 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart'>
 >(({ children, className, ...props }, ref) => {
-  const { activeItem } = useTabs()
-  const { direction } = React.useContext(MotionTabsContext)
-  const containerRef = React.useRef<HTMLDivElement>(null)
-  const [height, setHeight] = React.useState<number | undefined>(undefined)
+  const { slide } = useMotionTabs()
+  const { activeItem, orientation } = useTabs()
+  const [height, setHeight] = React.useState<number>()
+  const [panel, setPanel] = React.useState<HTMLDivElement | null>(null)
+  // A panel sliding out reports null as it leaves, after the next one has already reported itself.
+  const track = React.useCallback((node: HTMLDivElement | null) => {
+    if (node) setPanel(node)
+  }, [])
 
-  let activeChild: React.ReactNode = null
-  React.Children.forEach(children, (child) => {
-    if (React.isValidElement<{ value: string }>(child) && child.props.value === activeItem) {
-      activeChild = child
-    }
-  })
+  React.useEffect(() => {
+    if (!panel || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() => setHeight(panel.offsetHeight))
+    observer.observe(panel)
+    return () => observer.disconnect()
+  }, [panel])
+
+  const activeChild = React.Children.toArray(children).find(
+    (child) => React.isValidElement<{ value?: string }>(child) && child.props.value === activeItem,
+  )
 
   return (
     <m.div
-      ref={(node) => {
-        ;(containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node
-        if (typeof ref === 'function') ref(node)
-        else if (ref) ref.current = node
-      }}
+      ref={ref}
       animate={{ height: height ?? 'auto' }}
       transition={tweenExpand}
-      className={cn('relative mt-2 overflow-hidden', className)}
+      className={cn('relative overflow-hidden', orientation === 'horizontal' && 'mt-2', className)}
       {...props}
       data-slot="tabs-contents">
-      <AnimatePresence
-        mode="popLayout"
-        initial={false}
-        custom={direction}
-        onExitComplete={React.useCallback(() => {
-          if (containerRef.current) {
-            setHeight(containerRef.current.scrollHeight)
-          }
-        }, [])}>
-        {activeChild && React.isValidElement(activeChild) ? (
+      <AnimatePresence mode="popLayout" initial={false} custom={slide}>
+        {activeChild ? (
           <m.div
             key={activeItem}
-            custom={direction}
+            ref={track}
+            custom={slide}
             variants={MOTION_TABS_VARIANTS}
             initial="enter"
             animate="center"
             exit="exit"
-            transition={springSmooth}
-            onAnimationComplete={() => {
-              if (containerRef.current) {
-                setHeight(containerRef.current.scrollHeight)
-              }
-            }}>
+            transition={springSmooth}>
             {activeChild}
           </m.div>
         ) : null}
@@ -243,7 +235,8 @@ const MotionTabsContent = React.forwardRef<
       data-value={value}
       id={`${tabsId}-content-${value}`}
       role="tabpanel"
-      tabIndex={-1}
+      // biome-ignore lint/a11y/noNoninteractiveTabindex: a panel holding nothing focusable is still reached with Tab, as the ARIA tabs pattern asks
+      tabIndex={0}
       {...props}>
       {children}
     </div>

@@ -15,6 +15,12 @@ describe('registry-ui tabs', () => {
     expect(getTabsKeyTarget('ArrowRight', 0, 3, 'rtl')).toBe(2)
   })
 
+  test('vertical tabs move on Down and Up, the same in RTL, and ignore Left and Right', () => {
+    expect(getTabsKeyTarget('ArrowDown', 0, 3, 'rtl', 'vertical')).toBe(1)
+    expect(getTabsKeyTarget('ArrowUp', 0, 3, 'ltr', 'vertical')).toBe(2)
+    expect(getTabsKeyTarget('ArrowRight', 0, 3, 'ltr', 'vertical')).toBeNull()
+  })
+
   test('Home and End jump to the first and last tab; other keys are ignored', () => {
     expect(getTabsKeyTarget('Home', 2, 3, 'rtl')).toBe(0)
     expect(getTabsKeyTarget('End', 0, 3, 'ltr')).toBe(2)

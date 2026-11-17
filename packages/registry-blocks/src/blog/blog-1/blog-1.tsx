@@ -42,7 +42,7 @@ export default function Blog01Page() {
               </p>
 
               <Button className="mt-6 shadow-none" size="sm">
-                Read more <ChevronRight aria-hidden="true" />
+                Read more <ChevronRight aria-hidden="true" className="rtl:rotate-180" />
               </Button>
             </CardContent>
           </Card>

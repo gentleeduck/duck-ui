@@ -447,7 +447,7 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
                 onClick={() => table.setPageIndex(0)}
                 variant="outline">
                 <span className="sr-only">Go to first page</span>
-                <ChevronsLeftIcon aria-hidden="true" />
+                <ChevronsLeftIcon aria-hidden="true" className="rtl:rotate-180" />
               </Button>
               <Button
                 className="size-8"
@@ -456,7 +456,7 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
                 size="icon"
                 variant="outline">
                 <span className="sr-only">Go to previous page</span>
-                <ChevronLeftIcon aria-hidden="true" />
+                <ChevronLeftIcon aria-hidden="true" className="rtl:rotate-180" />
               </Button>
               <Button
                 className="size-8"
@@ -465,7 +465,7 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
                 size="icon"
                 variant="outline">
                 <span className="sr-only">Go to next page</span>
-                <ChevronRightIcon aria-hidden="true" />
+                <ChevronRightIcon aria-hidden="true" className="rtl:rotate-180" />
               </Button>
               <Button
                 className="hidden size-8 lg:flex"
@@ -474,7 +474,7 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
                 size="icon"
                 variant="outline">
                 <span className="sr-only">Go to last page</span>
-                <ChevronsRightIcon aria-hidden="true" />
+                <ChevronsRightIcon aria-hidden="true" className="rtl:rotate-180" />
               </Button>
             </div>
           </div>

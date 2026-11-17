@@ -102,13 +102,13 @@ export function CalendarToolbar({
 
         <ButtonGroup>
           <Button variant="outline" size="icon" className="size-8" onClick={onPrev} aria-label="Previous">
-            <ChevronLeftIcon className="size-4" />
+            <ChevronLeftIcon className="size-4 rtl:rotate-180" />
           </Button>
           <Button variant="outline" size="sm" onClick={onToday} aria-label="Go to today">
             Today
           </Button>
           <Button variant="outline" size="icon" className="size-8" onClick={onNext} aria-label="Next">
-            <ChevronRightIcon className="size-4" />
+            <ChevronRightIcon className="size-4 rtl:rotate-180" />
           </Button>
         </ButtonGroup>
 

@@ -40,7 +40,7 @@ export function NavMain({
                   <span>{item.title}</span>
                   <ChevronRight
                     aria-hidden="true"
-                    className="ml-auto transition-transform duration-200 group-data-[open=true]/collapsible:rotate-90"
+                    className="ms-auto transition-transform duration-200 group-data-[open=true]/collapsible:rotate-90"
                   />
                 </SidebarMenuButton>
               </CollapsibleTrigger>

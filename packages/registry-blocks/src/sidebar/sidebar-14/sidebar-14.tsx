@@ -25,7 +25,7 @@ export default function Page() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <SidebarTrigger className="-mr-1 ml-auto rotate-180" />
+          <SidebarTrigger className="ms-auto -me-1 rotate-180" />
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4">
           <div className="grid auto-rows-min gap-4 md:grid-cols-3">

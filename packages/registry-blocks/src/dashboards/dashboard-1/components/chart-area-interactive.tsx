@@ -150,7 +150,7 @@ export function ChartAreaInteractive() {
           <span className="@[540px]/card:block hidden">Total for the last 3 months</span>
           <span className="@[540px]/card:hidden">Last 3 months</span>
         </CardDescription>
-        <div className="absolute top-4 right-4">
+        <div className="absolute end-4 top-4">
           <ToggleGroup
             className="@[767px]/card:flex hidden"
             onValueChange={setTimeRange}

@@ -59,7 +59,7 @@ export default function Component() {
             <ChartTooltip content={<ChartTooltipContent indicator="line" />} cursor={false} />
             <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4}>
               <LabelList
-                className="fill-[--color-label]"
+                className="fill-(--color-label)"
                 dataKey="month"
                 fontSize={12}
                 offset={8}

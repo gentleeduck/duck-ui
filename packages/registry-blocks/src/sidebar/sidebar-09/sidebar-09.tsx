@@ -21,8 +21,8 @@ export default function Page() {
       <AppSidebar />
       <SidebarInset>
         <header className="sticky top-0 flex shrink-0 items-center gap-2 border-b bg-background p-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator className="mr-2 h-4" orientation="vertical" />
+          <SidebarTrigger className="-ms-1" />
+          <Separator className="me-2 h-4" orientation="vertical" />
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">

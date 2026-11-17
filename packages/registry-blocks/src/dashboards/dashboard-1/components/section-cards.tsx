@@ -9,7 +9,7 @@ export function SectionCards() {
         <CardHeader className="relative">
           <CardDescription>Total Revenue</CardDescription>
           <CardTitle className="font-semibold @[250px]/card:text-3xl text-2xl tabular-nums">$1,250.00</CardTitle>
-          <div className="absolute top-4 right-4">
+          <div className="absolute end-4 top-4">
             <Badge className="flex gap-1 rounded-lg text-xs" variant="outline">
               <TrendingUpIcon aria-hidden="true" className="size-3" />
               +12.5%
@@ -27,7 +27,7 @@ export function SectionCards() {
         <CardHeader className="relative">
           <CardDescription>New Customers</CardDescription>
           <CardTitle className="font-semibold @[250px]/card:text-3xl text-2xl tabular-nums">1,234</CardTitle>
-          <div className="absolute top-4 right-4">
+          <div className="absolute end-4 top-4">
             <Badge className="flex gap-1 rounded-lg text-xs" variant="outline">
               <TrendingDownIcon aria-hidden="true" className="size-3" />
               -20%
@@ -45,7 +45,7 @@ export function SectionCards() {
         <CardHeader className="relative">
           <CardDescription>Active Accounts</CardDescription>
           <CardTitle className="font-semibold @[250px]/card:text-3xl text-2xl tabular-nums">45,678</CardTitle>
-          <div className="absolute top-4 right-4">
+          <div className="absolute end-4 top-4">
             <Badge className="flex gap-1 rounded-lg text-xs" variant="outline">
               <TrendingUpIcon aria-hidden="true" className="size-3" />
               +12.5%
@@ -63,7 +63,7 @@ export function SectionCards() {
         <CardHeader className="relative">
           <CardDescription>Growth Rate</CardDescription>
           <CardTitle className="font-semibold @[250px]/card:text-3xl text-2xl tabular-nums">4.5%</CardTitle>
-          <div className="absolute top-4 right-4">
+          <div className="absolute end-4 top-4">
             <Badge className="flex gap-1 rounded-lg text-xs" variant="outline">
               <TrendingUpIcon aria-hidden="true" className="size-3" />
               +4.5%

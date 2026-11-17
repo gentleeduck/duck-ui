@@ -34,7 +34,7 @@ export default function Component() {
         <ChartContainer className="mx-auto aspect-square max-h-[250px]" config={chartConfig}>
           <RadarChart data={chartData}>
             <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
-            <PolarGrid className="fill-[--color-desktop] opacity-20" gridType="circle" />
+            <PolarGrid className="fill-(--color-desktop) opacity-20" gridType="circle" />
             <PolarAngleAxis dataKey="month" />
             <Radar dataKey="desktop" fill="var(--color-desktop)" fillOpacity={0.5} />
           </RadarChart>

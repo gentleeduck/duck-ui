@@ -10,10 +10,10 @@ export function SearchForm({ ...props }: React.ComponentProps<'form'>) {
           <Label className="sr-only" htmlFor="search">
             Search
           </Label>
-          <SidebarInput className="pl-8" id="search" placeholder="Search the docs..." />
+          <SidebarInput className="ps-8" id="search" placeholder="Search the docs..." />
           <Search
             aria-hidden="true"
-            className="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 select-none opacity-50"
+            className="pointer-events-none absolute start-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50"
           />
         </SidebarGroupContent>
       </SidebarGroup>

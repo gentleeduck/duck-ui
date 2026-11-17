@@ -152,7 +152,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {/* This is the first sidebar */}
       {/* We disable collapsible and adjust width to icon. */}
       {/* This will make the sidebar appear as icons. */}
-      <Sidebar className="!w-[calc(var(--sidebar-width-icon)_+_1px)] border-r" collapsible="none">
+      <Sidebar className="!w-[calc(var(--sidebar-width-icon)_+_1px)] border-e" collapsible="none">
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
@@ -162,7 +162,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                     <Command aria-hidden="true" className="size-4" />
                   </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
+                  <div className="grid flex-1 text-start text-sm leading-tight">
                     <span className="truncate font-semibold">Duck Labs</span>
                     <span className="truncate text-xs">Enterprise</span>
                   </div>
@@ -227,7 +227,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   href="#"
                   key={mail.email}>
                   <div className="flex w-full items-center gap-2">
-                    <span>{mail.name}</span> <span className="ml-auto text-xs">{mail.date}</span>
+                    <span>{mail.name}</span> <span className="ms-auto text-xs">{mail.date}</span>
                   </div>
                   <span className="font-medium">{mail.subject}</span>
                   <span className="line-clamp-2 w-[260px] whitespace-break-spaces text-xs">{mail.teaser}</span>

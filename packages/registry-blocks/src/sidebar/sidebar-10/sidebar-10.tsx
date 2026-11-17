@@ -12,7 +12,7 @@ export default function Page() {
         <header className="flex h-14 shrink-0 items-center gap-2">
           <div className="flex flex-1 items-center gap-2 px-3">
             <SidebarTrigger />
-            <Separator className="mr-2 h-4" orientation="vertical" />
+            <Separator className="me-2 h-4" orientation="vertical" />
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
@@ -21,7 +21,7 @@ export default function Page() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <div className="ml-auto px-3">
+          <div className="ms-auto px-3">
             <NavActions />
           </div>
         </header>

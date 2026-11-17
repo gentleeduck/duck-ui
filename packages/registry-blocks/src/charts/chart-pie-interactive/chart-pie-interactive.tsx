@@ -70,7 +70,7 @@ export default function Component() {
           <CardDescription>January - June 2024</CardDescription>
         </div>
         <Select onValueChange={setActiveMonth} value={activeMonth}>
-          <SelectTrigger aria-label="Select a value" className="ml-auto h-7 w-[130px] rounded-lg pl-2.5">
+          <SelectTrigger aria-label="Select a value" className="ms-auto h-7 w-[130px] rounded-lg ps-2.5">
             <SelectValue placeholder="Select month" />
           </SelectTrigger>
           <SelectContent align="end" className="rounded-xl" side="bottom">

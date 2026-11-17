@@ -40,7 +40,7 @@ export function NavMain({
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                   <span className="truncate">{item.title}</span>{' '}
-                  <MoreHorizontal aria-hidden="true" className="ml-auto shrink-0" />
+                  <MoreHorizontal aria-hidden="true" className="ms-auto shrink-0" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               {item.items?.length ? (

@@ -32,7 +32,7 @@ export default function Signup1({ className }: { className?: string }) {
       }>
       <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');</style>
       {/* Left Side */}
-      <div className="flex flex-col gap-4 p-5 sm:p-12 lg:border-border lg:border-r xl:p-18 xl:px-22" id="left-side">
+      <div className="flex flex-col gap-4 p-5 sm:p-12 lg:border-border lg:border-e xl:p-18 xl:px-22" id="left-side">
         {/* Title */}
         <h2 className="font-semibold text-2xl">Signup</h2>
 
@@ -138,7 +138,7 @@ export default function Signup1({ className }: { className?: string }) {
 
       {/* Right Side */}
       <div
-        className="hidden h-full flex-col gap-4 overflow-hidden px-16 pt-16 pr-0 lg:flex xl:pt-18 xl:pl-22"
+        className="hidden h-full flex-col gap-4 overflow-hidden px-16 pe-0 pt-16 lg:flex xl:ps-22 xl:pt-18"
         id="right-side">
         <div className="relative h-full w-full">
           <Image alt="" className="hidden object-cover object-left-top dark:block" fill src="/login.jpg" />

@@ -28,13 +28,13 @@ export function VersionSwitcher({ versions, defaultVersion }: { versions: string
                 <span className="font-semibold">Documentation</span>
                 <span className="">v{selectedVersion}</span>
               </div>
-              <ChevronsUpDown aria-hidden="true" className="ml-auto" />
+              <ChevronsUpDown aria-hidden="true" className="ms-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-(--gentleduck-dropdown-menu-trigger-width)">
             {versions.map((version) => (
               <DropdownMenuItem key={version} onSelect={() => setSelectedVersion(version)}>
-                v{version} {version === selectedVersion && <Check aria-hidden="true" className="ml-auto" />}
+                v{version} {version === selectedVersion && <Check aria-hidden="true" className="ms-auto" />}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

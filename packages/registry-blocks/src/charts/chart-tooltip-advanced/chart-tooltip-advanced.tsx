@@ -56,7 +56,7 @@ export default function Component() {
                   formatter={(value, name, item, index) => (
                     <>
                       <div
-                        className="h-2.5 w-2.5 shrink-0 rounded-[2px] bg-[--color-bg]"
+                        className="h-2.5 w-2.5 shrink-0 rounded-[2px] bg-(--color-bg)"
                         style={
                           {
                             '--color-bg': `var(--color-${name})`,
@@ -64,7 +64,7 @@ export default function Component() {
                         }
                       />
                       {chartConfig[name as keyof typeof chartConfig]?.label || name}
-                      <div className="ml-auto flex items-baseline gap-0.5 font-medium font-mono text-foreground tabular-nums">
+                      <div className="ms-auto flex items-baseline gap-0.5 font-medium font-mono text-foreground tabular-nums">
                         {value}
                         <span className="font-normal text-muted-foreground">kcal</span>
                       </div>
@@ -72,7 +72,7 @@ export default function Component() {
                       {index === 1 && (
                         <div className="mt-1.5 flex basis-full items-center border-t pt-1.5 font-medium text-foreground text-xs">
                           Total
-                          <div className="ml-auto flex items-baseline gap-0.5 font-medium font-mono text-foreground tabular-nums">
+                          <div className="ms-auto flex items-baseline gap-0.5 font-medium font-mono text-foreground tabular-nums">
                             {item.payload.running + item.payload.swimming}
                             <span className="font-normal text-muted-foreground">kcal</span>
                           </div>

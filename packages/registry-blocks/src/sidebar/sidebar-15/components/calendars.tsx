@@ -32,7 +32,7 @@ export function Calendars({
                   {calendar.name}{' '}
                   <ChevronRight
                     aria-hidden="true"
-                    className="ml-auto transition-transform group-data-[open=true]/collapsible:rotate-90"
+                    className="ms-auto transition-transform group-data-[open=true]/collapsible:rotate-90"
                   />
                 </CollapsibleTrigger>
               </SidebarGroupLabel>

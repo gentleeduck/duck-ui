@@ -180,13 +180,13 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
           Target
         </Label>
         <Input
-          className="h-8 w-16 border-transparent bg-transparent text-right shadow-none hover:bg-input/30 focus-visible:border focus-visible:bg-background"
+          className="h-8 w-16 border-transparent bg-transparent text-end shadow-none hover:bg-input/30 focus-visible:border focus-visible:bg-background"
           defaultValue={row.original.target}
           id={`${row.original.id}-target`}
         />
       </form>
     ),
-    header: () => <div className="w-full text-right">Target</div>,
+    header: () => <div className="w-full text-end">Target</div>,
   },
   {
     accessorKey: 'limit',
@@ -204,13 +204,13 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
           Limit
         </Label>
         <Input
-          className="h-8 w-16 border-transparent bg-transparent text-right shadow-none hover:bg-input/30 focus-visible:border focus-visible:bg-background"
+          className="h-8 w-16 border-transparent bg-transparent text-end shadow-none hover:bg-input/30 focus-visible:border focus-visible:bg-background"
           defaultValue={row.original.limit}
           id={`${row.original.id}-limit`}
         />
       </form>
     ),
-    header: () => <div className="w-full text-right">Limit</div>,
+    header: () => <div className="w-full text-end">Limit</div>,
   },
   {
     accessorKey: 'reviewer',
@@ -440,7 +440,7 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
             <div className="flex w-fit items-center justify-center font-medium text-sm">
               Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
             </div>
-            <div className="ml-auto flex items-center gap-2 lg:ml-0">
+            <div className="ms-auto flex items-center gap-2 lg:ms-0">
               <Button
                 className="hidden h-8 w-8 p-0 lg:flex"
                 disabled={!table.getCanPreviousPage()}
@@ -519,11 +519,11 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button className="w-fit px-0 text-left text-foreground" variant="link">
+        <Button className="w-fit px-0 text-start text-foreground" variant="link">
           {item.header}
         </Button>
       </SheetTrigger>
-      <SheetContent className="flex flex-col" side="right">
+      <SheetContent side="right">
         <SheetHeader className="gap-1">
           <SheetTitle>{item.header}</SheetTitle>
           <SheetDescription>Showing total visitors for the last 6 months</SheetDescription>

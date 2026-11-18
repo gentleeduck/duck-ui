@@ -195,5 +195,5 @@ returning them only below that count gives the same list, since the folded list 
 - `PaginationLinkProps`, an alias of `IPaginationLinkProps`. Removing it is breaking.
 - Ark's `count` and `pageSize` in place of `pageCount`, with `slice` for the current page's rows, and its
   page labels, "page 3" and "last page, page 10", where a page here is named by its number.
-- Mounting takes 1.17 times Ark's time and unmounting 1.43 times: each pager here draws 24 elements to Ark's
-  12, a list item around every control, which Ark leaves out.
+- Mounting and unmounting take longer than Ark's, as the benchmarks table shows: each pager here draws 24
+  elements to Ark's 12, a list item around every control, which Ark leaves out.

@@ -59,7 +59,7 @@ export default {
         </Base.Root>
       ),
       ark: (on) => (
-        <Ark.Root value={VALUES[+on]}>
+        <Ark.Root lazyMount unmountOnExit value={VALUES[+on]}>
           <Ark.List>
             {ITEMS.map((v) => (
               <Ark.Item key={v} value={v}>
@@ -70,6 +70,9 @@ export default {
               </Ark.Item>
             ))}
           </Ark.List>
+          <Ark.ViewportPositioner>
+            <Ark.Viewport />
+          </Ark.ViewportPositioner>
         </Ark.Root>
       ),
     },

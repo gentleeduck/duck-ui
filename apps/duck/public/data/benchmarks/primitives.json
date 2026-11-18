@@ -26,7 +26,7 @@
         "baseui": 25060,
         "react-aria": 28852,
         "ark": 21680,
-        "headless": 16893
+        "headless": 16899
       },
       "versions": {
         "radix": "1.1.23",
@@ -427,7 +427,7 @@
     },
     {
       "name": "Calendar",
-      "gentleduck": 9526,
+      "gentleduck": 10161,
       "radix": 0,
       "baseui": 0
     },
@@ -1044,5 +1044,5 @@
     }
   ],
   "methodology": "Every library is measured the same way: an entry re-exporting what the module's bench file in its __benches__ folder names, bundled and minified by esbuild with react and react-dom external, then gzipped. gentleduck is the whole dist module; Radix, Base UI, Ark UI, cmdk, input-otp and vaul are their whole package or subpath; React Aria, Headless UI and react-day-picker, which ship one entry for everything, are the named parts a component draws. A total is one bundle of every part it covers, so shared code counts once: gentleduck's own row is the whole library, and each other library's row carries gentleduckKB, gentleduck over the same components. The calendar's gentleduck figure includes the NativeAdapter it needs.",
-  "generatedAt": "2026-11-21T02:26:04.995Z"
+  "generatedAt": "2026-11-21T03:31:56.590Z"
 }

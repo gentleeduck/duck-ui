@@ -2,7 +2,7 @@ import { Dialog as Ark } from '@ark-ui/react/dialog'
 import { Portal as ArkPortal } from '@ark-ui/react/portal'
 import { AlertDialog as Base } from '@base-ui-components/react/alert-dialog'
 import * as Duck from '@gentleduck/primitives/alert-dialog'
-import { Description, DialogPanel, DialogTitle, Dialog as HeadlessDialog } from '@headlessui/react'
+import { Description, DialogBackdrop, DialogPanel, DialogTitle, Dialog as HeadlessDialog } from '@headlessui/react'
 import * as Radix from '@radix-ui/react-alert-dialog'
 import { Button, Dialog, DialogTrigger, Heading, Modal, ModalOverlay } from 'react-aria-components'
 import type { IBench } from '../../__benches__/bench.types'
@@ -40,7 +40,10 @@ export default {
       from: 'react-aria-components',
     },
     ark: ['@ark-ui/react/dialog', '@ark-ui/react/portal'],
-    headless: { names: ['Dialog', 'DialogPanel', 'DialogTitle', 'Description'], from: '@headlessui/react' },
+    headless: {
+      names: ['Dialog', 'DialogBackdrop', 'DialogPanel', 'DialogTitle', 'Description'],
+      from: '@headlessui/react',
+    },
   },
   runtime: {
     overlay: true,
@@ -96,6 +99,7 @@ export default {
         <>
           <button type="button">open</button>
           <HeadlessDialog open={on} onClose={noop} role="alertdialog">
+            <DialogBackdrop />
             <DialogPanel data-bench-content="">
               <DialogTitle>Title</DialogTitle>
               <Description>Description</Description>

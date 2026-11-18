@@ -76,95 +76,95 @@
         {
           "metric": "mount x100",
           "ms": {
-            "duck": 2.133,
-            "radix": 2.145,
-            "baseui": 5.943,
-            "react-aria": 5.389,
-            "ark": 4.902,
-            "headless": 3.309
+            "duck": 2.239,
+            "radix": 2.704,
+            "baseui": 6.223,
+            "react-aria": 5.948,
+            "ark": 5.423,
+            "headless": 3.668
           },
           "duckVs": {
-            "radix": 0.99,
+            "radix": 0.83,
             "baseui": 0.36,
-            "react-aria": 0.4,
-            "ark": 0.44,
-            "headless": 0.64
+            "react-aria": 0.38,
+            "ark": 0.41,
+            "headless": 0.61
           },
           "samples": 12
         },
         {
           "metric": "unmount x100",
           "ms": {
-            "duck": 0.414,
-            "radix": 0.445,
-            "baseui": 1.102,
-            "react-aria": 0.915,
-            "ark": 0.918,
-            "headless": 0.484
+            "duck": 0.412,
+            "radix": 0.443,
+            "baseui": 0.91,
+            "react-aria": 0.877,
+            "ark": 0.841,
+            "headless": 0.451
           },
           "duckVs": {
             "radix": 0.93,
-            "baseui": 0.38,
-            "react-aria": 0.45,
-            "ark": 0.45,
-            "headless": 0.86
+            "baseui": 0.45,
+            "react-aria": 0.47,
+            "ark": 0.49,
+            "headless": 0.91
           },
           "samples": 12
         },
         {
           "metric": "unmount open x100",
           "ms": {
-            "duck": 3.534,
-            "radix": 5.656,
-            "baseui": 4.116,
-            "react-aria": 4.377,
-            "ark": 1207.734,
-            "headless": 19.575
+            "duck": 3.253,
+            "radix": 5.829,
+            "baseui": 3.913,
+            "react-aria": 4.077,
+            "ark": 1176.904,
+            "headless": 18.979
           },
           "duckVs": {
-            "radix": 0.62,
-            "baseui": 0.86,
-            "react-aria": 0.81,
+            "radix": 0.56,
+            "baseui": 0.83,
+            "react-aria": 0.8,
             "ark": 0,
-            "headless": 0.18
+            "headless": 0.17
           },
           "samples": 12
         },
         {
           "metric": "open",
           "ms": {
-            "duck": 1.089,
-            "radix": 1.236,
-            "baseui": 1.78,
-            "react-aria": 1.579,
-            "ark": 1.612,
-            "headless": 1.406
+            "duck": 1.503,
+            "radix": 1.655,
+            "baseui": 2.171,
+            "react-aria": 2.113,
+            "ark": 2.197,
+            "headless": 1.802
           },
           "duckVs": {
-            "radix": 0.88,
-            "baseui": 0.61,
-            "react-aria": 0.69,
+            "radix": 0.91,
+            "baseui": 0.69,
+            "react-aria": 0.71,
             "ark": 0.68,
-            "headless": 0.77
+            "headless": 0.83
           },
           "samples": 240
         },
         {
           "metric": "close",
           "ms": {
-            "duck": 0.78,
-            "radix": 0.901,
-            "baseui": 1.276,
-            "react-aria": 0.928,
-            "ark": 1.245,
-            "headless": 0.966
+            "duck": 1.051,
+            "radix": 1.083,
+            "baseui": 1.736,
+            "react-aria": 1.238,
+            "ark": 1.714,
+            "headless": 1.148
           },
           "duckVs": {
-            "radix": 0.87,
+            "radix": 0.97,
             "baseui": 0.61,
-            "react-aria": 0.84,
-            "ark": 0.63,
-            "headless": 0.81
+            "react-aria": 0.85,
+            "ark": 0.61,
+            "headless": 0.92
           },
           "samples": 240
         }
@@ -830,45 +830,45 @@
         {
           "metric": "mount x100",
           "ms": {
-            "duck": 21.46,
-            "radix": 47.184,
-            "baseui": 178.404,
-            "ark": 22.559
+            "duck": 24.146,
+            "radix": 51.197,
+            "baseui": 185.339,
+            "ark": 44.761
           },
           "duckVs": {
-            "radix": 0.45,
-            "baseui": 0.12,
-            "ark": 0.95
+            "radix": 0.47,
+            "baseui": 0.13,
+            "ark": 0.54
           },
           "samples": 12
         },
         {
           "metric": "update x100",
           "ms": {
-            "duck": 15.009,
-            "radix": 36.384,
-            "baseui": 102.601,
-            "ark": 72.087
+            "duck": 16.117,
+            "radix": 36.354,
+            "baseui": 99.67,
+            "ark": 71.544
           },
           "duckVs": {
-            "radix": 0.41,
-            "baseui": 0.15,
-            "ark": 0.21
+            "radix": 0.44,
+            "baseui": 0.16,
+            "ark": 0.23
           },
           "samples": 12
         },
         {
           "metric": "unmount x100",
           "ms": {
-            "duck": 2.878,
-            "radix": 6.484,
-            "baseui": 8.902,
-            "ark": 312.656
+            "duck": 2.865,
+            "radix": 6.39,
+            "baseui": 8.322,
+            "ark": 3.795
           },
           "duckVs": {
-            "radix": 0.44,
-            "baseui": 0.32,
-            "ark": 0.01
+            "radix": 0.45,
+            "baseui": 0.34,
+            "ark": 0.75
           },
           "samples": 12
         }
@@ -1577,5 +1577,5 @@
       ]
     }
   ],
-  "generatedAt": "2026-11-21T02:55:56.334Z"
+  "generatedAt": "2026-11-21T03:35:12.949Z"
 }

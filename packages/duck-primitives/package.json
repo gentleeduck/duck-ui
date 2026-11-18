@@ -18,6 +18,7 @@
     "@gentleduck/libs": "file:../duck-libs/",
     "@gentleduck/tsdown-config": "workspace:*",
     "@gentleduck/typescript-config": "workspace:*",
+    "@playwright/test": "1.63.0",
     "@radix-ui/react-accordion": "^1.2.20",
     "@radix-ui/react-alert-dialog": "^1.1.23",
     "@radix-ui/react-avatar": "^1.2.6",
@@ -109,6 +110,7 @@
     "lint": "biome lint .",
     "test": "bun src/__tests__/istanbul/run.ts",
     "test:coverage": "bun test --coverage",
+    "test:e2e": "playwright test",
     "test:watch": "bun test --watch"
   },
   "types": "./dist/index.d.ts",

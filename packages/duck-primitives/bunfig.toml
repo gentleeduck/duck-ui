@@ -1,5 +1,6 @@
 [test]
 coveragePathIgnorePatterns = ["**/dist/**", "jsdom-setup.ts", "src/__tests__/**", "src/__stories__/**", "src/__benches__/**"]
+pathIgnorePatterns = ["**/*.e2e.test.ts"]
 preload = ["./jsdom-setup.ts"]
 root = "./src"
 timeout = 15000

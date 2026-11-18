@@ -1,0 +1,30 @@
+/* From Radix UI primitives, apps/storybook/.storybook/preview.css. MIT, see ../radix/LICENSE.
+   Its @radix-ui/colors imports only colour the stories, so they are left out. */
+
+* {
+  box-sizing: border-box;
+}
+
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+[hidden] {
+  display: none;
+}
+
+:root {
+  --color-white: #fff;
+  --color-gray100: #ccc;
+  --color-gray300: #aaa;
+  --color-black: #111;
+  --color-red: crimson;
+  --color-green: green;
+}
+
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol";
+}

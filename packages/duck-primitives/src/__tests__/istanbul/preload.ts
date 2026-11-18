@@ -1,10 +1,8 @@
 import { afterAll } from 'bun:test'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { transformSync } from '@babel/core'
-import transformTypescript from '@babel/plugin-transform-typescript'
-import istanbul from 'babel-plugin-istanbul'
 import { plugin } from 'bun'
+import { instrument } from './instrument'
 
 const SRC = join(import.meta.dir, '../..')
 const OUT = process.env.DUCK_COVERAGE_OUT ?? join(SRC, '../coverage/coverage-final.json')
@@ -19,19 +17,7 @@ plugin({
       { filter: new RegExp(`^${escaped}/(?!.*__(tests|benches|stories)__/).*\\.tsx?(\\?.*)?$`) },
       async (args) => {
         const path = args.path.replace(/\?.*$/, '')
-        const isTSX = path.endsWith('.tsx')
-        const out = transformSync(await Bun.file(path).text(), {
-          filename: path,
-          babelrc: false,
-          configFile: false,
-          sourceType: 'module',
-          parserOpts: { plugins: isTSX ? ['typescript', 'jsx'] : ['typescript'] },
-          plugins: [
-            [transformTypescript, { isTSX, onlyRemoveTypeImports: false }],
-            [istanbul, { cwd: '/', exclude: [], useInlineSourceMaps: false }],
-          ],
-        })
-        return { contents: out?.code ?? '', loader: isTSX ? 'jsx' : 'js' }
+        return { contents: instrument(path, await Bun.file(path).text()), loader: path.endsWith('.tsx') ? 'jsx' : 'js' }
       },
     )
   },

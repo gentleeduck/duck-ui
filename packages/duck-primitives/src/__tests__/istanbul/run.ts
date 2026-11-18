@@ -1,24 +1,13 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, realpathSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import { type IFileCoverage, instrument } from './instrument'
 
 // A ratchet: raise a floor as coverage rises, and read a drop as the thing to fix, never the number to lower.
-const FLOOR = { statements: 67, branches: 52, functions: 60, lines: 69 }
+const FLOOR = { statements: 65, branches: 50, functions: 59, lines: 68 }
 
 const PACKAGE = join(import.meta.dir, '../../..')
+const SRC = join(PACKAGE, 'src')
 const OUT = join(PACKAGE, 'coverage/coverage-final.json')
-
-interface ILocation {
-  start: { line: number }
-}
-
-interface IFileCoverage {
-  statementMap: Record<string, ILocation>
-  fnMap: Record<string, { loc: ILocation }>
-  branchMap: Record<string, { loc: ILocation; locations: Array<Partial<ILocation>> }>
-  s: Record<string, number>
-  f: Record<string, number>
-  b: Record<string, Array<number>>
-}
 
 function run(args: Array<string>, env: Record<string, string> = {}) {
   return Bun.spawnSync(['bun', 'test', ...args], {
@@ -36,6 +25,17 @@ const exitCode = run(['--preload', join(import.meta.dir, 'preload.ts')], { DUCK_
 if (exitCode !== 0) process.exit(exitCode)
 
 const coverage: Record<string, IFileCoverage> = JSON.parse(readFileSync(OUT, 'utf8'))
+
+// The report holds only the files a test loaded, so a file none loads is instrumented here and counts as never run.
+const unloaded = new Set<string>()
+for (const file of new Bun.Glob('**/*.{ts,tsx}').scanSync({ cwd: SRC })) {
+  const path = realpathSync(join(SRC, file))
+  if (/(^|\/)__(tests|benches|stories)__\//.test(file) || coverage[path]) continue
+  instrument(path, readFileSync(path, 'utf8'), (_, initial) => {
+    coverage[path] = initial
+  })
+  unloaded.add(path)
+}
 const totals = {
   statements: [0, 0],
   branches: [0, 0],
@@ -79,7 +79,9 @@ for (const [path, file] of Object.entries(coverage).sort(([a], [b]) => a.localeC
   const parts = Object.entries(missed)
     .filter(([, at]) => at.size > 0)
     .map(([metric, at]) => `${metric} ${[...at].sort((a, b) => a - b).join(' ')}`)
-  if (parts.length > 0) gaps.push(`  ${relative(PACKAGE, path)}: ${parts.join(' | ')}`)
+  if (parts.length > 0) {
+    gaps.push(`  ${relative(PACKAGE, path)}: ${unloaded.has(path) ? 'loaded by no test' : parts.join(' | ')}`)
+  }
 }
 
 let below = false

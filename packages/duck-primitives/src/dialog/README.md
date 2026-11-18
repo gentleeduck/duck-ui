@@ -12,18 +12,20 @@ The modal and non-modal dialog that Alert Dialog and Sheet build on.
 ## Benchmarks
 
 <!-- benchmarks -->
-Smaller than all 5. Faster in all 25 timed comparisons.
+Smaller than Base UI, React Aria, Ark UI and Headless UI; larger than Radix. Faster in all 25 timed comparisons.
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI | Headless UI |
 |---|--:|--:|--:|--:|--:|--:|
-| Size, gzipped bytes | 13,576 | 13,725 (0.99x) | 25,200 (0.54x) | 28,852 (0.47x) | 21,680 (0.63x) | 20,827 (0.65x) |
-| Mount x100, ms | 1.93 | 1.99 (0.97x) | 5.62 (0.34x) | 5.54 (0.35x) | 4.80 (0.40x) | 3.26 (0.59x) |
-| Unmount x100, ms | 0.381 | 0.426 (0.89x) | 1.07 (0.36x) | 0.873 (0.44x) | 0.866 (0.44x) | 0.470 (0.81x) |
-| Unmount open x100, ms | 3.10 | 5.11 (0.61x) | 4.04 (0.77x) | 3.85 (0.81x) | 1180 (0.00x) | 19.5 (0.16x) |
-| Open, ms | 1.20 | 1.30 (0.93x) | 1.94 (0.62x) | 1.63 (0.74x) | 1.68 (0.72x) | 1.55 (0.78x) |
-| Close, ms | 0.860 | 0.927 (0.93x) | 1.45 (0.60x) | 0.988 (0.87x) | 1.32 (0.65x) | 1.07 (0.80x) |
+| Size, gzipped bytes | 13,865 | **13,725 (1.01x)** | 25,200 (0.55x) | 28,852 (0.48x) | 21,680 (0.64x) | 20,827 (0.67x) |
+| Mount x100, ms | 1.89 | 2.04 (0.93x) | 5.71 (0.33x) | 5.40 (0.35x) | 4.95 (0.38x) | 3.40 (0.56x) |
+| Unmount x100, ms | 0.377 | 0.410 (0.92x) | 1.08 (0.35x) | 0.919 (0.41x) | 0.917 (0.41x) | 0.476 (0.79x) |
+| Unmount open x100, ms | 3.24 | 5.17 (0.63x) | 4.08 (0.79x) | 4.03 (0.80x) | 1187 (0.00x) | 19.0 (0.17x) |
+| Open, ms | 1.09 | 1.19 (0.92x) | 1.80 (0.61x) | 1.53 (0.71x) | 1.57 (0.70x) | 1.46 (0.75x) |
+| Close, ms | 0.796 | 0.848 (0.94x) | 1.33 (0.60x) | 0.930 (0.86x) | 1.23 (0.65x) | 1.00 (0.79x) |
 
-Behind nowhere: smaller and faster than every library here, in every case.
+Where gentleduck is behind:
+
+- Size against Radix: 1.01x, 140 bytes more.
 
 Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. The hundred copies mount and unmount closed, Unmount open tears them down once every one shows, and Open and Close time a single copy. Versions: Radix 1.1.23, Base UI 1.0.0-rc.0, React Aria 1.22.1, Ark UI 5.40.0 and Headless UI 2.2.10.
 <!-- /benchmarks -->

@@ -16,7 +16,7 @@ Radio group has its own README in [`../radio-group`](../radio-group).
 ## Benchmarks
 
 <!-- benchmarks -->
-No other library ships one to compare with. The module is 945 bytes gzipped.
+No other library ships one to compare with. The module is 1,042 bytes gzipped.
 
 A hook for a native checkbox or switch to draw its own indicator; none of the other libraries ships one.
 <!-- /benchmarks -->

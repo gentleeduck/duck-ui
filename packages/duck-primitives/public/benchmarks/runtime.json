@@ -1,0 +1,1581 @@
+{
+  "environment": {
+    "browser": "chromium 153.0.8010.12",
+    "react": "19.2.6",
+    "cpu": "Apple M4",
+    "os": "darwin 27.0.0",
+    "copies": 100,
+    "rounds": 12,
+    "toggleReps": 20
+  },
+  "methodology": "Production React in headless Chromium. Each library renders the same controlled tree, from the bench file in the module's __benches__ folder; a value is the median ms across rounds, with the libraries interleaved and their order alternated per round, and a garbage collection forced before each timed phase. \"x100\" is a hundred copies rendered at once; overlays mount and unmount closed, and \"unmount open\" tears down a hundred once every one shows. Each value is the main thread's work, read from a Chromium trace, from the step until two frames after its result shows, less the harness's own work for each of those frames, measured over frames with nothing to do: an effect that mounts the content, a later task that positions it, a frame-late unmount, and the style, layout and paint of the frame showing it all count, and idle time between them does not. After mounting and after an update the page settles, until two frames pass with nothing changed, so the next step does not pay for work the last one left behind. \"open\" and \"close\" are one overlay. \"type\" sets every copy's input and dispatches its input event, as typing does, and runs until every copy shows the change. A duckVs ratio under 1 means gentleduck is faster than that library.",
+  "results": [
+    {
+      "name": "Accordion",
+      "module": "accordion",
+      "overlay": false,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 10.239,
+            "radix": 21.641,
+            "baseui": 25.287,
+            "react-aria": 34.723,
+            "ark": 17.944
+          },
+          "duckVs": {
+            "radix": 0.47,
+            "baseui": 0.4,
+            "react-aria": 0.29,
+            "ark": 0.57
+          },
+          "samples": 12
+        },
+        {
+          "metric": "update x100",
+          "ms": {
+            "duck": 10.379,
+            "radix": 18.149,
+            "baseui": 16.274,
+            "react-aria": 34.326,
+            "ark": 41.457
+          },
+          "duckVs": {
+            "radix": 0.57,
+            "baseui": 0.64,
+            "react-aria": 0.3,
+            "ark": 0.25
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 1.796,
+            "radix": 3.037,
+            "baseui": 2.921,
+            "react-aria": 4.78,
+            "ark": 2.582
+          },
+          "duckVs": {
+            "radix": 0.59,
+            "baseui": 0.61,
+            "react-aria": 0.38,
+            "ark": 0.7
+          },
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "name": "Alert Dialog",
+      "module": "alert-dialog",
+      "overlay": true,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 2.133,
+            "radix": 2.145,
+            "baseui": 5.943,
+            "react-aria": 5.389,
+            "ark": 4.902,
+            "headless": 3.309
+          },
+          "duckVs": {
+            "radix": 0.99,
+            "baseui": 0.36,
+            "react-aria": 0.4,
+            "ark": 0.44,
+            "headless": 0.64
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 0.414,
+            "radix": 0.445,
+            "baseui": 1.102,
+            "react-aria": 0.915,
+            "ark": 0.918,
+            "headless": 0.484
+          },
+          "duckVs": {
+            "radix": 0.93,
+            "baseui": 0.38,
+            "react-aria": 0.45,
+            "ark": 0.45,
+            "headless": 0.86
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount open x100",
+          "ms": {
+            "duck": 3.534,
+            "radix": 5.656,
+            "baseui": 4.116,
+            "react-aria": 4.377,
+            "ark": 1207.734,
+            "headless": 19.575
+          },
+          "duckVs": {
+            "radix": 0.62,
+            "baseui": 0.86,
+            "react-aria": 0.81,
+            "ark": 0,
+            "headless": 0.18
+          },
+          "samples": 12
+        },
+        {
+          "metric": "open",
+          "ms": {
+            "duck": 1.089,
+            "radix": 1.236,
+            "baseui": 1.78,
+            "react-aria": 1.579,
+            "ark": 1.612,
+            "headless": 1.406
+          },
+          "duckVs": {
+            "radix": 0.88,
+            "baseui": 0.61,
+            "react-aria": 0.69,
+            "ark": 0.68,
+            "headless": 0.77
+          },
+          "samples": 240
+        },
+        {
+          "metric": "close",
+          "ms": {
+            "duck": 0.78,
+            "radix": 0.901,
+            "baseui": 1.276,
+            "react-aria": 0.928,
+            "ark": 1.245,
+            "headless": 0.966
+          },
+          "duckVs": {
+            "radix": 0.87,
+            "baseui": 0.61,
+            "react-aria": 0.84,
+            "ark": 0.63,
+            "headless": 0.81
+          },
+          "samples": 240
+        }
+      ]
+    },
+    {
+      "name": "Avatar",
+      "module": "avatar",
+      "overlay": false,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 1.054,
+            "radix": 0.884,
+            "baseui": 0.928,
+            "ark": 2.64
+          },
+          "duckVs": {
+            "radix": 1.19,
+            "baseui": 1.14,
+            "ark": 0.4
+          },
+          "samples": 12
+        },
+        {
+          "metric": "update x100",
+          "ms": {
+            "duck": 0.778,
+            "radix": 0.724,
+            "baseui": 0.782,
+            "ark": 1.705
+          },
+          "duckVs": {
+            "radix": 1.07,
+            "baseui": 0.99,
+            "ark": 0.46
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 0.375,
+            "radix": 0.314,
+            "baseui": 0.387,
+            "ark": 0.685
+          },
+          "duckVs": {
+            "radix": 1.19,
+            "baseui": 0.97,
+            "ark": 0.55
+          },
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "name": "Calendar",
+      "module": "calendar",
+      "overlay": false,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 55.403,
+            "react-aria": 248.58,
+            "ark": 94.174,
+            "react-day-picker": 97.81
+          },
+          "duckVs": {
+            "react-aria": 0.22,
+            "ark": 0.59,
+            "react-day-picker": 0.57
+          },
+          "samples": 12
+        },
+        {
+          "metric": "update x100",
+          "ms": {
+            "duck": 37.902,
+            "react-aria": 113.106,
+            "ark": 74.313,
+            "react-day-picker": 28.352
+          },
+          "duckVs": {
+            "react-aria": 0.34,
+            "ark": 0.51,
+            "react-day-picker": 1.34
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 3.45,
+            "react-aria": 17.136,
+            "ark": 6.493,
+            "react-day-picker": 4.471
+          },
+          "duckVs": {
+            "react-aria": 0.2,
+            "ark": 0.53,
+            "react-day-picker": 0.77
+          },
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "name": "Command",
+      "module": "command",
+      "overlay": false,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 22.366,
+            "baseui": 41.127,
+            "react-aria": 160.45,
+            "cmdk": 23.14
+          },
+          "duckVs": {
+            "baseui": 0.54,
+            "react-aria": 0.14,
+            "cmdk": 0.97
+          },
+          "samples": 12
+        },
+        {
+          "metric": "type x100",
+          "ms": {
+            "duck": 9.149,
+            "baseui": 31.821,
+            "react-aria": 31.276,
+            "cmdk": 14.53
+          },
+          "duckVs": {
+            "baseui": 0.29,
+            "react-aria": 0.29,
+            "cmdk": 0.63
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 1.981,
+            "baseui": 3.432,
+            "react-aria": 5.987,
+            "cmdk": 2.122
+          },
+          "duckVs": {
+            "baseui": 0.58,
+            "react-aria": 0.33,
+            "cmdk": 0.93
+          },
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "name": "Context Menu",
+      "module": "context-menu",
+      "overlay": true,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 2.822,
+            "radix": 3.208,
+            "baseui": 8.379,
+            "ark": 4.903
+          },
+          "duckVs": {
+            "radix": 0.88,
+            "baseui": 0.34,
+            "ark": 0.58
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 0.51,
+            "radix": 0.608,
+            "baseui": 0.98,
+            "ark": 0.905
+          },
+          "duckVs": {
+            "radix": 0.84,
+            "baseui": 0.52,
+            "ark": 0.56
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount open x100",
+          "ms": {
+            "duck": 3.625,
+            "radix": 10.196,
+            "baseui": 9.468,
+            "ark": 785.364
+          },
+          "duckVs": {
+            "radix": 0.36,
+            "baseui": 0.38,
+            "ark": 0
+          },
+          "samples": 12
+        },
+        {
+          "metric": "open",
+          "ms": {
+            "duck": 1.678,
+            "radix": 2.524,
+            "baseui": 2.727,
+            "ark": 1.593
+          },
+          "duckVs": {
+            "radix": 0.66,
+            "baseui": 0.62,
+            "ark": 1.05
+          },
+          "samples": 240
+        },
+        {
+          "metric": "close",
+          "ms": {
+            "duck": 0.85,
+            "radix": 1.198,
+            "baseui": 1.636,
+            "ark": 1.15
+          },
+          "duckVs": {
+            "radix": 0.71,
+            "baseui": 0.52,
+            "ark": 0.74
+          },
+          "samples": 240
+        }
+      ]
+    },
+    {
+      "name": "Dialog",
+      "module": "dialog",
+      "overlay": true,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 1.888,
+            "radix": 2.038,
+            "baseui": 5.713,
+            "react-aria": 5.396,
+            "ark": 4.948,
+            "headless": 3.398
+          },
+          "duckVs": {
+            "radix": 0.93,
+            "baseui": 0.33,
+            "react-aria": 0.35,
+            "ark": 0.38,
+            "headless": 0.56
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 0.377,
+            "radix": 0.41,
+            "baseui": 1.082,
+            "react-aria": 0.919,
+            "ark": 0.917,
+            "headless": 0.476
+          },
+          "duckVs": {
+            "radix": 0.92,
+            "baseui": 0.35,
+            "react-aria": 0.41,
+            "ark": 0.41,
+            "headless": 0.79
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount open x100",
+          "ms": {
+            "duck": 3.239,
+            "radix": 5.167,
+            "baseui": 4.077,
+            "react-aria": 4.026,
+            "ark": 1187.447,
+            "headless": 18.969
+          },
+          "duckVs": {
+            "radix": 0.63,
+            "baseui": 0.79,
+            "react-aria": 0.8,
+            "ark": 0,
+            "headless": 0.17
+          },
+          "samples": 12
+        },
+        {
+          "metric": "open",
+          "ms": {
+            "duck": 1.095,
+            "radix": 1.187,
+            "baseui": 1.796,
+            "react-aria": 1.534,
+            "ark": 1.575,
+            "headless": 1.46
+          },
+          "duckVs": {
+            "radix": 0.92,
+            "baseui": 0.61,
+            "react-aria": 0.71,
+            "ark": 0.7,
+            "headless": 0.75
+          },
+          "samples": 240
+        },
+        {
+          "metric": "close",
+          "ms": {
+            "duck": 0.796,
+            "radix": 0.848,
+            "baseui": 1.334,
+            "react-aria": 0.93,
+            "ark": 1.232,
+            "headless": 1.002
+          },
+          "duckVs": {
+            "radix": 0.94,
+            "baseui": 0.6,
+            "react-aria": 0.86,
+            "ark": 0.65,
+            "headless": 0.79
+          },
+          "samples": 240
+        }
+      ]
+    },
+    {
+      "name": "Dropdown Menu",
+      "module": "dropdown-menu",
+      "overlay": true,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 3.416,
+            "radix": 4.28,
+            "baseui": 9.093,
+            "react-aria": 6.787,
+            "ark": 4.882,
+            "headless": 14.907
+          },
+          "duckVs": {
+            "radix": 0.8,
+            "baseui": 0.38,
+            "react-aria": 0.5,
+            "ark": 0.7,
+            "headless": 0.23
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 0.541,
+            "radix": 0.719,
+            "baseui": 1.393,
+            "react-aria": 1.078,
+            "ark": 0.882,
+            "headless": 2.303
+          },
+          "duckVs": {
+            "radix": 0.75,
+            "baseui": 0.39,
+            "react-aria": 0.5,
+            "ark": 0.61,
+            "headless": 0.23
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount open x100",
+          "ms": {
+            "duck": 3.824,
+            "radix": 10.614,
+            "baseui": 12.248,
+            "react-aria": 16.148,
+            "ark": 811.463
+          },
+          "duckVs": {
+            "radix": 0.36,
+            "baseui": 0.31,
+            "react-aria": 0.24,
+            "ark": 0
+          },
+          "samples": 12
+        },
+        {
+          "metric": "open",
+          "ms": {
+            "duck": 1.71,
+            "radix": 2.734,
+            "baseui": 3.493,
+            "react-aria": 3.583,
+            "ark": 2.483
+          },
+          "duckVs": {
+            "radix": 0.63,
+            "baseui": 0.49,
+            "react-aria": 0.48,
+            "ark": 0.69
+          },
+          "samples": 240
+        },
+        {
+          "metric": "close",
+          "ms": {
+            "duck": 0.962,
+            "radix": 1.359,
+            "baseui": 2.087,
+            "react-aria": 1.746,
+            "ark": 1.336
+          },
+          "duckVs": {
+            "radix": 0.71,
+            "baseui": 0.46,
+            "react-aria": 0.55,
+            "ark": 0.72
+          },
+          "samples": 240
+        }
+      ]
+    },
+    {
+      "name": "Hover Card",
+      "module": "hover-card",
+      "overlay": true,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 2.507,
+            "radix": 2.786,
+            "baseui": 6.317,
+            "react-aria": 6.459,
+            "ark": 4.621
+          },
+          "duckVs": {
+            "radix": 0.9,
+            "baseui": 0.4,
+            "react-aria": 0.39,
+            "ark": 0.54
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 0.502,
+            "radix": 0.59,
+            "baseui": 0.818,
+            "react-aria": 1.08,
+            "ark": 0.764
+          },
+          "duckVs": {
+            "radix": 0.85,
+            "baseui": 0.61,
+            "react-aria": 0.46,
+            "ark": 0.66
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount open x100",
+          "ms": {
+            "duck": 1.49,
+            "radix": 3.453,
+            "baseui": 1.863,
+            "react-aria": 2.806,
+            "ark": 756.217
+          },
+          "duckVs": {
+            "radix": 0.43,
+            "baseui": 0.8,
+            "react-aria": 0.53,
+            "ark": 0
+          },
+          "samples": 12
+        },
+        {
+          "metric": "open",
+          "ms": {
+            "duck": 1.119,
+            "radix": 1.311,
+            "baseui": 1.68,
+            "react-aria": 1.498,
+            "ark": 1.893
+          },
+          "duckVs": {
+            "radix": 0.85,
+            "baseui": 0.67,
+            "react-aria": 0.75,
+            "ark": 0.59
+          },
+          "samples": 240
+        },
+        {
+          "metric": "close",
+          "ms": {
+            "duck": 0.524,
+            "radix": 0.588,
+            "baseui": 0.717,
+            "react-aria": 0.714,
+            "ark": 0.847
+          },
+          "duckVs": {
+            "radix": 0.89,
+            "baseui": 0.73,
+            "react-aria": 0.73,
+            "ark": 0.62
+          },
+          "samples": 240
+        }
+      ]
+    },
+    {
+      "name": "Input OTP",
+      "module": "input-otp",
+      "overlay": false,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 6.182,
+            "radix": 28.73,
+            "input-otp": 17.058,
+            "ark": 15.667
+          },
+          "duckVs": {
+            "radix": 0.22,
+            "input-otp": 0.36,
+            "ark": 0.39
+          },
+          "samples": 12
+        },
+        {
+          "metric": "update x100",
+          "ms": {
+            "duck": 4.385,
+            "radix": 13.744,
+            "input-otp": 18.931,
+            "ark": 13.079
+          },
+          "duckVs": {
+            "radix": 0.32,
+            "input-otp": 0.23,
+            "ark": 0.34
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 0.802,
+            "radix": 2.216,
+            "input-otp": 0.921,
+            "ark": 1.412
+          },
+          "duckVs": {
+            "radix": 0.36,
+            "input-otp": 0.87,
+            "ark": 0.57
+          },
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "name": "Menubar",
+      "module": "menubar",
+      "overlay": true,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 9.915,
+            "radix": 19.818,
+            "baseui": 51.761
+          },
+          "duckVs": {
+            "radix": 0.5,
+            "baseui": 0.19
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 1.231,
+            "radix": 2.163,
+            "baseui": 5.078
+          },
+          "duckVs": {
+            "radix": 0.57,
+            "baseui": 0.24
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount open x100",
+          "ms": {
+            "duck": 3.989,
+            "radix": 12.523,
+            "baseui": 13.977
+          },
+          "duckVs": {
+            "radix": 0.32,
+            "baseui": 0.29
+          },
+          "samples": 12
+        },
+        {
+          "metric": "open",
+          "ms": {
+            "duck": 1.572,
+            "radix": 2.427,
+            "baseui": 3.735
+          },
+          "duckVs": {
+            "radix": 0.65,
+            "baseui": 0.42
+          },
+          "samples": 240
+        },
+        {
+          "metric": "close",
+          "ms": {
+            "duck": 1.001,
+            "radix": 1.382,
+            "baseui": 2.439
+          },
+          "duckVs": {
+            "radix": 0.72,
+            "baseui": 0.41
+          },
+          "samples": 240
+        }
+      ]
+    },
+    {
+      "name": "Navigation Menu",
+      "module": "navigation-menu",
+      "overlay": false,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 21.46,
+            "radix": 47.184,
+            "baseui": 178.404,
+            "ark": 22.559
+          },
+          "duckVs": {
+            "radix": 0.45,
+            "baseui": 0.12,
+            "ark": 0.95
+          },
+          "samples": 12
+        },
+        {
+          "metric": "update x100",
+          "ms": {
+            "duck": 15.009,
+            "radix": 36.384,
+            "baseui": 102.601,
+            "ark": 72.087
+          },
+          "duckVs": {
+            "radix": 0.41,
+            "baseui": 0.15,
+            "ark": 0.21
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 2.878,
+            "radix": 6.484,
+            "baseui": 8.902,
+            "ark": 312.656
+          },
+          "duckVs": {
+            "radix": 0.44,
+            "baseui": 0.32,
+            "ark": 0.01
+          },
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "name": "Pagination",
+      "module": "pagination",
+      "overlay": false,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 11.962,
+            "ark": 10.503
+          },
+          "duckVs": {
+            "ark": 1.14
+          },
+          "samples": 12
+        },
+        {
+          "metric": "update x100",
+          "ms": {
+            "duck": 8.023,
+            "ark": 9.117
+          },
+          "duckVs": {
+            "ark": 0.88
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 1.977,
+            "ark": 1.449
+          },
+          "duckVs": {
+            "ark": 1.36
+          },
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "name": "Popover",
+      "module": "popover",
+      "overlay": true,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 2.501,
+            "radix": 2.819,
+            "baseui": 6.851,
+            "react-aria": 5.514,
+            "ark": 6.609,
+            "headless": 17.464
+          },
+          "duckVs": {
+            "radix": 0.89,
+            "baseui": 0.37,
+            "react-aria": 0.45,
+            "ark": 0.38,
+            "headless": 0.14
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 0.459,
+            "radix": 0.587,
+            "baseui": 1.089,
+            "react-aria": 0.909,
+            "ark": 0.736,
+            "headless": 2.577
+          },
+          "duckVs": {
+            "radix": 0.78,
+            "baseui": 0.42,
+            "react-aria": 0.5,
+            "ark": 0.62,
+            "headless": 0.18
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount open x100",
+          "ms": {
+            "duck": 1.951,
+            "radix": 3.992,
+            "baseui": 6.648,
+            "react-aria": 4.936,
+            "ark": 779.794
+          },
+          "duckVs": {
+            "radix": 0.49,
+            "baseui": 0.29,
+            "react-aria": 0.4,
+            "ark": 0
+          },
+          "samples": 12
+        },
+        {
+          "metric": "open",
+          "ms": {
+            "duck": 1.348,
+            "radix": 1.558,
+            "baseui": 2.954,
+            "react-aria": 1.97,
+            "ark": 2.353
+          },
+          "duckVs": {
+            "radix": 0.87,
+            "baseui": 0.46,
+            "react-aria": 0.68,
+            "ark": 0.57
+          },
+          "samples": 240
+        },
+        {
+          "metric": "close",
+          "ms": {
+            "duck": 0.778,
+            "radix": 0.78,
+            "baseui": 1.568,
+            "react-aria": 0.943,
+            "ark": 1.074
+          },
+          "duckVs": {
+            "radix": 1,
+            "baseui": 0.5,
+            "react-aria": 0.83,
+            "ark": 0.72
+          },
+          "samples": 240
+        }
+      ]
+    },
+    {
+      "name": "Progress",
+      "module": "progress",
+      "overlay": false,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 1.127,
+            "radix": 1,
+            "baseui": 1.511,
+            "react-aria": 1.874,
+            "ark": 3.629
+          },
+          "duckVs": {
+            "radix": 1.13,
+            "baseui": 0.75,
+            "react-aria": 0.6,
+            "ark": 0.31
+          },
+          "samples": 12
+        },
+        {
+          "metric": "update x100",
+          "ms": {
+            "duck": 0.546,
+            "radix": 0.506,
+            "baseui": 1.207,
+            "react-aria": 1.489,
+            "ark": 3.101
+          },
+          "duckVs": {
+            "radix": 1.08,
+            "baseui": 0.45,
+            "react-aria": 0.37,
+            "ark": 0.18
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 0.281,
+            "radix": 0.285,
+            "baseui": 0.387,
+            "react-aria": 0.591,
+            "ark": 0.583
+          },
+          "duckVs": {
+            "radix": 0.99,
+            "baseui": 0.73,
+            "react-aria": 0.48,
+            "ark": 0.48
+          },
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "name": "Radio Group",
+      "module": "radio-group",
+      "overlay": false,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 5.957,
+            "radix": 37.893,
+            "baseui": 20.486,
+            "react-aria": 47.516,
+            "ark": 28.718,
+            "headless": 15.149
+          },
+          "duckVs": {
+            "radix": 0.16,
+            "baseui": 0.29,
+            "react-aria": 0.13,
+            "ark": 0.21,
+            "headless": 0.39
+          },
+          "samples": 12
+        },
+        {
+          "metric": "update x100",
+          "ms": {
+            "duck": 5.764,
+            "radix": 13.623,
+            "baseui": 12.504,
+            "react-aria": 20.235,
+            "ark": 20.415,
+            "headless": 7.106
+          },
+          "duckVs": {
+            "radix": 0.42,
+            "baseui": 0.46,
+            "react-aria": 0.28,
+            "ark": 0.28,
+            "headless": 0.81
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 1.39,
+            "radix": 2.906,
+            "baseui": 2.709,
+            "react-aria": 4.841,
+            "ark": 1.715,
+            "headless": 1.472
+          },
+          "duckVs": {
+            "radix": 0.48,
+            "baseui": 0.51,
+            "react-aria": 0.29,
+            "ark": 0.81,
+            "headless": 0.94
+          },
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "name": "Select",
+      "module": "select",
+      "overlay": true,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 9.701,
+            "radix": 58.455,
+            "baseui": 13.947,
+            "react-aria": 33.855,
+            "ark": 15.267,
+            "headless": 17.753
+          },
+          "duckVs": {
+            "radix": 0.17,
+            "baseui": 0.7,
+            "react-aria": 0.29,
+            "ark": 0.64,
+            "headless": 0.55
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 0.879,
+            "radix": 3.825,
+            "baseui": 1.217,
+            "react-aria": 3.24,
+            "ark": 1.567,
+            "headless": 2.761
+          },
+          "duckVs": {
+            "radix": 0.23,
+            "baseui": 0.72,
+            "react-aria": 0.27,
+            "ark": 0.56,
+            "headless": 0.32
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount open x100",
+          "ms": {
+            "duck": 6.777,
+            "radix": 10.791,
+            "baseui": 10.71,
+            "react-aria": 15.873,
+            "ark": 828.655
+          },
+          "duckVs": {
+            "radix": 0.63,
+            "baseui": 0.63,
+            "react-aria": 0.43,
+            "ark": 0.01
+          },
+          "samples": 12
+        },
+        {
+          "metric": "open",
+          "ms": {
+            "duck": 2.206,
+            "radix": 2.912,
+            "baseui": 2.73,
+            "react-aria": 3.347,
+            "ark": 2.549
+          },
+          "duckVs": {
+            "radix": 0.76,
+            "baseui": 0.81,
+            "react-aria": 0.66,
+            "ark": 0.87
+          },
+          "samples": 240
+        },
+        {
+          "metric": "close",
+          "ms": {
+            "duck": 1.217,
+            "radix": 1.672,
+            "baseui": 1.947,
+            "react-aria": 2.006,
+            "ark": 1.481
+          },
+          "duckVs": {
+            "radix": 0.73,
+            "baseui": 0.63,
+            "react-aria": 0.61,
+            "ark": 0.82
+          },
+          "samples": 240
+        }
+      ]
+    },
+    {
+      "name": "Sheet",
+      "module": "sheet",
+      "overlay": true,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 1.913,
+            "vaul": 2.939,
+            "react-aria": 6.45,
+            "ark": 5.58
+          },
+          "duckVs": {
+            "vaul": 0.65,
+            "react-aria": 0.3,
+            "ark": 0.34
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 0.366,
+            "vaul": 0.737,
+            "react-aria": 0.914,
+            "ark": 0.98
+          },
+          "duckVs": {
+            "vaul": 0.5,
+            "react-aria": 0.4,
+            "ark": 0.37
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount open x100",
+          "ms": {
+            "duck": 3.156,
+            "vaul": 5.322,
+            "react-aria": 5.623,
+            "ark": 1277.03
+          },
+          "duckVs": {
+            "vaul": 0.59,
+            "react-aria": 0.56,
+            "ark": 0
+          },
+          "samples": 12
+        },
+        {
+          "metric": "open",
+          "ms": {
+            "duck": 1.105,
+            "vaul": 1.913,
+            "react-aria": 1.828,
+            "ark": 1.977
+          },
+          "duckVs": {
+            "vaul": 0.58,
+            "react-aria": 0.6,
+            "ark": 0.56
+          },
+          "samples": 240
+        },
+        {
+          "metric": "close",
+          "ms": {
+            "duck": 0.805,
+            "vaul": 19.043,
+            "react-aria": 1.002,
+            "ark": 1.438
+          },
+          "duckVs": {
+            "vaul": 0.04,
+            "react-aria": 0.8,
+            "ark": 0.56
+          },
+          "samples": 240
+        }
+      ]
+    },
+    {
+      "name": "Slider",
+      "module": "slider",
+      "overlay": false,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 7.072,
+            "radix": 10.428,
+            "baseui": 11.342,
+            "react-aria": 12.262,
+            "ark": 13.11
+          },
+          "duckVs": {
+            "radix": 0.68,
+            "baseui": 0.62,
+            "react-aria": 0.58,
+            "ark": 0.54
+          },
+          "samples": 12
+        },
+        {
+          "metric": "update x100",
+          "ms": {
+            "duck": 3.192,
+            "radix": 3.304,
+            "baseui": 4.69,
+            "react-aria": 6.903,
+            "ark": 6.97
+          },
+          "duckVs": {
+            "radix": 0.97,
+            "baseui": 0.68,
+            "react-aria": 0.46,
+            "ark": 0.46
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 1.004,
+            "radix": 1.036,
+            "baseui": 1.225,
+            "react-aria": 1.353,
+            "ark": 1.057
+          },
+          "duckVs": {
+            "radix": 0.97,
+            "baseui": 0.82,
+            "react-aria": 0.74,
+            "ark": 0.95
+          },
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "name": "Toggle",
+      "module": "toggle",
+      "overlay": false,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 1.198,
+            "radix": 1.314,
+            "baseui": 1.469,
+            "react-aria": 4.401,
+            "ark": 2.035
+          },
+          "duckVs": {
+            "radix": 0.91,
+            "baseui": 0.82,
+            "react-aria": 0.27,
+            "ark": 0.59
+          },
+          "samples": 12
+        },
+        {
+          "metric": "update x100",
+          "ms": {
+            "duck": 0.492,
+            "radix": 0.584,
+            "baseui": 0.77,
+            "react-aria": 3.667,
+            "ark": 1.351
+          },
+          "duckVs": {
+            "radix": 0.84,
+            "baseui": 0.64,
+            "react-aria": 0.13,
+            "ark": 0.36
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 0.333,
+            "radix": 0.367,
+            "baseui": 0.392,
+            "react-aria": 0.66,
+            "ark": 0.513
+          },
+          "duckVs": {
+            "radix": 0.91,
+            "baseui": 0.85,
+            "react-aria": 0.5,
+            "ark": 0.65
+          },
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "name": "Toggle Group",
+      "module": "toggle-group",
+      "overlay": false,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 5.512,
+            "radix": 12.619,
+            "baseui": 9.983,
+            "react-aria": 19.456,
+            "ark": 8.102
+          },
+          "duckVs": {
+            "radix": 0.44,
+            "baseui": 0.55,
+            "react-aria": 0.28,
+            "ark": 0.68
+          },
+          "samples": 12
+        },
+        {
+          "metric": "update x100",
+          "ms": {
+            "duck": 2.586,
+            "radix": 8.63,
+            "baseui": 3.817,
+            "react-aria": 15.904,
+            "ark": 6.072
+          },
+          "duckVs": {
+            "radix": 0.3,
+            "baseui": 0.68,
+            "react-aria": 0.16,
+            "ark": 0.43
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 1.091,
+            "radix": 1.764,
+            "baseui": 1.34,
+            "react-aria": 1.913,
+            "ark": 1.049
+          },
+          "duckVs": {
+            "radix": 0.62,
+            "baseui": 0.81,
+            "react-aria": 0.57,
+            "ark": 1.04
+          },
+          "samples": 12
+        }
+      ]
+    },
+    {
+      "name": "Tooltip",
+      "module": "tooltip",
+      "overlay": true,
+      "metrics": [
+        {
+          "metric": "mount x100",
+          "ms": {
+            "duck": 3.039,
+            "radix": 3.724,
+            "baseui": 6.416,
+            "react-aria": 5.608,
+            "ark": 4.188
+          },
+          "duckVs": {
+            "radix": 0.82,
+            "baseui": 0.47,
+            "react-aria": 0.54,
+            "ark": 0.73
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount x100",
+          "ms": {
+            "duck": 0.649,
+            "radix": 0.774,
+            "baseui": 1.275,
+            "react-aria": 0.849,
+            "ark": 0.76
+          },
+          "duckVs": {
+            "radix": 0.84,
+            "baseui": 0.51,
+            "react-aria": 0.76,
+            "ark": 0.85
+          },
+          "samples": 12
+        },
+        {
+          "metric": "unmount open x100",
+          "ms": {
+            "duck": 1.482,
+            "radix": 4.506,
+            "baseui": 3.165,
+            "react-aria": 1.286,
+            "ark": 1.663
+          },
+          "duckVs": {
+            "radix": 0.33,
+            "baseui": 0.47,
+            "react-aria": 1.15,
+            "ark": 0.89
+          },
+          "samples": 12
+        },
+        {
+          "metric": "open",
+          "ms": {
+            "duck": 1.047,
+            "radix": 1.402,
+            "baseui": 2.018,
+            "react-aria": 1.115,
+            "ark": 1.874
+          },
+          "duckVs": {
+            "radix": 0.75,
+            "baseui": 0.52,
+            "react-aria": 0.94,
+            "ark": 0.56
+          },
+          "samples": 240
+        },
+        {
+          "metric": "close",
+          "ms": {
+            "duck": 0.501,
+            "radix": 0.567,
+            "baseui": 0.966,
+            "react-aria": 0.588,
+            "ark": 0.788
+          },
+          "duckVs": {
+            "radix": 0.88,
+            "baseui": 0.52,
+            "react-aria": 0.85,
+            "ark": 0.64
+          },
+          "samples": 240
+        }
+      ]
+    }
+  ],
+  "generatedAt": "2026-11-21T02:55:56.334Z"
+}

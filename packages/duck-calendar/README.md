@@ -23,14 +23,14 @@
 
 ---
 
-**About half the size of react-day-picker**  -  9.6 KB gzipped for a whole calendar against 20.0 KB, and 5.8 KB for the `useCalendar` hook alone. Zero dependencies. Full keyboard navigation and ARIA compliance.
+**About half the size of react-day-picker**  -  9.9 KB gzipped for a whole calendar against 20.0 KB, and 5.9 KB for the `useCalendar` hook alone. Zero dependencies. Full keyboard navigation and ARIA compliance.
 
 ## Benchmarks
 
 | Library | Size (gzipped) | Dependencies | Source |
 |---|---|---|---|
-| **@gentleduck/calendar** (`useCalendar` + `NativeAdapter`) | **5.8 KB** | **0** | Measured |
-| **@gentleduck/primitives** Calendar | **9.6 KB** | **0** | Measured |
+| **@gentleduck/calendar** (`useCalendar` + `NativeAdapter`) | **5.9 KB** | **0** | Measured |
+| **@gentleduck/primitives** Calendar | **9.9 KB** | **0** | Measured |
 | react-day-picker 10, date-fns included | 20.0 KB | date-fns, @date-fns/tz | Measured |
 | React Aria Calendar | 36.9 KB | 8 | Measured |
 | Ark UI DatePicker, inline | 43.3 KB | 69 | Measured |

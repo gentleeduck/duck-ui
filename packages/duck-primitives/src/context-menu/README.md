@@ -14,18 +14,20 @@ The menu it shares with Dropdown Menu and Menubar has its own README in [`../men
 ## Benchmarks
 
 <!-- benchmarks -->
-Smaller than all 3. Faster in all 15 timed comparisons.
+Smaller than all 3. Faster in 14 of 15 timed comparisons.
 
 | | gentleduck | Radix | Base UI | Ark UI |
 |---|--:|--:|--:|--:|
-| Size, gzipped bytes | 30,523 | 32,057 (0.95x) | 51,777 (0.59x) | 35,423 (0.86x) |
-| Mount x100, ms | 2.77 | 3.34 (0.83x) | 8.60 (0.32x) | 4.85 (0.57x) |
-| Unmount x100, ms | 0.497 | 0.662 (0.75x) | 0.886 (0.56x) | 0.866 (0.57x) |
-| Unmount open x100, ms | 3.44 | 10.1 (0.34x) | 9.27 (0.37x) | 775 (0.00x) |
-| Open, ms | 1.72 | 2.64 (0.65x) | 2.91 (0.59x) | 1.74 (0.99x) |
-| Close, ms | 0.859 | 1.24 (0.69x) | 1.74 (0.49x) | 1.30 (0.66x) |
+| Size, gzipped bytes | 31,039 | 32,057 (0.97x) | 51,777 (0.60x) | 35,423 (0.88x) |
+| Mount x100, ms | 2.82 | 3.21 (0.88x) | 8.38 (0.34x) | 4.90 (0.58x) |
+| Unmount x100, ms | 0.510 | 0.608 (0.84x) | 0.980 (0.52x) | 0.905 (0.56x) |
+| Unmount open x100, ms | 3.63 | 10.2 (0.36x) | 9.47 (0.38x) | 785 (0.00x) |
+| Open, ms | 1.68 | 2.52 (0.66x) | 2.73 (0.62x) | **1.59 (1.05x)** |
+| Close, ms | 0.850 | 1.20 (0.71x) | 1.64 (0.52x) | 1.15 (0.74x) |
 
-Behind nowhere: smaller and faster than every library here, in every case.
+Where gentleduck is behind:
+
+- Open against Ark UI: 1.05x, 0.085 ms more.
 
 Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. The hundred copies mount and unmount closed, Unmount open tears them down once every one shows, and Open and Close time a single copy. Versions: Radix 2.3.7, Base UI 1.0.0-rc.0 and Ark UI 5.40.0.
 

@@ -16,16 +16,16 @@ Smaller than all 4. Faster in 19 of 20 timed comparisons.
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI |
 |---|--:|--:|--:|--:|--:|
-| Size, gzipped bytes | 19,019 | 19,402 (0.98x) | 33,094 (0.57x) | 19,867 (0.96x) | 23,181 (0.82x) |
-| Mount x100, ms | 2.96 | 3.86 (0.77x) | 6.47 (0.46x) | 5.60 (0.53x) | 4.00 (0.74x) |
-| Unmount x100, ms | 0.594 | 0.693 (0.86x) | 1.13 (0.53x) | 0.822 (0.72x) | 0.778 (0.76x) |
-| Unmount open x100, ms | 1.25 | 4.36 (0.29x) | 3.18 (0.39x) | 1.27 (0.99x) | 1.40 (0.90x) |
-| Open, ms | 1.20 | 1.57 (0.76x) | 2.25 (0.53x) | **1.19 (1.01x)** | 1.94 (0.62x) |
-| Close, ms | 0.575 | 0.634 (0.91x) | 1.07 (0.54x) | 0.592 (0.97x) | 0.849 (0.68x) |
+| Size, gzipped bytes | 19,232 | 19,402 (0.99x) | 33,094 (0.58x) | 19,867 (0.97x) | 23,181 (0.83x) |
+| Mount x100, ms | 3.04 | 3.72 (0.82x) | 6.42 (0.47x) | 5.61 (0.54x) | 4.19 (0.73x) |
+| Unmount x100, ms | 0.649 | 0.774 (0.84x) | 1.27 (0.51x) | 0.849 (0.76x) | 0.760 (0.85x) |
+| Unmount open x100, ms | 1.48 | 4.51 (0.33x) | 3.17 (0.47x) | **1.29 (1.15x)** | 1.66 (0.89x) |
+| Open, ms | 1.05 | 1.40 (0.75x) | 2.02 (0.52x) | 1.11 (0.94x) | 1.87 (0.56x) |
+| Close, ms | 0.501 | 0.567 (0.88x) | 0.966 (0.52x) | 0.588 (0.85x) | 0.788 (0.64x) |
 
 Where gentleduck is behind:
 
-- Open against React Aria: 1.01x, 0.007 ms more.
+- Unmount open x100 against React Aria: 1.15x, 0.196 ms more.
 
 Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. The hundred copies mount and unmount closed, Unmount open tears them down once every one shows, and Open and Close time a single copy. Versions: Radix 1.2.16, Base UI 1.0.0-rc.0, React Aria 1.22.1 and Ark UI 5.40.0.
 <!-- /benchmarks -->

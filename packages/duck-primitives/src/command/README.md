@@ -16,10 +16,10 @@ Smaller than all 3. Faster in all 9 timed comparisons.
 
 | | gentleduck | Base UI | React Aria | cmdk |
 |---|--:|--:|--:|--:|
-| Size, gzipped bytes | 7,479 | 48,724 (0.15x) | 44,329 (0.17x) | 18,812 (0.40x) |
-| Mount x100, ms | 21.4 | 40.2 (0.53x) | 147 (0.15x) | 22.4 (0.96x) |
-| Type x100, ms | 8.76 | 32.0 (0.27x) | 30.1 (0.29x) | 14.7 (0.60x) |
-| Unmount x100, ms | 2.08 | 3.17 (0.66x) | 5.50 (0.38x) | 2.16 (0.97x) |
+| Size, gzipped bytes | 7,642 | 48,724 (0.16x) | 44,329 (0.17x) | 18,812 (0.41x) |
+| Mount x100, ms | 22.4 | 41.1 (0.54x) | 160 (0.14x) | 23.1 (0.97x) |
+| Type x100, ms | 9.15 | 31.8 (0.29x) | 31.3 (0.29x) | 14.5 (0.63x) |
+| Unmount x100, ms | 1.98 | 3.43 (0.58x) | 5.99 (0.33x) | 2.12 (0.93x) |
 
 Behind nowhere: smaller and faster than every library here, in every case.
 

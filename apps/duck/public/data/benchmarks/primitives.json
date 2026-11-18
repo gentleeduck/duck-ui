@@ -1,176 +1,559 @@
 {
+  "components": [
+    {
+      "name": "Accordion",
+      "module": "accordion",
+      "bytes": {
+        "duck": 4869,
+        "radix": 8770,
+        "baseui": 9260,
+        "react-aria": 14752,
+        "ark": 11953
+      },
+      "versions": {
+        "radix": "1.2.20",
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0"
+      }
+    },
+    {
+      "name": "Alert Dialog",
+      "module": "alert-dialog",
+      "bytes": {
+        "duck": 14305,
+        "radix": 14089,
+        "baseui": 25060,
+        "react-aria": 28852,
+        "ark": 21680,
+        "headless": 16893
+      },
+      "versions": {
+        "radix": "1.1.23",
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0",
+        "headless": "2.2.10"
+      },
+      "note": "React Aria, Ark UI and Headless UI have no alert dialog of their own; each is its dialog with `role=\"alertdialog\"`."
+    },
+    {
+      "name": "Avatar",
+      "module": "avatar",
+      "bytes": {
+        "duck": 2536,
+        "radix": 3108,
+        "baseui": 2694,
+        "ark": 7180
+      },
+      "versions": {
+        "radix": "1.2.6",
+        "baseui": "1.0.0-rc.0",
+        "ark": "5.40.0"
+      }
+    },
+    {
+      "name": "Calendar",
+      "module": "calendar",
+      "bytes": {
+        "duck": 10161,
+        "react-aria": 37759,
+        "ark": 44308,
+        "react-day-picker": 20518
+      },
+      "versions": {
+        "react-aria": "1.22.1",
+        "ark": "5.40.0",
+        "react-day-picker": "10.0.1"
+      },
+      "note": "gentleduck's figure includes the `NativeAdapter` it needs. Ark UI has no calendar of its own, so it is its DatePicker drawn inline; React Aria and Ark UI are the parts a single-month calendar draws, react-day-picker its whole `DayPicker` with the date-fns it requires."
+    },
+    {
+      "name": "Checkers",
+      "module": "checkers",
+      "bytes": {
+        "duck": 1042
+      },
+      "versions": {},
+      "note": "A hook for a native checkbox or switch to draw its own indicator; none of the other libraries ships one."
+    },
+    {
+      "name": "Command",
+      "module": "command",
+      "bytes": {
+        "duck": 7642,
+        "baseui": 48724,
+        "react-aria": 44329,
+        "cmdk": 18812
+      },
+      "versions": {
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "cmdk": "1.1.1"
+      },
+      "note": "Timed by typing, not by a prop: cmdk copies a controlled search into its store in an effect, so a redraw would time half its work. Each copy's input gets `item-1` and its input event, and the time runs until every copy shows only the match. React Aria's is its Autocomplete over a Menu, and Base UI's its Autocomplete drawn inline."
+    },
+    {
+      "name": "Context Menu",
+      "module": "context-menu",
+      "bytes": {
+        "duck": 31039,
+        "radix": 32057,
+        "baseui": 51777,
+        "ark": 35423
+      },
+      "versions": {
+        "radix": "2.3.7",
+        "baseui": "1.0.0-rc.0",
+        "ark": "5.40.0"
+      },
+      "note": "Ark UI's context menu is its Menu opened from a `ContextTrigger`."
+    },
+    {
+      "name": "Dialog",
+      "module": "dialog",
+      "bytes": {
+        "duck": 13865,
+        "radix": 13725,
+        "baseui": 25200,
+        "react-aria": 28852,
+        "ark": 21680,
+        "headless": 20827
+      },
+      "versions": {
+        "radix": "1.1.23",
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0",
+        "headless": "2.2.10"
+      }
+    },
+    {
+      "name": "Dropdown Menu",
+      "module": "dropdown-menu",
+      "bytes": {
+        "duck": 30723,
+        "radix": 31764,
+        "baseui": 51013,
+        "react-aria": 52023,
+        "ark": 35423,
+        "headless": 33023
+      },
+      "versions": {
+        "radix": "2.1.24",
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0",
+        "headless": "2.2.10"
+      },
+      "note": "Headless UI has no controlled open state, so its copies are timed mounting and unmounting closed, and no more."
+    },
+    {
+      "name": "Hover Card",
+      "module": "hover-card",
+      "bytes": {
+        "duck": 17688,
+        "radix": 17770,
+        "baseui": 27024,
+        "react-aria": 32258,
+        "ark": 24964
+      },
+      "versions": {
+        "radix": "1.1.23",
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0"
+      },
+      "note": "React Aria's hover card is its PreviewTrigger."
+    },
+    {
+      "name": "Input OTP",
+      "module": "input-otp",
+      "bytes": {
+        "duck": 3995,
+        "radix": 11051,
+        "input-otp": 4101,
+        "ark": 11375
+      },
+      "versions": {
+        "radix": "0.2.1",
+        "input-otp": "1.5.0",
+        "ark": "5.40.0"
+      }
+    },
+    {
+      "name": "Menu",
+      "module": "menu",
+      "bytes": {
+        "duck": 29630,
+        "baseui": 51013,
+        "ark": 35225
+      },
+      "versions": {
+        "baseui": "1.0.0-rc.0",
+        "ark": "5.40.0"
+      },
+      "note": "The menu every gentleduck menu is built on, sized against the same layer elsewhere. Its timings are those of Dropdown Menu, Context Menu and Menubar."
+    },
+    {
+      "name": "Menubar",
+      "module": "menubar",
+      "bytes": {
+        "duck": 31447,
+        "radix": 32339,
+        "baseui": 52659
+      },
+      "versions": {
+        "radix": "1.1.24",
+        "baseui": "1.0.0-rc.0"
+      },
+      "note": "Base UI's Menubar is only the bar, so its figures include the Menu each entry opens. Ark UI and React Aria ship no menubar."
+    },
+    {
+      "name": "Mount",
+      "module": "mount",
+      "bytes": {
+        "duck": 561
+      },
+      "versions": {},
+      "note": "Keeps children mounted through an exit, for a fixed time or an element's transitions. Radix's nearest, `Presence`, waits for an animation on the one child it wraps."
+    },
+    {
+      "name": "Navigation Menu",
+      "module": "navigation-menu",
+      "bytes": {
+        "duck": 10036,
+        "radix": 12837,
+        "baseui": 39429,
+        "ark": 19523
+      },
+      "versions": {
+        "radix": "1.2.22",
+        "baseui": "1.0.0-rc.0",
+        "ark": "5.40.0"
+      }
+    },
+    {
+      "name": "Pagination",
+      "module": "pagination",
+      "bytes": {
+        "duck": 3506,
+        "ark": 8317
+      },
+      "versions": {
+        "ark": "5.40.0"
+      },
+      "note": "Page 3 to page 5 of 10, with first, previous, the page range, next and last."
+    },
+    {
+      "name": "Popover",
+      "module": "popover",
+      "bytes": {
+        "duck": 24536,
+        "radix": 24345,
+        "baseui": 41743,
+        "react-aria": 32305,
+        "ark": 32424,
+        "headless": 30888
+      },
+      "versions": {
+        "radix": "1.1.23",
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0",
+        "headless": "2.2.10"
+      },
+      "note": "Headless UI has no controlled open state, so its copies are timed mounting and unmounting closed, and no more."
+    },
+    {
+      "name": "Progress",
+      "module": "progress",
+      "bytes": {
+        "duck": 2483,
+        "radix": 2847,
+        "baseui": 2928,
+        "react-aria": 4641,
+        "ark": 8297
+      },
+      "versions": {
+        "radix": "1.1.16",
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0"
+      }
+    },
+    {
+      "name": "Radio Group",
+      "module": "radio-group",
+      "bytes": {
+        "duck": 7485,
+        "radix": 10371,
+        "baseui": 11893,
+        "react-aria": 17931,
+        "ark": 11401,
+        "headless": 11969
+      },
+      "versions": {
+        "radix": "1.4.7",
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0",
+        "headless": "2.2.10"
+      }
+    },
+    {
+      "name": "Select",
+      "module": "select",
+      "bytes": {
+        "duck": 31069,
+        "radix": 31643,
+        "baseui": 46138,
+        "react-aria": 59115,
+        "ark": 35369,
+        "headless": 35005
+      },
+      "versions": {
+        "radix": "2.3.7",
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0",
+        "headless": "2.2.10"
+      },
+      "note": "gentleduck is given `items`, as Ark UI is given its collection. Headless UI's Listbox has no controlled open state, so its copies are timed mounting and unmounting closed, and no more."
+    },
+    {
+      "name": "Sheet",
+      "module": "sheet",
+      "bytes": {
+        "duck": 13793,
+        "vaul": 19993,
+        "react-aria": 32732,
+        "ark": 32018
+      },
+      "versions": {
+        "vaul": "1.1.2",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0"
+      },
+      "note": "gentleduck's sheet is its dialog drawn from an edge, so Dialog's table has Radix and Base UI. Here it meets the drawers: vaul, React Aria's Sheet and Ark UI's Drawer, each of which also tracks a swipe."
+    },
+    {
+      "name": "Slider",
+      "module": "slider",
+      "bytes": {
+        "duck": 6768,
+        "radix": 9743,
+        "baseui": 12453,
+        "react-aria": 14321,
+        "ark": 14993
+      },
+      "versions": {
+        "radix": "1.4.7",
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0"
+      }
+    },
+    {
+      "name": "Toggle",
+      "module": "toggle",
+      "bytes": {
+        "duck": 1795,
+        "radix": 3020,
+        "baseui": 4427,
+        "react-aria": 12225,
+        "ark": 6159
+      },
+      "versions": {
+        "radix": "1.1.18",
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0"
+      }
+    },
+    {
+      "name": "Toggle Group",
+      "module": "toggle-group",
+      "bytes": {
+        "duck": 5051,
+        "radix": 8396,
+        "baseui": 8574,
+        "react-aria": 15699,
+        "ark": 9066
+      },
+      "versions": {
+        "radix": "1.1.19",
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0"
+      }
+    },
+    {
+      "name": "Tooltip",
+      "module": "tooltip",
+      "bytes": {
+        "duck": 19232,
+        "radix": 19402,
+        "baseui": 33094,
+        "react-aria": 19867,
+        "ark": 23181
+      },
+      "versions": {
+        "radix": "1.2.16",
+        "baseui": "1.0.0-rc.0",
+        "react-aria": "1.22.1",
+        "ark": "5.40.0"
+      }
+    }
+  ],
   "perComponent": [
     {
       "name": "Accordion",
-      "gentleduck": 1336,
+      "gentleduck": 4869,
       "radix": 8770,
       "baseui": 9260
     },
     {
       "name": "Alert Dialog",
-      "gentleduck": 1554,
+      "gentleduck": 14305,
       "radix": 14089,
       "baseui": 25060
     },
     {
       "name": "Avatar",
-      "gentleduck": 1111,
+      "gentleduck": 2536,
       "radix": 3108,
       "baseui": 2694
     },
     {
       "name": "Calendar",
-      "gentleduck": 1938,
+      "gentleduck": 9526,
       "radix": 0,
       "baseui": 0
     },
     {
       "name": "Checkers",
-      "gentleduck": 1661,
-      "radix": 5849,
-      "baseui": 7072
-    },
-    {
-      "name": "Collapsible",
-      "gentleduck": 0,
-      "radix": 5065,
-      "baseui": 7020
-    },
-    {
-      "name": "Command",
-      "gentleduck": 2782,
+      "gentleduck": 1042,
       "radix": 0,
       "baseui": 0
     },
     {
+      "name": "Command",
+      "gentleduck": 7642,
+      "radix": 0,
+      "baseui": 48724
+    },
+    {
       "name": "Context Menu",
-      "gentleduck": 2195,
+      "gentleduck": 31039,
       "radix": 32057,
       "baseui": 51777
     },
     {
       "name": "Dialog",
-      "gentleduck": 3093,
+      "gentleduck": 13865,
       "radix": 13725,
       "baseui": 25200
     },
     {
       "name": "Dropdown Menu",
-      "gentleduck": 2090,
+      "gentleduck": 30723,
       "radix": 31764,
       "baseui": 51013
     },
     {
       "name": "Hover Card",
-      "gentleduck": 2150,
+      "gentleduck": 17688,
       "radix": 17770,
       "baseui": 27024
     },
     {
       "name": "Input OTP",
-      "gentleduck": 1558,
-      "radix": 0,
+      "gentleduck": 3995,
+      "radix": 11051,
       "baseui": 0
     },
     {
       "name": "Menu",
-      "gentleduck": 5907,
+      "gentleduck": 29630,
+      "radix": 0,
+      "baseui": 51013
+    },
+    {
+      "name": "Menubar",
+      "gentleduck": 31447,
+      "radix": 32339,
+      "baseui": 52659
+    },
+    {
+      "name": "Mount",
+      "gentleduck": 561,
       "radix": 0,
       "baseui": 0
     },
     {
-      "name": "Menubar",
-      "gentleduck": 3013,
-      "radix": 0,
-      "baseui": 8974
-    },
-    {
       "name": "Nav Menu",
-      "gentleduck": 5546,
+      "gentleduck": 10036,
       "radix": 12837,
       "baseui": 39429
     },
     {
       "name": "Pagination",
-      "gentleduck": 530,
+      "gentleduck": 3506,
       "radix": 0,
       "baseui": 0
     },
     {
       "name": "Popover",
-      "gentleduck": 2494,
+      "gentleduck": 24536,
       "radix": 24345,
       "baseui": 41743
     },
     {
       "name": "Progress",
-      "gentleduck": 1126,
+      "gentleduck": 2483,
       "radix": 2847,
       "baseui": 2928
     },
     {
       "name": "Radio Group",
-      "gentleduck": 1907,
+      "gentleduck": 7485,
       "radix": 10371,
-      "baseui": 8119
-    },
-    {
-      "name": "Scroll Area",
-      "gentleduck": 0,
-      "radix": 7301,
-      "baseui": 7366
+      "baseui": 11893
     },
     {
       "name": "Select",
-      "gentleduck": 7725,
+      "gentleduck": 31069,
       "radix": 31643,
       "baseui": 46138
     },
     {
-      "name": "Separator",
-      "gentleduck": 0,
-      "radix": 1761,
-      "baseui": 1783
-    },
-    {
       "name": "Sheet",
-      "gentleduck": 261,
+      "gentleduck": 13793,
       "radix": 0,
       "baseui": 0
     },
     {
       "name": "Slider",
-      "gentleduck": 3715,
+      "gentleduck": 6768,
       "radix": 9743,
       "baseui": 12453
     },
     {
-      "name": "Tabs",
-      "gentleduck": 0,
-      "radix": 9172,
-      "baseui": 10892
-    },
-    {
       "name": "Toggle",
-      "gentleduck": 568,
+      "gentleduck": 1795,
       "radix": 3020,
       "baseui": 4427
     },
     {
       "name": "Toggle Group",
-      "gentleduck": 1148,
+      "gentleduck": 5051,
       "radix": 8396,
-      "baseui": 6450
-    },
-    {
-      "name": "Toolbar",
-      "gentleduck": 0,
-      "radix": 8955,
-      "baseui": 8031
+      "baseui": 8574
     },
     {
       "name": "Tooltip",
-      "gentleduck": 3581,
+      "gentleduck": 19232,
       "radix": 19402,
       "baseui": 33094
     }
@@ -178,431 +561,488 @@
   "savingsVsRadix": [
     {
       "name": "Accordion",
-      "gentleduckKB": 1.3,
+      "gentleduckKB": 4.8,
       "competitorKB": 8.6,
-      "savingPercent": 85
+      "savingPercent": 44
     },
     {
       "name": "Alert Dialog",
-      "gentleduckKB": 1.5,
+      "gentleduckKB": 14,
       "competitorKB": 13.8,
-      "savingPercent": 89
+      "savingPercent": -2
     },
     {
       "name": "Avatar",
-      "gentleduckKB": 1.1,
+      "gentleduckKB": 2.5,
       "competitorKB": 3,
-      "savingPercent": 64
-    },
-    {
-      "name": "Checkers",
-      "gentleduckKB": 1.6,
-      "competitorKB": 5.7,
-      "savingPercent": 72
+      "savingPercent": 18
     },
     {
       "name": "Context Menu",
-      "gentleduckKB": 2.1,
+      "gentleduckKB": 30.3,
       "competitorKB": 31.3,
-      "savingPercent": 93
+      "savingPercent": 3
     },
     {
       "name": "Dialog",
-      "gentleduckKB": 3,
+      "gentleduckKB": 13.5,
       "competitorKB": 13.4,
-      "savingPercent": 77
+      "savingPercent": -1
     },
     {
       "name": "Dropdown Menu",
-      "gentleduckKB": 2,
+      "gentleduckKB": 30,
       "competitorKB": 31,
-      "savingPercent": 93
+      "savingPercent": 3
     },
     {
       "name": "Hover Card",
-      "gentleduckKB": 2.1,
+      "gentleduckKB": 17.3,
       "competitorKB": 17.4,
-      "savingPercent": 88
+      "savingPercent": 0
+    },
+    {
+      "name": "Input OTP",
+      "gentleduckKB": 3.9,
+      "competitorKB": 10.8,
+      "savingPercent": 64
+    },
+    {
+      "name": "Menubar",
+      "gentleduckKB": 30.7,
+      "competitorKB": 31.6,
+      "savingPercent": 3
     },
     {
       "name": "Nav Menu",
-      "gentleduckKB": 5.4,
+      "gentleduckKB": 9.8,
       "competitorKB": 12.5,
-      "savingPercent": 57
+      "savingPercent": 22
     },
     {
       "name": "Popover",
-      "gentleduckKB": 2.4,
+      "gentleduckKB": 24,
       "competitorKB": 23.8,
-      "savingPercent": 90
+      "savingPercent": -1
     },
     {
       "name": "Progress",
-      "gentleduckKB": 1.1,
+      "gentleduckKB": 2.4,
       "competitorKB": 2.8,
-      "savingPercent": 60
+      "savingPercent": 13
     },
     {
       "name": "Radio Group",
-      "gentleduckKB": 1.9,
+      "gentleduckKB": 7.3,
       "competitorKB": 10.1,
-      "savingPercent": 82
+      "savingPercent": 28
     },
     {
       "name": "Select",
-      "gentleduckKB": 7.5,
+      "gentleduckKB": 30.3,
       "competitorKB": 30.9,
-      "savingPercent": 76
+      "savingPercent": 2
     },
     {
       "name": "Slider",
-      "gentleduckKB": 3.6,
+      "gentleduckKB": 6.6,
       "competitorKB": 9.5,
-      "savingPercent": 62
+      "savingPercent": 31
     },
     {
       "name": "Toggle",
-      "gentleduckKB": 0.6,
+      "gentleduckKB": 1.8,
       "competitorKB": 2.9,
-      "savingPercent": 81
+      "savingPercent": 41
     },
     {
       "name": "Toggle Group",
-      "gentleduckKB": 1.1,
+      "gentleduckKB": 4.9,
       "competitorKB": 8.2,
-      "savingPercent": 86
+      "savingPercent": 40
     },
     {
       "name": "Tooltip",
-      "gentleduckKB": 3.5,
+      "gentleduckKB": 18.8,
       "competitorKB": 18.9,
-      "savingPercent": 82
+      "savingPercent": 1
     }
   ],
   "savingsVsBaseui": [
     {
       "name": "Accordion",
-      "gentleduckKB": 1.3,
+      "gentleduckKB": 4.8,
       "competitorKB": 9,
-      "savingPercent": 86
+      "savingPercent": 47
     },
     {
       "name": "Alert Dialog",
-      "gentleduckKB": 1.5,
+      "gentleduckKB": 14,
       "competitorKB": 24.5,
-      "savingPercent": 94
+      "savingPercent": 43
     },
     {
       "name": "Avatar",
-      "gentleduckKB": 1.1,
+      "gentleduckKB": 2.5,
       "competitorKB": 2.6,
-      "savingPercent": 59
+      "savingPercent": 6
     },
     {
-      "name": "Checkers",
-      "gentleduckKB": 1.6,
-      "competitorKB": 6.9,
-      "savingPercent": 77
+      "name": "Command",
+      "gentleduckKB": 7.5,
+      "competitorKB": 47.6,
+      "savingPercent": 84
     },
     {
       "name": "Context Menu",
-      "gentleduckKB": 2.1,
+      "gentleduckKB": 30.3,
       "competitorKB": 50.6,
-      "savingPercent": 96
+      "savingPercent": 40
     },
     {
       "name": "Dialog",
-      "gentleduckKB": 3,
+      "gentleduckKB": 13.5,
       "competitorKB": 24.6,
-      "savingPercent": 88
+      "savingPercent": 45
     },
     {
       "name": "Dropdown Menu",
-      "gentleduckKB": 2,
+      "gentleduckKB": 30,
       "competitorKB": 49.8,
-      "savingPercent": 96
+      "savingPercent": 40
     },
     {
       "name": "Hover Card",
-      "gentleduckKB": 2.1,
+      "gentleduckKB": 17.3,
       "competitorKB": 26.4,
-      "savingPercent": 92
+      "savingPercent": 35
+    },
+    {
+      "name": "Menu",
+      "gentleduckKB": 28.9,
+      "competitorKB": 49.8,
+      "savingPercent": 42
     },
     {
       "name": "Menubar",
-      "gentleduckKB": 2.9,
-      "competitorKB": 8.8,
-      "savingPercent": 66
+      "gentleduckKB": 30.7,
+      "competitorKB": 51.4,
+      "savingPercent": 40
     },
     {
       "name": "Nav Menu",
-      "gentleduckKB": 5.4,
+      "gentleduckKB": 9.8,
       "competitorKB": 38.5,
-      "savingPercent": 86
+      "savingPercent": 75
     },
     {
       "name": "Popover",
-      "gentleduckKB": 2.4,
+      "gentleduckKB": 24,
       "competitorKB": 40.8,
-      "savingPercent": 94
+      "savingPercent": 41
     },
     {
       "name": "Progress",
-      "gentleduckKB": 1.1,
+      "gentleduckKB": 2.4,
       "competitorKB": 2.9,
-      "savingPercent": 62
+      "savingPercent": 15
     },
     {
       "name": "Radio Group",
-      "gentleduckKB": 1.9,
-      "competitorKB": 7.9,
-      "savingPercent": 77
+      "gentleduckKB": 7.3,
+      "competitorKB": 11.6,
+      "savingPercent": 37
     },
     {
       "name": "Select",
-      "gentleduckKB": 7.5,
+      "gentleduckKB": 30.3,
       "competitorKB": 45.1,
-      "savingPercent": 83
+      "savingPercent": 33
     },
     {
       "name": "Slider",
-      "gentleduckKB": 3.6,
+      "gentleduckKB": 6.6,
       "competitorKB": 12.2,
-      "savingPercent": 70
+      "savingPercent": 46
     },
     {
       "name": "Toggle",
-      "gentleduckKB": 0.6,
+      "gentleduckKB": 1.8,
       "competitorKB": 4.3,
-      "savingPercent": 87
+      "savingPercent": 59
     },
     {
       "name": "Toggle Group",
-      "gentleduckKB": 1.1,
-      "competitorKB": 6.3,
-      "savingPercent": 82
+      "gentleduckKB": 4.9,
+      "competitorKB": 8.4,
+      "savingPercent": 41
     },
     {
       "name": "Tooltip",
-      "gentleduckKB": 3.5,
+      "gentleduckKB": 18.8,
       "competitorKB": 32.3,
-      "savingPercent": 89
+      "savingPercent": 42
     }
   ],
   "totalComparison": [
     {
       "name": "Headless UI",
-      "sizeKB": 35,
-      "components": 10,
-      "verified": false
+      "sizeKB": 48,
+      "gentleduckKB": 44,
+      "components": 6,
+      "verified": true
     },
     {
-      "name": "Base UI",
-      "sizeKB": 428,
-      "components": 23,
+      "name": "Radix",
+      "sizeKB": 69,
+      "gentleduckKB": 64,
+      "components": 18,
       "verified": true
     },
     {
       "name": "gentleduck",
-      "sizeKB": 68,
+      "sizeKB": 79,
       "components": 36,
       "verified": true
     },
     {
-      "name": "Ark UI",
-      "sizeKB": 95,
-      "components": 30,
-      "verified": false
+      "name": "Base UI",
+      "sizeKB": 105,
+      "gentleduckKB": 67,
+      "components": 19,
+      "verified": true
     },
     {
-      "name": "Radix UI",
-      "sizeKB": 275,
-      "components": 22,
+      "name": "React Aria",
+      "sizeKB": 107,
+      "gentleduckKB": 67,
+      "components": 16,
       "verified": true
+    },
+    {
+      "name": "Ark UI",
+      "sizeKB": 124,
+      "gentleduckKB": 72,
+      "components": 21,
+      "verified": true
+    }
+  ],
+  "calendarComparison": [
+    {
+      "name": "gentleduck",
+      "sizeBytes": 10161,
+      "sizeKB": 9.9
+    },
+    {
+      "name": "React Aria",
+      "sizeBytes": 37759,
+      "sizeKB": 36.9
+    },
+    {
+      "name": "Ark UI",
+      "sizeBytes": 44308,
+      "sizeKB": 43.3
+    },
+    {
+      "name": "react-day-picker",
+      "sizeBytes": 20518,
+      "sizeKB": 20
+    }
+  ],
+  "paginationComparison": [
+    {
+      "name": "gentleduck",
+      "sizeBytes": 3506,
+      "sizeKB": 3.4
+    },
+    {
+      "name": "Ark UI",
+      "sizeBytes": 8317,
+      "sizeKB": 8.1
     }
   ],
   "allSizes": [
     {
-      "name": "select",
-      "sizeBytes": 7725,
-      "sizeKB": 7.5
-    },
-    {
-      "name": "menu",
-      "sizeBytes": 5907,
-      "sizeKB": 5.8
-    },
-    {
-      "name": "navigation-menu",
-      "sizeBytes": 5546,
-      "sizeKB": 5.4
-    },
-    {
-      "name": "slider",
-      "sizeBytes": 3715,
-      "sizeKB": 3.6
-    },
-    {
-      "name": "tooltip",
-      "sizeBytes": 3581,
-      "sizeKB": 3.5
-    },
-    {
-      "name": "dialog",
-      "sizeBytes": 3093,
-      "sizeKB": 3
-    },
-    {
       "name": "menubar",
-      "sizeBytes": 3013,
-      "sizeKB": 2.9
+      "sizeBytes": 31447,
+      "sizeKB": 30.7
     },
     {
-      "name": "command",
-      "sizeBytes": 2782,
-      "sizeKB": 2.7
-    },
-    {
-      "name": "popover",
-      "sizeBytes": 2494,
-      "sizeKB": 2.4
-    },
-    {
-      "name": "popper",
-      "sizeBytes": 2395,
-      "sizeKB": 2.3
+      "name": "select",
+      "sizeBytes": 31069,
+      "sizeKB": 30.3
     },
     {
       "name": "context-menu",
-      "sizeBytes": 2195,
-      "sizeKB": 2.1
-    },
-    {
-      "name": "hover-card",
-      "sizeBytes": 2150,
-      "sizeKB": 2.1
+      "sizeBytes": 31039,
+      "sizeKB": 30.3
     },
     {
       "name": "dropdown-menu",
-      "sizeBytes": 2090,
-      "sizeKB": 2
+      "sizeBytes": 30723,
+      "sizeKB": 30
     },
     {
-      "name": "calendar",
-      "sizeBytes": 1938,
-      "sizeKB": 1.9
+      "name": "menu",
+      "sizeBytes": 29630,
+      "sizeKB": 28.9
     },
     {
-      "name": "radio-group",
-      "sizeBytes": 1907,
-      "sizeKB": 1.9
+      "name": "popover",
+      "sizeBytes": 24536,
+      "sizeKB": 24
     },
     {
-      "name": "roving-focus",
-      "sizeBytes": 1893,
-      "sizeKB": 1.8
+      "name": "tooltip",
+      "sizeBytes": 19232,
+      "sizeKB": 18.8
     },
     {
-      "name": "checkers",
-      "sizeBytes": 1661,
-      "sizeKB": 1.6
-    },
-    {
-      "name": "dismissable-layer",
-      "sizeBytes": 1618,
-      "sizeKB": 1.6
-    },
-    {
-      "name": "focus-scope",
-      "sizeBytes": 1605,
-      "sizeKB": 1.6
-    },
-    {
-      "name": "input-otp",
-      "sizeBytes": 1558,
-      "sizeKB": 1.5
+      "name": "hover-card",
+      "sizeBytes": 17688,
+      "sizeKB": 17.3
     },
     {
       "name": "alert-dialog",
-      "sizeBytes": 1554,
-      "sizeKB": 1.5
+      "sizeBytes": 14305,
+      "sizeKB": 14
     },
     {
-      "name": "accordion",
-      "sizeBytes": 1336,
-      "sizeKB": 1.3
-    },
-    {
-      "name": "toggle-group",
-      "sizeBytes": 1148,
-      "sizeKB": 1.1
-    },
-    {
-      "name": "progress",
-      "sizeBytes": 1126,
-      "sizeKB": 1.1
-    },
-    {
-      "name": "avatar",
-      "sizeBytes": 1111,
-      "sizeKB": 1.1
-    },
-    {
-      "name": "presence",
-      "sizeBytes": 906,
-      "sizeKB": 0.9
-    },
-    {
-      "name": "mount",
-      "sizeBytes": 619,
-      "sizeKB": 0.6
-    },
-    {
-      "name": "toggle",
-      "sizeBytes": 568,
-      "sizeKB": 0.6
-    },
-    {
-      "name": "pagination",
-      "sizeBytes": 530,
-      "sizeKB": 0.5
-    },
-    {
-      "name": "primitive-elements",
-      "sizeBytes": 363,
-      "sizeKB": 0.4
-    },
-    {
-      "name": "visibility-hidden",
-      "sizeBytes": 343,
-      "sizeKB": 0.3
-    },
-    {
-      "name": "portal",
-      "sizeBytes": 335,
-      "sizeKB": 0.3
-    },
-    {
-      "name": "arrow",
-      "sizeBytes": 333,
-      "sizeKB": 0.3
-    },
-    {
-      "name": "direction",
-      "sizeBytes": 321,
-      "sizeKB": 0.3
+      "name": "dialog",
+      "sizeBytes": 13865,
+      "sizeKB": 13.5
     },
     {
       "name": "sheet",
-      "sizeBytes": 261,
-      "sizeKB": 0.3
+      "sizeBytes": 13793,
+      "sizeKB": 13.5
+    },
+    {
+      "name": "popper",
+      "sizeBytes": 13046,
+      "sizeKB": 12.7
+    },
+    {
+      "name": "navigation-menu",
+      "sizeBytes": 10036,
+      "sizeKB": 9.8
+    },
+    {
+      "name": "calendar",
+      "sizeBytes": 9526,
+      "sizeKB": 9.3
+    },
+    {
+      "name": "command",
+      "sizeBytes": 7642,
+      "sizeKB": 7.5
+    },
+    {
+      "name": "radio-group",
+      "sizeBytes": 7485,
+      "sizeKB": 7.3
+    },
+    {
+      "name": "slider",
+      "sizeBytes": 6768,
+      "sizeKB": 6.6
+    },
+    {
+      "name": "toggle-group",
+      "sizeBytes": 5051,
+      "sizeKB": 4.9
+    },
+    {
+      "name": "accordion",
+      "sizeBytes": 4869,
+      "sizeKB": 4.8
+    },
+    {
+      "name": "roving-focus",
+      "sizeBytes": 4341,
+      "sizeKB": 4.2
+    },
+    {
+      "name": "dismissable-layer",
+      "sizeBytes": 4170,
+      "sizeKB": 4.1
+    },
+    {
+      "name": "input-otp",
+      "sizeBytes": 3995,
+      "sizeKB": 3.9
+    },
+    {
+      "name": "pagination",
+      "sizeBytes": 3506,
+      "sizeKB": 3.4
+    },
+    {
+      "name": "focus-scope",
+      "sizeBytes": 3219,
+      "sizeKB": 3.1
+    },
+    {
+      "name": "avatar",
+      "sizeBytes": 2536,
+      "sizeKB": 2.5
+    },
+    {
+      "name": "progress",
+      "sizeBytes": 2483,
+      "sizeKB": 2.4
+    },
+    {
+      "name": "toggle",
+      "sizeBytes": 1795,
+      "sizeKB": 1.8
+    },
+    {
+      "name": "visibility-hidden",
+      "sizeBytes": 1549,
+      "sizeKB": 1.5
+    },
+    {
+      "name": "arrow",
+      "sizeBytes": 1526,
+      "sizeKB": 1.5
+    },
+    {
+      "name": "portal",
+      "sizeBytes": 1525,
+      "sizeKB": 1.5
+    },
+    {
+      "name": "primitive-elements",
+      "sizeBytes": 1358,
+      "sizeKB": 1.3
     },
     {
       "name": "slot",
-      "sizeBytes": 111,
-      "sizeKB": 0.1
+      "sizeBytes": 1178,
+      "sizeKB": 1.2
+    },
+    {
+      "name": "presence",
+      "sizeBytes": 1081,
+      "sizeKB": 1.1
+    },
+    {
+      "name": "checkers",
+      "sizeBytes": 1042,
+      "sizeKB": 1
+    },
+    {
+      "name": "mount",
+      "sizeBytes": 561,
+      "sizeKB": 0.5
+    },
+    {
+      "name": "direction",
+      "sizeBytes": 445,
+      "sizeKB": 0.4
     }
   ],
-  "methodology": "gentleduck: gzipped dist/ output as shipped. Radix UI / Base UI: each package/subpath bundled in isolation with esbuild (bundled, minified, react+react-dom externalized), then gzipped — matches bundlephobia methodology. \"verified: false\" entries in totalComparison are rough published estimates, not measured by this script.",
-  "generatedAt": "2026-08-05T19:04:21.419Z"
+  "methodology": "Every library is measured the same way: an entry re-exporting what the module's bench file in its __benches__ folder names, bundled and minified by esbuild with react and react-dom external, then gzipped. gentleduck is the whole dist module; Radix, Base UI, Ark UI, cmdk, input-otp and vaul are their whole package or subpath; React Aria, Headless UI and react-day-picker, which ship one entry for everything, are the named parts a component draws. A total is one bundle of every part it covers, so shared code counts once: gentleduck's own row is the whole library, and each other library's row carries gentleduckKB, gentleduck over the same components. The calendar's gentleduck figure includes the NativeAdapter it needs.",
+  "generatedAt": "2026-11-21T02:26:04.995Z"
 }

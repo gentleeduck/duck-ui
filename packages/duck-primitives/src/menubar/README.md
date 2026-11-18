@@ -18,12 +18,12 @@ Smaller than all 2. Faster in all 10 timed comparisons.
 
 | | gentleduck | Radix | Base UI |
 |---|--:|--:|--:|
-| Size, gzipped bytes | 30,950 | 32,339 (0.96x) | 52,659 (0.59x) |
-| Mount x100, ms | 10.8 | 20.6 (0.52x) | 51.3 (0.21x) |
-| Unmount x100, ms | 1.23 | 2.29 (0.54x) | 4.25 (0.29x) |
-| Unmount open x100, ms | 3.59 | 11.5 (0.31x) | 13.0 (0.28x) |
-| Open, ms | 1.69 | 2.55 (0.66x) | 3.98 (0.42x) |
-| Close, ms | 1.05 | 1.43 (0.73x) | 2.58 (0.41x) |
+| Size, gzipped bytes | 31,447 | 32,339 (0.97x) | 52,659 (0.60x) |
+| Mount x100, ms | 9.91 | 19.8 (0.50x) | 51.8 (0.19x) |
+| Unmount x100, ms | 1.23 | 2.16 (0.57x) | 5.08 (0.24x) |
+| Unmount open x100, ms | 3.99 | 12.5 (0.32x) | 14.0 (0.29x) |
+| Open, ms | 1.57 | 2.43 (0.65x) | 3.73 (0.42x) |
+| Close, ms | 1.00 | 1.38 (0.72x) | 2.44 (0.41x) |
 
 Behind nowhere: smaller and faster than every library here, in every case.
 

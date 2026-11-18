@@ -12,18 +12,20 @@ Anchored content opened from a trigger, modal or not.
 ## Benchmarks
 
 <!-- benchmarks -->
-Smaller than all 5. Faster in all 22 timed comparisons.
+Smaller than Base UI, React Aria, Ark UI and Headless UI; larger than Radix. Faster in all 22 timed comparisons.
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI | Headless UI |
 |---|--:|--:|--:|--:|--:|--:|
-| Size, gzipped bytes | 24,338 | 24,345 (1.00x) | 41,743 (0.58x) | 32,305 (0.75x) | 32,424 (0.75x) | 30,888 (0.79x) |
-| Mount x100, ms | 2.64 | 2.95 (0.90x) | 7.09 (0.37x) | 5.64 (0.47x) | 6.43 (0.41x) | 17.3 (0.15x) |
-| Unmount x100, ms | 0.486 | 0.546 (0.89x) | 1.13 (0.43x) | 0.831 (0.58x) | 0.825 (0.59x) | 2.39 (0.20x) |
-| Unmount open x100, ms | 1.80 | 3.88 (0.46x) | 6.33 (0.28x) | 4.65 (0.39x) | 762 (0.00x) | - |
-| Open, ms | 1.44 | 1.66 (0.87x) | 3.25 (0.44x) | 2.20 (0.65x) | 2.54 (0.57x) | - |
-| Close, ms | 0.802 | 0.806 (1.00x) | 1.72 (0.47x) | 1.06 (0.76x) | 1.15 (0.70x) | - |
+| Size, gzipped bytes | 24,536 | **24,345 (1.01x)** | 41,743 (0.59x) | 32,305 (0.76x) | 32,424 (0.76x) | 30,888 (0.79x) |
+| Mount x100, ms | 2.50 | 2.82 (0.89x) | 6.85 (0.37x) | 5.51 (0.45x) | 6.61 (0.38x) | 17.5 (0.14x) |
+| Unmount x100, ms | 0.459 | 0.587 (0.78x) | 1.09 (0.42x) | 0.909 (0.50x) | 0.736 (0.62x) | 2.58 (0.18x) |
+| Unmount open x100, ms | 1.95 | 3.99 (0.49x) | 6.65 (0.29x) | 4.94 (0.40x) | 780 (0.00x) | - |
+| Open, ms | 1.35 | 1.56 (0.87x) | 2.95 (0.46x) | 1.97 (0.68x) | 2.35 (0.57x) | - |
+| Close, ms | 0.778 | 0.780 (1.00x) | 1.57 (0.50x) | 0.943 (0.83x) | 1.07 (0.72x) | - |
 
-Behind nowhere: smaller and faster than every library here, in every case.
+Where gentleduck is behind:
+
+- Size against Radix: 1.01x, 191 bytes more.
 
 Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. The hundred copies mount and unmount closed, Unmount open tears them down once every one shows, and Open and Close time a single copy. Versions: Radix 1.1.23, Base UI 1.0.0-rc.0, React Aria 1.22.1, Ark UI 5.40.0 and Headless UI 2.2.10.
 

@@ -2,114 +2,140 @@
   "corePerformance": [
     {
       "label": "buildCalendarMonth",
-      "us": 7.8
+      "us": 3.4
     },
     {
       "label": "buildMultiMonth(3)",
-      "us": 19.9
+      "us": 11.9
     },
     {
       "label": "buildMultiMonth(12)",
-      "us": 60.8
+      "us": 37.9
     },
     {
       "label": "applySelection (single)",
-      "us": 12.2
+      "us": 5.3
     },
     {
       "label": "applySelection (range)",
-      "us": 12.2
+      "us": 6.4
     }
   ],
   "adapterPerformance": [
     {
       "name": "Native (Gregorian)",
-      "buildMonth": 4.3,
+      "buildMonth": 2.4,
       "getYear": 0.01,
-      "create": 0.06,
-      "addMonths": 0.25,
-      "format": 0.9
+      "create": 0.09,
+      "addMonths": 0.16,
+      "format": 0.7
     },
     {
       "name": "Islamic (Hijri)",
-      "buildMonth": 9.3,
+      "buildMonth": 7.7,
       "getYear": 0.01,
       "create": 0.11,
-      "addMonths": 0.13,
-      "format": 1.4
+      "addMonths": 0.12,
+      "format": 0.7
     },
     {
       "name": "Persian (Jalali)",
-      "buildMonth": 13.8,
+      "buildMonth": 9,
       "getYear": 0.02,
-      "create": 0.17,
-      "addMonths": 0.17,
-      "format": 1.2
+      "create": 0.13,
+      "addMonths": 0.12,
+      "format": 0.8
     },
     {
       "name": "Hebrew",
-      "buildMonth": 14.5,
+      "buildMonth": 12.7,
       "getYear": 0.02,
-      "create": 0.26,
-      "addMonths": 0.32,
-      "format": 1.2
+      "create": 0.24,
+      "addMonths": 0.37,
+      "format": 0.8
     }
   ],
   "bundleSize": [
     {
-      "name": "@gentleduck/calendar",
-      "sizeKB": 4.9,
-      "deps": 0,
+      "name": "@gentleduck/calendar (hook)",
+      "sizeKB": 5.9,
       "cssKB": 0,
-      "calendars": 4
+      "calendars": 4,
+      "measured": true
     },
     {
-      "name": "react-day-picker v9",
+      "name": "@gentleduck/primitives Calendar",
+      "sizeKB": 9.9,
+      "cssKB": 0,
+      "calendars": 4,
+      "measured": true
+    },
+    {
+      "name": "React Aria Calendar",
+      "sizeKB": 36.9,
+      "cssKB": 0,
+      "calendars": 13,
+      "measured": true
+    },
+    {
+      "name": "Ark UI DatePicker",
+      "sizeKB": 43.3,
+      "cssKB": 0,
+      "calendars": 13,
+      "measured": true
+    },
+    {
+      "name": "react-day-picker v10",
       "sizeKB": 20,
-      "deps": 1,
-      "cssKB": 3,
-      "calendars": 1
-    },
-    {
-      "name": "react-aria (DatePicker)",
-      "sizeKB": 45,
-      "deps": 8,
-      "cssKB": 0,
-      "calendars": 1
+      "cssKB": 2.2,
+      "calendars": 1,
+      "measured": true
     },
     {
       "name": "react-datepicker",
       "sizeKB": 32,
-      "deps": 3,
       "cssKB": 8,
-      "calendars": 1
+      "calendars": 1,
+      "measured": false
     },
     {
       "name": "react-calendar",
       "sizeKB": 15,
-      "deps": 0,
       "cssKB": 5,
-      "calendars": 1
+      "calendars": 1,
+      "measured": false
     }
   ],
   "totalCost": [
     {
-      "name": "@gentleduck/calendar",
-      "js": 4.9,
+      "name": "@gentleduck/calendar (hook)",
+      "js": 5.9,
       "css": 0,
-      "total": 4.9
+      "total": 5.9
     },
     {
-      "name": "react-day-picker v9",
+      "name": "@gentleduck/primitives Calendar",
+      "js": 9.9,
+      "css": 0,
+      "total": 9.9
+    },
+    {
+      "name": "React Aria Calendar",
+      "js": 36.9,
+      "css": 0,
+      "total": 36.9
+    },
+    {
+      "name": "Ark UI DatePicker",
+      "js": 43.3,
+      "css": 0,
+      "total": 43.3
+    },
+    {
+      "name": "react-day-picker v10",
       "js": 20,
-      "css": 3,
-      "total": 23
-    },
-    {
-      "name": "react-aria (DatePicker)",
-      "js": 45,
-      "css": 0,
-      "total": 45
+      "css": 2.2,
+      "total": 22.2
     },
     {
       "name": "react-datepicker",
@@ -128,8 +154,8 @@
     {
       "feature": "Tree-shakeable",
       "gentleduck": true,
-      "rdp": false,
-      "reactAria": false,
+      "rdp": true,
+      "reactAria": true,
       "datepicker": false,
       "reactCal": false
     },
@@ -153,7 +179,7 @@
       "feature": "Multi-Calendar",
       "gentleduck": "4",
       "rdp": "1",
-      "reactAria": "1",
+      "reactAria": "13",
       "datepicker": "1",
       "reactCal": "1"
     },
@@ -187,21 +213,21 @@
       "name": "react-day-picker",
       "comparison": [
         {
-          "metric": "Bundle size",
-          "gentleduck": "4.9 KB",
+          "metric": "Calendar component",
+          "gentleduck": "9.9 KB",
           "competitor": "20 KB",
           "winner": "gentleduck"
         },
         {
           "metric": "Dependencies",
           "gentleduck": "0",
-          "competitor": "1 (date-fns)",
+          "competitor": "2 (date-fns, @date-fns/tz)",
           "winner": "gentleduck"
         },
         {
-          "metric": "CSS required",
+          "metric": "Default stylesheet",
           "gentleduck": "None",
-          "competitor": "3 KB",
+          "competitor": "2.2 KB",
           "winner": "gentleduck"
         },
         {
@@ -213,7 +239,7 @@
         {
           "metric": "Date adapters",
           "gentleduck": "7",
-          "competitor": "0",
+          "competitor": "dateLib override",
           "winner": "gentleduck"
         },
         {
@@ -237,8 +263,8 @@
         {
           "metric": "RTL support",
           "gentleduck": "Yes",
-          "competitor": "Partial",
-          "winner": "gentleduck"
+          "competitor": "Yes (dir)",
+          "winner": "tie"
         },
         {
           "metric": "Maturity",
@@ -248,9 +274,9 @@
         },
         {
           "metric": "React 18",
-          "gentleduck": "No (19+)",
+          "gentleduck": "Yes",
           "competitor": "Yes",
-          "winner": "competitor"
+          "winner": "tie"
         }
       ]
     },
@@ -258,15 +284,9 @@
       "name": "react-aria",
       "comparison": [
         {
-          "metric": "Bundle size",
-          "gentleduck": "4.9 KB",
-          "competitor": "45 KB",
-          "winner": "gentleduck"
-        },
-        {
-          "metric": "Dependencies",
-          "gentleduck": "0",
-          "competitor": "8",
+          "metric": "Calendar component",
+          "gentleduck": "9.9 KB",
+          "competitor": "36.9 KB",
           "winner": "gentleduck"
         },
         {
@@ -278,14 +298,20 @@
         {
           "metric": "Calendar systems",
           "gentleduck": "4",
-          "competitor": "1",
-          "winner": "gentleduck"
+          "competitor": "13",
+          "winner": "competitor"
         },
         {
           "metric": "Date adapters",
           "gentleduck": "7 (pluggable)",
           "competitor": "0 (built-in)",
           "winner": "gentleduck"
+        },
+        {
+          "metric": "Typed date field",
+          "gentleduck": "No",
+          "competitor": "DateField",
+          "winner": "competitor"
         },
         {
           "metric": "ARIA compliance",
@@ -317,8 +343,8 @@
       "name": "react-datepicker",
       "comparison": [
         {
-          "metric": "Bundle size",
-          "gentleduck": "4.9 KB",
+          "metric": "Calendar component",
+          "gentleduck": "9.9 KB",
           "competitor": "32 KB",
           "winner": "gentleduck"
         },
@@ -376,8 +402,8 @@
       "name": "react-calendar",
       "comparison": [
         {
-          "metric": "Bundle size",
-          "gentleduck": "4.9 KB",
+          "metric": "Calendar component",
+          "gentleduck": "9.9 KB",
           "competitor": "15 KB",
           "winner": "gentleduck"
         },
@@ -413,9 +439,9 @@
         },
         {
           "metric": "React 18",
-          "gentleduck": "No (19+)",
+          "gentleduck": "Yes",
           "competitor": "Yes",
-          "winner": "competitor"
+          "winner": "tie"
         },
         {
           "metric": "Simplicity",
@@ -428,20 +454,24 @@
   ],
   "moduleSizes": [
     {
+      "name": "react",
+      "sizeKB": 7.4
+    },
+    {
       "name": "adapter",
-      "sizeKB": 2.8
+      "sizeKB": 3.8
     },
     {
       "name": "calendar-system",
-      "sizeKB": 2.4
+      "sizeKB": 2.1
     },
     {
       "name": "selection",
-      "sizeKB": 1.2
+      "sizeKB": 1.3
     },
     {
       "name": "grid",
-      "sizeKB": 1
+      "sizeKB": 1.2
     },
     {
       "name": "time",
@@ -450,11 +480,7 @@
     {
       "name": "navigation",
       "sizeKB": 0.4
-    },
-    {
-      "name": "react",
-      "sizeKB": 0.2
     }
   ],
-  "generatedAt": "2026-03-22T16:09:18.955Z"
+  "generatedAt": "2026-11-21T02:55:56.714Z"
 }

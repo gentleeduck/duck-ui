@@ -128,7 +128,8 @@ function spyOnAccessor(target: object, key: PropertyKey, access: 'get' | 'set') 
   const spy = bunVi.fn(function (this: unknown, ...args: unknown[]) {
     return original.apply(this, args)
   })
-  Object.defineProperty(target, key, { ...descriptor, [access]: spy })
+  // A shadow over an inherited accessor has to stay deletable, or restoring it leaves the spy in place.
+  Object.defineProperty(target, key, { ...descriptor, configurable: true, [access]: spy })
   const restore = () => {
     accessorRestores.delete(restore)
     if (owner === target) Object.defineProperty(target, key, descriptor)
@@ -145,7 +146,8 @@ export const vi = {
     return access ? spyOnAccessor(target, key, access) : bunVi.spyOn(target as never, key as never)
   },
   restoreAllMocks() {
-    for (const restore of accessorRestores) restore()
+    // A second spy on the same key saved the first as its original, so they unwind newest first.
+    for (const restore of [...accessorRestores].reverse()) restore()
     bunVi.restoreAllMocks()
   },
   stubEnv(name: string, value: string) {

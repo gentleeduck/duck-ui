@@ -24,6 +24,7 @@ Object.assign(globalThis, {
   requestAnimationFrame: dom.window.requestAnimationFrame,
   cancelAnimationFrame: dom.window.cancelAnimationFrame,
   DocumentFragment: dom.window.DocumentFragment,
+  ShadowRoot: dom.window.ShadowRoot,
   Text: dom.window.Text,
   HTMLCollection: dom.window.HTMLCollection,
   NodeList: dom.window.NodeList,
@@ -36,6 +37,18 @@ Object.assign(globalThis, {
   SVGElement: dom.window.SVGElement,
   Range: dom.window.Range,
   DOMRect: dom.window.DOMRect,
+  // jsdom has no CSS namespace. This is CSSOM's serialization of an identifier.
+  CSS: {
+    escape: (value: string) =>
+      Array.from(value, (char, index) => {
+        const code = char.codePointAt(0) ?? 0
+        if (code === 0) return '\uFFFD'
+        const leadingDigit = /[0-9]/.test(char) && (index === 0 || (index === 1 && value[0] === '-'))
+        if (code < 32 || code === 127 || leadingDigit) return `\\${code.toString(16)} `
+        if (char === '-' && value.length === 1) return '\\-'
+        return code >= 128 || /[\w-]/.test(char) ? char : `\\${char}`
+      }).join(''),
+  },
   ResizeObserver:
     dom.window.ResizeObserver ??
     class ResizeObserver {

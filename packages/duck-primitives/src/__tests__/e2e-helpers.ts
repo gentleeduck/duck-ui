@@ -75,7 +75,13 @@ async function boundingBoxOf(locator: Locator): Promise<Box> {
 /** `cy.realHover({ position })` — move the real pointer over the element. */
 export async function hoverAt(locator: Locator, position: Position = 'center'): Promise<void> {
   const box = await boundingBoxOf(locator)
-  await locator.hover({ position: offsetFor(box, position) })
+  const offset = offsetFor(box, position)
+  // Playwright measures `position` from the padding box, and the offset is from the border box.
+  const border = await locator.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return { left: Number.parseFloat(style.borderLeftWidth), top: Number.parseFloat(style.borderTopWidth) }
+  })
+  await locator.hover({ position: { x: offset.x - border.left, y: offset.y - border.top } })
 }
 
 /**

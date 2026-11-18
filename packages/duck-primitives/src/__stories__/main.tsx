@@ -18,6 +18,12 @@ function Mounted({ children }: { children: React.ReactNode }) {
 // Radix's Storybook renders every story in strict mode.
 createRoot(container).render(
   <React.StrictMode>
-    <Mounted>{Story ? <Story /> : <p>No story named {id}</p>}</Mounted>
+    {Story ? (
+      <Mounted>
+        <Story />
+      </Mounted>
+    ) : (
+      <p>No story named {id}</p>
+    )}
   </React.StrictMode>,
 )

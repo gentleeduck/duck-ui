@@ -187,7 +187,9 @@ const measured: IBench.IRuntimeResult[] = cases.map(({ name, module, overlay, li
     const timed = libs.filter((lib) => byLib[lib]?.length)
     const ms = Object.fromEntries(timed.map((lib) => [lib, +median(byLib[lib] ?? []).toFixed(3)]))
     const duckVs = Object.fromEntries(
-      timed.filter((lib) => lib !== 'duck').map((lib) => [lib, +(ms.duck / ms[lib]).toFixed(2)]),
+      timed
+        .filter((lib) => lib !== 'duck' && ms.duck > 0 && ms[lib] > 0)
+        .map((lib) => [lib, +(ms.duck / ms[lib]).toFixed(2)]),
     )
     return { metric, ms, duckVs, samples: byLib.duck?.length ?? 0 }
   }),
@@ -199,13 +201,13 @@ if (quick) {
   process.exit(0)
 }
 
-// A run over some modules keeps the last numbers of the rest.
-const kept: IBench.IRuntimeResult[] =
-  only.length && existsSync(OUT_FILE)
-    ? JSON.parse(readFileSync(OUT_FILE, 'utf-8')).results.filter(
-        (r: IBench.IRuntimeResult) => !measured.some((m) => m.name === r.name),
-      )
-    : []
+// A run over some modules keeps the last numbers of the rest, which only holds where they were measured the same way.
+const previous = only.length && existsSync(OUT_FILE) ? JSON.parse(readFileSync(OUT_FILE, 'utf-8')) : undefined
+if (previous && JSON.stringify(previous.environment) !== JSON.stringify(environment))
+  throw new Error(`runtime.json was measured on ${JSON.stringify(previous.environment)}: run every module again`)
+const kept: IBench.IRuntimeResult[] = (previous?.results ?? []).filter(
+  (r: IBench.IRuntimeResult) => !measured.some((m) => m.name === r.name),
+)
 const results = [...kept, ...measured].sort((a, b) => a.name.localeCompare(b.name))
 
 mkdirSync(OUT_DIR, { recursive: true })

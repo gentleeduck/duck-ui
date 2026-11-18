@@ -87,7 +87,7 @@ const chartName = (name: string) => (name === 'Navigation Menu' ? 'Nav Menu' : n
 
 const perComponent = components.map(({ name, module, bytes }) => ({
   name: chartName(name),
-  gentleduck: duckSizes[module] ?? 0,
+  gentleduck: bytes.duck ?? 0,
   radix: bytes.radix ?? 0,
   baseui: bytes.baseui ?? 0,
 }))
@@ -112,8 +112,8 @@ async function combined(entries: IBench.Entry[], what: string) {
     else for (const name of names) named.set(from, (named.get(from) ?? new Set()).add(name))
   }
   const source = [
-    ...[...whole].map((from, i) => `export * as m${i} from '${from}'`),
-    ...[...named].map(([from, names]) => `export { ${[...names].join(', ')} } from '${from}'`),
+    ...[...whole].map((from, i) => `export * as m${i} from ${JSON.stringify(from)}`),
+    ...[...named].map(([from, names]) => `export { ${[...names].join(', ')} } from ${JSON.stringify(from)}`),
   ].join('\n')
   return Math.round((await gzipped(source, what)) / 1024)
 }

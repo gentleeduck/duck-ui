@@ -54,7 +54,9 @@ export function parts(entry: IBench.Entry): Exclude<IBench.Part, string>[] {
 export function entrySource(entry: IBench.Entry): string {
   return parts(entry)
     .map(({ names, from }) =>
-      names[0] === '*' ? `export * from '${from}'\n` : `export { ${names.join(', ')} } from '${from}'\n`,
+      names[0] === '*'
+        ? `export * from ${JSON.stringify(from)}\n`
+        : `export { ${names.join(', ')} } from ${JSON.stringify(from)}\n`,
     )
     .join('')
 }

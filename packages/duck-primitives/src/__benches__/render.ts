@@ -76,8 +76,7 @@ function behindIn(module: string, rows: IRow[]) {
     for (const lib of RIVALS) {
       const theirs = row.values[lib]
       if (theirs === undefined) continue
-      const ratio = +(duck / theirs).toFixed(2)
-      if (ratio > 1) behind.push({ module, row, lib, ratio, gap: duck - theirs })
+      if (duck > theirs) behind.push({ module, row, lib, ratio: +(duck / theirs).toFixed(2), gap: duck - theirs })
     }
   }
   return behind.toSorted((a, b) => b.ratio - a.ratio)
@@ -98,19 +97,32 @@ function readmeBlock(size: IBench.ISizeResult, runtime: IBench.IRuntimeResult | 
   if (rivals.length === 0) {
     out.push(`No other library ships one to compare with. The module is ${bytes(size.bytes.duck ?? 0)} bytes gzipped.`)
   } else {
-    const larger = rivals.filter((lib) => behind.some((b) => b.row === rows[0] && b.lib === lib))
-    const smaller = rivals.filter((lib) => rows[0].values[lib] !== undefined && !larger.includes(lib))
-    const sizeLine = larger.length
-      ? `Smaller than ${list(smaller.map((lib) => LIBRARIES[lib])) || 'none of them'}; larger than ${list(larger.map((lib) => LIBRARIES[lib]))}.`
-      : `Smaller than ${smaller.length > 1 ? `all ${smaller.length}` : LIBRARIES[smaller[0]]}.`
-    const timed = rows
+    const names = (of: IBench.Rival[]) => list(of.map((lib) => LIBRARIES[lib]))
+    const sizes = rows[0].values
+    const duckSize = sizes.duck ?? 0
+    const sized = rivals.filter((lib) => sizes[lib] !== undefined)
+    const smaller = sized.filter((lib) => duckSize < (sizes[lib] ?? 0))
+    const same = sized.filter((lib) => duckSize === sizes[lib])
+    const larger = sized.filter((lib) => duckSize > (sizes[lib] ?? 0))
+    const sizeParts = [
+      smaller.length &&
+        `smaller than ${smaller.length === sized.length && sized.length > 1 ? `all ${sized.length}` : names(smaller)}`,
+      same.length && `the same size as ${names(same)}`,
+      larger.length && `larger than ${names(larger)}`,
+    ].filter(Boolean)
+    const sizeLine = `${sizeParts.join('; ').replace(/^./, (c) => c.toUpperCase())}.`
+    const pairs = rows
       .filter((row) => row.unit === 'ms' && row.values.duck !== undefined)
-      .reduce((n, row) => n + rivals.filter((lib) => row.values[lib] !== undefined).length, 0)
-    const slower = behind.filter((b) => b.row.unit === 'ms').length
+      .flatMap((row) =>
+        rivals.flatMap((lib) => (row.values[lib] === undefined ? [] : [[row.values.duck, row.values[lib]]])),
+      )
+    const timed = pairs.length
+    const faster = pairs.filter(([duck = 0, theirs = 0]) => duck < theirs).length
+    const level = pairs.filter(([duck, theirs]) => duck === theirs).length
     const timeLine = timed
-      ? slower
-        ? ` Faster in ${timed - slower} of ${timed} timed comparisons.`
-        : ` Faster in all ${timed} timed comparisons.`
+      ? faster === timed
+        ? ` Faster in all ${timed} timed comparisons.`
+        : ` Faster in ${faster} of ${timed} timed comparisons${level ? `, level in ${level}` : ''}.`
       : ''
     out.push(`${sizeLine}${timeLine}`, '')
     out.push(`| | ${libs.map((lib) => LIBRARIES[lib]).join(' | ')} |`, `|---|${libs.map(() => '--:').join('|')}|`)
@@ -121,15 +133,16 @@ function readmeBlock(size: IBench.ISizeResult, runtime: IBench.IRuntimeResult | 
         const value = row.values[lib]
         if (value === undefined) return '-'
         if (lib === 'duck' || duck === undefined) return show(value)
-        const ratio = +(duck / value).toFixed(2)
-        const cell = `${show(value)} (${ratio.toFixed(2)}x)`
-        return ratio > 1 ? `**${cell}**` : cell
+        const cell = `${show(value)} (${(duck / value).toFixed(2)}x)`
+        return duck > value ? `**${cell}**` : cell
       })
       out.push(`| ${row.name} | ${cells.join(' | ')} |`)
     }
     out.push('')
     if (behind.length) {
       out.push('Where gentleduck is behind:', '', ...behind.map((b) => `- ${behindLine(b)}.`))
+    } else if (same.length || level) {
+      out.push('Behind nowhere, and level with a library where the table shows the same figure.')
     } else {
       out.push(
         `Behind nowhere: ${timed ? 'smaller and faster than every library here, in every case' : 'smaller than every library here'}.`,

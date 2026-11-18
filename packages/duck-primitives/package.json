@@ -9,6 +9,8 @@
   },
   "description": "Unstyled, accessibility-first UI primitives for React.",
   "devDependencies": {
+    "@babel/core": "8.1.0",
+    "@babel/plugin-transform-typescript": "8.0.6",
     "@base-ui-components/react": "1.0.0-rc.0",
     "@changesets/cli": "^2.31.0",
     "@floating-ui/react": "^0.27.16",
@@ -44,6 +46,7 @@
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
     "axe-core": "^4.10.3",
+    "babel-plugin-istanbul": "8.0.0",
     "esbuild": ">=0.28.1",
     "jsdom": "catalog:",
     "mini-svg-data-uri": "^1.4.4",
@@ -104,7 +107,7 @@
     "fix": "biome check --write .",
     "format": "biome format --write .",
     "lint": "biome lint .",
-    "test": "bun test",
+    "test": "bun src/__tests__/istanbul/run.ts",
     "test:coverage": "bun test --coverage",
     "test:watch": "bun test --watch"
   },

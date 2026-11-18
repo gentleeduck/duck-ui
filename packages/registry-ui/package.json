@@ -29,6 +29,7 @@
     "@gentleduck/typescript-config": "workspace:*",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
+    "jsdom": "catalog:",
     "typescript": "catalog:"
   },
   "exports": {

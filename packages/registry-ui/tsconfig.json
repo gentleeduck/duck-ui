@@ -14,10 +14,11 @@
     "dist",
     "./src/_old",
     "./src/_audio",
-    "**/__test__/**",
+    "**/__tests__/**",
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.tsbuildinfo",
+    "jsdom-setup.ts",
     "tsconfig.tsbuildinfo"
   ],
   "extends": "@gentleduck/typescript-config/motion.json",

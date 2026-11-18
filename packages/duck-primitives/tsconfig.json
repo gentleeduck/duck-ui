@@ -13,7 +13,9 @@
   "exclude": [
     "node_modules",
     "dist",
-    "src/**/__test__/**",
+    "src/**/__tests__/**",
+    "src/**/__stories__/**",
+    "src/**/__benches__/**",
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.tsbuildinfo",

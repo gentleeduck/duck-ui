@@ -20,7 +20,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['github']] : 'list',
   retries: process.env.CI ? 2 : 0,
   testDir: './src',
-  testMatch: '**/__tests__/*.e2e.test.ts',
+  testMatch: '**/__tests__/*.e2e.ts',
   timeout: 30_000,
   use: {
     // An action whose target never appears fails here rather than timing the test out, which test.fail cannot expect.

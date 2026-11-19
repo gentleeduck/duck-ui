@@ -194,7 +194,7 @@ See the [@gentleduck/calendar package docs](/duck-calendar) for more information
 <ComponentPreview
   name="calendar-16"
   title="Booked Dates"
-  description="Booked dates shown with strikethrough via renderDay, legend via renderFooter. Only available dates are selectable."
+  description="Booked dates passed as unavailable: they keep focus, draw struck through and cannot be picked. Legend via renderFooter."
 />
 
 ### Booking Calendar
@@ -227,6 +227,56 @@ See the [@gentleduck/calendar package docs](/duck-calendar) for more information
   name="calendar-17"
   title="Calendar with Presets"
   description="Quick date selection with preset buttons (Today, Tomorrow, In 3 days, etc.)."
+/>
+
+### Week Layout
+
+`weekStartDay` sets the first column, `showWeekNumber` puts each week's ISO number at the start of its row, and `renderWeekday` draws the column headings. `fixedWeeks` keeps six rows in every month so the calendar does not change height as it pages, and `showOutsideDays={false}` leaves the days of the months either side blank.
+
+<ComponentPreview
+  name="calendar-26"
+  title="Week Layout"
+  description="Weeks from Monday with week numbers, six rows every month, and the weekend headings marked."
+/>
+
+### Custom Header
+
+`renderHeader` replaces the header and is handed the title, the paging handlers and whether each way is disabled.
+
+<ComponentPreview
+  name="calendar-27"
+  title="Custom Header"
+  description="A header of your own, with the title at the start and both buttons at the end."
+/>
+
+### Paging Every Month Shown
+
+With `numberOfMonths`, the buttons and PageUp/PageDown move one month at a time. `pageBehavior="visible"` moves by every month shown. `buttonVariant` sets the variant of the paging buttons.
+
+<ComponentPreview
+  name="calendar-28"
+  title="Paging Every Month Shown"
+  description="Two months that page two at a time, with outline paging buttons."
+/>
+
+### Closing on Escape
+
+`onDismiss` is called on Escape, for a calendar shown in place rather than in a popover, which closes on Escape by itself.
+
+<ComponentPreview
+  name="calendar-29"
+  title="Closing on Escape"
+  description="A due date edited in place, closed by a pick or by Escape."
+/>
+
+### Read-Only
+
+`readOnly` keeps the selection and the keyboard moving, but refuses a pick.
+
+<ComponentPreview
+  name="calendar-30"
+  title="Read-Only"
+  description="A confirmed stay that cannot be changed until the booking is unlocked."
 />
 
 ### Persian (Jalali) Calendar
@@ -288,7 +338,7 @@ See all calendar blocks in the [Blocks Library](/blocks/calendar) page.
 ### Migrated from react-day-picker
 
 <Callout icon={<TriangleAlert />} tone="warning" title="Migrated from react-day-picker">
-We have replaced `react-day-picker` with our own headless calendar engine  -  [`@gentleduck/calendar`](/duck-calendar). The result is **75% smaller bundle** (~5 KB vs ~20 KB gzipped), zero external dependencies, full keyboard navigation, and complete ARIA compliance. See the [performance benchmarks](/duck-calendar#performance) for detailed comparisons.
+We have replaced `react-day-picker` with our own headless calendar engine  -  [`@gentleduck/calendar`](/duck-calendar). The result is **about half the bundle** (9.7 KB vs 20.0 KB gzipped), zero external dependencies, full keyboard navigation, and complete ARIA compliance. See the [performance benchmarks](/duck-calendar#performance) for detailed comparisons.
 </Callout>
 
 ### Date Picker
@@ -347,6 +397,12 @@ Requires the `motion` package. Use `MotionCalendar` instead of `Calendar`. All p
 | `dir` | `'ltr' \| 'rtl'` | - | Direction override. Defaults to the nearest `DirectionProvider`, then `<html dir>`. |
 | `fromDate` | `Date` | - | Earliest selectable date |
 | `toDate` | `Date` | - | Latest selectable date |
+| `unavailable` | `Date[] \| ((date: Date) => boolean)` | - | Dates that stay focusable but cannot be picked, such as booked days, drawn struck through. A range cannot span one |
+| `readOnly` | `boolean` | `false` | Keeps the selection as it is, while the keys still move focus |
+| `invalid` | `boolean` | `false` | Marks the selection invalid and draws it in the destructive colour. A selection holding a day that cannot be picked is invalid without it |
+| `weekStartDay` | `0 \| 1 \| 2 \| 3 \| 4 \| 5 \| 6` | locale's first day | First day of the week, 0 for Sunday. Sunday with no `locale` |
+| `showWeekNumber` | `boolean` | `false` | Starts each week with its ISO week number |
+| `pageBehavior` | `'single' \| 'visible'` | `'single'` | With several months shown, whether the nav buttons and <Kbd>PageUp</Kbd>/<Kbd>PageDown</Kbd> move one month or the whole view |
 | `buttonVariant` | `string` | `'ghost'` | Variant style for navigation buttons |
 | `onDismiss` | `() => void` | - | Called when the user presses Escape |
 | `className` | `string` | - | Additional CSS classes for the root container |
@@ -431,6 +487,8 @@ The calendar uses `data-*` attributes on day cells for styling. Target these in 
 | `data-selected="true"` | Day is selected |
 | `data-selected-single="true"` | Day is selected (single mode, not part of range) |
 | `data-today="true"` | Day is today |
+| `data-unavailable="true"` | Day is `unavailable` |
+| `data-invalid="true"` | Day is selected while the selection is invalid |
 | `data-focused="true"` | Day has keyboard focus |
 | `data-range-start="true"` | Day is the start of a range |
 | `data-range-end="true"` | Day is the end of a range |

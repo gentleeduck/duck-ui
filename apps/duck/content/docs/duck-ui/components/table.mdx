@@ -86,7 +86,7 @@ import {
       <TableHead className="w-[100px]">Invoice</TableHead>
       <TableHead>Status</TableHead>
       <TableHead>Method</TableHead>
-      <TableHead className="text-right">Amount</TableHead>
+      <TableHead className="text-end">Amount</TableHead>
     </TableRow>
   </TableHeader>
   <TableBody>
@@ -94,13 +94,25 @@ import {
       <TableCell className="font-medium">INV001</TableCell>
       <TableCell>Paid</TableCell>
       <TableCell>Credit Card</TableCell>
-      <TableCell className="text-right">$250.00</TableCell>
+      <TableCell className="text-end">$250.00</TableCell>
     </TableRow>
   </TableBody>
 </Table>
 ```
 
 ## Examples
+
+### Row selection
+
+A `Checkbox` in the first column selects a row, and one in the header selects them all, reading `'indeterminate'` while only some are. `data-state="selected"` on a `TableRow` shades it. A head or cell holding a checkbox drops its end padding, whether the checkbox is a native input or carries `role="checkbox"`.
+
+<ComponentPreview name="table-4" description="A table whose rows are picked with checkboxes, with a select-all in the header." />
+
+### Sorting and row headers
+
+`aria-sort` on the active `TableHead` tells a screen reader which column orders the rows and which way. The first cell of each row is a `TableHead` with `scope="row"`, so a reader announces the city before each value.
+
+<ComponentPreview name="table-5" description="A table sorted by any column, with row headers." />
 
 ### Data Table
 
@@ -201,7 +213,7 @@ Requires the `motion` package. Use `MotionTable` instead of `Table` and `MotionT
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `scope` | `string` | `'col'` | HTML `scope` attribute for accessibility |
+| `scope` | `string` | `'col'` | HTML `scope` attribute. `'row'` makes the head a row header |
 | `className` | `string` | - | Additional CSS class names |
 | `children` | `React.ReactNode` | - | Header cell content |
 | `...props` | `React.ThHTMLAttributes<HTMLTableCellElement>` | - | Additional props to spread to the th element |

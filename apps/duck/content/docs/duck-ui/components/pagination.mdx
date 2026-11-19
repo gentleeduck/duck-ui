@@ -14,6 +14,8 @@ order: 10
 
 Pagination is a navigation pattern, not a data-fetching pattern. We provide the visual components (page buttons, next/previous, ellipsis) and let you wire them to your data layer. This separation means the same pagination UI works whether you're paginating a client-side array, an API, or a database cursor. Under the hood, this component composes `@gentleduck/primitives/pagination` for semantic structure and direction-aware behavior.
 
+Give the root a `pageCount` and it can also track the page for you: `PaginationPages` draws the pages around the current one, and the trigger parts move between them and disable themselves at either end. Every page draws the same number of items, so the triggers never move under the pointer.
+
 ## How It's Built
 
 <MermaidDiagram chart={`graph TD
@@ -23,6 +25,10 @@ Pagination is a navigation pattern, not a data-fetching pattern. We provide the 
     C --> E[PaginationLink]
     C --> F[PaginationNext]
     C --> G[PaginationEllipsis]
+    B --> I[PaginationPages]
+    I --> C
+    C --> J[PaginationPage]
+    C --> K[PaginationFirstTrigger / PreviousTrigger / NextTrigger / LastTrigger]
     A -.-> H[PaginationWrapper]
 `} />
 
@@ -103,6 +109,68 @@ import {
 
 ## Examples
 
+### Tracking the page
+
+Pass `pageCount` to the root, and either `defaultPage` or a controlled `page` with `onPageChange`. `PaginationPages` renders a `PaginationItem` per page or gap, so it sits straight in `PaginationContent`. Put each trigger in a `PaginationItem` of its own, since the list holds only list items.
+
+<ComponentPreview
+  name="pagination-5"
+  description="A pagination that tracks its page, with first, previous, next and last triggers."
+/>
+
+```tsx showLineNumbers
+const [page, setPage] = React.useState(1)
+
+<Pagination page={page} onPageChange={setPage} pageCount={20}>
+  <PaginationContent>
+    <PaginationItem>
+      <PaginationFirstTrigger />
+    </PaginationItem>
+    <PaginationItem>
+      <PaginationPreviousTrigger />
+    </PaginationItem>
+    <PaginationPages />
+    <PaginationItem>
+      <PaginationNextTrigger />
+    </PaginationItem>
+    <PaginationItem>
+      <PaginationLastTrigger />
+    </PaginationItem>
+  </PaginationContent>
+</Pagination>
+```
+
+### Links
+
+To render links rather than buttons, give the root `getPageHref`, which returns the address of a page. A trigger with nowhere to go keeps its place as a link with no address, `aria-disabled` and no tab stop. Read the page back from the address, with `defaultPage` or `page`, so a reload opens on it. A client router's link, or a click handler that prevents the browser from following the link to navigate itself, still moves the page and calls `onPageChange`.
+
+<ComponentPreview
+  name="pagination-6"
+  description="A pagination whose pages and triggers are links."
+/>
+
+```tsx
+<Pagination pageCount={20} defaultPage={page} getPageHref={(page) => `/posts?page=${page}`}>
+```
+
+### The window and its drawing
+
+`siblingCount` sets how many pages show on either side of the current one, and `boundaryCount` how many always show at each end, `0` for none. Give `PaginationPages` a function to draw the range yourself: it gets each page number and `'start-ellipsis'` or `'end-ellipsis'` for a gap. Children replace a trigger's icon, and an `aria-label` replaces its name.
+
+<ComponentPreview
+  name="pagination-7"
+  description="A pagination with a wider window, no end pages, its own labels and text triggers."
+/>
+
+### Wrapper
+
+`PaginationWrapper` lays out first, previous, next and last buttons with nothing between them, for a table footer. It holds no page, so wire each button's `onClick` and `disabled` yourself.
+
+<ComponentPreview
+  name="pagination-8"
+  description="A pagination wrapper wired to a page count."
+/>
+
 ### Next.js
 
 By default the `<PaginationLink />` component will render an `<a />` tag.
@@ -142,6 +210,10 @@ const PaginationLink = ({...props }: ) => (
     C --> E[PaginationLink]
     C --> F[PaginationNext]
     C --> G[PaginationEllipsis]
+    B --> I[PaginationPages]
+    I --> C
+    C --> J[PaginationPage]
+    B --> K[PaginationFirstTrigger / PreviousTrigger / NextTrigger / LastTrigger]
     A -.-> H[PaginationWrapper]
 `} />
 
@@ -163,11 +235,18 @@ Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the 
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionPagination` with `MotionPaginationLink`, `MotionPaginationPrevious`, and `MotionPaginationNext` for staggered entrance animations and tap feedback powered by [motion](https://motion.dev). Each link uses a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition, staggered by 50ms via the `index` prop.
+Use `MotionPagination` with `MotionPaginationLink`, `MotionPaginationPrevious`, and `MotionPaginationNext` for staggered entrance animations and tap feedback powered by [motion](https://motion.dev). Each link fades, scales and sharpens in with a bouncy spring, staggered by 50ms via the `index` prop, and scales to 0.97 on tap. A link scales in on `scaleX` and `scaleY`, so `scale` keeps the 15ms tap tween and a press releases at once.
 
 <ComponentPreview
   name="pagination-4"
   description="Pagination with motion-powered staggered entrance and tap feedback."
+/>
+
+`MotionPagination` animates on its own. Around the plain parts, the nav scales in as one piece and the links keep no tap feedback.
+
+<ComponentPreview
+  name="pagination-3"
+  description="A MotionPagination around the plain links, which enters as one piece."
 />
 
 <Callout icon={<Zap />}>
@@ -180,6 +259,13 @@ Requires the `motion` package. Use the `Motion*` variants instead of the base co
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
+| `pageCount` | `number` | `1` | Number of pages. Until it is set there is one, so the triggers stay disabled. |
+| `page` | `number` | - | The current page, when you control it. A page past either end shows as that end. |
+| `defaultPage` | `number` | `1` | The page to start on, when the root tracks it. |
+| `onPageChange` | `(page: number) => void` | - | Called with the page a trigger or page asks for |
+| `siblingCount` | `number` | `1` | Pages shown on either side of the current one |
+| `boundaryCount` | `number` | `1` | Pages always shown at each end |
+| `getPageHref` | `(page: number) => string` | - | Renders every page and trigger as a link to the address it returns |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `className` | `string` | `--` | Additional CSS classes for the `nav` element |
 | `...props` | `React.ComponentPropsWithoutRef<'nav'>` | - | Additional props to spread to the nav element |
@@ -234,7 +320,38 @@ Extends `PaginationLink` with `aria-label="Go to next page"`, text "Next", and r
 | `className` | `string` | `--` | Additional CSS classes for the ellipsis element |
 | `...props` | `React.ComponentPropsWithoutRef<'span'>` | - | Additional props to spread to the span element |
 
+### PaginationPages
+
+Draws the pages around the current one: a `PaginationItem` holding a `PaginationPage` for each page, and one holding a `PaginationEllipsis` for each gap. A gap of one page shows that page instead.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `children` | `(items: (number \| 'start-ellipsis' \| 'end-ellipsis')[]) => React.ReactNode` | - | Draws the items yourself |
+
+### PaginationPage
+
+A ghost icon button, or a link under `getPageHref`, that moves to its page. The current page carries `aria-current="page"`, `data-selected` and an outlined style.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `value` | `number` | - | The page it moves to. Also its label, unless it has children. |
+| `asChild` | `boolean` | `false` | Renders its child in place of the button |
+| `...props` | `React.HTMLAttributes<HTMLElement>` | - | Additional props to spread to the button or link |
+
+### PaginationFirstTrigger, PaginationPreviousTrigger, PaginationNextTrigger, PaginationLastTrigger
+
+Ghost icon buttons, or links under `getPageHref`, that move to the first, previous, next or last page. Each is disabled when it has nowhere to go and labelled "First page", "Previous page", "Next page" or "Last page". The chevrons flip in right-to-left.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `children` | `React.ReactNode` | chevron icon | Replaces the icon |
+| `disabled` | `boolean` | `false` | Disables the trigger whatever the page |
+| `asChild` | `boolean` | `false` | Renders its child in place of the button |
+| `...props` | `React.HTMLAttributes<HTMLElement>` | - | Additional props to spread to the button or link. An `aria-label` replaces the default. |
+
 ### PaginationWrapper
+
+Four outline icon buttons labelled "Go to first page", "Go to previous page", "Go to next page" and "Go to last page". Each takes the `Button` props, an `icon` among them.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -262,7 +379,7 @@ The wrapper follows `DirectionProvider` (or `<html dir>`) like the other parts. 
 
 ### MotionPaginationLink
 
-Staggered `scaleIn` entrance (fade, scale, and blur) + `whileTap` press feedback (scale 0.97). Requires the `motion` package.
+Staggered `scaleIn` entrance plus `whileTap` press feedback (scale 0.97) that `useMotionPreset`'s `tap` releases at once. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

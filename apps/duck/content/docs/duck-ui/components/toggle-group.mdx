@@ -125,9 +125,38 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 ### Disabled
 
+`disabled` on the group turns off every item. Put it on one `ToggleGroupItem` to turn off only that item, as the vertical example below does.
+
 <ComponentPreview
   name="toggle-group-7"
   description="A disabled toggle group."
+/>
+
+### Controlled, one always on
+
+Hold the value with `value` and `onValueChange`. `deselectable={false}` keeps the item that is on from being turned off, so the group always has a value.
+
+<ComponentPreview
+  name="toggle-group-10"
+  description="A toggle group switching a file list between a list and a grid."
+/>
+
+### Vertical
+
+`orientation="vertical"` stacks the items, rounds the group at its top and bottom, and moves focus with `ArrowDown` and `ArrowUp`. Arrow keys pass over a disabled item.
+
+<ComponentPreview
+  name="toggle-group-11"
+  description="A vertical toggle group with a disabled item."
+/>
+
+### Several on at once
+
+With `type="multiple"` each item turns on and off by itself, and `onValueChange` hands over every value that is on.
+
+<ComponentPreview
+  name="toggle-group-12"
+  description="A weekday picker that says which days it repeats on."
 />
 
 ## Keyboard Navigation
@@ -142,6 +171,8 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 | `Home` | Moves focus to the first item |
 | `End` | Moves focus to the last item |
 | `Space` / `Enter` | Toggles the focused item |
+
+The arrows skip a disabled item and wrap at either end unless `loop={false}`. A vertical group listens to `ArrowDown` and `ArrowUp` only, a horizontal one to `ArrowRight` and `ArrowLeft` only, and right-to-left turns `ArrowRight` and `ArrowLeft` around. With `rovingFocus={false}` the arrows do nothing and every item is its own `Tab` stop.
 
 ## RTL Support
 
@@ -161,7 +192,7 @@ Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and `Tog
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionToggleGroup` and `MotionToggleGroupItem` for a sliding active-item indicator and tap press feedback powered by [motion](https://motion.dev). A shared background indicator slides between items via `layoutId` as the pressed state changes, and each item presses to 0.97 on tap.
+Use `MotionToggleGroup` and `MotionToggleGroupItem` for a sliding active-item indicator and tap press feedback powered by [motion](https://motion.dev). In a single group one background indicator slides between items via `layoutId`. In a multiple group each item that is on fades in its own. Each item presses to 0.97 on tap.
 
 <ComponentPreview
   name="toggle-group-9"
@@ -176,18 +207,21 @@ Requires the `motion` package. Use `MotionToggleGroup` + `MotionToggleGroupItem`
 
 ### ToggleGroup
 
+A `type="single"` group is a `radiogroup` of radios, and a `type="multiple"` one a `toolbar` of toggle buttons.
+
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `type` | `'single' \| 'multiple'` | (required) | Determines selection behavior. `'single'` allows one toggle at a time; `'multiple'` allows multiple |
+| `type` | `'single' \| 'multiple'` | (required) | Determines selection behavior. `'single'` allows one toggle at a time and renders a `radiogroup` of `radio` items with `aria-checked`; `'multiple'` allows multiple and renders a `toolbar` (a `group` without roving focus) of buttons with `aria-pressed` |
 | `value` | `string \| string[]` | - | Controlled selected value(s) |
 | `defaultValue` | `string \| string[]` | - | Uncontrolled initial selected value(s) |
 | `onValueChange` | `(value: string \| string[]) => void` | - | Callback invoked when the value changes |
 | `variant` | `'default' \| 'outline'` | `'default'` | Visual style variant for the toggles (passed to items via context) |
 | `size` | `'default' \| 'sm' \| 'lg'` | `'default'` | Size variant for the toggles (passed to items via context) |
 | `disabled` | `boolean` | `false` | Disables all items in the group |
+| `deselectable` | `boolean` | `true` | Lets the last item that is on be turned off. `false` keeps one item on |
 | `rovingFocus` | `boolean` | `true` | Whether to use roving focus for keyboard navigation |
 | `loop` | `boolean` | `true` | Whether keyboard navigation should loop at boundaries |
-| `orientation` | `'horizontal' \| 'vertical'` | - | The orientation of the group for arrow key navigation |
+| `orientation` | `'horizontal' \| 'vertical'` | - | The axis of the arrow keys. `'vertical'` also stacks the items in a column |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `className` | `string` | - | Additional CSS class names to apply |
 | `children` | `React.ReactNode` | - | ToggleGroupItem elements to render inside the group |
@@ -202,7 +236,7 @@ Requires the `motion` package. Use `MotionToggleGroup` + `MotionToggleGroupItem`
 | `size` | `'default' \| 'sm' \| 'lg'` | - | Size variant for this item (overrides group context) |
 | `disabled` | `boolean` | `false` | Disables this specific item |
 | `className` | `string` | - | Additional CSS class names to apply |
-| `children` | `React.ReactNode` | - | Content rendered inside the toggle item |
+| `children` | `React.ReactNode \| ((pressed: boolean) => React.ReactNode)` | - | Content rendered inside the toggle item, or a function of whether it is on |
 | `ref` | `React.Ref<HTMLButtonElement>` | - | Ref forwarded to the underlying button element |
 
 ### Data Attributes
@@ -222,7 +256,7 @@ Wraps `ToggleGroup` in a `LayoutGroup` (scoped to a unique group ID) so its item
 
 ### MotionToggleGroupItem
 
-Adds `whileTap` press feedback (scale 0.97). When pressed (`data-state="on"`), renders a shared `layoutId` background indicator that slides smoothly between items using a `springSmooth` transition. Requires the `motion` package.
+Adds `whileTap` press feedback (scale 0.97). When on, renders a background indicator. In a single group it is one shared `layoutId` that slides between items with `springSmooth`. In a multiple group each item fades its own in and out, since items on together cannot share one `layoutId`. The indicator is in the first render, so the server markup has it too. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

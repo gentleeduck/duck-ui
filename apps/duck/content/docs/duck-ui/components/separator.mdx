@@ -59,6 +59,24 @@ import { Separator } from "@/components/ui/separator"
 <Separator />
 ```
 
+## Examples
+
+### Labelled divider
+
+Two separators that share a row with `flex-1` leave the label between them.
+
+<ComponentPreview name="separator-4" description="A divider with a label in the middle." />
+
+### Between rows
+
+<ComponentPreview name="separator-5" description="Separators between the rows of a list." />
+
+### Colour and thickness
+
+The line is the separator's background, so a `bg-*` class colours it and a height class thickens a horizontal one. A dashed line is a top border with the background cleared.
+
+<ComponentPreview name="separator-6" description="Separators in another colour, thicker, and dashed." />
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the separator follows it. No `dir` prop or `rtl:` classes needed.
@@ -92,12 +110,14 @@ Requires the `motion` package. Use `MotionSeparator` instead of `Separator`. Sam
 
 ### Separator
 
+Writes the orientation as both `aria-orientation` and `data-orientation`, so a class such as `data-[orientation=vertical]:h-auto` can key on it.
+
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Controls the orientation of the separator line |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `className` | `string` | - | Additional CSS class names |
-| `...props` | `React.HTMLProps<HTMLHRElement>` | - | Additional props to spread to the hr element |
+| `...props` | `React.HTMLAttributes<HTMLHRElement>` | - | Additional props to spread to the hr element |
 
 ### MotionSeparator
 

@@ -124,6 +124,33 @@ import { Toggle } from '@/components/ui/toggle'
   description="A disabled toggle component."
 />
 
+### Content that follows the state
+
+Pass a function as the child to render content from the pressed state, such as an icon that changes when the toggle turns on.
+
+<ComponentPreview
+  name="toggle-10"
+  description="A toggle whose icon follows its pressed state."
+/>
+
+### Controlled
+
+Hold the state yourself with `pressed` and `onPressedChange` when something else reads it, here the password field's `type`.
+
+<ComponentPreview
+  name="toggle-11"
+  description="A toggle that shows and hides a password."
+/>
+
+### Starts pressed
+
+`defaultPressed` starts the toggle on and leaves the state to it. `onPressedChange` still reports each change.
+
+<ComponentPreview
+  name="toggle-12"
+  description="A toggle that starts pressed and says what its state means."
+/>
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and `Toggle` follows it. No `dir` prop needed.
@@ -142,7 +169,7 @@ Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and `Tog
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionToggle` for tap feedback and a staggered entrance animation powered by [motion](https://motion.dev). Each child is wrapped in a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition, staggered by 50ms per child, and the toggle scales to 0.97 on tap for a physical press feel.
+Use `MotionToggle` for tap feedback and a staggered entrance animation powered by [motion](https://motion.dev). Each child is wrapped in a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition, staggered by 50ms per child, and the toggle scales to 0.97 on tap for a physical press feel and back on the same 15ms tween.
 
 <ComponentPreview
   name="toggle-9"
@@ -166,8 +193,9 @@ Requires the `motion` package. Use `MotionToggle` instead of `Toggle`. Same prop
 | `variant` | `'default' \| 'outline'` | `'default'` | Visual style variant of the toggle |
 | `size` | `'default' \| 'sm' \| 'lg'` | `'default'` | Size variant of the toggle |
 | `disabled` | `boolean` | `false` | Disables the toggle if set to `true` |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
-| `children` | `React.ReactNode` | - | Content rendered inside the toggle button |
+| `dir` | `string` | - | Sets the `dir` attribute, `auto` included. Leave it out and the toggle follows the page |
+| `children` | `React.ReactNode \| ((pressed: boolean) => React.ReactNode)` | - | Content rendered inside the toggle button, or a function of the pressed state |
+| `asChild` | `boolean` | `false` | Render the child element instead of a `button`, merging the toggle's props, state and ref onto it |
 | `ref` | `React.Ref<HTMLButtonElement>` | - | Ref forwarded to the underlying button element |
 
 ### Data Attributes
@@ -180,7 +208,7 @@ Requires the `motion` package. Use `MotionToggle` instead of `Toggle`. Same prop
 
 ### MotionToggle
 
-Adds `whileTap` press feedback (scale 0.97) and a staggered `scaleIn` entrance (fade, scale, and blur) on each child, delayed 50ms per index, with a `springBouncy` transition. Requires the `motion` package.
+Adds `whileTap` press feedback (scale 0.97, in and out on a 15ms tween) and a staggered `scaleIn` entrance (fade, scale, and blur) on each child, delayed 50ms per index, with a `springBouncy` transition. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

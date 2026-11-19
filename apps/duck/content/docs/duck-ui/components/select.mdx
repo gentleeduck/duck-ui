@@ -103,15 +103,105 @@ import {
   description="A select component with a scrollable list of options."
 />
 
+### Groups, separators and disabled items
+
+A `SelectLabel` names its group for screen readers, and a `SelectSeparator` between groups is hidden from them. A disabled item stays in the list, and the arrow keys and typeahead pass over it.
+
+<ComponentPreview name="select-7" description="A select with labelled groups, separators and a disabled item." />
+
+### Item-aligned
+
+With `position="item-aligned"` the list opens over the trigger with the chosen item lined up on it, the way a native select does on macOS. `side`, `align` and the offsets apply only to the default `popper` position.
+
+<ComponentPreview name="select-8" description="A select whose list opens over the trigger." />
+
+### Controlled
+
+Hold the value in state with `value` and `onValueChange`. Setting it to an empty string clears the pick and brings the placeholder back. An item can hold more than text, and the trigger shows what the picked item holds, icon included.
+
+<ComponentPreview name="select-9" description="A controlled select that can be cleared." />
+
+### Disabled
+
+`disabled` on the root keeps the select closed and out of the tab order, and still shows its value.
+
+<ComponentPreview name="select-10" description="A disabled select." />
+
 ### Form
 
 <ComponentPreview name="select-3" description="A select component in a form." />
+
+Inside a `<form>`, the select submits under `name`, a form reset restores the value it started with, and a pick fires the form's `change` event. A value set through `value` does not fire it.
 
 ### Active Trigger on Open
 
 Style the trigger to appear active while the select dropdown is open using `data-[state=open]`:
 
 <ComponentPreview name="select-5" description="A select with an active trigger style when open." />
+
+## Multiple
+
+Pass `multiple` and the select holds a list of values. `value`, `defaultValue` and `onValueChange` take and give `string[]`, in the order the values were picked. A click, Enter or Space toggles the item and leaves the list open, so several can be picked in one go, and Escape or a press outside closes it. The trigger shows the picked labels joined by ", ", or the placeholder while none is picked.
+
+<ComponentPreview name="select-11" description="A select that holds several values." />
+
+The listbox carries `aria-multiselectable`, and every option says whether it is picked with `aria-selected`. Typing a letter on the closed trigger picks nothing, since the pick would be made out of sight; the arrow keys, Enter and Space open the list as before.
+
+With `position="item-aligned"`, the list opens with the first pick lined up over the trigger, and that pick takes focus.
+
+### Controlled
+
+Hold the list in state. An empty array clears every pick and brings the placeholder back. Children given to `SelectValue` take the place of the joined labels; here they show a count.
+
+<ComponentPreview name="select-12" description="A controlled multiple select with a count and buttons that pick all or clear." />
+
+### Badges in the trigger
+
+Give `SelectValue` a function and it is called with the picked values in the order they were picked, so the trigger can draw anything. It is not called while nothing is picked, and the placeholder shows instead. Keep buttons out of what it draws: the trigger is a button itself, and a press anywhere on it opens the list.
+
+<ComponentPreview name="select-13" description="A multiple select showing its first two picks as badges and a count of the rest." />
+
+### Groups, separators and disabled items
+
+Groups, labels and separators work as they do in a single select, and a disabled item cannot be picked.
+
+<ComponentPreview name="select-14" description="A multiple select with labelled groups, separators and a disabled item." />
+
+### Form
+
+Inside a `<form>`, the select submits `name` once per picked value, so `FormData.getAll(name)` reads them all. `required` refuses a submit with nothing picked, and a form reset restores the values it started with. With react-hook-form, pass `field.value` and `field.onChange` as they are, and let the schema check the length of the array.
+
+<ComponentPreview name="select-15" description="A multiple select in a react-hook-form form that needs one to three picks." />
+
+### A limit on picks
+
+There is no `max` prop. Disable the items not yet picked once the limit is reached; the picked ones stay enabled, so one can be taken out to make room.
+
+<ComponentPreview name="select-16" description="A multiple select that allows three picks at most." />
+
+### Items as data
+
+With `items`, a closed select renders none of its items, and the trigger reads the picked labels from the list, in the server's HTML too. The items themselves can still draw more than their label.
+
+<ComponentPreview name="select-17" description="A multiple select given its items as data, each with an icon." />
+
+### Long lists
+
+A list taller than its box scrolls, with a scroll button at each end, and typing a letter while it is open moves focus to the next item starting with it.
+
+<ComponentPreview name="select-18" description="A multiple select over a long list of countries." />
+
+### Right-to-left
+
+The trigger and the list mirror under `DirectionProvider`. The labels are joined with ", " whatever the language, so this one gives `SelectValue` a function that joins them with the Arabic comma.
+
+<ComponentPreview name="select-19" description="A multiple select in Arabic, right to left." />
+
+### Motion
+
+`MotionSelect` takes `multiple` as `Select` does. The list animates as it opens and closes, and holds still while picks are made.
+
+<ComponentPreview name="select-20" description="A multiple select with motion-powered enter and exit animations." />
 
 ## Component Composition
 
@@ -164,17 +254,19 @@ The root component that manages open/closed state, value state, and provides con
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `string` | - | Controlled selected value |
-| `defaultValue` | `string` | - | Initial value (uncontrolled) |
-| `onValueChange` | `(value: string) => void` | - | Callback fired when the selected value changes |
+| `multiple` | `boolean` | `false` | Holds a list of values. A pick toggles its item and leaves the list open, and the form gets `name` once per value. |
+| `value` | `string \| string[]` | - | Controlled selected value, a list in pick order with `multiple` |
+| `defaultValue` | `string \| string[]` | - | Initial value (uncontrolled), a list with `multiple` |
+| `onValueChange` | `(value: string) => void` | - | Callback fired when the selected value changes. With `multiple` it is given `string[]`. |
 | `open` | `boolean` | - | Controlled open state |
 | `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
 | `onOpenChange` | `(open: boolean) => void` | - | Callback fired when dropdown open state changes |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `name` | `string` | - | Name attribute for native form submission |
 | `disabled` | `boolean` | - | Disables the entire select |
-| `required` | `boolean` | - | Marks the select as required for form validation |
+| `required` | `boolean` | - | Marks the select as required for form validation. With `multiple`, one pick satisfies it. |
 | `form` | `string` | - | Associates the select with a form element by ID |
+| `items` | `{ value: string; label: string; disabled?: boolean }[]` | - | The items, as data. A closed select then renders none of its items: the trigger's label, the native `<select>` options and typing on the closed trigger come from this list, and the label is in the server's HTML. Children given to the value still win over the label. |
 | `autoComplete` | `string` | - | Hint for browser autofill |
 
 ### SelectTrigger
@@ -186,15 +278,17 @@ Button that toggles the dropdown. Renders a styled `<button>` with a chevron ico
 | `className` | `string` | - | Additional CSS class names |
 | `disabled` | `boolean` | - | Disables the trigger |
 
-Sets `role="combobox"`, `aria-expanded`, `aria-controls`, `aria-autocomplete="none"`, and `data-state` automatically.
+Sets `role="combobox"`, `aria-expanded`, `aria-autocomplete="none"`, and `data-state` automatically, and `aria-controls` while the select is open.
 
 ### SelectValue
 
-Renders the selected value text, or a placeholder when nothing is selected.
+Renders the selected value text, or a placeholder when nothing is selected. With `multiple`, it renders the picked labels joined by ", ".
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `placeholder` | `React.ReactNode` | `''` | Text shown when no value is selected |
+| `children` | `React.ReactNode \| ((value: string[]) => React.ReactNode)` | - | Shown in place of the label. A function is given the picked values in pick order, a single select's one value as a list, and is not called while nothing is picked. |
+| `className` | `string` | - | Additional CSS class names |
 
 ### SelectContent
 
@@ -204,14 +298,16 @@ The dropdown content area. Handles positioning, focus management, keyboard navig
 | --- | --- | --- | --- |
 | `position` | `'item-aligned' \| 'popper'` | `'popper'` | Positioning strategy. `item-aligned` aligns selected item with trigger. `popper` uses floating positioning. |
 | `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'` | Preferred side (popper position only) |
-| `sideOffset` | `number` | - | Offset from trigger on the main axis |
+| `sideOffset` | `number` | `0` | Offset from trigger on the main axis |
 | `align` | `'start' \| 'center' \| 'end'` | `'start'` | Alignment on the cross axis |
-| `alignOffset` | `number` | - | Offset on the cross axis |
+| `alignOffset` | `number` | `0` | Offset on the cross axis |
 | `avoidCollisions` | `boolean` | `true` | Whether to flip to avoid viewport overflow |
 | `collisionPadding` | `number` | `10` | Padding from viewport edges |
 | `className` | `string` | - | Additional CSS class names |
 
 Exposes `data-state="open"` / `data-state="closed"` and `data-side` for CSS animation.
+
+One highlight slides behind the items to each one that takes focus, from the pointer or the keyboard, so a fast swipe passes over every item in between. It appears in place on the first item focus reaches, fades out once focus leaves the items, and moves without sliding under `prefers-reduced-motion`. It is `aria-hidden`, and the items keep their focus and `data-highlighted` as before.
 
 ### SelectGroup
 
@@ -235,12 +331,12 @@ An individual selectable item. Renders a `<div>` with `role="option"`.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `string` | (required) | The value representing this item. Must not be empty string. |
+| `value` | `string` | (required) | The value representing this item. An empty string clears the selection and shows the placeholder. |
 | `disabled` | `boolean` | `false` | Whether the item is disabled |
 | `textValue` | `string` | - | Optional text override for typeahead search |
 | `className` | `string` | - | Additional CSS class names |
 
-Exposes `data-state="checked"` / `data-state="unchecked"`, `data-highlighted`, and `data-disabled`.
+Exposes `data-state="checked"` / `data-state="unchecked"`, `data-highlighted`, and `data-disabled`. Its focused background is the content's sliding highlight, so outside `SelectContent` an item shows only its focused text colour.
 
 ### SelectSeparator
 
@@ -264,7 +360,7 @@ Same props as `Select`. Wraps the root with motion state management for enter/ex
 
 ### MotionSelectContent
 
-Same props as `SelectContent`. Adds a `scaleIn` enter/exit animation (fade, scale, and blur) with a `springBouncy` transition, mounted and unmounted via `useMotionRoot`/`useMotionMount` for exit-animation support. Must be used with `MotionSelect` root. Requires the `motion` package.
+Same props as `SelectContent`, with the same sliding highlight. Adds a `scaleIn` enter/exit animation (fade, scale, and blur) with a `springBouncy` transition, mounted and unmounted via `useMotionRoot`/`useMotionMount` for exit-animation support. Must be used with `MotionSelect` root. Requires the `motion` package.
 
 ### MotionSelectTrigger
 

@@ -12,7 +12,7 @@ order: 10
 
 ## Philosophy
 
-Progress bars answer the most anxious user question: "Is this working?" A determinate progress indicator builds trust by showing measurable advancement. We keep the API to a single `value` prop because progress is inherently one-dimensional  -  the component's visual treatment handles the rest.
+Progress bars answer the most anxious user question: "Is this working?" A determinate progress indicator builds trust by showing measurable advancement. We keep the API to `value`, `min` and `max`, because progress is one-dimensional: the visual treatment handles the rest.
 
 ## Installation
 
@@ -37,7 +37,7 @@ npx @gentleduck/cli add progress
 <Step>Install the following dependencies:</Step>
 
 ```bash
-npm install @gentleduck/libs
+npm install @gentleduck/primitives @gentleduck/libs
 ```
 
 <Step>Copy and paste the following code into your project.</Step>
@@ -62,9 +62,38 @@ import { Progress } from "@/components/ui/progress"
 <Progress value={33} />
 ```
 
+## Examples
+
+### Labelled, counting files
+
+A progress bar needs a name. Point `aria-labelledby` at a visible label, or pass `aria-label`. `getValueLabel` turns the value into what a screen reader says, here `3 of 8 files` where the default would be `38%`. At `max` the fill takes `data-state="complete"`, which the `className` uses to turn it green.
+
+<ComponentPreview
+  name="progress-4"
+  description="A labelled progress bar counting files, green once complete."
+/>
+
+### From a minimum
+
+`min` is the value an empty bar stands for. Steps 1 to 5 fill a quarter of the bar each, so step 1 shows an empty bar.
+
+<ComponentPreview
+  name="progress-5"
+  description="A setup progress bar running from step 1 to step 5."
+/>
+
+### Indeterminate
+
+A `value` of `null` says the work has no known end yet. The bar fills and pulses, so it still shows something is happening, and carries `data-state="indeterminate"` with no `aria-valuenow`. A value outside `min` to `max` is read the same way, as the primitive reads it. Under reduced motion the plain bar stays still at half strength.
+
+<ComponentPreview
+  name="progress-6"
+  description="Two indeterminate progress bars, plain and motion."
+/>
+
 ## RTL Support
 
-Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and `Progress` fills from the right. No `dir` prop or `rtl:` classes needed.
+Set the direction anywhere above the bar, with `DirectionProvider`, `<html dir="rtl">` or a `dir` on any element, and `Progress` and `MotionProgress` fill from the right. No `dir` prop or `rtl:` classes needed.
 
 <ComponentPreview
   name="progress-2"
@@ -97,16 +126,22 @@ Requires the `motion` package. Use `MotionProgress` instead of `Progress`. Same 
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `number` | (required) | Progress value from `0` to `100` representing the completion percentage |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
-| `className` | `string` | `--` | Additional CSS classes for the progress bar container |
-| `...props` | `Omit<React.HTMLProps<HTMLDivElement>, 'value'>` | - | Additional props to spread to the content div |
+| `value` | `number \| null` | `null` | Progress from `min` to `max`. `null`, or a value outside that range, is indeterminate: the bar fills and pulses |
+| `min` | `number` | `0` | The value at which the bar is empty |
+| `max` | `number` | `100` | The value at which the bar is full. A `max` no greater than `min` falls back to `100`, as the primitive does |
+| `dir` | `string` | - | Sets `dir` on the bar. Leave it out and the bar fills from the side the element around it reads from |
+| `className` | `string` | - | Additional CSS classes for the progress bar container |
+| `...props` | `Progress.Root` props | - | Every prop of the primitive's [`Progress.Root`](/duck-primitives/api/progress), `getValueLabel` included |
 
 ### MotionProgress
 
+The animated fill is the primitive's `Progress.Indicator`, so it carries `data-slot="progress-indicator"` and `data-state` as the `Progress` fill does.
+
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `number` | (required) | Progress value from `0` to `100`. Value changes animate the bar's scale and opacity over a 0.6s eased transition (not a spring). Includes a continuously looping shimmer overlay. |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
+| `value` | `number \| null` | `null` | Progress from `min` to `max`. Value changes animate the bar's scale and opacity over a 0.6s eased transition (not a spring). Includes a continuously looping shimmer overlay. While indeterminate the bar fills and its opacity pulses every 2s. |
+| `min` | `number` | `0` | The value at which the bar is empty |
+| `max` | `number` | `100` | The value at which the bar is full. A `max` no greater than `min` falls back to `100`, as the primitive does |
+| `dir` | `string` | - | Sets `dir` on the bar. Leave it out and the bar grows, and its shimmer runs, from the side the element around it reads from |
 | `className` | `string` | - | Additional CSS classes for the progress bar container |
-| `...props` | `Omit<React.HTMLProps<HTMLDivElement>, 'value'>` | - | Additional props to spread to the content div |
+| `...props` | `Progress.Root` props | - | Every prop of the primitive's [`Progress.Root`](/duck-primitives/api/progress) |

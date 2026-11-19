@@ -106,9 +106,45 @@ Add a caret pointing at the trigger. The arrow moves along the content edge when
   description="A hover card with an arrow pointing at the trigger."
 />
 
+The arrow fills with `--popover` and outlines its curve in `--hover-card-border-color`, the content's border colour. Change both with a class such as `[--hover-card-border-color:#5865f2]` on `HoverCardContent`, or in its `style`. `MotionHoverCardContent` takes it too:
+
+```tsx
+<HoverCardContent className="[--hover-card-border-color:#5865f2]">
+  ...
+  <HoverCardArrow />
+</HoverCardContent>
+```
+
+### Delays
+
+`openDelay` is how long the pointer or focus rests on the trigger before the card opens, and `closeDelay` how long it stays once they leave. `onOpenChange` reports each change.
+
+<ComponentPreview
+  name="hover-card-7"
+  description="Two hover cards, one opening at once and one after a second, with the open one named below."
+/>
+
+### Disabled
+
+`disabled` keeps the card closed, here behind a setting. Turning it on while the card is open closes it.
+
+<ComponentPreview
+  name="hover-card-6"
+  description="A hover card turned off by a switch."
+/>
+
+### Loading content
+
+A card can load what it shows once it opens, as a profile fetched on hover does. What arrives later stays out of the tab order with the rest of the card.
+
+<ComponentPreview
+  name="hover-card-8"
+  description="A hover card that loads a profile once it opens."
+/>
+
 ## RTL Support
 
-Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the hover card follows. The portaled content gets the resolved `dir`, and `side="left"`/`side="right"` and `align="start"`/`align="end"` mirror with it.
+Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the hover card follows. The portaled content gets the resolved `dir`, the trigger keeps the page's, and `side="left"`/`side="right"` and `align="start"`/`align="end"` mirror with it.
 
 ```tsx
 <DirectionProvider dir="rtl">
@@ -148,21 +184,18 @@ Requires the `motion` package. Use `MotionHoverCard` instead of `HoverCard` and 
 
 ### HoverCard
 
-Root wrapper that provides hover-card state and context. Wraps `HoverCardPrimitive.Root` internally.
+Root that holds the hover card's state. It is `HoverCardPrimitive.Root` itself and renders no element.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `open` | `boolean` | `-` | Controlled open state |
 | `onOpenChange` | `(open: boolean) => void` | `-` | Callback when open state changes |
 | `defaultOpen` | `boolean` | `-` | Initial open state for uncontrolled usage |
-| `openDelay` | `number` | `700` | Delay before opening on hover/focus |
+| `openDelay` | `number` | `700` | Delay before opening on hover or keyboard focus. A touch does not open it. |
 | `closeDelay` | `number` | `300` | Delay before closing on pointer leave/blur |
-| `delayDuration` | `number` | - | Alias for `openDelay`. If both are provided, `openDelay` takes precedence |
-| `skipDelayDuration` | `number` | - | Reserved for future use (currently ignored) |
-| `placement` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'` | Accepted but has no effect on the base `HoverCard`/`HoverCardContent` pairing; only takes effect with `MotionHoverCard`/`MotionHoverCardContent`, which read it via context to pick the entrance direction |
-| `dir` | `'ltr' \| 'rtl'` | - | Optional override. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
+| `disabled` | `boolean` | `false` | Keeps the card closed, and closes it if it is open |
+| `dir` | `'ltr' \| 'rtl'` | - | Direction of the content, resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). The trigger keeps the page's |
 | `children` | `React.ReactNode` | `--` | HoverCard sub-components |
-| `...props` | `React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Root>` | - | Additional props inherited from `HoverCard.Root`. |
 
 ### HoverCardTrigger
 
@@ -182,10 +215,10 @@ The content displayed when the hover card is open. Wraps `HoverCardPrimitive.Con
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `className` | `string` | `-` | Additional CSS classes to apply to the content container |
+| `className` | `string` | `-` | Additional CSS classes. The arrow fills with `--popover` and draws a 1px outline in `--hover-card-border-color` |
 | `children` | `React.ReactNode` | `-` | Content rendered inside the hover card |
-| `forceMount` | `boolean` | `-` | Keep content mounted for animation control |
-| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'` | Preferred side relative to the trigger. Defaults to the `placement` value from `HoverCard` |
+| `forceMount` | `true` | - | Keeps the content in the page while closed, as `data-state="closed"`, for an exit animation to run on |
+| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'` | Preferred side relative to the trigger |
 | `align` | `'start' \| 'center' \| 'end'` | `'center'` | Alignment on the chosen side |
 | `sideOffset` | `number` | `4` | Main-axis offset from trigger |
 | `alignOffset` | `number` | `0` | Cross-axis offset from trigger |
@@ -198,12 +231,12 @@ Wraps with `useMotionRoot` for exit animation support. Requires the `motion` pac
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `placement` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'` | Provided via context to `MotionHoverCardContent`, which uses it as the default entrance/exit direction when its own `side` prop is unset. This is where `placement` actually takes effect. |
-| `...props` | `HoverCardProps` | - | All props from `HoverCard` are supported |
+| `placement` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'` | The side `MotionHoverCardContent` opens on and animates from when its own `side` is unset |
+| `...props` | `React.ComponentProps<typeof HoverCard>` | - | Every `HoverCard` prop |
 
 ### MotionHoverCardContent
 
-Adds directional scale, blur, and opacity enter/exit animation. Requires the `motion` package.
+Adds directional scale, blur, and opacity enter/exit animation, on the same surface as `HoverCardContent`. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

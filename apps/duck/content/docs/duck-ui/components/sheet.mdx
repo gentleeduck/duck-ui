@@ -100,22 +100,33 @@ Use the `side` property to `<SheetContent />` to indicate the edge of the screen
 
 ### Size
 
-You can adjust the size of the sheet using CSS classes:
+A left or right sheet is three quarters of the screen wide and stops at `max-w-sm` from the `sm` breakpoint up, so a wider sheet lifts that cap with a class such as `sm:max-w-xl`. A width class alone stays under the cap. A top or bottom sheet takes a height class.
 
-```tsx {3}
-<Sheet>
-  <SheetTrigger>Open</SheetTrigger>
-  <SheetContent className="w-[400px] sm:w-[540px]">
-    <SheetHeader>
-      <SheetTitle>Are you absolutely sure?</SheetTitle>
-      <SheetDescription>
-        This action cannot be undone. This will permanently delete your account
-        and remove your data from our servers.
-      </SheetDescription>
-    </SheetHeader>
-  </SheetContent>
-</Sheet>
-```
+<ComponentPreview name="sheet-6" description="A wider side sheet and a shorter bottom sheet." />
+
+### Controlled
+
+Hold `open` in state to close the sheet from code, here once its form saves. With `hideClose`, a `SheetClose` in the footer is the way out.
+
+<ComponentPreview name="sheet-7" description="A controlled sheet that closes when its form saves." />
+
+### Scrolling body
+
+The content is a column, and a top or bottom sheet is no taller than the screen, so a body with `min-h-0 flex-1 overflow-y-auto` scrolls between a header and a footer that stay put, on every side.
+
+<ComponentPreview name="sheet-8" description="A sheet whose long list scrolls under a fixed header and footer." />
+
+### Nested
+
+A sheet opened from a sheet's content stacks over it with a clear overlay, and Escape closes only the top one.
+
+<ComponentPreview name="sheet-9" description="A sheet opened from another sheet." />
+
+### Non-modal
+
+With `modal={false}` the sheet draws no overlay, leaves focus free and the page usable. A press outside still closes it unless `onInteractOutside` prevents it.
+
+<ComponentPreview name="sheet-10" description="A non-modal sheet that stays open while the page is used." />
 
 ### Active Trigger on Open
 
@@ -192,7 +203,7 @@ Requires the `motion` package. Use `MotionSheet` instead of `Sheet` and `MotionS
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `container` | `HTMLElement` | - | Optional portal container |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Optional portal container |
 | `forceMount` | `true` | - | Forces mounted state for all portal children |
 | `...props` | `React.ComponentPropsWithoutRef<typeof SheetPrimitive.Portal>` | - | Additional props inherited from `SheetPrimitive.Portal` |
 
@@ -203,17 +214,25 @@ Requires the `motion` package. Use `MotionSheet` instead of `Sheet` and `MotionS
 | `className` | `string` | - | Additional CSS class names |
 | `...props` | `React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>` | - | Additional props inherited from `SheetPrimitive.Overlay` |
 
+Clear when the sheet is opened from a dialog's content, since the dialog's overlay already dims the page.
+
 ### SheetContent
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'right'` | The side from which the sheet slides in. `left` and `right` mirror in RTL |
 | `closeText` | `string` | `'Close'` | Screen-reader label for the built-in close button |
+| `hideClose` | `boolean` | `false` | When `true`, hides the built-in close button |
+| `forceMount` | `true` | - | Force mounting for animation control |
+| `initialFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on open in place of the first tabbable element. `false` leaves focus on the trigger |
+| `finalFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on close in place of the trigger. `false` moves focus nowhere |
 | `className` | `string` | - | Additional CSS class names |
 | `children` | `React.ReactNode` | - | Sheet content |
 | `...props` | `React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content> & VariantProps<typeof sheetVariants>` | - | Additional props inherited from `SheetPrimitive.Content` and the local `sheetVariants` |
 
-`SheetContent` renders a built-in close button in the top-end corner (top-right in LTR, top-left in RTL).
+`SheetContent` lays its children out in a column with a gap between them, so a header, a scrolling body with `flex-1` and a footer stack without classes of their own.
+
+`SheetContent` renders a built-in close button in the top-end corner (top-right in LTR, top-left in RTL). Set `hideClose` to remove it when you close the sheet from your own UI.
 
 ### SheetHeader
 
@@ -251,15 +270,15 @@ Requires the `motion` package. Use `MotionSheet` instead of `Sheet` and `MotionS
 | `children` | `React.ReactNode` | - | Close control content |
 | `...props` | `React.ComponentPropsWithoutRef<typeof SheetPrimitive.Close>` | - | Additional props inherited from `SheetPrimitive.Close` |
 
-## See also
-
-- [Dialog](/duck-ui/components/dialog)  -  Centered modal overlay
-- [Drawer](/duck-ui/components/drawer)  -  Bottom drawer overlay, great for mobile
-
 ### MotionSheet
 
 Same props as `Sheet`. Wraps with `useMotionRoot` for exit animation support. Requires the `motion` package.
 
 ### MotionSheetContent
 
-Same props as `SheetContent`. Adds directional slide enter/exit animation with blur and opacity fade using tweenSlow (300ms). Requires the `motion` package.
+Same props as `SheetContent`. Adds directional slide enter/exit animation with blur and opacity fade using tweenSlow (300ms). Under `prefers-reduced-motion` the panel and the overlay jump into place. Requires the `motion` package.
+
+## See also
+
+- [Dialog](/duck-ui/components/dialog)  -  Centered modal overlay
+- [Drawer](/duck-ui/components/drawer)  -  Bottom drawer overlay, great for mobile

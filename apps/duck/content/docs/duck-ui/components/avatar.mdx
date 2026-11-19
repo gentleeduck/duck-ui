@@ -66,6 +66,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 </Avatar>
 ```
 
+## Examples
+
+### Fallback and a group
+
+A photo that fails to load leaves the fallback in its place. `delayMs` holds the fallback back for that long, so a photo that loads quickly never flashes the initials first. `AvatarGroup` draws the first `maxVisible` of `imgs` and a count of the rest.
+
+<ComponentPreview name="avatar-4" description="An avatar falling back to its initials, and a group of five showing three." />
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the avatar follows it: groups stack from the start side. No `dir` prop or `rtl:` classes needed.
@@ -108,11 +116,12 @@ The root container rendered as a `span`. Provides context for `AvatarImage` and 
 
 ### AvatarImage
 
-The `img` element inside the avatar. Automatically tracks loading status and hides when the image fails.
+The `img` element inside the avatar. It is in the server's HTML, so the download starts before hydration, and it stays hidden until it loads and when it fails. `data-state` is `loading`, `loaded` or `error`.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `src` | `string` | - | Image source URL |
+| `srcSet` | `string` | - | Candidate images for other pixel densities or widths. Enough on its own, without a `src` |
 | `alt` | `string` | - | Alternate text for the image |
 | `onLoadingStatusChange` | `(status: 'idle' \| 'loading' \| 'loaded' \| 'error') => void` | - | Callback when the image loading status changes |
 | `className` | `string` | - | Additional class names for styling the image |
@@ -131,10 +140,13 @@ Content displayed when the image has not loaded. Typically initials or an icon.
 
 ### AvatarGroup
 
+Shows the first `maxVisible` people and a `+N` counter for the rest. Each fallback is named by its `alt`, so a screen reader hears the same name before and after the photo loads.
+
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `imgs` | `{ src?: string; alt?: string; fallback?: string; id?: string }[]` | (required) | Array of avatar data objects. Fallback text is truncated to 2 characters. |
+| `imgs` | `{ src?: string; alt?: string; fallback?: string; id?: string }[]` | (required) | Array of avatar data objects. Each fallback shows the first 2 letters of `fallback`, or of `alt` when there is none, never half of a flag, an emoji or an accented letter |
 | `maxVisible` | `number` | `3` | Maximum number of avatars to display before showing a `+N` overflow counter |
+| `getOverflowLabel` | `(count: number) => string` | `` count => `${count} more` `` | Names the `+N` counter for a screen reader, in the page's language |
 | `className` | `string` | - | Additional class names for styling the avatar group container |
 | `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Additional props to spread to the container div |
 
@@ -144,7 +156,7 @@ Content scales and blurs in on mount using the `scaleIn` preset. Requires the `m
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `...props` | `AvatarProps` | - | All props from `Avatar` are supported |
+| `...props` | `React.ComponentPropsWithoutRef<typeof Avatar>` | - | All props from `Avatar` are supported |
 
 ### MotionAvatarGroup
 
@@ -152,4 +164,4 @@ Each avatar staggers in 80ms apart with `scaleIn` animation. The overflow counte
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `...props` | `AvatarGroupProps` | - | All props from `AvatarGroup` are supported |
+| `...props` | `IAvatarGroupProps` | - | All props from `AvatarGroup` are supported |

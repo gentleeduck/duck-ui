@@ -122,32 +122,34 @@ To set the size of the items, you can use the `basis` utility class on the `<Car
 
 ```tsx showLineNumbers /-ml-4/ /pl-4/
 <Carousel>
-  <CarouselContent className="-ml-4">
-    <CarouselItem className="pl-4">...</CarouselItem>
-    <CarouselItem className="pl-4">...</CarouselItem>
-    <CarouselItem className="pl-4">...</CarouselItem>
+  <CarouselContent className="-ms-4">
+    <CarouselItem className="ps-4">...</CarouselItem>
+    <CarouselItem className="ps-4">...</CarouselItem>
+    <CarouselItem className="ps-4">...</CarouselItem>
   </CarouselContent>
 </Carousel>
 ```
 
 ```tsx showLineNumbers /-ml-2/ /pl-2/ /md:-ml-4/ /md:pl-4/
 <Carousel>
-  <CarouselContent className="-ml-2 md:-ml-4">
-    <CarouselItem className="pl-2 md:pl-4">...</CarouselItem>
-    <CarouselItem className="pl-2 md:pl-4">...</CarouselItem>
-    <CarouselItem className="pl-2 md:pl-4">...</CarouselItem>
+  <CarouselContent className="-ms-2 md:-ms-4">
+    <CarouselItem className="ps-2 md:ps-4">...</CarouselItem>
+    <CarouselItem className="ps-2 md:ps-4">...</CarouselItem>
+    <CarouselItem className="ps-2 md:ps-4">...</CarouselItem>
   </CarouselContent>
 </Carousel>
 ```
 
 ### Spacing
 
-To set the spacing between the items, we use a `pl-[VALUE]` utility on the `<CarouselItem />` and a negative `-ml-[VALUE]` on the `<CarouselContent />`.
+To set the spacing between the items, we use a `ps-[VALUE]` utility on the `<CarouselItem />` and a negative `-ms-[VALUE]` on the `<CarouselContent />`.
+
+Use the logical `ps-` and `-ms-`. The carousel spaces its items with them, so they replace its spacing, where `pl-` and `-ml-` would sit beside it and, in a right-to-left carousel, pull the other way.
 
 <Callout icon={<TriangleAlert />} className="mt-6">
   **Why:** I have been using the `gap` property or a `grid` layout on the `
   <CarouselContent />` but it required a lot of math and mental effort to get the
-  spacing right. I found `pl-[VALUE]` and `-ml-[VALUE]` utilities much easier to
+  spacing right. I found `ps-[VALUE]` and `-ms-[VALUE]` utilities much easier to
   use.
 
 You can always adjust this in your own project if you need to.
@@ -162,20 +164,20 @@ You can always adjust this in your own project if you need to.
 
 ```tsx showLineNumbers /-ml-4/ /pl-4/
 <Carousel>
-  <CarouselContent className="-ml-4">
-    <CarouselItem className="pl-4">...</CarouselItem>
-    <CarouselItem className="pl-4">...</CarouselItem>
-    <CarouselItem className="pl-4">...</CarouselItem>
+  <CarouselContent className="-ms-4">
+    <CarouselItem className="ps-4">...</CarouselItem>
+    <CarouselItem className="ps-4">...</CarouselItem>
+    <CarouselItem className="ps-4">...</CarouselItem>
   </CarouselContent>
 </Carousel>
 ```
 
 ```tsx showLineNumbers /-ml-2/ /pl-2/ /md:-ml-4/ /md:pl-4/
 <Carousel>
-  <CarouselContent className="-ml-2 md:-ml-4">
-    <CarouselItem className="pl-2 md:pl-4">...</CarouselItem>
-    <CarouselItem className="pl-2 md:pl-4">...</CarouselItem>
-    <CarouselItem className="pl-2 md:pl-4">...</CarouselItem>
+  <CarouselContent className="-ms-2 md:-ms-4">
+    <CarouselItem className="ps-2 md:ps-4">...</CarouselItem>
+    <CarouselItem className="ps-2 md:ps-4">...</CarouselItem>
+    <CarouselItem className="ps-2 md:ps-4">...</CarouselItem>
   </CarouselContent>
 </Carousel>
 ```
@@ -199,6 +201,15 @@ Use the `orientation` prop to set the orientation of the carousel.
   </CarouselContent>
 </Carousel>
 ```
+
+### Loop, icons and labels
+
+With `opts={{ loop: true }}` the last slide leads back to the first, so neither arrow is ever disabled. `icon` swaps the arrow for one of your own, which follows the direction only if you give it `rtl:rotate-180`, and `text` names the button for a screen reader. The left and right arrow keys move the carousel while focus is inside it.
+
+<ComponentPreview
+  name="carousel-8"
+  description="A looping carousel of ponds with chevron buttons named Previous pond and Next pond."
+/>
 
 ### Slide Counter (API)
 
@@ -361,7 +372,7 @@ Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the 
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Carousel axis direction |
 | `dir` | `'ltr' \| 'rtl'` | - | Direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `setApi` | `(api: CarouselApi) => void` | - | Callback to expose the Embla API |
-| `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `...props` | `React.HTMLAttributes<HTMLElement>` | - | Additional props to spread to the `section` |
 
 ### CarouselContent
 
@@ -385,7 +396,8 @@ Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the 
 | --- | --- | --- | --- |
 | `variant` | `string` | `'outline'` | Variant prop for the `Button` component |
 | `size` | `string` | `'icon'` | Size prop for the `Button` component |
-| `text` | `string` | `'Previous slide'` | Accessible label for the button (`aria-label`) |
+| `text` | `string` | `'Previous slide'` | Name of the button, as text only a screen reader reads |
+| `icon` | `React.ReactNode` | arrow | Replaces the arrow, which points the other way in a right-to-left carousel |
 | `...props` | `React.ComponentPropsWithoutRef<typeof Button>` | - | Additional props inherited from `Button`. |
 
 ### CarouselNext
@@ -394,7 +406,8 @@ Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the 
 | --- | --- | --- | --- |
 | `variant` | `string` | `'outline'` | Variant prop for the `Button` component |
 | `size` | `string` | `'icon'` | Size prop for the `Button` component |
-| `text` | `string` | `'Next slide'` | Accessible label for the button (`aria-label`) |
+| `text` | `string` | `'Next slide'` | Name of the button, as text only a screen reader reads |
+| `icon` | `React.ReactNode` | arrow | Replaces the arrow, which points the other way in a right-to-left carousel |
 | `...props` | `React.ComponentPropsWithoutRef<typeof Button>` | - | Additional props inherited from `Button`. |
 
 ### Types

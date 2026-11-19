@@ -135,11 +135,13 @@ toast('Event has been created.')
 
 ## Examples
 
-### Default
+### Custom icon
+
+`icon` replaces the toast's icon, and `action` adds a button that runs its `onClick` and closes the toast.
 
 <ComponentPreview
   name="sonner-2"
-  description="A toast component."
+  description="A toast with its own icon, a description and an action."
 />
 
 ### Upload
@@ -163,6 +165,42 @@ toast('Event has been created.')
   description="Upload toast with multiple files and remaining time."
 />
 
+### Position
+
+A toast's `position` overrides the `Toaster`'s for that toast alone.
+
+<ComponentPreview
+  name="sonner-7"
+  description="Toasts shown in each of the six positions."
+/>
+
+### Rich colours and close button
+
+`richColors` tints success, error, warning and info toasts, `closeButton` gives each toast a close button, and `expand` shows the stack open. These are `Toaster` props, so this example mounts its own `Toaster` with an `id` and sends its toasts there with `toasterId`, leaving the page's `Toaster` as it is.
+
+<ComponentPreview
+  name="sonner-8"
+  description="A Toaster with rich colours, a close button and an expanded stack."
+/>
+
+### Loading, then done
+
+`toast.loading` returns the toast's id. Pass it as `id` to `toast.success` or `toast.error` and the same toast changes in place, rather than a second one appearing.
+
+<ComponentPreview
+  name="sonner-9"
+  description="A loading toast that turns into a success toast."
+/>
+
+### Action and cancel
+
+`action` and `cancel` each add a button. Both close the toast; `cancel` is drawn quieter, for the choice that changes nothing.
+
+<ComponentPreview
+  name="sonner-10"
+  description="A toast with an Undo action and a Dismiss button."
+/>
+
 ## RTL Support
 
 Set the direction once with `<html dir="rtl">` (or a `DirectionProvider` around the `Toaster`) and toasts follow: text, icons and the action button mirror, and left/right positions mirror, so the default `bottom-right` becomes `bottom-left`.
@@ -183,6 +221,7 @@ The `Toaster` component wraps the `Sonner` `Toaster` from the `sonner` library, 
 | `dir` | `'ltr' \| 'rtl'` | - | Optional override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `position` | `ToasterProps['position']` | `'bottom-right'` | Corner the toasts stack in. Left and right mirror in RTL |
 | `theme` | `'light' \| 'dark' \| 'system'` | `'system'` | Toast theme. Auto-detected from `next-themes` `useTheme()` |
+| `style` | `React.CSSProperties` | - | Merged over the popover colours the toasts take, `--normal-bg`, `--normal-border` and `--normal-text`, so one of those can be overridden and the rest kept |
 | `...props` | `ToasterProps` | - | Additional props inherited from the `sonner` toaster. |
 
 ### SonnerUpload
@@ -195,7 +234,7 @@ The `Toaster` component wraps the `Sonner` `Toaster` from the `sonner` library, 
 | `onCancel` | `(e: React.MouseEvent<HTMLButtonElement>, dismiss: (id: string) => void) => void` | - | Callback triggered when the Cancel button is clicked. Receives the click event and a function to dismiss the toast by ID |
 | `onComplete` | `(e: React.MouseEvent<HTMLButtonElement>, dismiss: (id: string) => void) => void` | - | Callback triggered when the Complete button is clicked. Receives the click event and a function to dismiss the toast by ID |
 
-`SonnerUpload` shows a spinning `Loader` icon while `progress < 100` and switches to a success `CircleCheck` icon at completion.
+While `progress` is under 100, `SonnerUpload` shows a spinning `Loader`, the time left when `remainingTime` is above zero, and a Cancel button. From 100 up it shows a `CircleCheck`, a full bar at 100%, reads "Upload complete", says it is safe to close the browser, and offers Complete. The bar is named "Upload progress". It adds no live region of its own, since the `Toaster` already announces what changes in a toast.
 
 ### Utility Function
 
@@ -203,10 +242,12 @@ The `Toaster` component wraps the `Sonner` `Toaster` from the `sonner` library, 
 
 Formats a duration in seconds into a human-readable string:
 
-* Returns days if >= 1 day (`'Xd '`),
-* else hours if >= 1 hour (`'Xh '`),
-* else minutes if >= 1 minute (`'Xm '`),
+* Returns days if >= 1 day (`'Xd'`),
+* else hours if >= 1 hour (`'Xh'`),
+* else minutes if >= 1 minute (`'Xm'`),
 * else seconds (`'Xs'`).
+
+Each is rounded down, so `formatTime(119)` is `'1m'`.
 
 ### Types
 

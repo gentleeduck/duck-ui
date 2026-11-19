@@ -88,6 +88,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 
 <ComponentPreview name="checkbox-3" description="A controlled checkbox with state managed via useState and onCheckedChange." />
 
+A controlled checkbox shows `checked` and nothing else. A click calls `onCheckedChange` with the value it asks for, and the box moves only once `checked` does, so a handler that ignores the click keeps it where it is.
+
 ### Checkbox with label
 
 <ComponentPreview name="checkbox-4" description="A checkbox paired with a label using the CheckboxWithLabel composition." />
@@ -95,6 +97,14 @@ import { Checkbox } from "@/components/ui/checkbox"
 ### Indeterminate state
 
 <ComponentPreview name="checkbox-5" description="A checkbox demonstrating the indeterminate state." />
+
+`'indeterminate'` sets the input's own `indeterminate` property, so assistive technology announces it as mixed, and the input carries `data-checked="indeterminate"` for styling. A click leaves the mixed state for checked.
+
+### Select all
+
+<ComponentPreview name="checkbox-11" description="A select-all checkbox that turns mixed while only some of its children are ticked, with its own icon for each state." />
+
+`indeterminateIndicator` draws the mixed state with an icon of your own. Without one the checkbox draws a short bar.
 
 ###  Checkbox group
 
@@ -107,6 +117,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 ### Form
 
 <ComponentPreview name="checkbox-8" description="A checkbox group integrated with React Hook Form and Zod validation." />
+
+Inside a `<form>`, or with `form`, the checkbox submits under `name`, and a form reset puts it back on `defaultChecked`, or on the `checked` it was first given, and calls `onCheckedChange` with that state. A click fires the form's `change` event, even when its handler stops propagation, as a native input's does. A value set through `checked` fires it too, as a click would, without running the checkbox's own `onChange`, `onClick` or `onCheckedChange`; a move between unchecked and mixed fires nothing, since the form sees the box unchecked both times. If the owner does not follow a reset, the checkbox goes back to its `checked` before the next paint.
 
 ## Component Composition
 
@@ -153,15 +165,16 @@ Requires the `motion` package. Use `MotionCheckboxWithLabel` instead of `Checkbo
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `indicator` | `React.ReactElement` | - | Custom SVG or icon for unchecked state indicator |
-| `checkedIndicator` | `React.ReactElement` | - | Custom SVG or icon for checked state indicator |
+| `indicator` | `React.ReactElement` | - | Icon shown while unchecked, in the muted foreground colour. Without `checkedIndicator` the check mark is drawn once checked |
+| `checkedIndicator` | `React.ReactElement` | - | Icon shown while checked, in place of the check mark |
+| `indeterminateIndicator` | `React.ReactElement` | - | Custom SVG or icon for the indeterminate state. Without one a short bar is drawn |
 | `checked` | `boolean \| 'indeterminate'` | - | Controlled checked state |
-| `defaultChecked` | `boolean \| 'indeterminate'` | `false` | Initial checked state if uncontrolled |
-| `onCheckedChange` | `(checked: boolean \| 'indeterminate') => void` | - | Callback fired when checked state changes |
+| `defaultChecked` | `boolean \| 'indeterminate'` | `false` | Initial checked state if uncontrolled, and the state a form reset puts it back on |
+| `onCheckedChange` | `(checked: boolean \| 'indeterminate') => void` | - | Called with the state a click asks for, which is always `true` or `false`, and with the state a form reset puts it back on |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `className` | `string` | - | Additional CSS classes applied to the checkbox input |
 | `style` | `React.CSSProperties` | - | Inline styles merged with internal indicator styles |
-| `ref` | `React.Ref<HTMLInputElement>` | - | Ref forwarded to the native checkbox input |
+| `ref` | `React.Ref<HTMLInputElement>` | - | The native checkbox input. Object and callback refs both work |
 | `...props` | `Omit<React.HTMLProps<HTMLInputElement>, 'checked' \| 'onChange' \| 'defaultChecked'>` | - | Additional props to spread to the input element |
 
 ### CheckboxWithLabel
@@ -179,7 +192,7 @@ Requires the `motion` package. Use `MotionCheckboxWithLabel` instead of `Checkbo
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `subtasks` | `CheckboxGroupSubtasks[]` | (required) | Array of subtasks to render as individual checkboxes with labels |
+| `subtasks` | `CheckboxGroupSubtasks[]` | (required) | Array of subtasks to render as individual checkboxes with labels. Each `checked` is where that checkbox starts |
 | `defaults` | `CheckboxWithLabelProps` | - | Default props applied to each checkbox and label in the group |
 | `className` | `string` | - | Additional CSS classes applied to the wrapping div |
 | `ref` | `React.Ref<HTMLDivElement>` | - | Ref forwarded to the wrapping div |

@@ -102,6 +102,12 @@ Style the trigger to appear active while the collapsible is expanded using `data
 
 <ComponentPreview name="collapsible-3" description="A collapsible with an active trigger style when expanded." />
 
+### Open by default
+
+`defaultOpen` starts it open and leaves it to the user from there, with no state of your own.
+
+<ComponentPreview name="collapsible-5" description="A collapsible that starts open, without controlled state." />
+
 ## Component Composition
 
 <MermaidDiagram chart={`graph TD
@@ -145,10 +151,10 @@ Requires the `motion` package. Replace `CollapsibleContent` with `MotionCollapsi
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `open` | `boolean` | - | Controlled open state |
-| `onOpenChange` | `(open: boolean) => void` | - | Callback fired when open state changes |
+| `onOpenChange` | `(open: boolean) => void` | - | Called once with the new state when the trigger is clicked |
 | `defaultOpen` | `boolean` | `false` | Initial open state when uncontrolled |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
-| `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `dir` | `'ltr' \| 'rtl'` | - | Lands on the root as its `dir` attribute. Without it the root carries none and follows the page. |
+| `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Additional props to spread to the root div |
 
 ### CollapsibleTrigger
 
@@ -156,10 +162,12 @@ Requires the `motion` package. Replace `CollapsibleContent` with `MotionCollapsi
 | --- | --- | --- | --- |
 | `variant` | `ButtonVariant` | `'ghost'` | Button variant passed to the underlying `Button` component |
 | `children` | `React.ReactNode` | - | Trigger content |
-| `onClick` | `React.MouseEventHandler` | - | Additional click handler; open/close toggle is handled internally |
+| `onClick` | `React.MouseEventHandler` | - | Called before the toggle; `event.preventDefault()` keeps the collapsible as it is |
 | `...props` | `React.ComponentPropsWithoutRef<typeof Button>` | - | Additional props inherited from `Button`. |
 
 ### CollapsibleContent
+
+Its children unmount once the section's close transition ends, a `transition-delay` and the longest of several transitions included. Under `motion-reduce:transition-none` they unmount at once.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -182,7 +190,7 @@ const { open, onOpenChange } = useCollapsible()
 | `onOpenChange` | `(open: boolean) => void` | Function to update open state |
 | `wrapperRef` | `React.RefObject<HTMLDivElement \| null>` | Ref to the root collapsible element |
 | `triggerRef` | `React.RefObject<HTMLButtonElement \| null>` | Ref to the trigger button |
-| `contentRef` | `React.RefObject<HTMLDivElement \| null>` | Ref to the content section |
+| `contentRef` | `React.RefObject<HTMLElement \| null>` | Ref to the content section |
 | `contentId` | `string` | Auto-generated ID linking trigger and content via `aria-controls` |
 
 

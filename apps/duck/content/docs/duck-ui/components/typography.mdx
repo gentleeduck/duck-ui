@@ -104,6 +104,10 @@ import {
 
 <ComponentPreview name="typography-8" />
 
+A head or cell given `align="center"` or `align="right"` lines its text up that way. `wrapperClassName` styles the `div` around the table, which scrolls a table too wide for it.
+
+<ComponentPreview name="typography-18" description="A plans table with centred and right-aligned columns in a narrower wrapper." />
+
 ### list
 
 <ComponentPreview name="typography-9" />
@@ -153,6 +157,14 @@ Use the `Motion*` variants for a staggered entrance animation powered by [motion
 Requires the `motion` package. Each `Motion*` component uses the shared `slideUp` preset with a `springBouncy` transition and `delay: index * 0.05`.
 </Callout>
 
+`MotionTypographyList` turns each `li` it is given into a `MotionTypographyListItem`, keeping the item's own props, and the items enter one after another from the list's `index`. `MotionTypographyTable` animates the wrapper around the table, so its rows and cells are the plain `TypographyTr`, `TypographyTh` and `TypographyTd`. Under reduced motion every entrance is skipped.
+
+<ComponentPreview
+  name="typography-17"
+  description="A lead, muted text, inline code, a list and a table entering one after another."
+  className="[&_.preview]:!h-auto"
+/>
+
 ## API Reference
 
 ### Typography components
@@ -162,10 +174,10 @@ Every base `Typography*` component is a thin `forwardRef` wrapper around the mat
 | Component | Element | Classes |
 | --- | --- | --- |
 | `TypographyH1` | `h1` | `scroll-m-20 font-extrabold text-4xl tracking-tight lg:text-5xl` |
-| `TypographyH2` | `h2` | `scroll-m-20 border-b pb-2 font-semibold text-3xl tracking-tight first:mt-0` |
+| `TypographyH2` | `h2` | `scroll-m-20 border-b pb-2 font-semibold text-3xl tracking-tight transition-colors first:mt-0` |
 | `TypographyH3` | `h3` | `scroll-m-20 font-semibold text-2xl tracking-tight` |
 | `TypographyH4` | `h4` | `scroll-m-20 font-semibold text-xl tracking-tight` |
-| `TypographyP` | `p` | `leading-7 [&:not(:first-child)]:mt-6` |
+| `TypographyP` | `p` | `leading-7 mt-6 first:mt-0`. A margin in your `className`, such as `mt-0`, replaces the `mt-6` |
 | `TypographyBlockquote` | `blockquote` | `mt-6 border-s-2 ps-6 italic rtl:not-italic` |
 | `TypographyList` | `ul` | `my-6 ms-6 list-disc [&>li]:mt-2` |
 | `TypographyInlineCode` | `code` | `relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono font-semibold text-sm` |
@@ -175,12 +187,12 @@ Every base `Typography*` component is a thin `forwardRef` wrapper around the mat
 | `TypographyMuted` | `p` | `text-muted-foreground text-sm` |
 | `TypographyTable` | `div > table` | wrapper + `w-full` (accepts `wrapperClassName` for the outer div) |
 | `TypographyTr` | `tr` | `m-0 border-t p-0 even:bg-muted` |
-| `TypographyTh` | `th` | `border px-4 py-2 text-start font-bold` |
-| `TypographyTd` | `td` | `border px-4 py-2 text-start` |
+| `TypographyTh` | `th` | `border px-4 py-2 text-start font-bold`, centred or right-aligned by its `align` |
+| `TypographyTd` | `td` | `border px-4 py-2 text-start`, centred or right-aligned by its `align` |
 
 ### Motion variants
 
-Every `Motion*` variant supports all the props of its base component plus an optional `index` prop.
+Every `Motion*` variant supports all the props of its base component plus an optional `index` prop. There is a motion version of each part except `TypographyTr`, `TypographyTh` and `TypographyTd`, plus `MotionTypographyListItem`, the `li` that `MotionTypographyList` wraps its items in.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

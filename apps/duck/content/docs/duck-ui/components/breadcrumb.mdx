@@ -161,7 +161,7 @@ import {
 
 ### Collapsed
 
-We provide a `<BreadcrumbEllipsis />` component to show a collapsed state when the breadcrumb is too long.
+We provide a `<BreadcrumbEllipsis />` component to show a collapsed state when the breadcrumb is too long. A screen reader hears it as `More`; pass `text` to say what it hides.
 
 <ComponentPreview
   name="breadcrumb-4"
@@ -217,9 +217,7 @@ import Link from "next/link"
 
 ### Responsive
 
-Here's an example of a responsive breadcrumb that composes `<BreadcrumbItem />` with `<BreadcrumbEllipsis />`, `<DropdownMenu />`, and `<Drawer />`.
-
-It displays a dropdown on desktop and a drawer on mobile.
+A responsive breadcrumb keeps the first page and the last two, and folds the pages between behind `<BreadcrumbEllipsis />`. The ellipsis opens a `<DropdownMenu />` on desktop, whose items are the links themselves through `asChild`, and a `<Drawer />` on mobile. A separator is its own list item, so it goes beside a `<BreadcrumbItem />`, never inside one.
 
 <ComponentPreview
   name="breadcrumb-6"
@@ -347,7 +345,7 @@ Renders directly as `m.li` with a `scaleIn` entrance (fade, scale, and blur) usi
 
 ### MotionBreadcrumbSeparator
 
-Renders directly as `m.li` with a `slideFromLeft` entrance so the chevron slides in from the previous item. Requires the `motion` package.
+Renders directly as `m.li` with a `slideFromLeft` entrance, or `slideFromRight` in a right-to-left trail, so the chevron slides in from the item before it. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

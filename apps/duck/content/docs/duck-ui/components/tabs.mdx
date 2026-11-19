@@ -80,6 +80,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 </Tabs>
 ```
 
+## Examples
+
+### Controlled
+
+Pass `value` and `onValueChange` to drive the tabs from your own state. A click or an arrow key calls `onValueChange`, and the selection moves when `value` does, so buttons outside the tabs can move it too. `onValueChange` runs only when the tab changes, never on mount.
+
+<ComponentPreview name="tabs-6" description="A three-step flow whose Back and Next buttons move the tabs." />
+
+### Vertical, with a disabled tab
+
+`orientation="vertical"` stacks the list, moves between tabs on `ArrowUp` and `ArrowDown`, and sets `aria-orientation` for screen readers. Lay the list beside the panels on `Tabs` itself, as `className="flex gap-4"` does here. The arrow keys skip a disabled tab.
+
+<ComponentPreview name="tabs-7" description="Vertical settings tabs with icons and a disabled Billing tab." />
+
 ## Component Composition
 
 <MermaidDiagram chart={`graph TD
@@ -94,9 +108,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 | --- | --- |
 | `ArrowRight` | Move focus to the next tab and select it (previous tab in RTL) |
 | `ArrowLeft` | Move focus to the previous tab and select it (next tab in RTL) |
+| `ArrowDown` | With `orientation="vertical"`, move focus to the next tab and select it |
+| `ArrowUp` | With `orientation="vertical"`, move focus to the previous tab and select it |
 | `Home` | Move focus to the first tab and select it |
 | `End` | Move focus to the last tab and select it |
-| `Tab` | Move focus onto the active tab, then out of the tab list |
+| `Tab` | Move focus onto the active tab, or the first enabled tab while none is selected, then into its panel |
+
+The arrows wrap at either end and skip a disabled tab.
 
 ## Keeping Panels Mounted
 
@@ -145,7 +163,7 @@ Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the 
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionTabs`, `MotionTabsList`, `MotionTabsTrigger`, and `MotionTabsContent` for a sliding active indicator and direction-aware content crossfade powered by [motion](https://motion.dev). The indicator slides between tabs via `layoutId` and content panels crossfade with a directional shift, a slight scale-down, and blur.
+Use `MotionTabs`, `MotionTabsList`, `MotionTabsTrigger`, and `MotionTabsContent` for a sliding active indicator and direction-aware content crossfade powered by [motion](https://motion.dev). The indicator slides between tabs via `layoutId` and content panels crossfade with a directional shift, a slight scale-down, and blur. The shift runs the way the tabs do: sideways for a horizontal list, mirrored in RTL, and up and down for a vertical one.
 
 <ComponentPreview
   name="tabs-3"
@@ -171,9 +189,10 @@ Requires the `motion` package. Replace `Tabs` with `MotionTabs`, `TabsList` with
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `string` | - | Controlled active tab value. Must be used alongside `onValueChange` |
+| `value` | `string` | - | Controlled active tab. The selection follows it, and wins over `defaultValue` |
 | `defaultValue` | `string` | - | Uncontrolled initial tab value |
-| `onValueChange` | `(value: string) => void` | - | Callback fired when the active tab changes |
+| `onValueChange` | `(value: string) => void` | - | Called when the user picks another tab, by click or key. Not called on mount |
+| `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Which arrow keys move between tabs, and how the list lays out. Sets `aria-orientation` on the list |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `...props` | `Omit<React.HTMLProps<HTMLDivElement>, 'defaultValue'>` | - | Additional props to spread to the content div |
 
@@ -233,7 +252,7 @@ Replaces `TabsTrigger`. Adds sliding `layoutId` indicator and disabled tab shake
 
 ### MotionTabsContents
 
-Wrapper around all `MotionTabsContent` panels. Provides a single `AnimatePresence` with overflow-hidden for directional slide animation. Requires the `motion` package.
+Wrapper around all `MotionTabsContent` panels. Provides a single `AnimatePresence` with overflow-hidden for directional slide animation, and animates its height to the open panel's, following the panel as it grows or shrinks. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

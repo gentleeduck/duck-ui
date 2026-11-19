@@ -116,6 +116,69 @@ Style the trigger to appear active while the dialog is open using `data-[state=o
   description="A dialog with an active trigger style when open."
 />
 
+### Nested Dialog
+
+A dialog opened from another dialog's content stacks on it. The one underneath steps back a little for each dialog in front of it, and only the first overlay dims the page. The step is a transition, which `prefers-reduced-motion` turns off.
+
+<ComponentPreview
+  name="dialog-6"
+  description="A confirmation dialog opened from a settings dialog, which steps back behind it."
+/>
+
+### Focus on open and on close
+
+`initialFocus` names what takes focus when the dialog opens, in place of the first tabbable element, and `finalFocus` what takes it back when it closes, in place of the trigger. `hideClose` drops the corner close button when the footer already has one.
+
+<ComponentPreview
+  name="dialog-7"
+  description="A rename dialog that focuses its name field and hands focus to Share on close."
+/>
+
+### Keep it open while unsaved
+
+`onEscapeKeyDown` and `onPointerDownOutside` on `DialogContent` get the event before the dialog closes, and `event.preventDefault()` keeps it open. A `DialogClose` still closes it.
+
+<ComponentPreview
+  name="dialog-8"
+  description="A note dialog that Escape and an outside click close only while the note is empty."
+/>
+
+### Scrollable content
+
+A body taller than the screen scrolls inside the dialog while the page behind it stays locked. Cap the content's height and give the middle row `minmax(0, 1fr)`, so the header and footer stay put.
+
+<ComponentPreview
+  name="dialog-10"
+  description="A terms dialog whose body scrolls between a fixed header and footer."
+/>
+
+### Non-modal
+
+`modal={false}` leaves the page usable while the dialog is open: there is no overlay, focus is not trapped, the page scrolls, and a screen reader still reaches it. A press outside closes it unless `onInteractOutside` prevents that, as it does here.
+
+<ComponentPreview
+  name="dialog-11"
+  description="A keyboard shortcuts dialog that stays open while the page behind it is used."
+/>
+
+### Selects and popovers inside
+
+A `Select`, `Popover` or menu opened from the dialog renders outside it in a portal, and still takes focus and scrolls while the dialog keeps the rest of the page locked. Escape closes the one in front first.
+
+<ComponentPreview
+  name="dialog-12"
+  description="An invite dialog with a role select and a date in a popover."
+/>
+
+### Dialog on desktop, drawer on mobile
+
+The responsive parts draw a `Dialog` at 768px and wider and a `Drawer` below that, from one tree.
+
+<ComponentPreview
+  name="dialog-9"
+  description="A share dialog that becomes a bottom drawer on a narrow screen."
+/>
+
 ## Component Composition
 
 <MermaidDiagram chart={`graph TD
@@ -230,7 +293,7 @@ Requires the `motion` package. Use `MotionDialog` instead of `Dialog` and `Motio
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `container` | `HTMLElement` | - | Optional portal container |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Optional portal container |
 | `forceMount` | `true` | - | Forces mounted state for all portal children |
 | `...props` | `React.ComponentPropsWithoutRef<typeof DialogPrimitive.Portal>` | - | Additional props inherited from `DialogPrimitive.Portal` |
 
@@ -241,18 +304,22 @@ Requires the `motion` package. Use `MotionDialog` instead of `Dialog` and `Motio
 | `className` | `string` | - | Additional CSS classes |
 | `...props` | `React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>` | - | Additional props inherited from `DialogPrimitive.Overlay` |
 
+Clear on a dialog opened from another dialog's content, since the overlay under it already dims the page.
+
 ### DialogContent
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `forceMount` | `true` | - | Force mounting for animation control |
+| `initialFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on open in place of the first tabbable element. `false` leaves focus on the trigger |
+| `finalFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on close in place of the trigger. `false` moves focus nowhere |
 | `closeText` | `string` | `'Close'` | Accessible label for the built-in close button |
 | `hideClose` | `boolean` | `false` | When `true`, hides the built-in close button entirely |
 | `className` | `string` | - | Additional CSS classes applied to the content panel |
 | `children` | `React.ReactNode` | - | Dialog inner content |
 | `...props` | `React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>` | - | Additional props inherited from `DialogPrimitive.Content` |
 
-`DialogContent` renders a built-in close button in the top-end corner (top-right in LTR, top-left in RTL). Set `hideClose` to remove it when you handle closing via other UI (e.g. a custom header with its own close button).
+`DialogContent` renders a built-in close button in the top-end corner (top-right in LTR, top-left in RTL). Set `hideClose` to remove it when you handle closing via other UI (e.g. a custom header with its own close button). Its props are exported as `IDialogContentProps`.
 
 ### DialogHeader
 
@@ -301,13 +368,12 @@ Same props as `Dialog`. Wraps with `useMotionRoot` for exit animation support. R
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `open` | `boolean` | - | **Required.** Controlled open state for AnimatePresence enter/exit |
 | `closeText` | `string` | `'Close'` | Accessible label for the built-in close button |
 | `hideClose` | `boolean` | `false` | When `true`, hides the built-in close button |
 | `className` | `string` | - | Additional CSS classes applied to the content panel |
 | `children` | `React.ReactNode` | - | Dialog inner content |
 
-Requires `motion` package installed. Uses `AnimatePresence` + `m.div` for ~5KB bundle. Automatically respects `prefers-reduced-motion`.
+Requires `motion` package installed. Animates an `m.div` under `LazyMotion`, which loads the animation features on first open. Automatically respects `prefers-reduced-motion`.
 
 ### Responsive Variants
 

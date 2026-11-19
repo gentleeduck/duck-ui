@@ -81,6 +81,38 @@ import {
 </NavigationMenu>
 ```
 
+## Examples
+
+### Without a viewport
+
+`viewport={false}` drops each item's content right under its own trigger instead of in one shared panel that resizes between items. `NavigationMenuIndicator` in the list draws an arrow under the open trigger, and `active` on a link marks the current page.
+
+<ComponentPreview
+  name="navigation-menu-4"
+  className="[&>div>div>div[duck-preview]]:overflow-visible [&>div>div>div[duck-preview]]:items-start"
+  description="A navigation menu with no viewport, an indicator and an active link."
+/>
+
+### Vertical
+
+`orientation="vertical"` stacks the list and opens each item to its side, with the indicator and the chevron pointing at it. `ArrowUp` and `ArrowDown` move between the triggers, the arrow pointing away from the list enters the content, and a new item's content slides in from above or below.
+
+<ComponentPreview
+  name="navigation-menu-5"
+  className="[&>div>div>div[duck-preview]]:overflow-visible [&>div>div>div[duck-preview]]:items-start"
+  description="A vertical navigation menu with an indicator."
+/>
+
+### Controlled and manual
+
+`value` and `onValueChange` hold the open item. `activationMode="manual"` opens an item on a click only and keeps it open once the pointer leaves, `closeOnSelect={false}` on a link keeps the menu open after it, and a `disabled` trigger opens nothing and is passed over by the arrow keys.
+
+<ComponentPreview
+  name="navigation-menu-6"
+  className="[&>div>div>div[duck-preview]]:overflow-visible [&>div>div>div[duck-preview]]:items-start"
+  description="A controlled navigation menu that opens on a click, with links that keep it open and a disabled trigger."
+/>
+
 ## Component Composition
 
 <MermaidDiagram chart={`graph TD
@@ -90,7 +122,7 @@ import {
     C --> E[NavigationMenuContent]
     C --> F[NavigationMenuLink]
     A --> G[NavigationMenuViewport]
-    A --> H[NavigationMenuIndicator]
+    B --> H[NavigationMenuIndicator]
 `} />
 
 ## Link
@@ -130,12 +162,12 @@ Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the 
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionNavigationMenu` for a `scaleIn` entrance animation (fade, scale, and blur) with a bouncy spring transition, powered by [motion](https://motion.dev).
+Use `MotionNavigationMenu` to open the viewport with a `scaleIn` animation (fade, scale, and blur) on a bouncy spring, powered by [motion](https://motion.dev). The bar itself stays still, and the viewport plays its exit before it leaves.
 
 <ComponentPreview
   name="navigation-menu-3"
   className="[&>div>div>div[duck-preview]]:overflow-visible [&>div>div>div[duck-preview]]:items-start"
-  description="A navigation menu with motion entrance animation."
+  description="A navigation menu whose viewport scales in with motion."
 />
 
 <Callout icon={<Zap />}>
@@ -156,8 +188,10 @@ Root container that wraps the navigation menu and optionally renders the viewpor
 | `viewport` | `boolean` | `true` | Whether to render the `NavigationMenuViewport` automatically |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`) and inherited by descendants. |
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | The orientation of the menu |
-| `delayDuration` | `number` | `200` | Duration in ms from when the pointer enters a trigger until the content opens |
+| `delayDuration` | `number` | `200` | Duration in ms from when the pointer enters a trigger until the content opens. A click on the trigger before then cancels the open |
 | `skipDelayDuration` | `number` | `300` | Duration in ms a user has to enter another trigger without incurring a delay again |
+| `closeDelay` | `number` | `150` | Duration in ms an item stays open after the pointer leaves it |
+| `activationMode` | `'automatic' \| 'manual'` | `'automatic'` | `manual` opens and closes an item only on a click of its trigger, and ignores the pointer resting on it |
 | `className` | `string` | - | Additional CSS classes for the root element |
 | `children` | `React.ReactNode` | - | Navigation menu list and other elements |
 | `...props` | `React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root>` | - | Additional props inherited from `NavigationMenu.Root`. |
@@ -196,6 +230,9 @@ Root container that wraps the navigation menu and optionally renders the viewpor
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `className` | `string` | `--` | Additional CSS classes for the link |
+| `active` | `boolean` | `false` | Marks the link as the current page and draws it highlighted |
+| `closeOnSelect` | `boolean` | `true` | `false` keeps the menu open once the link is selected. A click with Cmd, Ctrl, Shift or Alt held leaves it open either way, since the link opens elsewhere and the page stays |
+| `onSelect` | `(event: Event) => void` | - | Called when the link is chosen. `event.preventDefault()` keeps the menu open |
 | `...props` | `React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Link>` | - | Additional props inherited from `NavigationMenu.Link`. |
 
 ### NavigationMenuViewport
@@ -207,9 +244,12 @@ Root container that wraps the navigation menu and optionally renders the viewpor
 
 ### NavigationMenuIndicator
 
+Place it in `NavigationMenuList`. It draws an arrow under the open trigger, or beside it in a vertical menu.
+
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `className` | `string` | `--` | Additional CSS classes for the indicator |
+| `forceMount` | `true` | - | Keeps the indicator drawn, as `data-state="hidden"`, while no item is open |
 | `...props` | `React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Indicator>` | - | Additional props inherited from `NavigationMenu.Indicator`. |
 
 ### navigationMenuTriggerStyle
@@ -226,4 +266,4 @@ import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu"
 
 ### MotionNavigationMenu
 
-Same props as `NavigationMenu`. Adds a `scaleIn` entrance animation (fade, scale, and blur) with a bouncy spring transition via motion. Requires the `motion` package.
+Same props as `NavigationMenu`. Its viewport opens with a `scaleIn` animation (fade, scale, and blur) on a bouncy spring and stays mounted through its exit, in place of the CSS animation `NavigationMenuViewport` plays. With `viewport={false}` the contents keep their CSS animation. Requires the `motion` package.

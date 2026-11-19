@@ -90,6 +90,24 @@ import {
 
 ## Examples
 
+### Focus
+
+An alert dialog focuses its Cancel button on open. `initialFocus` names another element, here the field that asks for the project's name before deleting it. `finalFocus` does the same on close, in place of the trigger.
+
+<ComponentPreview
+  name="alert-dialog-5"
+  description="An alert dialog that focuses a confirmation field on open."
+/>
+
+### An action that waits
+
+An action closes the dialog on click unless its `onClick` calls `event.preventDefault()`. Here it deletes first and closes once the work is done, and `onOpenChange` ignores Escape while it runs.
+
+<ComponentPreview
+  name="alert-dialog-6"
+  description="An alert dialog that stays open until its action finishes."
+/>
+
 ### Active Trigger on Open
 
 Style the trigger to appear active while the alert dialog is open using `data-[state=open]`:
@@ -177,13 +195,13 @@ Requires the `motion` package. Use `MotionAlertDialog` instead of `AlertDialog` 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `children` | `React.ReactNode` | `--` | Content of the trigger |
-| `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Trigger>` | - | Additional props inherited from `AlertDialogPrimitive.Trigger`. Always renders a native `button` element; there is no `asChild`/`Slot` support. |
+| `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Trigger>` | - | Additional props inherited from `AlertDialogPrimitive.Trigger` |
 
 ### AlertDialogPortal
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `container` | `HTMLElement` | - | Optional portal container |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Optional portal container |
 | `forceMount` | `true` | - | Forces mounted state for all portal children |
 | `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Portal>` | - | Additional props inherited from `AlertDialogPrimitive.Portal` |
 
@@ -194,13 +212,17 @@ Requires the `motion` package. Use `MotionAlertDialog` instead of `AlertDialog` 
 | `className` | `string` | - | Additional class names to apply |
 | `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>` | - | Additional props inherited from `AlertDialogPrimitive.Overlay` |
 
+Clear when the alert dialog is opened from a dialog's content, since the dialog's overlay already dims the page.
+
 ### AlertDialogContent
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `className` | `string` | `-` | Additional class names to apply |
 | `children` | `React.ReactNode` | `-` | Content displayed inside the dialog |
-| `forceMount` | `boolean` | `false` | If `true`, forces the content to stay mounted in the DOM |
+| `forceMount` | `true` | - | Forces the content to stay mounted in the DOM |
+| `initialFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on open in place of `AlertDialogCancel`. `false` leaves focus on the trigger |
+| `finalFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on close in place of the trigger. `false` moves focus nowhere |
 | `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>` | - | Additional props inherited from `AlertDialogPrimitive.Content` |
 
 ### MotionAlertDialog
@@ -211,7 +233,6 @@ Same props as `AlertDialog`. Wraps with `useMotionRoot` for exit animation suppo
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `open` | `boolean` | - | **Required.** Controlled open state for AnimatePresence enter/exit |
 | `className` | `string` | `-` | Additional class names to apply |
 | `children` | `React.ReactNode` | `-` | Content displayed inside the dialog |
 
@@ -231,7 +252,7 @@ Requires `motion` package installed. Content uses a `scaleIn` entrance (fade, sc
 | --- | --- | --- | --- |
 | `className` | `string` | `--` | Additional class names to apply |
 | `children` | `React.ReactNode` | `--` | Footer content (typically Action and Cancel buttons) |
-| `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Additional props to spread to the footer div |
 
 ### AlertDialogTitle
 

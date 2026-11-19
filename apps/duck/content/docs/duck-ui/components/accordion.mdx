@@ -106,6 +106,12 @@ Style the trigger to appear highlighted when its section is expanded using `data
 
 <ComponentPreview name="accordion-6" description="An accordion with active trigger styling when expanded." />
 
+### Controlled, with a disabled item
+
+`value` and `onValueChange` hold which item is open in your own state. A `disabled` item stays shut, and the arrow keys pass over it.
+
+<ComponentPreview name="accordion-8" description="A controlled accordion with a disabled item." />
+
 ## Component Composition
 
 <MermaidDiagram chart={`graph TD
@@ -153,8 +159,12 @@ Requires the `motion` package. Replace `AccordionItem` with `MotionAccordionItem
 | `defaultValue` | `string \| string[]` | - | Sets initial open state(s); string for single type, array for multiple |
 | `value` | `string \| string[]` | - | Controlled open state(s); requires `onValueChange` for updates |
 | `onValueChange` | `(value: string \| string[]) => void` | - | Callback fired when open state changes |
-| `collapsible` | `boolean` | `true` | Allows collapsing the currently open item by clicking again (single type only) |
+| `collapsible` | `boolean` | `false` | Allows collapsing the currently open item by clicking again (single type only) |
 | `renderOnce` | `boolean` | `false` | Mounts content only on first expand and preserves it afterward |
+| `disabled` | `boolean` | `false` | Disables every item |
+| `orientation` | `'vertical' \| 'horizontal'` | `'vertical'` | Which arrow keys move focus between triggers |
+| `loop` | `boolean` | `true` | Arrow keys wrap from the last trigger to the first and back |
+| `onFocusChange` | `(value: string \| null) => void` | - | Called with the focused item's value, and with `null` once focus leaves the triggers |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `className` | `string` | - | Additional CSS classes applied to the root div |
 | `children` | `React.ReactNode` | - | AccordionItem elements to render inside the accordion |
@@ -164,19 +174,23 @@ Requires the `motion` package. Replace `AccordionItem` with `MotionAccordionItem
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `string` | (required) | Unique identifier tying trigger to content |
-| `children` | `[trigger: ReactNode, content: ReactNode]` | (required) | Two nodes: first the `AccordionTrigger`, second the `AccordionContent` |
-| `className` | `string` | - | Additional CSS classes applied to the details element |
-| `...props` | `React.HTMLProps<HTMLDetailsElement>` | - | Additional props to spread to the details element |
+| `value` | `string` | a generated id | Identifies the item in the root's `value` |
+| `children` | `React.ReactNode` | - | The item's `AccordionTrigger` and `AccordionContent` |
+| `disabled` | `boolean` | `false` | Prevents the item from being opened or closed |
+| `onOpenChange` | `(open: boolean) => void` | - | Called when the item's trigger, or the browser's find-in-page, opens or closes it |
+| `className` | `string` | - | Additional CSS classes applied to the item div |
+| `...props` | `React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>` | - | Additional props inherited from `Accordion.Item` |
 
 ### AccordionTrigger
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `icon` | `React.ReactNode` | - | Custom icon component; defaults to a rotating ChevronDown |
-| `className` | `string` | - | Additional CSS classes applied to the summary element |
+| `className` | `string` | - | Additional CSS classes applied to the trigger button |
 | `children` | `React.ReactNode` | - | Content rendered as the trigger label |
-| `...props` | `React.HTMLProps<HTMLElement>` | - | Additional props to spread to the summary element |
+| `...props` | `React.HTMLProps<HTMLButtonElement>` | - | Additional props to spread to the trigger button |
+
+The trigger sits in an `h3`, so assistive technology lists each section, and its icon is hidden from it.
 
 ### AccordionContent
 
@@ -185,6 +199,8 @@ Requires the `motion` package. Replace `AccordionItem` with `MotionAccordionItem
 | `className` | `string` | - | Additional CSS classes applied to the content div |
 | `children` | `React.ReactNode` | - | Content to reveal when the accordion item is expanded |
 | `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+
+Closed content stays in the page as `hidden="until-found"`, so the browser's find-in-page opens the item holding the match. Its height animates with `tw-animate-css`'s `animate-accordion-down` and `animate-accordion-up`, which every browser runs.
 
 ### MotionAccordion
 
@@ -196,7 +212,7 @@ Wraps `Accordion` and auto-injects a stagger `index` into each `MotionAccordionI
 
 ### MotionAccordionItem
 
-Replaces `AccordionItem`. Keeps the `<details>` element open for motion height animation, and renders with a staggered `scaleIn` entrance (fade, scale, and blur; 50ms per index). Requires the `motion` package.
+Replaces `AccordionItem`. Renders with a staggered `scaleIn` entrance (fade, scale, and blur; 50ms per index). Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

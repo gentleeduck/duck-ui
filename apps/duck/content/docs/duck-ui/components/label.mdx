@@ -59,6 +59,22 @@ import { Label } from "@/components/ui/label"
 <Label htmlFor="email">Your email address</Label>
 ```
 
+A double click on a label toggles its control twice without selecting the label's text. A control inside the label keeps its own double click.
+
+## Examples
+
+### With an input
+
+Point `htmlFor` at the control's `id`, and the label names it for screen readers and focuses it on a click.
+
+<ComponentPreview name="label-2" description="A label above an email input." />
+
+### Disabled
+
+A label right after a disabled `Checkbox` or `Switch`, or one wrapped around a disabled control, dims and shows a not-allowed cursor. A label before its control, such as one above an `Input`, cannot see it, so dim that one yourself.
+
+<ComponentPreview name="label-5" description="Labels beside and around disabled controls." />
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and `Label` follows it. No `dir` prop needed.
@@ -96,6 +112,7 @@ Renders an accessible label element associated with form controls.
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `className` | `string` | - | Additional class names for the label element |
 | `htmlFor` | `string` | - | The `id` of the form element this label is associated with |
+| `onMouseDown` | `React.MouseEventHandler<HTMLLabelElement>` | - | Called on every press. A double click is then kept from selecting the label's text unless the handler called `preventDefault` or the press is inside a control. |
 | `children` | `React.ReactNode` | - | Label text or elements |
 | `ref` | `React.Ref<HTMLLabelElement>` | - | Ref forwarded to the label element |
 | `...props` | `React.HTMLProps<HTMLLabelElement>` | - | Additional props to spread to the label element |

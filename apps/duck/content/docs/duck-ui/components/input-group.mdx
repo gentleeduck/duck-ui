@@ -185,9 +185,29 @@ Wrap input groups with button groups to create prefixes and suffixes.
   className="[&_.preview]:p-4"
 />
 
+### Kbd
+
+A `Kbd` in an addon sits closer to the edge, as a button does.
+
+<ComponentPreview
+  name="input-group-14"
+  className="[&_.preview]:p-4"
+  description="A search input with a keyboard shortcut at its end."
+/>
+
+### Invalid
+
+Set `aria-invalid` on the control, and the whole group draws its border in the destructive colour.
+
+<ComponentPreview
+  name="input-group-15"
+  className="[&_.preview]:p-4"
+  description="An input group marked invalid, with its error below."
+/>
+
 ### Custom Input
 
-Add the `data-slot="input-group-control"` attribute to your custom input for automatic behavior and focus state handling.
+Add the `data-slot="input-group-control"` attribute to your custom input for automatic behavior and focus state handling: the group draws its focus ring, and a click on an addon focuses the input.
 
 No style is applied to the custom input. Apply your own styles using the `className` prop.
 
@@ -258,7 +278,7 @@ The root container that wraps inputs and addons into a unified group with shared
 
 ### InputGroupAddon
 
-Displays icons, text, buttons, or other content alongside inputs.
+Displays icons, text, buttons, or other content alongside inputs. A click on the addon, outside a button in it, focuses the group's control: the element marked `data-slot="input-group-control"`, or else its `input`.
 
 <Callout icon={<Lightbulb />} title="Focus Navigation">
   For proper focus navigation, the `InputGroupAddon` component should be placed
@@ -268,6 +288,7 @@ Displays icons, text, buttons, or other content alongside inputs.
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `align` | `'inline-start' \| 'inline-end' \| 'block-start' \| 'block-end'` | `'inline-start'` | Position of the addon relative to the input. Use `inline-start`/`inline-end` with `InputGroupInput` and `block-start`/`block-end` with `InputGroupTextarea`. |
+| `onClick` | `React.MouseEventHandler<HTMLDivElement>` | - | Runs before the addon focuses the group's control. Call `event.preventDefault()` to keep the focus where it is. |
 | `className` | `string` | `--` | Additional CSS classes to apply |
 | `children` | `React.ReactNode` | `--` | Icons, text, buttons, or other content |
 | `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |

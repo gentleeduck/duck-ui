@@ -74,7 +74,7 @@ import { Slider } from "@/components/ui/slider"
 ```
 
 ```tsx
-<Slider defaultValue={[33]} max={100} step={1} />
+<Slider aria-label="Volume" defaultValue={[33]} max={100} step={1} />
 ```
 
 ## Examples
@@ -90,6 +90,36 @@ import { Slider } from "@/components/ui/slider"
 ### Vertical
 
 <ComponentPreview name="slider-4" description="A vertical slider component." />
+
+### Controlled
+
+Hold the values with `value` and `onValueChange`, and save them in `onValueCommit`, which fires once when a drag ends or a key moves a thumb. `min`, `max` and `step` set the scale, and `largeStep` sets how far <Kbd>PageUp</Kbd> and <Kbd>PageDown</Kbd> move. Name it with `aria-labelledby` when the label is on the page.
+
+<ComponentPreview name="slider-7" description="A controlled slider with a visible label, its value, and a saved value." />
+
+### Form
+
+Inside a `<form>`, or with `form`, the slider submits its values under `name`, a range as `name[]`, and a form reset restores the values it started with. A change the user makes fires the form's `change` event and bubbles `input` to ancestors; a value set through `value` fires the form's `change` but not an ancestor's `input`.
+
+<ComponentPreview name="slider-8" description="A range slider submitted with a form and restored by its reset." />
+
+### Keeping thumbs in order
+
+By default a range thumb dragged past its neighbour swaps places with it. Set `preserveThumbOrder` to stop it at the neighbour instead, `minStepsBetweenThumbs` away. <Kbd>Home</Kbd> and <Kbd>End</Kbd> move the focused thumb, as far as its neighbour allows.
+
+<ComponentPreview name="slider-9" description="A range slider whose thumbs stay in order, two steps apart." />
+
+### Disabled
+
+`disabled` fades the whole slider once and marks each thumb `aria-disabled`, so assistive technology reads it as unavailable.
+
+<ComponentPreview name="slider-10" description="A disabled slider." />
+
+### Inverted
+
+`inverted` runs the scale the other way: a vertical slider then grows downwards, and a horizontal one from the right.
+
+<ComponentPreview name="slider-11" description="An inverted vertical slider that fills from the top." />
 
 ## Component Composition
 
@@ -132,17 +162,19 @@ Requires the `motion` package. Use `MotionSlider` instead of `Slider`. Same prop
 
 ### Slider
 
-A unified slider component that supports both single-thumb and multi-thumb (range) usage. Pass a single-element `defaultValue` array for a single thumb, or a multi-element array for a range slider. Internally composes `SliderPrimitive.Root`, `SliderPrimitive.Track`, `SliderPrimitive.Range`, and dynamically renders `SliderPrimitive.Thumb` elements based on the values array.
+A unified slider component that supports both single-thumb and multi-thumb (range) usage. Pass a single-element `defaultValue` array for a single thumb, or a multi-element array for a range slider. Internally composes `SliderPrimitive.Root`, `SliderPrimitive.Track`, `SliderPrimitive.Range`, and dynamically renders `SliderPrimitive.Thumb` elements based on the values array, each given its `index` so a server-rendered range shows its thumbs before it hydrates.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `className` | `string` | - | Additional CSS class names |
-| `defaultValue` | `number[]` | - | Uncontrolled initial values. When omitted (and `value` is also omitted), two thumbs are rendered at `[min, max]`. |
+| `defaultValue` | `number[]` | - | Uncontrolled initial values. When omitted (and `value` is also omitted), one thumb is rendered at `min`. |
 | `value` | `number[]` | - | Controlled values array |
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Slider orientation |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`) and inherited by slider parts. |
 | `min` | `number` | `0` | Minimum allowed value |
 | `max` | `number` | `100` | Maximum allowed value |
+| `aria-label` | `string` | - | Names the slider. One thumb takes it, since the thumb is the `role="slider"` element. Several thumbs share it through the root, which becomes a `role="group"`, and keep their own Minimum and Maximum names |
+| `aria-labelledby` | `string` | - | Names the slider by another element's id, in the same place `aria-label` goes |
 | `...props` | `React.ComponentProps<typeof SliderPrimitive.Root>` | - | All other props from `SliderPrimitive.Root` |
 
 ### MotionSlider
@@ -166,15 +198,17 @@ The following primitives are used internally by `Slider`:
 | `min` | `number` | `0` | Minimum allowed value |
 | `max` | `number` | `100` | Maximum allowed value |
 | `step` | `number` | `1` | Increment step for values |
+| `largeStep` | `number` | ten steps | How far <Kbd>PageUp</Kbd>, <Kbd>PageDown</Kbd> and <Kbd>Shift</Kbd> with an arrow key move a thumb |
 | `value` | `number[]` | - | Controlled values array |
 | `defaultValue` | `number[]` | `[min]` | Uncontrolled initial values |
 | `onValueChange` | `(value: number[]) => void` | - | Callback fired on every value change |
-| `onValueCommit` | `(value: number[]) => void` | - | Callback fired when interaction ends (pointer up or key commit) |
+| `onValueCommit` | `(value: number[]) => void` | - | Callback fired when an interaction that changed any value ends (pointer up or a key) |
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Slider orientation |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction for horizontal sliders. Uses the same `useDirection` resolution order. |
 | `inverted` | `boolean` | `false` | Inverts the slider direction |
 | `minStepsBetweenThumbs` | `number` | `0` | Minimum number of steps between thumbs |
-| `form` | `string` | - | Associates with a form element by ID |
+| `preserveThumbOrder` | `boolean` | `false` | Stops a thumb at its neighbour instead of letting it cross and swap places |
+| `form` | `string` | - | Associates with a form element by ID, whose reset restores the starting values |
 
 #### SliderPrimitive.Track
 

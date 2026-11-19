@@ -7,16 +7,16 @@ description: "Side-by-side comparison of @gentleduck/calendar and react-day-pick
 
 | | @gentleduck/calendar | react-day-picker |
 |---|---|---|
-| **Bundle size (gzip)** | ~5 KB | ~20 KB |
-| **Dependencies** | 0 (peer-optional: date-fns, dayjs, luxon) | date-fns (required) |
-| **Tree-shaking** | Full (ESM, `sideEffects: false`) | Partial |
-| **Calendar systems** | Gregorian, Hijri, Persian via adapter pattern | Gregorian default; Persian via separate `react-day-picker/persian` |
+| **Bundle size (gzip)** | 9.7 KB for a calendar, 5.8 KB for the hook | 20.0 KB |
+| **Dependencies** | 0 (peer-optional: date-fns, dayjs, luxon) | date-fns and @date-fns/tz (required) |
+| **Tree-shaking** | Full (ESM, `sideEffects: false`) | ESM, one `DayPicker` component |
+| **Calendar systems** | Gregorian, Islamic, Persian, Hebrew through adapters | Gregorian; others only by overriding `dateLib` |
 | **Selection modes** | single, multiple, range | single, multiple, range |
 | **ARIA compliance** | WAI-ARIA grid pattern, live regions, roving tabindex | ARIA attributes, custom navigation |
 | **CSS approach** | Headless (BYO styles), styled component uses `data-*` selectors + Tailwind | CSS modules, classNames prop, or custom styles |
 | **Multi-month** | Built-in (`numberOfMonths` prop) | Built-in (`numberOfMonths` prop) |
-| **Keyboard navigation** | Arrow keys, Home/End, PageUp/PageDown, Escape | Arrow keys, PageUp/PageDown |
-| **Framework** | React 18+ | React 18+ |
+| **Keyboard navigation** | Arrow keys, Home/End, PageUp/PageDown (Shift for a year), Escape | Arrow keys, Home/End, PageUp/PageDown (Shift for a year) |
+| **Framework** | React 18+ | React 16.8+ |
 | **Date library lock-in** | None (adapter pattern) | date-fns required |
 
 ---
@@ -25,7 +25,7 @@ description: "Side-by-side comparison of @gentleduck/calendar and react-day-pick
 
 <ComponentPreview name="chart-benchmark-calendar-vs" description="Calendar vs other libraries" />
 
-`@gentleduck/calendar` ships ~5 KB gzipped with zero runtime dependencies. react-day-picker pulls in date-fns, bringing total bundle impact to ~20 KB gzipped. The adapter pattern means you only pay for the date library you already use.
+A whole calendar built on `@gentleduck/calendar` is 9.7 KB gzipped with zero runtime dependencies, and the `useCalendar` hook alone is 5.8 KB. react-day-picker's `DayPicker` is 20.0 KB with the date-fns it requires. The adapter pattern means you only pay for the date library you already use.
 
 Both libraries cover the core calendar feature set. The key differences are in architecture:
 
@@ -175,9 +175,9 @@ Same selection modes, same numberOfMonths, same fixedWeeks. The differences are 
 
 | Feature | gentleduck | react-day-picker |
 |---|---|---|
-| **Bundle** | ~5 KB, 0 dependencies | ~20 KB + date-fns |
-| **Calendar systems** | 4 (Gregorian, Islamic, Persian, Hebrew) | 1 (Gregorian) |
-| **Date adapters** | 7 (Native, date-fns, dayjs, luxon + 3 calendar-specific) | date-fns only |
+| **Bundle** | 9.7 KB, 0 dependencies | 20.0 KB, date-fns included |
+| **Calendar systems** | 4 (Gregorian, Islamic, Persian, Hebrew) | Gregorian, or another through a `dateLib` you supply |
+| **Date adapters** | 7 (Native, date-fns, dayjs, luxon + 3 calendar-specific) | date-fns, overridable through `dateLib` |
 | **Headless hook** | `useCalendar` returns grid data for any UI | Not available |
 | **Render props** | `renderDay`, `renderHeader`, `renderWeekday`, `renderFooter` | Component injection |
 | **Month/year dropdowns** | `showDropdowns` prop, built-in | `captionLayout="dropdown"` |
@@ -186,15 +186,15 @@ Same selection modes, same numberOfMonths, same fixedWeeks. The differences are 
 | **Locale/RTL** | Full i18n with Arabic numerals, Persian text, Hebrew | Basic locale support |
 | **CSS required** | None (headless) | CSS modules or `style.css` import |
 
-The adapter pattern is the key architectural difference. react-day-picker locks you into date-fns. gentleduck lets you use whatever date library your project already depends on, or none at all (NativeAdapter uses the built-in Date object). If your project uses dayjs for everything else, you use DayjsAdapter. No second date library in your bundle.
+The adapter pattern is the key architectural difference. react-day-picker always ships date-fns, and its `dateLib` prop only overrides functions on top of it. gentleduck lets you use whatever date library your project already depends on, or none at all (NativeAdapter uses the built-in Date object). If your project uses dayjs for everything else, you use DayjsAdapter. No second date library in your bundle.
 
-For teams building products that serve Arabic, Persian, or Hebrew-speaking users, gentleduck is the only copy-paste calendar library that supports Islamic (Hijri), Persian (Jalaali), and Hebrew calendar systems through pluggable adapters. react-day-picker ships a limited Persian variant but does not support Islamic or Hebrew calendars.
+For teams building products that serve Arabic, Persian, or Hebrew-speaking users, gentleduck is the only copy-paste calendar library that supports Islamic (Hijri), Persian (Jalaali), and Hebrew calendar systems through pluggable adapters. react-day-picker 10 ships Gregorian only; any other system means writing a `dateLib` yourself.
 
 ---
 
 ## Why teams switch
 
-You drop 15 KB from your bundle immediately. react-day-picker plus date-fns costs ~20 KB gzipped. gentleduck/calendar costs ~5 KB with zero dependencies. If your project already uses dayjs or luxon, the savings are even larger because you stop shipping two date libraries.
+You drop about 10 KB from your bundle immediately: react-day-picker with date-fns is 20.0 KB gzipped, and a gentleduck calendar is 9.7 KB with zero dependencies. If your project already uses dayjs or luxon, the savings are even larger because you stop shipping two date libraries.
 
 You stop being locked into date-fns. The adapter pattern means your calendar uses whatever date library the rest of your project uses. One date library in your bundle instead of two.
 

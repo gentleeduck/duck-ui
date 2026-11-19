@@ -145,12 +145,30 @@ export default function Example() {
   return (
     <ResizablePanelGroup orientation="horizontal">
       <ResizablePanel>One</ResizablePanel>
-      <ResizableHandle />
+      <ResizableHandle withHandle={false} />
       <ResizablePanel>Two</ResizablePanel>
     </ResizablePanelGroup>
   )
 }
 ```
+
+### Sizes, limits and collapsing
+
+A size given as a string is a percentage of the group, `"30%"` or just `"30"`, and a size given as a number is pixels. `minSize` and `maxSize` bound a drag. A `collapsible` panel dragged below its `minSize` snaps to `collapsedSize`, and `onResize` reports each new size, so this sidebar swaps its label for an initial once it is a rail.
+
+<ComponentPreview name="resizable-6" description="A sidebar held between 20% and 45% that collapses to a rail." />
+
+### Reading the layout
+
+`onLayoutChange` reports every panel's size, keyed by its `id`, on each move of a drag. `onLayoutChanged` reports once the drag ends, so it is the one to save, and `defaultLayout` takes the same shape back to restore it.
+
+<ComponentPreview name="resizable-7" description="Resizable panels printing their layout as it changes." />
+
+### Disabled
+
+A `disabled` handle cannot be dragged or focused, and it dims. It can be locked and unlocked at any time.
+
+<ComponentPreview name="resizable-8" description="A layout locked until a button unlocks its handle." />
 
 ## Component Composition
 
@@ -195,7 +213,11 @@ Requires the `motion` package. Use `MotionResizablePanelGroup` instead of `Resiz
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `orientation` | `"horizontal" \| "vertical"` | (required) | Layout orientation of the panels |
+| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | Layout orientation of the panels |
+| `defaultLayout` | `Record<string, number>` | `--` | Starting percentage of each panel, keyed by panel `id`: the shape `onLayoutChanged` reports |
+| `onLayoutChange` | `(layout: Layout) => void` | `--` | Called on every change, each pointer move of a drag included |
+| `onLayoutChanged` | `(layout: Layout) => void` | `--` | Called once a change settles, after the pointer is released |
+| `disabled` | `boolean` | `false` | Turns resizing off for the whole group |
 | `className` | `string` | `--` | Additional CSS classes for the panel group |
 | `dir` | `"ltr" \| "rtl"` | `--` | Text direction override for RTL support |
 | `children` | `React.ReactNode` | `--` | `ResizablePanel` and `ResizableHandle` elements |
@@ -207,10 +229,14 @@ Re-exports `Panel` from `react-resizable-panels` directly.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `defaultSize` | `number` | `-` | Default size of the panel as a percentage (0-100) |
-| `minSize` | `number` | `-` | Minimum size of the panel as a percentage |
-| `maxSize` | `number` | `-` | Maximum size of the panel as a percentage |
-| `collapsible` | `boolean` | `false` | Whether the panel can be collapsed |
+| `id` | `string` | `--` | Names the panel in a layout, which `defaultLayout` needs |
+| `defaultSize` | `number \| string` | `--` | Starting size. A string is a percentage of the group (`"25%"`), a number is pixels |
+| `minSize` | `number \| string` | `--` | Smallest size a drag reaches, in the same units |
+| `maxSize` | `number \| string` | `--` | Largest size a drag reaches, in the same units |
+| `collapsible` | `boolean` | `false` | Snaps the panel to `collapsedSize` when it is dragged below `minSize` |
+| `collapsedSize` | `number \| string` | `"0%"` | Size of the panel while collapsed |
+| `onResize` | `(size: PanelSize) => void` | `--` | Called with each new size, as `asPercentage` and `inPixels` |
+| `disabled` | `boolean` | `false` | Keeps the panel at its size, whichever handle is dragged |
 | `className` | `string` | `--` | Additional CSS classes for the panel |
 | `children` | `React.ReactNode` | `--` | Panel content |
 | `...props` | `React.ComponentPropsWithoutRef<typeof Panel>` | - | Additional props inherited from `Panel`. |
@@ -220,6 +246,8 @@ Re-exports `Panel` from `react-resizable-panels` directly.
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `withHandle` | `boolean` | `true` | Whether to render the visible grip icon handle. Set to `false` to show only the thin line. |
+| `aria-label` | `string` | `"Resize panels"` | Name read out for the handle |
+| `disabled` | `boolean` | `false` | Stops the handle resizing its panels and takes it out of the tab order; it dims while disabled |
 | `className` | `string` | `--` | Additional CSS classes for the resize handle |
 | `...props` | `React.ComponentPropsWithoutRef<typeof Separator>` | - | Additional props inherited from `Separator`. |
 

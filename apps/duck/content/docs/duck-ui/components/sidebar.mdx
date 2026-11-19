@@ -139,6 +139,30 @@ export function AppSidebar() {
 }
 ```
 
+### Right side, search and badges
+
+`side="right"` puts the sidebar on the inline-end edge; render it after `SidebarInset` so its gap lands on that side. `SidebarInput` filters the menu, `SidebarGroupAction` adds a channel, and `SidebarMenuBadge` shows the unread count beside each item.
+
+<ComponentPreview name="sidebar-8" description="A right-hand sidebar with a search field, a group action and unread badges." className="[&_[duck-preview]]:!p-0 [&_[duck-preview]]:!items-stretch" />
+
+### Loading
+
+`SidebarMenuSkeleton` holds each row's place while the menu loads. Pass `index` to vary the widths, which are fixed so the server and the client render the same markup, and `showIcon` for the icon's place.
+
+<ComponentPreview name="sidebar-9" description="A sidebar showing skeleton rows while its menu loads." className="[&_[duck-preview]]:!p-0 [&_[duck-preview]]:!items-stretch" />
+
+### Collapsible groups
+
+A `Collapsible` around each group folds it away, with the group label as its trigger. `SidebarMenuSub` nests the pages under each item, and `size="sm"` makes the sub buttons smaller.
+
+<ComponentPreview name="sidebar-17" description="A sidebar whose groups fold open and closed." className="[&_[duck-preview]]:!p-0 [&_[duck-preview]]:!items-stretch" />
+
+### Non-collapsing
+
+`collapsible="none"` renders a plain column with no fixed position and no toggle, for a sidebar inside a page such as a settings panel. Give the provider `min-h-0`, since it fills the viewport's height by default.
+
+<ComponentPreview name="sidebar-18" description="A settings panel with a sidebar that does not collapse." />
+
 ## Component Composition
 
 A `Sidebar` component is composed of the following parts:
@@ -170,14 +194,13 @@ const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 ```
 
-For multiple sidebars in your application, you can use the `--sidebar-width` and `--sidebar-width-mobile` CSS variables in the `style` prop.
+For multiple sidebars in your application, you can use the `--sidebar-width` and `--sidebar-width-icon` CSS variables in the `style` prop. `MotionSidebar` animates to the same variables. On mobile the sidebar opens in a sheet portalled out of the provider, so it takes `SIDEBAR_WIDTH_MOBILE` whatever the provider sets.
 
 ```tsx showLineNumbers
 <SidebarProvider
   style={
     {
       "--sidebar-width": "20rem",
-      "--sidebar-width-mobile": "20rem",
     } as React.CSSProperties
   }
 >
@@ -255,7 +278,7 @@ Use the `SidebarHeader` component to add a sticky header to the sidebar.
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton>
               Select Workspace
-              <ChevronDown className="ml-auto" />
+              <ChevronDown className="ms-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-(--gentleduck-dropdown-menu-trigger-width)">
@@ -332,20 +355,22 @@ A `SidebarGroup` has a `SidebarGroupLabel`, a `SidebarGroupContent` and an optio
 To make a `SidebarGroup` collapsible, wrap it in a `Collapsible`.
 
 ```tsx showLineNumbers
-<Collapsible defaultOpen className="group/collapsible">
-  <SidebarGroup>
-    <SidebarGroupLabel asChild>
-      <CollapsibleTrigger>
+<SidebarGroup>
+  <Collapsible defaultOpen className="group/collapsible gap-0">
+    <SidebarGroupLabel asChild className="w-full justify-between hover:bg-sidebar-accent has-[>svg]:px-2">
+      <CollapsibleTrigger variant="nothing">
         Help
-        <ChevronDown className="ml-auto transition-transform group-data-[open=true]/collapsible:rotate-180" />
+        <ChevronDown className="transition-transform group-data-[open=true]/collapsible:rotate-180" />
       </CollapsibleTrigger>
     </SidebarGroupLabel>
     <CollapsibleContent>
       <SidebarGroupContent />
     </CollapsibleContent>
-  </SidebarGroup>
-</Collapsible>
+  </Collapsible>
+</SidebarGroup>
 ```
+
+`CollapsibleTrigger` is a `Button`, so `variant="nothing"` drops its ghost style and the label's classes win. See [Collapsible groups](#collapsible-groups).
 
 ## SidebarMenu
 
@@ -388,7 +413,7 @@ By default, the `SidebarMenuButton` renders a button but you can use the `asChil
 
 ### Tooltip
 
-Use the `tooltip` prop to show a tooltip when the sidebar is collapsed to icons.
+Use the `tooltip` prop to show a tooltip when the sidebar is collapsed to icons. `SidebarProvider` supplies the `TooltipProvider` it needs, with no delay, so the label shows as soon as an icon is hovered or focused.
 
 ```tsx showLineNumbers
 <SidebarMenuButton tooltip="Home">
@@ -659,4 +684,4 @@ Requires the `motion` package. Use `MotionSidebar` instead of `Sidebar`. All oth
 
 ### MotionSidebar
 
-Same props as `Sidebar`. Replaces CSS width transition with motion `m.div animate` using a `springBouncy` spring transition. Handles icon collapse, offcanvas slide, and floating/inset variants. On mobile, renders through the regular (non-motion) `Sheet`/`SheetContent`. Requires the `motion` package.
+Same props as `Sidebar`, less `onAnimationStart`, `onDrag`, `onDragStart` and `onDragEnd`, which motion uses for its own callbacks. Replaces CSS width transition with motion `m.div animate` using a `springBouncy` spring transition. Handles icon collapse, offcanvas slide, and floating/inset variants. On mobile, renders through the regular (non-motion) `Sheet`/`SheetContent`. Requires the `motion` package.

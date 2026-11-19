@@ -70,6 +70,15 @@ import { Skeleton } from "@/components/ui/skeleton"
   description="A card with skeleton showing a loading state."
 />
 
+### Loading, then content
+
+Each block is hidden from screen readers and stops pulsing under reduced motion, so the region does the telling: mark it `aria-busy` while it loads and put a visually hidden `role="status"` line in it. Size the blocks to the content they stand in for, so nothing moves when it arrives.
+
+<ComponentPreview
+  name="skeleton-5"
+  description="A profile that shows skeletons while it loads, then its content."
+/>
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the skeleton follows it. No `dir` prop or `rtl:` classes needed.
@@ -104,7 +113,7 @@ Requires the `motion` package. Use `MotionSkeleton` instead of `Skeleton`. Same 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
-| `className` | `string` | - | Additional CSS class names to control shape and size |
+| `className` | `string` | - | Additional CSS class names to control shape and size. The block is `aria-hidden`, and its pulse stops under `prefers-reduced-motion`. |
 | `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
 
 ### MotionSkeleton

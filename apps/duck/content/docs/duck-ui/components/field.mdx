@@ -135,11 +135,21 @@ Wrap `Field` components inside `FieldLabel` to create selectable field groups. T
 
 <ComponentPreview name="field-10" className="!mb-4 [&_.preview]:p-6" description="Selectable choice cards using radio items inside field labels." />
 
+A card shows as checked when the checkbox, switch or radio item inside it is.
+
+<ComponentPreview name="field-15" className="!mb-4 [&_.preview]:p-6" description="Choice cards built on checkboxes and a switch." />
+
 ### Field Group
 
 Stack `Field` components with `FieldGroup`. Add `FieldSeparator` to divide them.
 
 <ComponentPreview name="field-11" className="!mb-4 [&_.preview]:p-6" description="Grouped fields with separators for notification settings." />
+
+### Separator with text
+
+Give `FieldSeparator` children to write them across the line.
+
+<ComponentPreview name="field-17" className="!mb-4 [&_.preview]:p-6" description="A separator reading Or continue with between two ways to sign in." />
 
 ### Responsive Layout
 
@@ -183,7 +193,7 @@ The `Field` family is designed for composing accessible forms. A typical field i
 ## Responsive Layout
 
 - **Vertical fields:** Default orientation stacks label, control, and helper text  -  ideal for mobile-first layouts.
-- **Horizontal fields:** Set `orientation="horizontal"` on `Field` to align the label and control side-by-side. Pair with `FieldContent` to keep descriptions aligned.
+- **Horizontal fields:** Set `orientation="horizontal"` on `Field` to align the label and control side-by-side. Pair with `FieldContent` to keep descriptions aligned. With a `FieldContent` the row aligns to the top, and a `Checkbox` or `RadioGroupItem` drops a pixel to line up with the title.
 - **Responsive fields:** Set `orientation="responsive"` for automatic column layouts inside container-aware parents. Apply `@container/field-group` classes on `FieldGroup` to switch orientations at specific breakpoints.
 
 <ComponentPreview
@@ -205,6 +215,10 @@ The `Field` family is designed for composing accessible forms. A typical field i
   <FieldError>Enter a valid email address.</FieldError>
 </Field>
 ```
+
+Pass `errors` to `FieldError` to show what a form library or your own rules report: one message as text, several as a list.
+
+<ComponentPreview name="field-16" className="!mb-4 [&_.preview]:p-6" description="A password field listing the rules it still breaks." />
 
 ## Accessibility
 
@@ -298,7 +312,7 @@ Flex column that groups control and descriptions when the label sits beside the 
 
 ### FieldLabel
 
-Label styled for both direct inputs and nested `Field` children.
+Label styled for both direct inputs and nested `Field` children. Wrapped around a `Field`, it draws a choice card that shows as checked when the checkbox, switch or radio item inside it is.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

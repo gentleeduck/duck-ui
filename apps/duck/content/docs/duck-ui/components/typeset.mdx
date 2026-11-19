@@ -82,6 +82,14 @@ The component only adds the `typeset` class, so plain HTML works too.
 <article class="typeset">...</article>
 ```
 
+`asChild` puts the class on the element you give it instead of a `div`, such as an `article`.
+
+## What it styles
+
+Everything a markdown renderer writes: headings, paragraphs, links, ordered, nested and task lists, definition lists, inline code, `kbd`, `mark`, `abbr`, `sub` and `sup`, quotes, rules, code blocks, figures with captions, `details` and tables.
+
+<ComponentPreview name="typeset-9" description="Every element a markdown renderer writes, styled by one wrapper." />
+
 ## Rhythm
 
 Type has a lot of dials: scale ratios, tracking, measure, the space above and below every element. Exposing all of them makes markdown harder to style, not easier.
@@ -195,15 +203,21 @@ Add `data-not-typeset` or the `not-typeset` class to a component inside the pros
 
 A `Typeset` nested inside an opted-out component turns styling back on for its own content, so a preview card can still show prose.
 
+<ComponentPreview name="typeset-7" description="A link preview card that opts out of prose styles, with a nested Typeset for its excerpt." />
+
 ## Wide tables
 
-Tables wrap by default. Wrap a wide table in `typeset-scroll` to scroll it instead. The easiest place is your renderer's `table` component.
+A table wraps its text to fit, but one whose columns cannot wrap any narrower is wider than its container and widens the page. Wrap a wide table in `typeset-scroll` so what still does not fit scrolls inside the wrapper. The easiest place is your renderer's `table` component.
 
 ```tsx
 <div className="typeset-scroll">
   <table>...</table>
 </div>
 ```
+
+A column marked `align="right"`, which markdown writes for `--:`, lines up at the end of its cells.
+
+<ComponentPreview name="typeset-6" description="A release table in an article that scrolls inside its wrapper on narrow screens." />
 
 ## Overrides
 
@@ -214,6 +228,8 @@ Typeset lives in `@layer components` and uses `:where()`, so any Tailwind utilit
   <h2 className="text-primary">Overrides the heading color</h2>
 </Typeset>
 ```
+
+<ComponentPreview name="typeset-8" description="A heading, a date line and a quote restyled with utilities inside Typeset." />
 
 ## Compared with typography plugins
 
@@ -228,3 +244,21 @@ Typeset lives in `@layer components` and uses `:where()`, so any Tailwind utilit
 | Distribution | npm plugin | One CSS file in your repo |
 
 The `:where()` guard and the opt-out class (in the spirit of `not-prose`) come straight from the plugin.
+
+## API Reference
+
+### Typeset
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `size` | `'sm' \| 'default' \| 'lg'` | `'default'` | Sets `--typeset-size`, `--typeset-leading` and `--typeset-flow` together. A variable in `className` replaces the one the size sets |
+| `asChild` | `boolean` | `false` | Puts the class and props on the child element instead of a `div` |
+| `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Passed to the element |
+
+### Classes
+
+| Class | Effect |
+| --- | --- |
+| `typeset` | Styles everything inside. What `Typeset` renders |
+| `not-typeset`, `data-not-typeset` | Keeps prose styles off an element and its children |
+| `typeset-scroll` | Scrolls a wide table inside its wrapper |

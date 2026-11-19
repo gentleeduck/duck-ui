@@ -91,6 +91,15 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
   description="Alert variants including default and destructive styles."
 />
 
+### Icon, title and description
+
+An icon placed first takes its own column, and the title and description line up beside it. Either one can be left out, and a description can hold paragraphs and lists.
+
+<ComponentPreview
+  name="alert-3"
+  description="Alerts with an icon: one with a title and description, one with a title only, and a destructive one with a list."
+/>
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the alert follows it: the icon moves to the start side. No `dir` prop or `rtl:` classes needed.

@@ -67,6 +67,8 @@ import { DirectionProvider } from '@/components/ui/direction'
 
 Components resolve direction from their own `dir` prop, then the nearest `DirectionProvider`, then `<html dir>`. Changes to `<html dir>` are picked up at runtime. On the server the document is not available, so in server-rendered apps use `DirectionProvider` (it can sit right inside `<html dir="rtl">`) to get the right direction on first paint.
 
+`DirectionProvider` renders a `div` with `dir` and `display: contents`, so your own logical classes and `rtl:` variants follow it too, and it adds no box to the layout. A flex or grid row orders its items by its own direction, so put the provider around the row, not inside it.
+
 ### Custom components
 
 Use `useDirection` when your own component needs the direction in JavaScript, such as picking an icon or flipping a key. For layout, prefer logical classes (`ms-*`, `pe-*`, `start-*`, `text-start`), which follow `dir` without any code.
@@ -80,6 +82,26 @@ function NextIcon() {
   return dir === 'rtl' ? <ArrowLeft /> : <ArrowRight />
 }
 ```
+
+## Examples
+
+### Switch at runtime
+
+Change the provider's `dir` and everything under it follows: the slider fills from the other side and its arrow keys turn around, and the menu and its submenu open toward the start. `toDirection` narrows the string the toggle group reports, which is empty when its pressed item is pressed again.
+
+<ComponentPreview
+  name="direction-2"
+  description="A direction toggle over a slider and a dropdown menu with a submenu."
+/>
+
+### Nested directions
+
+A provider inside another wins for its subtree. Here an Arabic card keeps its install commands, and the tabs that switch them, left to right.
+
+<ComponentPreview
+  name="direction-3"
+  description="An Arabic card holding left-to-right install command tabs."
+/>
 
 ## API Reference
 

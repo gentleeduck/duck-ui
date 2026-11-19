@@ -134,6 +134,13 @@ Alternatively, you can set the `asChild` parameter and nest the link component.
 </Button>
 ```
 
+A link has no `disabled` of its own, so with `disabled` or `loading` the button marks it `aria-disabled`, dims it, and stops its click, from a pointer or from Enter, before the link or anything around it hears it. The link stays in the tab order, so a screen reader still finds it.
+
+<ComponentPreview
+  name="button-25"
+  description="Two links drawn as buttons, the second disabled."
+/>
+
 ## Examples
 
 ### Primary
@@ -195,8 +202,17 @@ Alternatively, you can set the `asChild` parameter and nest the link component.
 ### Nothing
 
 <ComponentPreview
-  name="button-10"
-  description="nothing button"
+  name="button-22"
+  description="A button with no variant styles of its own."
+/>
+
+### Sizes
+
+`sm`, `default` and `lg` set the height and padding, and `icon-sm`, `icon` and `icon-lg` make a square button for an icon alone, which takes an `aria-label`.
+
+<ComponentPreview
+  name="button-23"
+  description="Small, default and large outline buttons, and the three square icon sizes."
 />
 
 ### With Border
@@ -252,16 +268,27 @@ When `loading` is `true`, `Button` renders a `lucide-react` `<Loader />` with `a
 
 ### Collapsible
 
+`isCollapsed` draws the icon alone and drops `children` and `secondIcon`, so a collapsed button has no name of its own. Give it an `aria-label` while it is collapsed.
+
 <ComponentPreview
   name="button-18"
-  description="collapsible button"
+  description="A button that collapses to its icon on a press and keeps its name through aria-label."
+/>
+
+A row of collapsed buttons shows each one's name in a tooltip, the eye's copy of the `aria-label`. Once the labels show, the tooltips go.
+
+<ComponentPreview
+  name="button-20"
+  description="Inbox, Sent and Archive buttons collapsed to icons with tooltips, and a toggle that shows their labels."
 />
 
 ### Expand Icon
 
+The `expandIcon` variant makes the button a hover group, and `AnimationIcon` slides its icon in on hover, before the label or after it as `iconPlacement` says.
+
 <ComponentPreview
   name="button-19"
-  description="expand icon button"
+  description="Back and Next buttons whose arrows slide in on hover, one before the label and one after."
 />
 
 ## RTL Support
@@ -282,7 +309,7 @@ Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and `But
 Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 </Callout>
 
-Use `MotionButton` for a mount entrance plus press feedback powered by [motion](https://motion.dev). The button uses a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition on mount, and scales to 0.97 on tap for a physical press feel.
+Use `MotionButton` for a mount entrance plus press feedback powered by [motion](https://motion.dev). The button fades, scales and sharpens in on mount with a bouncy spring, and scales to 0.97 on tap for a physical press feel. The entrance scales on `scaleX` and `scaleY`, so `scale` keeps the 15ms tap tween and a press releases at once.
 
 <ComponentPreview
   name="button-10"
@@ -290,8 +317,15 @@ Use `MotionButton` for a mount entrance plus press feedback powered by [motion](
 />
 
 <Callout icon={<Zap />}>
-Requires the `motion` package. Use `MotionButton` instead of `Button`. Same props except `asChild` is not supported. The regular `Button` is perfectly fine - this is an optional enhancement.
+Requires the `motion` package. Use `MotionButton` instead of `Button`, with the same props. The regular `Button` is perfectly fine - this is an optional enhancement.
 </Callout>
+
+With `asChild`, `MotionButton` animates a wrapper around the element you give it, and disables a link the way `Button` does.
+
+<ComponentPreview
+  name="button-24"
+  description="Two links drawn as motion buttons, the second disabled."
+/>
 
 ## API Reference
 
@@ -307,7 +341,7 @@ Requires the `motion` package. Use `MotionButton` instead of `Button`. Same prop
 | `disabled` | `boolean` | `-` | Disables the button manually |
 | `icon` | `React.ReactNode` | `-` | Primary icon displayed before the content (or centered if collapsed) |
 | `secondIcon` | `React.ReactNode` | `-` | Secondary icon displayed after the content |
-| `isCollapsed` | `boolean` | `-` | If `true`, renders icon-only button (hides children and secondIcon) |
+| `isCollapsed` | `boolean` | `-` | Draws the icon alone, at the `icon` size, and drops `children` and `secondIcon`. Pair it with an `aria-label`. |
 | `type` | `'button' \| 'submit' \| 'reset'` | `'button'` | Native HTML button type |
 | `...props` | `Omit<React.HTMLProps<HTMLButtonElement>, 'size'>` | - | Additional props to spread to the button element |
 
@@ -321,8 +355,8 @@ Requires the `motion` package. Use `MotionButton` instead of `Button`. Same prop
 
 ### MotionButton
 
-Adds a `scaleIn` entrance (fade, scale, and blur) with a `springBouncy` transition on mount, `whileTap` press feedback (scale 0.97), and animated icon/text transitions via `AnimatePresence`. `asChild` is not supported. Requires the `motion` package.
+Adds a `scaleIn` entrance with a `springBouncy` transition on mount, `whileTap` press feedback (scale 0.97) that `useMotionPreset`'s `tap` releases at once, and animated icon/text transitions via `AnimatePresence`. With `asChild` it animates a wrapper around the child and marks the child `aria-disabled` while `disabled` or `loading`. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `...props` | `Omit<ButtonProps, 'asChild'>` | - | All props from `Button` except `asChild` |
+| `...props` | `ButtonProps` | - | All props from `Button` |

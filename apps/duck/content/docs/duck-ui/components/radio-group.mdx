@@ -90,6 +90,24 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 <ComponentPreview name="radio-group-2" description="A radio group integrated with React Hook Form for notification type selection." />
 
+### Horizontal, with a disabled option
+
+`orientation="horizontal"` lays the items in a row and keeps the arrow keys to Left and Right. A disabled item is skipped by the arrow keys, and its label dims with it.
+
+<ComponentPreview name="radio-group-5" description="A horizontal radio group with one disabled option." />
+
+### Custom indicators
+
+`indicator` draws an icon on an item while it is not selected, and `checkedIndicator` replaces the dot once it is.
+
+<ComponentPreview name="radio-group-6" description="A radio group drawing a cross and a tick in place of the dot." />
+
+### Read-only until edited
+
+`readOnly` keeps the selection fixed while the items stay focusable and readable, which suits a setting shown before it is edited. Here `value` and `onValueChange` hold the plan outside the group.
+
+<ComponentPreview name="radio-group-7" description="A controlled radio group that is read-only until Change plan is pressed." />
+
 ## Component Composition
 
 <MermaidDiagram chart={`graph TD
@@ -117,6 +135,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 | `G` | Jump to last item and select it |
 | `Tab` | Move focus into/out of the radio group |
 | `Space` | Select the focused item (if not already selected) |
+| `Enter` | Nothing, as on a native radio |
+
+In a `readOnly` group these keys move focus without selecting.
 
 ## RTL Support
 
@@ -153,12 +174,14 @@ Requires the `motion` package. Use `MotionRadioGroup` + `MotionRadioGroupItem` i
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `string` | - | Controlled value of the selected radio item |
+| `value` | `string \| null` | - | Controlled value of the selected radio item. `null` or `''` selects nothing |
 | `defaultValue` | `string` | - | Initial selected value when uncontrolled |
 | `onValueChange` | `(value: string) => void` | - | Callback fired when selection changes |
 | `disabled` | `boolean` | `false` | Whether the entire group is disabled |
-| `required` | `boolean` | `false` | Whether the group is required in a form |
+| `readOnly` | `boolean` | `false` | Keeps the selection fixed while the items stay focusable |
+| `required` | `boolean` | `false` | Whether the form refuses to submit with nothing selected |
 | `name` | `string` | - | The name used when submitting an HTML form |
+| `form` | `string` | - | Id of a form outside the group that it submits with |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `orientation` | `'horizontal' \| 'vertical'` | - | The orientation of the group for arrow key navigation |
 | `loop` | `boolean` | `true` | Whether keyboard navigation should loop |
@@ -169,9 +192,10 @@ Requires the `motion` package. Use `MotionRadioGroup` + `MotionRadioGroupItem` i
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `value` | `string` | (required) | Unique value for the radio item |
-| `disabled` | `boolean` | `false` | Whether this item is disabled |
-| `indicator` | `React.ReactElement` | - | Custom SVG or element for unchecked state indicator |
-| `checkedIndicator` | `React.ReactElement` | - | Custom SVG or element for checked state indicator |
+| `disabled` | `boolean` | `false` | Whether this item is disabled. Its label dims with it, as it does when the whole group is disabled |
+| `id` | `string` | generated | Id of the radio control, which the label points at |
+| `indicator` | `React.ReactElement` | - | Icon shown while the item is not selected, in the muted foreground colour. Without `checkedIndicator` the item draws its own dot once selected |
+| `checkedIndicator` | `React.ReactElement` | - | Icon shown while the item is selected, in place of the dot |
 | `textValue` | `string` | - | Optional text used for keyboard typeahead matching (`a-z`). In the registry component, plain string/number children are inferred automatically. |
 | `children` | `React.ReactNode` | - | Label content. When provided, a clickable label is rendered next to the control and selects the item on click. |
 | `className` | `string` | - | Additional CSS classes for the radio button control |
@@ -198,4 +222,4 @@ Wraps `RadioGroupItem` with a staggered `scaleIn` entrance animation (fade, scal
 - [Checkbox](/duck-ui/components/checkbox)  -  Multi-selection toggle control
 - [Switch](/duck-ui/components/switch)  -  Toggle between on and off states
 - [Select](/duck-ui/components/select)  -  Dropdown selection from a list
-- [Radio Group Primitive API](/duck-primitives/api/radio-group)  -  Headless primitive reference (`Root`, `Item`, `Indicator`)
+- [Radio Group Primitive API](/duck-primitives/api/radio-group)  -  Headless primitive reference (`Root`, `Item`, `Indicator`, `ItemProvider`, `ItemTrigger`, `ItemBubbleInput`)

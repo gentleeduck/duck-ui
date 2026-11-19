@@ -123,17 +123,25 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 
 <ComponentPreview name="scroll-area-2" description="A horizontal scroll area displaying a gallery of artwork images." />
 
+### Both directions
+
+Content wider and taller than the frame scrolls both ways in the one viewport. Sticky cells stick to the viewport, so a table header stays in view.
+
+<ComponentPreview name="scroll-area-6" description="A table scrolling in both directions under a sticky header." />
+
+### Scrolling from code
+
+`viewportRef` reaches the element that scrolls, so `scrollTo` and `scrollTop` work on it. Here two buttons move a build log to its start and its end. Pass `role="region"` and an `aria-label` when the area is a landmark of its own.
+
+<ComponentPreview name="scroll-area-5" description="A build log with buttons that scroll it to the top and to the latest line." />
+
 ## Scrollbar
 
 The viewport shows the native scrollbar, styled by the `::-webkit-scrollbar` rules from the installation step. Chromium and Safari use those rules; Firefox ignores them and draws its own thin scrollbar.
 
-To keep scrolling but hide the bar, pass `scrollbar-none` to the viewport. Use it sparingly: without a bar, nothing tells people the content scrolls.
+To keep scrolling but hide the bar, pass `scrollbar-none` to the viewport. Use it sparingly: without a bar, nothing tells people the content scrolls. A row cut off at the edge, as here, is one way to show it.
 
-```tsx
-<ScrollArea className="h-48" viewportClassName="scrollbar-none">
-  ...
-</ScrollArea>
-```
+<ComponentPreview name="scroll-area-7" description="A row of topics that scrolls sideways with its scrollbar hidden." />
 
 ## RTL Support
 
@@ -176,7 +184,7 @@ Requires the `motion` package. Use `MotionScrollArea` instead of `ScrollArea`. S
 | `className` | `string` | `--` | Additional CSS classes for the outer container |
 | `style` | `React.CSSProperties` | `--` | Inline styles for the outer container |
 | `children` | `React.ReactNode` | `--` | Scrollable content |
-| `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Additional props for the outer container, which `ref` also reaches |
 
 ### MotionScrollArea
 

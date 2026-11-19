@@ -485,7 +485,7 @@ const chartData = [
 #### Tailwind
 
 ```tsx
-<LabelList className="fill-[--color-desktop]" />
+<LabelList className="fill-(--color-desktop)" />
 ```
 
 ## Tooltip
@@ -595,6 +595,15 @@ const chartConfig = {
 
 This will use `Chrome` and `Safari` for the legend names.
 
+### Icons, formatter and placement
+
+A series given an `icon` in the config shows it in the legend and the tooltip in place of its colour swatch; `hideIcon` on `ChartLegendContent` keeps the swatch. `verticalAlign="top"` on `ChartLegend` puts the legend above the chart, and `ChartLegendContent` pads it from below. `formatter` on `ChartTooltipContent` draws each tooltip row itself, and a series given a `theme` takes its light or dark colour from the page.
+
+<ComponentPreview
+  name="chart-9"
+  description="A stacked bar chart of mallards and swans, with icons in a legend above it and tooltip rows that count birds."
+/>
+
 ## Accessibility
 
 You can turn on the `accessibilityLayer` prop to add an accessible layer to your chart.
@@ -675,7 +684,7 @@ Custom content renderer for `<ChartLegend>` (Recharts `Legend`). Reads theme col
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `nameKey` | `string` | - | Config or data key to use for legend item names. |
-| `hideIcon` | `boolean` | `false` | Whether to hide the icon or color swatch for each legend entry. |
+| `hideIcon` | `boolean` | `false` | Shows the colour swatch in place of a series' config `icon`. |
 | `verticalAlign` | `'top' \| 'middle' \| 'bottom'` | `'bottom'` | Vertical alignment of the legend relative to the chart. Controls top/bottom padding. |
 | `payload` | `RechartsPrimitive.LegendProps['payload']` | - | Legend payload provided automatically by Recharts. |
 | `className` | `string` | - | Additional CSS classes applied to the legend container. |

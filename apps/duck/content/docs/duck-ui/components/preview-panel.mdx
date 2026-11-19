@@ -24,7 +24,7 @@ order: 10
 
 ## Philosophy
 
-Preview panels bridge the gap between list views and detail views. Instead of navigating away to see content, users get an inline preview that respects their current context. We ship this as a compound component because the trigger, content, and dialog modes each need independent control while sharing state.
+Preview panels bridge the gap between list views and detail views. Instead of navigating away to see content, users get an inline preview that respects their current context. `PreviewPanelDialog` pairs two panels through `onStateChange` and `syncState`, the same two props you can use to pair your own.
 
 ## How It's Built
 
@@ -105,6 +105,8 @@ Drag, wheel and pinch start locked, so scrolling a page past the panel scrolls t
 </PreviewPanel>
 ```
 
+The lock button is named for what a press does: `unlockText` while locked and `lockText` while unlocked. With `showControls={false}` there is no lock button, so the gestures stay off unless you pass `defaultLocked={false}`.
+
 ### With actions
 
 `actions` renders in the toolbar before the zoom controls, and still renders with `showControls={false}`.
@@ -137,7 +139,7 @@ import { PreviewPanelDialog } from '@/components/ui/preview-panel'
 
 ### HTML / SVG content
 
-Render raw HTML or SVG strings directly using the `unsafeHtml` prop. The value is rendered verbatim via `dangerouslySetInnerHTML` and is not sanitized, so only pass HTML you fully trust.
+Render raw HTML or SVG strings directly using the `unsafeHtml` prop. The value is rendered verbatim via `dangerouslySetInnerHTML` and is not sanitized, so only pass HTML you fully trust. In development, either panel warns once in the console when the markup carries a `<script>` tag or an inline event handler.
 
 <ComponentPreview
   name="preview-panel-2"
@@ -160,6 +162,42 @@ Use as a zoomable image viewer.
 <ComponentPreview
   name="preview-panel-4"
   description="Preview panel as an image viewer."
+/>
+
+### Unlocked, with actions
+
+`defaultLocked={false}` turns drag, wheel and pinch on from the start, and `minZoom` and `maxZoom` bound every way of zooming. The grid toggle sits in `actions`, before the zoom controls. Unlocked, the wheel over the panel zooms it instead of scrolling the page.
+
+<ComponentPreview
+  name="preview-panel-7"
+  description="An unlocked preview panel with a grid toggle in its actions and zoom limits."
+/>
+
+### Synced panels
+
+Feed each panel's `onStateChange` into one state and hand that state back as `syncState`, and the panels pan and zoom together. A panel leaves alone a state it already shows, so its own update coming back does nothing.
+
+<ComponentPreview
+  name="preview-panel-8"
+  description="Two preview panels that pan and zoom together."
+/>
+
+### Controls of your own
+
+`showControls={false}` hides the zoom controls, and `syncState` moves the view from outside the panel. With the controls hidden there is no lock button, so this view stays locked and only the buttons move it.
+
+<ComponentPreview
+  name="preview-panel-9"
+  description="A preview panel moved by buttons outside it."
+/>
+
+### Dialog without sync
+
+`syncPanels={false}` gives the fullscreen panel a view of its own. `fullscreenText` names the expand button, and `panelClassName` styles both panels.
+
+<ComponentPreview
+  name="preview-panel-10"
+  description="A preview panel dialog whose fullscreen view is its own."
 />
 
 ## RTL Support
@@ -218,7 +256,7 @@ The core pan-zoom container.
 | `resetText` | `string` | `'Reset view'` | Label and tooltip for the reset control |
 | `lockText` | `string` | `'Lock the view'` | Label and tooltip for the lock control while the view is unlocked |
 | `unlockText` | `string` | `'Unlock the view'` | Label and tooltip for the lock control while the view is locked |
-| `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `...props` | `React.HTMLProps<HTMLDivElement>` | - | Spread onto the outer element, the one with `data-slot="preview-panel"` |
 
 ### MotionPreviewPanel
 

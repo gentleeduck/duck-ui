@@ -83,6 +83,8 @@ npm install @gentleduck/libs @gentleduck/primitives
 import {
   Popover,
   PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover"
 ```
@@ -90,9 +92,14 @@ import {
 ```tsx showLineNumbers
 <Popover>
   <PopoverTrigger>Open</PopoverTrigger>
-  <PopoverContent>Place content for the popover here.</PopoverContent>
+  <PopoverContent>
+    <PopoverTitle>Dimensions</PopoverTitle>
+    <PopoverDescription>Set the dimensions for the layer.</PopoverDescription>
+  </PopoverContent>
 </Popover>
 ```
+
+`PopoverTitle` names the popover for screen readers and `PopoverDescription` describes it: while either is mounted, the content's `aria-labelledby` or `aria-describedby` points at it.
 
 ## Examples
 
@@ -108,6 +115,15 @@ import {
 <ComponentPreview
   name="popover-3"
   description="A popover with form inputs for setting dimensions."
+/>
+
+### Focus
+
+`initialFocus` names the element focused on open, here the note rather than the Cancel button before it. `finalFocus` does the same on close, in place of the trigger.
+
+<ComponentPreview
+  name="popover-8"
+  description="A popover that focuses its note field on open."
 />
 
 ### Active Trigger on Open
@@ -128,7 +144,7 @@ Add a directional caret pointing at the trigger. The arrow tracks the trigger an
   description="A popover with an arrow pointing at the trigger."
 />
 
-Customize the border color via `--popover-border-color` on `PopoverContent`:
+Customize the border color via `--popover-border-color` on `PopoverContent`, in its `style` or as a class such as `[--popover-border-color:#5865f2]`. `MotionPopoverContent` takes it too:
 
 ```tsx
 <PopoverContent style={{ '--popover-border-color': '#5865f2' }}>
@@ -137,13 +153,25 @@ Customize the border color via `--popover-border-color` on `PopoverContent`:
 </PopoverContent>
 ```
 
+### Custom anchor, controlled and modal
+
+`PopoverAnchor` positions the content against an element other than the trigger, here the whole field around a small trigger. `open` and `onOpenChange` hold the state, so a form can close the popover once it saves. `modal` keeps focus inside, hides the page from a screen reader and stops a click outside from reaching it.
+
+<ComponentPreview
+  name="popover-9"
+  description="A modal popover anchored to a field, controlled so its form closes it on save."
+/>
+
 ## Component Composition
 
 <MermaidDiagram chart={`graph TD
     A[Popover] --> B[PopoverTrigger]
     A --> C[PopoverContent]
     A --> D[PopoverAnchor]
-    A --> E[PopoverClose]
+    C --> E[PopoverTitle]
+    C --> F[PopoverDescription]
+    C --> G[PopoverArrow]
+    C --> H[PopoverClose]
 `} />
 
 ## RTL Support
@@ -202,19 +230,47 @@ Requires the `motion` package. Use `MotionPopover` instead of `Popover` and `Mot
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `asChild` | `boolean` | `--` | Use the child element as the trigger |
+| `asChild` | `boolean` | `false` | Use the child element as the trigger |
 | `...props` | `React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Trigger>` | - | Additional props inherited from `Popover.Trigger`. |
 
 ### PopoverContent
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `forceMount` | `boolean` | `-` | Keep content mounted for animation control |
+| `forceMount` | `true` | - | Keeps the content in the page while closed, as `data-state="closed"`, for an exit animation to run on |
 | `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'` | Preferred side relative to the trigger |
 | `align` | `'start' \| 'center' \| 'end'` | `'center'` | Alignment on the chosen side |
 | `sideOffset` | `number` | `4` | Main-axis offset from trigger |
 | `alignOffset` | `number` | `0` | Cross-axis offset from trigger |
+| `initialFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on open in place of the first tabbable element; `false` leaves focus on the trigger |
+| `finalFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on close in place of the trigger; `false` moves focus nowhere |
 | `...props` | `React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>` | - | Additional props inherited from `Popover.Content`. |
+
+### PopoverTitle
+
+An `h2` styled `font-medium leading-none` that names the popover. Use `asChild` for another heading level.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `...props` | `React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Title>` | - | Additional props inherited from `Popover.Title`. |
+
+### PopoverDescription
+
+A muted `p` that describes the popover.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `...props` | `React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Description>` | - | Additional props inherited from `Popover.Description`. |
+
+### PopoverArrow
+
+A caret drawn in the content's fill and border colors.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `width` | `number` | `14` | Arrow width in pixels |
+| `height` | `number` | `7` | Arrow height in pixels |
+| `...props` | `React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Arrow>` | - | Additional props inherited from `Popover.Arrow`. |
 
 ### PopoverClose
 

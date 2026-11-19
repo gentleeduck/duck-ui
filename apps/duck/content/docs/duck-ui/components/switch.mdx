@@ -23,7 +23,7 @@ Switches represent immediate, binary state changes  -  unlike checkboxes, which 
   primitives --> |"provides"| NativeCheckbox["Native Checkbox\nwith role=switch"]
   motion --> |"provides"| AnimVariants["Slide Animation"]
   motion --> |"provides"| CheckerStyles["checkersStylePattern"]
-  Switch --> |"adds"| A11y["aria-checked\naria-label"]
+  Switch --> |"adds"| A11y["role=switch on\nthe native checked state"]
 
   classDef external fill:#818cf8,stroke:#6366f1,color:#fff
   classDef internal fill:#2dd4bf,stroke:#14b8a6,color:#fff
@@ -83,6 +83,20 @@ import { Switch } from "@/components/ui/switch"
 
 <ComponentPreview name="switch-2" description="A switch integrated with React Hook Form for toggling email notification preferences." />
 
+Inside a `<form>`, a form reset puts the switch back on `defaultChecked` and calls `onCheckedChange` with that value. A value set through `checked` fires the form's `change` event as a click would, without running the switch's own `onChange`, `onClick` or `onCheckedChange`. If the owner does not follow a reset, a controlled switch goes back to its `checked` before the next paint. `MotionSwitch` does the same.
+
+### Native form
+
+With a `name`, a checked switch submits `name=on` and an unchecked one submits nothing, as a checkbox does. Reset puts it back on `defaultChecked` and tells `onCheckedChange`, so the label follows.
+
+<ComponentPreview name="switch-6" description="A switch submitted with a native form and restored by its reset." />
+
+### Icons, controlled and disabled
+
+`indicator` is drawn on the thumb while the switch is off and `checkedIndicator` while it is on. `checked` with `onCheckedChange` holds the value, and `disabled` keeps it where it is.
+
+<ComponentPreview name="switch-5" description="A controlled switch with a sun and moon in its thumb, beside a disabled one." />
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and `Switch` follows it: the thumb starts on the right and slides left when checked. No `dir` prop or `rtl:` classes needed.
@@ -120,10 +134,10 @@ Requires the `motion` package. Use `MotionSwitch` instead of `Switch`. The motio
 | --- | --- | --- | --- |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `className` | `string` | - | Additional class names for the checkbox input |
-| `indicator` | `React.ReactElement` | - | Custom element for the unchecked state indicator |
-| `checkedIndicator` | `React.ReactElement` | - | Custom element for the checked state indicator |
+| `indicator` | `React.ReactElement` | - | Icon drawn on the thumb while off. Without `checkedIndicator` the thumb is plain while on |
+| `checkedIndicator` | `React.ReactElement` | - | Icon drawn on the thumb while on |
 | `onChange` | `(event: ChangeEvent) => void` | - | Native checkbox `change` event handler |
-| `onCheckedChange` | `(checked: boolean) => void` | - | Callback with the new checked boolean when toggled |
+| `onCheckedChange` | `(checked: boolean) => void` | - | Called with the new checked state on a click, and on a form reset that moves it back |
 | `ref` | `React.Ref<HTMLInputElement>` | - | Ref forwarded to the native checkbox input |
 | `style` | `React.CSSProperties` | - | Inline styles applied to the input element |
 | `...props` | `React.HTMLProps<HTMLInputElement>` | - | Additional props to spread to the input element |
@@ -139,7 +153,7 @@ Renders its own motion-controlled track and thumb. The thumb slides with a bounc
 | `defaultChecked` | `boolean` | `false` | Uncontrolled initial checked state |
 | `disabled` | `boolean` | `false` | Disables interaction and lowers opacity |
 | `onChange` | `(event: ChangeEvent) => void` | - | Native checkbox `change` event handler |
-| `onCheckedChange` | `(checked: boolean) => void` | - | Callback with the new checked boolean when toggled |
+| `onCheckedChange` | `(checked: boolean) => void` | - | Called with the new checked state on a click, and on a form reset that moves it back |
 | `className` | `string` | - | Additional class names for the outer track label |
 | `style` | `React.CSSProperties` | - | Inline styles applied to the outer track label |
 | `...props` | `React.HTMLProps<HTMLInputElement>` | - | Additional props spread onto the hidden input element |

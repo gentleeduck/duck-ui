@@ -64,11 +64,13 @@ import { Textarea } from '@/components/ui/textarea'
 
 ## Examples
 
-### Default
+### Character count
+
+`maxLength` stops typing at the limit. Point `aria-describedby` at the count so a screen reader reads it with the field.
 
 <ComponentPreview
   name="textarea-2"
-  description="A textarea"
+  description="A textarea counting down the characters left."
 />
 
 ### Disabled
@@ -103,6 +105,24 @@ import { Textarea } from '@/components/ui/textarea'
 
 <ComponentPreview name="textarea-7" description="A textarea integrated with React Hook Form for bio input with validation." />
 
+### Invalid and warning
+
+`aria-invalid="true"` draws the textarea in the destructive colour and `aria-warning="true"` in the warning colour, as on `Input`. Link the message with `aria-describedby`.
+
+<ComponentPreview name="textarea-11" description="An invalid textarea and one with a warning, each with its message." />
+
+### Grows with its text
+
+The textarea grows with its text through `field-sizing: content`. Cap it with a `max-h-*` class and it scrolls past that. A browser without `field-sizing` keeps it at its minimum height and scrolls.
+
+<ComponentPreview name="textarea-12" description="A textarea that grows with each line up to a maximum height." />
+
+### Direction from the text
+
+`dir="auto"` is kept as it is, so the text typed decides the direction rather than the page. Use it where people may write in either a right-to-left or a left-to-right language.
+
+<ComponentPreview name="textarea-10" description="A textarea whose direction follows the language typed in it." />
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and `Textarea` follows it. No `dir` prop needed.
@@ -136,7 +156,9 @@ Requires the `motion` package. Use `MotionTextarea` instead of `Textarea`. Same 
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
+| `dir` | `'ltr' \| 'rtl' \| 'auto'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). `'auto'` is kept as it is, so the text typed decides |
+| `aria-invalid` | `boolean \| 'true'` | - | Draws the border and ring in the destructive colour |
+| `aria-warning` | `'true'` | - | Draws the border and ring in the warning colour. Not an ARIA attribute, so pair it with a message linked by `aria-describedby` |
 | `className` | `string` | - | Additional CSS class names |
 | `...props` | `React.HTMLProps<HTMLTextAreaElement>` | - | Additional props to spread to the textarea element |
 

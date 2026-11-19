@@ -131,9 +131,15 @@ The `Item` component has different sizes for different use cases. For example, y
 
 <ComponentPreview name="item-8" className="[&_.preview]:p-4" description="Items with header images displayed in a grid layout." />
 
+### Footer
+
+`ItemFooter` spans the full width of the item, below everything else in it.
+
+<ComponentPreview name="item-13" className="[&_.preview]:p-4" description="A deployment item with a footer holding its details." />
+
 ### Link
 
-To render an item as a link, use the `asChild` prop. The hover and focus states will be applied to the anchor element.
+To render an item as a link, use the `asChild` prop. The hover and focus states will be applied to the anchor element, and it stays a link to a screen reader.
 
 <ComponentPreview name="item-9" className="[&_.preview]:p-4" description="Items rendered as anchor links using the asChild prop." />
 
@@ -202,7 +208,7 @@ The main component for displaying content with media, title, description, and ac
 | `className` | `string` | - | Additional class names for the item container |
 | `variant` | `"default" \| "muted" \| "outline"` | `"default"` | Visual variant of the item |
 | `size` | `"default" \| "sm"` | `"default"` | Size of the item |
-| `asChild` | `boolean` | `false` | Render as a child element using `Slot` |
+| `asChild` | `boolean` | `false` | Render as a child element using `Slot`. The child keeps its own role. |
 | `children` | `React.ReactNode` | - | Item content (media, content, actions, etc.) |
 | `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
 
@@ -238,7 +244,7 @@ export function ItemLink() {
 
 ### ItemGroup
 
-A container that groups related items together with consistent styling.
+A container that groups related items together with consistent styling. It is a list, and each `Item` in it a list item. An item given `asChild` is wrapped in a list item that takes no layout, so a link stays a link.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -248,7 +254,7 @@ A container that groups related items together with consistent styling.
 
 ### ItemSeparator
 
-A horizontal separator between items in a group.
+A horizontal separator between items in a group. Inside an `ItemGroup` it is drawn but not announced, since a list holds only list items.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

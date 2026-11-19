@@ -89,6 +89,17 @@ export function createComponentIndexSignature(options: {
   })
 }
 
+/** Two items of one name share an index key and a registry file, so one would silently overwrite the other. */
+export function assertUniqueNames(items: readonly Pick<IIndexedRegistryEntry, 'name' | 'type'>[]) {
+  const types = new Map<string, string>()
+  for (const { name, type } of items) {
+    const first = types.get(name)
+    if (first !== undefined)
+      throw new Error(`Two registry items are named "${name}", a ${first} and a ${type}; rename one.`)
+    types.set(name, type)
+  }
+}
+
 export function renderComponentIndexContent(options: {
   adapter: {
     renderEntry: (options: { id: string; item: IIndexedRegistryEntry }) => string
@@ -100,6 +111,7 @@ export function renderComponentIndexContent(options: {
   ssr: boolean
   context: IRegistryBuildContext
 }) {
+  assertUniqueNames(options.filteredItems)
   let imports = ''
   let entries = ''
 

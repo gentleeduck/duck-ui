@@ -29,10 +29,8 @@ function PopoverArrow() {
 ### Custom shape with `asChild`
 
 ```tsx
-<Arrow.Arrow asChild width={14} height={8}>
-  <svg viewBox="0 0 14 8">
-    <path d="M0 0h14L7 8z" />
-  </svg>
+<Arrow.Arrow asChild viewBox="0 0 14 8" width={14} height={8}>
+  <path d="M0 0h14L7 8z" />
 </Arrow.Arrow>
 ```
 
@@ -42,14 +40,14 @@ function PopoverArrow() {
 
 ### `Arrow.Arrow`
 
-Renders an SVG arrow. By default, it renders a downward triangle polygon.
+Also exported as `Arrow.Root`, the name Radix gives it. Renders an `<svg>` holding a downward arrow with a rounded tip, drawn in a `0 0 30 10` viewBox and stretched to `width` and `height`. A `viewBox` or `preserveAspectRatio` passed in replaces its own.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `width` | `number` | `10` | SVG width |
 | `height` | `number` | `5` | SVG height |
-| `asChild` | `boolean` | - | Render as child element |
-| `children` | `React.ReactNode` | - | Custom SVG contents when using `asChild` |
+| `asChild` | `boolean` | - | Draw `children` inside the svg in place of the rounded arrow. The svg stays, unlike `asChild` elsewhere |
+| `children` | `React.ReactNode` | - | The shape drawn with `asChild`, in the svg's viewBox |
 | `...props` | `React.ComponentPropsWithoutRef<typeof Primitive.svg>` | - | Native SVG props |
 
 ---

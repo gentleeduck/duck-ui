@@ -19,16 +19,27 @@ import { Portal } from '@gentleduck/primitives/portal'
 <Portal container={document.getElementById('my-container')}>
   <div>I'm rendered in #my-container</div>
 </Portal>
+
+// A ref, even to an element that renders after the portal
+const ref = React.useRef<HTMLDivElement>(null)
+
+<Portal container={ref}>
+  <div>I'm rendered in the div below</div>
+</Portal>
+<div ref={ref} />
 ```
 
 ## Props
 
+`Portal` is also exported as `Root`, the name Radix gives it.
+
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `container` | `Element \| DocumentFragment \| null` | `document.body` | Target container |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Target container. A ref is read when the portal renders, and nothing renders while it holds no element |
+| `asChild` | `boolean` | `false` | Portal the child itself instead of a `<div>`. Only the `<div>` carries `data-slot="portal"`, so the child keeps its own |
 
 <Callout icon={<Lightbulb />}>
 
-Portal waits until after the first layout effect before mounting, ensuring SSR compatibility.
+Without a `container`, Portal renders nothing until its first layout effect, so the server render and the first client render match.
 
 </Callout>

@@ -17,7 +17,8 @@ graph TD
   A --> D["Selection Logic"]
   A --> E["Navigation"]
   B --> F["NativeAdapter (Date)"]
-  B --> G["Custom Adapter (dayjs, date-fns, Temporal)"]
+  B --> G["dayjs, date-fns, Luxon adapters"]
+  B --> M["Islamic, Persian, Hebrew adapters"]
   C --> H["React Hooks"]
   D --> H
   E --> H
@@ -37,7 +38,7 @@ Built to replace `react-day-picker`. The measurements:
 
 <ComponentPreview name="chart-benchmark-calendar" description="Calendar internals"  />
 
-~5 KB gzipped. Zero dependencies. 4 calendar systems. 7 date adapters. Full keyboard navigation and WAI-ARIA grid pattern. Islamic, Persian, and Hebrew support at this size. See the [full benchmarks](/duck-calendar/benchmarks) and the [comparison with react-day-picker](/www/comparisons/vs-react-day-picker).
+5.8 KB gzipped for `useCalendar` with the `NativeAdapter`, and 9.7 KB for a whole calendar built with `@gentleduck/primitives`, against 20.0 KB for react-day-picker, 36.9 KB for React Aria's and 43.3 KB for Ark UI's. Zero dependencies. 4 calendar systems. 7 date adapters. Full keyboard navigation and WAI-ARIA grid pattern. See the [full benchmarks](/duck-calendar/benchmarks) and the [comparison with react-day-picker](/www/comparisons/vs-react-day-picker).
 
 ## The four layers
 
@@ -45,7 +46,7 @@ Built to replace `react-day-picker`. The measurements:
 
 <Step>**Core** - Pure functions for grid building, selection logic, and navigation. No React, no state, no side effects.</Step>
 
-<Step>**Adapter** - An `Adapter.IDateAdapter<TDate>` interface that abstracts date operations. Ships with a zero-dependency `NativeAdapter` for `Date`. Plug in dayjs, date-fns, or Temporal when you need it.</Step>
+<Step>**Adapter** - An `Adapter.IDateAdapter<TDate>` interface that abstracts date operations. Ships with a zero-dependency `NativeAdapter` for `Date` and adapters for dayjs, date-fns and Luxon; write your own for anything else, such as Temporal.</Step>
 
 <Step>**React hooks** - `useCalendar`, `useTimePicker`, `useDateTime` manage state and return prop getters you spread onto your elements.</Step>
 
@@ -59,9 +60,9 @@ Built to replace `react-day-picker`. The measurements:
 
 Existing React calendar libraries bundle CSS, mandate a specific date library, or ship monolithic components you cannot tree-shake. `@gentleduck/calendar` addresses each:
 
-- **~5 KB gzipped** - 3 to 9 times smaller than the alternatives tested.
+- **5.8 KB gzipped** - `useCalendar` with the `NativeAdapter`, measured the way the benchmarks measure React Aria and Ark UI.
 - **Zero runtime dependencies** - `NativeAdapter` uses `Date` and `Intl.DateTimeFormat`.
-- **Pluggable date backend** - swap `Date` for dayjs, date-fns, or Temporal without touching calendar code.
+- **Pluggable date backend** - swap `Date` for dayjs, date-fns, Luxon or your own adapter without touching calendar code.
 - **No CSS** - style with data attributes and Tailwind.
 - **WAI-ARIA grid pattern** - keyboard navigation and screen reader announcements built in.
 

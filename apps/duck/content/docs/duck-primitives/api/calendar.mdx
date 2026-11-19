@@ -17,10 +17,8 @@ import * as Calendar from '@gentleduck/primitives/calendar'
     <Calendar.PrevButton />
     <Calendar.NextButton />
   </Calendar.Nav>
-  <Calendar.Grid>
-    <Calendar.Weekdays />
-    {/* Map over state.weeks to render Calendar.Day */}
-  </Calendar.Grid>
+  <Calendar.ViewTrigger view="months" />
+  <Calendar.Grid>{(day) => <Calendar.Day day={day} />}</Calendar.Grid>
   <Calendar.MonthView />
   <Calendar.YearView />
 </Calendar.Root>
@@ -50,9 +48,10 @@ function DatePicker() {
           </Calendar.NextButton>
         </Calendar.Nav>
       </div>
-      <Calendar.Grid className="grid grid-cols-7 gap-1">
-        <Calendar.Weekdays className="contents text-muted-foreground text-xs" />
-        {/* Day cells rendered via context */}
+      <Calendar.Grid className="space-y-1 [&_[role=row]]:grid [&_[role=row]]:grid-cols-7">
+        {(day) => (
+          <Calendar.Day day={day} className="h-8 rounded data-[outside-month]:opacity-50 data-[selected]:bg-primary" />
+        )}
       </Calendar.Grid>
     </Calendar.Root>
   )
@@ -71,7 +70,7 @@ The root component. Wraps `useCalendar` and provides context to all children. Re
 | :--- | :--- | :--- | :--- |
 | `adapter` | `Adapter.IDateAdapter<Date>` | **required** | Date adapter instance |
 | `mode` | `Selection.SelectionMode` | **required** | `'single'`, `'range'`, `'multi'`, or `'multi-range'` |
-| `locale` | `CalendarLocaleConfig` | - | Locale, week start day, and direction |
+| `locale` | `CalendarLocaleConfig` | - | Locale, week start day, and direction. The week starts on the locale's first day unless `weekStartDay` is given, and on Sunday with no locale. The direction is written on the root as `dir`, and comes from a `DirectionProvider` when the locale has none |
 | `month` | `Date` | - | Controlled displayed month |
 | `defaultMonth` | `Date` | - | Default month (uncontrolled) |
 | `selected` | `CalendarValue<Date, M>` | - | Controlled selection |
@@ -85,6 +84,11 @@ The root component. Wraps `useCalendar` and provides context to all children. Re
 | `disabled` | `Date[] \| (date) => boolean` | - | Disabled dates |
 | `fromDate` | `Date` | - | Earliest selectable date |
 | `toDate` | `Date` | - | Latest selectable date |
+| `unavailable` | `Date[] \| (date) => boolean` | - | Days that keep focus but cannot be picked, such as a booked day. A range cannot span one |
+| `readOnly` | `boolean` | `false` | Focus still moves, but no day can be picked |
+| `invalid` | `boolean` | `false` | Marks the selection invalid. It is also invalid while it holds a day that cannot be picked |
+| `pageBehavior` | `'single' \| 'visible'` | `'single'` | How far the nav buttons and <Kbd>PageUp</Kbd>/<Kbd>PageDown</Kbd> move: one month, or every shown month |
+| `showWeekNumber` | `boolean` | `false` | Draws each week's ISO week number at the start of its row |
 
 **Data attributes:**
 
@@ -161,15 +165,49 @@ Automatically applies `aria-label="Go to next month"` and `disabled` from contex
 
 ---
 
+### `Calendar.ViewTrigger`
+
+Opens a view: the days, the month view or the year view. Renders a `button`. The root's `data-view` names the view that shows, so a stylesheet shows one view at a time.
+
+| Prop | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `view` | `'days' \| 'months' \| 'years'` | (required) | The view a click opens |
+| All `button` props | - | - | Standard button HTML attributes |
+
+**Data attributes:**
+
+| Attribute | Value |
+| :--- | :--- |
+| `data-slot` | `"calendar-view-trigger"` |
+| `data-state` | `"active"` while its view shows, otherwise `"inactive"` |
+
+---
+
 ### `Calendar.Grid`
 
-The day grid container. Renders a `div` with `role="grid"`, `aria-roledescription="calendar"`, and `aria-labelledby` pointing to the Header element (set automatically by `getGridProps()`).
+The day grid. Renders a `div` with `role="grid"`, `aria-roledescription="calendar"`, and `aria-labelledby` pointing to the Header element (set automatically by `getGridProps()`). It draws a `Calendar.Weekdays` row, then a `role="row"` per week holding a `Calendar.Day` per day, with each day's selection, range and disabled state applied.
+
+| Prop | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `month` | `number` | `0` | Which of the shown months to draw, counting from 0. Render one grid per month when `numberOfMonths` is above 1 |
+| `children` | `(day: Grid.ICalendarDay<Date>) => ReactNode \| ReactNode` | - | A function draws each day in place of `Calendar.Day`. Any other children replace the weekdays and weeks |
+
+```tsx
+<Calendar.Root adapter={adapter} mode="range" numberOfMonths={2}>
+  <Calendar.Grid />
+  <Calendar.Grid month={1} />
+</Calendar.Root>
+```
 
 **Data attributes:**
 
 | Attribute | Value |
 | :--- | :--- |
 | `data-slot` | `"calendar-grid"` |
+| `data-slot` (each week row) | `"calendar-week"` |
+| `data-slot` (each week number) | `"calendar-week-number"`, a `role="rowheader"` labelled `"Week 10"`, drawn with `showWeekNumber` |
+| `data-readonly` | `"true"` with `readOnly`, which also sets `aria-readonly` |
+| `data-invalid` | `"true"` while the selection is invalid |
 
 ---
 
@@ -187,6 +225,7 @@ Renders the weekday header row as a `div` with `role="row"`. Each weekday render
 | :--- | :--- |
 | `data-slot` | `"calendar-weekdays"` |
 | `data-slot` (each cell) | `"calendar-weekday"` |
+| `data-slot` (week number column) | `"calendar-week-number-header"`, an empty `aria-hidden` cell drawn with `showWeekNumber` |
 
 ---
 
@@ -198,7 +237,7 @@ A single day cell. Renders a `button` with full ARIA attributes and data attribu
 | :--- | :--- | :--- | :--- |
 | `day` | `Grid.ICalendarDay<Date>` | **required** | Day data from the calendar grid |
 
-Automatically applies all day props from context: `aria-label`, `aria-selected`, `aria-disabled`, `aria-current`, `tabIndex`, `onClick`, `onKeyDown`, `onMouseEnter`, and all `data-*` styling attributes.
+Automatically applies all day props from context: `aria-label`, `aria-selected`, `aria-disabled`, `aria-invalid`, `aria-current`, `tabIndex`, `onClick`, `onKeyDown`, `onMouseEnter`, and all `data-*` styling attributes.
 
 **Data attributes:**
 
@@ -209,19 +248,25 @@ Automatically applies all day props from context: `aria-label`, `aria-selected`,
 | `data-selected` | `"true"` when selected |
 | `data-today` | `"true"` for today |
 | `data-disabled` | `"true"` when disabled |
+| `data-unavailable` | `"true"` for an `unavailable` day, which stays focusable |
+| `data-invalid` | `"true"` on a selected day while the selection is invalid |
 | `data-outside-month` | `"true"` for adjacent month days |
 | `data-hidden` | `"true"` when `showOutsideDays` is false and day is outside |
 | `data-range-start` | `"true"` for range start |
 | `data-range-middle` | `"true"` for range middle |
 | `data-range-end` | `"true"` for range end |
-| `data-focused` | `"true"` when keyboard focused |
+| `data-focused` | `"true"` on the day holding the tab stop |
 | `data-weekend` | `"true"` for weekends |
 
 ---
 
 ### `Calendar.MonthView`
 
-A 12-month grid for month picking. Renders a `div` with `role="grid"`. Clicking a month navigates to it and switches back to the day view.
+A 12-month grid for month picking. Renders a `role="grid"` of 12 `gridcell` buttons in rows, with `aria-selected` on the shown month and `aria-current="date"` on this month. Picking a month navigates to it and switches back to the day view.
+
+| Prop | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `columns` | `number` | `3` | Months to a row. The arrow keys move along and between the rows |
 
 **Data attributes:**
 
@@ -230,13 +275,18 @@ A 12-month grid for month picking. Renders a `div` with `role="grid"`. Clicking 
 | `data-slot` | `"calendar-month-view"` |
 | `data-slot` (each cell) | `"calendar-month"` |
 | `data-current` | `"true"` on the current month |
+| `data-selected` | `"true"` on the shown month |
 | `data-month` (each cell) | Zero-based month index (e.g. `0` for January) |
 
 ---
 
 ### `Calendar.YearView`
 
-A decade year grid for year picking. Renders a `div` with `role="grid"`. Clicking a year navigates to it and switches to the month view.
+A decade year grid for year picking. Renders a `role="grid"` of 12 `gridcell` buttons in rows, with `aria-selected` on the shown year and `aria-current="date"` on this year. Picking a year navigates to it and switches to the month view.
+
+| Prop | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `columns` | `number` | `3` | Years to a row. The arrow keys move along and between the rows |
 
 **Data attributes:**
 
@@ -245,6 +295,7 @@ A decade year grid for year picking. Renders a `div` with `role="grid"`. Clickin
 | `data-slot` | `"calendar-year-view"` |
 | `data-slot` (each cell) | `"calendar-year"` |
 | `data-current` | `"true"` on the current year |
+| `data-selected` | `"true"` on the shown year |
 | `data-year` (each cell) | Four-digit year (e.g. `2026`) |
 
 ---
@@ -255,7 +306,10 @@ A decade year grid for year picking. Renders a `div` with `role="grid"`. Clickin
 - `Calendar.Grid` renders `role="grid"` with `aria-roledescription="calendar"` and `aria-labelledby` linked to the Header
 - `Calendar.Weekdays` renders `role="row"` with each weekday cell as `role="columnheader"`
 - `Calendar.Day` renders `role="gridcell"` with full ARIA labeling
-- `Calendar.MonthView` and `Calendar.YearView` render each button cell with `role="gridcell"`
+- Exactly one day is in the tab order: the focused day while a shown month holds it, otherwise the first selected day, today, or the first day that can be picked. A day drawn from a neighbouring month never holds it
+- Arrow keys moving between shown months leave the view where it is, and moving past them shifts it by one month
+- `Calendar.MonthView` and `Calendar.YearView` are grids with one tab stop: the arrow keys move along and between rows, <Kbd>Home</Kbd>/<Kbd>End</Kbd> go to the start and end of a row, and <Kbd>PageUp</Kbd>/<Kbd>PageDown</Kbd> move a year or a decade
+- An `unavailable` day stays in the arrow-key order with `aria-disabled`, and picking it is refused aloud; the arrow keys skip a `disabled` day
 - `Calendar.Nav` renders `role="navigation"` with `aria-label="Calendar navigation"`
 - Screen reader announcements are rendered automatically via `AnnouncerPortal`
 - Keyboard navigation follows the WAI-ARIA grid pattern (<Kbd>ArrowLeft</Kbd>/<Kbd>ArrowRight</Kbd>, <Kbd>PageUp</Kbd>/<Kbd>PageDown</Kbd>, <Kbd>Home</Kbd>/<Kbd>End</Kbd>, <Kbd>Enter</Kbd>/<Kbd>Space</Kbd>, <Kbd>Escape</Kbd>)

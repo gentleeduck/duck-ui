@@ -37,6 +37,8 @@ Alert Dialog wraps Dialog with `modal` forced to `true`. It replaces `Dialog.Clo
 
 The key difference: Alert Dialog requires explicit user choice. Clicking the overlay does **NOT** dismiss it (unlike Dialog). The user must press Cancel or Action.
 
+Opened from a dialog's content, it is a [nested dialog](/duck-primitives/api/dialog#nested-dialogs) like any other.
+
 ---
 
 ## Example
@@ -87,7 +89,7 @@ Same as `Dialog.Root` but `modal` is always `true`.
 | `open` | `boolean` | - | Controlled open state |
 | `defaultOpen` | `boolean` | `false` | Initial open state |
 | `onOpenChange` | `(open: boolean) => void` | - | Called when open state changes |
-| `dir` | `'ltr' \| 'rtl'` | - | Reading direction for keyboard navigation |
+| `dir` | `'ltr' \| 'rtl'` | - | Direction of the content and the overlay. Falls back to the nearest `DirectionProvider`, then `<html dir>` |
 
 ### `AlertDialog.Trigger`
 
@@ -103,15 +105,15 @@ Same as `Dialog.Overlay`.
 
 ### `AlertDialog.Content`
 
-Same as `Dialog.Content`, but pointer-down-outside does not dismiss.
+Same as `Dialog.Content`, with `role="alertdialog"`, but a press outside does not dismiss, and it focuses `AlertDialog.Cancel` on open. `initialFocus` names another element to focus in its place, or `false` to leave focus on the trigger. In development, an error is logged when it mounts with no `AlertDialog.Title`, and a warning when it has no `AlertDialog.Description` or `aria-describedby`.
 
 ### `AlertDialog.Title`
 
-Same as `Dialog.Title`.
+Same as `Dialog.Title`, and must render inside `AlertDialog.Content`.
 
 ### `AlertDialog.Description`
 
-Same as `Dialog.Description`.
+Same as `Dialog.Description`, and must render inside `AlertDialog.Content`.
 
 ### `AlertDialog.Cancel`
 

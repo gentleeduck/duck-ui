@@ -12,6 +12,8 @@ import * as Progress from '@gentleduck/primitives/progress'
 
 ```tsx
 <Progress.Root>
+  <Progress.Label />
+  <Progress.Value />
   <Progress.Indicator />
 </Progress.Root>
 ```
@@ -24,6 +26,8 @@ import * as Progress from '@gentleduck/primitives/progress'
   value={65}
   max={100}
 >
+  <Progress.Label>Uploading</Progress.Label>
+  <Progress.Value />
   <Progress.Indicator
     className="h-full bg-blue-500 transition-all"
     style={{ width: `${65}%` }}
@@ -39,16 +43,29 @@ Renders a `<div>` with `role="progressbar"` and appropriate ARIA attributes.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `number \| null` | `null` | Current value. `null` = indeterminate. |
-| `max` | `number` | `100` | Maximum value |
-| `getValueLabel` | `(value: number, max: number) => string` | Percentage | Custom label for screen readers |
-| `dir` | `'ltr' \| 'rtl'` | - | Reading direction |
+| `value` | `number \| null` | `null` | Current value, from `min` to `max`. `null` = indeterminate. |
+| `min` | `number` | `0` | The value an empty bar stands for, announced as `aria-valuemin`, as in Base UI, Ark and React Aria |
+| `max` | `number` | `100` | Maximum value. One not above `min` falls back to `100`, and is logged in development |
+| `getValueLabel` | `(value: number, max: number, min: number) => string` | Percentage of the way from `min` to `max` | Custom label for screen readers |
+| `dir` | `string` | - | Sets the `dir` attribute, `auto` included. Leave it out and the progress bar follows the page |
 
 Exposes `data-state` as `indeterminate`, `loading`, or `complete`, and `data-value` / `data-max`.
 
 ### `Progress.Indicator`
 
-Visual fill indicator. Inherits `data-state`, `data-value`, and `data-max` from context.
+Visual fill indicator. Inherits `data-state`, `data-value`, and `data-max` from context. Takes `asChild`, so an animated element can be the fill.
+
+### `Progress.Label`
+
+Renders a `<span>` that names the progress bar: while it is mounted, the root's `aria-labelledby` points at its `id`, which it generates unless you pass one. An `aria-labelledby` passed to the root wins. Exposes `data-state`.
+
+### `Progress.Value`
+
+Renders a `<span>` showing the root's `getValueLabel` result, and nothing while indeterminate. It is `aria-hidden`, because the root already announces the same text as `aria-valuetext`. Exposes `data-state`.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `children` | `ReactNode \| (valueLabel: string \| undefined, value: number \| null) => ReactNode` | the label | Replaces the label, or formats it when a function |
 
 ## Indeterminate state
 

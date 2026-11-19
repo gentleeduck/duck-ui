@@ -1,6 +1,6 @@
 ---
 title: "Benchmarks"
-description: "Real bundle size and performance measurements for @gentleduck/calendar compared to react-day-picker, react-aria, react-datepicker, and react-calendar."
+description: "Bundle size and performance of @gentleduck/calendar, measured against React Aria, Ark UI and react-day-picker and compared with react-datepicker and react-calendar."
 section: Benchmarks
 order: 10
 ---
@@ -28,14 +28,18 @@ Module sizes, core engine performance, and adapter benchmarks:
 
 ## Methodology
 
-- **gentleduck**: sizes from `packages/duck-calendar/dist/` via `gzip -c | wc -c`
-- **Competitors**: bundle sizes from npm and bundlephobia.com
+- **gentleduck**: `useCalendar` with the `NativeAdapter`, and each module of `packages/duck-calendar/dist/`, bundled
+  and minified by `Bun.build` with `react` external, then gzipped
+- **React Aria and Ark UI**: measured by the primitives benchmark, the parts an inline single-month calendar draws.
+  See [the primitives benchmarks](/duck-primitives/benchmarks) for the runtime comparison
+- **react-day-picker**: measured by the primitives benchmark, its one `DayPicker` component with the date-fns it requires
+- **react-datepicker and react-calendar**: bundlephobia's published sizes, not measured
 - **Performance**: average of 2,000 iterations per operation
 - Sizes are **minified + gzipped**
 
-Regenerate:
+Regenerate, after the primitives benchmark:
 
 ```bash
-cd packages/duck-calendar
-bun run benchmark
+cd packages/duck-primitives && bun run build && bun run benchmark
+cd ../duck-calendar && bun run build && bun run benchmark
 ```

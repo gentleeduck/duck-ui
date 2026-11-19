@@ -29,9 +29,52 @@ import { FocusScope } from '@gentleduck/primitives/focus-scope'
 | `asChild` | `boolean` | `false` | Render as child element |
 | `onMountAutoFocus` | `(event) => void` | - | Called when focus moves in on mount. Prevent default to skip auto-focus. |
 | `onUnmountAutoFocus` | `(event) => void` | - | Called when focus restores on unmount |
+| `branches` | `readonly HTMLElement[]` | - | Nodes outside the scope's DOM, such as a nested layer's portalled content, that focus may move into |
+
+Focus that lands in an input selects its text, on mount and when focus comes back to it. A <Kbd>Tab</Kbd> pressed while an input method is composing text is left to the input method. An `onKeyDown` passed to the scope runs before its own handler, and a <Kbd>Tab</Kbd> it prevents does not loop.
+
+A looping scope counts a group of native radios as one stop, as the browser does: <Kbd>Tab</Kbd> leaves the group from any radio in it, and looping into the group lands on its checked radio. A focusable `svg` is a stop. Nothing inside a `hidden` or `inert` element or a disabled `<fieldset>` is a stop, and the scope does not look for stops inside a shadow root it holds.
+
+## Iframes, shadow roots and a changing element
+
+The scope works in its container's own document, so inside an iframe it traps, loops and gives focus back there. It reads the element focused inside each open shadow root, so it works inside a shadow root too, and a trapped scope holding a custom element gives focus back to the field inside it rather than to the element itself.
+
+A scope whose element changes, as with `asChild` when its child changes type, stays the same scope. It gives focus back once, when it unmounts, to what had focus when it first mounted, and a scope opened over another keeps the one under it paused throughout.
+
+## Branches
+
+A trapped scope keeps focus inside its own DOM, so a nested layer portalled out of it, such as a popover's content, needs to register as a branch. Host the branches with `useFocusScopeBranchRegistry` and `FocusScopeBranchProvider`, and register each node with `useFocusScopeBranch`:
+
+```tsx
+import {
+  FocusScope,
+  FocusScopeBranchProvider,
+  useFocusScopeBranch,
+  useFocusScopeBranchRegistry,
+} from '@gentleduck/primitives/focus-scope'
+
+function Panel({ children }: { children: React.ReactNode }) {
+  const { nodes, registry } = useFocusScopeBranchRegistry()
+  return (
+    <FocusScopeBranchProvider registry={registry}>
+      <FocusScope trapped loop branches={nodes}>
+        <div>{children}</div>
+      </FocusScope>
+    </FocusScopeBranchProvider>
+  )
+}
+
+function Portalled() {
+  const [node, setNode] = React.useState<HTMLDivElement | null>(null)
+  useFocusScopeBranch(node)
+  return createPortal(<div ref={setNode}>...</div>, document.body)
+}
+```
+
+A modal `Dialog` and a modal `Popover` host branches, and `Popover.Content` registers itself, so a popover inside a dialog needs nothing extra.
 
 <Callout icon={<Target />}>
 
-Used internally by Dialog.Content for modal focus trapping. You typically don't need to use it directly unless building your own overlay components.
+Used internally by the content of Dialog, Popover, Select and every menu, and a Tooltip's content registers as a branch. You typically don't need to use it directly unless building your own overlay components.
 
 </Callout>

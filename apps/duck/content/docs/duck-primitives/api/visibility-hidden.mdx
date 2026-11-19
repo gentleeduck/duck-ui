@@ -46,12 +46,12 @@ function IconButtonLabel() {
 
 ### `VisuallyHidden` / `Root`
 
-Renders a visually hidden `<span>` using an accessibility-safe clipping pattern.
+Renders a visually hidden `<span>` using an accessibility-safe clipping pattern. The `span` carries `data-slot="visually-hidden"`; with `asChild` the child keeps its own `data-slot`, so a hidden `Dialog.Title` still reads `dialog-title`.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `asChild` | `boolean` | - | Render as child element |
-| `style` | `React.CSSProperties` | - | Additional inline styles merged after hidden defaults |
+| `asChild` | `boolean` | - | Hide the child itself in place of a `<span>`, such as a `Dialog.Title` |
+| `style` | `React.CSSProperties` | - | Inline styles merged after the hidden ones, so one given replaces its hidden counterpart |
 | `...props` | `React.ComponentPropsWithoutRef<typeof Primitive.span>` | - | Native span props |
 
 ---

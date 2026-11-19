@@ -52,7 +52,7 @@ canNavigate(
 | `unit` | `Navigation.Unit` | Navigation unit |
 | `constraints` | `{ fromDate?: TDate; toDate?: TDate }` | Optional bounds. `fromDate` is the earliest navigable date, `toDate` is the latest. |
 
-**Returns** `true` if navigation is within bounds.
+**Returns** `true` while any day of the month, year or decade it moves to lies on or between `fromDate` and `toDate`.
 
 ---
 

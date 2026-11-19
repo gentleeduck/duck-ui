@@ -15,13 +15,15 @@ The calendar outputs `data-*` attributes on every element. These give you full c
 | `data-selected` | `"true"` | Day is selected |
 | `data-today` | `"true"` | Day is today |
 | `data-disabled` | `"true"` | Day is disabled |
+| `data-unavailable` | `"true"` | Day is `unavailable`: focusable, but it cannot be picked |
+| `data-invalid` | `"true"` | Selected day while the selection is invalid |
 | `data-outside-month` | `"true"` | Day belongs to adjacent month |
 | `data-hidden` | `"true"` | Outside day hidden because `showOutsideDays` is `false` |
 | `data-range-start` | `"true"` | First day in a range selection |
 | `data-range-middle` | `"true"` | Middle day in a range selection |
 | `data-range-end` | `"true"` | Last day in a range selection |
 | `data-focused` | `"true"` | Day has keyboard focus |
-| `data-weekend` | `"true"` | Day is a weekend |
+| `data-weekend` | `"true"` | Day falls on the locale's weekend |
 
 ---
 
@@ -109,6 +111,9 @@ When using compound components from `@gentleduck/primitives/calendar`, each comp
 | `calendar-grid` | `Calendar.Grid` |
 | `calendar-weekdays` | `Calendar.Weekdays` |
 | `calendar-weekday` | Individual weekday header cells |
+| `calendar-week` | Each week row `Calendar.Grid` draws |
+| `calendar-week-number` | Each row's week number, with `showWeekNumber` |
+| `calendar-week-number-header` | The empty weekday cell above the week numbers |
 | `calendar-day` | `Calendar.Day` |
 | `calendar-month-view` | `Calendar.MonthView` |
 | `calendar-year-view` | `Calendar.YearView` |

@@ -36,8 +36,10 @@ import * as NavigationMenu from '@gentleduck/primitives/navigation-menu'
 | `onValueChange` | `(value: string) => void` | - | Called when open value changes |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved with `useDirection` (`dir` prop -> `DirectionProvider` -> `'ltr'`). |
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Menu orientation |
-| `delayDuration` | `number` | `200` | Delay before opening item on pointer move |
-| `skipDelayDuration` | `number` | `300` | Time window to skip reopen delay |
+| `delayDuration` | `number` | `200` | Delay before an item opens when the pointer rests on its trigger. A click on the trigger before it runs out cancels the open. Ignored in `manual` mode |
+| `skipDelayDuration` | `number` | `300` | Time window to skip reopen delay. Ignored in `manual` mode |
+| `closeDelay` | `number` | `150` | How long an item stays open after the pointer leaves it. Ignored in `manual` mode |
+| `activationMode` | `'automatic' \| 'manual'` | `'automatic'` | `automatic` opens an item when the pointer rests on its trigger and closes it when the pointer leaves; `manual` opens and closes it only on a click |
 | `...props` | `React.ComponentPropsWithoutRef<'nav'>` | - | Additional props for root nav |
 
 ### `NavigationMenu.Sub`
@@ -48,6 +50,8 @@ import * as NavigationMenu from '@gentleduck/primitives/navigation-menu'
 | `defaultValue` | `string` | `''` | Initial sub-menu value |
 | `onValueChange` | `(value: string) => void` | - | Called when sub-menu value changes |
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Sub-menu orientation |
+| `activationMode` | `'automatic' \| 'manual'` | the root's | As on the root, for this sub-menu's items |
+| `disableToggle` | `boolean` | `true` | Keeps an open item open when its trigger is clicked again. `false` closes it |
 
 ### `NavigationMenu.List`
 
@@ -61,11 +65,11 @@ List wrapper for menu items and indicator tracking.
 
 ### `NavigationMenu.Trigger`
 
-Interactive trigger button for an item. Sets `aria-expanded`, `aria-controls`, and `data-state` automatically.
+Interactive trigger button for an item. Sets `aria-expanded` and `data-state`, and `aria-controls` while its content is open, so it never points at an element that is not rendered.
 
 ### `NavigationMenu.Content`
 
-Content panel for an item. Supports pointer/focus outside handlers from dismissable layer props.
+Content panel for an item. Supports pointer/focus outside handlers from dismissable layer props. Focus moving outside the menu closes it only when it left from inside the menu, so a dialog that focuses itself on open leaves the menu open. It carries `data-state`, `open` or `closed`, inside the viewport as well as out of it, so a force-mounted content can be hidden while closed.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -79,10 +83,11 @@ Composable link slot used inside content.
 | --- | --- | --- | --- |
 | `active` | `boolean` | `false` | Marks link as current page (`aria-current="page"`) |
 | `onSelect` | `(event: Event) => void` | - | Called on link selection before root dismiss |
+| `closeOnSelect` | `boolean` | `true` | `false` keeps the menu open once the link is selected. A click with Cmd, Ctrl, Shift or Alt held leaves it open either way, since the link opens in another tab or window, or downloads, and the page stays |
 
 ### `NavigationMenu.Indicator`
 
-Positions an active-item indicator relative to the current trigger.
+Positions an active-item indicator relative to the current trigger. Place it in `NavigationMenu.List`: it is drawn in the list's track and measured from it, so a positioned item around the trigger does not move it. It sets its `width` and `translateX` from the trigger in a horizontal menu, and its `height` and `translateY` in a vertical one.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -90,7 +95,13 @@ Positions an active-item indicator relative to the current trigger.
 
 ### `NavigationMenu.Viewport`
 
-Shared animated viewport that hosts active content.
+Shared animated viewport that hosts active content. It sets `--gentleduck-navigation-menu-viewport-width` and `--gentleduck-navigation-menu-viewport-height` to the open content's size, before the first paint and again whenever the content resizes, so its styles can size and animate it. Its own children render before the content. With `asChild`, its props land on the child element and the content renders inside it:
+
+```tsx
+<NavigationMenu.Viewport asChild>
+  <section className="viewport" />
+</NavigationMenu.Viewport>
+```
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

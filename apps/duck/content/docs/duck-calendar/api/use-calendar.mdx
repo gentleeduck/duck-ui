@@ -42,13 +42,17 @@ const { state, actions, getDayProps, getGridProps, getNavProps, getHeaderProps, 
 | `disabled` | `TDate[] \| (date) => boolean` | - | Dates that cannot be selected |
 | `fromDate` | `TDate` | - | Earliest selectable date |
 | `toDate` | `TDate` | - | Latest selectable date |
+| `unavailable` | `TDate[] \| (date) => boolean` | - | Dates that stay focusable but cannot be picked, such as a booked day. A range cannot span one |
+| `readOnly` | `boolean` | `false` | Focus still moves, but no day can be picked |
+| `invalid` | `boolean` | `false` | Marks the selection invalid. It is also invalid while it holds a day that cannot be picked |
+| `pageBehavior` | `'single' \| 'visible'` | `'single'` | How far `goToNext`, `goToPrevious` and <Kbd>PageUp</Kbd>/<Kbd>PageDown</Kbd> move: one month, or every shown month |
 
 #### `Calendar.ICalendarLocaleConfig`
 
 | Property | Type | Description |
 | :--- | :--- | :--- |
 | `locale` | `string` | BCP 47 locale tag (e.g. 'en-US', 'ar-SA', 'fa-IR') |
-| `weekStartDay` | `0 \| 1 \| 2 \| 3 \| 4 \| 5 \| 6` | Day the week starts on (0 = Sunday) |
+| `weekStartDay` | `0 \| 1 \| 2 \| 3 \| 4 \| 5 \| 6` | Day the week starts on (0 = Sunday). Defaults to the locale's first day, or Sunday with no locale |
 | `direction` | `'ltr' \| 'rtl'` | Text direction |
 
 ---
@@ -61,13 +65,14 @@ const { state, actions, getDayProps, getGridProps, getNavProps, getHeaderProps, 
 | :--- | :--- | :--- |
 | `month` | `TDate` | Currently visible month |
 | `value` | `Selection.CalendarValue<TDate, M>` | Current selection. Shape depends on mode |
-| `focusedDate` | `TDate` | Date with keyboard focus |
+| `focusedDate` | `TDate` | The day holding the grid's tab stop, which arrow keys move from: the focused day while a shown month holds it, else the first selected day, today, or the first day that can be picked |
 | `viewMode` | `Calendar.ViewMode` | `'days'`, `'months'`, or `'years'` |
 | `weeks` | `Grid.ICalendarWeek<TDate>[]` | Decorated weeks for the first month |
 | `months` | `Grid.ICalendarMonth<TDate>[]` | All month grids (for multi-month) |
 | `weekdays` | `string[]` | Localized weekday labels (7 items) |
 | `canGoNext` | `boolean` | Forward navigation available (respects `toDate`) |
 | `canGoPrevious` | `boolean` | Backward navigation available (respects `fromDate`) |
+| `isInvalid` | `boolean` | `invalid` was passed, or the selection holds a day that cannot be picked |
 
 ### `actions`
 

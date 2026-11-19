@@ -43,6 +43,24 @@ import * as HoverCard from '@gentleduck/primitives/hover-card'
 </HoverCard.Root>
 ```
 
+## Opening and closing
+
+The card opens `openDelay` after a mouse or pen moves onto the trigger, or after the trigger takes keyboard focus. It closes `closeDelay` after the pointer leaves the trigger and the card, or after the trigger loses focus. A pointer that leaves before the open delay ends opens nothing, and one that comes back before the close delay ends keeps the card open.
+
+A touch never opens the card: neither the press nor the focus a tap gives the link, so a tap follows the link and a page still scrolls from the trigger. The next keyboard focus opens it as usual.
+
+The card stays open while a pointer that pressed on it is down, and after text inside it is selected. While the press lasts, only the card's text can be selected. A press the browser cancels, as when a touch turns into a scroll, ends like a release.
+
+`disabled` keeps the card closed. Setting it while the card is open closes it, and an open still waiting on `openDelay` never happens.
+
+## Focus
+
+The card opens without taking focus, and nothing inside it is in the tab order, since what it shows previews the link the keyboard is already on. That includes what renders into the card after it opens, such as a profile that loads, and an element given a tab index later.
+
+## In an iframe
+
+Give `HoverCard.Portal` a `container` inside an iframe and the card follows presses and selection in the iframe's document.
+
 ## API
 
 ### `HoverCard.Root`
@@ -54,6 +72,8 @@ import * as HoverCard from '@gentleduck/primitives/hover-card'
 | `onOpenChange` | `(open: boolean) => void` | - | State change callback |
 | `openDelay` | `number` | `700` | Delay before opening (ms) |
 | `closeDelay` | `number` | `300` | Delay before closing (ms) |
+| `disabled` | `boolean` | `false` | Keeps the card closed, and closes it if it is open |
+| `dir` | `'ltr' \| 'rtl'` | - | Direction of the content. Falls back to `DirectionProvider`, then `<html dir>`. The trigger keeps the page's |
 
 ### `HoverCard.Trigger`
 
@@ -69,7 +89,7 @@ Portals content to `document.body`.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `container` | `Element \| null` | `document.body` | Portal target |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Portal target |
 | `forceMount` | `true` | - | Force mount content |
 
 ### `HoverCard.Content`

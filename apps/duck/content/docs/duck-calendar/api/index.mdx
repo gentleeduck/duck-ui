@@ -24,17 +24,18 @@ Full prop tables, return types, and type definitions for every export in `@gentl
 
 | Export | Description |
 | :--- | :--- |
-| [Grid](/duck-calendar/api/grid) | Grid builder functions - `buildCalendarMonth`, `buildMultiMonth`, etc. |
+| [Grid](/duck-calendar/api/grid) | Grid builder functions - `buildCalendarMonth`, `buildMultiMonth`, `getLocaleWeekInfo`, etc. |
 | [Selection](/duck-calendar/api/selection) | Selection logic - `selectDay`, `applySelection` |
 | [Navigation](/duck-calendar/api/navigation) | Navigation functions - `navigate`, `canNavigate` |
 | `isDateDisabled` | Check if a date is disabled by the current constraints |
+| `isDateUnavailable` | Check if a date is `unavailable`: focusable, but it cannot be picked |
 | `isInRange` | Check if a date falls within a range |
-| `clampTime` | Clamp a time value to min/max bounds |
+| `clampTime` | Clamp a time value to min/max bounds, keeping the seconds field the input had |
 | `formatTimeField` | Format a single time field for display |
 | `getAmPm` | Get the AM/PM value from a time |
-| `incrementField` | Increment or decrement a time field by step |
-| `isValidTime` | Validate a time value against constraints |
-| `parseTimeInput` | Parse raw keyboard input into a time field value |
+| `incrementField` | Step a time field, an off-step value landing on the next or previous step |
+| `isValidTime` | Whether each field is a whole number in its range |
+| `parseTimeInput` | Parse typed digits into a field value, refusing anything but digits |
 | `to12Hour` | Convert a 24-hour value to 12-hour format |
 | `to24Hour` | Convert a 12-hour value to 24-hour format |
 

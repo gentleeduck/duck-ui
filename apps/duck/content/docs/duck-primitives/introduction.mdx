@@ -67,7 +67,7 @@ Build wrappers once; consume wrappers everywhere. Avoid copying examples ad hoc 
 
 ## Bundle size
 
-gentleduck primitives are 50-92% smaller than the Radix equivalents. Shared internals (Slot, Presence, Popper, focus-scope) are deduplicated across all primitives. Measured sizes: Alert Dialog 1.6 KB vs 18.6 KB, Popover 2.4 KB vs 19.6 KB, Dialog 3.1 KB vs 10.6 KB. Installing 5 Radix primitives costs about 25 KB in duplicated internals; with gentleduck the shared internals load once.
+Every gentleduck primitive but Dialog and Alert Dialog is smaller than its Radix equivalent, by 1% to 64% gzipped; those two are 1% and 2% larger. Measured sizes: Toggle Group 4.8 KB vs 8.2 KB, Accordion 4.7 KB vs 8.6 KB, Dialog 13.5 KB vs 13.4 KB, Popover 23.6 KB vs 23.8 KB.
 
 <ComponentPreview name="chart-benchmark-primitives" description="Module breakdown and totals" />
 

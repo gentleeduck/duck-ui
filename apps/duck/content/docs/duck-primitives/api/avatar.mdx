@@ -50,26 +50,35 @@ The root container that manages image loading state. Renders a `<span>`.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction for RTL support |
+| `dir` | `string` | - | Sets the `dir` attribute, `auto` included. Leave it out and the avatar follows the page |
 | `asChild` | `boolean` | - | Render as child element |
 
 ### `Avatar.Image`
 
-The `<img>` element. Only renders when the image has successfully loaded.
+The `<img>` element. It is in the page from the first render, the server's HTML included, so the download starts before the page hydrates. Until it loads it is hidden but still laid out, so `loading="lazy"` still waits for the viewport. An image that loads as 0 by 0 counts as an error. Render one per `Avatar.Root`: a second logs a warning in development.
+
+It shows once it is complete with a natural size, which covers an image that loaded before hydration. A new `src` or `srcSet` hides it again until that one loads, unless the browser already has it. Every other `<img>` attribute, such as `sizes`, `loading`, `crossOrigin` and `referrerPolicy`, goes on the image as given, and `onLoad` and `onError` still fire.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `src` | `string` | - | Image source URL |
+| `srcSet` | `string` | - | Candidate images for other pixel densities or widths. Enough on its own, without a `src` |
 | `onLoadingStatusChange` | `(status: ImageLoadingStatus) => void` | - | Called when loading status changes |
 | `asChild` | `boolean` | - | Render as child element |
 
-**`ImageLoadingStatus`**: `'idle' | 'loading' | 'loaded' | 'error'`
+**`ImageLoadingStatus`**: `'idle' | 'loading' | 'loaded' | 'error'`, exported as `IAvatar.ImageLoadingStatus`
+
+| Data attribute | Values |
+| --- | --- |
+| `data-state` | `'loading' \| 'loaded' \| 'error'` |
+
+Style the loaded image with `[data-state="loaded"]`, for example to fade it in. While it is not loaded, its inline `style` also carries `position: absolute`, a 1px size and `visibility: hidden`.
 
 ### `Avatar.Fallback`
 
-Renders when the image is not available. Renders a `<span>`.
+Renders until the image loads, and again if the image unmounts. Renders a `<span>`.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `delayMs` | `number` | - | Delay in milliseconds before showing the fallback |
+| `delayMs` | `number` | - | Delay in milliseconds before showing the fallback. A new value starts the wait over |
 | `asChild` | `boolean` | - | Render as child element |

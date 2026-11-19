@@ -16,7 +16,7 @@ import { Slot, Slottable, createSlot, createSlottable } from '@gentleduck/primit
 
 </Callout>
 
-When `<Primitive.button asChild>` is used, the `button` element is replaced by a `Slot`, and the child element receives all the button's props (ARIA attributes, event handlers, refs, etc.).
+When `<Primitive.button asChild>` is used, the `button` element is replaced by a `Slot`, and the child element receives all the button's props (ARIA attributes, event handlers, refs, etc.). The Slot is a single component, so an `asChild` adds one entry to the React tree. `Root` is the same component under the name the other primitives use.
 
 ## How props merge
 
@@ -24,13 +24,25 @@ When `<Primitive.button asChild>` is used, the `button` element is replaced by a
 | --- | --- |
 | Event handlers (`onClick`, etc.) | Both fire (child first, then slot) |
 | `style` | Merged (child overrides slot) |
-| `className` | Concatenated |
-| `ref` | Both refs receive the element |
+| `className` | Concatenated, the slot's first |
+| `aria-describedby` | Joined, the child's ids first, with blanks, repeats and a `false` or other value that is not a string dropped |
+| `ref` | Both refs receive the element through one composed ref that keeps its identity across renders, so a child ref that sets state does not loop. A slot with no ref of its own hands the child its own ref unchanged |
+| `dangerouslySetInnerHTML` | Dropped, so `asChild` cannot inject raw HTML into the child |
 | Everything else | Child props override slot props |
+
+## What it can slot onto
+
+The Slot needs one React element: its only child, or the element inside its `Slottable`. `null`, `undefined`, `false` and an empty string render nothing. Anything else, such as text, a number, `0` or several elements, throws an error naming the owner:
+
+```text
+Primitive.button failed to slot onto its children. Expected a single React element child or `Slottable`.
+```
+
+A lazy reference a server component passes as the child is unwrapped with `React.use` until it reaches the element.
 
 ## Creating named slots
 
-Use `createSlot` and `createSlottable` to create named instances for better debugging in React DevTools:
+Use `createSlot` and `createSlottable` to create named instances for better debugging in React DevTools and clearer errors:
 
 ```tsx
 const MySlot = createSlot('MyComponent')
@@ -41,15 +53,32 @@ const MySlottable = createSlottable('MyComponent')
 
 <Callout icon={<Lightbulb />}>
 
-Marks a specific child as the replacement target. Identified by a symbol, not instanceof checks, so it works across module boundaries.
+Marks the child the Slot lands on when the Slot has other children too. It is identified by `Symbol.for('gentleduck.slottable')`, a key in the global symbol registry, so a `Slottable` from another copy of the package still counts.
 
 </Callout>
 
+The Slot's other children go inside the element, where the `Slottable` stood. A child that comes and goes, such as `{icon && <Icon />}`, leaves the element's own children where they were, so they keep their state:
+
 ```tsx
 <Slot>
+  <Icon />
   <Slottable>
-    <button>This replaces the Slot</button>
+    <a href="/">Home</a>
   </Slottable>
-  <span>This is preserved as a sibling</span>
 </Slot>
+
+// renders
+<a href="/"><Icon />Home</a>
+```
+
+To wrap the element's own children as well, pass the element as `child` and a function as `children`. The function receives the element's children and returns what goes inside it:
+
+```tsx
+<Slot>
+  <Slottable child={<a href="/">Home</a>}>{(label) => <span className="label">{label}</span>}</Slottable>
+  <Icon />
+</Slot>
+
+// renders
+<a href="/"><span class="label">Home</span><Icon /></a>
 ```

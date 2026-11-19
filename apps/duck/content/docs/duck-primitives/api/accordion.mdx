@@ -13,7 +13,11 @@ import * as Accordion from '@gentleduck/primitives/accordion'
 ```tsx
 <Accordion.Root>
   <Accordion.Item>
-    <Accordion.Trigger />
+    <Accordion.Header>
+      <Accordion.Trigger>
+        <Accordion.Indicator />
+      </Accordion.Trigger>
+    </Accordion.Header>
     <Accordion.Content />
   </Accordion.Item>
 </Accordion.Root>
@@ -30,13 +34,17 @@ function BasicAccordion() {
   return (
     <Accordion.Root type="single" collapsible>
       <Accordion.Item value="item-1">
-        <Accordion.Trigger>Is it accessible?</Accordion.Trigger>
+        <Accordion.Header>
+          <Accordion.Trigger>Is it accessible?</Accordion.Trigger>
+        </Accordion.Header>
         <Accordion.Content>
           Yes. It adheres to the WAI-ARIA design pattern.
         </Accordion.Content>
       </Accordion.Item>
       <Accordion.Item value="item-2">
-        <Accordion.Trigger>Is it unstyled?</Accordion.Trigger>
+        <Accordion.Header>
+          <Accordion.Trigger>Is it unstyled?</Accordion.Trigger>
+        </Accordion.Header>
         <Accordion.Content>
           Yes. It is unstyled by default, giving you full control over styling.
         </Accordion.Content>
@@ -63,7 +71,6 @@ The root container. Accepts either `type="single"` (one item open at a time) or 
 | `defaultValue` | `string` | - | Initial open item value (uncontrolled) |
 | `onValueChange` | `(value: string) => void` | - | Called when the open item changes |
 | `collapsible` | `boolean` | `false` | Allow the open item to be closed by clicking its trigger again |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction |
 
 #### Multiple mode
 
@@ -73,9 +80,18 @@ The root container. Accepts either `type="single"` (one item open at a time) or 
 | `value` | `string[]` | - | Controlled array of open item values |
 | `defaultValue` | `string[]` | - | Initial array of open item values (uncontrolled) |
 | `onValueChange` | `(value: string[]) => void` | - | Called when the open items change |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction |
 
-Exposes `data-orientation` (`vertical`) on the root element.
+#### Both modes
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `disabled` | `boolean` | `false` | Disables every item |
+| `orientation` | `'vertical' \| 'horizontal'` | `'vertical'` | Which arrow keys move focus between triggers |
+| `loop` | `boolean` | `true` | Arrow keys wrap from the last trigger to the first and back |
+| `onFocusChange` | `(value: string \| null) => void` | - | Called with the focused item's value, and with `null` once focus leaves the triggers |
+| `dir` | `'ltr' \| 'rtl'` | - | Text direction; flips the horizontal arrow keys. Lands on the root as its `dir` attribute, and the parts carry none |
+
+Exposes `data-orientation` and `data-disabled` on the root element.
 
 ---
 
@@ -87,8 +103,17 @@ A single collapsible section. Must be a direct child of `Accordion.Root`. Render
 | --- | --- | --- | --- |
 | `value` | `string` | - | Unique identifier for the item, used to control open state |
 | `disabled` | `boolean` | `false` | Prevents the item from being opened or closed |
+| `onOpenChange` | `(open: boolean) => void` | - | Called when the item's trigger, or the browser's find-in-page, opens or closes it. Not called when another item's opening closes it |
 
-Exposes `data-state` (`open` | `closed`) and `data-disabled` attributes.
+Exposes `data-state` (`open` | `closed`), `data-disabled`, `data-orientation` and `data-value` attributes.
+
+---
+
+### `Accordion.Header`
+
+The heading that wraps a trigger, so assistive technology lists each section. Renders an `<h3>`; use `asChild` for another level.
+
+Exposes `data-state`, `data-disabled` and `data-orientation` attributes.
 
 ---
 
@@ -98,7 +123,15 @@ The button that toggles the associated content panel. Must be a descendant of `A
 
 Inherits all standard `<button>` props.
 
-Exposes `data-state` (`open` | `closed`) and `data-disabled` attributes. Sets `aria-expanded` and `aria-controls` automatically.
+Exposes `data-state` (`open` | `closed`), `data-disabled` and `data-orientation` attributes. Sets `aria-expanded`, `aria-controls` and, when disabled, `aria-disabled` automatically.
+
+---
+
+### `Accordion.Indicator`
+
+A decorative element for the chevron, hidden from assistive technology. Renders a `<span>`.
+
+Exposes `data-state`, `data-disabled` and `data-orientation` attributes, so the icon can rotate with `data-[state=open]:rotate-180`.
 
 ---
 
@@ -108,9 +141,32 @@ The collapsible panel that contains the item's content. Must be a descendant of 
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `forceMount` | `boolean` | `false` | Keep the content mounted in the DOM even when closed |
+| `forceMount` | `boolean` | `false` | Keep the content mounted and visible when closed, for a JavaScript animation library to hide |
+| `hiddenUntilFound` | `boolean` | `false` | Keep closed content in the page as `hidden="until-found"`, so the browser's find-in-page opens the item holding the match. A disabled item stays out of the search |
 
-Exposes `data-state` (`open` | `closed`) attributes. Sets `role="region"` and `aria-labelledby` automatically.
+Exposes `data-state` (`open` | `closed`), `data-disabled` and `data-orientation` attributes. Sets `role="region"` and `aria-labelledby` automatically, and `aria-hidden` while closed content stays in the page.
+
+Closing content stays mounted until its CSS exit animation ends. The content's open size is set as `--gentleduck-accordion-content-height` and `--gentleduck-accordion-content-width`, unless its `style` sets one, and an item open on the first render does not play its open animation:
+
+```css
+.content[data-state="open"] {
+  animation: accordion-down 200ms ease-out;
+}
+
+.content[data-state="closed"] {
+  animation: accordion-up 150ms ease-in;
+}
+
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--gentleduck-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--gentleduck-accordion-content-height); }
+  to { height: 0; }
+}
+```
 
 ---
 
@@ -120,7 +176,34 @@ Exposes `data-state` (`open` | `closed`) attributes. Sets `role="region"` and `a
 | --- | --- |
 | `Enter` | Toggles the focused item open or closed |
 | `Space` | Toggles the focused item open or closed |
-| `ArrowDown` | Moves focus to the next trigger |
-| `ArrowUp` | Moves focus to the previous trigger |
+| `ArrowDown` | Moves focus to the next trigger when `orientation` is `vertical` |
+| `ArrowUp` | Moves focus to the previous trigger when `orientation` is `vertical` |
+| `ArrowRight` | Moves focus to the next trigger when `orientation` is `horizontal`, the previous in `rtl` |
+| `ArrowLeft` | Moves focus to the previous trigger when `orientation` is `horizontal`, the next in `rtl` |
 | `Home` | Moves focus to the first trigger |
 | `End` | Moves focus to the last trigger |
+
+Disabled triggers are skipped, and so are a nested accordion's and those React has hidden in a suspended `Suspense` boundary or a hidden `Activity`. Focus wraps at either end unless `loop` is `false`. The root and its triggers are found by `data-slot`, so one given another `data-slot` drops out of keyboard navigation.
+
+---
+
+## Benchmarks
+
+Measured against every library that ships an accordion, as on the [benchmarks page](/duck-primitives/benchmarks).
+
+{/* benchmarks */}
+
+Smaller than all 4. Faster in all 12 timed comparisons.
+
+| | gentleduck | Radix | Base UI | React Aria | Ark UI |
+|---|--:|--:|--:|--:|--:|
+| Size, gzipped bytes | 4,847 | 8,770 (0.55x) | 9,260 (0.52x) | 14,752 (0.33x) | 11,953 (0.41x) |
+| Mount x100, ms | 10.4 | 22.3 (0.47x) | 25.0 (0.42x) | 34.8 (0.30x) | 18.1 (0.57x) |
+| Update x100, ms | 9.76 | 17.2 (0.57x) | 15.5 (0.63x) | 34.1 (0.29x) | 40.2 (0.24x) |
+| Unmount x100, ms | 1.89 | 2.76 (0.68x) | 2.79 (0.68x) | 4.73 (0.40x) | 2.53 (0.74x) |
+
+Behind nowhere: smaller and faster than every library here, in every case.
+
+Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. Versions: Radix 1.2.20, Base UI 1.0.0-rc.0, React Aria 1.22.1 and Ark UI 5.40.0.
+
+{/* /benchmarks */}

@@ -42,16 +42,16 @@ function MyTimePicker() {
 
 Each field is a `spinbutton`. Users can:
 
-- **Type** a number to set the value.
+- **Type** a number to set the value. Focus moves on once no further digit could fit.
 - Press <Kbd>ArrowUp</Kbd> / <Kbd>ArrowDown</Kbd> to increment/decrement.
-- Press <Kbd>Tab</Kbd> to move between fields.
+- Press <Kbd>Tab</Kbd> or <Kbd>ArrowLeft</Kbd> / <Kbd>ArrowRight</Kbd> to move between fields.
 - On the AM/PM field: <Kbd>A</Kbd> for AM, <Kbd>P</Kbd> for PM.
 
 `getFieldProps` applies:
 
 - `role="spinbutton"` with `aria-valuemin`, `aria-valuemax`, `aria-valuenow`.
 - Keyboard handlers for increment, decrement, and digit entry.
-- Focus management via `tabIndex`.
+- Every field in the tab order, and the attributes the hook finds a field by to move focus to it.
 
 ---
 

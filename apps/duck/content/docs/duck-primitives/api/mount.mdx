@@ -1,6 +1,6 @@
 ---
 title: "Mount"
-description: "Simple mount/unmount helpers with animation delay support."
+description: "Keeps children mounted through their exit, for a fixed time or until an element's transitions end."
 section: Misc
 order: 10
 ---
@@ -10,12 +10,11 @@ import { Mount, MountMinimal } from '@gentleduck/primitives/mount'
 
 ## `Mount`
 
-A simple component that mounts children when `open` is true and unmounts after `animationDuration` when `open` becomes false.
+Mounts its children in the commit that sets `open`, and unmounts them `animationDuration` after `open` goes false. Opening again before then keeps them.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `open` | `boolean` | - | Whether to show children |
-| `renderOnce` | `boolean` | `false` | Unmount completely after close (no re-render) |
 | `animationDuration` | `number` | `400` | Delay before unmounting (ms) |
 
 ```tsx
@@ -26,18 +25,32 @@ A simple component that mounts children when `open` is true and unmounts after `
 
 ## `MountMinimal`
 
-A more advanced mount helper that reads the element's CSS `transition-duration` to determine when to unmount, rather than using a fixed duration.
+Waits until an element's last CSS transition ends before it unmounts its children, rather than a fixed time: each transition's `transition-duration` plus its `transition-delay`, the longest of several. Under `transition-property: none`, as `motion-reduce:transition-none` leaves it, or when the browser starts no transition, as for a height going to `auto` without `interpolate-size`, they unmount at once. The element comes from `ref`, which `MountMinimal` reads and never writes: it does not render a node of its own.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `open` | `boolean` | `false` | Whether to show children |
-| `forceMount` | `boolean` | `false` | Force mount regardless of open state |
+| `forceMount` | `boolean` | `false` | Keep the children mounted while closed |
 | `skipWaiting` | `boolean` | `false` | Unmount immediately without waiting for transitions |
-| `renderOnce` | `boolean` | `false` | Keep mounted after first render |
-| `ref` | `HTMLDialogElement \| null` | - | Element to observe for transition duration |
+| `renderOnce` | `boolean` | `false` | Keep the children mounted once they have opened |
+| `ref` | `React.RefObject<HTMLElement \| null>` | - | A ref object for the element whose transitions the children wait out. Without one, or with a callback ref it cannot read, they unmount as soon as it closes |
+
+```tsx
+function Panel({ open }: { open: boolean }) {
+  const ref = React.useRef<HTMLDivElement>(null)
+
+  return (
+    <div ref={ref} className="transition-[height] duration-200">
+      <MountMinimal open={open} ref={ref}>
+        <Content />
+      </MountMinimal>
+    </div>
+  )
+}
+```
 
 <Callout icon={<Lightbulb />}>
 
-For most cases, prefer `Presence` over `Mount`. Mount is useful for simpler scenarios where you don't need animation detection.
+`Presence` waits for a CSS animation on the one child it wraps. Reach for `MountMinimal` when what moves is a transition on another element, such as a parent, and for `Mount` when no style says how long the exit takes.
 
 </Callout>

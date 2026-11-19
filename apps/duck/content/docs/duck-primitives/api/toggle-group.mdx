@@ -63,7 +63,7 @@ function FormatOptions() {
 
 ### `ToggleGroup.Root`
 
-The root container. Renders a `<div>`. Supports two modes: `single` and `multiple`.
+The root container. Renders a `<div>`. Supports two modes: `single` and `multiple`. A single group is a `radiogroup`, a multiple one a `toolbar`, or a `group` when `rovingFocus` is off and the arrow keys do nothing. A `role` passed to it wins. A group given no `type`, which only JavaScript allows, is single.
 
 #### Single mode
 
@@ -89,7 +89,8 @@ The root container. Renders a `<div>`. Supports two modes: `single` and `multipl
 | --- | --- | --- | --- |
 | `rovingFocus` | `boolean` | `true` | Enable roving focus keyboard navigation |
 | `disabled` | `boolean` | `false` | Disables the entire group |
-| `orientation` | `'horizontal' \| 'vertical'` | - | Arrow key navigation direction |
+| `deselectable` | `boolean` | `true` | Lets the last item that is on be turned off. `false` keeps one item on, as a segmented control does |
+| `orientation` | `'horizontal' \| 'vertical'` | - | Arrow key navigation direction, also set as `aria-orientation` while `rovingFocus` is on |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction |
 | `loop` | `boolean` | `true` | Keyboard navigation wraps around |
 | `asChild` | `boolean` | - | Render as child element |
@@ -104,6 +105,7 @@ An individual toggle button within the group. Renders a `<button>`.
 | --- | --- | --- | --- |
 | `value` | `string` | - | **Required.** Unique value for this item |
 | `disabled` | `boolean` | - | Disables this item (inherits from group) |
+| `children` | `ReactNode \| ((pressed: boolean) => ReactNode)` | - | The content, or a function of whether the item is on, as `Toggle.Root` takes. With `asChild`, the function returns the element to render |
 | `asChild` | `boolean` | - | Render as child element |
 
 Exposes `aria-pressed` (multiple mode), `role="radio"` (single mode), `data-state` (`on` | `off`), and `data-disabled` attributes.

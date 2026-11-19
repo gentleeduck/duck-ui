@@ -37,7 +37,7 @@ function SettingsSheet() {
       <Sheet.Trigger className="px-3 py-2 rounded border">Open settings</Sheet.Trigger>
       <Sheet.Portal>
         <Sheet.Overlay className="fixed inset-0 bg-black/50" />
-        <Sheet.Content className="fixed right-0 top-0 h-full w-[400px] bg-white p-6 shadow-xl">
+        <Sheet.Content className="fixed end-0 top-0 h-full w-[400px] bg-white p-6 shadow-xl">
           <Sheet.Title className="text-lg font-semibold">Settings</Sheet.Title>
           <Sheet.Description className="mt-2 text-sm text-gray-500">
             Configure your account and interface preferences.
@@ -58,6 +58,8 @@ function SettingsSheet() {
 
 - behavior, accessibility, and focus management are the same as Dialog
 - `Sheet.*` and `Dialog.*` map to the same underlying primitives
+- the content writes `dir`, from the root's `dir`, then a `DirectionProvider`, then `<html dir>`, so a panel placed with `start-0` or `end-0` mirrors in right to left, even when portalled out of the provider
+- a sheet opened from a dialog's content, or a dialog from a sheet's, is a [nested dialog](/duck-primitives/api/dialog#nested-dialogs)
 
 ## API Mapping
 
@@ -72,10 +74,12 @@ function SettingsSheet() {
 | `Description` | `DialogDescription` |
 | `Close` | `DialogClose` |
 
+Each part is also exported under its sheet name, such as `SheetContent` for `Content`.
+
 Additional exports:
 
 - `createSheetScope` (alias of `createDialogScope`)
-- type aliases such as `SheetContentProps`, `SheetTriggerProps`, etc.
+- the `ISheet` namespace of prop types, such as `ISheet.IContentProps`, each the matching `IDialog` type
 
 ---
 

@@ -12,11 +12,13 @@ import { DirectionProvider, useDirection } from '@gentleduck/primitives/directio
 
 <Callout icon={<Zap />}>
 
-`DirectionProvider` lets you set `ltr`/`rtl` once for a subtree. `useDirection` resolves local `dir` overrides first, then provider value, then falls back to `ltr`.
+`DirectionProvider` sets `ltr` or `rtl` once for a subtree. `useDirection` resolves a component's own `dir` first, then the nearest provider, then `<html dir>`.
 
 </Callout>
 
-This is the single direction module used by primitives and registry-ui components.
+This is the single direction module used by primitives and registry-ui components. A change to `<html dir>` is picked up at runtime. `RTL` reads as `rtl`, and anything else, `auto` included, as `ltr`. On the server there is no document, so `useDirection` answers `ltr` there; a provider gives the right direction on first paint.
+
+The provider renders a `div` with `data-slot="direction"`, `dir` and `display: contents`. The `dir` attribute is what makes the page's CSS follow the provider, logical properties and `[dir='rtl']` selectors included, and `display: contents` keeps the `div` out of layout, so a grid or flex parent still lays out the provider's children. Those children are ordered by the parent's direction, though, so put the provider around a row that should mirror, not inside it. A child selector across the provider, such as `.list > li`, does not match, since the `div` sits between the two.
 
 ## Example
 
@@ -41,7 +43,7 @@ export function App() {
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `dir` | `'ltr' \| 'rtl'` | - | Direction value provided to descendants |
+| `dir` | `'ltr' \| 'rtl'` | - | Direction for the subtree, set on its `div` and read by `useDirection` |
 | `children` | `React.ReactNode` | - | Wrapped subtree |
 
 ### `useDirection`
@@ -56,5 +58,13 @@ const direction = useDirection(localDir)
 
 Returns:
 - `localDir` when provided
-- Provider `dir` when available
-- `'ltr'` as final fallback
+- the nearest provider's `dir` when there is one
+- `'rtl'` when `<html dir>` is `rtl`, and `'ltr'` otherwise, which is also the answer on the server
+
+### Other exports
+
+| Export | Type | Description |
+| --- | --- | --- |
+| `Provider` | `React.FC<{ dir: 'ltr' \| 'rtl'; children?: ReactNode }>` | `DirectionProvider` under Radix's name |
+| `DirectionContext` | `React.Context<'ltr' \| 'rtl' \| undefined>` | The context the provider fills |
+| `DIRECTION_DICTIONARY` | `{ ltr: 'ltr'; rtl: 'rtl' }` | The two values |

@@ -86,20 +86,44 @@ function ActionsMenu() {
 }
 ```
 
+### An item that opens a dialog
+
+The menu closes when the item is selected, so the dialog has no trigger to give focus back to. Pass the menu's trigger as the dialog's `finalFocus`:
+
+```tsx
+const actionsRef = React.useRef<HTMLButtonElement>(null)
+const [open, setOpen] = React.useState(false)
+
+<DropdownMenu.Root>
+  <DropdownMenu.Trigger ref={actionsRef}>Actions</DropdownMenu.Trigger>
+  <DropdownMenu.Portal>
+    <DropdownMenu.Content>
+      <DropdownMenu.Item onSelect={() => setOpen(true)}>Delete</DropdownMenu.Item>
+    </DropdownMenu.Content>
+  </DropdownMenu.Portal>
+</DropdownMenu.Root>
+
+<Dialog.Root open={open} onOpenChange={setOpen}>
+  <Dialog.Portal>
+    <Dialog.Content finalFocus={actionsRef}>...</Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>
+```
+
 ---
 
 ## API
 
 ### `DropdownMenu.Root`
 
-The root component that manages open/closed state and provides context. Wraps the base Menu primitive internally.
+The root component that manages open/closed state and provides context. Wraps the base Menu primitive internally. The menu closes, with any open submenu, when the window loses focus.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `open` | `boolean` | - | Controlled open state |
 | `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
 | `onOpenChange` | `(open: boolean) => void` | - | Called when the open state should change |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved with `useDirection` (`dir` prop -> `DirectionProvider` -> `'ltr'`). |
+| `dir` | `'ltr' \| 'rtl'` | - | Direction of the menu and its submenus. Falls back to `DirectionProvider`, then `<html dir>`. The trigger keeps the page's |
 | `modal` | `boolean` | `true` | When true, interaction with outside elements is disabled and only menu content is visible to screen readers |
 
 ### `DropdownMenu.Trigger`
@@ -119,7 +143,7 @@ Renders the dropdown content into a portal.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `container` | `Element \| null` | `document.body` | Portal target |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Portal target |
 
 ### `DropdownMenu.Content`
 
@@ -137,12 +161,12 @@ The dropdown content. Handles focus management, keyboard navigation, and dismiss
 | `onEscapeKeyDown` | `(event: KeyboardEvent) => void` | - | Called when Escape is pressed |
 | `onPointerDownOutside` | `(event) => void` | - | Called when clicking outside |
 | `onInteractOutside` | `(event) => void` | - | Called on any interaction outside |
-| `trapFocus` | `boolean` | `context.open` | Override whether focus is trapped inside the content |
-| `disableOutsidePointerEvents` | `boolean` | `context.open` | Override whether pointer events outside are blocked |
-| `disableOutsideScroll` | `boolean` | `true` | Override whether body scroll is locked while open |
+| `trapFocus` | `boolean` | `open` | Modal only. Override whether focus is trapped inside the content |
+| `disableOutsidePointerEvents` | `boolean` | `open` | Modal only. Override whether pointer events outside are blocked |
+| `disableOutsideScroll` | `boolean` | `true` | Modal only. Override whether body scroll is locked while open |
 
 <Callout>
-The `trapFocus`, `disableOutsidePointerEvents`, and `disableOutsideScroll` props default to sensible values. Override them when integrating with animation libraries like [motion](https://motion.dev) that need custom lifecycle control during exit animations.
+On a modal menu, `trapFocus` and `disableOutsidePointerEvents` follow the open state and `disableOutsideScroll` is on. Override them when integrating with animation libraries like [motion](https://motion.dev) that need custom lifecycle control during exit animations. A non-modal menu never traps focus, blocks outside pointer events or locks scroll, and ignores all three.
 </Callout>
 
 Exposes `data-state="open"` / `data-state="closed"` and `data-side` for CSS animation.
@@ -171,9 +195,10 @@ An interactive menu item. Fires `onSelect` when activated.
 | --- | --- | --- | --- |
 | `disabled` | `boolean` | `false` | Disable the item |
 | `onSelect` | `(event: Event) => void` | - | Called when item is selected |
+| `closeOnSelect` | `boolean` | `true` | Close the menu once the item is selected. A checkbox or radio item takes it too |
 | `textValue` | `string` | - | Text override for typeahead search |
 
-Exposes `data-highlighted` when focused and `data-disabled` when disabled.
+Exposes `data-highlighted` when focused and `data-disabled` when disabled. A key typed into a focusable element inside the item, even one portalled out of it, is left to that element. A disabled item rendered as a link with `asChild` does not follow the link.
 
 ### `DropdownMenu.CheckboxItem`
 
@@ -209,13 +234,14 @@ Renders only when the parent item is checked. Use for check marks or radio dots.
 
 ### `DropdownMenu.Sub` / `DropdownMenu.SubTrigger` / `DropdownMenu.SubContent`
 
-Nested submenus.
+Nested submenus. The sub-trigger points `aria-controls` at its submenu only while the submenu is open, since the id names nothing while it is closed.
 
 | Prop (Sub) | Type | Default | Description |
 | --- | --- | --- | --- |
 | `open` | `boolean` | - | Controlled open state |
-| `defaultOpen` | `boolean` | `false` | Initial open state |
+| `defaultOpen` | `boolean` | `false` | Initial open state. It holds only in a menu that leaves focus alone on open, as in Radix: a menu focusing its content closes the submenu |
 | `onOpenChange` | `(open: boolean) => void` | - | Called when open state changes |
+| `closeParentOnEsc` | `boolean` | `true` | Whether Escape inside the submenu closes the whole menu, or only the submenu, focusing its sub-trigger |
 
 `SubContent` exposes the same `--gentleduck-dropdown-menu-*` CSS custom properties as `Content`.
 
@@ -241,6 +267,7 @@ Arrow pointing to the trigger.
 | <Kbd>Space</Kbd> / <Kbd>Enter</Kbd> | Opens menu (on trigger) or activates highlighted item |
 | <Kbd>ArrowDown</Kbd> | Opens menu or highlights next item |
 | <Kbd>ArrowUp</Kbd> | Highlights previous item |
+| A letter | Highlights the next item whose text starts with it |
 | <Kbd>ArrowRight</Kbd> | Opens submenu (on SubTrigger) |
 | <Kbd>ArrowLeft</Kbd> | Closes submenu |
-| <Kbd>Escape</Kbd> | Closes menu |
+| <Kbd>Escape</Kbd> | Closes the menu, or only a submenu given `closeParentOnEsc={false}` |

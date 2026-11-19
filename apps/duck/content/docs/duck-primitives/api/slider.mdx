@@ -12,6 +12,7 @@ import * as Slider from '@gentleduck/primitives/slider'
 
 ```tsx
 <Slider.Root>
+  <Slider.Value />
   <Slider.Track>
     <Slider.Range />
   </Slider.Track>
@@ -60,23 +61,29 @@ function PriceRange() {
 
 ### `Slider.Root`
 
-The root component that manages slider state, drag interactions, keyboard stepping, and provides context to all children. Renders a `<span>`.
+The root component that manages slider state, drag interactions, keyboard stepping, and provides context to all children. Renders a `<span>`. Inside a form, or with `form`, each thumb renders a hidden `<input>`, so the values submit under `name` (as `name[]` with more than one thumb), and a form reset restores the values the slider started with.
+
+A press with the main button moves the closest thumb to the pointer and focuses it, even when the value stays where it was. A press on a thumb, or on anything inside it, focuses that thumb without moving it. A right click or a Control click moves nothing, since each opens the context menu. A drag the browser cancels ends where it stopped, as a pointer up does.
+
+A change the user makes dispatches a bubbling `input` event from that hidden input, so a form's `onChange` and an ancestor's `onInput` both hear it, including a value a controlled parent adjusts in the same render. A change made through `value` reaches a form's `onChange` but stops before any ancestor's `onInput`.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `name` | `string` | - | Name for hidden form inputs |
 | `disabled` | `boolean` | `false` | Disables the slider |
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Slider orientation |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction (horizontal only). Resolved with `useDirection` (`dir` prop -> `DirectionProvider` -> `'ltr'`). |
+| `dir` | `'ltr' \| 'rtl'` | - | Text direction (horizontal only). Resolved with `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`), and written on the root alone, which the parts inherit. |
 | `min` | `number` | `0` | Minimum allowed value |
 | `max` | `number` | `100` | Maximum allowed value |
 | `step` | `number` | `1` | Increment step for values |
 | `value` | `number[]` | - | Controlled values array |
 | `defaultValue` | `number[]` | `[min]` | Uncontrolled initial values |
 | `onValueChange` | `(value: number[]) => void` | - | Called on every value change during interaction |
-| `onValueCommit` | `(value: number[]) => void` | - | Called when the user finishes an interaction (pointer up or key commit) |
+| `onValueCommit` | `(value: number[]) => void` | - | Called once when the user finishes an interaction that changed any value (pointer up, a cancelled drag, or a key) |
 | `inverted` | `boolean` | `false` | Inverts the slider direction |
+| `largeStep` | `number` | ten steps | How far <Kbd>PageUp</Kbd>, <Kbd>PageDown</Kbd> and <Kbd>Shift</Kbd> with an arrow key move a thumb, as in Base UI. Give a multiple of `step` |
 | `minStepsBetweenThumbs` | `number` | `0` | Minimum number of steps required between thumbs |
+| `preserveThumbOrder` | `boolean` | `false` | Stops a thumb at its neighbour, `minStepsBetweenThumbs` away from it, instead of letting it cross and swap places |
 | `form` | `string` | - | Associates hidden inputs with a form element by ID |
 
 Exposes `data-disabled` and `data-orientation` attributes. Sets the CSS custom property `--gentleduck-slider-thumb-transform` for thumb positioning.
@@ -103,14 +110,54 @@ Exposes `data-disabled` and `data-orientation` attributes.
 
 ### `Slider.Thumb`
 
-A draggable thumb. The thumb index is auto-detected from render order  -  you do not need to pass an `index` prop. Renders a `<span>` with `role="slider"`. Each thumb also renders a hidden `<input>` for form submission.
+A draggable thumb. Once it mounts, its index comes from its render order. On the server that order is not known yet, so a lone thumb renders at the slider's one value, and each thumb of a range renders hidden unless given `index`. Renders a `<span>` with `role="slider"`, and inside a form a hidden `<input>` for submission. After a change, focus moves to the thumb that changed, showing the focus ring only when a key moved it.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `name` | `string` | - | Optional name override for this thumb's hidden input |
+| `index` | `number` | - | Where the thumb sits among the values until it mounts, so a range renders its thumbs on the server |
 | `asChild` | `boolean` | - | Render as child element |
 
-Sets `aria-valuemin`, `aria-valuenow`, `aria-valuemax`, and `aria-orientation` automatically. Exposes `data-disabled` and `data-orientation` attributes.
+Sets `aria-valuemin`, `aria-valuenow`, `aria-valuemax`, and `aria-orientation` automatically, and `aria-disabled` when the slider is disabled. Exposes `data-disabled` and `data-orientation` attributes.
+
+### `Slider.Value`
+
+The values as text, as Base UI's `Slider.Value`, Ark's `ValueText` and React Aria's `SliderOutput` show them, following each thumb as it moves. Renders a `<span>` hidden from assistive technology, since each thumb already announces its own value. Without children it shows the values joined with a comma.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `children` | `ReactNode \| ((values: number[]) => ReactNode)` | - | What to show in place of the values, or a function of them |
+
+```tsx
+<Slider.Root aria-label="Price" defaultValue={[20, 80]}>
+  <Slider.Value>{([low, high]) => `$${low} to $${high}`}</Slider.Value>
+  <Slider.Track>
+    <Slider.Range />
+  </Slider.Track>
+  <Slider.Thumb />
+  <Slider.Thumb />
+</Slider.Root>
+```
+
+Exposes `data-disabled` and `data-orientation` attributes.
+
+### `Slider.ThumbProvider` / `Slider.ThumbTrigger` / `Slider.BubbleInput`
+
+`Slider.Thumb` is `Slider.ThumbTrigger` inside a `Slider.ThumbProvider`, with a `Slider.BubbleInput` beside it when the slider is in a form. Compose the three yourself to place the hidden input, give it props of its own, or render it outside a form.
+
+```tsx
+<Slider.Root name="volume" defaultValue={[50]}>
+  <Slider.Track>
+    <Slider.Range />
+  </Slider.Track>
+  <Slider.ThumbProvider>
+    <Slider.ThumbTrigger aria-label="Volume" />
+    <Slider.BubbleInput data-testid="volume-input" />
+  </Slider.ThumbProvider>
+</Slider.Root>
+```
+
+`Slider.ThumbProvider` takes the thumb's `name` and `index`. `Slider.ThumbTrigger` takes the props of `Slider.Thumb` except `name`. `Slider.BubbleInput` takes the props of an `<input>` except `value`, which comes from the thumb.
 
 ---
 
@@ -122,8 +169,10 @@ Sets `aria-valuemin`, `aria-valuenow`, `aria-valuemax`, and `aria-orientation` a
 | <Kbd>ArrowLeft</Kbd> | Decrements by one step (horizontal LTR) |
 | <Kbd>ArrowUp</Kbd> | Increments by one step (vertical) |
 | <Kbd>ArrowDown</Kbd> | Decrements by one step (vertical) |
-| <Kbd>PageUp</Kbd> | Increments by ten steps |
-| <Kbd>PageDown</Kbd> | Decrements by ten steps |
-| <Kbd>Shift</Kbd> + <Kbd>ArrowKey</Kbd> | Increments/decrements by ten steps |
+| <Kbd>PageUp</Kbd> | Increments by `largeStep`, ten steps by default |
+| <Kbd>PageDown</Kbd> | Decrements by `largeStep`, ten steps by default |
+| <Kbd>Shift</Kbd> + <Kbd>ArrowKey</Kbd> | Increments/decrements by `largeStep` |
 | <Kbd>Home</Kbd> | Sets the focused thumb to the minimum value |
 | <Kbd>End</Kbd> | Sets the focused thumb to the maximum value |
+
+A value off the `step` grid, such as one set through `value`, moves to the next grid line in the direction of the key first, and that counts as one of the steps.

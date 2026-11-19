@@ -1,6 +1,6 @@
 ---
 title: "Pagination"
-description: "Structural pagination primitives with optional direction support."
+description: "Pagination that tracks its page, draws a steady window of pages and renders buttons or links."
 section: Navigation
 order: 10
 ---
@@ -13,24 +13,58 @@ import * as Pagination from '@gentleduck/primitives/pagination'
 ```tsx
 <Pagination.Root>
   <Pagination.Content>
-    <Pagination.Item />
+    <Pagination.Item>
+      <Pagination.First />
+    </Pagination.Item>
+    <Pagination.Item>
+      <Pagination.Previous />
+    </Pagination.Item>
+    <Pagination.Pages />
+    <Pagination.Item>
+      <Pagination.Next />
+    </Pagination.Item>
+    <Pagination.Item>
+      <Pagination.Last />
+    </Pagination.Item>
   </Pagination.Content>
 </Pagination.Root>
 ```
 
+`Pagination.Pages` renders an `Item` holding a `Page` for each page and one holding an `Ellipsis` for each gap. The list is the same length on every page, so the triggers never move under the pointer. Give an ellipsis the width of a page and nothing shifts at all.
+
 ## Example
 
 ```tsx
-<Pagination.Root className="flex justify-center" dir="rtl">
-  <Pagination.Content className="flex items-center gap-2">
+const [page, setPage] = React.useState(1)
+
+<Pagination.Root page={page} onPageChange={setPage} pageCount={20}>
+  <Pagination.Content className="flex items-center gap-1">
     <Pagination.Item>
-      <button type="button">التالي</button>
+      <Pagination.Previous />
     </Pagination.Item>
+    <Pagination.Pages />
     <Pagination.Item>
-      <button type="button">١</button>
+      <Pagination.Next />
     </Pagination.Item>
   </Pagination.Content>
 </Pagination.Root>
+```
+
+With `getPageHref`, every page and trigger is a link to the address it returns, so the page survives a reload and opens in a new tab:
+
+```tsx
+<Pagination.Root pageCount={20} defaultPage={page} getPageHref={(page) => `/posts?page=${page}`}>
+```
+
+A client router's link prevents the browser from following it so it can navigate itself. The page still moves and `onPageChange` still fires, so a handler that does the same works:
+
+```tsx
+const navigate = (event: React.MouseEvent<HTMLElement>) => {
+  event.preventDefault()
+  router.push(event.currentTarget.getAttribute('href'))
+}
+
+<Pagination.Page value={item} onClick={navigate} />
 ```
 
 ## API
@@ -41,12 +75,19 @@ Renders a semantic `<nav>` container (`aria-label="pagination"` by default).
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `dir` | `'ltr' \| 'rtl'` | `'ltr'` | Text direction for pagination context. Resolved with `useDirection` (`dir` prop -> `DirectionProvider` -> `'ltr'`). |
+| `pageCount` | `number` | `1` | Number of pages. Until it is set there is one, so the triggers stay disabled. |
+| `page` | `number` | - | The current page, when you control it. A page past either end shows as that end. |
+| `defaultPage` | `number` | `1` | The page to start on, when the root tracks it |
+| `onPageChange` | `(page: number) => void` | - | Called with the page a trigger or page asks for. A page outside `1` to `pageCount` is refused and never reported |
+| `siblingCount` | `number` | `1` | Pages shown on either side of the current one |
+| `boundaryCount` | `number` | `1` | Pages always shown at each end |
+| `getPageHref` | `(page: number) => string` | - | Renders every page and trigger as a link to the address it returns |
+| `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved with `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `...props` | `React.ComponentPropsWithoutRef<'nav'>` | - | Additional props for the root nav element |
 
 ### `Pagination.Content`
 
-Renders a `<ul>` element inside `Pagination.Root` and inherits direction from root context.
+Renders a `<ul>`. Its direction is the nav's.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -54,8 +95,62 @@ Renders a `<ul>` element inside `Pagination.Root` and inherits direction from ro
 
 ### `Pagination.Item`
 
-Renders a `<li>` element inside `Pagination.Content` and inherits direction from root context.
+Renders a `<li>`. Its direction is the nav's.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `...props` | `React.ComponentPropsWithoutRef<'li'>` | - | Additional props for the list item element |
+
+### `Pagination.Pages`
+
+Renders the window of pages around the current one. A gap of one page shows that page instead of an ellipsis.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `children` | `(items: (number \| 'start-ellipsis' \| 'end-ellipsis')[]) => React.ReactNode` | - | Draws the items yourself |
+
+### `Pagination.Page`
+
+A button, or a link under `getPageHref`, that moves to its page. Its label is the page number unless it has children.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `value` | `number` | - | The page it moves to |
+| `disabled` | `boolean` | `false` | Disables the page |
+| `asChild` | `boolean` | `false` | Renders its child in place of the button or link |
+| `...props` | `React.HTMLAttributes<HTMLElement>` | - | Additional props for the button or link |
+
+| Data attribute | Values |
+| --- | --- |
+| `[data-slot]` | `"pagination-page"` |
+| `[data-selected]` | Present on the current page, which also carries `aria-current="page"` |
+| `[data-disabled]` | Present when disabled |
+
+### `Pagination.First`, `Pagination.Previous`, `Pagination.Next`, `Pagination.Last`
+
+A button, or a link under `getPageHref`, that moves to the first, previous, next or last page. Each is disabled when it has nowhere to go: a button gets `disabled`, and a link loses its address and gets `aria-disabled`, so it leaves the tab order. Each is labelled "First page", "Previous page", "Next page" or "Last page" unless it has an `aria-label`.
+
+On a button, a click handler that calls `event.preventDefault()` keeps the page where it is. On a link it only stops the browser following the link, and the page still moves. A disabled page or trigger runs no click handler, link or button.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `disabled` | `boolean` | `false` | Disables the trigger whatever the page |
+| `asChild` | `boolean` | `false` | Renders its child in place of the button or link |
+| `...props` | `React.HTMLAttributes<HTMLElement>` | - | Additional props for the button or link |
+
+| Data attribute | Values |
+| --- | --- |
+| `[data-slot]` | `"pagination-first"`, `"pagination-previous"`, `"pagination-next"` or `"pagination-last"` |
+| `[data-disabled]` | Present when disabled |
+
+### `Pagination.Ellipsis`
+
+Renders a `<span>` for a gap, with `data-slot="pagination-ellipsis"`. It holds an ellipsis character unless it has children.
+
+### `getPaginationRange`
+
+```ts
+getPaginationRange(page: number, pageCount: number, siblingCount = 1, boundaryCount = 1)
+```
+
+The items `Pagination.Pages` draws, for a table or a server render that does not mount the root. `getPaginationRange(5, 10)` is `[1, 'start-ellipsis', 4, 5, 6, 'end-ellipsis', 10]`.

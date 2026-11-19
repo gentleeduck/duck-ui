@@ -63,7 +63,8 @@ Wraps your app (or section) to coordinate tooltip delays. When a user moves from
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `delayDuration` | `number` | `700` | Delay in ms before tooltip opens |
-| `skipDelayDuration` | `number` | `300` | Time in ms before delay resets after closing |
+| `closeDelay` | `number` | `0` | Delay in ms before tooltip closes once the pointer leaves it |
+| `skipDelayDuration` | `number` | `300` | Time in ms before delay resets after closing. `0` keeps the delay on every tooltip |
 | `disableHoverableContent` | `boolean` | `false` | Close immediately when pointer leaves trigger (can't hover content) |
 
 ### `Tooltip.Root`
@@ -76,11 +77,16 @@ Manages state for a single tooltip instance.
 | `defaultOpen` | `boolean` | `false` | Initial open state |
 | `onOpenChange` | `(open: boolean) => void` | - | Called on state change |
 | `delayDuration` | `number` | - | Override Provider's delay for this tooltip |
+| `closeDelay` | `number` | - | Override Provider's close delay for this tooltip |
 | `disableHoverableContent` | `boolean` | - | Override Provider's setting |
+| `disabled` | `boolean` | `false` | Keeps the tooltip closed, and closes it if it is open |
+| `dir` | `'ltr' \| 'rtl'` | - | Direction of the content. Without it the content takes the nearest `DirectionProvider`, then `<html dir>`. The trigger keeps the page's |
 
 ### `Tooltip.Trigger`
 
-The element that activates the tooltip on hover/focus.
+The element that activates the tooltip on hover/focus. While the tooltip is open, the trigger's `aria-describedby` adds the content's id after any ids it was given.
+
+Focus opens the tooltip only when the last input was not a pointer press and the trigger matches `:focus-visible`. So a trigger that is also a menu or dialog trigger shows no tooltip when an item chosen with the pointer, or a dialog closed with the pointer, gives focus back to it. <Kbd>Tab</Kbd>, <Kbd>Escape</Kbd> handing focus back, and a focus no input led to, such as a screen reader moving it, open it.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -117,7 +123,8 @@ The floating tooltip content. Positioned by the Popper engine.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `aria-label` | `string` | - | Accessible label when content is purely visual |
+| `aria-label` | `string` | - | Announced in place of the visible content, from a visually hidden `role="tooltip"` element |
+| `id` | `string` | - | The id the trigger's `aria-describedby` points at. Generated when not given |
 | `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'` | Preferred side |
 | `sideOffset` | `number` | `0` | Distance from anchor in pixels |
 | `align` | `'start' \| 'center' \| 'end'` | `'center'` | Alignment along the side |
@@ -142,11 +149,19 @@ Content exposes `data-state` with values: `closed`, `delayed-open`, `instant-ope
 
 ---
 
+## Accessibility
+
+The content is the `role="tooltip"` element and renders its children once. With an `aria-label`, the label moves to a visually hidden element that takes the role and the id instead. Inside a modal `Dialog` but portalled out of it, the content registers with the dialog, so focus can move into it and it scrolls under the dialog's scroll lock.
+
+---
+
 ## Grace area
 
-When the user moves their pointer from the trigger toward the content, a grace area (triangle) keeps the tooltip open during the transition. This prevents the tooltip from closing when the user moves diagonally to interact with the content.
+When the user moves their pointer from the trigger toward the content, a grace area (triangle) keeps the tooltip open during the transition. This prevents the tooltip from closing when the user moves diagonally to interact with the content. The area is checked from the move that leaves the trigger, so a pointer that lands outside it closes the tooltip at once, and one that lands on another trigger in the same provider opens that tooltip on the same move.
 
 Set `disableHoverableContent={true}` to disable this behavior.
+
+With `closeDelay`, a pointer leaving the trigger or straying out of the grace area closes the tooltip only after that many milliseconds, and a pointer coming back to the trigger or onto the content keeps it open. A press, a blur, <Kbd>Escape</Kbd>, a scroll or another tooltip opening still closes it at once.
 
 ---
 

@@ -24,19 +24,11 @@ import { Primitive } from '@gentleduck/primitives/primitive-elements'
 
 <Callout icon={<Lightbulb />}>
 
-`Primitive.a`, `Primitive.button`, `Primitive.div`, `Primitive.form`, `Primitive.h2`, `Primitive.h3`, `Primitive.img`, `Primitive.input`, `Primitive.label`, `Primitive.li`, `Primitive.nav`, `Primitive.ol`, `Primitive.p`, `Primitive.span`, `Primitive.svg`, `Primitive.ul`
+`Primitive.a`, `Primitive.button`, `Primitive.div`, `Primitive.form`, `Primitive.h2`, `Primitive.h3`, `Primitive.img`, `Primitive.input`, `Primitive.label`, `Primitive.li`, `Primitive.nav`, `Primitive.ol`, `Primitive.p`, `Primitive.select`, `Primitive.span`, `Primitive.svg`, `Primitive.ul`
 
-Each accepts all native HTML props for that element type, plus `asChild`.
+Each accepts all native HTML props for that element type, plus `asChild`. `asChild` stays with the primitive, so one primitive can slot onto another. `Primitive` is also exported as `Root`, the name Radix gives it.
 
 </Callout>
-
-## `dispatchDiscreteCustomEvent`
-
-A utility that dispatches a custom event inside `flushSync` to ensure React processes the resulting state update synchronously. Used internally by primitives that need synchronous event processing for discrete user interactions.
-
-```tsx
-import { dispatchDiscreteCustomEvent } from '@gentleduck/primitives/primitive-elements'
-```
 
 ## Building custom primitives
 

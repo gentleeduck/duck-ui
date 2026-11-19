@@ -29,7 +29,7 @@ import * as RovingFocusGroup from '@gentleduck/primitives/roving-focus'
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `orientation` | `'horizontal' \| 'vertical'` | - | Arrow key direction |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved with `useDirection` (`dir` prop -> `DirectionProvider` -> `'ltr'`). |
+| `dir` | `'ltr' \| 'rtl'` | - | Which way `ArrowLeft` and `ArrowRight` move, written to the group as `dir` so its items run the same way. Without it the group takes a `DirectionProvider`'s, then `<html dir>`. |
 | `loop` | `boolean` | `false` | Wrap at boundaries |
 | `currentTabStopId` | `string \| null` | - | Controlled active tab stop ID |
 | `defaultCurrentTabStopId` | `string` | - | Initial active tab stop ID (uncontrolled) |
@@ -37,16 +37,61 @@ import * as RovingFocusGroup from '@gentleduck/primitives/roving-focus'
 | `onEntryFocus` | `(event: Event) => void` | - | Called when focus enters the group. Call `event.preventDefault()` to prevent auto-focus. |
 | `preventScrollOnEntryFocus` | `boolean` | `false` | Prevent scroll when focus enters the group |
 
+## Props (Item)
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `tabStopId` | `string` | generated | The id the group names in `currentTabStopId` when this item is its tab stop |
+| `focusable` | `boolean` | `true` | `false` keeps the item out of arrow key and Tab navigation, and a mouse down on it moves no focus |
+| `active` | `boolean` | `false` | Focus entering the group goes to this item first, as to the checked radio or the pressed toggle |
+| `children` | `ReactNode \| ((state) => ReactNode)` | - | Nodes, or a function called with `isCurrentTabStop` and `hasTabStop` |
+| `asChild` | `boolean` | `false` | Renders the child element instead of a `span` |
+
+```tsx
+<RovingFocusGroup.Item tabStopId="bold" asChild>
+  {({ isCurrentTabStop, hasTabStop }) => (
+    <button data-tab-stop={isCurrentTabStop ? '' : undefined}>Bold</button>
+  )}
+</RovingFocusGroup.Item>
+```
+
+`isCurrentTabStop` is true for the one item Tab reaches. `hasTabStop` is true once the group has a tab stop at all, which it gets from `currentTabStopId` or when an item is first focused.
+
+## Keyboard
+
+| Key | Horizontal | Vertical |
+| --- | --- | --- |
+| `ArrowRight` | Next item, previous right to left | - |
+| `ArrowLeft` | Previous item, next right to left | - |
+| `ArrowDown` | - | Next item |
+| `ArrowUp` | - | Previous item |
+| `Home`, `PageUp` | First item | First item |
+| `End`, `PageDown` | Last item | Last item |
+| `Tab` | Into the group on its tab stop, then out past the other items | Same |
+| `Shift+Tab` | Out of the group from any item, or from after it back onto its tab stop | Same |
+
+A group with no `orientation` moves on all four arrows. An arrow held with Shift, Ctrl, Alt or Meta goes to the page. Items that cannot take focus are skipped, and `loop` wraps at either end.
+
+## Data attributes
+
+| Part | Attribute | Values |
+| --- | --- | --- |
+| Root | `data-slot` | `roving-focus-group` |
+| Root | `data-orientation` | `horizontal`, `vertical` |
+| Root | `dir` | `ltr`, `rtl` |
+| Item | `data-slot` | `roving-focus-item` |
+| Item | `data-orientation` | `horizontal`, `vertical` |
+
 ## How it works
 
 <Callout icon={<Lightbulb />}>
 
-Only one item in the group is tabbable at a time (`tabIndex={0}`). All others have `tabIndex={-1}`. Arrow keys move focus between items. This follows the **WAI-ARIA roving tabindex** pattern.
+Only one item in the group is tabbable at a time (`tabIndex={0}`). All others have `tabIndex={-1}`. Arrow keys move focus between items. This follows the **WAI-ARIA roving tabindex** pattern. Focus moves a task after the key, and a key pressed before it lands counts from the item it is moving to, so each press moves one item even on a busy page. Any other key goes to the item that has focus when it is pressed, so on a busy page an Enter pressed straight after an arrow can still reach the item focus is leaving. Radix behaves the same: moving focus inside the keydown would batch every item's blur and focus handlers into it, the React bug ([facebook/react#20332](https://github.com/facebook/react/issues/20332)) the wait avoids.
 
 </Callout>
 
 <Callout icon={<Target />}>
 
-Used internally by Menubar and other components that need arrow-key navigation.
+Used by `ToggleGroup`, `RadioGroup`, `Menubar` and every menu. It works inside an iframe and inside a shadow root.
 
 </Callout>

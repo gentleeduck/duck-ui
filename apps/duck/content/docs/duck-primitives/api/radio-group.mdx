@@ -44,31 +44,54 @@ function DensityPicker() {
 
 ### `RadioGroup.Root`
 
-Container for a single-selection radio set. Uses roving focus and form-compatible hidden radio inputs.
+Container for a single-selection radio set. Uses roving focus and, when it has a `name`, a hidden native radio input per item, so a form submits, validates and resets it like native radios.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `string` | - | Controlled selected value |
+| `value` | `string \| null` | - | Controlled selected value. `null` or `''` selects nothing |
 | `defaultValue` | `string` | - | Initial selected value (uncontrolled) |
 | `onValueChange` | `(value: string) => void` | - | Called when selected value changes |
 | `disabled` | `boolean` | `false` | Disables all items in the group |
-| `required` | `boolean` | `false` | Marks the group required for form validation |
+| `readOnly` | `boolean` | `false` | Keeps the selection fixed while items stay focusable. Sets `aria-readonly` |
+| `required` | `boolean` | `false` | Marks the hidden inputs required, so the form refuses to submit with nothing selected |
 | `name` | `string` | - | Name used for hidden native radio inputs |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved with `useDirection` (`dir` prop -> `DirectionProvider` -> `'ltr'`). |
+| `form` | `string` | - | Id of a form outside the group that the hidden inputs belong to |
+| `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved with `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `orientation` | `'horizontal' \| 'vertical'` | - | Limits arrow-key navigation axis |
 | `loop` | `boolean` | `true` | Wraps focus from end to start (and reverse) |
 | `...props` | `React.ComponentPropsWithoutRef<'div'>` | - | Additional props for the radiogroup container |
 
+Exposes `data-disabled` and `data-readonly`. Picking a radio fires the form's `change` event once, as a native radio does. Resetting the form puts back the value the group started with and fires nothing.
+
 ### `RadioGroup.Item`
 
-A single radio control. Renders a `button` with `role="radio"` and associated state data attributes.
+A single radio control. Renders a `button` with `role="radio"`, and inside a form a hidden `<input type="radio">` beside it.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `value` | `string` | (required) | Unique value for the item |
-| `textValue` | `string` | - | Optional text override used for typeahead matching |
+| `textValue` | `string` | - | Text typeahead matches. Falls back to `aria-label`, then the item's text |
 | `disabled` | `boolean` | `false` | Disables this item |
 | `...props` | `React.ComponentPropsWithoutRef<'button'>` | - | Additional props for the radio button element |
+
+Exposes `data-state` (`checked` / `unchecked`), `data-disabled`, `data-readonly` and `data-value`. Items take their direction from the group and carry no `dir` of their own.
+
+### `RadioGroup.ItemProvider` / `RadioGroup.ItemTrigger` / `RadioGroup.ItemBubbleInput`
+
+`RadioGroup.Item` is `RadioGroup.ItemTrigger` inside a `RadioGroup.ItemProvider`, with a `RadioGroup.ItemBubbleInput` beside it when the group has a `name`. Compose the three yourself to place the hidden input, give it props of its own, or render it without a `name`.
+
+```tsx
+<RadioGroup.Root name="density" defaultValue="compact">
+  <RadioGroup.ItemProvider value="compact">
+    <RadioGroup.ItemTrigger aria-label="Compact density">
+      <RadioGroup.Indicator />
+    </RadioGroup.ItemTrigger>
+    <RadioGroup.ItemBubbleInput data-testid="compact-input" />
+  </RadioGroup.ItemProvider>
+</RadioGroup.Root>
+```
+
+`RadioGroup.ItemProvider` takes the item's `value` and `disabled`. `RadioGroup.ItemTrigger` takes the props of `RadioGroup.Item` except those two. `RadioGroup.ItemBubbleInput` takes the props of an `<input>`; its `name`, `value`, `checked`, `required`, `disabled` and `form` come from the group and the item. Focus given to it, as when a form refuses an empty submit to a required group, moves to the item's radio.
 
 ### `RadioGroup.Indicator`
 
@@ -87,7 +110,10 @@ Indicator content that mounts when the parent item is checked.
 | <Kbd>ArrowDown</Kbd> / <Kbd>ArrowRight</Kbd> | Move focus to next item and select it |
 | <Kbd>Home</Kbd> / <Kbd>PageUp</Kbd> | Move to first item and select it |
 | <Kbd>End</Kbd> / <Kbd>PageDown</Kbd> | Move to last item and select it |
-| <Kbd>a-z</Kbd> | Typeahead jump to matching item and select it |
+| <Kbd>a-z</Kbd> | Move to the next item after the focused one whose text starts with it, and select it |
 | <Kbd>g</Kbd> <Kbd>g</Kbd> | Jump to first item and select it |
 | <Kbd>Shift</Kbd>+<Kbd>g</Kbd> (`G`) | Jump to last item and select it |
 | <Kbd>Space</Kbd> | Select focused item |
+| <Kbd>Enter</Kbd> | Nothing, as on a native radio |
+
+In a `readOnly` group these keys move focus without selecting.

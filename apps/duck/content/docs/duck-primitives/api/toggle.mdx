@@ -45,7 +45,8 @@ A button that toggles between on and off states. Renders a `<button>`.
 | `defaultPressed` | `boolean` | `false` | Initial pressed state |
 | `onPressedChange` | `(pressed: boolean) => void` | - | Called when pressed state changes |
 | `disabled` | `boolean` | `false` | Disables the toggle |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction |
+| `dir` | `string` | - | Sets the `dir` attribute, `auto` included. Leave it out and the toggle follows the page |
+| `children` | `ReactNode \| ((pressed: boolean) => ReactNode)` | - | The content, or a function of the pressed state, as React Aria's `ToggleButton` takes. With `asChild`, the function returns the element to render |
 | `asChild` | `boolean` | - | Render as child element |
 
 Exposes `aria-pressed`, `data-state` (`on` | `off`), and `data-disabled` attributes.

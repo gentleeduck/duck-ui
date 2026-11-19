@@ -16,7 +16,15 @@
     "types": ["@types/react", "node", "./types/index.d.ts"],
     "useDefineForClassFields": true
   },
-  "exclude": ["node_modules", "dist", "**/__test__/**", "**/*.test.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/__test__/**",
+    "**/__tests__/**",
+    "**/__stories__/**",
+    "**/__benches__/**",
+    "**/*.test.ts"
+  ],
   "extends": "@gentleduck/typescript-config/nextjs.json",
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".gentleduck"]
 }

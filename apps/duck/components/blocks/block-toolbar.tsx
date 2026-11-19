@@ -102,6 +102,7 @@ export function BlockToolbar({
           <div className="hidden h-7 items-center gap-1.5 rounded-md border p-[2px] shadow-xs md:flex">
             <ToggleGroup
               defaultValue="100"
+              deselectable={false}
               disabled={isLiftMode}
               onValueChange={(value) => {
                 if (resizablePanelRef.current) {

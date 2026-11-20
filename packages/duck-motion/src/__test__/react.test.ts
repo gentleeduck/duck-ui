@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test'
 import { renderHook } from '@testing-library/react'
+import { describe, expect, test } from 'vitest'
 import { motionTransition, useDuckReducedMotion } from '../react'
 
 describe('motionTransition', () => {

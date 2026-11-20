@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test'
 import { Project } from 'ts-morph'
+import { describe, expect, test } from 'vitest'
 import { stripSourceVariables } from '../ts-morph'
 
 const project = new Project({ useInMemoryFileSystem: true })

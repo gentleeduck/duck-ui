@@ -47,7 +47,8 @@
     "tailwindcss": "^4.2.0",
     "ts-morph": "^27.0.2",
     "typescript": "5.9.3",
-    "velite": "^0.3.1"
+    "velite": "^0.3.1",
+    "vitest": "catalog:"
   },
   "name": "@acme/docs",
   "author": "Acme",
@@ -78,7 +79,8 @@
     "start": "next start --port 3008",
     "preview": "next build && next start",
     "clean": "rm -rf .next dist .turbo .cache .velite *.tsbuildinfo",
-    "clean:git": "git clean -xdf .cache .turbo node_modules dist .next .velite"
+    "clean:git": "git clean -xdf .cache .turbo node_modules dist .next .velite",
+    "test": "vitest run"
   },
   "version": "3.0.21"
 }

@@ -1,9 +1,9 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import fsSync from 'node:fs'
 import fs from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { afterEach, describe, expect, test } from 'vitest'
 
 // macOS aliases /var to /private/var; the pipeline's safe-path helpers
 // canonicalise via realpath, so test assertions against output paths must do
@@ -65,7 +65,7 @@ export const Button = () => helper()
     'utf8',
   )
 
-  const packageSourceUrl = pathToFileURL(path.resolve(import.meta.dir, '../../index.ts')).href
+  const packageSourceUrl = pathToFileURL(path.resolve(import.meta.dirname, '../../index.ts')).href
 
   await fs.writeFile(
     path.join(tempDir, 'registry-build.config.ts'),
@@ -366,8 +366,8 @@ describe('registry build pipeline', () => {
       'componentIndex',
       'colors',
     ])
-    await expect(fs.access(result.outputPaths.indexFile)).resolves.toBeNull()
-    await expect(fs.access(result.outputPaths.componentIndexFile)).resolves.toBeNull()
+    await expect(fs.access(result.outputPaths.indexFile)).resolves.toBeUndefined()
+    await expect(fs.access(result.outputPaths.componentIndexFile)).resolves.toBeUndefined()
     expect(buttonComponent).not.toHaveProperty('tree')
     expect(buttonSourceFile?.content).not.toContain('iframeHeight')
     expect(buttonSourceFile?.content).toContain('@new/pkg')
@@ -396,7 +396,7 @@ describe('registry build pipeline', () => {
     const secondResult = await build({ cwd: tempDir, silent: true })
     const phaseResultMap = new Map(secondResult.phaseResults.map((phase) => [phase.name, phase]))
 
-    await expect(fs.access(firstResult.outputPaths.cacheFile)).resolves.toBeNull()
+    await expect(fs.access(firstResult.outputPaths.cacheFile)).resolves.toBeUndefined()
     expect(phaseResultMap.get('index')?.outputFiles).toEqual([])
     expect(phaseResultMap.get('components')?.outputFiles).toEqual([])
     expect(phaseResultMap.get('componentIndex')?.outputFiles).toEqual([])
@@ -530,7 +530,7 @@ export default {
       'utf8',
     )
 
-    const packageSourceUrl = pathToFileURL(path.resolve(import.meta.dir, '../../index.ts')).href
+    const packageSourceUrl = pathToFileURL(path.resolve(import.meta.dirname, '../../index.ts')).href
 
     await fs.writeFile(
       path.join(tempDir, 'registry-build.config.ts'),

@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import fs from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { IResolvedRegistryBuildConfig } from '../../config/types'
 import { config as mainConfig } from '../../main/main.constants'
 import { runBannerPhase } from '../../pipeline/phases/banner'

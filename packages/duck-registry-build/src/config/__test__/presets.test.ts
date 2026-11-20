@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from 'vitest'
 import { uiRegistryPreset } from '../..'
 import type { IUiRegistryPresetOptions } from '../presets/ui-registry.preset'
 

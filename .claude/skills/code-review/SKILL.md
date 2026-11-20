@@ -75,12 +75,10 @@ more than the generic smells:
 - **A condition's `false` reaching an attribute**: an id list built as `cond && id` and joined
   without filtering wrote `aria-describedby="false"`. Read every value that lands in an `aria-*`
   or `id` attribute for a branch that leaves `false`, `undefined` or an empty string.
-- **A browser spec named `*.e2e.test.ts`**: bun 1.3.10 ignores `test.pathIgnorePatterns`, so
-  `bun test` runs it too and fails without a browser. Playwright matches
-  `**/__tests__/*.e2e.ts`.
-- **A test file that leaves its roots mounted**: the next file in the same run finds focus
-  trapped or a portal still open. A file that asserts on focus starts from `freshDom()` in
-  `src/__tests__/dom.ts`.
+- **A browser spec named `*.e2e.test.ts`**: vitest collects every `*.test.ts` and fails it
+  without a browser. Playwright matches `**/__tests__/*.e2e.ts`.
+- **A test file that never unmounts**: these files import vitest's API rather than its globals,
+  so testing-library cleans up only where a file calls `freshDom()` from `src/__tests__/dom.ts`.
 - **A test that cannot fail**: every module README claims each test was proven by changing the
   code and watching it fail. Mutate the line the test is about and run it; green means unproven.
 - **A tsconfig `paths` entry pointing into another package's `src`**: under TypeScript 7 the

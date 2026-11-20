@@ -1,5 +1,6 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, it } from 'vitest'
 import type { MdxComponentMap } from '../../../src/components/mdx/mdx-component-registry.types'
 import { compileMdxBody, trustCompiledMdxBody, useMDXComponent } from '../../../src/components/mdx/mdx-runtime'
 

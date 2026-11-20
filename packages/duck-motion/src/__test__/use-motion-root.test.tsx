@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { act, cleanup, renderHook } from '@testing-library/react'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { duckMotionDurationMs } from '../transitions/tweens'
 import { useMotionRoot } from '../use-motion-root'
 
@@ -9,7 +9,7 @@ const frame = () => act(() => new Promise<void>((resolve) => requestAnimationFra
 const wait = (ms: number) => act(() => new Promise<void>((resolve) => setTimeout(resolve, ms)))
 
 function setup() {
-  const onOpenChange = mock()
+  const onOpenChange = vi.fn()
   const hook = renderHook(() => useMotionRoot({ onOpenChange }))
   const change = (...steps: boolean[]) =>
     act(() => {

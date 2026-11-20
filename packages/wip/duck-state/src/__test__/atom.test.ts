@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from 'vitest'
 import type { Getter, IWritableAtom, Setter } from '../primitive/atom'
 import { atom } from '../primitive/atom'
 

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from 'vitest'
 import type { IRegistryFileTreeNode } from '../file-tree'
 import { createRegistryFileTree } from '../file-tree'
 

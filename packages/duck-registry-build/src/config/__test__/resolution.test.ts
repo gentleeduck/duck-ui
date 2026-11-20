@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test'
 import path from 'node:path'
+import { describe, expect, test } from 'vitest'
 import { DEFAULT_SOURCE_GLOB, DEFAULT_SOURCE_IGNORE, DEFAULT_SOURCE_INDEX_STRATEGY } from '../defaults'
 import {
   deriveDeclaredItemTypes,

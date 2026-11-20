@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from 'vitest'
 import { uiRegistryPreset } from '../../config/presets/ui-registry.preset'
 import { bannerExtension } from '../banner'
 import { colorsExtension } from '../colors'

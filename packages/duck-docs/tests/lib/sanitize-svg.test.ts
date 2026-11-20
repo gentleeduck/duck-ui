@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { sanitizeSvg } from '../../src/lib/sanitize-svg'
 
 describe('sanitizeSvg', () => {

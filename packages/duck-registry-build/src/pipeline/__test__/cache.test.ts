@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import fs from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { afterEach, describe, expect, test } from 'vitest'
 import { hashString } from '../../lib/hash'
 import { createRegistryBuildCache } from '../cache'
 

@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test'
+import { describe, expect, test, vi } from 'vitest'
 import { atom } from '../primitive/atom'
 import { createStore } from '../primitive/store'
 
@@ -189,7 +189,7 @@ describe('createStore', () => {
       // Initialize derived atom so dependency tracking is established
       store.get(derivedAtom)
 
-      const listener = mock(() => {})
+      const listener = vi.fn(() => {})
       store.subscribe(derivedAtom, listener)
 
       store.set(baseAtom, 5)
@@ -219,7 +219,7 @@ describe('createStore', () => {
     test('subscribe is called when atom value changes', () => {
       const store = createStore()
       const countAtom = atom(0)
-      const listener = mock(() => {})
+      const listener = vi.fn(() => {})
       store.subscribe(countAtom, listener)
       store.set(countAtom, 1)
       expect(listener).toHaveBeenCalledTimes(1)
@@ -228,9 +228,9 @@ describe('createStore', () => {
     test('multiple subscribers all get notified', () => {
       const store = createStore()
       const countAtom = atom(0)
-      const listener1 = mock(() => {})
-      const listener2 = mock(() => {})
-      const listener3 = mock(() => {})
+      const listener1 = vi.fn(() => {})
+      const listener2 = vi.fn(() => {})
+      const listener3 = vi.fn(() => {})
       store.subscribe(countAtom, listener1)
       store.subscribe(countAtom, listener2)
       store.subscribe(countAtom, listener3)
@@ -243,7 +243,7 @@ describe('createStore', () => {
     test('unsubscribe removes listener', () => {
       const store = createStore()
       const countAtom = atom(0)
-      const listener = mock(() => {})
+      const listener = vi.fn(() => {})
       const unsub = store.subscribe(countAtom, listener)
       store.set(countAtom, 1)
       expect(listener).toHaveBeenCalledTimes(1)
@@ -257,8 +257,8 @@ describe('createStore', () => {
     test('unsubscribe only removes the specific listener', () => {
       const store = createStore()
       const countAtom = atom(0)
-      const listener1 = mock(() => {})
-      const listener2 = mock(() => {})
+      const listener1 = vi.fn(() => {})
+      const listener2 = vi.fn(() => {})
       const unsub1 = store.subscribe(countAtom, listener1)
       store.subscribe(countAtom, listener2)
 
@@ -271,7 +271,7 @@ describe('createStore', () => {
     test('multiple updates trigger listener each time', () => {
       const store = createStore()
       const countAtom = atom(0)
-      const listener = mock(() => {})
+      const listener = vi.fn(() => {})
       store.subscribe(countAtom, listener)
       store.set(countAtom, 1)
       store.set(countAtom, 2)
@@ -295,7 +295,7 @@ describe('createStore', () => {
     test('same primitive value does not trigger listener', () => {
       const store = createStore()
       const countAtom = atom(5)
-      const listener = mock(() => {})
+      const listener = vi.fn(() => {})
       store.subscribe(countAtom, listener)
 
       store.set(countAtom, 5) // same value
@@ -305,7 +305,7 @@ describe('createStore', () => {
     test('same string value does not trigger listener', () => {
       const store = createStore()
       const nameAtom = atom('hello')
-      const listener = mock(() => {})
+      const listener = vi.fn(() => {})
       store.subscribe(nameAtom, listener)
 
       store.set(nameAtom, 'hello') // same value
@@ -315,7 +315,7 @@ describe('createStore', () => {
     test('shallow-equal object does not trigger listener', () => {
       const store = createStore()
       const objAtom = atom({ a: 1, b: 2 })
-      const listener = mock(() => {})
+      const listener = vi.fn(() => {})
       store.subscribe(objAtom, listener)
 
       store.set(objAtom, { a: 1, b: 2 }) // shallow equal
@@ -325,7 +325,7 @@ describe('createStore', () => {
     test('shallow-equal array does not trigger listener', () => {
       const store = createStore()
       const arrAtom = atom([1, 2, 3])
-      const listener = mock(() => {})
+      const listener = vi.fn(() => {})
       store.subscribe(arrAtom, listener)
 
       store.set(arrAtom, [1, 2, 3]) // shallow equal
@@ -335,7 +335,7 @@ describe('createStore', () => {
     test('different object triggers listener', () => {
       const store = createStore()
       const objAtom = atom({ a: 1, b: 2 })
-      const listener = mock(() => {})
+      const listener = vi.fn(() => {})
       store.subscribe(objAtom, listener)
 
       store.set(objAtom, { a: 1, b: 3 }) // different
@@ -345,7 +345,7 @@ describe('createStore', () => {
     test('different length array triggers listener', () => {
       const store = createStore()
       const arrAtom = atom([1, 2, 3])
-      const listener = mock(() => {})
+      const listener = vi.fn(() => {})
       store.subscribe(arrAtom, listener)
 
       store.set(arrAtom, [1, 2])
@@ -355,7 +355,7 @@ describe('createStore', () => {
     test('NaN is equal to NaN (Object.is)', () => {
       const store = createStore()
       const nanAtom = atom(NaN)
-      const listener = mock(() => {})
+      const listener = vi.fn(() => {})
       store.subscribe(nanAtom, listener)
 
       store.set(nanAtom, NaN)
@@ -365,7 +365,7 @@ describe('createStore', () => {
     test('updater returning same value does not trigger listener', () => {
       const store = createStore()
       const countAtom = atom(5)
-      const listener = mock(() => {})
+      const listener = vi.fn(() => {})
       store.subscribe(countAtom, listener)
 
       store.set(countAtom, (prev: number) => prev) // returns same value
@@ -402,7 +402,7 @@ describe('createStore', () => {
       // Initialize to establish dependencies
       store.get(derivedAtom)
 
-      const baseListener = mock(() => {})
+      const baseListener = vi.fn(() => {})
       store.subscribe(baseAtom, baseListener)
 
       store.set(derivedAtom, 10)
@@ -427,7 +427,7 @@ describe('createStore', () => {
       const store2 = createStore()
       const countAtom = atom(0)
 
-      const listener = mock(() => {})
+      const listener = vi.fn(() => {})
       store1.subscribe(countAtom, listener)
 
       store2.set(countAtom, 10)

@@ -14,14 +14,13 @@ not after.
 
 Five facts change how the loop behaves here:
 
-- **Red has to be an assertion failure.** Neither `bun test` nor vitest type-checks, so a test
+- **Red has to be an assertion failure.** vitest does not type-check, so a test
   that "fails" because the types are wrong is not red, it is unwired. `bun run check-types` is
   the only thing that reads a type.
-- **Two runners.** `@gentleduck/primitives`, `registry-ui`, `motion`, `registers`,
-  `registry-build` and `docs` run under `bun test`, with jsdom loaded by each package's
-  `jsdom-setup.ts`. `calendar`, `cli`, `hooks`, `lazy`, `libs`, `variants` and `vim` run under
-  vitest. Read the package's `test` script before reaching for an API: `bun:test` and `vitest`
-  differ in `vi`, timers and module mocks.
+- **One runner.** Every package runs vitest, each from its own `vitest.config.ts`. A package
+  that renders runs in vitest's jsdom environment, which gives each file a document of its own.
+  The packages moved from `bun test` import `describe`, `it`, `expect` and `vi` from `vitest`;
+  `calendar`, `cli`, `hooks`, `lazy`, `libs`, `variants` and `vim` turn the globals on.
 - **One cycle, one tier.** The unit suite is where the loop lives. The browser tier,
   `bun run test:e2e` in `packages/duck-primitives`, builds the stories and starts browsers;
   pull it into the loop and the cycle stops being tight.
@@ -58,8 +57,8 @@ each file proves what the one before it cannot:
 
 | File | Runs under | Proves |
 |---|---|---|
-| `<module>.test.tsx` | `bun test`, jsdom | the parts through their props and the DOM they render, driven with `@testing-library/react` and `user-event` |
-| `<name>.radix.test.tsx` | `bun test`, `src/__tests__/radix/harness.tsx` | Radix's own cases for the same primitive pass here too. Each file calls `radixEnvironment()`. |
+| `<module>.test.tsx` | vitest, jsdom | the parts through their props and the DOM they render, driven with `@testing-library/react` and `user-event` |
+| `<name>.radix.test.tsx` | vitest, `src/__tests__/radix/harness.tsx` | Radix's own cases for the same primitive pass here too. Each file calls `radixEnvironment()`. |
 | `<module>.e2e.ts` | Playwright, the module's `__stories__` | what jsdom cannot: layout, real focus order, pointer events, animation |
 
 Suites that cross modules, keyboard, axe and integration, live in `src/__tests__/` itself. A
@@ -68,10 +67,10 @@ only through the primitives that use it.
 
 Three things bite at these seams:
 
-- **A browser spec is named `*.e2e.ts`**, never `*.e2e.test.ts`. bun 1.3.10 ignores
-  `test.pathIgnorePatterns`, so `bun test` would collect it and fail without a browser.
-- **Roots left mounted by an earlier file** trap focus in a later one under `bun test`, since
-  every file shares one jsdom. A file that asserts on focus starts from `freshDom()` in
+- **A browser spec is named `*.e2e.ts`**, never `*.e2e.test.ts`, which vitest would collect
+  and fail without a browser.
+- **A file that never unmounts** leaves its roots for the next test in it, since testing-library
+  cleans up on its own only under vitest's globals. A file starts from `freshDom()` in
   `src/__tests__/dom.ts`.
 - **The story server is on port 9009**: `bun run stories` in `packages/duck-primitives` serves an index of every
   story at `/`. Playwright reuses one already running outside CI.
@@ -114,11 +113,9 @@ leverage and locality terms, and it is a reference to consult, not a session to 
 
 ## Coverage
 
-`@gentleduck/primitives` holds a coverage floor in `src/__tests__/istanbul/run.ts`. It is read
-only when `bun run test` runs the whole suite, since a filtered run covers part of the package,
-and a source file no test loads counts as never run. The floor is a ratchet: set at what the
-package measures, raised as coverage rises, and a drop is the thing to fix rather than the
-number to lower.
+`@gentleduck/primitives` holds 100% coverage, enforced by the thresholds in its
+`vitest.config.ts` whenever `bun run test` runs, and a source file no test loads counts as never
+run. The thresholds are a ratchet: a drop is the thing to fix rather than the number to lower.
 
 - **An uncovered line is a design signal first.** Before writing a test to reach it, ask
   whether the line should exist. An unreachable `catch` or a defensive branch the types forbid

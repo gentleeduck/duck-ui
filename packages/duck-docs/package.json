@@ -18,6 +18,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
+    "@vitest/coverage-v8": "catalog:",
     "clsx": "^2.1.1",
     "jotai": "^2.19.1",
     "lucide-react": "catalog:",
@@ -30,7 +31,8 @@
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.2.0",
     "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "@gentleduck/hooks": "^1.0.0",
@@ -132,9 +134,10 @@
   "scripts": {
     "build": "tsdown",
     "check-types:test": "tsc -p tsconfig.test.json --noEmit --pretty false --skipLibCheck",
-    "test": "bun test ./tests",
+    "test": "vitest run",
     "dev": "tsdown --watch",
-    "check-types": "tsc -p tsconfig.json --noEmit --pretty false --skipLibCheck"
+    "check-types": "tsc -p tsconfig.json --noEmit --pretty false --skipLibCheck",
+    "test:watch": "vitest"
   },
   "type": "module",
   "types": "./dist/index.d.ts",

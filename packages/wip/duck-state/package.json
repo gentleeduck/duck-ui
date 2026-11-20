@@ -15,8 +15,10 @@
     "@testing-library/react": "^16.3.2",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
+    "@vitest/coverage-v8": "catalog:",
     "jsdom": "catalog:",
-    "tsdown": "catalog:"
+    "tsdown": "catalog:",
+    "vitest": "catalog:"
   },
   "exports": {
     ".": {
@@ -60,7 +62,8 @@
   "scripts": {
     "build": "tsdown",
     "check-types": "tsc -p tsconfig.json --noEmit --pretty false --skipLibCheck",
-    "test": "bun test"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "type": "module",
   "version": "0.2.6"

@@ -28,8 +28,7 @@ Repo-specific. These five know duck-ui and are the ones to reach for on this cod
 
 Generated from each tool's own docs, so they are current rather than remembered. Matched to
 what this repo actually runs: `turbo.json`, a `tsdown.config.ts` per built package, and vitest in
-the packages that do not run under `bun test`. Only deprecated packages still have a
-`vite.config.ts`.
+every package with tests. Only deprecated packages still have a `vite.config.ts`.
 
 | Skill | For |
 |---|---|

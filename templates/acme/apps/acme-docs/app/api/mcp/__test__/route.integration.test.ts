@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'bun:test'
+import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { resolve } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
@@ -6,7 +6,7 @@ import { GET as MCP_HEALTH_GET, OPTIONS as MCP_HEALTH_OPTIONS } from '../health/
 import { DELETE as MCP_DELETE, GET as MCP_GET, OPTIONS as MCP_OPTIONS, POST as MCP_POST } from '../route'
 
 const CONTENT_DIR_ENV_VAR = 'ACME_DOCS_CONTENT_DIR'
-const DOCS_CONTENT_DIR = resolve(import.meta.dir, '../../../../content/docs')
+const DOCS_CONTENT_DIR = resolve(import.meta.dirname, '../../../../content/docs')
 const MCP_URL = new URL('http://localhost/api/mcp')
 const MCP_HEALTH_URL = new URL('http://localhost/api/mcp/health')
 

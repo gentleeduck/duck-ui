@@ -21,8 +21,10 @@
     "@gentleduck/tsdown-config": "workspace:*",
     "@gentleduck/typescript-config": "workspace:*",
     "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "exports": {
     ".": {
@@ -57,8 +59,9 @@
     "start:dev": "bun ./index.ts",
     "dev": "tsdown --watch",
     "check-types": "tsc -p tsconfig.json --noEmit --pretty false --skipLibCheck",
-    "test": "bun test",
-    "test:pack": "bun ./scripts/pack-smoke.ts"
+    "test": "vitest run",
+    "test:pack": "bun ./scripts/pack-smoke.ts",
+    "test:watch": "vitest"
   },
   "type": "module",
   "types": "./dist/index.d.mts",

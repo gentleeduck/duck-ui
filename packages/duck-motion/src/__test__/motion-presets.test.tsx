@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { act, cleanup, fireEvent, render, renderHook } from '@testing-library/react'
 import { LazyMotion, m } from 'motion/react'
+import { afterEach, describe, expect, test } from 'vitest'
 import { loadDomAnimation } from '../motion-features'
 import type { IUseMotionPresetOptions, MotionPresetName } from '../motion-presets'
 import { useMotionPreset } from '../motion-presets'

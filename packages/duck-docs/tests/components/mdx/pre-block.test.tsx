@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, it } from 'vitest'
 import { PreBlock } from '../../../src/components/mdx/mdx-components/code/pre-block/pre-block'
 
 describe('PreBlock', () => {

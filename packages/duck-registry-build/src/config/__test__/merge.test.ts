@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from 'vitest'
 import { mergeRegistryBuildConfigs } from '../..'
 import { mergeUniqueStrings } from '../merge/merge.lib'
 import type { IRegistryBuildConfig } from '../types'

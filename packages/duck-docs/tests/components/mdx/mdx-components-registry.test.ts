@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { mdxBaseComponents } from '../../../src/components/mdx/mdx-components-base'
 import { mdxComponents } from '../../../src/components/mdx/mdx-components-registry'
 import { mdxUiComponents } from '../../../src/components/mdx/mdx-components-ui'

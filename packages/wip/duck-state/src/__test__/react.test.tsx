@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'bun:test'
 import { act, render, renderHook } from '@testing-library/react'
 import React from 'react'
+import { describe, expect, test } from 'vitest'
 import { atom } from '../primitive/atom'
 import { createStore } from '../primitive/store'
 import { Provider, useStore } from '../react/provider'

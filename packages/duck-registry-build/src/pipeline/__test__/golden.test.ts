@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import fs from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { afterEach, describe, expect, test } from 'vitest'
 import { build, loadRegistryBuildConfig } from '../..'
 
 const fixtureDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../__fixtures__/golden/basic')
@@ -278,7 +278,7 @@ export default {
 
     const result = await build({ cwd: tempDir, silent: true })
 
-    await expect(fs.access(result.outputPaths.indexFile)).resolves.toBeNull()
+    await expect(fs.access(result.outputPaths.indexFile)).resolves.toBeUndefined()
 
     const indexContent = JSON.parse(await fs.readFile(result.outputPaths.indexFile, 'utf8')) as Array<
       Record<string, unknown>

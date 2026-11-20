@@ -71,7 +71,8 @@
     "tailwindcss": "^4.2.0",
     "ts-morph": "^27.0.2",
     "tsx": "^4.21.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "name": "@gentleduck/ui-docs",
   "author": "gentleduck contributors",
@@ -102,7 +103,9 @@
     "check-types": "tsc -p tsconfig.json --noEmit --pretty false --skipLibCheck",
     "postbuild": "node scripts/patch-nft.mjs && next-sitemap",
     "start": "next start --port 3008",
-    "preview": "next build && next start"
+    "preview": "next build && next start",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "browserslist": [
     "Chrome >= 110",

@@ -98,7 +98,7 @@ export function buildDayProps<TDate>(
   return {
     role: 'gridcell',
     'aria-label': adapter.format(day.date, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }, locale),
-    'aria-selected': day.isSelected,
+    'aria-selected': day.isSelected || day.isRangeMiddle,
     'aria-disabled': day.isDisabled || day.isUnavailable,
     'aria-invalid': invalid,
     'aria-current': day.isToday ? 'date' : undefined,

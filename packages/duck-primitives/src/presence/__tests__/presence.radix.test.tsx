@@ -1,8 +1,8 @@
 // From Radix UI primitives, packages/react/presence/src/presence.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import { afterEach, describe, expect, it } from 'bun:test'
 import { cleanup, render } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, it } from 'vitest'
 import { radixEnvironment } from '../../__tests__/radix/harness'
 import { Presence } from '../index'
 

@@ -1,6 +1,6 @@
-import { describe, expect, it, mock } from 'bun:test'
 import { render } from '@testing-library/react'
 import * as React from 'react'
+import { describe, expect, it, vi } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { composeRefs, useComposedRefs } from '../compose-ref'
 
@@ -9,7 +9,7 @@ freshDom()
 describe('composeRefs', () => {
   it('sets every ref and hands back nothing when no ref has a cleanup', () => {
     const objectRef = React.createRef<HTMLDivElement>()
-    const callbackRef = mock((_node: HTMLDivElement | null) => {})
+    const callbackRef = vi.fn((_node: HTMLDivElement | null) => {})
     const node = document.createElement('div')
 
     expect(composeRefs(objectRef, callbackRef, undefined)(node)).toBeUndefined()
@@ -18,9 +18,9 @@ describe('composeRefs', () => {
   })
 
   it('hands back one cleanup that runs the callback cleanup and nulls the other refs', () => {
-    const cleanup = mock(() => {})
+    const cleanup = vi.fn(() => {})
     const objectRef = React.createRef<HTMLDivElement>()
-    const callbackRef = mock((_node: HTMLDivElement | null) => {})
+    const callbackRef = vi.fn((_node: HTMLDivElement | null) => {})
     const node = document.createElement('div')
 
     const dispose = composeRefs<HTMLDivElement>(() => cleanup, objectRef, callbackRef)(node)
@@ -38,7 +38,7 @@ describe('useComposedRefs', () => {
   }
 
   it('runs a callback ref cleanup on unmount and nulls the object ref beside it', () => {
-    const cleanup = mock(() => {})
+    const cleanup = vi.fn(() => {})
     const objectRef = React.createRef<HTMLDivElement>()
     const { unmount } = render(<Box refs={[() => cleanup, objectRef]} />)
 

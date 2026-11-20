@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it, mock, setSystemTime } from 'bun:test'
 import { NativeAdapter } from '@gentleduck/calendar'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import * as React from 'react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DirectionProvider } from '../../direction'
 import { Calendar } from '../calendar'
 import { CalendarDay } from '../day'
@@ -243,7 +243,7 @@ describe('CalendarPrevButton / CalendarNextButton', () => {
   })
 
   it('calls its own onClick and still turns the month', () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     const { container } = renderCalendar(
       {},
       <>
@@ -622,7 +622,7 @@ describe('CalendarDay', () => {
   })
 
   it('click selects the date via onClick', () => {
-    const onSelect = mock(() => {})
+    const onSelect = vi.fn(() => {})
     const day = {
       date: new Date(2026, 2, 15),
       isToday: false,
@@ -646,9 +646,9 @@ describe('CalendarDay', () => {
   })
 
   it('takes the props, handlers and children it is given, and still selects', () => {
-    const onClick = mock()
-    const onKeyDown = mock()
-    const onSelect = mock()
+    const onClick = vi.fn()
+    const onKeyDown = vi.fn()
+    const onSelect = vi.fn()
     const { container } = renderCalendar(
       { onSelect },
       <CalendarGrid>
@@ -883,13 +883,13 @@ describe('CalendarMonthView', () => {
   })
 
   it('tells assistive technology which month is the current one', () => {
-    setSystemTime(new Date(2026, 4, 15))
+    vi.setSystemTime(new Date(2026, 4, 15))
     try {
       const { container } = renderCalendar({}, <CalendarMonthView />)
 
       expect(container.querySelector('[aria-current="date"]')?.getAttribute('data-month')).toBe('4')
     } finally {
-      setSystemTime()
+      vi.useRealTimers()
     }
   })
 })
@@ -1138,7 +1138,7 @@ describe('Calendar integration', () => {
   })
 
   it('clicking a day calls onSelect with the selected date', () => {
-    const onSelect = mock(() => {})
+    const onSelect = vi.fn(() => {})
     const day = {
       date: new Date(2026, 2, 10),
       isToday: false,
@@ -1225,7 +1225,7 @@ describe('Calendar integration', () => {
   })
 
   it('submits no form it sits in from its buttons', () => {
-    const onSubmit = mock((event: React.FormEvent) => event.preventDefault())
+    const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault())
     const { container } = render(
       <form onSubmit={onSubmit}>
         <Calendar adapter={adapter} mode="single" defaultMonth={march2026}>

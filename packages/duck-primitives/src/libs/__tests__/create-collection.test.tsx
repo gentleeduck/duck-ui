@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { describe, expect, it } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { createCollection } from '../create-collection'
 
@@ -168,6 +168,34 @@ describe('createCollection read from an event handler', () => {
 
     expect(read(seen)).toEqual(['test'])
     expect(other).toEqual(['other'])
+  })
+})
+
+describe('createCollection with two slots', () => {
+  it('reads the slot mounted later once the one before it leaves', () => {
+    const seen = { labels: [] }
+    const slots = (both: boolean) => (
+      <Collection.Provider scope={undefined}>
+        {both ? (
+          <Collection.Slot scope={undefined}>
+            <div>
+              <Items labels={['old']} />
+            </div>
+          </Collection.Slot>
+        ) : null}
+        <Collection.Slot scope={undefined}>
+          <div>
+            <Items labels={['new']} />
+          </div>
+        </Collection.Slot>
+        <ReadOnClick seen={seen} />
+      </Collection.Provider>
+    )
+    const { rerender } = render(slots(true))
+
+    rerender(slots(false))
+
+    expect(read(seen)).toEqual(['new'])
   })
 })
 
@@ -444,5 +472,173 @@ describe('createCollection slots', () => {
     )
 
     expect(read(seen)).toEqual(['b'])
+  })
+})
+
+// From Radix UI primitives, packages/react/collection/src/collection.test.tsx. MIT, see src/__tests__/radix/LICENSE.
+// Radix hands back a map and these hand back a reading function, so each case reads through `ReadOnClick`.
+describe("createCollection, the cases of Radix's collection suite", () => {
+  function Slotted({ children }: { children: React.ReactNode }) {
+    return (
+      <Collection.Provider scope={undefined}>
+        <Collection.Slot scope={undefined}>
+          <div>{children}</div>
+        </Collection.Slot>
+        <ReadOnClick seen={seen} />
+      </Collection.Provider>
+    )
+  }
+  const seen: Seen = { labels: [] }
+
+  it('reads no item once the whole list unmounts', () => {
+    const { rerender } = render(<List labels={['a', 'b', 'c']}>{<ReadOnClick seen={seen} />}</List>)
+    const before = read(seen)
+
+    rerender(<List labels={[]}>{<ReadOnClick seen={seen} />}</List>)
+
+    expect([before, read(seen)]).toEqual([['a', 'b', 'c'], []])
+  })
+
+  it('reads the element an item renders now once its child becomes another element', () => {
+    let found: Element[] = []
+    function ReadNodes() {
+      const getItems = useCollection(undefined)
+      return (
+        <button onClick={() => (found = getItems().map((item) => item.ref.current))} type="button">
+          nodes
+        </button>
+      )
+    }
+    const list = (asSpan: boolean) => (
+      <Collection.Provider scope={undefined}>
+        <Collection.Slot scope={undefined}>
+          <div>
+            <Collection.ItemSlot label="a" scope={undefined}>
+              {asSpan ? <span data-testid="item" /> : <div data-testid="item" />}
+            </Collection.ItemSlot>
+          </div>
+        </Collection.Slot>
+        <ReadNodes />
+      </Collection.Provider>
+    )
+    const { rerender } = render(list(false))
+
+    rerender(list(true))
+    fireEvent.click(screen.getByRole('button', { name: 'nodes' }))
+
+    expect(found).toEqual([screen.getByTestId('item')])
+    expect(found[0]?.tagName).toBe('SPAN')
+  })
+
+  it('reads nested items in their new order once their wrappers move', async () => {
+    const list = (labels: string[]) => (
+      <Slotted>
+        {labels.map((label) => (
+          <section key={label}>
+            <Collection.ItemSlot label={label} scope={undefined}>
+              <div />
+            </Collection.ItemSlot>
+          </section>
+        ))}
+      </Slotted>
+    )
+    const { rerender } = render(list(['a', 'b', 'c']))
+
+    rerender(list(['b', 'c', 'a']))
+    await act(async () => {})
+
+    expect(read(seen)).toEqual(['b', 'c', 'a'])
+  })
+
+  it('reads the items inside a Suspense boundary once it resolves', async () => {
+    let resolve = () => {}
+    const promise = new Promise<void>((done) => {
+      resolve = done
+    })
+    function Deferred({ children }: { children: React.ReactNode }) {
+      React.use(promise)
+      return children
+    }
+    await act(async () => {
+      render(
+        <Slotted>
+          <Collection.ItemSlot label="a" scope={undefined}>
+            <div />
+          </Collection.ItemSlot>
+          <React.Suspense fallback={<span>loading</span>}>
+            <Deferred>
+              <Collection.ItemSlot label="b" scope={undefined}>
+                <div />
+              </Collection.ItemSlot>
+            </Deferred>
+          </React.Suspense>
+          <Collection.ItemSlot label="c" scope={undefined}>
+            <div />
+          </Collection.ItemSlot>
+        </Slotted>,
+      )
+    })
+    const before = read(seen)
+
+    await act(async () => {
+      resolve()
+      await promise
+    })
+
+    expect([before, read(seen)]).toEqual([
+      ['a', 'c'],
+      ['a', 'b', 'c'],
+    ])
+  })
+
+  it('reads the items of an Activity that starts hidden once it shows', () => {
+    const list = (mode: 'visible' | 'hidden') => (
+      <Slotted>
+        <Collection.ItemSlot label="a" scope={undefined}>
+          <div />
+        </Collection.ItemSlot>
+        <React.Activity mode={mode}>
+          <Collection.ItemSlot label="b" scope={undefined}>
+            <div />
+          </Collection.ItemSlot>
+        </React.Activity>
+        <Collection.ItemSlot label="c" scope={undefined}>
+          <div />
+        </Collection.ItemSlot>
+      </Slotted>
+    )
+    const { rerender } = render(list('hidden'))
+    const before = read(seen)
+
+    rerender(list('visible'))
+
+    expect([before, read(seen)]).toEqual([
+      ['a', 'c'],
+      ['a', 'b', 'c'],
+    ])
+  })
+
+  it('reads items in the order a transition moved them to', async () => {
+    let reorder = (_labels: string[]) => {}
+    function Reordered() {
+      const [labels, setLabels] = React.useState(['a', 'b', 'c'])
+      reorder = setLabels
+      return (
+        <Slotted>
+          {labels.map((label) => (
+            <Collection.ItemSlot key={label} label={label} scope={undefined}>
+              <div />
+            </Collection.ItemSlot>
+          ))}
+        </Slotted>
+      )
+    }
+    render(<Reordered />)
+
+    await act(async () => {
+      React.startTransition(() => reorder(['c', 'b', 'a']))
+    })
+
+    expect(read(seen)).toEqual(['c', 'b', 'a'])
   })
 })

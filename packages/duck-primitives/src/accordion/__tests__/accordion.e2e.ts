@@ -29,6 +29,20 @@ async function expectSettled(locator: Locator) {
   await expect.poll(() => running(locator)).toBe(0)
 }
 
+// A check of a running animation reads it once the click has returned, which a busy run can delay past the story's
+// 300ms, so the animations here run for 1.5s.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    document.addEventListener('DOMContentLoaded', () => {
+      const style = document.createElement('style')
+      style.textContent = `
+        [data-slot="accordion-content"] { animation-duration: 1.5s !important }
+        [data-slot="accordion-item"] { transition-duration: 1.5s !important }`
+      document.head.append(style)
+    })
+  })
+})
+
 test.describe('Accordion', () => {
   test.describe('single and collapsible', () => {
     test.beforeEach(async ({ page }) => {
@@ -220,9 +234,19 @@ test.describe('Accordion', () => {
       await expect(indicator).toHaveAttribute('aria-hidden', 'true')
       await expect(indicator).toHaveAttribute('data-state', 'closed')
 
+      // A read after the click can land once a 200ms turn has ended on a busy machine, so the start is heard instead.
+      await indicator.evaluate((node) =>
+        node.addEventListener(
+          'transitionrun',
+          (event) => {
+            node.dataset.turned = event.propertyName
+          },
+          { once: true },
+        ),
+      )
       await trigger(page, 'Is it accessible?').click()
 
-      expect(await running(indicator)).toBe(1)
+      await expect(indicator).toHaveAttribute('data-turned', 'transform')
       await expect(indicator).toHaveAttribute('data-state', 'open')
       await expectSettled(indicator)
       await expect(indicator).not.toHaveCSS('transform', 'none')

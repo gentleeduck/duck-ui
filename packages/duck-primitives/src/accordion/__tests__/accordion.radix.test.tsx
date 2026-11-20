@@ -1,11 +1,11 @@
 // From Radix UI primitives, packages/react/accordion/src/accordion.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import type { Mock } from 'bun:test'
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import type { RenderResult } from '@testing-library/react'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
-import { axe, radixEnvironment, vi } from '../../__tests__/radix/harness'
+import type { Mock } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { axe, radixEnvironment } from '../../__tests__/radix/harness'
 import * as Accordion from '../index'
 
 radixEnvironment()

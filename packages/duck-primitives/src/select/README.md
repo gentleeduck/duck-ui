@@ -44,19 +44,110 @@ picks in the order made, submitting each, refusing to submit empty when required
 item-aligned on its first pick without moving as picks are made. The end-to-end suite runs each in Chromium, Firefox and WebKit, except a touch scroll of a list
 portalled into a shadow root, which only Chromium can drive.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Ark UI, Base UI, Headless UI and React Aria run that library's own cases against this code. Each file's header
+names its source and every case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 205 | `select.radix.test.tsx` 65, `select.test.tsx` 140 |
+| Unit | 284 | `select.ark.test.tsx` 8, `select.base-ui.test.tsx` 12, `select.headless.test.tsx` 49, `select.radix.test.tsx` 65, `select.react-aria.test.tsx` 7, `select.test.tsx` 143 |
 | End to end | 34 | `select.e2e.ts` 25, `select.radix.e2e.ts` 9 |
 | registry-ui | 10 | `select.test.tsx` 10 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>239 behaviours, one per test</summary>
+<summary>318 behaviours, one per test</summary>
+
+**Unit, `select.ark.test.tsx`**
+
+- Ark UI select
+  - has no axe violations
+  - shows the item picked on its trigger, and closes on the pick
+  - stays shut while disabled
+  - picks several items when multiple, staying open
+  - opens when its owner tells it to through onOpenChange
+  - mounts its items only while open, and unmounts them on close
+  - marks its trigger required for assistive technology
+  - focuses its trigger on a click of the label naming it
+
+**Unit, `select.base-ui.test.tsx`**
+
+- Base UI select value
+  - shows its placeholder with nothing picked, and the pick once there is one
+  - shows the children it is given over the label and the placeholder
+  - hands a render function the values picked
+  - shows the label items give, and changes it as the value does
+  - shows its placeholder with nothing picked when multiple
+- Base UI select items
+  - picks an item clicked and closes
+  - picks no disabled item, neither on a click nor on Enter
+  - takes its disabled state from the root
+  - runs the onClick of an item once per click
+  - focuses the picked item as it opens
+  - picks the item a press of the trigger is dragged onto and released over, and no disabled one
+  - picks nothing on a mouse up that follows a touch
+
+**Unit, `select.headless.test.tsx`**
+
+- Headless UI listbox safe guards
+  - renders closed without crashing
+  - renders in multiple mode without crashing
+- Headless UI listbox uncontrolled
+  - starts on its default value and tells onValueChange each new pick
+- Headless UI listbox opening from the keyboard
+  - opens on Enter with its first option active
+  - opens on Enter on its picked option
+  - stays closed on Enter while disabled
+  - opens on Enter with no option active when it has none
+  - opens on Enter on its first option that is not disabled, past several that are
+  - opens on Space with its first option active
+  - opens on Space on its picked option
+  - stays closed on Space while disabled
+  - opens on Space with no option active when it has none
+  - opens on Space on its first option that is not disabled, past several that are
+  - opens on ArrowDown with its first option active
+  - opens on ArrowDown on its picked option
+  - stays closed on ArrowDown while disabled
+  - opens on ArrowDown with no option active when it has none
+  - opens on ArrowDown on its first option that is not disabled, past several that are
+  - opens on ArrowUp with its first option active
+  - opens on ArrowUp on its picked option
+  - stays closed on ArrowUp while disabled
+  - opens on ArrowUp with no option active when it has none
+  - opens on ArrowUp on its first option that is not disabled, past several that are
+- Headless UI listbox keys while open
+  - picks the active option on Enter and closes, giving focus back to its trigger
+  - picks the active option on Space and closes, giving focus back to its trigger
+  - closes on Escape, giving focus back to its trigger
+  - moves down on ArrowDown and up on ArrowUp, past disabled options
+  - stays on its one option that is not disabled on ArrowUp and ArrowDown
+  - moves to the last option on End, past disabled options
+  - moves to the last option on PageDown, past disabled options
+  - moves to the first option on Home, past disabled options
+  - moves to the first option on PageUp, past disabled options
+- Headless UI listbox typeahead
+  - moves to the option a whole word names
+  - moves to the option the start of a word names, whatever the case
+  - takes a search with a space in it
+  - passes over a disabled option
+  - stays on its option while the letters typed still match it
+- Headless UI listbox with the mouse
+  - focuses its trigger on a click of the label naming it
+  - opens on a press of its trigger on its picked option
+  - stays closed on a right press, and on a press while disabled
+  - opens on a programmatic click of its trigger
+  - closes on a press outside it
+  - makes the option the pointer moves over active, and none once it leaves, passing over a disabled option
+  - picks an option clicked and closes, and does nothing on a click of a disabled option
+  - makes an option active when it takes focus
+- Headless UI listbox picking many
+  - opens on its first picked option, stays open as the keyboard picks, and toggles an option clicked
+- Headless UI listbox in a form
+  - submits the value it holds
+  - submits nothing while disabled
+  - hands its native select the form it names
 
 **Unit, `select.radix.test.tsx`**
 
@@ -152,6 +243,18 @@ Each test was proven by changing the code and watching a test fail.
   - bubbles a user-driven value change that the controlled parent ignores, without applying it
   - does not bubble a user-driven value change when the consumer stopped propagation and the controlled parent applies it later
 
+**Unit, `select.react-aria.test.tsx`**
+
+- React Aria select typeahead on the closed trigger
+  - picks the next item starting with a letter typed twice quickly, not one starting with it twice
+  - moves on to the next item on the same letter typed again after a pause
+  - wraps to the first match once no item after the picked one matches
+- React Aria select
+  - focuses its trigger with autoFocus
+  - moves on each repeat of an arrow key held down in the open list
+  - disables its native select while disabled
+  - goes back to its default value on a reset of its form, given no name
+
 **Unit, `select.test.tsx`**
 
 - Select
@@ -181,6 +284,7 @@ Each test was proven by changing the code and watching a test fail.
   - shows the placeholder when the picked item leaves in the update that clears the value
   - shows string children given while the picked item text is shown
   - slots an element child with asChild
+  - refuses asChild with a render function, which gives it no element to slot onto
 - Select item indicator and arrow
   - draws the indicator on the selected item only
   - draws no arrow when the content sits over the trigger rather than beside it
@@ -263,6 +367,7 @@ Each test was proven by changing the code and watching a test fail.
   - keeps inside the width of the iframe it is in, less its margins
   - keeps inside the width of the iframe it is in, less its margins, right to left
   - grows on a scroll no taller than the window of the iframe it is in, less its margins
+  - lines up and grows by the window it runs in when its document has none of its own
 - Select opening and closing
   - renders each item once as it opens as a popper, and again only the one it focuses
   - renders each item once as it opens aligned to the item, and again only the one it focuses
@@ -288,6 +393,7 @@ Each test was proven by changing the code and watching a test fail.
   - shows the label of an item picked from the list
 - Select with multiple
   - adds a picked item and stays open, and a second pick takes it out
+  - adds the first pick of a select made multiple after it mounted with nothing picked
   - picks the item a press is dragged onto and released over, and stays open
   - shows its picks in the order they were made, and its placeholder once none is left
   - shows the labels of a default value while closed
@@ -395,6 +501,8 @@ fieldset defect under Fixed.
   out of sight, and item-aligned content lines up the first pick and holds still while picks are made.
 - A function given to `Select.Value` as its child is called with the picked values, a single select's one
   value as a list, and not while nothing is picked.
+- PageUp and PageDown move to the first and last item in the open list, as Home and End do and as the menus here
+  do.
 
 ## Fixed
 

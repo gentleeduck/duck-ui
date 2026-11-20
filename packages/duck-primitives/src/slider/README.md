@@ -36,19 +36,116 @@ order `minStepsBetweenThumbs` apart, pressed on the content inside a thumb and c
 submits every thumb, takes a slider outside it through `form` and resets them all, leaving focus on Reset; and a
 thumb composed from its parts. The end-to-end suite runs each in Chromium, Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Ark UI, Base UI and React Aria run that library's own cases against this code. Each file's header names its source
+and every case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 161 | `slider-libs.test.ts` 32, `slider.radix.test.tsx` 39, `slider.test.tsx` 90 |
+| Unit | 199 | `slider-libs.test.ts` 32, `slider.ark.test.tsx` 8, `slider.base-ui.test.tsx` 27, `slider.radix.test.tsx` 39, `slider.react-aria.test.tsx` 3, `slider.test.tsx` 90 |
 | End to end | 25 | `slider.e2e.ts` 25 |
 | registry-ui | 16 | `slider.test.tsx` 16 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>186 behaviours, one per test</summary>
+<summary>224 behaviours, one per test</summary>
+
+**Unit, `slider-libs.test.ts`**
+
+- slider.libs &gt; getNextSortedValues
+  - inserts value at index and sorts
+  - handles single value
+  - sorts after insertion
+  - handles empty with default
+- slider.libs &gt; convertValueToPercentage
+  - converts to percentage
+  - works with custom range
+  - clamps to 0-100
+- slider.libs &gt; getLabel
+  - single value returns undefined
+  - two values return Minimum/Maximum
+  - three+ values return numbered label
+- slider.libs &gt; getClosestValueIndex
+  - single value returns 0
+  - returns closest index
+  - returns first when equidistant
+- slider.libs &gt; hasMinStepsBetweenValues
+  - returns true when steps meet minimum
+  - returns false when steps are too close
+  - returns true when minSteps is 0
+- slider.libs &gt; linearScale
+  - scales linearly
+  - scales from where the input starts
+  - handles identical input range
+  - handles inverted ranges
+- slider.libs &gt; getDecimalCount
+  - integer has 0 decimals
+  - counts decimal places
+  - counts the exponent of a number printed in scientific notation
+  - a non-finite number has 0 decimals
+- slider.libs &gt; getNextStepValue
+  - moves an aligned value by whole steps
+  - snaps an off-grid value to the next grid line in the direction of travel
+  - counts the snap as the first of several steps
+  - keeps the precision of a fractional step
+- slider.libs &gt; roundValue
+  - rounds to specified decimals
+  - no-op for integers
+- slider.libs &gt; getThumbInBoundsOffset
+  - pulls a 20px thumb half its width inside the track at either end and leaves it centred midway
+  - keeps a right-to-left thumb inside too, where the -50% translate still pulls it left
+
+**Unit, `slider.ark.test.tsx`**
+
+- Ark UI slider
+  - has no axe violations
+  - moves with the arrow keys
+  - keeps one thumb from passing the other with a gap between them
+  - moves the other way with the horizontal arrows in right to left
+  - moves up on ArrowUp and down on ArrowDown when vertical
+  - stays put while disabled
+  - tells onValueChange each value
+  - takes ten steps at once on Shift with an arrow and on PageUp and PageDown, or the largeStep it is given
+
+**Unit, `slider.base-ui.test.tsx`**
+
+- Base UI slider keys, ltr horizontal
+  - steps down on ArrowLeft, by ten steps with Shift, and no lower than min
+  - steps up on ArrowRight, by ten steps with Shift, and no higher than max
+  - goes to max on End and to min on Home
+  - steps by ten on PageUp and PageDown, within min and max
+  - rounds a value off its step onto the step
+- Base UI slider keys, rtl horizontal
+  - steps down on ArrowRight, by ten steps with Shift, and no lower than min
+  - steps up on ArrowLeft, by ten steps with Shift, and no higher than max
+  - goes to max on End and to min on Home
+  - steps by ten on PageUp and PageDown, within min and max
+  - rounds a value off its step onto the step
+- Base UI slider keys, ltr vertical
+  - steps down on ArrowDown, by ten steps with Shift, and no lower than min
+  - steps up on ArrowUp, by ten steps with Shift, and no higher than max
+  - goes to max on End and to min on Home
+  - steps by ten on PageUp and PageDown, within min and max
+  - rounds a value off its step onto the step
+- Base UI slider keys, rtl vertical
+  - steps down on ArrowDown, by ten steps with Shift, and no lower than min
+  - steps up on ArrowUp, by ten steps with Shift, and no higher than max
+  - goes to max on End and to min on Home
+  - steps by ten on PageUp and PageDown, within min and max
+  - rounds a value off its step onto the step
+- Base UI slider steps
+  - takes min as the origin of its steps
+  - steps by a fraction without a rounding error
+- Base UI slider wiring
+  - updates aria-valuenow as its value changes
+  - marks its thumb with its orientation
+- Base UI slider commits
+  - commits a value the keyboard changes, and nothing for a key that changes none
+- Base UI slider presses
+  - changes nothing on a right press of its track
+  - changes nothing on a press of its track while disabled
 
 **Unit, `slider.radix.test.tsx`**
 
@@ -104,6 +201,13 @@ Each test was proven by changing the code and watching a test fail.
   - bubbles every thumb value a user drag changes to ancestor `onInput` handlers when a controlled parent adjusts the values
   - does not treat a programmatic change as user-driven after a rejected user interaction
   - does not re-render the slider for pointer moves that do not change the value
+
+**Unit, `slider.react-aria.test.tsx`**
+
+- React Aria slider
+  - moves each of three thumbs on its own
+  - moves on each repeat of PageUp and PageDown held down
+  - hands its hidden inputs the form it names
 
 **Unit, `slider.test.tsx`**
 
@@ -222,51 +326,6 @@ Each test was proven by changing the code and watching a test fail.
   - keeps the track where it was when the slide began
   - measures the track again on the next slide
   - measures a vertical track again on the next slide
-
-**Unit, `slider-libs.test.ts`**
-
-- slider.libs &gt; getNextSortedValues
-  - inserts value at index and sorts
-  - handles single value
-  - sorts after insertion
-  - handles empty with default
-- slider.libs &gt; convertValueToPercentage
-  - converts to percentage
-  - works with custom range
-  - clamps to 0-100
-- slider.libs &gt; getLabel
-  - single value returns undefined
-  - two values return Minimum/Maximum
-  - three+ values return numbered label
-- slider.libs &gt; getClosestValueIndex
-  - single value returns 0
-  - returns closest index
-  - returns first when equidistant
-- slider.libs &gt; hasMinStepsBetweenValues
-  - returns true when steps meet minimum
-  - returns false when steps are too close
-  - returns true when minSteps is 0
-- slider.libs &gt; linearScale
-  - scales linearly
-  - scales from where the input starts
-  - handles identical input range
-  - handles inverted ranges
-- slider.libs &gt; getDecimalCount
-  - integer has 0 decimals
-  - counts decimal places
-  - counts the exponent of a number printed in scientific notation
-  - a non-finite number has 0 decimals
-- slider.libs &gt; getNextStepValue
-  - moves an aligned value by whole steps
-  - snaps an off-grid value to the next grid line in the direction of travel
-  - counts the snap as the first of several steps
-  - keeps the precision of a fractional step
-- slider.libs &gt; roundValue
-  - rounds to specified decimals
-  - no-op for integers
-- slider.libs &gt; getThumbInBoundsOffset
-  - pulls a 20px thumb half its width inside the track at either end and leaves it centred midway
-  - keeps a right-to-left thumb inside too, where the -50% translate still pulls it left
 
 **End to end, `slider.e2e.ts`**
 

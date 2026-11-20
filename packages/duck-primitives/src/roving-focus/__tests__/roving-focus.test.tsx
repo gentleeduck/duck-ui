@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { describe, expect, it, vi } from 'vitest'
 import { freshDom, wait } from '../../__tests__/dom'
 import { DirectionProvider } from '../../direction'
 import { RovingFocusGroup, RovingFocusGroupItem } from '../index'
+import { NO_GROUP } from '../roving-focus'
 
 freshDom()
 
@@ -92,6 +93,28 @@ describe('RovingFocusGroup', () => {
         </RovingFocusGroup>,
       ),
     ).not.toThrow()
+  })
+
+  it('throws for an item outside any group', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    try {
+      expect(() => render(<RovingFocusGroupItem>A</RovingFocusGroupItem>)).toThrow(
+        '`RovingFocusGroupItem` must be used within `RovingFocusGroup`',
+      )
+    } finally {
+      error.mockRestore()
+    }
+  })
+
+  it('gives an item outside any group no tab stop to take and nowhere to register', () => {
+    const item = { ref: { current: null }, id: 'a', focusable: true, active: false, textValue: undefined }
+
+    NO_GROUP.register(item)()
+    NO_GROUP.onItemFocus('a')
+    NO_GROUP.onItemShiftTab()
+
+    expect([NO_GROUP.currentTabStopId, NO_GROUP.items.size]).toEqual([null, 0])
   })
 })
 

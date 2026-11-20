@@ -40,19 +40,89 @@ submenu with `closeParentOnEsc={false}`; a controlled bar that can be disabled, 
 trigger and presses outside counted; and an overlay a browser extension draws over the page. The end-to-end suite
 runs each in Chromium, Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Base UI run that library's own cases against this code. Each file's header names its source and every case left
+out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 94 | `menubar.radix.test.tsx` 30, `menubar.test.tsx` 64 |
+| Unit | 107 | `menubar.base-ui.test.tsx` 13, `menubar.radix.test.tsx` 30, `menubar.test.tsx` 64 |
 | End to end | 35 | `menubar.e2e.ts` 17, `menubar.radix.e2e.ts` 18 |
 | registry-ui | 11 | `menubar-force-mount.test.tsx` 2, `menubar.test.tsx` 9 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>129 behaviours, one per test</summary>
+<summary>142 behaviours, one per test</summary>
+
+**Unit, `menubar.base-ui.test.tsx`**
+
+- Base UI menubar roles
+  - is a menubar with its orientation, and its triggers menu items
+- Base UI menubar with the mouse
+  - opens a menu on a press of its trigger, and closes it on the next
+  - moves to the menu the pointer enters while one is open, and opens none on hover while none is
+  - closes the whole tree on one press outside once a submenu is open
+- Base UI menubar keys
+  - moves between triggers on the arrow keys, and to the ends on Home and End
+  - moves between triggers on ArrowDown and ArrowUp when vertical
+  - opens a menu on Space, moving through it with the arrow keys
+  - opens a submenu on ArrowRight, and closes it on ArrowLeft, back on its trigger
+  - takes the keyboard after a menu opens on a press
+  - goes round from the last trigger to the first with loop true
+  - goes no further than the last trigger with loop false
+- Base UI menubar disabled
+  - disables its triggers while disabled
+  - stays reachable by Tab while its first trigger is disabled
+
+**Unit, `menubar.radix.test.tsx`**
+
+- aria-controls
+  - should not reference a non-existent element while closed
+  - should reference the rendered content while open
+- Menubar.Root
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Menubar.Trigger
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Menubar.Content
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Menubar.Group
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Menubar.Label
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Menubar.Item
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Menubar.CheckboxItem
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Menubar.RadioGroup
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Menubar.RadioItem
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Menubar.ItemIndicator
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Menubar.Separator
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Menubar.Arrow
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Menubar.SubTrigger
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Menubar.SubContent
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
 
 **Unit, `menubar.test.tsx`**
 
@@ -134,54 +204,6 @@ Each test was proven by changing the code and watching a test fail.
   - gives the page back when the menu closes
   - moves between menus from the keyboard
   - leaves the page alone by default
-
-**Unit, `menubar.radix.test.tsx`**
-
-- aria-controls
-  - should not reference a non-existent element while closed
-  - should reference the rendered content while open
-- Menubar.Root
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Menubar.Trigger
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Menubar.Content
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Menubar.Group
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Menubar.Label
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Menubar.Item
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Menubar.CheckboxItem
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Menubar.RadioGroup
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Menubar.RadioItem
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Menubar.ItemIndicator
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Menubar.Separator
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Menubar.Arrow
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Menubar.SubTrigger
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Menubar.SubContent
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
 
 **End to end, `menubar.e2e.ts`**
 

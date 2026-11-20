@@ -37,19 +37,142 @@ opened from the dialog that takes focus and scrolls under its lock, a dropdown m
 `finalFocus` as refs and as `false`, a dialog kept open while its notes are unsaved, three dialogs nested, and
 Radix's own cases. The end-to-end suite runs each in Chromium, Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Ark UI, Base UI, Headless UI and React Aria run that library's own cases against this code. Each file's header
+names its source and every case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 124 | `dialog.radix.test.tsx` 48, `dialog.test.tsx` 76 |
+| Unit | 156 | `dialog.ark.test.tsx` 5, `dialog.base-ui.test.tsx` 12, `dialog.headless.test.tsx` 12, `dialog.radix.test.tsx` 48, `dialog.react-aria.test.tsx` 2, `dialog.test.tsx` 77 |
 | End to end | 22 | `dialog.e2e.ts` 12, `dialog.radix.e2e.ts` 10 |
-| registry-ui | 6 | `dialog-responsive.test.tsx` 2, `dialog.test.tsx` 4 |
+| registry-ui | 7 | `dialog-responsive.test.tsx` 2, `dialog.test.tsx` 5 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>146 behaviours, one per test</summary>
+<summary>178 behaviours, one per test</summary>
+
+**Unit, `dialog.ark.test.tsx`**
+
+- Ark UI dialog
+  - has no axe violations while open
+  - shows its content once opened
+  - tells onOpenChange when it closes
+  - mounts its content only while open, and points its trigger at it only then
+  - stays open while open is true, and shut while it is false
+
+**Unit, `dialog.base-ui.test.tsx`**
+
+- Base UI dialog focus targets
+  - gives focus on close to the finalFocus it names when initialFocus points outside it
+  - gives focus back to its trigger on close when initialFocus points outside it and no finalFocus is given
+- Base UI dialog parts
+  - asks to close once from its close button, and not again on a click once closed
+  - closes from a close button given onClick={undefined}
+  - stays shut from a disabled trigger
+  - renders with a Suspense boundary outside its portal
+- Base UI dialog modal
+  - hides the rest of the page while modal, and leaves it while not
+- Base UI dialog dismissal
+  - closes sibling dialogs open together one per Escape, the newest first
+  - closes only a menu opened inside it on a press outside the menu
+  - closes a dialog opened from a menu on Escape, leaving the menu open
+  - closes on a press outside once the focused element inside it is taken away by a press
+  - closes on a press outside a closed shadow root it renders in
+
+**Unit, `dialog.headless.test.tsx`**
+
+- Headless UI dialog safe guards
+  - renders closed without crashing
+- Headless UI dialog scroll lock
+  - keeps the page locked as one dialog hands over to the next, and unlocks it once the last closes
+- Headless UI dialog composition
+  - opens from inside a popover, which closes, and gives focus back to the popover trigger once it closes
+- Headless UI dialog keys
+  - closes on Escape while a field in it has focus
+  - cycles Tab from the element initialFocus names
+  - keeps focus in it on Tab and Shift+Tab when it holds one element that takes focus
+- Headless UI dialog with the mouse
+  - submits a form inside it
+  - stays open on a press of an element its own press removes
+  - stays open on a press inside a shadow root inside it
+  - closes on a press on its overlay, and stays open on a press inside it
+  - stays open when it opened on the mouse up of the press that then clicks outside it
+  - stays open on a press that starts inside it and ends outside, and closes on the next press outside
+
+**Unit, `dialog.radix.test.tsx`**
+
+- given a default Dialog
+  - should have no accessibility violations in default state
+- given a default Dialog &gt; after clicking the trigger
+  - should open the content
+  - should have no accessibility violations
+  - should focus the close button
+- given a default Dialog &gt; after clicking the trigger &gt; when pressing escape
+  - should close the content
+- aria-controls
+  - should not reference a non-existent element while closed
+  - should reference the rendered content while open
+  - should reference content with a custom id while open
+- aria-labelledby / aria-describedby references
+  - should reference `Title` and `Description` when they are rendered
+  - should normalize existing aria-describedby ids and append the Description id
+  - should not set `aria-labelledby` when no `Title` is rendered
+  - should not set `aria-describedby` when no `Description` is rendered
+  - should update references when `Title`/`Description` mount and unmount
+  - should reference a `Title` with a custom id
+  - should update the `Title` reference when its custom id changes or is removed
+  - should fall back to a generated id for a `Title` with an empty id
+  - should reference a `Description` with a custom id
+  - should reference every rendered `Description` with unique ids
+  - should merge `aria-describedby` on `Content` with custom `Description` ids
+  - should update the `Description` reference when its custom id changes or is removed
+  - should remove only the unmounted `Description` from `aria-describedby`
+  - should keep custom id references across React strict mode remounts
+- given a modal Dialog
+  - should restore `body` pointer-events after closing
+  - should not prevent ctrl + wheel (page zoom) while open
+- given a Dialog with `asChild` on the Content
+  - forwards content props and the ref to the child (modal: true)
+  - forwards content props and the ref to the child (modal: false)
+  - registers portalled descendants as focus scope branches
+  - still dismisses on escape when slotted
+- given two overlapping modal Dialogs (forceMount)
+  - should restore `body` pointer-events after both close
+- given a modal Dialog containing a nested modal layer (eg. a DropdownMenu)
+  - does not call `onOpenChange(false)` on a controlled dialog when the nested layer is dismissed by an outside interaction
+- given a modal Dialog with an Overlay
+  - gives the overlay a click listener of its own so iOS Safari dispatches click for taps on it (asChild: false)
+  - gives the overlay a click listener of its own so iOS Safari dispatches click for taps on it (asChild: true)
+  - waits for the click that follows a pointer down on the overlay, then closes and calls the consumer handlers once
+  - stays open when `'onPointerDownOutside'` is prevented
+  - stays open when `'onInteractOutside'` is prevented
+- Dialog.Trigger
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Dialog.Overlay
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Dialog.Content
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+  - forwards props to the child element when `asChild` is set on a non-modal dialog
+- Dialog.Title
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Dialog.Description
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Dialog.Close
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+
+**Unit, `dialog.react-aria.test.tsx`**
+
+- React Aria dialog
+  - keeps focus on the field it opens with when a menu item opens it from the keyboard
+  - renders into the container its portal names
 
 **Unit, `dialog.test.tsx`**
 
@@ -97,10 +220,11 @@ Each test was proven by changing the code and watching a test fail.
   - errors without a title and warns without a description, naming the part to render
   - stays quiet with a title and a description
   - names the parts its WarningProvider gives
-  - takes {"aria-label":"Ducks"} in place of a title
-  - takes {"aria-labelledby":"elsewhere"} in place of a title
-  - takes {"aria-describedby":"elsewhere"} in place of a description
-  - takes {} in place of a description
+  - renders its children alone in production
+  - takes { 'aria-label': 'Ducks' } in place of a title
+  - takes { 'aria-labelledby': 'elsewhere' } in place of a title
+  - takes { 'aria-describedby': 'elsewhere' } in place of a description
+  - takes { 'aria-describedby': undefined } in place of a description
 - Dialog parts
   - throws for a Title or Description outside the content
   - sets dir on the overlay and the content, and on none of the parts inside them
@@ -117,8 +241,8 @@ Each test was proven by changing the code and watching a test fail.
   - puts focus guards at both ends of the page while open, and takes them away once closed
   - moves focus from its last element to its first on Tab, and back on Shift+Tab
 - Dialog returning focus
-  - returns focus to its trigger when something else opened it, {"modal":true}
-  - returns focus to its trigger when something else opened it, {"modal":false}
+  - returns focus to its trigger when something else opened it, { modal: true }
+  - returns focus to its trigger when something else opened it, { modal: false }
 - Dialog scroll lock
   - lets a registered branch scroll and keeps the rest of the page locked
   - leaves a registered branch to screen readers and hides the rest of the page from them
@@ -140,73 +264,6 @@ Each test was proven by changing the code and watching a test fail.
   - leaves focus on the trigger when initialFocus is false
   - focuses the element finalFocus names on close rather than the trigger
   - lets an auto focus handler that prevents the default win over the targets
-
-**Unit, `dialog.radix.test.tsx`**
-
-- given a default Dialog
-  - should have no accessibility violations in default state
-- given a default Dialog &gt; after clicking the trigger
-  - should open the content
-  - should have no accessibility violations
-  - should focus the close button
-- given a default Dialog &gt; after clicking the trigger &gt; when pressing escape
-  - should close the content
-- aria-controls
-  - should not reference a non-existent element while closed
-  - should reference the rendered content while open
-  - should reference content with a custom id while open
-- aria-labelledby / aria-describedby references
-  - should reference `Title` and `Description` when they are rendered
-  - should normalize existing aria-describedby ids and append the Description id
-  - should not set `aria-labelledby` when no `Title` is rendered
-  - should not set `aria-describedby` when no `Description` is rendered
-  - should update references when `Title`/`Description` mount and unmount
-  - should reference a `Title` with a custom id
-  - should update the `Title` reference when its custom id changes or is removed
-  - should fall back to a generated id for a `Title` with an empty id
-  - should reference a `Description` with a custom id
-  - should reference every rendered `Description` with unique ids
-  - should merge `aria-describedby` on `Content` with custom `Description` ids
-  - should update the `Description` reference when its custom id changes or is removed
-  - should remove only the unmounted `Description` from `aria-describedby`
-  - should keep custom id references across React strict mode remounts
-- given a modal Dialog
-  - should restore `body` pointer-events after closing
-  - should not prevent ctrl + wheel (page zoom) while open
-- given a Dialog with `asChild` on the Content
-  - forwards content props and the ref to the child (modal: true)
-  - forwards content props and the ref to the child (modal: false)
-  - registers portalled descendants as focus scope branches
-  - still dismisses on escape when slotted
-- given two overlapping modal Dialogs (forceMount)
-  - should restore `body` pointer-events after both close
-- given a modal Dialog containing a nested modal layer (eg. a DropdownMenu)
-  - does not call `onOpenChange(false)` on a controlled dialog when the nested layer is dismissed by an outside interaction
-- given a modal Dialog with an Overlay
-  - gives the overlay a click listener of its own so iOS Safari dispatches click for taps on it (asChild: false)
-  - gives the overlay a click listener of its own so iOS Safari dispatches click for taps on it (asChild: true)
-  - waits for the click that follows a pointer down on the overlay, then closes and calls the consumer handlers once
-  - stays open when `onPointerDownOutside` is prevented
-  - stays open when `onInteractOutside` is prevented
-- Dialog.Trigger
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Dialog.Overlay
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Dialog.Content
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-  - forwards props to the child element when `asChild` is set on a non-modal dialog
-- Dialog.Title
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Dialog.Description
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Dialog.Close
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
 
 **End to end, `dialog.e2e.ts`**
 
@@ -322,6 +379,9 @@ Each test was proven by changing the code and watching a test fail.
 - The examples cover a controlled dialog, an active trigger, a nested dialog, focus targets, a dialog kept open
   while unsaved, a body that scrolls, a non-modal dialog, a select and a popover inside, right-to-left, motion,
   and the responsive dialog that becomes a drawer on a narrow screen.
+- `DialogContent` with `forceMount` stays in the page while closed. It drew its portal without the prop, so the
+  portal unmounted it and the documented `forceMount` did nothing. Its overlay, kept with it, holds the end of
+  its fade and lets presses through, so it never covers the page once closed.
 
 ## Later
 

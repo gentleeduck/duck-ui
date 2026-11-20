@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it } from 'vitest'
 import { getExitSideFromRect, getHull, getPaddedExitPoints, getPointsFromRect } from '../tooltip.libs'
 
 describe('tooltip geometry', () => {

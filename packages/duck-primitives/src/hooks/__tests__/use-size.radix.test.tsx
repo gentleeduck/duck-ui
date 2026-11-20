@@ -1,9 +1,9 @@
 // From Radix UI primitives, packages/react/use-size/src/use-size.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
-import { radixEnvironment, vi } from '../../__tests__/radix/harness'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { radixEnvironment } from '../../__tests__/radix/harness'
 import { useSize } from '../use-size'
 
 radixEnvironment()

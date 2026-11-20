@@ -215,7 +215,7 @@ const MenuContentImpl = React.forwardRef<MenuContentImplElement, IMenu.IContentI
     const [, handleTypeaheadSearch, resetTypeahead] = useTypeaheadListNavigation({
       getItems: () => getFocusableItems(items),
       getItemElement: ({ node }) => node,
-      getItemTextValue: ({ item, node }) => item.textValue || (node.textContent ?? ''),
+      getItemTextValue: ({ item, node }) => item.textValue || node.textContent || '',
       // Focus moves a task later, by which time the match may have been disabled or removed.
       onMatch: ({ node }) => {
         setTimeout(() => {

@@ -37,19 +37,66 @@ not hoverable, `closeDelay`, `disableCloseOnClick`, `disabled`, a controlled too
 a `Toggle` as the trigger, and a dialog's trigger, closed once with the pointer and once with Escape. The end-to-end suite drives each in Chromium, Firefox and WebKit, with the pointer
 moving in steps as a real one does, and once in a single jump, which the grace area has to act on in that one move.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Ark UI, Base UI and React Aria run that library's own cases against this code. Each file's header names its source
+and every case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 106 | `tooltip-libs.test.ts` 7, `tooltip.radix.test.tsx` 19, `tooltip.test.tsx` 80 |
+| Unit | 132 | `tooltip-libs.test.ts` 7, `tooltip.ark.test.tsx` 5, `tooltip.base-ui.test.tsx` 17, `tooltip.radix.test.tsx` 19, `tooltip.react-aria.test.tsx` 3, `tooltip.test.tsx` 81 |
 | End to end | 12 | `tooltip.e2e.ts` 12 |
 | registry-ui | 7 | `tooltip-force-mount.test.tsx` 1, `tooltip.test.tsx` 6 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>118 behaviours, one per test</summary>
+<summary>144 behaviours, one per test</summary>
+
+**Unit, `tooltip-libs.test.ts`**
+
+- tooltip geometry
+  - names the edge of a box nearest a point
+  - refuses a point with no position
+  - pads an exit point back inside the edge it left by
+  - lists the corners of a box clockwise from the top left
+  - lists the convex hull in order from its top-left corner, dropping the points inside
+  - finds the hull of points stacked in a column, whatever order they come in
+  - keeps one point once however often it repeats
+
+**Unit, `tooltip.ark.test.tsx`**
+
+- Ark UI tooltip
+  - has no axe violations
+  - mounts only once hovered
+  - closes on Escape
+  - stays open on Escape when onEscapeKeyDown prevents it
+  - closes once the pointer leaves the trigger for its content, with hoverable content off
+
+**Unit, `tooltip.base-ui.test.tsx`**
+
+- Base UI tooltip &gt; opening and closing
+  - opens on hover
+  - stays closed while a touch pointer moves over its trigger
+  - opens on focus and closes on blur
+  - tells onOpenChange once, and nothing again on a hover while open
+  - does not open once its trigger unmounts during the open delay
+  - stays closed as focus comes back to its trigger with the window, once Escape closed it
+- Base UI tooltip &gt; delays
+  - waits for the delay of its provider, and takes a delay of its own over it
+  - waits for its close delay once the pointer leaves, taking the latest one given
+  - opens a tooltip beside it at once while the skip delay runs, and waits again once it has passed
+- Base UI tooltip &gt; disabled
+  - opens on neither hover nor focus, and does not throw beside defaultOpen
+  - closes once it becomes disabled while open
+- Base UI tooltip &gt; dismissal
+  - closes on Escape
+  - does not open once its trigger is pressed during the open delay
+  - closes on a click of its trigger, and opens again on the next hover
+  - stays open on a click of its trigger with disableCloseOnClick
+- Base UI tooltip &gt; in a group
+  - closes one tooltip as another opens
+  - leaves the outer tooltip shut while the pointer is over a trigger nested in its trigger
 
 **Unit, `tooltip.radix.test.tsx`**
 
@@ -78,16 +125,12 @@ Each test was proven by changing the code and watching a test fail.
   - spreads props it does not consume onto the element it renders
   - forwards props to the child element when `asChild` is set
 
-**Unit, `tooltip-libs.test.ts`**
+**Unit, `tooltip.react-aria.test.tsx`**
 
-- tooltip geometry
-  - names the edge of a box nearest a point
-  - refuses a point with no position
-  - pads an exit point back inside the edge it left by
-  - lists the corners of a box clockwise from the top left
-  - lists the convex hull in order from its top-left corner, dropping the points inside
-  - finds the hull of points stacked in a column, whatever order they come in
-  - keeps one point once however often it repeats
+- React Aria tooltip
+  - shows on focus from the keyboard
+  - hides once the page under its trigger scrolls
+  - renders into the container its portal names
 
 **Unit, `tooltip.test.tsx`**
 
@@ -99,6 +142,7 @@ Each test was proven by changing the code and watching a test fail.
   - respects open prop (controlled)
   - trigger with disableCloseOnClick uses data-tooltip-state instead of data-slot="tooltip-trigger"
   - leaves an asChild child's own data-state and data-slot alone under disableCloseOnClick
+  - opens on hover through a trigger slotted onto a component that drops its ref
   - names the popper's measurements under the tooltip's own variables, beside the style it was given
   - keeps the click handler it was given, and stays open on a click when told to
   - TooltipProvider renders children
@@ -229,6 +273,9 @@ Each test was proven by changing the code and watching a test fail.
   `:focus-visible`. A menu item chosen with the pointer hands focus back focus-visible, and a dialog closed with
   the pointer hands it back after a press on its own button, so each check catches what the other lets through.
   Escape, Tab and a focus no input led to, such as a screen reader moving it, still open it.
+- A press on the trigger during the open delay drops the open, where the tooltip still appeared after the click.
+- The pointer over a trigger nested in another trigger opens the inner tooltip only, where the move reached the outer
+  trigger too, which opened its own tooltip and closed the inner one.
 
 ## Smaller and faster
 

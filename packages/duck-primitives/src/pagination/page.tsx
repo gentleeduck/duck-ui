@@ -19,7 +19,7 @@ const PaginationPage = React.forwardRef<HTMLElement, IPagination.IPageProps>(
         {...pageProps}
         disabled={pageProps.disabled || value < 1 || value > pageCount}
         name={PAGE_NAME}
-        target={value}
+        toPage={value}
         ref={forwardedRef}>
         {children ?? value}
       </PaginationControl>

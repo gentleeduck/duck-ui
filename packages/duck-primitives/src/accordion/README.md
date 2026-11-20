@@ -40,102 +40,54 @@ runtime and `asChild`. The end-to-end suite runs each in Chromium, Firefox and W
 `Combinations` story renders all 72 combinations of type, orientation, direction, animation and content
 mounting, and each one is opened, closed and walked with the keyboard.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Ark UI, Base UI and React Aria run that library's own cases against this code. Each file's header names its source
+and every case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 140 | `accordion.radix.test.tsx` 84, `accordion.test.tsx` 56 |
+| Unit | 166 | `accordion.ark.test.tsx` 14, `accordion.base-ui.test.tsx` 8, `accordion.radix.test.tsx` 84, `accordion.react-aria.test.tsx` 4, `accordion.test.tsx` 56 |
 | End to end | 116 | `accordion.e2e.ts` 116 |
 | registry-ui | 19 | `accordion.test.tsx` 7, `collapsible.test.tsx` 11, `motion-collapsible.test.tsx` 1 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>256 behaviours, one per test</summary>
+<summary>282 behaviours, one per test</summary>
 
-**Unit, `accordion.test.tsx`**
+**Unit, `accordion.ark.test.tsx`**
 
-- Accordion
-  - renders root with data-slot="accordion"
-  - renders triggers with data-slot="accordion-trigger"
-  - does not render content when closed by default
-  - renders defaultValue content for single accordions
-  - toggles a collapsible single item open and closed on click
-  - keeps force-mounted content in the DOM while closed
-  - calls onValueChange when a single item opens
-  - forwards refs to the trigger
-- Accordion single without collapsible
-  - keeps the item open when it is pressed twice in one task, before React renders the first press
-- Accordion.Item without a value
-  - opens and closes on its own, apart from its siblings
-- Accordion.Trigger asChild
-  - stays closed when a disabled item is pressed through an element the browser does not disable
-- Accordion.Content asChild
-  - opens when its child never takes the ref
-- Accordion keyboard
-  - leaves a key it does not handle to the browser
-  - leaves an arrow key pressed inside the content to the element there
-- Accordion.Header
-  - wraps the trigger in an h3 carrying its item state
-- Accordion disabled
-  - disables every item when the root is disabled
-- Accordion loop
-  - stops at the ends when loop is off
-  - wraps at the ends by default
-- Accordion.Indicator
-  - renders a hidden span carrying its item state
-- Accordion.Indicator closed
-  - marks the indicator of a closed, enabled item
-- Accordion onFocusChange
-  - reports the focused item, once per move, and null once focus leaves the triggers
-- Accordion find-in-page
-  - keeps a closed item in the page as hidden until found
-  - opens the item when the browser finds a match in its content
-  - hides the content until found again once the item closes
-  - keeps a disabled item out of find-in-page
-  - takes a closed item out of find-in-page once it is disabled
-  - hides the content again when a controlled value keeps the item closed after a find
-- Accordion.Item onOpenChange
-  - tells an item when its trigger opens and closes it
-  - tells only the item whose trigger was pressed
-  - stays quiet when an open item that cannot collapse is pressed
-  - tells an item when find-in-page opens it
-- Accordion dir
-  - writes no dir attribute without a dir prop
-  - puts a dir prop on the root alone and reads it for the arrow keys
-  - reads a dir on any element around it for the arrow keys
-- Accordion content animation
-  - exposes the open size as CSS variables for the animation to read
-  - keeps a size variable its style sets, measuring only the other
-  - keeps closing content mounted until its exit animation ends
-  - skips the open animation of an item open on mount, and plays every one after
-  - hides findable content until found only once its exit animation ends
-  - skips the animation of closed content kept in the page until its item first opens
-  - drops a size variable once it measures nothing, so the stylesheet falls back to its own
-- Accordion multiple
-  - hands its ref to the root element
-- Accordion single value
-  - lets the open item close once collapsible is switched on
-  - reads an empty value as no item open, even beside an item valued with the empty string
-- Accordion keys and the page
-  - keeps the page from scrolling on an arrow key it moves focus with
-  - runs an onKeyDown given to the root first, and moves no focus once it prevents the default
-- Accordion focus leaving the triggers
-  - reports null once focus moves from a trigger to a button in the content
-  - reports null once focus moves to a trigger its root does not hold, such as one portalled out
-- Accordion.Trigger wiring
-  - points the trigger at its own content
-  - disables a trigger given disabled, and keeps its item shut
-  - leaves a form around it unsent when pressed
-  - runs an onFocus and an onBlur given to a trigger
-  - lets a data-slot given to the root or a trigger win
-- Accordion orientation
-  - marks every part with its orientation
-- Accordion scope
-  - hands its parts the scope it is given
-- Accordion find-in-page, again
-  - opens the item once for each find, with a close between
+- Ark UI accordion
+  - has no axe violations
+  - opens no item by default
+  - opens the item defaultValue names
+  - closes an open item on a click when collapsible
+  - keeps the open item open on a click when not collapsible
+  - leaves a disabled item shut on a click
+  - disables every item while the accordion is disabled
+  - opens several items at once when multiple
+  - tells onValueChange the value an item click opens
+  - writes the direction it is given
+  - moves focus to the next and previous trigger on ArrowDown and ArrowUp
+  - moves focus to the first and last trigger on Home and End
+  - moves focus to the next trigger on Tab
+  - mounts the content of an item only while it is open
+
+**Unit, `accordion.base-ui.test.tsx`**
+
+- Base UI accordion ids
+  - points its trigger at a content id given to it
+  - names its content by a trigger id given to it
+  - follows a trigger id added or changed later, and goes back to its own once it is taken away
+- Base UI accordion parts
+  - throws for an item outside the accordion, and for a header outside an item
+- Base UI accordion disabled
+  - neither toggles nor tells onValueChange while the accordion is disabled
+  - neither toggles nor tells onValueChange while the item is disabled
+- Base UI accordion keys
+  - opens and closes an item on Enter
+  - opens and closes an item on Space
 
 **Unit, `accordion.radix.test.tsx`**
 
@@ -267,6 +219,97 @@ Each test was proven by changing the code and watching a test fail.
   - should not register duplicate items in strict mode
   - should skip an item after it becomes disabled
   - should keep navigation within a nested Accordion separate from its parent
+
+**Unit, `accordion.react-aria.test.tsx`**
+
+- React Aria disclosure
+  - shows a disabled item its controlled value opens
+  - leaves its item as it is on a click of a button beside the trigger in its header
+  - opens and closes an accordion inside an item without touching the outer one
+  - disables every item while the accordion is disabled
+
+**Unit, `accordion.test.tsx`**
+
+- Accordion
+  - renders root with data-slot="accordion"
+  - renders triggers with data-slot="accordion-trigger"
+  - does not render content when closed by default
+  - renders defaultValue content for single accordions
+  - toggles a collapsible single item open and closed on click
+  - keeps force-mounted content in the DOM while closed
+  - calls onValueChange when a single item opens
+  - forwards refs to the trigger
+- Accordion single without collapsible
+  - keeps the item open when it is pressed twice in one task, before React renders the first press
+- Accordion.Item without a value
+  - opens and closes on its own, apart from its siblings
+- Accordion.Trigger asChild
+  - stays closed when a disabled item is pressed through an element the browser does not disable
+- Accordion.Content asChild
+  - opens when its child never takes the ref
+- Accordion keyboard
+  - leaves a key it does not handle to the browser
+  - leaves an arrow key pressed inside the content to the element there
+- Accordion.Header
+  - wraps the trigger in an h3 carrying its item state
+- Accordion disabled
+  - disables every item when the root is disabled
+- Accordion loop
+  - stops at the ends when loop is off
+  - wraps at the ends by default
+- Accordion.Indicator
+  - renders a hidden span carrying its item state
+- Accordion.Indicator closed
+  - marks the indicator of a closed, enabled item
+- Accordion onFocusChange
+  - reports the focused item, once per move, and null once focus leaves the triggers
+- Accordion find-in-page
+  - keeps a closed item in the page as hidden until found
+  - opens the item when the browser finds a match in its content
+  - hides the content until found again once the item closes
+  - keeps a disabled item out of find-in-page
+  - takes a closed item out of find-in-page once it is disabled
+  - hides the content again when a controlled value keeps the item closed after a find
+- Accordion.Item onOpenChange
+  - tells an item when its trigger opens and closes it
+  - tells only the item whose trigger was pressed
+  - stays quiet when an open item that cannot collapse is pressed
+  - tells an item when find-in-page opens it
+- Accordion dir
+  - writes no dir attribute without a dir prop
+  - puts a dir prop on the root alone and reads it for the arrow keys
+  - reads a dir on any element around it for the arrow keys
+- Accordion content animation
+  - exposes the open size as CSS variables for the animation to read
+  - keeps a size variable its style sets, measuring only the other
+  - keeps closing content mounted until its exit animation ends
+  - skips the open animation of an item open on mount, and plays every one after
+  - hides findable content until found only once its exit animation ends
+  - skips the animation of closed content kept in the page until its item first opens
+  - drops a size variable once it measures nothing, so the stylesheet falls back to its own
+- Accordion multiple
+  - hands its ref to the root element
+- Accordion single value
+  - lets the open item close once collapsible is switched on
+  - reads an empty value as no item open, even beside an item valued with the empty string
+- Accordion keys and the page
+  - keeps the page from scrolling on an arrow key it moves focus with
+  - runs an onKeyDown given to the root first, and moves no focus once it prevents the default
+- Accordion focus leaving the triggers
+  - reports null once focus moves from a trigger to a button in the content
+  - reports null once focus moves to a trigger its root does not hold, such as one portalled out
+- Accordion.Trigger wiring
+  - points the trigger at its own content
+  - disables a trigger given disabled, and keeps its item shut
+  - leaves a form around it unsent when pressed
+  - runs an onFocus and an onBlur given to a trigger
+  - lets a data-slot given to the root or a trigger win
+- Accordion orientation
+  - marks every part with its orientation
+- Accordion scope
+  - hands its parts the scope it is given
+- Accordion find-in-page, again
+  - opens the item once for each find, with a close between
 
 **End to end, `accordion.e2e.ts`**
 
@@ -427,6 +470,9 @@ Each test was proven by changing the code and watching a test fail.
 ## Fixed
 
 - Passes every Radix accordion test.
+- An `id` given to a trigger or a content is the one the other points at, where Radix kept pointing at the id it
+  made, so the region lost its name. An `id={undefined}` passed on, as a wrapper forwarding an optional id does,
+  leaves each part its own id rather than none.
 - The arrow keys, Home and End move focus between triggers, skipping disabled items and following
   `orientation` and the direction of the page around the root. They find the root and its triggers by
   `data-slot`, so a trigger given another `data-slot` is skipped, and so is a nested accordion's, one React has

@@ -2,11 +2,11 @@
 // Radix's todo for `Select.BubbleInput` with `asChild` is left out: it is the hidden native `<select>` carrying the
 // options to the form, so it takes no `asChild`.
 
-import { afterEach, describe, expect, it } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-import { assertStableComposedRef, radixEnvironment, vi } from '../../__tests__/radix/harness'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { assertStableComposedRef, radixEnvironment } from '../../__tests__/radix/harness'
 import * as Select from '../index'
 
 radixEnvironment()

@@ -1,6 +1,6 @@
-import { describe, expect, it, mock, spyOn } from 'bun:test'
 import { act, fireEvent, render } from '@testing-library/react'
 import * as React from 'react'
+import { describe, expect, it, vi } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { useCheckedSync, useSvgIndicator } from '../checkers'
 
@@ -121,7 +121,7 @@ describe('useSvgIndicator', () => {
       />,
     )
 
-    expect(uri('--svg-on')).toStartWith('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">')
+    expect(uri('--svg-on')).toMatch(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 16 16">/)
   })
 
   it('keeps a namespace the markup already declares', () => {
@@ -163,7 +163,7 @@ describe('useSvgIndicator with hostile text in the markup', () => {
 
     for (const name of ['--svg-off', '--svg-on']) {
       const value = input().style.getPropertyValue(name)
-      expect(value).toStartWith('url("data:image/svg+xml,')
+      expect(value).toMatch(/^url\("data:image\/svg\+xml,/)
       expect(value.slice(5, -2)).not.toMatch(/["<>\\\n]/)
     }
   })
@@ -186,9 +186,9 @@ function Synced(props: Parameters<typeof useCheckedSync>[1]) {
 
 describe('useCheckedSync', () => {
   it("tells the form of a checked set from outside, and runs none of the input's handlers", () => {
-    const heard = mock()
-    const handlers = { onChange: mock(), onClick: mock() }
-    const clicked = mock()
+    const heard = vi.fn()
+    const handlers = { onChange: vi.fn(), onClick: vi.fn() }
+    const clicked = vi.fn()
     const owned = (checked: boolean) => (
       <form onChange={(event) => heard((event.target as HTMLInputElement).checked)}>
         <div onClick={clicked}>
@@ -207,7 +207,7 @@ describe('useCheckedSync', () => {
   })
 
   it('tells the form of each value set from outside, a change back included', () => {
-    const heard = mock()
+    const heard = vi.fn()
     const owned = (checked: boolean) => (
       <form onChange={(event) => heard((event.target as HTMLInputElement).checked)}>
         <Synced checked={checked} onChange={() => undefined} />
@@ -222,7 +222,7 @@ describe('useCheckedSync', () => {
   })
 
   it("hands a click after a value set from outside to the input's handlers", () => {
-    const handlers = { onChange: mock(), onClick: mock() }
+    const handlers = { onChange: vi.fn(), onClick: vi.fn() }
     const owned = (checked: boolean) => (
       <form>
         <Synced checked={checked} {...handlers} />
@@ -237,8 +237,8 @@ describe('useCheckedSync', () => {
   })
 
   it('tells the form nothing when the owner stops holding the value', () => {
-    const heard = mock()
-    const error = spyOn(console, 'error').mockImplementation(() => {})
+    const heard = vi.fn()
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
     const owned = (checked: boolean | undefined) => (
       <form onChange={(event) => heard((event.target as HTMLInputElement).checked)}>
         <Synced checked={checked} onChange={() => undefined} />
@@ -253,7 +253,7 @@ describe('useCheckedSync', () => {
   })
 
   it('sends nothing outside a form', () => {
-    const clicked = mock()
+    const clicked = vi.fn()
     const { container, rerender } = render(<Synced checked={false} />)
     container.addEventListener('click', clicked)
 
@@ -263,7 +263,7 @@ describe('useCheckedSync', () => {
   })
 
   it("hands a click and its change to the input's handlers", () => {
-    const handlers = { onChange: mock(), onClick: mock() }
+    const handlers = { onChange: vi.fn(), onClick: vi.fn() }
     render(<Synced checked={undefined} {...handlers} />)
 
     fireEvent.click(input())
@@ -276,7 +276,7 @@ describe('useCheckedSync', () => {
   })
 
   it('tells the form nothing of a value it already heard from a click', () => {
-    const heard = mock()
+    const heard = vi.fn()
     const owned = (checked: boolean) => (
       <form onChange={(event) => heard((event.target as HTMLInputElement).checked)}>
         <Synced checked={checked} onChange={() => undefined} />
@@ -324,7 +324,7 @@ describe('useCheckedSync', () => {
   })
 
   it('hears an uncancelled reset of the form the input belongs to now', () => {
-    const onReset = mock()
+    const onReset = vi.fn()
     function InForm({ form }: { form: string }) {
       const ref = React.useRef<HTMLInputElement>(null)
       const sync = useCheckedSync(ref, { checked: undefined, onReset })
@@ -345,6 +345,20 @@ describe('useCheckedSync', () => {
     act(() => document.forms.namedItem('sync-cancelled')?.reset())
 
     expect(onReset.mock.calls.map(([target]) => target === input())).toEqual([true])
+  })
+
+  it('hears no reset while it has no input, and runs nothing on one', () => {
+    const onReset = vi.fn()
+    function NoInput() {
+      const ref = React.useRef<HTMLInputElement>(null)
+      useCheckedSync(ref, { checked: true, onReset })
+      return <form id="sync-empty" />
+    }
+    render(<NoInput />)
+
+    act(() => document.forms.namedItem('sync-empty')?.reset())
+
+    expect(onReset).not.toHaveBeenCalled()
   })
 
   it('puts nothing back once it unmounts', async () => {

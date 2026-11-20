@@ -11,7 +11,8 @@ const AvatarFallback = React.forwardRef<AvatarFallbackElement, IAvatar.IFallback
   (props: IAvatar.IScoped<IAvatar.IFallbackProps>, forwardedRef) => {
     const { __scopeAvatar, delayMs, ...fallbackProps } = props
     const context = useAvatarContext(FALLBACK_NAME, __scopeAvatar)
-    const [canRender, setCanRender] = React.useState(delayMs === undefined)
+    // A delay of 0 shows the fallback in the first render, where waiting a timer for it would draw a blank frame.
+    const [canRender, setCanRender] = React.useState(delayMs === undefined || delayMs <= 0)
 
     React.useEffect(() => {
       if (delayMs !== undefined) {

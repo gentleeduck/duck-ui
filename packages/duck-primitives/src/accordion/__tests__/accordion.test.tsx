@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { createPortal } from 'react-dom'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import {
   Accordion,
@@ -86,7 +86,7 @@ describe('Accordion', () => {
   })
 
   it('calls onValueChange when a single item opens', () => {
-    const onValueChange = mock(() => {})
+    const onValueChange = vi.fn(() => {})
     const { container } = renderAccordion({ onValueChange })
 
     fireEvent.click(container.querySelector('[data-slot="accordion-trigger"]')!)
@@ -249,7 +249,7 @@ describe('Accordion.Header', () => {
 
 describe('Accordion disabled', () => {
   it('disables every item when the root is disabled', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderAccordion({ type: 'single', disabled: true, onValueChange })
 
     const [first, second] = screen.getAllByRole('button')
@@ -329,7 +329,7 @@ describe('Accordion.Indicator closed', () => {
 
 describe('Accordion onFocusChange', () => {
   it('reports the focused item, once per move, and null once focus leaves the triggers', () => {
-    const onFocusChange = mock()
+    const onFocusChange = vi.fn()
     render(
       <>
         <Accordion type="single" onFocusChange={onFocusChange}>
@@ -380,7 +380,7 @@ describe('Accordion find-in-page', () => {
   })
 
   it('opens the item when the browser finds a match in its content', () => {
-    const onValueChange = mock(() => {})
+    const onValueChange = vi.fn(() => {})
     renderFindable({ onValueChange })
 
     fireEvent(content('Parcels leave within two days.'), new Event('beforematch'))
@@ -400,7 +400,7 @@ describe('Accordion find-in-page', () => {
   })
 
   it('keeps a disabled item out of find-in-page', () => {
-    const onValueChange = mock(() => {})
+    const onValueChange = vi.fn(() => {})
     renderFindable({ onValueChange })
 
     fireEvent(content('Returns are free for thirty days.'), new Event('beforematch'))
@@ -439,8 +439,8 @@ describe('Accordion find-in-page', () => {
 
 describe('Accordion.Item onOpenChange', () => {
   function renderWithSpies(props: Record<string, unknown>) {
-    const one = mock((_open: boolean) => {})
-    const two = mock((_open: boolean) => {})
+    const one = vi.fn((_open: boolean) => {})
+    const two = vi.fn((_open: boolean) => {})
     render(
       <Accordion {...props}>
         <AccordionItem value="one" onOpenChange={one}>
@@ -538,14 +538,14 @@ describe('Accordion dir', () => {
 
 describe('Accordion content animation', () => {
   let animationName = 'none'
-  let styleSpy: ReturnType<typeof spyOn>
-  let rectSpy: ReturnType<typeof spyOn>
+  let styleSpy: ReturnType<typeof vi.spyOn>
+  let rectSpy: ReturnType<typeof vi.spyOn>
   let animations: Pick<CSSAnimation, 'animationName' | 'finished' | 'pending' | 'playState'>[] = []
   let endAnimation = async () => {}
 
   beforeEach(() => {
     animationName = 'none'
-    styleSpy = spyOn(globalThis, 'getComputedStyle').mockImplementation(
+    styleSpy = vi.spyOn(globalThis, 'getComputedStyle').mockImplementation(
       () =>
         ({
           get animationName() {
@@ -553,7 +553,7 @@ describe('Accordion content animation', () => {
           },
         }) as CSSStyleDeclaration,
     )
-    rectSpy = spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 300, 120))
+    rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 300, 120))
     Object.defineProperty(HTMLElement.prototype, 'getAnimations', { configurable: true, value: () => animations })
   })
 
@@ -758,7 +758,7 @@ describe('Accordion keys and the page', () => {
   })
 
   it('runs an onKeyDown given to the root first, and moves no focus once it prevents the default', () => {
-    const onKeyDown = mock((event: React.KeyboardEvent) => event.preventDefault())
+    const onKeyDown = vi.fn((event: React.KeyboardEvent) => event.preventDefault())
     renderAccordion({ type: 'single', onKeyDown })
     const [first] = screen.getAllByRole('button')
     act(() => first.focus())
@@ -771,7 +771,7 @@ describe('Accordion keys and the page', () => {
 
 describe('Accordion focus leaving the triggers', () => {
   it('reports null once focus moves from a trigger to a button in the content', () => {
-    const onFocusChange = mock()
+    const onFocusChange = vi.fn()
     render(
       <Accordion type="single" defaultValue="one" onFocusChange={onFocusChange}>
         <AccordionItem value="one">
@@ -790,7 +790,7 @@ describe('Accordion focus leaving the triggers', () => {
   })
 
   it('reports null once focus moves to a trigger its root does not hold, such as one portalled out', () => {
-    const onFocusChange = mock()
+    const onFocusChange = vi.fn()
     render(
       <Accordion type="single" onFocusChange={onFocusChange}>
         <AccordionItem value="one">
@@ -818,7 +818,7 @@ describe('Accordion.Trigger wiring', () => {
   })
 
   it('disables a trigger given disabled, and keeps its item shut', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(
       <Accordion type="single" onValueChange={onValueChange}>
         <AccordionItem value="one">
@@ -843,7 +843,7 @@ describe('Accordion.Trigger wiring', () => {
   })
 
   it('leaves a form around it unsent when pressed', () => {
-    const onSubmit = mock((event: React.FormEvent) => event.preventDefault())
+    const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault())
     render(
       <form onSubmit={onSubmit}>
         <Accordion type="single">
@@ -860,8 +860,8 @@ describe('Accordion.Trigger wiring', () => {
   })
 
   it('runs an onFocus and an onBlur given to a trigger', () => {
-    const onFocus = mock()
-    const onBlur = mock()
+    const onFocus = vi.fn()
+    const onBlur = vi.fn()
     render(
       <>
         <Accordion type="single">
@@ -961,7 +961,7 @@ describe('Accordion scope', () => {
 
 describe('Accordion find-in-page, again', () => {
   it('opens the item once for each find, with a close between', () => {
-    const onOpenChange = mock((_open: boolean) => {})
+    const onOpenChange = vi.fn((_open: boolean) => {})
     render(
       <Accordion type="single" collapsible>
         <AccordionItem value="shipping" onOpenChange={onOpenChange}>

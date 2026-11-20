@@ -38,19 +38,21 @@ and year views opened by their triggers, an Arabic calendar right to left, a Per
 controlled calendar that reports a page, a pick and Escape, six fixed weeks without the days either side, and an
 invalid selection. The end-to-end suite runs each in Chromium, Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+React Aria and react-day-picker run that library's own cases against this code. Each file's header names its source
+and every case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 116 | `calendar-a11y.test.tsx` 16, `calendar.test.tsx` 100 |
-| End to end | 16 | `calendar.e2e.ts` 16 |
+| Unit | 137 | `calendar-a11y.test.tsx` 16, `calendar.react-aria.test.tsx` 5, `calendar.react-day-picker.test.tsx` 14, `calendar.test.tsx` 102 |
+| End to end | 17 | `calendar.e2e.ts` 17 |
 | registry-ui | 38 | `calendar.libs.test.ts` 2, `calendar.test.tsx` 36 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>132 behaviours, one per test</summary>
+<summary>154 behaviours, one per test</summary>
 
 **Unit, `calendar-a11y.test.tsx`**
 
@@ -73,6 +75,38 @@ Each test was proven by changing the code and watching a test fail.
   - header has aria-live="polite"
   - announcer div has role="status" and aria-live="polite"
 
+**Unit, `calendar.react-aria.test.tsx`**
+
+- React Aria calendar
+  - leaves the selection as it is on Enter over an unavailable day
+  - moves on each repeat of an arrow key held down
+  - takes no focus when its controlled month changes
+  - selects several days in multi mode, and lets a second press take one off
+  - disables the days before fromDate and after toDate, and selects none of them
+
+**Unit, `calendar.react-day-picker.test.tsx`**
+
+- react-day-picker keyboard, from the first day of the month
+  - shows the month before and focuses its last day on ArrowLeft
+  - stays in the month and focuses the day a week on, on ArrowDown
+  - shows the month before on ArrowUp, on the day a week back
+  - turns a month on PageUp and PageDown, keeping the day
+  - turns a year on Shift with PageUp and PageDown, keeping the day
+  - goes to the start of the week on Home and its end on End
+  - goes to Monday on Home and Sunday on End in a week starting on Monday
+- react-day-picker keyboard, from the last day of the month
+  - shows the month after and focuses its first day on ArrowRight
+  - stays in the month on ArrowUp, on the day a week back
+- react-day-picker keyboard, with navigation held to one month
+  - keeps the month and focus on the arrow keys out of it
+- react-day-picker two months
+  - draws a grid for each, and turns both back on a press of the previous button
+- react-day-picker range
+  - takes a first click as its start and a later one as its end, and starts again on a third
+  - takes a click before its start as the new start, the old one becoming its end
+- react-day-picker disabled days
+  - still marks a selected day as selected while it is disabled, and no other disabled day
+
 **Unit, `calendar.test.tsx`**
 
 - Calendar (root)
@@ -83,6 +117,7 @@ Each test was proven by changing the code and watching a test fail.
   - writes the locale's direction on the root, so the grid lays out the way its arrow keys move
   - reads its direction from a DirectionProvider, and moves the arrow keys with it
   - takes the locale direction over the provider
+  - takes a dir given to it over the provider, for the arrow keys as well as the layout
 - CalendarHeader
   - renders month/year text by default (March 2026)
   - has data-slot="calendar-header"
@@ -144,6 +179,7 @@ Each test was proven by changing the code and watching a test fail.
   - has data-slot="calendar-month-view"
   - month buttons have data-slot="calendar-month"
   - draws a grid of rows, three months to a row unless told otherwise
+  - lays out three columns when the count it is given cannot make a row
   - marks the shown month selected and gives it the one tab stop
   - moves focus with the arrow keys, Home and End, and stops at the edges
   - ends a short last row at its last month
@@ -199,6 +235,7 @@ Each test was proven by changing the code and watching a test fail.
   - keeps its selection when read-only
   - starts each week on its locale day, with its ISO week number
   - moves the month a year or a month picked in its views points at
+  - shows only the picker or the days its view names
   - opens the view its trigger names
   - lays a right-to-left calendar out from the right, and takes ArrowLeft to the next day
   - shows a Persian month, and picks its Gregorian day
@@ -241,6 +278,10 @@ Each test was proven by changing the code and watching a test fail.
 - In development under StrictMode, a key pressed before React ran the calendar's mount effects moved the
   tab stop to the next day but left focus on the day before. The replayed cleanup cancelled the frame
   that moves focus.
+- A day focused some other way than the arrow keys or the pointer, such as by a screen reader or by code, took
+  no tab stop, so the next arrow key moved from the day that held it.
+- The days between a range's ends read as not selected to assistive technology, where React Aria and
+  react-day-picker mark the whole range selected.
 
 ## Smaller and faster
 

@@ -20,19 +20,72 @@ focusable `svg` at its end; a scope opened over another, which renders another e
 branch beside a portal that is not one; a scope holding a shadow root; and a scope in an iframe and one in a
 shadow root. The end-to-end suite runs each in Chromium, Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Headless UI run that library's own cases against this code. Each file's header names its source and every case left
+out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 84 | `branches.test.tsx` 5, `focus-scope.radix.test.tsx` 19, `focus-scope.test.tsx` 60 |
-| End to end | 24 | `focus-scope.e2e.ts` 24 |
+| Unit | 91 | `branches.test.tsx` 5, `focus-scope.headless.test.tsx` 7, `focus-scope.radix.test.tsx` 19, `focus-scope.test.tsx` 60 |
+| End to end | 26 | `focus-scope.e2e.ts` 26 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>108 behaviours, one per test</summary>
+<summary>117 behaviours, one per test</summary>
+
+**Unit, `branches.test.tsx`**
+
+- useFocusScopeBranchRegistry
+  - keeps its list when a node is added twice or a stranger is removed
+  - holds the same registry across renders
+- useFocusScopeBranch
+  - registers with the nearest host and leaves it on unmount
+  - passes through a provider without a registry to the host above it
+  - does nothing without a host
+
+**Unit, `focus-scope.headless.test.tsx`**
+
+- Headless UI focus trap
+  - focuses its first element on mount, and takes focus back from outside it
+  - stays on its one element on Tab and on Shift+Tab
+  - moves on Tab to the next element and loops from the last, and back on Shift+Tab
+  - passes over a hidden element on Tab, and loops
+  - passes over a disabled element on Tab, and loops
+  - keeps Tab inside it when a positive tabIndex outside it comes next in the page order
+  - takes a Tab from its own element on to its first stop, and keeps focus there on a Shift+Tab, when a positive tabIndex outside comes next
+
+**Unit, `focus-scope.radix.test.tsx`**
+
+- FocusScope &gt; given a default FocusScope
+  - should focus the next element in the scope on tab
+  - should focus the last element in the scope on shift+tab from the first element in scope
+  - should focus the first element in scope on tab from the last element in scope
+  - should wrap focus on a plain shift+tab keydown from the first element in scope
+  - should leave a tab that belongs to an IME composition to the input method
+  - should leave a tab the IME processed (keyCode 229) to the input method
+- FocusScope &gt; given a FocusScope where the first focusable has a negative tabindex
+  - should skip the element with a negative tabindex on tab
+  - should skip the element with a negative tabindex on shift+tab
+- FocusScope &gt; given a trapped FocusScope with branches
+  - reclaims focus moved into an unregistered outside node
+  - keeps focus when it moves into a registered branch
+- FocusScope &gt; given a FocusScope with internal focus handlers
+  - should properly blur the last element in the scope before cycling back
+- FocusScope &gt; ref stability
+  - keeps a stable composed ref (no infinite render loop)
+- FocusScope &gt; unmount timer
+  - does not read realm globals after the environment has been torn down
+  - still restores focus and honours `preventDefault` after unmount
+- FocusScope &gt; given a FocusScope with hidden elements
+  - should skip elements with display: none when looping backward
+  - should skip elements with visibility: hidden when looping forward
+- FocusScope.Root
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+  - forwards props to the child element when `asChild` is set on a trapped, looping scope
 
 **Unit, `focus-scope.test.tsx`**
 
@@ -115,46 +168,6 @@ Each test was proven by changing the code and watching a test fail.
   - takes focus back from outside it, and from outside its shadow root
   - gives focus back to what had it inside the shadow root on unmount
 
-**Unit, `branches.test.tsx`**
-
-- useFocusScopeBranchRegistry
-  - keeps its list when a node is added twice or a stranger is removed
-  - holds the same registry across renders
-- useFocusScopeBranch
-  - registers with the nearest host and leaves it on unmount
-  - passes through a provider without a registry to the host above it
-  - does nothing without a host
-
-**Unit, `focus-scope.radix.test.tsx`**
-
-- FocusScope &gt; given a default FocusScope
-  - should focus the next element in the scope on tab
-  - should focus the last element in the scope on shift+tab from the first element in scope
-  - should focus the first element in scope on tab from the last element in scope
-  - should wrap focus on a plain shift+tab keydown from the first element in scope
-  - should leave a tab that belongs to an IME composition to the input method
-  - should leave a tab the IME processed (keyCode 229) to the input method
-- FocusScope &gt; given a FocusScope where the first focusable has a negative tabindex
-  - should skip the element with a negative tabindex on tab
-  - should skip the element with a negative tabindex on shift+tab
-- FocusScope &gt; given a trapped FocusScope with branches
-  - reclaims focus moved into an unregistered outside node
-  - keeps focus when it moves into a registered branch
-- FocusScope &gt; given a FocusScope with internal focus handlers
-  - should properly blur the last element in the scope before cycling back
-- FocusScope &gt; ref stability
-  - keeps a stable composed ref (no infinite render loop)
-- FocusScope &gt; unmount timer
-  - does not read realm globals after the environment has been torn down
-  - still restores focus and honours `preventDefault` after unmount
-- FocusScope &gt; given a FocusScope with hidden elements
-  - should skip elements with display: none when looping backward
-  - should skip elements with visibility: hidden when looping forward
-- FocusScope.Root
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-  - forwards props to the child element when `asChild` is set on a trapped, looping scope
-
 **End to end, `focus-scope.e2e.ts`**
 
 - FocusScope
@@ -170,6 +183,8 @@ Each test was proven by changing the code and watching a test fail.
   - takes focus to its own element
 - FocusScope skipping what is not a stop
   - loops past hidden, invisible, inert and disabled elements and those out of the tab order
+  - focuses past the disabled and hidden elements that start it, on mount
+  - keeps Tab inside it when a positive tabIndex outside it comes next in the page order
   - reads a focusable svg at its end as its last stop
 - FocusScope looping past native radios
   - loops from any radio of the group that ends it onto the checked radio of the group that starts it

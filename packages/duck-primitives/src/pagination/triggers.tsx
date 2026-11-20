@@ -8,7 +8,7 @@ function createTrigger(name: string, slot: string, label: string, step: (page: n
     (props: IPagination.IScoped<IPagination.ITriggerProps>, forwardedRef) => {
       const { disabled, ...triggerProps } = props
       const { page, pageCount } = usePaginationContext(name, props.__scopePagination)
-      const target = Math.min(Math.max(step(page, pageCount), 1), pageCount)
+      const toPage = Math.min(Math.max(step(page, pageCount), 1), pageCount)
 
       return (
         <PaginationControl
@@ -16,8 +16,8 @@ function createTrigger(name: string, slot: string, label: string, step: (page: n
           aria-label={label}
           {...triggerProps}
           name={name}
-          target={target}
-          disabled={disabled || target === page}
+          toPage={toPage}
+          disabled={disabled || toPage === page}
           ref={forwardedRef}
         />
       )

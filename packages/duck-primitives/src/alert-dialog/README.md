@@ -40,19 +40,28 @@ The stories cover a dialog confirming a delete, with a button outside it to pres
 an action that prevents its own close while its work runs, then closes; and right to left under a provider. The
 end-to-end suite runs each in Chromium, Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Base UI run that library's own cases against this code. Each file's header names its source and every case left
+out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 47 | `alert-dialog.radix.test.tsx` 18, `alert-dialog.test.tsx` 29 |
+| Unit | 50 | `alert-dialog.base-ui.test.tsx` 3, `alert-dialog.radix.test.tsx` 18, `alert-dialog.test.tsx` 29 |
 | End to end | 6 | `alert-dialog.e2e.ts` 6 |
-| registry-ui | 7 | `alert-dialog.test.tsx` 5, `motion-alert-dialog.test.tsx` 2 |
+| registry-ui | 8 | `alert-dialog.test.tsx` 6, `motion-alert-dialog.test.tsx` 2 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>53 behaviours, one per test</summary>
+<summary>56 behaviours, one per test</summary>
+
+**Unit, `alert-dialog.base-ui.test.tsx`**
+
+- Base UI alert dialog
+  - is an alert dialog named by its title and described by its description
+  - stays open on a press of its overlay
+  - hides the rest of the page from assistive technology while open
 
 **Unit, `alert-dialog.radix.test.tsx`**
 
@@ -171,6 +180,9 @@ Each test was proven by changing the code and watching a test fail.
   before deleting it and focuses that field on open.
 - The overlay is clear when the alert dialog is opened from a dialog's content.
 - The docs drop the claim that `AlertDialogTrigger` has no `asChild`, which every example uses.
+- `AlertDialogContent` with `forceMount` stays in the page while closed. It drew its portal without the prop, so
+  the portal unmounted it and the documented `forceMount` did nothing. Its overlay, kept with it, holds the end
+  of its fade and lets presses through, so it never covers the page once closed.
 
 ## Later
 

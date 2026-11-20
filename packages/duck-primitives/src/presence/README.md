@@ -26,14 +26,28 @@ frame it was created, while its `finished` promise is rejected in all three, and
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 37 | `presence.radix.test.tsx` 8, `presence.test.tsx` 29 |
+| Unit | 39 | `presence.radix.test.tsx` 8, `presence.test.tsx` 31 |
 | End to end | 11 | `presence.e2e.ts` 11 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>48 behaviours, one per test</summary>
+<summary>50 behaviours, one per test</summary>
+
+**Unit, `presence.radix.test.tsx`**
+
+- ref stability
+  - does not loop when the child has a stable ref
+  - does not loop when the child has an unstable callback ref that triggers a render on attach
+  - forwards the node to the child ref
+- mount/unmount behavior
+  - renders the child when present is true
+  - removes the child when present is false and no exit animation
+  - keeps the child mounted when toggling present back to true
+- render function children
+  - always renders the child when using a render function
+  - passes present=true to the render function when present prop is true
 
 **Unit, `presence.test.tsx`**
 
@@ -47,6 +61,8 @@ frame it was created, while its `finished` promise is rejected in all three, and
   - initial present=false does not mount
   - render function always mounts (forceMount behavior)
 - Presence with a CSS exit animation
+  - leaves at once on a close in a DOM with no animations to wait for
+  - reads an empty computed animation name as none, so it waits on no animation of its own
   - stays mounted until the exit animation ends
   - waits for every exit animation to end, not the first
   - ends the exit when its animation is cancelled
@@ -69,20 +85,6 @@ frame it was created, while its `finished` promise is rejected in all three, and
   - attaches the child ref once, however often the child renders with a new one
   - gives the node to a ref object on the child and takes it back on unmount
   - runs the cleanup a child callback ref returns
-
-**Unit, `presence.radix.test.tsx`**
-
-- ref stability
-  - does not loop when the child has a stable ref
-  - does not loop when the child has an unstable callback ref that triggers a render on attach
-  - forwards the node to the child ref
-- mount/unmount behavior
-  - renders the child when present is true
-  - removes the child when present is false and no exit animation
-  - keeps the child mounted when toggling present back to true
-- render function children
-  - always renders the child when using a render function
-  - passes present=true to the render function when present prop is true
 
 **End to end, `presence.e2e.ts`**
 

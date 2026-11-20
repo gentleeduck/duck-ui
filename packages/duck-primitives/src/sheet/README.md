@@ -40,24 +40,49 @@ does; a non-modal sheet that leaves the page usable; and a sheet at its end edge
 and right to left. The end-to-end suite runs each in Chromium, Firefox and WebKit. The rest is Dialog's, which
 its own stories and tests cover, and the unit test checks that every part is the Dialog part itself.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+React Aria and vaul run that library's own cases against this code. Each file's header names its source and every
+case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 1 | `sheet.test.tsx` 1 |
+| Unit | 13 | `sheet.react-aria.test.tsx` 3, `sheet.test.tsx` 1, `sheet.vaul.test.tsx` 9 |
 | End to end | 6 | `sheet.e2e.ts` 6 |
-| registry-ui | 24 | `sheet.test.tsx` 24 |
+| registry-ui | 25 | `sheet.test.tsx` 25 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>7 behaviours, one per test</summary>
+<summary>19 behaviours, one per test</summary>
+
+**Unit, `sheet.react-aria.test.tsx`**
+
+- React Aria sheet
+  - closes on Escape and gives focus back to its trigger
+  - closes on a press outside it
+  - closes only the topmost of two sheets on Escape
 
 **Unit, `sheet.test.tsx`**
 
 - Sheet
   - is Dialog under both its short and its sheet names
+
+**Unit, `sheet.vaul.test.tsx`**
+
+- vaul base
+  - opens from its trigger
+  - closes on a press outside it
+  - closes from its close button
+  - closes when its owner sets it closed
+  - starts open with defaultOpen
+- vaul controlled
+  - stays open on a press outside it when given open alone
+  - closes on a press outside it when given open and onOpenChange
+- vaul nested
+  - opens and closes a sheet inside another, leaving the outer one open
+- vaul with a redirect
+  - gives the page back its scroll and its pointer once an open sheet unmounts with the page it was on
 
 **End to end, `sheet.e2e.ts`**
 
@@ -127,6 +152,9 @@ portalled out of the content takes focus and scrolls under its lock. The rest st
   `width: --sidebar-width` under Tailwind 4, which the browser drops. Eight chart and block classes and one
   chart docs snippet had the same Tailwind 3 syntax and use `(--name)` now.
 - The sidebar docs drop `--sidebar-width-mobile`, which nothing read.
+- `SheetContent` with `forceMount` stays in the page while closed. It drew its portal without the prop, so the
+  portal unmounted it and the documented `forceMount` did nothing. Its overlay, kept with it, holds the end of
+  its fade and lets presses through, so it never covers the page once closed.
 
 ## Later
 

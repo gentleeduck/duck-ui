@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it, mock, spyOn } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { freshDom, wait } from '../../__tests__/dom'
 import { DirectionProvider } from '../../direction'
 import { createPopperScope, Popper, PopperAnchor, PopperArrow, PopperContent } from '../index'
@@ -563,7 +563,7 @@ describe('Popper positioning', () => {
   })
 
   it('reports once it is placed, and holds its animation until then', async () => {
-    const onPlaced = mock()
+    const onPlaced = vi.fn()
     const { content } = mount({ onPlaced })
     const before = [onPlaced.mock.calls.length, content.style.animation]
 
@@ -690,8 +690,8 @@ describe('Popper positioning', () => {
     })
 
     it('stops watching sizes, scrolls and resizes once it closes', async () => {
-      const added = spyOn(window, 'addEventListener')
-      const removed = spyOn(window, 'removeEventListener')
+      const added = vi.spyOn(window, 'addEventListener')
+      const removed = vi.spyOn(window, 'removeEventListener')
       try {
         const { wrapper, unmount } = mount({})
         await waitFor(() => expect(wrapper.style.transform).toBe('translate(85px, 120px)'))

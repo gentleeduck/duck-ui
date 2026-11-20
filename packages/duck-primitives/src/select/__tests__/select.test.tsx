@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it, mock } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import * as React from 'react'
 import { renderToString } from 'react-dom/server'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { freshDom, pageChangesOnClose, wait } from '../../__tests__/dom'
 import {
   Select,
@@ -124,21 +124,21 @@ describe('Select', () => {
   })
 
   it('calls onOpenChange on trigger keyboard events', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderSelect({ onOpenChange: handler })
     fireEvent.keyDown(container.querySelector('[data-slot="select-trigger"]')!, { key: 'ArrowDown' })
     expect(handler).toHaveBeenCalledWith(true)
   })
 
   it('opens on Enter key', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderSelect({ onOpenChange: handler })
     fireEvent.keyDown(container.querySelector('[data-slot="select-trigger"]')!, { key: 'Enter' })
     expect(handler).toHaveBeenCalledWith(true)
   })
 
   it('opens on Space key', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderSelect({ onOpenChange: handler })
     fireEvent.keyDown(container.querySelector('[data-slot="select-trigger"]')!, { key: ' ' })
     expect(handler).toHaveBeenCalledWith(true)
@@ -256,6 +256,24 @@ describe('Select', () => {
     const value = container.querySelector('[data-slot="select-value"]')
     expect(value?.tagName).toBe('B')
     expect(value?.textContent).toBe('Green apple')
+  })
+
+  it('refuses asChild with a render function, which gives it no element to slot onto', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    try {
+      expect(() =>
+        render(
+          <Select value="apple">
+            <SelectTrigger>
+              <SelectValue asChild>{(picks) => picks.join(', ')}</SelectValue>
+            </SelectTrigger>
+          </Select>,
+        ),
+      ).toThrow('failed to slot onto its `Slottable`')
+    } finally {
+      error.mockRestore()
+    }
   })
 })
 
@@ -387,7 +405,7 @@ describe('Select with the pointer', () => {
   })
 
   it('keeps the item under the pointer when the opening press is released without moving', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderFruitSelect({ onValueChange })
     fireEvent.pointerDown(screen.getByTestId('trigger'), { ...mouse, clientX: 10, clientY: 10 })
     fireEvent.pointerMove(option('Banana'), mouse)
@@ -399,7 +417,7 @@ describe('Select with the pointer', () => {
   })
 
   it('selects the item a press is dragged onto and released over', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderFruitSelect({ onValueChange })
     fireEvent.pointerDown(screen.getByTestId('trigger'), { ...mouse, clientX: 10, clientY: 10 })
 
@@ -420,7 +438,7 @@ describe('Select with the pointer', () => {
   })
 
   it('selects an item on a tap, where a mouse selects on release', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderFruitSelect({ defaultOpen: true, onValueChange })
 
     fireEvent.pointerDown(option('Cherry'), { pointerType: 'touch' })
@@ -476,7 +494,7 @@ describe('Select with the pointer', () => {
   }
 
   it('takes the click after a mouse press as part of that press, so the next keyboard open selects on release', async () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderFruitSelect({ onValueChange })
     const trigger = screen.getByTestId('trigger')
     const at = { ...mouse, clientX: 10, clientY: 10 }
@@ -494,7 +512,7 @@ describe('Select with the pointer', () => {
   })
 
   it('leaves selecting to the release when a mouse clicks an item', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderFruitSelect({ defaultOpen: true, onValueChange })
 
     fireEvent.pointerDown(option('Cherry'), mouse)
@@ -550,7 +568,7 @@ describe('Select with the pointer', () => {
 
 describe('Select keyboard on the trigger', () => {
   it('picks the next item after the selected one that a typed letter starts', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(
       <Select defaultValue="apple" onValueChange={onValueChange}>
         <SelectTrigger data-testid="trigger">
@@ -576,7 +594,7 @@ describe('Select keyboard on the trigger', () => {
   })
 
   it('steps on from its last match when the owner keeps the value', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(
       <Select value="" onValueChange={onValueChange}>
         <SelectTrigger data-testid="trigger">
@@ -603,7 +621,7 @@ describe('Select keyboard on the trigger', () => {
   })
 
   it('takes a space typed as part of a search as part of it, not as a key that opens', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderFruitSelect({ onValueChange })
     const trigger = screen.getByTestId('trigger')
 
@@ -660,7 +678,7 @@ describe('Select keyboard in the list', () => {
   })
 
   it('selects with Space and keeps the page from scrolling', async () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderFruitSelect({ defaultOpen: true, onValueChange })
     await wait(0)
 
@@ -670,7 +688,7 @@ describe('Select keyboard in the list', () => {
   })
 
   it('takes a space typed as part of a search as part of it, not as a select', async () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderFruitSelect({ defaultOpen: true, onValueChange })
     await wait(0)
 
@@ -751,7 +769,7 @@ describe('Select items whose element never takes the ref', () => {
   })
 
   it('are passed over by a search on the closed trigger when they show no text it can read', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderPlainItems({ onValueChange })
 
     fireEvent.keyDown(screen.getByTestId('trigger'), { key: 'l' })
@@ -1331,7 +1349,7 @@ describe('Select in another root', () => {
 
   it('keeps the item under the pointer when the opening press is released without moving inside an iframe', () => {
     const { container, remove } = inFrame()
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { trigger, listbox, item } = renderInto(container, { onValueChange })
     fireEvent.pointerDown(trigger, { ...mouse, clientX: 10, clientY: 10 })
     fireEvent.pointerMove(item('Banana'), mouse)
@@ -1344,7 +1362,7 @@ describe('Select in another root', () => {
 
   it('selects the item a press is dragged onto and released over inside an iframe', () => {
     const { container, remove } = inFrame()
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { trigger, item } = renderInto(container, { onValueChange })
     fireEvent.pointerDown(trigger, { ...mouse, clientX: 10, clientY: 10 })
 
@@ -1419,6 +1437,22 @@ describe('Select in another root', () => {
 
     expect(wrapper.style.height).toBe('180px')
     remove()
+  })
+
+  it('lines up and grows by the window it runs in when its document has none of its own', async () => {
+    const other = document.implementation.createHTMLDocument('detached')
+    const container = other.body.appendChild(other.createElement('div'))
+    const { listbox } = renderInto(container, { defaultValue: 'banana', defaultOpen: true })
+    await act(() => wait(50))
+    const wrapper = listbox()!.parentElement!
+    const viewport = container.querySelector<HTMLElement>('[data-slot="select-viewport"]')!
+    const placed = wrapper.style.minWidth
+    Object.assign(wrapper.style, { height: '100px', minHeight: '0px' })
+
+    viewport.scrollTop = 5000
+    act(() => void viewport.dispatchEvent(new Event('scroll')))
+
+    expect([placed !== '', wrapper.style.height]).toEqual([true, `${window.innerHeight - 20}px`])
   })
 })
 
@@ -1676,7 +1710,7 @@ describe('Select with items', () => {
   }
 
   it('renders none of its items while closed', () => {
-    const onShow = mock()
+    const onShow = vi.fn()
 
     renderItemsSelect({ defaultValue: '1' }, { onShow })
 
@@ -1714,7 +1748,7 @@ describe('Select with items', () => {
   })
 
   it('picks the next label a letter typed on the closed trigger starts, passing over a disabled item', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderItemsSelect({ defaultValue: '2', onValueChange })
 
     fireEvent.keyDown(screen.getByTestId('trigger'), { key: 'b' })
@@ -1723,7 +1757,7 @@ describe('Select with items', () => {
   })
 
   it('picks the first label a letter typed on the closed trigger starts while nothing is picked', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderItemsSelect({ onValueChange })
 
     fireEvent.keyDown(screen.getByTestId('trigger'), { key: 'a' })
@@ -1791,7 +1825,7 @@ describe('Select with multiple', () => {
   const shown = () => screen.getByTestId('value').textContent
 
   it('adds a picked item and stays open, and a second pick takes it out', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderFruitSelect({ multiple: true, defaultOpen: true, onValueChange })
 
     fireEvent.click(option('Cherry'))
@@ -1804,8 +1838,43 @@ describe('Select with multiple', () => {
     ])
   })
 
+  it('adds the first pick of a select made multiple after it mounted with nothing picked', () => {
+    const onValueChange = vi.fn()
+    const items = (
+      <SelectPortal>
+        <SelectContent>
+          <SelectViewport>
+            <SelectItem value="apple">
+              <SelectItemText>Apple</SelectItemText>
+            </SelectItem>
+          </SelectViewport>
+        </SelectContent>
+      </SelectPortal>
+    )
+    const { rerender } = render(
+      <Select defaultOpen>
+        <SelectTrigger>
+          <SelectValue placeholder="Choose" />
+        </SelectTrigger>
+        {items}
+      </Select>,
+    )
+    rerender(
+      <Select multiple defaultOpen onValueChange={onValueChange}>
+        <SelectTrigger>
+          <SelectValue placeholder="Choose" />
+        </SelectTrigger>
+        {items}
+      </Select>,
+    )
+
+    fireEvent.click(option('Apple'))
+
+    expect(onValueChange.mock.calls).toEqual([[['apple']]])
+  })
+
   it('picks the item a press is dragged onto and released over, and stays open', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderFruitSelect({ multiple: true, onValueChange })
     fireEvent.pointerDown(screen.getByTestId('trigger'), { ...mouse, clientX: 10, clientY: 10 })
 
@@ -1884,7 +1953,7 @@ describe('Select with multiple', () => {
   })
 
   it('toggles the focused item with Enter and Space and stays open', async () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderFruitSelect({ multiple: true, defaultOpen: true, onValueChange })
     await wait(0)
 
@@ -1899,7 +1968,7 @@ describe('Select with multiple', () => {
   })
 
   it('picks nothing when a letter is typed on its closed trigger', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderFruitSelect({ multiple: true, onValueChange })
 
     fireEvent.keyDown(screen.getByTestId('trigger'), { key: 'c' })
@@ -1920,9 +1989,9 @@ describe('Select with multiple', () => {
   })
 
   it('hands a function child its picks, and a single select its one value as a list', () => {
-    const many = mock((picked: string[]) => `${picked.length} picked: ${picked.join('+')}`)
-    const one = mock((picked: string[]) => picked.join('+'))
-    const none = mock(() => 'never')
+    const many = vi.fn((picked: string[]) => `${picked.length} picked: ${picked.join('+')}`)
+    const one = vi.fn((picked: string[]) => picked.join('+'))
+    const none = vi.fn(() => 'never')
 
     renderMultiple({ multiple: true, defaultValue: ['cherry', 'apple'] }, { children: many })
     const first = shown()
@@ -1958,7 +2027,7 @@ describe('Select with multiple', () => {
   })
 
   it('takes the picks its native select is given, as autofill gives them', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { container } = renderMultiple({ multiple: true, onValueChange }, { inForm: true })
     const select = container.querySelector('select')!
 
@@ -1969,8 +2038,8 @@ describe('Select with multiple', () => {
   })
 
   it('tells the form about each pick once, and calls onValueChange once for it', () => {
-    const onValueChange = mock()
-    const onChange = mock()
+    const onValueChange = vi.fn()
+    const onChange = vi.fn()
     const { container } = renderMultiple(
       { multiple: true, name: 'fruit', defaultOpen: true, onValueChange },
       { inForm: true },
@@ -1984,7 +2053,7 @@ describe('Select with multiple', () => {
   })
 
   it('calls onValueChange once for each pick when its parent holds the value', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     function Owner() {
       const [value, setValue] = React.useState<string[]>([])
       return (
@@ -2033,7 +2102,7 @@ describe('Select with multiple', () => {
       </form>
     )
     const { container, rerender } = render(page())
-    const onChange = mock()
+    const onChange = vi.fn()
     container.querySelector('select')?.addEventListener('change', onChange)
 
     rerender(page())
@@ -2124,8 +2193,8 @@ describe('Select and its native select in a form', () => {
   })
 
   it("hands an autofilled value to the select as well as to the native select's own onChange", () => {
-    const onChange = mock()
-    const onValueChange = mock()
+    const onChange = vi.fn()
+    const onValueChange = vi.fn()
     const { container } = render(
       <form>
         <SelectProvider name="fruit" items={PICKS} defaultValue="apple" onValueChange={onValueChange}>

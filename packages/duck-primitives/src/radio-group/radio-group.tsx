@@ -158,6 +158,7 @@ const RadioGroup = React.forwardRef<RadioGroupElement, IRadioGroup.IProps>(
             role="radiogroup"
             data-slot="radio-group"
             aria-required={required}
+            aria-disabled={disabled || undefined}
             aria-readonly={readOnly || undefined}
             aria-orientation={orientation}
             data-disabled={disabled ? '' : undefined}

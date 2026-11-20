@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it, mock } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { freshDom, wait } from '../../__tests__/dom'
 import { FocusScope } from '../focus-scope'
 
@@ -47,7 +47,7 @@ describe('FocusScope', () => {
 
 describe('FocusScope onKeyDown', () => {
   it('hands each key to its own onKeyDown', () => {
-    const onKeyDown = mock((event: React.KeyboardEvent) => event.key)
+    const onKeyDown = vi.fn((event: React.KeyboardEvent) => event.key)
     render(
       <FocusScope loop onKeyDown={onKeyDown}>
         <button type="button">Only</button>
@@ -175,7 +175,7 @@ describe('FocusScope among other trapped scopes', () => {
   })
 
   it('leaves focus going outside both to the scope opened inside it, never taking it to its own element', () => {
-    const outerFocus = mock()
+    const outerFocus = vi.fn()
     function Nested({ inner }: { inner: boolean }) {
       return (
         <>
@@ -272,7 +272,7 @@ describe('FocusScope among other trapped scopes', () => {
 
 describe('FocusScope rendering another element', () => {
   it('neither gives focus back nor reports an unmount until it unmounts, then gives it to what had it first', async () => {
-    const onUnmountAutoFocus = mock()
+    const onUnmountAutoFocus = vi.fn()
     function Opened({ open, section }: { open: boolean; section: boolean }) {
       const inside = <button type="button">Inside</button>
       return (
@@ -383,7 +383,7 @@ describe('FocusScope focusing an input', () => {
 
 describe('FocusScope where the browser has checkVisibility', () => {
   // jsdom has no checkVisibility, so this one reads a marker the CSS fallback cannot see.
-  const checkVisibility = mock(function (this: Element) {
+  const checkVisibility = vi.fn(function (this: Element) {
     return !this.hasAttribute('data-invisible')
   })
 
@@ -633,7 +633,7 @@ describe('FocusScope on mount', () => {
   })
 
   it('leaves focus where it is when an element inside already has it', () => {
-    const onMountAutoFocus = mock()
+    const onMountAutoFocus = vi.fn()
     render(
       <FocusScope onMountAutoFocus={onMountAutoFocus}>
         <button type="button">First</button>

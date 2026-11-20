@@ -1,6 +1,6 @@
-import { describe, expect, it, mock, spyOn } from 'bun:test'
 import { fireEvent, render } from '@testing-library/react'
 import * as React from 'react'
+import { describe, expect, it, vi } from 'vitest'
 import { Toggle } from '../toggle'
 
 describe('Toggle', () => {
@@ -26,7 +26,7 @@ describe('Toggle', () => {
   })
 
   it('names itself when it switches from uncontrolled to controlled', () => {
-    const warn = spyOn(console, 'warn').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const { rerender } = render(<Toggle>Bold</Toggle>)
     rerender(<Toggle pressed>Bold</Toggle>)
     const starts = warn.mock.calls.map(([message]) => String(message).split('.')[0])
@@ -61,7 +61,7 @@ describe('Toggle', () => {
   })
 
   it('calls onPressedChange on toggle', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = render(<Toggle onPressedChange={handler}>Bold</Toggle>)
     fireEvent.click(container.querySelector('button')!)
     expect(handler).toHaveBeenCalledWith(true)
@@ -70,7 +70,7 @@ describe('Toggle', () => {
   })
 
   it('does not toggle when disabled', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = render(
       <Toggle disabled onPressedChange={handler}>
         Bold
@@ -85,7 +85,7 @@ describe('Toggle', () => {
   })
 
   it('does not toggle when disabled and rendered as an element a click still reaches', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = render(
       <Toggle asChild disabled onPressedChange={handler}>
         <a href="#bold">Bold</a>

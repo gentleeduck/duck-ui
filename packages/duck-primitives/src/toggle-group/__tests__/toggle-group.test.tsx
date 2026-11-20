@@ -1,6 +1,6 @@
-import { describe, expect, it, mock } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { describe, expect, it, vi } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { DirectionProvider } from '../../direction'
 import { createToggleGroupScope, ToggleGroup, ToggleGroupItem } from '../index'
@@ -58,7 +58,7 @@ describe('ToggleGroup (single)', () => {
   })
 
   it('calls onValueChange with selected value', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = render(
       <ToggleGroup type="single" onValueChange={handler}>
         <ToggleGroupItem value="a">A</ToggleGroupItem>
@@ -156,7 +156,7 @@ describe('ToggleGroup (multiple)', () => {
   })
 
   it('calls onValueChange with array of values', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = render(
       <ToggleGroup type="multiple" onValueChange={handler}>
         <ToggleGroupItem value="a">A</ToggleGroupItem>
@@ -171,7 +171,7 @@ describe('ToggleGroup (multiple)', () => {
   })
 
   it('toggles item off when clicking again', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = render(
       <ToggleGroup type="multiple" onValueChange={handler}>
         <ToggleGroupItem value="a">A</ToggleGroupItem>
@@ -353,7 +353,7 @@ describe('ToggleGroup single values', () => {
 
 describe('ToggleGroup deselectable', () => {
   it('keeps the item of a single group on when it is clicked again', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(
       <ToggleGroup type="single" defaultValue="a" deselectable={false} onValueChange={onValueChange}>
         <ToggleGroupItem value="a">A</ToggleGroupItem>
@@ -449,7 +449,7 @@ describe('ToggleGroup wiring', () => {
   })
 
   it('follows a controlled multiple value, and reports a press its owner has not taken', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(
       <ToggleGroup type="multiple" value={['a']} onValueChange={onValueChange}>
         <ToggleGroupItem value="a">A</ToggleGroupItem>

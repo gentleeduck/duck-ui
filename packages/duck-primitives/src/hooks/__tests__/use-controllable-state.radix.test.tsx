@@ -1,10 +1,10 @@
 // From Radix UI primitives, packages/react/use-controllable-state/src/use-controllable-state.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import { afterAll, afterEach, describe, expect, it } from 'bun:test'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import * as React from 'react'
-import { radixEnvironment, vi } from '../../__tests__/radix/harness'
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
+import { radixEnvironment } from '../../__tests__/radix/harness'
 import { useControllableState } from '../use-controllable-state'
 
 radixEnvironment()

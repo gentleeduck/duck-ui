@@ -40,8 +40,10 @@ export namespace IPagination {
   export interface IContentProps extends PrimitiveUlProps {}
   export interface IItemProps extends PrimitiveLiProps {}
 
-  /** A page or trigger renders a button, or a link under `getPageHref`, so it takes the props both share. */
-  export interface IControlProps extends React.HTMLAttributes<HTMLElement> {
+  /** A page or trigger renders a button, or a link under `getPageHref`, so it takes the props both share and a link's own. */
+  export interface IControlProps
+    extends React.HTMLAttributes<HTMLElement>,
+      Pick<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'target' | 'rel' | 'download' | 'referrerPolicy'> {
     asChild?: boolean
     disabled?: boolean
   }
@@ -54,7 +56,8 @@ export namespace IPagination {
 
   export interface IControlImplProps extends IControlProps {
     name: string
-    target: number
+    toPage: number
+    disabled: boolean
   }
   export interface IEllipsisProps extends PrimitiveSpanProps {}
 

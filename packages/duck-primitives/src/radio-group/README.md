@@ -34,19 +34,67 @@ left, looping or not, disabled whole or one radio at a time, and read-only; a va
 reset; and a group composed by hand from its item parts, submitting with a form outside it. The end-to-end suite
 runs each in Chromium, Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Ark UI, Base UI, Headless UI and React Aria run that library's own cases against this code. Each file's header
+names its source and every case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 136 | `radio-group.radix.test.tsx` 49, `radio-group.test.tsx` 87 |
+| Unit | 169 | `radio-group.ark.test.tsx` 2, `radio-group.base-ui.test.tsx` 9, `radio-group.headless.test.tsx` 15, `radio-group.radix.test.tsx` 49, `radio-group.react-aria.test.tsx` 4, `radio-group.test.tsx` 90 |
 | End to end | 10 | `radio-group.e2e.ts` 10 |
 | registry-ui | 12 | `radio-group.test.tsx` 12 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>146 behaviours, one per test</summary>
+<summary>179 behaviours, one per test</summary>
+
+**Unit, `radio-group.ark.test.tsx`**
+
+- Ark UI radio group
+  - has no axe violations
+  - tells onValueChange the value picked, and nothing for a disabled radio
+
+**Unit, `radio-group.base-ui.test.tsx`**
+
+- Base UI radio group keys
+  - checks a radio on Space, and not on Enter
+- Base UI radio group as a whole
+  - marks itself disabled for assistive technology, and only while disabled
+  - takes no tab stop while disabled
+  - lets Tab reach the checked radio once the focused one is removed
+- Base UI radio group with a native label
+  - checks the radio a label wraps, on a click of the label
+  - checks the radio a label names by its id, on a click of the label
+- Base UI radio group clicks
+  - hands each click to the elements around it once
+- Base UI radio group in a form
+  - submits nothing with no radio checked
+  - leaves a disabled checked radio out of what it submits, and puts it back once enabled
+
+**Unit, `radio-group.headless.test.tsx`**
+
+- Headless UI radio group rendering
+  - renders without any item, and without crashing
+  - keeps the order of its items after one unmounts and mounts again
+  - keeps the order of its items after one is taken out and put back while it has focus
+- Headless UI radio group Tab and Shift+Tab
+  - tabs to the first radio with none checked, and checks nothing by focusing it
+  - tabs to the checked radio, and leaves it as it was
+  - tabs out of the group with none checked
+  - tabs out of the group from the checked radio
+  - reaches the first radio on Shift+Tab with none checked, and tabs back out of the group
+  - reaches the checked radio on Shift+Tab, and tabs back out of the group
+- Headless UI radio group keys
+  - checks the radio Space is pressed on, once however often it is pressed
+  - checks the radio before on ArrowLeft and ArrowUp, and the one after on ArrowRight and ArrowDown
+- Headless UI radio group with the mouse
+  - checks the radio clicked, and does nothing on a click on the checked one
+- Headless UI radio group in a form
+  - submits the value it holds
+  - submits nothing while disabled
+  - hands its hidden inputs the form it names
 
 **Unit, `radio-group.radix.test.tsx`**
 
@@ -119,6 +167,14 @@ Each test was proven by changing the code and watching a test fail.
   - spreads props it does not consume onto the element it renders
   - forwards props to the child element when `asChild` is set
 
+**Unit, `radio-group.react-aria.test.tsx`**
+
+- React Aria radio group
+  - moves on each repeat of an arrow key held down
+  - passes over an element in the group that is not a radio on the arrow keys
+  - fires onFocus once for clicks in turn on one radio, and onBlur as focus moves to another
+  - takes an aria-describedby given to a radio
+
 **Unit, `radio-group.test.tsx`**
 
 - RadioGroup
@@ -131,6 +187,7 @@ Each test was proven by changing the code and watching a test fail.
   - calls onValueChange on selection
   - items have data-state on/off
   - disabled group disables all items
+  - marks the indicator of a checked radio that is disabled
   - forwards ref
   - only one item can be checked at a time
   - clicking same item does not uncheck it
@@ -172,6 +229,8 @@ Each test was proven by changing the code and watching a test fail.
   - draws the hidden inputs invisible and out of the flow
   - keeps the pick it mounted with as the one its inputs reset to
   - runs an onFocus given to a hidden input before handing the focus on
+  - keeps the focus on a hidden input in a group whose root drops its ref
+  - takes a form reset through a hidden input slotted onto a component that drops its ref
   - restores its pick on reset when it renders into another document, such as an iframe
   - restores the inputs on reset without telling the form, as native radios do
 - RadioGroup reset by its form
@@ -252,6 +311,8 @@ Each test was proven by changing the code and watching a test fail.
 - `form` ties the hidden inputs to a form outside the group.
 - `RadioGroup.ItemProvider`, `RadioGroup.ItemTrigger` and `RadioGroup.ItemBubbleInput` compose an item by
   hand, and `value` takes `null` for no selection.
+- A disabled group carries `aria-disabled`, as Base UI's does, so assistive technology hears the whole group is
+  disabled on entering it.
 
 ## Fixed
 

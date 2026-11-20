@@ -1,6 +1,6 @@
-import { afterAll, beforeAll, describe, expect, it, mock } from 'bun:test'
 import { act, createEvent, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { freshDom, wait } from '../../__tests__/dom'
 import { DirectionProvider } from '../../direction'
 import {
@@ -84,7 +84,7 @@ describe('RadioGroup', () => {
   })
 
   it('calls onValueChange on selection', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderRadioGroup({ onValueChange: handler })
     fireEvent.click(container.querySelectorAll('[role="radio"]')[0]!)
     expect(handler).toHaveBeenCalledWith('a')
@@ -103,6 +103,18 @@ describe('RadioGroup', () => {
     for (const radio of radios) {
       expect(radio.getAttribute('data-disabled')).toBe('')
     }
+  })
+
+  it('marks the indicator of a checked radio that is disabled', () => {
+    const { container } = render(
+      <RadioGroup defaultValue="a" disabled>
+        <RadioGroupItem value="a">
+          <RadioGroupIndicator />
+        </RadioGroupItem>
+      </RadioGroup>,
+    )
+
+    expect(container.querySelector('[data-slot="radio-group-indicator"]')?.getAttribute('data-disabled')).toBe('')
   })
 
   it('forwards ref', () => {
@@ -423,7 +435,7 @@ describe('RadioGroup cleared to null', () => {
   })
 
   it('hands onValueChange null when a form reset takes it back to no pick', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(
       <form>
         <RadioGroup name="pet" onValueChange={onValueChange}>
@@ -456,7 +468,7 @@ describe('RadioGroup in a form', () => {
   const checkedInput = () => document.querySelector<HTMLInputElement>('input[name="pet"]:checked')?.value ?? null
 
   it('tells the form once when a radio is picked', () => {
-    const onChange = mock()
+    const onChange = vi.fn()
     renderPetForm(onChange)
 
     act(() => fireEvent.click(screen.getByText('Dog')))
@@ -466,7 +478,7 @@ describe('RadioGroup in a form', () => {
   })
 
   it('fires no click when it mounts with a radio checked', () => {
-    const onClick = mock()
+    const onClick = vi.fn()
 
     render(
       <form ref={(form) => form?.addEventListener('click', onClick)}>
@@ -480,7 +492,7 @@ describe('RadioGroup in a form', () => {
   })
 
   it('keeps the hidden inputs out of the tab order and the pointer path', () => {
-    renderPetForm(mock())
+    renderPetForm(vi.fn())
     const input = document.querySelector<HTMLInputElement>('input[value="cat"]')!
 
     expect(input.tabIndex).toBe(-1)
@@ -488,7 +500,7 @@ describe('RadioGroup in a form', () => {
   })
 
   it('hands focus given to a hidden input, as by a form refusing a submit, to the radio it stands for', () => {
-    renderPetForm(mock())
+    renderPetForm(vi.fn())
 
     act(() => document.querySelector<HTMLInputElement>('input[value="dog"]')?.focus())
 
@@ -536,14 +548,14 @@ describe('RadioGroup in a form', () => {
   })
 
   it('draws the hidden inputs invisible and out of the flow', () => {
-    renderPetForm(mock())
+    renderPetForm(vi.fn())
     const input = document.querySelector<HTMLInputElement>('input[value="cat"]')!
 
     expect([input.style.position, input.style.opacity]).toEqual(['absolute', '0'])
   })
 
   it('keeps the pick it mounted with as the one its inputs reset to', () => {
-    renderPetForm(mock())
+    renderPetForm(vi.fn())
 
     act(() => fireEvent.click(screen.getByText('Dog')))
 
@@ -553,7 +565,7 @@ describe('RadioGroup in a form', () => {
   })
 
   it('runs an onFocus given to a hidden input before handing the focus on', () => {
-    const onFocus = mock()
+    const onFocus = vi.fn()
     render(
       <RadioGroup name="pet">
         <RadioGroupItemProvider value="cat">
@@ -566,6 +578,44 @@ describe('RadioGroup in a form', () => {
     act(() => document.querySelector<HTMLInputElement>('input[value="cat"]')?.focus())
 
     expect([onFocus.mock.calls.length, document.activeElement?.textContent]).toEqual([1, 'Cat'])
+  })
+
+  it('keeps the focus on a hidden input in a group whose root drops its ref', () => {
+    function NoRef({ ref: _ref, ...props }: React.ComponentProps<'div'>) {
+      return <div {...props} />
+    }
+    render(
+      <RadioGroup name="pet" asChild>
+        <NoRef>
+          <RadioGroupItem value="cat">Cat</RadioGroupItem>
+        </NoRef>
+      </RadioGroup>,
+    )
+    const input = document.querySelector<HTMLInputElement>('input[value="cat"]')!
+
+    act(() => input.focus())
+
+    expect(document.activeElement).toBe(input)
+  })
+
+  it('takes a form reset through a hidden input slotted onto a component that drops its ref', () => {
+    function NoRef({ ref: _ref, ...props }: React.ComponentProps<'input'>) {
+      return <input {...props} />
+    }
+    render(
+      <form id="pets-unreached">
+        <RadioGroup name="pet" defaultValue="cat">
+          <RadioGroupItemProvider value="cat">
+            <RadioGroupItemTrigger>Cat</RadioGroupItemTrigger>
+            <RadioGroupItemBubbleInput asChild>
+              <NoRef />
+            </RadioGroupItemBubbleInput>
+          </RadioGroupItemProvider>
+        </RadioGroup>
+      </form>,
+    )
+
+    expect(() => act(() => document.forms.namedItem('pets-unreached')?.reset())).not.toThrow()
   })
 
   it('restores its pick on reset when it renders into another document, such as an iframe', () => {
@@ -594,7 +644,7 @@ describe('RadioGroup in a form', () => {
   })
 
   it('restores the inputs on reset without telling the form, as native radios do', () => {
-    const onChange = mock()
+    const onChange = vi.fn()
     renderPetForm(onChange)
     act(() => fireEvent.click(screen.getByText('Dog')))
     onChange.mockClear()
@@ -736,7 +786,7 @@ describe('RadioGroup after a reset', () => {
   }
 
   it('tells the form about the next change once a reset restored a pick', () => {
-    const onChange = mock()
+    const onChange = vi.fn()
     render(<ControlledPetForm onChange={onChange} />)
     act(() => fireEvent.click(screen.getByText('Dog')))
     act(() => fireEvent.click(screen.getByText('Reset')))
@@ -748,7 +798,7 @@ describe('RadioGroup after a reset', () => {
   })
 
   it('tells the form about the next change after a second reset', () => {
-    const onChange = mock()
+    const onChange = vi.fn()
     render(<ControlledPetForm onChange={onChange} />)
     act(() => fireEvent.click(screen.getByText('Choose dog')))
     act(() => fireEvent.click(screen.getByText('Reset')))
@@ -761,7 +811,7 @@ describe('RadioGroup after a reset', () => {
   })
 
   it('tells the form about the next change after a reset with nothing to restore', () => {
-    const onChange = mock()
+    const onChange = vi.fn()
     render(<ControlledPetForm onChange={onChange} />)
     act(() => fireEvent.click(screen.getByText('Reset')))
 
@@ -976,7 +1026,7 @@ describe('RadioGroup arrow keys', () => {
 
 describe('RadioGroup picking the checked radio', () => {
   it('leaves the next change audible when its click stopped propagating', () => {
-    const onChange = mock()
+    const onChange = vi.fn()
     function PetForm() {
       const [pet, setPet] = React.useState('cat')
       return (
@@ -1002,7 +1052,7 @@ describe('RadioGroup picking the checked radio', () => {
   })
 
   it('tells the form about a change its parent makes after declining a pick whose click stopped propagating', () => {
-    const onChange = mock()
+    const onChange = vi.fn()
     function PetForm() {
       const [pet, setPet] = React.useState('cat')
       return (
@@ -1029,7 +1079,7 @@ describe('RadioGroup picking the checked radio', () => {
   })
 
   it('does not report a change', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(
       <RadioGroup value="apple" onValueChange={onValueChange}>
         <RadioGroupItem value="apple">Apple</RadioGroupItem>
@@ -1246,9 +1296,9 @@ describe('RadioGroup wiring', () => {
   })
 
   it('runs the onKeyDown and onBlur given to the group and the onFocus given to an item', () => {
-    const onKeyDown = mock()
-    const onBlur = mock()
-    const onFocus = mock()
+    const onKeyDown = vi.fn()
+    const onBlur = vi.fn()
+    const onFocus = vi.fn()
     render(
       <>
         <RadioGroup onKeyDown={onKeyDown} onBlur={onBlur}>

@@ -36,6 +36,47 @@ Each test was proven by changing the code and watching a test fail.
 <details>
 <summary>146 behaviours, one per test</summary>
 
+**Unit, `dismissable-layer.radix.test.tsx`**
+
+- DismissableLayer
+  - dismisses on an outside pointer interaction
+  - dismisses immediately on pointer down outside by default
+  - does not dismiss on pointer down inside
+  - does not dismiss when pointer down outside is prevented
+  - does not dismiss when interact outside is prevented for a pointer down outside event
+  - dismisses on focus outside
+  - does not dismiss on focus inside
+  - does not dismiss when interacting with a branch
+  - defers touch pointer down outside dismissal until click
+  - does not flush sync when a deferred outside click is dispatched from a passive effect
+  - dismisses immediately on non-primary mouse pointer down outside
+  - dismisses immediately on non-primary pen pointer down outside
+  - cancels pending touch outside dismissal when pointer down moves back inside
+  - treats a shadow tree inside the layer as inside
+  - dismisses when a later outside interaction event is stopped by default
+  - does not dismiss when a later outside interaction event is stopped and pointer down outside is deferred
+  - dismisses when a registered dismiss surface stops propagation
+  - dismisses when a registered dismiss surface stops propagation without deferring
+  - only exempts registered dismiss surfaces from stopped propagation
+  - gives a registered dismiss surface a click listener of its own until it unmounts so iOS Safari dispatches click for taps on it
+  - does not dismiss when focus moves outside during a deferred stopped interaction
+  - does not dismiss a deferred parent when a child layer dismisses first
+  - does not dismiss a deferred modal parent when a nested layer is dismissed by an outside touch tap
+  - keeps a stable composed ref (no infinite render loop)
+  - calls the latest escape key handler after re-rendering
+  - observes the latest state when preventing escape dismissal
+  - leaves an escape key that belongs to an IME composition to the input method
+  - leaves an escape key the IME processed (keyCode 229) to the input method
+  - dismisses on the escape key that follows a finished composition
+- DismissableLayer.Root
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+  - merges its own `pointerEvents` into the consumer's `style`
+  - has its pointer-events auto override in place in the commit that disables the body, before paint
+- DismissableLayer.Branch
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+
 **Unit, `dismissable-layer.test.tsx`**
 
 - DismissableLayer
@@ -128,51 +169,10 @@ Each test was proven by changing the code and watching a test fail.
   - keeps hearing focus in the shadow root while another layer there stays open
   - stops hearing focus in the shadow root once its last layer there closes
   - hears focus moving into the shadow root once, though the shadow root and the document both hear it
-  - hands a press outside the element pressed, not the shadow host, when deferring is false
-  - hands a press outside the element pressed, not the shadow host, when deferring is true
+  - hands a press outside the element pressed, not the shadow host, when deferring is %p
+  - hands a press outside the element pressed, not the shadow host, when deferring is %p
   - closes on a press on a surface inside the shadow root, though the surface stops its click
   - closes on a press in a shadow root a surface holds, though the surface stops its click
-
-**Unit, `dismissable-layer.radix.test.tsx`**
-
-- DismissableLayer
-  - dismisses on an outside pointer interaction
-  - dismisses immediately on pointer down outside by default
-  - does not dismiss on pointer down inside
-  - does not dismiss when pointer down outside is prevented
-  - does not dismiss when interact outside is prevented for a pointer down outside event
-  - dismisses on focus outside
-  - does not dismiss on focus inside
-  - does not dismiss when interacting with a branch
-  - defers touch pointer down outside dismissal until click
-  - does not flush sync when a deferred outside click is dispatched from a passive effect
-  - dismisses immediately on non-primary mouse pointer down outside
-  - dismisses immediately on non-primary pen pointer down outside
-  - cancels pending touch outside dismissal when pointer down moves back inside
-  - treats a shadow tree inside the layer as inside
-  - dismisses when a later outside interaction event is stopped by default
-  - does not dismiss when a later outside interaction event is stopped and pointer down outside is deferred
-  - dismisses when a registered dismiss surface stops propagation
-  - dismisses when a registered dismiss surface stops propagation without deferring
-  - only exempts registered dismiss surfaces from stopped propagation
-  - gives a registered dismiss surface a click listener of its own until it unmounts so iOS Safari dispatches click for taps on it
-  - does not dismiss when focus moves outside during a deferred stopped interaction
-  - does not dismiss a deferred parent when a child layer dismisses first
-  - does not dismiss a deferred modal parent when a nested layer is dismissed by an outside touch tap
-  - keeps a stable composed ref (no infinite render loop)
-  - calls the latest escape key handler after re-rendering
-  - observes the latest state when preventing escape dismissal
-  - leaves an escape key that belongs to an IME composition to the input method
-  - leaves an escape key the IME processed (keyCode 229) to the input method
-  - dismisses on the escape key that follows a finished composition
-- DismissableLayer.Root
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-  - merges its own `pointerEvents` into the consumer's `style`
-  - has its pointer-events auto override in place in the commit that disables the body, before paint
-- DismissableLayer.Branch
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
 
 **End to end, `dismissable-layer.e2e.ts`**
 

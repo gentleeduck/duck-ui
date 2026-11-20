@@ -70,13 +70,12 @@ export const Tooltip: React.FC<ITooltip.IProps> = (props: ITooltip.IScoped<ITool
   }, [setOpen, clearTimer])
 
   const handleDelayedOpen = React.useCallback(() => {
-    if (disabled) return
     clearTimer()
     timerRef.current = window.setTimeout(() => {
       wasOpenDelayedRef.current = true
       setOpen(true)
     }, delayDuration)
-  }, [delayDuration, setOpen, disabled, clearTimer])
+  }, [delayDuration, setOpen, clearTimer])
 
   const handleDelayedClose = React.useCallback(() => {
     if (closeDelay <= 0) return handleClose()

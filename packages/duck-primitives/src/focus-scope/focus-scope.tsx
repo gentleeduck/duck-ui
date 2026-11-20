@@ -10,6 +10,7 @@ import {
   focus,
   focusFirst,
   focusScopesStack,
+  getNextStop,
   getTabbableCandidates,
   getTabbableEdges,
   isSameStop,
@@ -39,6 +40,8 @@ const FocusScope = React.forwardRef<FocusScopeElement, IFocusScope.IProps>((prop
   const onMountAutoFocus = useCallbackRef(onMountAutoFocusProp)
   const onUnmountAutoFocus = useCallbackRef(onUnmountAutoFocusProp)
   const lastFocusedComponentRef = React.useRef<FocusableElement | null>(null)
+  // A Tab left to the browser, which a positive tabIndex outside the scope can take out of it.
+  const tabbingRef = React.useRef<{ from: Element; backwards: boolean } | null>(null)
   const restoreFocusRef = React.useRef<FocusableElement | null>(null)
   const unmountTimerRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const composedRefs = useComposedRefs(forwardedRef, setContainer)
@@ -65,6 +68,10 @@ const FocusScope = React.forwardRef<FocusScopeElement, IFocusScope.IProps>((prop
       contains(container, target) || !!branchesRef.current?.some((branch) => contains(branch, target))
     // The element last focused may have gone with a branch since, which the observer below never sees.
     const focusBack = () => {
+      const tabbing = tabbingRef.current
+      tabbingRef.current = null
+      const next = tabbing && getNextStop(container, tabbing.from, tabbing.backwards)
+      if (next) return focus(next)
       const last = lastFocusedComponentRef.current
       if (last) focus(last.isConnected && isInScope(last) ? last : container)
     }
@@ -73,8 +80,10 @@ const FocusScope = React.forwardRef<FocusScopeElement, IFocusScope.IProps>((prop
       if (focusScope.paused) return
       // The element focused, where a listener outside its shadow root is handed the shadow host.
       const target = event.composedPath()[0] as FocusableElement
-      if (isInScope(target)) lastFocusedComponentRef.current = target
-      else focusBack()
+      if (isInScope(target)) {
+        lastFocusedComponentRef.current = target
+        tabbingRef.current = null
+      } else focusBack()
     }
 
     const handleFocusOut = (event: Event) => {
@@ -169,7 +178,7 @@ const FocusScope = React.forwardRef<FocusScopeElement, IFocusScope.IProps>((prop
         } else if (event.shiftKey && isSameStop(focusedElement, first)) {
           event.preventDefault()
           if (loop) focus(last)
-        }
+        } else tabbingRef.current = { from: focusedElement, backwards: event.shiftKey }
       }
     }
   }

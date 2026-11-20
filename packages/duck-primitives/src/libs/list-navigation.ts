@@ -2,21 +2,21 @@ import * as React from 'react'
 import { useCallbackRef } from '../hooks/use-callback-ref'
 import { getRootActiveElement, wrapArray } from './shared-utils'
 
-export const NAVIGATION_KEYS = ['ArrowUp', 'ArrowDown', 'Home', 'End'] as const
+export const NAVIGATION_KEYS = ['ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'] as const
 
 function focusItem(item: HTMLElement) {
   item.scrollIntoView({ block: 'nearest' })
   item.focus({ preventScroll: true })
 }
 
-/** Ordered arrow-key candidates: reversed for Up/End, sliced past current for Up/Down. */
+/** Ordered arrow-key candidates: reversed for Up, End and PageDown, sliced past current for Up/Down. */
 export function getNavigationCandidates(
   items: HTMLElement[],
   key: string,
   activeElement: Element | null,
 ): HTMLElement[] {
   let candidates = items.slice()
-  if (key === 'ArrowUp' || key === 'End') {
+  if (key === 'ArrowUp' || key === 'End' || key === 'PageDown') {
     candidates = candidates.reverse()
   }
   if (key === 'ArrowUp' || key === 'ArrowDown') {

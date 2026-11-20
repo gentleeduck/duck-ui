@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'bun:test'
 import { render } from '@testing-library/react'
 import * as React from 'react'
 import { renderToString } from 'react-dom/server'
+import { describe, expect, it } from 'vitest'
 import * as PrimitiveModule from '..'
 import { Primitive } from '../primitive-elements'
 

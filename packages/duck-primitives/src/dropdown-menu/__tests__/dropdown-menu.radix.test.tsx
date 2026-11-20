@@ -1,10 +1,10 @@
 // From Radix UI primitives, packages/react/dropdown-menu/src/dropdown-menu.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import { afterEach, describe, expect, it } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
 import ReactDOM from 'react-dom'
-import { assertStableComposedRef, radixEnvironment, vi } from '../../__tests__/radix/harness'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { assertStableComposedRef, radixEnvironment } from '../../__tests__/radix/harness'
 import * as DropdownMenu from '../index'
 
 radixEnvironment()

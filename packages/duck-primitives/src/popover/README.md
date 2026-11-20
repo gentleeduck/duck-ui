@@ -41,19 +41,106 @@ or not; parts given through `asChild`; one in a scrolling box that hides while i
 inside a dialog, modal or not; and one under an overlay a browser extension draws. The end-to-end suite runs each
 in Chromium, Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Ark UI, Base UI and Headless UI run that library's own cases against this code. Each file's header names its source
+and every case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 91 | `popover.radix.test.tsx` 28, `popover.test.tsx` 63 |
+| Unit | 117 | `popover.ark.test.tsx` 5, `popover.base-ui.test.tsx` 4, `popover.headless.test.tsx` 17, `popover.radix.test.tsx` 28, `popover.test.tsx` 63 |
 | End to end | 28 | `popover.e2e.ts` 25, `popover.radix.e2e.ts` 3 |
 | registry-ui | 8 | `popover-force-mount.test.tsx` 1, `popover.test.tsx` 7 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>119 behaviours, one per test</summary>
+<summary>145 behaviours, one per test</summary>
+
+**Unit, `popover.ark.test.tsx`**
+
+- Ark UI popover
+  - has no axe violations
+  - opens and closes, mounting its content only while open
+  - focuses its first element that takes focus on open
+  - follows an owner that controls it
+  - starts open with defaultOpen, and points its trigger at its content only while open
+
+**Unit, `popover.base-ui.test.tsx`**
+
+- Base UI popover parts
+  - is named by its title and described by its description
+- Base UI popover focus
+  - gives focus back to its trigger on close after opening from code while the page held focus
+  - gives focus back to what held it before once its trigger unmounts while open
+- Base UI popover dismissal
+  - closes on a press inside a modal dialog opened before it outside its React tree
+
+**Unit, `popover.headless.test.tsx`**
+
+- Headless UI popover safe guards
+  - renders closed without crashing
+- Headless UI popover keys
+  - opens on Enter, moving focus to its first element that is not a link, and closes on Enter on its trigger
+  - stays closed on Enter while its trigger is disabled
+  - closes another popover as Enter opens this one
+  - closes on Enter on a close button inside it, giving focus back to its trigger
+  - opens on Space, moving focus to its first element that is not a link, and closes on Space on its trigger
+  - stays closed on Space while its trigger is disabled
+  - closes another popover as Space opens this one
+  - closes on Space on a close button inside it, giving focus back to its trigger
+  - closes on Escape inside it, giving focus back to its trigger
+- Headless UI popover with the mouse
+  - opens on a click, and closes on the next
+  - stays closed on a click while its trigger is disabled
+  - closes on a press on the page, giving focus back to its trigger
+  - closes on a press of another focusable element, leaving focus there
+  - closes on a click of a close button inside it
+  - stays open on a press of an element inside it
+- Headless UI nested popovers
+  - opens and closes a popover inside another on its own
+
+**Unit, `popover.radix.test.tsx`**
+
+- aria-controls
+  - should not reference a non-existent element while closed
+  - should reference the rendered content while open
+  - should not reference the content before it is open
+  - should reference the content when it is open
+  - should stop referencing the content once it closes
+- Title and Description
+  - should not reference a title or description when none are rendered
+  - should label the content via aria-labelledby when a Title is rendered
+  - should describe the content via aria-describedby when a Description is rendered
+  - should reference both Title and Description when rendered together
+- given a Popover with `asChild` on the Content
+  - forwards content props and the ref to the child (modal: true)
+  - forwards content props and the ref to the child (modal: false)
+- Popover.Anchor
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Popover.Trigger
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Popover.Content
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+  - spreads props it does not consume onto the element it renders on a modal popover
+  - forwards props to the child element when `asChild` is set on a modal popover
+- Popover.Title
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Popover.Description
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Popover.Close
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Popover.Arrow
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- handlers with a narrower parameter type than the prop
+  - accepts an `onOpenChange` handler typed with a narrower parameter
 
 **Unit, `popover.test.tsx`**
 
@@ -138,48 +225,6 @@ Each test was proven by changing the code and watching a test fail.
   - focuses the element finalFocus names on close rather than the trigger
   - moves focus nowhere on close when finalFocus is false
   - lets an auto focus handler that prevents the default win over the targets
-
-**Unit, `popover.radix.test.tsx`**
-
-- aria-controls
-  - should not reference a non-existent element while closed
-  - should reference the rendered content while open
-  - should not reference the content before it is open
-  - should reference the content when it is open
-  - should stop referencing the content once it closes
-- Title and Description
-  - should not reference a title or description when none are rendered
-  - should label the content via aria-labelledby when a Title is rendered
-  - should describe the content via aria-describedby when a Description is rendered
-  - should reference both Title and Description when rendered together
-- given a Popover with `asChild` on the Content
-  - forwards content props and the ref to the child (modal: true)
-  - forwards content props and the ref to the child (modal: false)
-- Popover.Anchor
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Popover.Trigger
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Popover.Content
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-  - spreads props it does not consume onto the element it renders on a modal popover
-  - forwards props to the child element when `asChild` is set on a modal popover
-- Popover.Title
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Popover.Description
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Popover.Close
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Popover.Arrow
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- handlers with a narrower parameter type than the prop
-  - accepts an `onOpenChange` handler typed with a narrower parameter
 
 **End to end, `popover.e2e.ts`**
 

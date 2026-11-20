@@ -65,6 +65,9 @@ export namespace IAccordion {
     triggerId: string
     contentId: string
     onOpenToggle(): void
+    /** An id given to the trigger or the content, so each points at the id the other renders. */
+    onTriggerIdChange(id: string | undefined): void
+    onContentIdChange(id: string | undefined): void
   }
 
   export interface IContentProps extends React.ComponentPropsWithoutRef<typeof Primitive.div> {

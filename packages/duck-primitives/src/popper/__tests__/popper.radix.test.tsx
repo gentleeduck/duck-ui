@@ -1,9 +1,9 @@
 // From Radix UI primitives, packages/react/popper/src/popper.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import { afterEach, describe, expect, it } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
-import { assertStableComposedRef, radixEnvironment, vi } from '../../__tests__/radix/harness'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { assertStableComposedRef, radixEnvironment } from '../../__tests__/radix/harness'
 import * as Popper from '../index'
 
 radixEnvironment()

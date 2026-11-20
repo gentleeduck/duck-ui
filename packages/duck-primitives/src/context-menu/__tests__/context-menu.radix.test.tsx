@@ -1,10 +1,10 @@
 // From Radix UI primitives, packages/react/context-menu/src/context-menu.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import type { MockInstance } from 'bun:test'
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
-import { axe, radixEnvironment, vi } from '../../__tests__/radix/harness'
+import type { MockInstance } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { axe, radixEnvironment } from '../../__tests__/radix/harness'
 import * as ContextMenu from '../index'
 
 radixEnvironment()

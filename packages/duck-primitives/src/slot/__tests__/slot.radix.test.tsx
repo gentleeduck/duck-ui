@@ -1,11 +1,11 @@
 // From Radix UI primitives, packages/react/slot/src/slot.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 // Radix's file snapshots (__snapshots__/slot.test.tsx.snap) are inlined as innerHTML: bun cannot read vitest's.
 
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import * as React from 'react'
-import { radixEnvironment, vi } from '../../__tests__/radix/harness'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { radixEnvironment } from '../../__tests__/radix/harness'
 import { Slot as SlotRoot, Slottable } from '../index'
 
 const Slot = { Root: SlotRoot, Slottable }

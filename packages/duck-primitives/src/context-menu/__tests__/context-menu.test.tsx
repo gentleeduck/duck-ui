@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, mock, spyOn, vi } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { freshDom, wait } from '../../__tests__/dom'
 import { DirectionProvider } from '../../direction'
 import {
@@ -52,14 +52,14 @@ describe('ContextMenu', () => {
   })
 
   it('opens on right-click (contextmenu event)', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderContextMenu({ onOpenChange: handler })
     fireEvent.contextMenu(container.querySelector('[data-slot="context-menu-trigger"]')!)
     expect(handler).toHaveBeenCalledWith(true)
   })
 
   it('disabled trigger does not open on right-click', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = render(
       <ContextMenu onOpenChange={handler}>
         <ContextMenuTrigger disabled>Right click me</ContextMenuTrigger>
@@ -144,11 +144,11 @@ describe('ContextMenu trigger props', () => {
 
   it.each([{ disabled: false }, { disabled: true }])("runs the trigger's own handlers, %o", ({ disabled }) => {
     const handlers = {
-      onPointerDown: mock(),
-      onPointerMove: mock(),
-      onPointerCancel: mock(),
-      onPointerUp: mock(),
-      onContextMenu: mock(),
+      onPointerDown: vi.fn(),
+      onPointerMove: vi.fn(),
+      onPointerCancel: vi.fn(),
+      onPointerUp: vi.fn(),
+      onContextMenu: vi.fn(),
     }
     render(
       <ContextMenu>
@@ -349,9 +349,9 @@ describe('ContextMenu right-click mark', () => {
   })
 
   it('leaves no listener behind once the contextmenu after a right click lands', async () => {
-    const heard = mock()
+    const heard = vi.fn()
     const add = window.addEventListener.bind(window)
-    const spy = spyOn(window, 'addEventListener').mockImplementation((type, listener, options) => {
+    const spy = vi.spyOn(window, 'addEventListener').mockImplementation((type, listener, options) => {
       if (type !== 'contextmenu' || typeof listener !== 'function') return add(type, listener, options)
       add(type, (event) => (heard(), listener(event)), options)
     })
@@ -368,7 +368,7 @@ describe('ContextMenu right-click mark', () => {
   })
 
   it("hands a press outside to the content's own onPointerDownOutside", async () => {
-    const onPointerDownOutside = mock()
+    const onPointerDownOutside = vi.fn()
     const trigger = renderStopping({ onPointerDownOutside })
     fireEvent.contextMenu(trigger)
     await wait(0)
@@ -480,7 +480,7 @@ describe('ContextMenu long press', () => {
   })
 
   function renderHeld(trigger: (shown: boolean) => React.ReactNode) {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const page = (changed: boolean) => (
       <ContextMenu onOpenChange={onOpenChange}>
         {trigger(changed)}
@@ -513,7 +513,7 @@ describe('ContextMenu long press', () => {
 
 describe('ContextMenu open before interaction', () => {
   it('warns once, even when strict mode runs its effects twice', () => {
-    const warn = spyOn(console, 'warn').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     render(
       <React.StrictMode>
@@ -699,7 +699,7 @@ describe('ContextMenu content placement', () => {
 
 describe('ContextMenu close focus', () => {
   it("runs the content's own onCloseAutoFocus", async () => {
-    const onCloseAutoFocus = mock()
+    const onCloseAutoFocus = vi.fn()
     render(
       <ContextMenu>
         <ContextMenuTrigger>Right click me</ContextMenuTrigger>
@@ -841,7 +841,7 @@ describe('ContextMenu sub menu state', () => {
   })
 
   it('reports a sub menu opening to onOpenChange', async () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     renderSub({ onOpenChange })
 
     fireEvent.keyDown(screen.getByText('Share'), { key: 'ArrowRight' })

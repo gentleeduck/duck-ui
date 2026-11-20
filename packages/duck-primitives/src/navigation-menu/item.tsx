@@ -26,10 +26,9 @@ const NavigationMenuItem = React.forwardRef<HTMLLIElement, INavigationMenu.IItem
     }, [])
 
     const handleContentExit = React.useCallback(() => {
-      if (contentRef.current) {
-        const candidates = getTabbableCandidates(contentRef.current)
-        if (candidates.length) restoreContentTabOrderRef.current = removeFromTabOrder(candidates)
-      }
+      // biome-ignore lint/style/noNonNullAssertion: only the content calls this, from the layer its own node holds
+      const candidates = getTabbableCandidates(contentRef.current!)
+      if (candidates.length) restoreContentTabOrderRef.current = removeFromTabOrder(candidates)
     }, [])
 
     return (

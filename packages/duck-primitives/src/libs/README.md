@@ -33,91 +33,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 98 | `associated-form.test.ts` 8, `compose-ref.test.tsx` 4, `create-collection.test.tsx` 17, `create-context.test.tsx` 9, `focus-on.test.ts` 4, `get-component-ref.test.ts` 4, `join-ids.test.ts` 3, `list-navigation.test.tsx` 27, `primitives-utils.test.ts` 20, `scoped-part.test.tsx` 2 |
+| Unit | 105 | `associated-form.test.ts` 8, `compose-ref.test.tsx` 4, `create-collection.test.tsx` 24, `create-context.test.tsx` 9, `focus-on.test.ts` 4, `get-component-ref.test.ts` 4, `join-ids.test.ts` 3, `list-navigation.test.tsx` 27, `primitives-utils.test.ts` 20, `scoped-part.test.tsx` 2 |
 | End to end | 0 | - |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>98 behaviours, one per test</summary>
-
-**Unit, `primitives-utils.test.ts`**
-
-- duck-primitives utils
-  - clamp constrains numbers within an inclusive range
-  - clamp preserves boundary values
-  - getState returns Radix-style open and closed strings
-  - composeEventHandlers preserves order and respects defaultPrevented
-  - composeEventHandlers returns our handler result when it runs
-  - composeEventHandlers runs our handler when the original does not prevent default
-  - composeEventHandlers can ignore defaultPrevented checks when requested
-- wrapArray
-  - wraps from a given start index
-  - wraps from index 0 returns same order
-  - wraps from last index
-  - empty array returns empty
-- isPointInPolygon
-  - point inside returns true
-  - point outside returns false
-  - point far outside returns false
-  - point beside it, level with it, returns false
-  - counts a point on its left edge as inside and one on its right edge as outside, casting its ray rightwards
-  - works with triangle
-- focusFirst
-  - moves on past a candidate that will not take focus
-  - stops at the first candidate that takes focus, and hands on preventScroll
-  - leaves focus on a candidate that already has it
-
-**Unit, `create-context.test.tsx`**
-
-- createContext
-  - hands back a null default outside its provider rather than throwing
-- createContext Provider
-  - is named after its root, scoped or not
-  - hands its readers one value while its props stay the same, and a new one once they change
-- createContext without a default
-  - throws naming the part and the root it must be used within
-- createContextScope
-  - hands back a null default outside its provider rather than throwing
-- createContextScope scopes
-  - hands a provider and its readers given a scope contexts of their own, apart from those of the same root
-  - keeps each context of a scope apart, and hands its readers one value while its props stay the same
-  - passes the contexts of a scope it is handed down, so a part reads what its root provided
-  - composes the scopes it depends on into its own, so its root can provide theirs to its parts
-
-**Unit, `join-ids.test.ts`**
-
-- joinIds
-  - joins id lists in the order first seen, dropping blanks and repeats
-  - skips a value that is not a string, such as the false a condition leaves
-  - hands back nothing when there is no id
-
-**Unit, `create-collection.test.tsx`**
-
-- createCollection read from an event handler
-  - reads the items as they are now, in document order
-  - reads items in document order after React moves them
-  - orders items nested at different depths by where they are in the document
-  - reads no items before its collection element renders
-  - reads from the nearest provider, apart from the items of the one around it
-  - keeps the items of two collections apart
-- createCollection ordering
-  - orders an item that rendered again on its own by where it is in the document
-- createCollection consumers
-  - hands its consumers one function that keeps its identity as items change
-  - renders no consumer again when its items change
-- createCollection read from a layout effect
-  - reads an item mounted in the same commit
-  - leaves out an item unmounted in the same commit
-  - reads items moved in the same commit in document order
-  - reads the data an item was given in the same commit
-- createCollection with React hiding its items
-  - leaves out the items a Suspense boundary hides when it suspends again
-  - leaves out the items of a hidden Activity, and reads them again once it shows
-- createCollection slots
-  - renders the collection element and each item as its child, with no element of its own, and hands it the ref
-  - registers each item once under strict mode, and drops it on unmount
+<summary>105 behaviours, one per test</summary>
 
 **Unit, `associated-form.test.ts`**
 
@@ -140,11 +63,57 @@ Each test was proven by changing the code and watching a test fail.
   - runs a callback ref cleanup on unmount and nulls the object ref beside it
   - keeps one callback while its refs stay the same, and hands the node to a ref that replaces one
 
-**Unit, `scoped-part.test.tsx`**
+**Unit, `create-collection.test.tsx`**
 
-- createScopedPart
-  - hands its own scope on as the inner scope and keeps it off the part
-  - names the part it makes
+- createCollection read from an event handler
+  - reads the items as they are now, in document order
+  - reads items in document order after React moves them
+  - orders items nested at different depths by where they are in the document
+  - reads no items before its collection element renders
+  - reads from the nearest provider, apart from the items of the one around it
+  - keeps the items of two collections apart
+- createCollection with two slots
+  - reads the slot mounted later once the one before it leaves
+- createCollection ordering
+  - orders an item that rendered again on its own by where it is in the document
+- createCollection consumers
+  - hands its consumers one function that keeps its identity as items change
+  - renders no consumer again when its items change
+- createCollection read from a layout effect
+  - reads an item mounted in the same commit
+  - leaves out an item unmounted in the same commit
+  - reads items moved in the same commit in document order
+  - reads the data an item was given in the same commit
+- createCollection with React hiding its items
+  - leaves out the items a Suspense boundary hides when it suspends again
+  - leaves out the items of a hidden Activity, and reads them again once it shows
+- createCollection slots
+  - renders the collection element and each item as its child, with no element of its own, and hands it the ref
+  - registers each item once under strict mode, and drops it on unmount
+- createCollection, the cases of Radix's collection suite
+  - reads no item once the whole list unmounts
+  - reads the element an item renders now once its child becomes another element
+  - reads nested items in their new order once their wrappers move
+  - reads the items inside a Suspense boundary once it resolves
+  - reads the items of an Activity that starts hidden once it shows
+  - reads items in the order a transition moved them to
+
+**Unit, `create-context.test.tsx`**
+
+- createContext
+  - hands back a null default outside its provider rather than throwing
+- createContext Provider
+  - is named after its root, scoped or not
+  - hands its readers one value while its props stay the same, and a new one once they change
+- createContext without a default
+  - throws naming the part and the root it must be used within
+- createContextScope
+  - hands back a null default outside its provider rather than throwing
+- createContextScope scopes
+  - hands a provider and its readers given a scope contexts of their own, apart from those of the same root
+  - keeps each context of a scope apart, and hands its readers one value while its props stay the same
+  - passes the contexts of a scope it is handed down, so a part reads what its root provided
+  - composes the scopes it depends on into its own, so its root can provide theirs to its parts
 
 **Unit, `focus-on.test.ts`**
 
@@ -161,6 +130,13 @@ Each test was proven by changing the code and watching a test fail.
   - reads props.ref, never the element.ref that warns under React 19, even with no ref given
   - reads props.ref off an element with no ref field of its own, as React has once it drops element.ref
   - reads the ref off an element React made
+
+**Unit, `join-ids.test.ts`**
+
+- joinIds
+  - joins id lists in the order first seen, dropping blanks and repeats
+  - skips a value that is not a string, such as the false a condition leaves
+  - hands back nothing when there is no id
 
 **Unit, `list-navigation.test.tsx`**
 
@@ -196,6 +172,39 @@ Each test was proven by changing the code and watching a test fail.
   - takes G to the last item and gg to the first, after the keydown, and claims both keys
   - takes no gg whose second g comes too late, after another key, or with a modifier between
   - leaves a G typed without Shift, and any key with no items, to the list
+
+**Unit, `primitives-utils.test.ts`**
+
+- duck-primitives utils
+  - clamp constrains numbers within an inclusive range
+  - clamp preserves boundary values
+  - getState returns Radix-style open and closed strings
+  - composeEventHandlers preserves order and respects defaultPrevented
+  - composeEventHandlers returns our handler result when it runs
+  - composeEventHandlers runs our handler when the original does not prevent default
+  - composeEventHandlers can ignore defaultPrevented checks when requested
+- wrapArray
+  - wraps from a given start index
+  - wraps from index 0 returns same order
+  - wraps from last index
+  - empty array returns empty
+- isPointInPolygon
+  - point inside returns true
+  - point outside returns false
+  - point far outside returns false
+  - point beside it, level with it, returns false
+  - counts a point on its left edge as inside and one on its right edge as outside, casting its ray rightwards
+  - works with triangle
+- focusFirst
+  - moves on past a candidate that will not take focus
+  - stops at the first candidate that takes focus, and hands on preventScroll
+  - leaves focus on a candidate that already has it
+
+**Unit, `scoped-part.test.tsx`**
+
+- createScopedPart
+  - hands its own scope on as the inner scope and keeps it off the part
+  - names the part it makes
 
 </details>
 <!-- /behaviour -->

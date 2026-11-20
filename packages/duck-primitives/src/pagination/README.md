@@ -38,37 +38,23 @@ client router follows without a reload; no pages at all; a compact pager with on
 controlled from outside, with its count, window and direction changed at runtime; and a range drawn by a
 function with its own labels. The end-to-end suite runs each in Chromium, Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail. One change has no test to fail:
-`getPaginationRange` returns every page at `2 * (boundaryCount + siblingCount) + 3` pages or fewer, and
-returning them only below that count gives the same list, since the folded list at that count holds every page.
+Each test written for this module was proven by changing the code and watching a test fail. One change has no test
+to fail: `getPaginationRange` returns every page at `2 * (boundaryCount + siblingCount) + 3` pages or fewer, and
+returning them only below that count gives the same list, since the folded list at that count holds every page. The
+suites taken from Ark UI run that library's own cases against this code. Each file's header names its source and
+every case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 49 | `controls.test.tsx` 30, `pagination.test.tsx` 7, `range.test.ts` 12 |
+| Unit | 55 | `controls.test.tsx` 31, `pagination.ark.test.tsx` 5, `pagination.test.tsx` 7, `range.test.ts` 12 |
 | End to end | 12 | `pagination.e2e.ts` 12 |
 | registry-ui | 12 | `pagination-links.test.tsx` 4, `pagination-pages.test.tsx` 5, `pagination.test.tsx` 3 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>61 behaviours, one per test</summary>
-
-**Unit, `range.test.ts`**
-
-- getPaginationRange
-  - lists every page when they all fit
-  - lists every page when they all fit a wider window
-  - folds as soon as one page does not fit
-  - folds the far end into an ellipsis on the first page
-  - folds both ends around a page in the middle
-  - folds the near end into an ellipsis on the last page
-  - shows the one page an ellipsis would hide
-  - keeps the same number of items on every page, so the controls do not shift
-  - widens the window with more siblings and boundary pages
-  - leaves the ends out with no boundary pages
-  - treats a page past either end as that end
-  - has nothing to list with no pages
+<summary>67 behaviours, one per test</summary>
 
 **Unit, `controls.test.tsx`**
 
@@ -85,6 +71,7 @@ returning them only below that count gives the same list, since the folded list 
   - disables the triggers that would leave the range
   - stays inert until it knows how many pages there are
   - draws no pages and disables every trigger with no pages
+  - moves nowhere with a page count that is not a number
   - marks each part with its slot
   - hands each part its element through a ref
   - does not submit the form it sits in
@@ -109,6 +96,15 @@ returning them only below that count gives the same list, since the folded list 
 - Pagination scope
   - reads the root its scope names over a nearer one
 
+**Unit, `pagination.ark.test.tsx`**
+
+- Ark UI pagination
+  - has no axe violations, as buttons and as links
+  - moves to the page clicked
+  - moves to the next and the previous page from its triggers
+  - renders its pages and triggers as buttons by default, and as links given an address for each page
+  - takes anchor attributes on a trigger rendered as a link
+
 **Unit, `pagination.test.tsx`**
 
 - Pagination
@@ -119,6 +115,22 @@ returning them only below that count gives the same list, since the folded list 
   - forwards ref
   - defaults to ltr direction
   - accepts rtl direction
+
+**Unit, `range.test.ts`**
+
+- getPaginationRange
+  - lists every page when they all fit
+  - lists every page when they all fit a wider window
+  - folds as soon as one page does not fit
+  - folds the far end into an ellipsis on the first page
+  - folds both ends around a page in the middle
+  - folds the near end into an ellipsis on the last page
+  - shows the one page an ellipsis would hide
+  - keeps the same number of items on every page, so the controls do not shift
+  - widens the window with more siblings and boundary pages
+  - leaves the ends out with no boundary pages
+  - treats a page past either end as that end
+  - has nothing to list with no pages
 
 **End to end, `pagination.e2e.ts`**
 
@@ -156,6 +168,7 @@ returning them only below that count gives the same list, since the folded list 
 - With `getPageHref` every control is a link, and one with nowhere to go loses its address and its tab
   stop. A child given through `asChild` keeps its own `href`, since `Slot` lets a child's props win, though a
   click on it does nothing.
+- A control rendered as a link takes the link's own `target`, `rel`, `download` and `referrerPolicy`.
 - `Content` and `Item` put the controls in a `ul` of `li`s inside the `nav`. Ark has no list parts.
 - `getPaginationRange` returns the same list for code that does not mount the root.
 - A disabled page or trigger runs no click handler, link or button, a slotted child's included, as a disabled

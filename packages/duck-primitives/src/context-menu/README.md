@@ -41,95 +41,33 @@ items, one with `closeOnSelect={false}`, radio items and a disabled item; a moda
 outside and a trigger that can be disabled; a menu inside a dialog; and an overlay a browser extension draws over
 the page. The end-to-end suite runs each in Chromium, Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Base UI run that library's own cases against this code. Each file's header names its source and every case left
+out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 114 | `context-menu.radix.test.tsx` 56, `context-menu.test.tsx` 58 |
+| Unit | 121 | `context-menu.base-ui.test.tsx` 7, `context-menu.radix.test.tsx` 56, `context-menu.test.tsx` 58 |
 | End to end | 25 | `context-menu.e2e.ts` 6, `context-menu.radix.e2e.ts` 19 |
 | registry-ui | 12 | `context-menu-force-mount.test.tsx` 1, `context-menu.test.tsx` 11 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>139 behaviours, one per test</summary>
+<summary>146 behaviours, one per test</summary>
 
-**Unit, `context-menu.test.tsx`**
+**Unit, `context-menu.base-ui.test.tsx`**
 
-- ContextMenu
-  - renders trigger with data-slot="context-menu-trigger"
-  - trigger renders as a span
-  - trigger starts with data-state="closed"
-  - opens on right-click (contextmenu event)
-  - disabled trigger does not open on right-click
-  - disabled trigger has data-disabled
-  - forwards ref to trigger
-  - trigger changes data-state to open when right-clicked
-  - passes className to trigger
-  - puts a dir passed to the root on the menu and leaves the trigger to the page
-  - trigger renders children as text
-- ContextMenu trigger props
-  - lets the props on a trigger win over its own attributes
-  - turns off the touch callout, beside the style it was given
-  - runs the trigger's own handlers, {"disabled":false}
-  - runs the trigger's own handlers, {"disabled":true}
-- ContextMenu scope
-  - hands its parts the scope it is given
-- ContextMenu right-click while open
-  - closes the menu rather than reopening it
-  - closes the menu on a control-click, which also fires contextmenu
-  - closes a modal menu too, whose press lands on the page because the page takes no pointer events
-  - opens from the keyboard after a right click elsewhere closed it
-  - reopens the menu on a right-click after a left click closed it
-- ContextMenu right-click mark
-  - opens on the next right click after one closed it, when the trigger stops the contextmenu going further
-  - moves to a right click on its trigger that onPointerDownOutside kept from closing it
-  - moves to a right click on its trigger that onInteractOutside kept from closing it
-  - opens on a right click after a control press elsewhere closed it without a contextmenu, as on Windows
-  - clears the mark when a right click elsewhere lands on the root element, as it does under a modal menu
-  - leaves no listener behind once the contextmenu after a right click lands
-  - hands a press outside to the content's own onPointerDownOutside
-- ContextMenu long press
-  - opens when the finger drifts 10px while it holds
-  - cancels once the finger moves further than 10px
-  - keeps a held finger when a mouse moves away or lifts over the trigger
-  - closes the open menu when a finger presses the trigger again, and opens it once that finger holds
-  - cancels when the finger lifts or the browser takes the gesture
-  - waits the whole 700ms before it opens
-  - counts from the last press when a finger presses again
-  - drops a held press once the browser opens the menu, so closing it then sticks
-  - drops a held press when its trigger leaves the page
-  - drops a held press when its trigger is disabled
-- ContextMenu open before interaction
-  - warns once, even when strict mode runs its effects twice
-- ContextMenu direction
-  - opens to the right of the pointer in LTR
-  - opens to the left of the pointer and sets dir in RTL
-- ContextMenu parts
-  - renders its arrow, separator and the indicator of a checked item
-- ContextMenu focus on close
-  - returns focus to where it was when a modal menu closes on Escape
-  - returns focus to where it was when a modal menu closes on a click outside
-  - returns focus to where it was on Escape after a click outside that was kept from closing it
-  - leaves focus where the user clicked when a non-modal menu closes on a click outside
-- ContextMenu content placement
-  - opens 2px to the right of the pointer, its top at the pointer
-  - keeps that placement when a caller without the types passes its own
-  - opens a menu kept mounted while closed where the right click lands
-- ContextMenu close focus
-  - runs the content's own onCloseAutoFocus
-  - kept mounted, gives focus back on unmount when its last opening closed on Escape
-- ContextMenu sub menu
-  - closes only itself on Escape and focuses its trigger when it keeps its parent open
-- ContextMenu sub menu state
-  - marks its sub trigger with data-slot="context-menu-subtrigger"
-  - opens a sub menu by open
-  - opens a sub menu by defaultOpen when it mounts into a menu already open
-  - reports a sub menu opening to onOpenChange
-- ContextMenu content style
-  - names the popper's measurements under the context menu's own variables, beside the style it was given
-  - keeps its own measurement variables over ones the style names
+- Base UI context menu trigger
+  - opens on a context menu event, telling onOpenChange
+  - stays shut on a context menu event while disabled, leaving the browser its own menu
+- Base UI context menu long press
+  - opens on a long press of a finger
+  - gives up the press once the finger moves past its threshold, and keeps it for a smaller move
+  - gives up the press once the finger lifts
+  - gives up the press once a second finger comes down
+  - stays shut on a long press while disabled
 
 **Unit, `context-menu.radix.test.tsx`**
 
@@ -214,6 +152,82 @@ Each test was proven by changing the code and watching a test fail.
   - opens the menu on a touch long press
   - opens the outer menu when the inner trigger is disabled
 
+**Unit, `context-menu.test.tsx`**
+
+- ContextMenu
+  - renders trigger with data-slot="context-menu-trigger"
+  - trigger renders as a span
+  - trigger starts with data-state="closed"
+  - opens on right-click (contextmenu event)
+  - disabled trigger does not open on right-click
+  - disabled trigger has data-disabled
+  - forwards ref to trigger
+  - trigger changes data-state to open when right-clicked
+  - passes className to trigger
+  - puts a dir passed to the root on the menu and leaves the trigger to the page
+  - trigger renders children as text
+- ContextMenu trigger props
+  - lets the props on a trigger win over its own attributes
+  - turns off the touch callout, beside the style it was given
+  - runs the trigger's own handlers, { disabled: false }
+  - runs the trigger's own handlers, { disabled: true }
+- ContextMenu scope
+  - hands its parts the scope it is given
+- ContextMenu right-click while open
+  - closes the menu rather than reopening it
+  - closes the menu on a control-click, which also fires contextmenu
+  - closes a modal menu too, whose press lands on the page because the page takes no pointer events
+  - opens from the keyboard after a right click elsewhere closed it
+  - reopens the menu on a right-click after a left click closed it
+- ContextMenu right-click mark
+  - opens on the next right click after one closed it, when the trigger stops the contextmenu going further
+  - moves to a right click on its trigger that onPointerDownOutside kept from closing it
+  - moves to a right click on its trigger that onInteractOutside kept from closing it
+  - opens on a right click after a control press elsewhere closed it without a contextmenu, as on Windows
+  - clears the mark when a right click elsewhere lands on the root element, as it does under a modal menu
+  - leaves no listener behind once the contextmenu after a right click lands
+  - hands a press outside to the content's own onPointerDownOutside
+- ContextMenu long press
+  - opens when the finger drifts 10px while it holds
+  - cancels once the finger moves further than 10px
+  - keeps a held finger when a mouse moves away or lifts over the trigger
+  - closes the open menu when a finger presses the trigger again, and opens it once that finger holds
+  - cancels when the finger lifts or the browser takes the gesture
+  - waits the whole 700ms before it opens
+  - counts from the last press when a finger presses again
+  - drops a held press once the browser opens the menu, so closing it then sticks
+  - drops a held press when its trigger leaves the page
+  - drops a held press when its trigger is disabled
+- ContextMenu open before interaction
+  - warns once, even when strict mode runs its effects twice
+- ContextMenu direction
+  - opens to the right of the pointer in LTR
+  - opens to the left of the pointer and sets dir in RTL
+- ContextMenu parts
+  - renders its arrow, separator and the indicator of a checked item
+- ContextMenu focus on close
+  - returns focus to where it was when a modal menu closes on Escape
+  - returns focus to where it was when a modal menu closes on a click outside
+  - returns focus to where it was on Escape after a click outside that was kept from closing it
+  - leaves focus where the user clicked when a non-modal menu closes on a click outside
+- ContextMenu content placement
+  - opens 2px to the right of the pointer, its top at the pointer
+  - keeps that placement when a caller without the types passes its own
+  - opens a menu kept mounted while closed where the right click lands
+- ContextMenu close focus
+  - runs the content's own onCloseAutoFocus
+  - kept mounted, gives focus back on unmount when its last opening closed on Escape
+- ContextMenu sub menu
+  - closes only itself on Escape and focuses its trigger when it keeps its parent open
+- ContextMenu sub menu state
+  - marks its sub trigger with data-slot="context-menu-subtrigger"
+  - opens a sub menu by open
+  - opens a sub menu by defaultOpen when it mounts into a menu already open
+  - reports a sub menu opening to onOpenChange
+- ContextMenu content style
+  - names the popper's measurements under the context menu's own variables, beside the style it was given
+  - keeps its own measurement variables over ones the style names
+
 **End to end, `context-menu.e2e.ts`**
 
 - ContextMenu items
@@ -281,6 +295,8 @@ Each test was proven by changing the code and watching a test fail.
 - A non-modal menu kept mounted with `forceMount` forgets a press outside when it opens again, where one on the
   page while it was closed, or the one that closed it, kept focus from going back to where it was once the menu
   unmounted.
+- A second finger coming down during a long press gives the press up, where it started the timer again, so a
+  pinch on the trigger opened the menu.
 
 ## Smaller and faster
 

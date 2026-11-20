@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test'
 import { act, cleanup, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useSize } from '../use-size'
 
 class Observer {
@@ -144,7 +144,7 @@ describe('useSize', () => {
   })
 
   it('stops observing and drops a pending report on unmount', async () => {
-    const error = spyOn(console, 'error').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
     const { unmount } = render(<Measured />)
     const observer = Observer.all[0]
 

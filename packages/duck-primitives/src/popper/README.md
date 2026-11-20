@@ -35,6 +35,23 @@ Each test was proven by changing the code and watching a test fail.
 <details>
 <summary>79 behaviours, one per test</summary>
 
+**Unit, `popper.radix.test.tsx`**
+
+- PopperAnchor virtualRef
+  - updates the anchor when virtualRef.current is swapped on an unrelated re-render
+  - registers a virtualRef whose current is set after mount
+- PopperContent ref stability
+  - keeps a stable composed ref (no infinite render loop)
+- Popper.Anchor
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Popper.Content
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- Popper.Arrow
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+
 **Unit, `popper.test.tsx`**
 
 - Popper
@@ -90,23 +107,6 @@ Each test was proven by changing the code and watching a test fail.
   - stops watching sizes, scrolls and resizes once it closes
 - Popper anchor from another window
   - marks an anchor that lives in an iframe
-
-**Unit, `popper.radix.test.tsx`**
-
-- PopperAnchor virtualRef
-  - updates the anchor when virtualRef.current is swapped on an unrelated re-render
-  - registers a virtualRef whose current is set after mount
-- PopperContent ref stability
-  - keeps a stable composed ref (no infinite render loop)
-- Popper.Anchor
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Popper.Content
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- Popper.Arrow
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
 
 **End to end, `popper.e2e.ts`**
 

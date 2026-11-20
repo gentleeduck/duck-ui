@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, mock, vi } from 'bun:test'
 import { act, createEvent, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { freshDom, scrollable, scrolls, untilScrollLocked, wait } from '../../__tests__/dom'
 import { Dialog, DialogContent, DialogDescription, DialogOverlay, DialogPortal, DialogTitle } from '../../dialog'
 import { DirectionProvider } from '../../direction'
@@ -93,6 +93,27 @@ describe('Tooltip', () => {
     expect(toggle.getAttribute('data-tooltip-state')).toBe('closed')
   })
 
+  it('opens on hover through a trigger slotted onto a component that drops its ref', async () => {
+    function NoRef({ ref: _ref, ...props }: React.ComponentProps<'button'>) {
+      return <button type="button" {...props} />
+    }
+    render(
+      <TooltipProvider delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <NoRef>Hover me</NoRef>
+          </TooltipTrigger>
+          <TooltipContent>Tooltip text</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>,
+    )
+
+    fireEvent.pointerMove(screen.getByRole('button', { name: 'Hover me' }), { pointerType: 'mouse' })
+    await act(() => wait(10))
+
+    expect(screen.getAllByText('Tooltip text').length).toBeGreaterThan(0)
+  })
+
   it("names the popper's measurements under the tooltip's own variables, beside the style it was given", () => {
     render(
       <TooltipProvider>
@@ -123,8 +144,8 @@ describe('Tooltip', () => {
   })
 
   it('keeps the click handler it was given, and stays open on a click when told to', () => {
-    const onClick = mock()
-    const onOpenChange = mock()
+    const onClick = vi.fn()
+    const onOpenChange = vi.fn()
     renderTooltip({ onOpenChange, open: true }, { disableCloseOnClick: true, onClick })
 
     fireEvent.click(screen.getByText('Hover me'))
@@ -177,7 +198,7 @@ describe('Tooltip', () => {
   })
 
   it('a press on a trigger with disableCloseOnClick keeps it open, pointer down and up included', async () => {
-    const onOpenChange = mock(() => {})
+    const onOpenChange = vi.fn(() => {})
     renderTooltip({ defaultOpen: true, onOpenChange }, { disableCloseOnClick: true })
     await wait(10)
     const trigger = screen.getByText('Hover me')
@@ -192,7 +213,7 @@ describe('Tooltip', () => {
   })
 
   it('a press on a trigger without disableCloseOnClick closes it once', async () => {
-    const onOpenChange = mock(() => {})
+    const onOpenChange = vi.fn(() => {})
     renderTooltip({ defaultOpen: true, onOpenChange })
     await wait(10)
     const trigger = screen.getByText('Hover me')
@@ -207,7 +228,7 @@ describe('Tooltip', () => {
   })
 
   it('opened with no trigger mounted, it still closes on a press outside', async () => {
-    const onOpenChange = mock(() => {})
+    const onOpenChange = vi.fn(() => {})
     render(
       <TooltipProvider>
         <Tooltip onOpenChange={onOpenChange} open>
@@ -224,7 +245,7 @@ describe('Tooltip', () => {
   })
 
   it('trigger without disableCloseOnClick closes on click', () => {
-    const onOpenChange = mock(() => {})
+    const onOpenChange = vi.fn(() => {})
     const { container } = renderTooltip({ open: true, onOpenChange })
     fireEvent.click(container.querySelector('[data-slot="tooltip-trigger"]')!)
     expect(onOpenChange).toHaveBeenCalledWith(false)
@@ -295,7 +316,7 @@ describe('Tooltip', () => {
 
 function renderHoverTooltip({
   delayDuration = 0,
-  onOpenChange = mock(),
+  onOpenChange = vi.fn(),
   ...props
 }: React.ComponentProps<typeof Tooltip> & { delayDuration?: number } = {}) {
   const view = render(
@@ -395,7 +416,7 @@ describe('Tooltip grace area', () => {
   })
 
   it('opens the next trigger in the provider on the move that reaches it', async () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(
       <TooltipProvider delayDuration={10}>
         <Tooltip onOpenChange={onOpenChange}>
@@ -488,7 +509,7 @@ describe('Tooltip grace area', () => {
   })
 
   it('starts no crossing from its content once its trigger is gone', async () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const page = (withTrigger: boolean) => (
       <TooltipProvider delayDuration={0}>
         <Tooltip defaultOpen onOpenChange={onOpenChange}>
@@ -555,7 +576,7 @@ describe('Tooltip trigger', () => {
   })
 
   it('closes when another tooltip opens', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(
       <TooltipProvider delayDuration={0}>
         <Tooltip defaultOpen onOpenChange={onOpenChange}>
@@ -622,7 +643,7 @@ describe('Tooltip trigger', () => {
   })
 
   it('closes once it is disabled while open', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const { rerender } = render(
       <TooltipProvider>
         <Tooltip defaultOpen onOpenChange={onOpenChange}>
@@ -652,7 +673,7 @@ describe('Tooltip trigger', () => {
   })
 
   it('opens for the next move over its trigger once it is enabled again', async () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const tooltip = (disabled: boolean) => (
       <TooltipProvider delayDuration={0}>
         <Tooltip onOpenChange={onOpenChange} disabled={disabled}>
@@ -673,7 +694,7 @@ describe('Tooltip trigger', () => {
   })
 
   it('drops a delayed open that was pending when it was disabled', async () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const tooltip = (disabled: boolean) => (
       <TooltipProvider delayDuration={20}>
         <Tooltip onOpenChange={onOpenChange} disabled={disabled}>
@@ -784,7 +805,7 @@ describe('Tooltip close delay', () => {
   })
 
   it("takes the close delay from its provider, and its own over the provider's", async () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const tooltip = (closeDelay?: number) => (
       <TooltipProvider closeDelay={20} delayDuration={0} disableHoverableContent>
         <Tooltip closeDelay={closeDelay} defaultOpen onOpenChange={onOpenChange}>
@@ -924,7 +945,7 @@ describe('Tooltip delays', () => {
   const state = (trigger: HTMLElement) => trigger.getAttribute('data-state')
 
   function renderOne(provider: Omit<React.ComponentProps<typeof TooltipProvider>, 'children'>, root = {}) {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(
       <TooltipProvider {...provider}>
         <div data-testid="scroller">
@@ -1093,7 +1114,7 @@ describe('Tooltip delays', () => {
   })
 
   it('stays open each time it opens with an id given to its content', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(
       <TooltipProvider delayDuration={100}>
         <Tooltip onOpenChange={onOpenChange}>
@@ -1148,11 +1169,11 @@ describe('Tooltip delays', () => {
 describe('Tooltip parts', () => {
   it("runs the trigger's own pointer, focus and blur handlers", () => {
     const handlers = {
-      onPointerMove: mock(),
-      onPointerLeave: mock(),
-      onPointerDown: mock(),
-      onFocus: mock(),
-      onBlur: mock(),
+      onPointerMove: vi.fn(),
+      onPointerLeave: vi.fn(),
+      onPointerDown: vi.fn(),
+      onFocus: vi.fn(),
+      onBlur: vi.fn(),
     }
     renderTooltip({}, handlers)
     const trigger = screen.getByText('Hover me')
@@ -1167,10 +1188,10 @@ describe('Tooltip parts', () => {
   })
 
   it("runs the content's own pointer enter, outside press and escape handlers", async () => {
-    const onPointerEnter = mock()
-    const onPointerDownOutside = mock((event: Event) => event.preventDefault())
-    const onEscapeKeyDown = mock()
-    const onOpenChange = mock()
+    const onPointerEnter = vi.fn()
+    const onPointerDownOutside = vi.fn((event: Event) => event.preventDefault())
+    const onEscapeKeyDown = vi.fn()
+    const onOpenChange = vi.fn()
     render(
       <>
         <TooltipProvider>

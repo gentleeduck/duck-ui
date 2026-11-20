@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { freshDom, wait } from '../../__tests__/dom'
 import { DirectionProvider } from '../../direction'
 import {
@@ -90,7 +90,7 @@ describe('AlertDialog', () => {
   })
 
   it('calls onOpenChange when trigger clicked', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderAlertDialog({ onOpenChange: handler })
     fireEvent.click(container.querySelector('[data-slot="dialog-trigger"]')!)
     expect(handler).toHaveBeenCalledWith(true)
@@ -236,11 +236,11 @@ function renderOpenAlertDialog(description?: React.ReactNode) {
 
 describe('AlertDialog warnings in development', () => {
   const nodeEnv = process.env.NODE_ENV
-  let warn: ReturnType<typeof spyOn>
+  let warn: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
     process.env.NODE_ENV = 'development'
-    warn = spyOn(console, 'warn').mockImplementation(() => {})
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -258,7 +258,7 @@ describe('AlertDialog warnings in development', () => {
   })
 
   it('errors when the content has no title, naming the alert dialog parts', () => {
-    const error = spyOn(console, 'error').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
     try {
       render(
         <AlertDialog defaultOpen>
@@ -269,7 +269,7 @@ describe('AlertDialog warnings in development', () => {
         </AlertDialog>,
       )
 
-      expect(String(error.mock.calls[0]?.[0])).toStartWith('`AlertDialogContent` requires a `AlertDialogTitle`')
+      expect(String(error.mock.calls[0]?.[0])).toMatch(/^`AlertDialogContent` requires a `AlertDialogTitle`/)
     } finally {
       error.mockRestore()
     }
@@ -346,7 +346,7 @@ describe('AlertDialog focus targets', () => {
   })
 
   it('runs an onOpenAutoFocus of its own before focusing the cancel button', async () => {
-    const onOpenAutoFocus = mock()
+    const onOpenAutoFocus = vi.fn()
 
     await open({ onOpenAutoFocus })
 

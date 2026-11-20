@@ -1,20 +1,8 @@
-import { afterEach, beforeAll } from 'bun:test'
 import { act, cleanup, fireEvent } from '@testing-library/react'
+import { afterEach } from 'vitest'
 
-// bun runs every file in one process and testing-library registers its own cleanup for the first file only, so a
-// file starts with whatever the files before it left mounted. Unmounting one of those can throw, and React drops
-// a root before unmounting it, so each retry gets past the root that threw.
-function cleanupLeftovers() {
-  for (let attempt = 0; attempt < 1000; attempt++) {
-    try {
-      cleanup()
-      return
-    } catch {}
-  }
-}
-
+// testing-library unmounts after each test on its own only where the runner's globals are on, and these files import theirs.
 export function freshDom() {
-  beforeAll(cleanupLeftovers)
   afterEach(cleanup)
 }
 

@@ -39,19 +39,67 @@ registry-ui has no browser suite. Its tests check in jsdom that the bars write n
 origin, and the side `MotionProgress` grows from and the way its shimmer runs, on a right-to-left page and on a
 left-to-right box inside one, were measured once in all three browsers.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Ark UI and Base UI run that library's own cases against this code. Each file's header names its source and every
+case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 69 | `progress-libs.test.ts` 22, `progress.radix.test.tsx` 4, `progress.test.tsx` 43 |
+| Unit | 75 | `progress-libs.test.ts` 22, `progress.ark.test.tsx` 2, `progress.base-ui.test.tsx` 4, `progress.radix.test.tsx` 4, `progress.test.tsx` 43 |
 | End to end | 9 | `progress.e2e.ts` 9 |
 | registry-ui | 13 | `progress.test.tsx` 13 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>78 behaviours, one per test</summary>
+<summary>84 behaviours, one per test</summary>
+
+**Unit, `progress-libs.test.ts`**
+
+- progress.libs
+  - DEFAULT_MAX is 100
+- progress.libs &gt; isNumber
+  - returns true for numbers
+  - returns false for non-numbers
+- progress.libs &gt; isValidMaxNumber
+  - accepts positive numbers
+  - rejects zero
+  - rejects negative
+  - rejects NaN
+  - rejects non-numbers
+- progress.libs &gt; isValidValueNumber
+  - accepts values between 0 and max
+  - rejects negative values
+  - rejects values above max
+  - rejects NaN
+  - rejects non-numbers
+- progress.libs &gt; getProgressState
+  - returns indeterminate for null
+  - returns indeterminate for undefined
+  - returns complete when value equals max
+  - returns loading when value is less than max
+- progress.libs &gt; defaultGetValueLabel
+  - returns percentage string
+  - rounds to nearest integer
+  - works with custom max
+- progress.libs &gt; error messages
+  - getInvalidMaxError includes prop value and component name
+  - getInvalidValueError includes prop value and component name
+
+**Unit, `progress.ark.test.tsx`**
+
+- Ark UI progress
+  - has no axe violations
+  - renders its value against a max of its own
+
+**Unit, `progress.base-ui.test.tsx`**
+
+- Base UI progress
+  - updates aria-valuenow as the value changes
+  - draws a value of NaN indeterminate
+  - draws a value of Infinity indeterminate
+  - draws a value of -Infinity indeterminate
 
 **Unit, `progress.radix.test.tsx`**
 
@@ -114,38 +162,6 @@ Each test was proven by changing the code and watching a test fail.
   - hands the label and the value to a render function
   - shows children it is given in place of the label
   - carries the state of the progress
-
-**Unit, `progress-libs.test.ts`**
-
-- progress.libs
-  - DEFAULT_MAX is 100
-- progress.libs &gt; isNumber
-  - returns true for numbers
-  - returns false for non-numbers
-- progress.libs &gt; isValidMaxNumber
-  - accepts positive numbers
-  - rejects zero
-  - rejects negative
-  - rejects NaN
-  - rejects non-numbers
-- progress.libs &gt; isValidValueNumber
-  - accepts values between 0 and max
-  - rejects negative values
-  - rejects values above max
-  - rejects NaN
-  - rejects non-numbers
-- progress.libs &gt; getProgressState
-  - returns indeterminate for null
-  - returns indeterminate for undefined
-  - returns complete when value equals max
-  - returns loading when value is less than max
-- progress.libs &gt; defaultGetValueLabel
-  - returns percentage string
-  - rounds to nearest integer
-  - works with custom max
-- progress.libs &gt; error messages
-  - getInvalidMaxError includes prop value and component name
-  - getInvalidValueError includes prop value and component name
 
 **End to end, `progress.e2e.ts`**
 

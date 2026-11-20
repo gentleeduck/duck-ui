@@ -1,11 +1,11 @@
 // From Radix UI primitives, packages/react/one-time-password-field/src/one-time-password-field.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import type { RenderResult } from '@testing-library/react'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { type UserEvent, userEvent } from '@testing-library/user-event'
 import * as React from 'react'
-import { axe, radixEnvironment, vi } from '../../__tests__/radix/harness'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { axe, radixEnvironment } from '../../__tests__/radix/harness'
 import * as InputOTP from '../index'
 
 // duck names the per-character input Slot.

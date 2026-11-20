@@ -1,7 +1,7 @@
-import { describe, expect, it, mock } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { createPortal } from 'react-dom'
+import { describe, expect, it, vi } from 'vitest'
 import { freshDom, wait } from '../../__tests__/dom'
 import { DirectionProvider } from '../../direction'
 import { HoverCard, HoverCardArrow, HoverCardContent, HoverCardPortal, HoverCardTrigger } from '../index'
@@ -206,7 +206,7 @@ describe('HoverCard delays', () => {
   })
 
   it('drops a pending open when it unmounts', async () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const trigger = renderClosedCard({ open: false, openDelay: 20, onOpenChange })
     fireEvent.pointerEnter(trigger, { pointerType: 'mouse' })
 
@@ -217,7 +217,7 @@ describe('HoverCard delays', () => {
   })
 
   it('drops a pending close when it unmounts', async () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const trigger = renderClosedCard({ open: true, closeDelay: 20, onOpenChange })
     fireEvent.pointerLeave(trigger, { pointerType: 'mouse' })
 
@@ -230,7 +230,7 @@ describe('HoverCard delays', () => {
 
 describe('HoverCard disabled', () => {
   it('does not open on hover or focus while disabled', async () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const trigger = renderClosedCard({ disabled: true, onOpenChange })
 
     fireEvent.pointerEnter(trigger, { pointerType: 'mouse' })
@@ -242,7 +242,7 @@ describe('HoverCard disabled', () => {
   })
 
   it('closes once it is disabled while open', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const card = (disabled: boolean) => (
       <HoverCard defaultOpen onOpenChange={onOpenChange} disabled={disabled}>
         <HoverCardTrigger href="#">Hover target</HoverCardTrigger>
@@ -264,7 +264,7 @@ describe('HoverCard disabled', () => {
   })
 
   it('drops a pending open when it is disabled', async () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const card = (disabled: boolean) => (
       <HoverCard openDelay={20} onOpenChange={onOpenChange} disabled={disabled}>
         <HoverCardTrigger href="#">Hover target</HoverCardTrigger>

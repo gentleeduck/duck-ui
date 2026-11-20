@@ -42,6 +42,7 @@ const InputOTP = React.forwardRef<InputOTPElement, IInputOTP.IProps>(
       onValueChange,
       onComplete,
       autoSubmit = false,
+      autoFocus = false,
       pattern = REGEXP_ONLY_DIGITS_AND_CHARS,
       dir,
       maxLength,
@@ -55,6 +56,8 @@ const InputOTP = React.forwardRef<InputOTPElement, IInputOTP.IProps>(
     const wrapperRef = React.useRef<HTMLDivElement>(null)
     const composedRef = useComposedRefs(forwardedRef, wrapperRef)
     const submitRef = React.useRef(false)
+    // Read once, on mount, as the attribute is.
+    const autoFocusRef = React.useRef(autoFocus)
     const pressedRef = React.useRef<EventTarget | null>(null)
     const [, rerender] = React.useReducer((count: number) => count + 1, 0)
     const [value, setValue] = useControllableState({
@@ -88,6 +91,8 @@ const InputOTP = React.forwardRef<InputOTPElement, IInputOTP.IProps>(
         setUnlessOwn(slot, 'aria-label', `Digit ${index + 1}`)
         setUnlessOwn(slot, 'tabindex', index === stop ? '0' : '-1')
       })
+      if (autoFocusRef.current) slots[stop]?.focus()
+      autoFocusRef.current = false
       // Here, not in commit, so the hidden input holds the whole code when the form reads it.
       const submit = submitRef.current
       submitRef.current = false

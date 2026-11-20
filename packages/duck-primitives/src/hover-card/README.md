@@ -37,19 +37,40 @@ select; content that loads after it opens; an animated card, and one kept mounte
 through `asChild`; each side, left to right and right to left; and a card in an iframe and one in a shadow root.
 The end-to-end suite runs each in Chromium, Firefox and WebKit, with a tap on a touch screen.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Ark UI and Base UI run that library's own cases against this code. Each file's header names its source and every
+case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 65 | `hover-card.radix.test.tsx` 10, `hover-card.test.tsx` 55 |
+| Unit | 76 | `hover-card.ark.test.tsx` 4, `hover-card.base-ui.test.tsx` 7, `hover-card.radix.test.tsx` 10, `hover-card.test.tsx` 55 |
 | End to end | 30 | `hover-card.e2e.ts` 30 |
 | registry-ui | 9 | `hover-card-force-mount.test.tsx` 1, `hover-card.test.tsx` 8 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>95 behaviours, one per test</summary>
+<summary>106 behaviours, one per test</summary>
+
+**Unit, `hover-card.ark.test.tsx`**
+
+- Ark UI hover card
+  - has no axe violations
+  - opens on hover, mounting its content only then, and closes once the pointer leaves
+  - tells onOpenChange as it opens
+  - starts open with defaultOpen
+
+**Unit, `hover-card.base-ui.test.tsx`**
+
+- Base UI preview card
+  - opens on hover and closes once the pointer leaves
+  - opens on focus and closes on blur
+  - tells onOpenChange each change, and nothing again when the trigger is hovered again while open
+  - closes once the pointer leaves the trigger after opening by default
+  - opens after its open delay, and closes after its close delay
+  - closes on Escape, and opens again on the next hover
+  - stays closed as focus comes back to its trigger with the window, once Escape closed it
 
 **Unit, `hover-card.radix.test.tsx`**
 
@@ -212,6 +233,8 @@ Each test was proven by changing the code and watching a test fail.
   selected text keeps it open. Radix decides as the pointer leaves, before the press's selection is read.
 - A press the browser cancels, as when a touch turns into a scroll, gives the page its selection back and lets
   the card close. Radix waits only for a `pointerup`.
+- Focus coming back with the window to the trigger it left from leaves the card shut, where it opened it again,
+  so a card closed with Escape came back each time the window did.
 
 ## Smaller and faster
 

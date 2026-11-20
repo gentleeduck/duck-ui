@@ -1,9 +1,9 @@
 // From Radix UI primitives, packages/react/hover-card/src/hover-card.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import { afterEach, describe, expect, it } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
-import { radixEnvironment, vi } from '../../__tests__/radix/harness'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { radixEnvironment } from '../../__tests__/radix/harness'
 import * as HoverCard from '../index'
 
 radixEnvironment()

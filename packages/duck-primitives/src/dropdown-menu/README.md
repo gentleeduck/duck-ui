@@ -41,19 +41,95 @@ links, one disabled; a list longer than the space below it; every side and align
 trigger; a trigger inside a tooltip trigger; an exit animation; a menu inside a dialog; and an overlay a browser
 extension draws over the page. The end-to-end suite runs each in Chromium, Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Ark UI, Base UI, Headless UI and React Aria run that library's own cases against this code. Each file's header
+names its source and every case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 115 | `dropdown-menu.radix.test.tsx` 40, `dropdown-menu.test.tsx` 75 |
+| Unit | 173 | `dropdown-menu.ark.test.tsx` 7, `dropdown-menu.base-ui.test.tsx` 4, `dropdown-menu.headless.test.tsx` 44, `dropdown-menu.radix.test.tsx` 40, `dropdown-menu.react-aria.test.tsx` 3, `dropdown-menu.test.tsx` 75 |
 | End to end | 50 | `dropdown-menu.e2e.ts` 33, `dropdown-menu.radix.e2e.ts` 17 |
 | registry-ui | 15 | `dropdown-menu-force-mount.test.tsx` 1, `dropdown-menu.test.tsx` 14 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>165 behaviours, one per test</summary>
+<summary>223 behaviours, one per test</summary>
+
+**Unit, `dropdown-menu.ark.test.tsx`**
+
+- Ark UI menu
+  - has no axe violations while open
+  - marks a disabled item for assistive technology, and runs nothing on a click of it
+  - gives a group the group role, named by its label
+  - follows an owner that controls it, mounting its content only while open
+  - opens on a context menu event
+  - opens a submenu from its trigger
+  - checks the radio item picked
+
+**Unit, `dropdown-menu.base-ui.test.tsx`**
+
+- Base UI menu nested
+  - closes every level on a press outside the deepest submenu
+- Base UI menu nested &gt; opening a submenu on hover
+  - opens a submenu once the pointer moves over its trigger
+- Base UI menu checkbox and radio items
+  - checks a checkbox item on a click, telling onCheckedChange
+  - gives a radio group the group role, and checks the radio item clicked
+
+**Unit, `dropdown-menu.headless.test.tsx`**
+
+- Headless UI menu safe guards
+  - renders closed without crashing
+- Headless UI menu opening from the keyboard
+  - opens on Enter with its first item active
+  - stays closed on Enter while its trigger is disabled
+  - opens on Enter with no item active when it has none
+  - opens on Enter on its first item that is not disabled, past several that are
+  - opens on Enter with no item active when every item is disabled
+  - opens on Space with its first item active
+  - stays closed on Space while its trigger is disabled
+  - opens on Space with no item active when it has none
+  - opens on Space on its first item that is not disabled, past several that are
+  - opens on Space with no item active when every item is disabled
+  - opens on ArrowDown with its first item active
+  - stays closed on ArrowDown while its trigger is disabled
+  - opens on ArrowDown with no item active when it has none
+  - opens on ArrowDown on its first item that is not disabled, past several that are
+  - opens on ArrowDown with no item active when every item is disabled
+- Headless UI menu keys while open
+  - runs the active item on Enter and closes, giving focus back to its trigger
+  - runs the active item on Space and closes, giving focus back to its trigger
+  - closes on Escape, giving focus back to its trigger
+  - moves down on ArrowDown and up on ArrowUp, past disabled items
+  - stays on its one item that is not disabled on ArrowUp and ArrowDown
+  - moves to the last item on End, past disabled items
+  - stays on the one item that is not disabled on End
+  - moves to the last item on PageDown, past disabled items
+  - stays on the one item that is not disabled on PageDown
+  - moves to the first item on Home, past disabled items
+  - stays on the one item that is not disabled on Home
+  - moves to the first item on PageUp, past disabled items
+  - stays on the one item that is not disabled on PageUp
+- Headless UI menu typeahead
+  - moves to the item a whole word names
+  - moves to the item the start of a word names
+  - takes a search with a space in it
+  - passes over a disabled item
+  - matches whatever the case
+  - moves on to the next match on the same letter typed again
+  - stays on its item while the letters typed still match it
+- Headless UI menu with the mouse
+  - opens on a press of its trigger, and closes on the next
+  - stays closed on a right press, and while its trigger is disabled
+  - closes on a press outside it, and does nothing on one while closed
+  - closes and opens another on a press of that menu trigger
+  - makes the item the pointer moves over active, and none once it leaves, passing over a disabled item
+  - runs an item clicked and closes, and does nothing on a click of a disabled item
+  - makes an item active when it takes focus
+- Headless UI menu items changing
+  - keeps the order of its items after one is taken out and put back
 
 **Unit, `dropdown-menu.radix.test.tsx`**
 
@@ -116,6 +192,14 @@ Each test was proven by changing the code and watching a test fail.
 - DropdownMenu.SubContent
   - spreads props it does not consume onto the element it renders
   - forwards props to the child element when `asChild` is set
+
+**Unit, `dropdown-menu.react-aria.test.tsx`**
+
+- React Aria menu submenus
+  - closes the whole menu on Escape in a submenu, giving focus back to the root trigger
+  - stays open on a click on an element inside a submenu that is not an item
+- React Aria menu presses
+  - runs the item a press of the trigger is dragged onto and released over
 
 **Unit, `dropdown-menu.test.tsx`**
 

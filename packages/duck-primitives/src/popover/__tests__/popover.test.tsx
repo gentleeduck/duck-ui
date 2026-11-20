@@ -1,7 +1,7 @@
-import { describe, expect, it, mock, spyOn } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
+import { describe, expect, it, vi } from 'vitest'
 import {
   clickOutside,
   freshDom,
@@ -67,7 +67,7 @@ describe('Popover', () => {
   })
 
   it('calls onOpenChange on trigger click', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderPopover({ onOpenChange: handler })
     fireEvent.click(container.querySelector('[data-slot="popover-trigger"]')!)
     expect(handler).toHaveBeenCalledWith(true)
@@ -90,7 +90,7 @@ describe('Popover', () => {
   })
 
   it('toggles closed on second click', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderPopover({ onOpenChange: handler })
     const trigger = container.querySelector('[data-slot="popover-trigger"]')!
     fireEvent.click(trigger)
@@ -337,8 +337,8 @@ describe('Popover modal focus on close', () => {
   })
 
   it('hands a focus and a press outside to the handlers it was given', async () => {
-    const onFocusOutside = mock(() => {})
-    const onInteractOutside = mock(() => {})
+    const onFocusOutside = vi.fn(() => {})
+    const onInteractOutside = vi.fn(() => {})
     const { outside } = await openPopover({ modal: true, onFocusOutside, onInteractOutside })
 
     fireEvent.focusOut(screen.getByRole('dialog'))
@@ -462,7 +462,7 @@ describe('Popover non-modal outside interaction', () => {
   })
 
   it('ignores the focus that follows a click outside while the content is still mounted', async () => {
-    const onInteractOutside = mock()
+    const onInteractOutside = vi.fn()
     const { outside } = await openPopover({ modal: false, forceMount: true, onInteractOutside })
 
     await clickOutside(outside, { focus: true })
@@ -725,7 +725,7 @@ describe('Popover modal content ref', () => {
 
 describe('Popover non-modal content props', () => {
   it('keeps the modal-only lockScroll off the element', () => {
-    const error = spyOn(console, 'error').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     try {
       render(

@@ -36,19 +36,45 @@ and a controlled group whose owner can refuse a change. The end-to-end suite dri
 WebKit. Roving focus moves focus in a timeout after the keydown, as Radix does, so the suite waits for each move
 before the next key.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Ark UI and Base UI run that library's own cases against this code. Each file's header names its source and every
+case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 57 | `toggle-group.radix.test.tsx` 17, `toggle-group.test.tsx` 40 |
+| Unit | 73 | `toggle-group.ark.test.tsx` 6, `toggle-group.base-ui.test.tsx` 10, `toggle-group.radix.test.tsx` 17, `toggle-group.test.tsx` 40 |
 | End to end | 13 | `toggle-group.e2e.ts` 12, `toggle-group.radix.e2e.ts` 1 |
 | registry-ui | 9 | `toggle-group.test.tsx` 9 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>70 behaviours, one per test</summary>
+<summary>86 behaviours, one per test</summary>
+
+**Unit, `toggle-group.ark.test.tsx`**
+
+- Ark UI toggle group
+  - has no axe violations
+  - starts on its default value
+  - tells onValueChange the item pressed
+  - presses several items when multiple
+  - presses nothing while disabled
+  - loops focus from the last item to the first by default, and stops at the end with loop off
+
+**Unit, `toggle-group.base-ui.test.tsx`**
+
+- Base UI toggle group
+  - renders a group, with no aria-orientation on it, once roving focus is off
+  - moves focus with ArrowRight and ArrowLeft in ltr horizontal
+  - moves focus with ArrowLeft and ArrowRight in rtl horizontal
+  - moves focus with ArrowDown and ArrowUp in ltr vertical
+  - moves focus with ArrowDown and ArrowUp in rtl vertical
+  - moves focus to the first item on Home and the last on End
+  - presses and releases an item on Enter
+  - presses and releases an item on Space
+  - presses one item at a time when single, checking it as a radio
+  - disables the whole group, or one item
 
 **Unit, `toggle-group.radix.test.tsx`**
 

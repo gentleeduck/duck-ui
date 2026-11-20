@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, it, mock } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import * as React from 'react'
 import { flushSync } from 'react-dom'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { clickOutside, freshDom, wait } from '../../__tests__/dom'
 import { DismissableLayer } from '../dismissable-layer'
 import { DismissableLayerBranch, useDismissableLayer, useDismissableLayerSurface } from '../index'
@@ -34,7 +34,7 @@ describe('DismissableLayer', () => {
   })
 
   it('calls onEscapeKeyDown when Escape is pressed', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     render(
       <DismissableLayer onEscapeKeyDown={handler}>
         <span>content</span>
@@ -45,7 +45,7 @@ describe('DismissableLayer', () => {
   })
 
   it('calls onDismiss when Escape is pressed', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     render(
       <DismissableLayer onDismiss={handler}>
         <span>content</span>
@@ -66,7 +66,7 @@ describe('DismissableLayer', () => {
   })
 
   it('does not call onDismiss on non-Escape keys', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     render(
       <DismissableLayer onDismiss={handler}>
         <span>content</span>
@@ -203,7 +203,7 @@ describe('DismissableLayer stack', () => {
 
 describe('DismissableLayer branch', () => {
   it('stays put when focus moves into one of its branches, and not elsewhere', () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     render(
       <>
         <DismissableLayer onDismiss={onDismiss}>
@@ -226,7 +226,7 @@ describe('DismissableLayer branch', () => {
 
 describe('DismissableLayer and focus leaving it', () => {
   it('dismisses once focus moves from inside it to an element outside', () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     render(
       <>
         <DismissableLayer onDismiss={onDismiss}>
@@ -244,7 +244,7 @@ describe('DismissableLayer and focus leaving it', () => {
   })
 
   it('stays when onFocusOutside prevents the default', () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     render(
       <>
         <DismissableLayer onDismiss={onDismiss} onFocusOutside={(event) => event.preventDefault()} />
@@ -260,7 +260,7 @@ describe('DismissableLayer and focus leaving it', () => {
 
 describe('DismissableLayer branch without a node', () => {
   it('is no branch when its child never takes the ref, and the next focus outside still dismisses', () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     function Plain({ children }: { children?: React.ReactNode }) {
       return <button type="button">{children}</button>
     }
@@ -304,8 +304,8 @@ describe('DismissableLayer in two documents', () => {
   function renderInBoth() {
     const other = document.implementation.createHTMLDocument('frame')
     const container = other.body.appendChild(other.createElement('div'))
-    const onPageDismiss = mock()
-    const onFrameDismiss = mock()
+    const onPageDismiss = vi.fn()
+    const onFrameDismiss = vi.fn()
     render(<DismissableLayer onDismiss={onPageDismiss} />)
     render(<DismissableLayer onDismiss={onFrameDismiss} />, { container })
     return { other, onPageDismiss, onFrameDismiss }
@@ -325,7 +325,7 @@ describe('DismissableLayer in two documents', () => {
   it('leaves a layer pressable and hearing presses outside while a modal layer blocks only another document', async () => {
     const other = document.implementation.createHTMLDocument('frame')
     const container = other.body.appendChild(other.createElement('div'))
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     render(<DismissableLayer data-testid="page layer" onDismiss={onDismiss} />)
     render(<DismissableLayer disableOutsidePointerEvents />, { container })
     const outside = document.body.appendChild(document.createElement('button'))
@@ -431,7 +431,7 @@ async function renderLayer(props: React.ComponentProps<typeof DismissableLayer> 
 
 describe('DismissableLayer outside a deferred press', () => {
   it('waits for the click after a touch even without deferPointerDownOutside', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
 
     fireEvent.pointerDown(outside, { pointerType: 'touch' })
@@ -443,8 +443,8 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('leaves the focus that moves during a deferred touch to the click that follows', async () => {
-    const onDismiss = mock()
-    const onFocusOutside = mock()
+    const onDismiss = vi.fn()
+    const onFocusOutside = vi.fn()
     const outside = await renderLayer({ onDismiss, onFocusOutside })
 
     fireEvent.pointerDown(outside, { pointerType: 'touch' })
@@ -460,7 +460,7 @@ describe('DismissableLayer outside a deferred press', () => {
     ['a right press', { button: 2 }],
     ['a control press', { button: 0, ctrlKey: true }],
   ])('dismisses at once on %s, even when it defers', async (_, press) => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ deferPointerDownOutside: true, onDismiss })
 
     fireEvent.pointerDown(outside, { ...press, pointerType: 'mouse' })
@@ -469,7 +469,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('listens to focus again once a stopped click has settled the press', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ deferPointerDownOutside: true, onDismiss })
     outside.addEventListener('click', (event) => event.stopPropagation())
 
@@ -483,7 +483,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('does not dismiss from a click that lands after it unmounted', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     function Test({ open }: { open: boolean }) {
       return (
         <>
@@ -509,7 +509,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('does not dismiss when it unmounts between the click and the dismissal', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     function Test({ open }: { open: boolean }) {
       return (
         <>
@@ -535,7 +535,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('reads a press cancelled before its click as over, so the next press decides alone', async () => {
-    const onPointerDownOutside = mock()
+    const onPointerDownOutside = vi.fn()
     render(
       <>
         <DismissableLayer deferPointerDownOutside onPointerDownOutside={onPointerDownOutside}>
@@ -562,7 +562,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('waits for the click a tap sends a task after it lifts', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
 
     fireEvent.pointerDown(outside, { pointerType: 'touch' })
@@ -575,7 +575,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('keeps a press made before the last one was found clickless, and settles it on its own click', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ deferPointerDownOutside: true, onDismiss })
 
     fireEvent.pointerDown(outside, { pointerType: 'mouse' })
@@ -590,7 +590,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('listens to focus again once the mouse lifts with no click to wait for', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ deferPointerDownOutside: true, onDismiss })
 
     fireEvent.pointerDown(outside, { pointerType: 'mouse' })
@@ -603,7 +603,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('leaves a click with no press of its own, as Enter on a button sends, to the button', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ deferPointerDownOutside: true, onDismiss })
 
     fireEvent.pointerDown(outside, { pointerType: 'mouse' })
@@ -616,7 +616,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('listens to focus again once a touch turns into a scroll, which sends no click', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
 
     fireEvent.pointerDown(outside, { pointerType: 'touch' })
@@ -630,7 +630,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('stays open when a modal layer opens over it between the press and its click', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     function Test({ modal }: { modal: boolean }) {
       return (
         <>
@@ -653,7 +653,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('settles a stopped click on its own press, not on a press made before the stop is read', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ deferPointerDownOutside: true, onDismiss })
     const stopping = document.body.appendChild(document.createElement('button'))
     stopping.addEventListener('click', (event) => event.stopPropagation())
@@ -670,7 +670,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('settles a tap on a click a browser holds back 350ms after the lift, waiting out a double tap', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
 
     fireEvent.pointerDown(outside, { pointerType: 'touch' })
@@ -683,7 +683,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('listens to focus again once a tap sends no click for a second after it lifts', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
 
     fireEvent.pointerDown(outside, { pointerType: 'touch' })
@@ -695,7 +695,7 @@ describe('DismissableLayer outside a deferred press', () => {
   })
 
   it('closes on a mouse press on a surface that stops its click, as a dialog overlay may', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     function Surface() {
       return (
         // biome-ignore lint/a11y/noStaticElementInteractions: a backdrop for the pointer, as a dialog's overlay is
@@ -768,7 +768,7 @@ function pressAt(
 
 describe('DismissableLayer and scrollbars outside it', () => {
   it('stays open when a scrollbar outside it is pressed, and closes on the content beside it', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside)
 
@@ -781,7 +781,7 @@ describe('DismissableLayer and scrollbars outside it', () => {
   })
 
   it('finds the vertical scrollbar on the left of a right-to-left box', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside, { direction: 'rtl' })
 
@@ -793,7 +793,7 @@ describe('DismissableLayer and scrollbars outside it', () => {
   })
 
   it('closes where a horizontal scrollbar would be on a box that only scrolls down', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside, { overflow: 'hidden', overflowY: 'auto' })
 
@@ -805,7 +805,7 @@ describe('DismissableLayer and scrollbars outside it', () => {
   })
 
   it('closes on the border of a box that does not scroll', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside, { overflow: 'visible' })
 
@@ -815,7 +815,7 @@ describe('DismissableLayer and scrollbars outside it', () => {
   })
 
   it('closes on the border of a scrolling box whose content fits', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside, { overflows: false })
 
@@ -826,7 +826,7 @@ describe('DismissableLayer and scrollbars outside it', () => {
   })
 
   it('closes on a touch where a scrollbar would be, since a touch scrolls without one', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside)
 
@@ -838,7 +838,7 @@ describe('DismissableLayer and scrollbars outside it', () => {
   })
 
   it('stays open when the press on a scrollbar outside it focuses that box, until the pointer lifts', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside)
 
@@ -853,7 +853,7 @@ describe('DismissableLayer and scrollbars outside it', () => {
   })
 
   it('closes when focus moves to anything but the box whose scrollbar was pressed', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     render(
       <>
         <DismissableLayer onDismiss={onDismiss} />
@@ -871,7 +871,7 @@ describe('DismissableLayer and scrollbars outside it', () => {
   })
 
   it("stays open when the page's own scrollbar is pressed", async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     await renderLayer({ onDismiss })
     const restore = laidOut(document.documentElement, { overflow: 'visible' })
 
@@ -906,7 +906,7 @@ const lift = (target: Element) => fireEvent.pointerUp(target, { pointerType: 'mo
 
 describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
   it('stays open on a press at the edge of a box whose scrollbars take no room, since a scrollbar sends no click', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside, { room: false })
 
@@ -921,7 +921,7 @@ describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
   })
 
   it('closes on the click that follows a press at that edge, which only a press on the box sends', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside, { room: false })
 
@@ -935,7 +935,7 @@ describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
   })
 
   it('finds that edge on the left of a right-to-left box', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside, { room: false, direction: 'rtl' })
 
@@ -947,7 +947,7 @@ describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
   })
 
   it('closes at once on a press away from that edge, or at the edge of a side that does not scroll', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside, { room: false, overflow: 'hidden', overflowY: 'auto' })
 
@@ -958,7 +958,7 @@ describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
   })
 
   it('closes at once at the edge of a box whose content fits', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside, { room: false, overflows: false })
 
@@ -969,7 +969,7 @@ describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
   })
 
   it('closes at once on a press beside a scrollbar that takes room', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside)
 
@@ -980,7 +980,7 @@ describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
   })
 
   it('closes at once on a right press at that edge, which sends no click to wait for', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     laidOut(outside, { room: false })
 
@@ -990,7 +990,7 @@ describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
   })
 
   it("stays open on a press at the edge of a page whose scrollbars take no room, and closes on the page's content", async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     const restore = pageLaidOut()
 
@@ -1008,7 +1008,7 @@ describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
   })
 
   it("finds the page's edge on the left of a right-to-left page, whatever the direction under the press", async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     const restore = pageLaidOut({ direction: 'rtl', across: true })
     outside.style.direction = 'ltr'
@@ -1030,7 +1030,7 @@ describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
   })
 
   it('measures the page of the frame it is in, not the window around the frame', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const frame = document.createElement('iframe')
     document.body.append(frame)
     const frameDocument = frame.contentDocument as Document
@@ -1062,7 +1062,7 @@ describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
   })
 
   it('closes at once at the edge of a page that does not scroll, or whose scrollbars take room', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const outside = await renderLayer({ onDismiss })
     let restore = pageLaidOut({ down: false })
 
@@ -1082,7 +1082,7 @@ describe('DismissableLayer and scrollbars drawn over a box outside it', () => {
 
 describe('DismissableLayer closed by the press it hears', () => {
   it('hears no more of a press outside once the layer under it has closed it', async () => {
-    const onUpperOutside = mock()
+    const onUpperOutside = vi.fn()
     function Pair() {
       const [open, setOpen] = React.useState(true)
       return open ? (
@@ -1109,7 +1109,7 @@ describe('DismissableLayer closed by the press it hears', () => {
 
 describe('DismissableLayer and the press around its mount', () => {
   it('leaves alone the press that opened it, which reaches the document after it mounts', () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     function Opener() {
       const [open, setOpen] = React.useState(false)
       const ref = React.useRef<HTMLButtonElement>(null)
@@ -1140,7 +1140,7 @@ describe('DismissableLayer and the press around its mount', () => {
   })
 
   it('hears a press outside made after it mounted, without waiting for the task that mounted it to end', () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     render(<DismissableLayer onDismiss={onDismiss}>Layer</DismissableLayer>)
     const outside = document.body.appendChild(document.createElement('button'))
     // A busy page runs queued input before timers; the press is stamped on a later millisecond than the mount.
@@ -1153,7 +1153,7 @@ describe('DismissableLayer and the press around its mount', () => {
   })
 
   it('hears a press dispatched on the document itself as outside', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     await renderLayer({ onDismiss })
 
     document.dispatchEvent(new window.PointerEvent('pointerdown', { bubbles: true, pointerType: 'mouse' }))
@@ -1164,7 +1164,7 @@ describe('DismissableLayer and the press around its mount', () => {
 
 describe('DismissableLayer and a press inside it', () => {
   it('hears the next press outside after one inside stopped before reaching the document', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     render(
       <>
         <DismissableLayer onDismiss={onDismiss}>
@@ -1184,7 +1184,7 @@ describe('DismissableLayer and a press inside it', () => {
   })
 
   it('reads a press inside as inside when its own pointer down capture prevents the default', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     render(
       <DismissableLayer onDismiss={onDismiss} onPointerDownCapture={(event) => event.preventDefault()}>
         <button type="button">Inside</button>
@@ -1226,7 +1226,7 @@ describe('DismissableLayer inside a shadow root', () => {
   }
 
   it('stays open on a press or focus in a branch inside the shadow root', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const shadow = await renderInShadow({ onDismiss })
 
     fireEvent.pointerDown(shadow.getByLabelText('Branch field'))
@@ -1236,7 +1236,7 @@ describe('DismissableLayer inside a shadow root', () => {
   })
 
   it('stays open on a press or focus in a shadow root a branch holds', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const host = document.createElement('div')
     const button = host.attachShadow({ mode: 'open' }).appendChild(document.createElement('button'))
     render(
@@ -1255,7 +1255,7 @@ describe('DismissableLayer inside a shadow root', () => {
   })
 
   it('closes once focus moves from inside it to an element outside it in the same shadow root', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const shadow = await renderInShadow({ onDismiss })
 
     act(() => shadow.getByText('Inside').focus())
@@ -1265,7 +1265,7 @@ describe('DismissableLayer inside a shadow root', () => {
   })
 
   it('keeps hearing focus in the shadow root while another layer there stays open', () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const container = inShadowRoot()
     const Two = ({ first }: { first: boolean }) => (
       <>
@@ -1286,7 +1286,7 @@ describe('DismissableLayer inside a shadow root', () => {
   })
 
   it('stops hearing focus in the shadow root once its last layer there closes', () => {
-    const onFocusOutside = mock()
+    const onFocusOutside = vi.fn()
     render(<DismissableLayer onFocusOutside={onFocusOutside} />)
     const container = inShadowRoot()
     const [first, second] = [document.createElement('button'), document.createElement('button')]
@@ -1300,7 +1300,7 @@ describe('DismissableLayer inside a shadow root', () => {
   })
 
   it('hears focus moving into the shadow root once, though the shadow root and the document both hear it', async () => {
-    const onFocusOutside = mock()
+    const onFocusOutside = vi.fn()
     const shadow = await renderInShadow({ onFocusOutside })
 
     act(() => shadow.getByText('Outside').focus())
@@ -1312,7 +1312,7 @@ describe('DismissableLayer inside a shadow root', () => {
     'hands a press outside the element pressed, not the shadow host, when deferring is %p',
     async (deferPointerDownOutside) => {
       const pressed: (EventTarget | null)[] = []
-      const onDismiss = mock()
+      const onDismiss = vi.fn()
       const shadow = await renderInShadow({
         deferPointerDownOutside,
         onDismiss,
@@ -1328,7 +1328,7 @@ describe('DismissableLayer inside a shadow root', () => {
   )
 
   it('closes on a press on a surface inside the shadow root, though the surface stops its click', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     function Surface() {
       return (
         // biome-ignore lint/a11y/noStaticElementInteractions: a backdrop for the pointer, as a dialog's overlay is
@@ -1354,7 +1354,7 @@ describe('DismissableLayer inside a shadow root', () => {
   })
 
   it('closes on a press in a shadow root a surface holds, though the surface stops its click', async () => {
-    const onDismiss = mock()
+    const onDismiss = vi.fn()
     const host = document.createElement('div')
     const button = host.attachShadow({ mode: 'open' }).appendChild(document.createElement('button'))
     function Surface() {

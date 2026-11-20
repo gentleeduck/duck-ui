@@ -1,12 +1,12 @@
 // From Radix UI primitives, packages/react/dialog/src/dialog.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import type { MockInstance } from 'bun:test'
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import type { RenderResult } from '@testing-library/react'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-import { axe, radixEnvironment, vi } from '../../__tests__/radix/harness'
+import type { MockInstance } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { axe, radixEnvironment } from '../../__tests__/radix/harness'
 import { DismissableLayer } from '../../dismissable-layer'
 import * as FocusScope from '../../focus-scope'
 import * as Dialog from '../index'

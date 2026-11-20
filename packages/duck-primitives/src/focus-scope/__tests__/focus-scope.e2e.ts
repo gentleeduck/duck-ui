@@ -133,6 +133,26 @@ test.describe('FocusScope skipping what is not a stop', () => {
     await expect(button(page, 'Last')).toBeFocused()
   })
 
+  // From Headless UI's focus trap suite, packages/@headlessui-react/src/components/focus-trap/focus-trap.test.tsx.
+  test('focuses past the disabled and hidden elements that start it, on mount', async ({ page }) => {
+    await visitStory(page, 'focusscope--skipped')
+
+    await expect(button(page, 'First')).toBeFocused()
+  })
+
+  test('keeps Tab inside it when a positive tabIndex outside it comes next in the page order', async ({ page }) => {
+    await visitStory(page, 'focusscope--positive-tab-index')
+    const field = (name: string) => page.getByRole('textbox', { exact: true, name })
+    await expect(field('Inside first')).toBeFocused()
+
+    await page.keyboard.press('Tab')
+    await expect(field('Inside second')).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(field('Inside first')).toBeFocused()
+    await page.keyboard.press('Shift+Tab')
+    await expect(field('Inside second')).toBeFocused()
+  })
+
   test('reads a focusable svg at its end as its last stop', async ({ page }) => {
     await visitStory(page, 'focusscope--svg')
     await page.getByRole('img', { name: 'Icon' }).focus()

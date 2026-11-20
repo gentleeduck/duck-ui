@@ -1,7 +1,7 @@
-import { describe, expect, it, mock, spyOn } from 'bun:test'
 import { act, fireEvent, render } from '@testing-library/react'
 import * as React from 'react'
 import { renderToString } from 'react-dom/server'
+import { describe, expect, it, vi } from 'vitest'
 import { useCallbackRef } from '../use-callback-ref'
 import { useControllableState } from '../use-controllable-state'
 import { useEscapeKeydown } from '../use-escape-keydown'
@@ -213,7 +213,7 @@ describe('useStateMachine', () => {
 
 describe('useEscapeKeydown', () => {
   it('calls handler on Escape keydown', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     function Comp() {
       useEscapeKeydown(handler)
       return <div />
@@ -224,7 +224,7 @@ describe('useEscapeKeydown', () => {
   })
 
   it('does not call handler on other keys', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     function Comp() {
       useEscapeKeydown(handler)
       return <div />
@@ -235,7 +235,7 @@ describe('useEscapeKeydown', () => {
   })
 
   it('cleans up listener on unmount', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     function Comp() {
       useEscapeKeydown(handler)
       return <div />
@@ -336,7 +336,7 @@ describe('useControllableState', () => {
   })
 
   it('calls onChange when uncontrolled value changes', () => {
-    const onChange = mock(() => {})
+    const onChange = vi.fn(() => {})
     let setValue: React.Dispatch<React.SetStateAction<string>> = () => {}
     function Comp() {
       const [, set] = useControllableState({ defaultProp: 'a', onChange })
@@ -349,7 +349,7 @@ describe('useControllableState', () => {
   })
 
   it('calls onChange when controlled value differs from prop', () => {
-    const onChange = mock(() => {})
+    const onChange = vi.fn(() => {})
     let setValue: React.Dispatch<React.SetStateAction<string>> = () => {}
     function Comp() {
       const [, set] = useControllableState({ prop: 'a', defaultProp: 'a', onChange })
@@ -362,7 +362,7 @@ describe('useControllableState', () => {
   })
 
   it('accepts a function updater', () => {
-    const onChange = mock(() => {})
+    const onChange = vi.fn(() => {})
     let setValue: React.Dispatch<React.SetStateAction<number>> = () => {}
     function Comp() {
       const [, set] = useControllableState({ defaultProp: 5, onChange })
@@ -375,7 +375,7 @@ describe('useControllableState', () => {
   })
 
   it('does not call onChange when setting the same controlled value', () => {
-    const onChange = mock(() => {})
+    const onChange = vi.fn(() => {})
     let setValue: React.Dispatch<React.SetStateAction<string>> = () => {}
     function Comp() {
       const [, set] = useControllableState({ prop: 'same', defaultProp: 'same', onChange })
@@ -388,7 +388,7 @@ describe('useControllableState', () => {
   })
 
   it('hands a controlled updater the controlled value, not the default', () => {
-    const onChange = mock(() => {})
+    const onChange = vi.fn(() => {})
     let setValue: React.Dispatch<React.SetStateAction<string>> = () => {}
     function Comp() {
       setValue = useControllableState({ prop: 'b', defaultProp: 'a', onChange })[1]
@@ -400,7 +400,7 @@ describe('useControllableState', () => {
   })
 
   it('reports an uncontrolled change back to the value it started at', () => {
-    const onChange = mock(() => {})
+    const onChange = vi.fn(() => {})
     let setValue: React.Dispatch<React.SetStateAction<string>> = () => {}
     function Comp() {
       setValue = useControllableState({ defaultProp: 'a', onChange })[1]
@@ -413,8 +413,8 @@ describe('useControllableState', () => {
   })
 
   it('reports an uncontrolled change to the onChange it was given last', () => {
-    const first = mock(() => {})
-    const last = mock(() => {})
+    const first = vi.fn(() => {})
+    const last = vi.fn(() => {})
     let setValue: React.Dispatch<React.SetStateAction<string>> = () => {}
     function Comp({ onChange }: { onChange: (value: string) => void }) {
       setValue = useControllableState({ defaultProp: 'a', onChange })[1]
@@ -431,7 +431,7 @@ describe('useControllableState', () => {
       useControllableState({ prop: value, defaultProp: 'default', caller: 'Probe' })
       return null
     }
-    const warn = spyOn(console, 'warn').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const { rerender } = render(<Probe />)
     rerender(<Probe value="controlled" />)
     rerender(<Probe />)
@@ -502,7 +502,7 @@ describe('useControllableState in production', () => {
       const [current] = useControllableState({ prop: value, defaultProp: 'default', caller: 'Probe' })
       return <span>{current}</span>
     }
-    const warn = spyOn(console, 'warn').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const nodeEnv = process.env.NODE_ENV
     process.env.NODE_ENV = 'production'
 
@@ -526,7 +526,7 @@ describe('useLayoutEffect on the server', () => {
     const server: typeof import('../use-layout-effect') = await import(serverCopy).finally(() => {
       globalThis.document = page
     })
-    const effect = mock()
+    const effect = vi.fn()
     function Probe() {
       server.useLayoutEffect(effect)
       return <span>server</span>

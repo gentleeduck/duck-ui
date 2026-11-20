@@ -1,11 +1,11 @@
 // From Radix UI primitives, packages/react/focus-scope/src/focus-scope.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import type { RenderResult } from '@testing-library/react'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import * as React from 'react'
-import { assertStableComposedRef, radixEnvironment, vi } from '../../__tests__/radix/harness'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { assertStableComposedRef, radixEnvironment } from '../../__tests__/radix/harness'
 import { FocusScope as FocusScopeRoot } from '../index'
 
 const FocusScope = { Root: FocusScopeRoot }

@@ -21,6 +21,9 @@ export const CalendarDay = React.forwardRef<HTMLButtonElement, ICalendar.IDayPro
         ref={forwardedRef}
         onClick={composeEventHandlers(props.onClick, dayDomProps.onClick)}
         onMouseEnter={composeEventHandlers(props.onMouseEnter, dayDomProps.onMouseEnter)}
+        onFocus={composeEventHandlers(props.onFocus, () => {
+          if (!context.adapter.isSameDay(day.date, context.state.focusedDate)) context.actions.focusDate(day.date)
+        })}
         onKeyDown={composeEventHandlers(props.onKeyDown, dayDomProps.onKeyDown)}>
         {children ?? day.date.getDate()}
       </Primitive.button>

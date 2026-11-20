@@ -1,9 +1,6 @@
-import { describe, expect, it, mock, setDefaultTimeout } from 'bun:test'
-
-setDefaultTimeout(15_000)
-
 import { fireEvent, render } from '@testing-library/react'
 import * as React from 'react'
+import { describe, expect, it, vi } from 'vitest'
 
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../command'
 import {
@@ -77,7 +74,7 @@ describe('Dialog full lifecycle', () => {
   })
 
   it('fires onOpenChange(true) when trigger clicked', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderFullDialog({ onOpenChange: handler })
     fireEvent.click(container.querySelector('[data-slot="dialog-trigger"]')!)
     expect(handler).toHaveBeenCalledWith(true)
@@ -132,7 +129,7 @@ describe('Popover with close button', () => {
   // does not fully produce DOM in jsdom. We verify open/close through the
   // trigger state and onOpenChange callbacks, matching existing unit tests.
   it('clicking trigger opens popover (verified via trigger state)', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderPopover({ onOpenChange: handler })
     const trigger = container.querySelector('[data-slot="popover-trigger"]')!
 
@@ -146,7 +143,7 @@ describe('Popover with close button', () => {
   })
 
   it('clicking trigger twice closes the popover', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderPopover({ onOpenChange: handler })
     const trigger = container.querySelector('[data-slot="popover-trigger"]')!
 
@@ -180,7 +177,7 @@ describe('Popover with close button', () => {
   })
 
   it('fires onOpenChange with correct values across open/close cycle', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderPopover({ onOpenChange: handler })
     const trigger = container.querySelector('[data-slot="popover-trigger"]')!
 
@@ -281,7 +278,7 @@ describe('RadioGroup with Indicator', () => {
   })
 
   it('fires onValueChange with the selected value', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderRadioGroup({ onValueChange: handler })
     const items = container.querySelectorAll('[data-slot="radio-group-item"]')
 
@@ -410,7 +407,7 @@ describe('ToggleGroup multiple mode', () => {
   })
 
   it('onValueChange reports current array of active values', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = render(
       <ToggleGroup type="multiple" onValueChange={handler}>
         <ToggleGroupItem value="a">A</ToggleGroupItem>
@@ -446,7 +443,7 @@ describe('DropdownMenu trigger keyboard', () => {
   }
 
   it('Enter key toggles dropdown open', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderDropdown({ onOpenChange: handler })
     const trigger = container.querySelector('[data-slot="dropdown-menu-trigger"]')!
 
@@ -455,7 +452,7 @@ describe('DropdownMenu trigger keyboard', () => {
   })
 
   it('Space key toggles dropdown open', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderDropdown({ onOpenChange: handler })
     const trigger = container.querySelector('[data-slot="dropdown-menu-trigger"]')!
 
@@ -464,7 +461,7 @@ describe('DropdownMenu trigger keyboard', () => {
   })
 
   it('ArrowDown key opens dropdown', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderDropdown({ onOpenChange: handler })
     const trigger = container.querySelector('[data-slot="dropdown-menu-trigger"]')!
 
@@ -493,7 +490,7 @@ describe('DropdownMenu trigger keyboard', () => {
   })
 
   it('disabled trigger does not open on key press', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = render(
       <DropdownMenu onOpenChange={handler}>
         <DropdownMenuTrigger disabled>Menu</DropdownMenuTrigger>
@@ -695,7 +692,7 @@ describe('Menubar compound', () => {
   })
 
   it('Enter key opens a menu (trigger state updates)', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderMenubar({ onValueChange: handler })
     const triggers = container.querySelectorAll('[data-slot="menubar-trigger"]')
 
@@ -706,7 +703,7 @@ describe('Menubar compound', () => {
   })
 
   it('Space key opens a menu', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderMenubar({ onValueChange: handler })
     const triggers = container.querySelectorAll('[data-slot="menubar-trigger"]')
 
@@ -716,7 +713,7 @@ describe('Menubar compound', () => {
   })
 
   it('ArrowDown key opens a menu', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderMenubar({ onValueChange: handler })
     const triggers = container.querySelectorAll('[data-slot="menubar-trigger"]')
 
@@ -726,7 +723,7 @@ describe('Menubar compound', () => {
   })
 
   it('disabled trigger does not open on key press', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = render(
       <Menubar onValueChange={handler}>
         <MenubarMenu value="file">
@@ -803,7 +800,7 @@ describe('Select compound', () => {
   })
 
   it('fires onOpenChange(true) when trigger is activated via keyboard', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderSelect({ onOpenChange: handler })
     const trigger = container.querySelector('[data-slot="select-trigger"]')!
 
@@ -812,7 +809,7 @@ describe('Select compound', () => {
   })
 
   it('ArrowDown key also opens the select', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderSelect({ onOpenChange: handler })
     const trigger = container.querySelector('[data-slot="select-trigger"]')!
 
@@ -821,7 +818,7 @@ describe('Select compound', () => {
   })
 
   it('disabled trigger does not open', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderSelect({ disabled: true, onOpenChange: handler })
     const trigger = container.querySelector('[data-slot="select-trigger"]')!
 

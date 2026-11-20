@@ -26,6 +26,8 @@ export namespace IInputOTP {
     onComplete?: (value: string) => void
     /** Submits the form the slots sit in once every slot is filled. */
     autoSubmit?: boolean
+    /** Focuses the slot typing goes to once it mounts, as `autoFocus` on an input does. */
+    autoFocus?: boolean
     pattern?: RegExp
     dir?: IDirection.Kind
     maxLength?: number

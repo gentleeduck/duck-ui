@@ -1,4 +1,4 @@
-import { describe, expect, spyOn, test } from 'bun:test'
+import { describe, expect, test, vi } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { clamp } from '../clamp'
 import { composeEventHandlers } from '../compose-event-handler'
@@ -159,7 +159,7 @@ describe('focusFirst', () => {
       button.textContent = label
       return button
     })
-    const focus = spyOn(first as HTMLButtonElement, 'focus')
+    const focus = vi.spyOn(first as HTMLButtonElement, 'focus')
 
     focusFirst([first as HTMLButtonElement, second as HTMLButtonElement], true)
 

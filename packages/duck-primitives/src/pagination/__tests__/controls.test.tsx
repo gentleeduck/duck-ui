@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it, mock } from 'bun:test'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as Pagination from '..'
 
 function Pager(props: React.ComponentProps<typeof Pagination.Root>) {
@@ -46,7 +46,7 @@ describe('Pagination pages', () => {
   })
 
   it('moves to a clicked page and reports it', () => {
-    const onPageChange = mock()
+    const onPageChange = vi.fn()
     render(<Pager pageCount={5} onPageChange={onPageChange} />)
 
     fireEvent.click(screen.getByRole('button', { name: '4' }))
@@ -137,6 +137,15 @@ describe('Pagination triggers', () => {
     }
   })
 
+  it('moves nowhere with a page count that is not a number', () => {
+    const onPageChange = vi.fn()
+    render(<Pager pageCount={Number.NaN} onPageChange={onPageChange} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next page' }))
+
+    expect(onPageChange).not.toHaveBeenCalled()
+  })
+
   it('marks each part with its slot', () => {
     const { container } = render(<Pager pageCount={5} />)
 
@@ -183,7 +192,7 @@ describe('Pagination triggers', () => {
   })
 
   it('does not submit the form it sits in', () => {
-    const onSubmit = mock((event: React.FormEvent) => event.preventDefault())
+    const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault())
     render(
       <form onSubmit={onSubmit}>
         <Pager pageCount={5} />
@@ -207,7 +216,7 @@ describe('Pagination triggers', () => {
   })
 
   it('does not move when the handler prevents it', () => {
-    const onPageChange = mock()
+    const onPageChange = vi.fn()
     render(
       <Pagination.Root pageCount={3} onPageChange={onPageChange}>
         <Pagination.Next onClick={(event) => event.preventDefault()} />
@@ -222,7 +231,7 @@ describe('Pagination triggers', () => {
 
 describe('Pagination outside the range', () => {
   it('disables a page past either end, staying where it is and reporting nothing', () => {
-    const onPageChange = mock()
+    const onPageChange = vi.fn()
     render(
       <Pagination.Root defaultPage={2} onPageChange={onPageChange} pageCount={3}>
         <Pagination.Page value={0} />
@@ -254,7 +263,7 @@ describe('Pagination outside the range', () => {
 
 describe('Pagination controlled', () => {
   it('asks for the page and waits for it', () => {
-    const onPageChange = mock()
+    const onPageChange = vi.fn()
     render(<Pager pageCount={5} page={2} onPageChange={onPageChange} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Next page' }))
@@ -317,7 +326,7 @@ describe('Pagination links', () => {
   })
 
   it('runs no click handler on a link with nowhere to go, as a disabled button runs none', () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     render(
       <Pagination.Root pageCount={3} getPageHref={href}>
         <Pagination.Previous onClick={onClick} />
@@ -330,7 +339,7 @@ describe('Pagination links', () => {
   })
 
   it('runs no click handler of a slotted link with nowhere to go', () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     render(
       <Pagination.Root pageCount={3} getPageHref={href}>
         <Pagination.Previous asChild>
@@ -358,7 +367,7 @@ describe('Pagination links', () => {
   })
 
   it('moves when a client router prevents the browser from following the link', () => {
-    const onPageChange = mock()
+    const onPageChange = vi.fn()
     render(
       <Pagination.Root pageCount={5} getPageHref={href} onPageChange={onPageChange}>
         <Pagination.Pages>

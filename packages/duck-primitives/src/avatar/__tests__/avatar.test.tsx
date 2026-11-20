@@ -1,7 +1,7 @@
-import { describe, expect, it, spyOn } from 'bun:test'
 import { act, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToString } from 'react-dom/server'
+import { describe, expect, it, vi } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { Avatar, createAvatarScope } from '../avatar'
 import { AvatarFallback } from '../fallback'
@@ -175,7 +175,7 @@ describe('AvatarImage loading', () => {
 
   it('says nothing about two images in production', () => {
     const env = process.env.NODE_ENV
-    const warn = spyOn(console, 'warn').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     process.env.NODE_ENV = 'production'
 
     try {
@@ -322,7 +322,7 @@ describe('AvatarImage loading', () => {
   })
 
   it('does not warn about two images when one replaces another', () => {
-    const warn = spyOn(console, 'warn').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const { rerender } = render(avatar(<AvatarImage key="ada" src="/ada.png" alt="Ada" />))
 
     rerender(avatar(<AvatarImage key="grace" src="/grace.png" alt="Grace" />))

@@ -35,19 +35,33 @@ submitted under its name once complete and on `Enter` with or without a submit b
 disabled, read-only and password slots; one stop for `Tab`; and a code right to left. The end-to-end suite runs each in Chromium,
 Firefox and WebKit, with a tap on a touch screen.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+Ark UI run that library's own cases against this code. Each file's header names its source and every case left out,
+and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 91 | `input-otp.test.tsx` 79, `one-time-password-field.radix.test.tsx` 12 |
-| End to end | 18 | `input-otp.e2e.ts` 18 |
+| Unit | 99 | `input-otp.ark.test.tsx` 8, `input-otp.test.tsx` 79, `one-time-password-field.radix.test.tsx` 12 |
+| End to end | 21 | `input-otp.e2e.ts` 21 |
 | registry-ui | 3 | `input-otp.test.tsx` 3 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>109 behaviours, one per test</summary>
+<summary>120 behaviours, one per test</summary>
+
+**Unit, `input-otp.ark.test.tsx`**
+
+- Ark UI pin input
+  - has no axe violations
+  - labels each slot for assistive technology
+  - focuses its first slot with autoFocus
+  - moves focus to the next slot as a character is typed
+  - clears the slot before on Backspace in an empty one, moving there
+  - tells onComplete once every slot is filled, and again once the last is typed over
+  - asks the browser for a one-time code
+  - marks its slots disabled and read-only
 
 **Unit, `input-otp.test.tsx`**
 
@@ -178,6 +192,9 @@ Each test was proven by changing the code and watching a test fail.
   - refuses a letter the digits pattern does not take
   - takes Backspace in an empty slot back over the digit before it
   - moves between slots on the arrow keys, and replaces the digit of a filled slot
+  - keeps the code its length when typing goes on in the last slot, the last digit taking the new one
+  - removes the digit in the slot on Delete, closing the gap
+  - removes the digit in the slot on the key that deletes a word
   - fills every slot from a pasted code, keeping only its digits
   - fills every slot from text inserted at once, as an autofilled code arrives
   - replaces the digit of a filled slot with one an on-screen keyboard puts after it
@@ -204,6 +221,8 @@ Each test was proven by changing the code and watching a test fail.
   after `HiddenInput` holds the whole code.
 - Every slot carries `autoComplete="one-time-code"`, so the browser can offer a code from a text message, as
   Ark's do with `otp`. A slot's own `autoComplete` wins.
+- `autoFocus` on the root focuses the slot typing goes to once it mounts, as Radix's one-time password field and
+  Ark's pin input take it.
 - `onComplete` is called with the code once every slot is filled, as `onComplete` in `input-otp` and
   `onValueComplete` in Ark.
 - `HiddenInput` submits the code under the root's `name`, and nothing while the root is disabled. The root

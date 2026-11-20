@@ -1,7 +1,7 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it, mock, spyOn, vi } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { createPortal } from 'react-dom'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { freshDom, scrolls, untilScrollLocked, wait } from '../../__tests__/dom'
 import {
   Menu,
@@ -177,7 +177,7 @@ describe('Menu.Sub', () => {
   })
 
   it('does not ask an open sub menu to open again when its trigger is clicked', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(
       <Menu open>
         <MenuAnchor />
@@ -202,8 +202,8 @@ describe('Menu.Sub', () => {
 
 describe('Menu keyboard tracking', () => {
   it('adds one keydown listener for every menu mounted, and removes it with the last', () => {
-    const add = spyOn(document, 'addEventListener')
-    const remove = spyOn(document, 'removeEventListener')
+    const add = vi.spyOn(document, 'addEventListener')
+    const remove = vi.spyOn(document, 'removeEventListener')
     try {
       const { unmount } = render(
         <>
@@ -226,7 +226,7 @@ describe('Menu keyboard tracking', () => {
   })
 
   it('stops listening for the window losing focus once it closes', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const { rerender } = render(
       <Menu open onOpenChange={onOpenChange}>
         <MenuAnchor />
@@ -356,7 +356,7 @@ describe('Menu.Content', () => {
   it('moves focus without scrolling: to itself on open, to the first item on a keyboard open, to an item under the mouse', () => {
     const calls: [HTMLElement, FocusOptions | undefined][] = []
     const focus = HTMLElement.prototype.focus
-    const spy = spyOn(HTMLElement.prototype, 'focus').mockImplementation(function (this: HTMLElement, options) {
+    const spy = vi.spyOn(HTMLElement.prototype, 'focus').mockImplementation(function (this: HTMLElement, options) {
       calls.push([this, options])
       focus.call(this, options)
     })
@@ -488,7 +488,7 @@ describe('Menu keys', () => {
   })
 
   it('selects once for each Enter and Space, taking the key', () => {
-    const onSelect = mock()
+    const onSelect = vi.fn()
     renderMenu(
       <MenuItem onSelect={onSelect} closeOnSelect={false}>
         Apple
@@ -538,6 +538,20 @@ describe('Menu typeahead', () => {
     await wait(0)
 
     expect(document.activeElement?.textContent).toBe('Blueberry')
+  })
+
+  it('passes over an item with no text to match', async () => {
+    renderMenu(
+      <>
+        <MenuItem aria-label="Close" />
+        <MenuItem>Banana</MenuItem>
+      </>,
+    )
+
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'b' })
+    await wait(0)
+
+    expect(document.activeElement?.textContent).toBe('Banana')
   })
 
   it('leaves focus where it is when the match is disabled before focus moves to it', async () => {
@@ -655,8 +669,8 @@ describe('Menu modal', () => {
   })
 
   it('lets focus leave with trapFocus false, telling onFocusOutside and staying open', () => {
-    const onOpenChange = mock()
-    const onFocusOutside = mock()
+    const onOpenChange = vi.fn()
+    const onFocusOutside = vi.fn()
     render(
       <>
         <button type="button">Outside</button>
@@ -722,7 +736,7 @@ describe('Menu modal', () => {
 
 describe('Menu items', () => {
   it('selects again on a release alone after a select that keeps it open', () => {
-    const onSelect = mock()
+    const onSelect = vi.fn()
     renderMenu(
       <MenuItem onSelect={onSelect} closeOnSelect={false}>
         Apple
@@ -756,7 +770,7 @@ describe('Menu items', () => {
   })
 
   it('calls its own onPointerDown', () => {
-    const onPointerDown = mock()
+    const onPointerDown = vi.fn()
     renderMenu(<MenuItem onPointerDown={onPointerDown}>Apple</MenuItem>)
 
     fireEvent.pointerDown(screen.getByText('Apple'), mouse)
@@ -765,8 +779,8 @@ describe('Menu items', () => {
   })
 
   it('starts a checkbox item unchecked, and toggles it on a select whose own handler keeps the menu open', () => {
-    const onSelect = mock((event: Event) => event.preventDefault())
-    const onCheckedChange = mock()
+    const onSelect = vi.fn((event: Event) => event.preventDefault())
+    const onCheckedChange = vi.fn()
     renderMenu(
       <MenuCheckboxItem onSelect={onSelect} onCheckedChange={onCheckedChange}>
         Bold
@@ -785,7 +799,7 @@ describe('Menu items', () => {
   })
 
   it('marks the chosen radio item and shows its indicator, and chooses on a select whose own handler keeps the menu open', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     renderMenu(
       <MenuRadioGroup value="small" onValueChange={onValueChange}>
         <MenuRadioItem value="small">
@@ -843,7 +857,7 @@ describe('Menu items', () => {
 describe('Menu.SubTrigger', () => {
   it('opens its sub menu on Enter, Space and the arrow toward it', () => {
     const opensOn = (key: string) => {
-      const onOpenChange = mock()
+      const onOpenChange = vi.fn()
       render(<SubMenu sub={{ onOpenChange }} />)
       fireEvent.keyDown(screen.getByText('More'), { key })
       const calls = [...onOpenChange.mock.calls]
@@ -865,13 +879,13 @@ describe('Menu.SubTrigger', () => {
   })
 
   it('opens its sub menu on a click, focusing itself, unless the click is prevented', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(<SubMenu sub={{ onOpenChange }} />)
     const more = screen.getByText('More')
     fireEvent.click(more)
     const clicked = [[...onOpenChange.mock.calls], document.activeElement === more]
     cleanup()
-    const onPreventedOpenChange = mock()
+    const onPreventedOpenChange = vi.fn()
     render(
       <SubMenu
         sub={{ onOpenChange: onPreventedOpenChange }}
@@ -896,7 +910,7 @@ describe('Menu.SubTrigger', () => {
 
 describe('Menu.Sub', () => {
   it('asks to close when it mounts in a closed menu, and when it unmounts', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const fruit = (withSub: boolean) => (
       <Menu>
         <MenuAnchor />
@@ -934,8 +948,8 @@ describe('Menu.SubContent', () => {
   })
 
   it('closes when focus leaves it for anything but its trigger, telling onFocusOutside', () => {
-    const onOpenChange = mock()
-    const onFocusOutside = mock()
+    const onOpenChange = vi.fn()
+    const onFocusOutside = vi.fn()
     render(<SubMenu sub={{ open: true, onOpenChange }} subContent={{ onFocusOutside }} />)
     onOpenChange.mockClear()
     onFocusOutside.mockClear()
@@ -946,7 +960,7 @@ describe('Menu.SubContent', () => {
   })
 
   it('takes an Escape typed in it, telling onEscapeKeyDown', () => {
-    const onEscapeKeyDown = mock()
+    const onEscapeKeyDown = vi.fn()
     const { rerender } = render(<SubMenu subContent={{ onEscapeKeyDown }} />)
     rerender(<SubMenu sub={{ open: true }} subContent={{ onEscapeKeyDown }} />)
 
@@ -956,7 +970,7 @@ describe('Menu.SubContent', () => {
   })
 
   it('leaves the arrow away from it typed in a field inside it to the field', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(<SubMenu sub={{ open: true, onOpenChange }} subChildren={<input aria-label="Note" />} />)
     onOpenChange.mockClear()
 
@@ -966,8 +980,8 @@ describe('Menu.SubContent', () => {
   })
 
   it('stays open on the arrow away from it typed in a field portalled out of it, telling onKeyDown', () => {
-    const onOpenChange = mock()
-    const onKeyDown = mock()
+    const onOpenChange = vi.fn()
+    const onKeyDown = vi.fn()
     const Field = () => createPortal(<input aria-label="Note" />, document.body)
     render(<SubMenu sub={{ open: true, onOpenChange }} subContent={{ onKeyDown }} subChildren={<Field />} />)
     onOpenChange.mockClear()
@@ -982,7 +996,7 @@ describe('Menu sub menu on hover', () => {
   afterEach(() => vi.useRealTimers())
 
   it('opens 100ms after the mouse comes over its trigger, once however often it moves', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(<SubMenu sub={{ onOpenChange }} />)
     vi.useFakeTimers()
     const more = screen.getByText('More')
@@ -996,7 +1010,7 @@ describe('Menu sub menu on hover', () => {
   })
 
   it('opens again on hover after it closed', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const { rerender } = render(<SubMenu sub={{ onOpenChange }} />)
     vi.useFakeTimers()
     const hover = () => {
@@ -1013,7 +1027,7 @@ describe('Menu sub menu on hover', () => {
   })
 
   it('does not open once its trigger has unmounted', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const { rerender } = render(<SubMenu sub={{ onOpenChange }} />)
     vi.useFakeTimers()
 

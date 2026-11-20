@@ -1,7 +1,7 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it, mock } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import ReactDOM from 'react-dom'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { freshDom, pageChangesOnClose, wait } from '../../__tests__/dom'
 import { DirectionProvider } from '../../direction'
 import {
@@ -57,28 +57,28 @@ describe('DropdownMenu', () => {
   })
 
   it('trigger opens on Enter key', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderDropdown({ onOpenChange: handler })
     fireEvent.keyDown(container.querySelector('[data-slot="dropdown-menu-trigger"]')!, { key: 'Enter' })
     expect(handler).toHaveBeenCalled()
   })
 
   it('trigger opens on Space key', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderDropdown({ onOpenChange: handler })
     fireEvent.keyDown(container.querySelector('[data-slot="dropdown-menu-trigger"]')!, { key: ' ' })
     expect(handler).toHaveBeenCalled()
   })
 
   it('trigger opens on ArrowDown key', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderDropdown({ onOpenChange: handler })
     fireEvent.keyDown(container.querySelector('[data-slot="dropdown-menu-trigger"]')!, { key: 'ArrowDown' })
     expect(handler).toHaveBeenCalledWith(true)
   })
 
   it('leaves a key it does not use to the page', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderDropdown({ onOpenChange: handler })
     const trigger = container.querySelector('[data-slot="dropdown-menu-trigger"]')!
 
@@ -116,7 +116,7 @@ describe('DropdownMenu', () => {
   })
 
   it('opens on no key while disabled, even rendered as an element that still takes focus', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     render(
       <DropdownMenu onOpenChange={handler}>
         <DropdownMenuTrigger asChild disabled>
@@ -143,7 +143,7 @@ describe('DropdownMenu', () => {
   })
 
   it('calls onOpenChange', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderDropdown({ onOpenChange: handler })
     fireEvent.keyDown(container.querySelector('[data-slot="dropdown-menu-trigger"]')!, { key: 'Enter' })
     expect(handler).toHaveBeenCalled()
@@ -467,7 +467,7 @@ describe('DropdownMenu content keyboard', () => {
 
 describe('DropdownMenu item pointer', () => {
   it('selects an item released on after a press that started elsewhere', () => {
-    const onSelect = mock((_fruit: string) => {})
+    const onSelect = vi.fn((_fruit: string) => {})
     renderOpenFruitMenu({ onSelect })
 
     fireEvent.pointerUp(screen.getByText('Apple'))
@@ -476,7 +476,7 @@ describe('DropdownMenu item pointer', () => {
   })
 
   it('leaves selection to the click when the press started on the item', () => {
-    const onSelect = mock((_fruit: string) => {})
+    const onSelect = vi.fn((_fruit: string) => {})
     renderOpenFruitMenu({ onSelect })
 
     fireEvent.pointerDown(screen.getByText('Apple'))
@@ -764,7 +764,7 @@ describe('DropdownMenu opened by the pointer after typing', () => {
 
 describe('DropdownMenu closeOnSelect', () => {
   it('keeps the menu open after an item with closeOnSelect={false} is selected', () => {
-    const onSelect = mock()
+    const onSelect = vi.fn()
     render(
       <DropdownMenu defaultOpen>
         <DropdownMenuTrigger>Menu</DropdownMenuTrigger>
@@ -785,7 +785,7 @@ describe('DropdownMenu closeOnSelect', () => {
   })
 
   it('keeps the menu open while a checkbox item with closeOnSelect={false} toggles', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     render(
       <DropdownMenu defaultOpen>
         <DropdownMenuTrigger>Menu</DropdownMenuTrigger>
@@ -808,7 +808,7 @@ describe('DropdownMenu closeOnSelect', () => {
 
 describe('DropdownMenu radio item outside a radio group', () => {
   it('selects and closes with no group to report to', () => {
-    const onSelect = mock()
+    const onSelect = vi.fn()
     render(
       <DropdownMenu defaultOpen>
         <DropdownMenuTrigger>Menu</DropdownMenuTrigger>
@@ -846,7 +846,7 @@ function Plain({ children }: { children?: React.ReactNode }) {
 
 describe('DropdownMenu checkbox item, indeterminate', () => {
   it('reads as mixed and checks on select', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     render(
       <DropdownMenu defaultOpen>
         <DropdownMenuTrigger>Menu</DropdownMenuTrigger>
@@ -947,7 +947,7 @@ describe('DropdownMenu items whose child never takes the ref', () => {
 
 describe('DropdownMenu space typed as part of a search', () => {
   it('does not select the item it lands on', async () => {
-    const onSelect = mock((_fruit: string) => {})
+    const onSelect = vi.fn((_fruit: string) => {})
     renderOpenFruitMenu({ onSelect })
     act(() => screen.getByText('Apple').focus())
 

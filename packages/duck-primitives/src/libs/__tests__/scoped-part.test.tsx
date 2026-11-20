@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'bun:test'
 import { render } from '@testing-library/react'
 import * as React from 'react'
+import { describe, expect, it } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import type { Scope } from '../create-context'
 import { createScopedPart } from '../scoped-part'

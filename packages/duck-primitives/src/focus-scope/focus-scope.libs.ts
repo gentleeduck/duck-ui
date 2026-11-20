@@ -40,16 +40,29 @@ function isSameStop(element: Element, other: Element | undefined) {
 }
 
 /** First and last visible tab stops inside a container. */
-function getTabbableEdges(container: HTMLElement) {
+function getTabStops(container: HTMLElement) {
   const candidates = getTabbableCandidates(container)
   // Tab into a radio group lands on its checked radio, so the group's other radios are no stop of their own.
-  const stops = candidates.filter(
+  return candidates.filter(
     (candidate) =>
       !isRadio(candidate) ||
       candidate.checked ||
       !candidates.some((other) => isRadio(other) && other.checked && isSameStop(candidate, other)),
   )
+}
+
+function getTabbableEdges(container: HTMLElement) {
+  const stops = getTabStops(container)
   return [findVisible(stops, container), findVisible([...stops].reverse(), container)] as const
+}
+
+/** The visible stop a Tab from `from` reaches inside the container, or a Shift+Tab, read in the container's order. */
+function getNextStop(container: HTMLElement, from: Element, backwards: boolean) {
+  const stops = getTabStops(container)
+  const at = stops.findIndex((stop) => isSameStop(from, stop))
+  // From the container itself, which is no stop, a Tab reaches the first stop and a Shift+Tab none, so focus stays.
+  const ahead = backwards ? stops.slice(0, Math.max(at, 0)).reverse() : stops.slice(at + 1)
+  return findVisible(ahead, container)
 }
 
 /**
@@ -138,6 +151,7 @@ export {
   focus,
   focusFirst,
   focusScopesStack,
+  getNextStop,
   getTabbableCandidates,
   getTabbableEdges,
   isSameStop,

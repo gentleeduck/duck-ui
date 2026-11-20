@@ -1,10 +1,10 @@
 // From Radix UI primitives, packages/react/alert-dialog/src/alert-dialog.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import type { RenderResult } from '@testing-library/react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
-import { axe, radixEnvironment, vi } from '../../__tests__/radix/harness'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { axe, radixEnvironment } from '../../__tests__/radix/harness'
 import * as AlertDialog from '../index'
 
 radixEnvironment()

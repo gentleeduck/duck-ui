@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it, spyOn } from 'bun:test'
 import { cleanup, render } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FocusGuards, useFocusGuards } from '../use-focus-guard'
 
 function Guarded() {
@@ -31,7 +31,7 @@ describe('useFocusGuards', () => {
 
   it('leaves the body alone when another consumer mounts with the guards in place', () => {
     const { rerender } = render(<Guarded />)
-    const insert = spyOn(document.body, 'insertAdjacentElement')
+    const insert = vi.spyOn(document.body, 'insertAdjacentElement')
 
     rerender(
       <>
@@ -49,7 +49,7 @@ describe('useFocusGuards', () => {
     const [start, end] = guards()
     const banner = document.createElement('div')
     document.body.prepend(banner)
-    const insert = spyOn(document.body, 'insertAdjacentElement')
+    const insert = vi.spyOn(document.body, 'insertAdjacentElement')
 
     rerender(
       <>

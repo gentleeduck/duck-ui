@@ -1,6 +1,6 @@
-import { describe, expect, it, spyOn } from 'bun:test'
 import { render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { describe, expect, it, vi } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { createContext, createContextScope, type Scope } from '../create-context'
 
@@ -63,7 +63,7 @@ describe('createContext without a default', () => {
       useValue('Reader')
       return null
     }
-    const error = spyOn(console, 'error').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     try {
       expect(() => render(<Reader />)).toThrow('`Reader` must be used within `Root`')

@@ -33,23 +33,109 @@ the viewport, links that keep the menu open, and every part force mounted; the t
 children, with and without `asChild`; and a sub-menu in each activation mode, closing on a second click or not.
 The end-to-end suite runs each in Chromium, Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail. One change has no test to fail: the viewport
-dropping the element of a content that has unmounted. When another item opens, the viewport moves to that
-item's element, so a stale one is never measured in place of a live one, and dropping it only lets it be
-collected. When the open item unmounts and a controlled `value` keeps naming it, nothing replaces the old
-element, and the viewport keeps measuring it until the value changes.
+Each test written for this module was proven by changing the code and watching a test fail. One change has no test
+to fail: the viewport dropping the element of a content that has unmounted. When another item opens, the viewport
+moves to that item's element, so a stale one is never measured in place of a live one, and dropping it only lets it
+be collected. When the open item unmounts and a controlled `value` keeps naming it, nothing replaces the old
+element, and the viewport keeps measuring it until the value changes. The suites taken from Base UI run that
+library's own cases against this code. Each file's header names its source and every case left out, and not every
+case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 144 | `navigation-menu.radix.test.tsx` 40, `navigation-menu.test.tsx` 104 |
+| Unit | 160 | `navigation-menu.base-ui.test.tsx` 14, `navigation-menu.radix.test.tsx` 40, `navigation-menu.test.tsx` 106 |
 | End to end | 25 | `navigation-menu.e2e.ts` 25 |
 | registry-ui | 7 | `navigation-menu.test.tsx` 7 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>169 behaviours, one per test</summary>
+<summary>185 behaviours, one per test</summary>
+
+**Unit, `navigation-menu.base-ui.test.tsx`**
+
+- Base UI navigation menu &gt; roles
+  - puts no aria-orientation on its list or its root
+- Base UI navigation menu &gt; opening
+  - opens on a mouse hover, and not on a touch one
+  - opens on a click, whatever the pointer
+  - moves to another item on a click of its trigger, staying open
+  - waits for its delay before opening on hover, and its close delay before closing
+  - opens by no means while its trigger is disabled
+- Base UI navigation menu &gt; value
+  - starts on its defaultValue, and tells onValueChange each item opened
+  - follows a controlled value
+- Base UI navigation menu &gt; focus
+  - gives focus back to its trigger when Escape closes it
+  - leaves focus where it is when the pointer leaving closes it
+- Base UI navigation menu &gt; links
+  - marks an active link as the current page, and no other
+  - closes the menu on a click of a link, and keeps it open with closeOnSelect off
+  - stays open when a link loses focus to nothing, as the window does
+- Base UI navigation menu &gt; list
+  - moves on from the focused trigger once an item before it is removed
+
+**Unit, `navigation-menu.radix.test.tsx`**
+
+- aria-controls
+  - should not reference a non-existent element while closed
+  - should reference the rendered content while open
+- NavigationMenu activationMode &gt; "automatic" activationMode
+  - opens the item on pointer enter
+  - toggles item on click
+- NavigationMenu activationMode &gt; "manual" activationMode
+  - does not open on pointer enter
+  - toggles item on click
+- NavigationMenuSub activationMode &gt; "automatic" activationMode
+  - opens the item on pointer enter
+- NavigationMenuSub activationMode &gt; "manual" activationMode
+  - does not open on pointer enter
+  - opens the item on click
+- NavigationMenuSub activationMode &gt; inheritance
+  - inherits "manual" from the parent NavigationMenu
+  - inherits "automatic" from the parent NavigationMenu
+  - overrides inherited "manual" with activationMode="automatic"
+  - overrides inherited "automatic" with activationMode="manual"
+- NavigationMenuSub disableToggle
+  - does not close an open item when clicking its trigger by default
+  - keeps an open item open on click in manual mode by default
+  - closes an open item when clicking its trigger with disableToggle={false}
+  - closes an open item on click with disableToggle={false} in manual mode
+- NavigationMenu ref stability
+  - keeps a stable composed ref on the root
+  - keeps a stable composed ref on viewport content
+- focus outside
+  - should not dismiss an open menu when focus moves between elements outside the menu
+  - should dismiss an open menu when focus actually leaves the menu
+- NavigationMenu.Root
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- NavigationMenu.Sub
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- NavigationMenu.List
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- NavigationMenu.Item
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- NavigationMenu.Trigger
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- NavigationMenu.Link
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- NavigationMenu.Content
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- NavigationMenu.Indicator
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+- NavigationMenu.Viewport
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+  - renders the active content inside the child element when `asChild` is set
 
 **Unit, `navigation-menu.test.tsx`**
 
@@ -176,67 +262,9 @@ element, and the viewport keeps measuring it until the value changes.
   - closes once on Escape under StrictMode
 - NavigationMenu orientation and direction
   - marks every part with the orientation and direction it runs in
-
-**Unit, `navigation-menu.radix.test.tsx`**
-
-- aria-controls
-  - should not reference a non-existent element while closed
-  - should reference the rendered content while open
-- NavigationMenu activationMode &gt; "automatic" activationMode
-  - opens the item on pointer enter
-  - toggles item on click
-- NavigationMenu activationMode &gt; "manual" activationMode
-  - does not open on pointer enter
-  - toggles item on click
-- NavigationMenuSub activationMode &gt; "automatic" activationMode
-  - opens the item on pointer enter
-- NavigationMenuSub activationMode &gt; "manual" activationMode
-  - does not open on pointer enter
-  - opens the item on click
-- NavigationMenuSub activationMode &gt; inheritance
-  - inherits "manual" from the parent NavigationMenu
-  - inherits "automatic" from the parent NavigationMenu
-  - overrides inherited "manual" with activationMode="automatic"
-  - overrides inherited "automatic" with activationMode="manual"
-- NavigationMenuSub disableToggle
-  - does not close an open item when clicking its trigger by default
-  - keeps an open item open on click in manual mode by default
-  - closes an open item when clicking its trigger with disableToggle={false}
-  - closes an open item on click with disableToggle={false} in manual mode
-- NavigationMenu ref stability
-  - keeps a stable composed ref on the root
-  - keeps a stable composed ref on viewport content
-- focus outside
-  - should not dismiss an open menu when focus moves between elements outside the menu
-  - should dismiss an open menu when focus actually leaves the menu
-- NavigationMenu.Root
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- NavigationMenu.Sub
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- NavigationMenu.List
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- NavigationMenu.Item
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- NavigationMenu.Trigger
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- NavigationMenu.Link
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- NavigationMenu.Content
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- NavigationMenu.Indicator
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-- NavigationMenu.Viewport
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
-  - renders the active content inside the child element when `asChild` is set
+- NavigationMenu parts that cannot reach an element
+  - leaves focus on a link outside any list when an arrow key is pressed on it
+  - moves to another content beside a trigger slotted onto a component that drops its ref
 
 **End to end, `navigation-menu.e2e.ts`**
 

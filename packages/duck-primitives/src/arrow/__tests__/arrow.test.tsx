@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it } from 'bun:test'
 import { cleanup, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, it } from 'vitest'
 import * as ArrowModule from '..'
 import { Arrow } from '../arrow'
 

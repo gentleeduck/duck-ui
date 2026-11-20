@@ -63,6 +63,38 @@ test.describe('InputOTP code', () => {
     await expect(page.getByLabel('Value')).toHaveText('193')
   })
 
+  test('keeps the code its length when typing goes on in the last slot, the last digit taking the new one', async ({
+    page,
+  }) => {
+    await digit(page, 1).focus()
+    await page.keyboard.type('1234567')
+
+    await expect(page.getByLabel('Value')).toHaveText('123457')
+    await expect(digit(page, 6)).toBeFocused()
+  })
+
+  test('removes the digit in the slot on Delete, closing the gap', async ({ page }) => {
+    await digit(page, 1).focus()
+    await page.keyboard.type('123')
+    await page.keyboard.press('ArrowLeft')
+    await page.keyboard.press('ArrowLeft')
+
+    await page.keyboard.press('Delete')
+
+    await expect(page.getByLabel('Value')).toHaveText('13')
+    await expect(digit(page, 2)).toBeFocused()
+  })
+
+  test('removes the digit in the slot on the key that deletes a word', async ({ page }) => {
+    await digit(page, 1).focus()
+    await page.keyboard.type('123')
+    await page.keyboard.press('ArrowLeft')
+
+    await page.keyboard.press(process.platform === 'darwin' ? 'Alt+Backspace' : 'Control+Backspace')
+
+    await expect(page.getByLabel('Value')).toHaveText('12')
+  })
+
   test('fills every slot from a pasted code, keeping only its digits', async ({ browserName, page }) => {
     test.skip(browserName === 'firefox', 'Firefox empties the data of a paste event the page makes itself')
     await digit(page, 1).focus()

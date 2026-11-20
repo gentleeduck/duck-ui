@@ -16,6 +16,7 @@ export const HoverCardTrigger = React.forwardRef<HoverCardTriggerElement, IHover
     const popperScope = usePopperScope(__scopeHoverCard)
     // A tap focuses a link after the pointer is up, so the press is remembered until a blur or a cancel.
     const touchedRef = React.useRef(false)
+    const leftWithWindowRef = React.useRef(false)
     return (
       <PopperPrimitive.Anchor asChild {...popperScope}>
         <Primitive.a
@@ -32,10 +33,14 @@ export const HoverCardTrigger = React.forwardRef<HoverCardTriggerElement, IHover
             touchedRef.current = false
           })}
           onFocus={composeEventHandlers(props.onFocus, () => {
-            if (!touchedRef.current) context.onOpen()
+            // Focus coming back with the window to the trigger it left from asks for nothing new.
+            if (leftWithWindowRef.current) leftWithWindowRef.current = false
+            else if (!touchedRef.current) context.onOpen()
           })}
-          onBlur={composeEventHandlers(props.onBlur, () => {
+          onBlur={composeEventHandlers(props.onBlur, (event) => {
             touchedRef.current = false
+            // The window losing focus blurs the trigger but leaves it the document's active element.
+            leftWithWindowRef.current = event.currentTarget.ownerDocument.activeElement === event.currentTarget
             context.onClose()
           })}
         />

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useLayoutEffect } from '../hooks/use-layout-effect'
 import { composeEventHandlers } from '../libs/compose-event-handler'
 import { Primitive } from '../primitive-elements'
 import { isTrigger, ROOT_SELECTOR, useAccordionContext } from './accordion'
@@ -13,6 +14,13 @@ const AccordionTrigger = React.forwardRef<HTMLButtonElement, IAccordion.ITrigger
     const context = useAccordionContext(TRIGGER_NAME, __scopeAccordion)
     const itemContext = useAccordionItemContext(TRIGGER_NAME, __scopeAccordion)
     const disabled = itemContext.disabled || disabledProp || false
+    const { onTriggerIdChange } = itemContext
+    const { id } = triggerProps
+
+    useLayoutEffect(() => {
+      onTriggerIdChange(id)
+      return () => onTriggerIdChange(undefined)
+    }, [onTriggerIdChange, id])
 
     return (
       <Primitive.button
@@ -24,9 +32,10 @@ const AccordionTrigger = React.forwardRef<HTMLButtonElement, IAccordion.ITrigger
         data-state={itemContext.open ? 'open' : 'closed'}
         data-disabled={disabled ? '' : undefined}
         disabled={disabled}
-        id={itemContext.triggerId}
         data-orientation={context.orientation}
         {...triggerProps}
+        // After the props, so an id={undefined} passed on leaves the trigger the id its content is named by.
+        id={itemContext.triggerId}
         ref={forwardedRef}
         onClick={composeEventHandlers(props.onClick, () => {
           if (!disabled) itemContext.onOpenToggle()

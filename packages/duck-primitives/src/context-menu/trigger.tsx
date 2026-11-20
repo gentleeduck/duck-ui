@@ -24,12 +24,18 @@ const ContextMenuTrigger = React.forwardRef<HTMLSpanElement, IContextMenu.ITrigg
     const [virtualRef, setVirtualRef] = React.useState(atPoint)
     const longPressTimerRef = React.useRef(0)
     const pressRef = React.useRef<IPoint>({ x: 0, y: 0 })
+    const touchesRef = React.useRef(new Set<number>())
     const clearLongPress = React.useCallback(() => window.clearTimeout(longPressTimerRef.current), [])
     const handleOpen = (event: React.MouseEvent | React.PointerEvent) => {
       context.hasInteractedRef.current = true
       pointRef.current = { x: event.clientX, y: event.clientY }
       setVirtualRef(atPoint())
       context.onOpenChange(true)
+    }
+
+    const endTouch = (event: React.PointerEvent) => {
+      touchesRef.current.delete(event.pointerId)
+      clearLongPress()
     }
 
     React.useEffect(() => clearLongPress, [clearLongPress])
@@ -63,7 +69,10 @@ const ContextMenuTrigger = React.forwardRef<HTMLSpanElement, IContextMenu.ITrigg
               ? props.onPointerDown
               : composeEventHandlers(props.onPointerDown, (event) => {
                   if (event.pointerType === 'mouse') return
+                  touchesRef.current.add(event.pointerId)
                   clearLongPress()
+                  // A second finger makes the gesture a pinch or a scroll, so the press is given up, not started again.
+                  if (touchesRef.current.size > 1) return
                   if (claimedLongPressEvents.has(event.nativeEvent)) return
                   claimedLongPressEvents.add(event.nativeEvent)
                   context.onOpenChange(false)
@@ -80,8 +89,8 @@ const ContextMenuTrigger = React.forwardRef<HTMLSpanElement, IContextMenu.ITrigg
               }
             }),
           )}
-          onPointerCancel={composeEventHandlers(props.onPointerCancel, whenTouchOrPen(clearLongPress))}
-          onPointerUp={composeEventHandlers(props.onPointerUp, whenTouchOrPen(clearLongPress))}
+          onPointerCancel={composeEventHandlers(props.onPointerCancel, whenTouchOrPen(endTouch))}
+          onPointerUp={composeEventHandlers(props.onPointerUp, whenTouchOrPen(endTouch))}
         />
       </>
     )

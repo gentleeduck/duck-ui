@@ -10,13 +10,9 @@
   "description": "Unstyled, accessibility-first UI primitives for React.",
   "devDependencies": {
     "@ark-ui/react": "5.40.0",
-    "@babel/core": "8.1.0",
-    "@babel/plugin-transform-typescript": "8.0.6",
     "@base-ui-components/react": "1.0.0-rc.0",
     "@changesets/cli": "^2.31.0",
     "@floating-ui/react": "^0.27.16",
-    "@gentleduck/hooks": "file:../duck-hooks/",
-    "@gentleduck/libs": "file:../duck-libs/",
     "@gentleduck/tsdown-config": "workspace:*",
     "@gentleduck/typescript-config": "workspace:*",
     "@headlessui/react": "2.2.10",
@@ -52,8 +48,8 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
+    "@vitest/coverage-v8": "catalog:",
     "axe-core": "^4.10.3",
-    "babel-plugin-istanbul": "8.0.0",
     "cmdk": "1.1.1",
     "esbuild": ">=0.28.1",
     "input-otp": "1.5.0",
@@ -61,7 +57,8 @@
     "react-aria-components": "1.22.1",
     "react-day-picker": "^10.0.1",
     "tsdown": "catalog:",
-    "vaul": "1.1.2"
+    "vaul": "1.1.2",
+    "vitest": "catalog:"
   },
   "exports": {
     "./hooks/*": {
@@ -122,10 +119,9 @@
     "format": "biome format --write .",
     "lint": "biome lint .",
     "stories": "bun src/__stories__/server.ts",
-    "test": "bun src/__tests__/istanbul/run.ts",
-    "test:coverage": "bun test --coverage",
+    "test": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test:watch": "bun test --watch"
+    "test:watch": "vitest"
   },
   "types": "./dist/index.d.ts",
   "type": "module",

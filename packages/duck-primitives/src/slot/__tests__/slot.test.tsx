@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { act, render } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createSlot, createSlottable, Slot, Slottable } from '../slot'
 
 describe('Slot', () => {
@@ -93,8 +93,8 @@ describe('Slot', () => {
   })
 
   it('composes event handlers from slot and child', () => {
-    const slotClick = mock(() => {})
-    const childClick = mock(() => {})
+    const slotClick = vi.fn(() => {})
+    const childClick = vi.fn(() => {})
     const { container } = render(
       <Slot onClick={slotClick}>
         <button onClick={childClick}>click me</button>
@@ -258,9 +258,9 @@ describe('Slot (edge cases)', () => {
 })
 
 describe('Slot (children it cannot slot onto)', () => {
-  let errorSpy: ReturnType<typeof spyOn>
+  let errorSpy: ReturnType<typeof vi.spyOn>
   beforeEach(() => {
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {})
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
   })
   afterEach(() => errorSpy.mockRestore())
 
@@ -305,8 +305,8 @@ describe('Slot (security)', () => {
   })
 
   it('still merges legitimate onClick and className when child is sanitized', () => {
-    const slotClick = mock(() => {})
-    const childClick = mock(() => {})
+    const slotClick = vi.fn(() => {})
+    const childClick = vi.fn(() => {})
     const { container } = render(
       <Slot className="slot-class" onClick={slotClick}>
         <button className="child-class" onClick={childClick}>

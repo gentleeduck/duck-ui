@@ -94,12 +94,10 @@ export const PopperContent = React.forwardRef<PopperContentElement, IPopper.ICon
           ...(referenceNode ? getOverflowAncestors(referenceNode) : []),
           ...getOverflowAncestors(floating),
         ])
-        for (const ancestor of ancestors) {
+        const unwatch = [...ancestors].map((ancestor) => {
           if (updateOnScroll) ancestor.addEventListener('scroll', update, { passive: true })
-          // Adding a listener already there adds nothing.
-          ancestor.addEventListener('resize', onResize)
-          resizing.set(ancestor, (resizing.get(ancestor) ?? new Set()).add(update))
-        }
+          return watchResize(ancestor, update)
+        })
         // Floating UI places again for every size its observer reports, the first ones too, which placed the content
         // three times each time it opened. This places again only for a size it was not placed at.
         // A test DOM may have no observer, which Floating UI checks for too.
@@ -120,11 +118,8 @@ export const PopperContent = React.forwardRef<PopperContentElement, IPopper.ICon
         return () => {
           stop()
           observer?.disconnect()
-          for (const ancestor of ancestors) {
-            if (updateOnScroll) ancestor.removeEventListener('scroll', update)
-            const updates = resizing.get(ancestor)
-            if (updates?.delete(update) && !updates.size) ancestor.removeEventListener('resize', onResize)
-          }
+          for (const ancestor of ancestors) if (updateOnScroll) ancestor.removeEventListener('scroll', update)
+          for (const stopWatching of unwatch) stopWatching()
         }
       },
       elements: { reference: context.anchor },
@@ -249,10 +244,26 @@ PopperContent.displayName = CONTENT_NAME
 
 // Every placed popper shares one resize listener on each ancestor it watches, where each added its own and taking it
 // off searched the list every other one had grown.
-const resizing = new WeakMap<EventTarget, Set<() => void>>()
+const resizing = new WeakMap<EventTarget, { updates: Set<() => void>; run: () => void }>()
 
-function onResize(this: EventTarget) {
-  for (const update of resizing.get(this) ?? []) update()
+function watchResize(ancestor: EventTarget, update: () => void) {
+  let watched = resizing.get(ancestor)
+  if (!watched) {
+    const updates = new Set<() => void>()
+    const run = () => {
+      for (const each of updates) each()
+    }
+    watched = { updates, run }
+    resizing.set(ancestor, watched)
+  }
+  const { updates, run } = watched
+  // Adding a listener already there adds nothing.
+  ancestor.addEventListener('resize', run)
+  updates.add(update)
+  return () => {
+    updates.delete(update)
+    if (!updates.size) ancestor.removeEventListener('resize', run)
+  }
 }
 
 // Not `instanceof Element`, which is false for an anchor from another window, such as an iframe's.
@@ -281,9 +292,10 @@ const transformOrigin = (options: { arrowWidth: number; arrowHeight: number }): 
     const [startOrigin, endOrigin] = isRTL && isVertical ? ['100%', '0%'] : ['0%', '100%']
     const noArrowAlign = { start: startOrigin, center: '50%', end: endOrigin }[placedAlign]
 
+    const { x: arrowX = 0, y: arrowY = 0 } = middlewareData.arrow ?? {}
     const along = isArrowHidden
       ? noArrowAlign
-      : `${isVertical ? (middlewareData.arrow?.x ?? 0) + options.arrowWidth / 2 : (middlewareData.arrow?.y ?? 0) + arrowHeight / 2}px`
+      : `${isVertical ? arrowX + options.arrowWidth / 2 : arrowY + arrowHeight / 2}px`
     const across = `${placedSide === 'bottom' || placedSide === 'right' ? -arrowHeight : (isVertical ? rects.floating.height : rects.floating.width) + arrowHeight}px`
 
     return { data: isVertical ? { x: along, y: across } : { x: across, y: along } }

@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'bun:test'
 import { act, render } from '@testing-library/react'
 import * as React from 'react'
 import { renderToString } from 'react-dom/server'
+import { describe, expect, it } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { DIRECTION_DICTIONARY, DirectionProvider, useDirection } from '../direction'
 

@@ -1,6 +1,6 @@
-import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { freshDom, wait } from '../../__tests__/dom'
 import {
   NavigationMenu,
@@ -1791,5 +1791,49 @@ describe('NavigationMenu orientation and direction', () => {
       '-viewport': [['vertical', null, null]],
       '-indicator': [['vertical', null, 'true']],
     })
+  })
+})
+
+describe('NavigationMenu parts that cannot reach an element', () => {
+  function NoRef({ ref: _ref, ...props }: React.ComponentProps<'button'>) {
+    return <button type="button" {...props} />
+  }
+
+  it('leaves focus on a link outside any list when an arrow key is pressed on it', () => {
+    render(
+      <NavigationMenu>
+        <NavigationMenuLink href="/">Home</NavigationMenuLink>
+      </NavigationMenu>,
+    )
+    const link = screen.getByRole('link', { name: 'Home' })
+    act(() => link.focus())
+
+    fireEvent.keyDown(link, { key: 'ArrowRight' })
+
+    expect(document.activeElement).toBe(link)
+  })
+
+  it('moves to another content beside a trigger slotted onto a component that drops its ref', () => {
+    const menu = (value: string) => (
+      <NavigationMenu value={value}>
+        <NavigationMenuList>
+          <NavigationMenuItem value="a">
+            <NavigationMenuTrigger asChild>
+              <NoRef>A</NoRef>
+            </NavigationMenuTrigger>
+            <NavigationMenuContent>Panel A</NavigationMenuContent>
+          </NavigationMenuItem>
+          <NavigationMenuItem value="b">
+            <NavigationMenuTrigger>B</NavigationMenuTrigger>
+            <NavigationMenuContent>Panel B</NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
+    )
+    const { rerender } = render(menu('a'))
+
+    rerender(menu('b'))
+
+    expect(screen.getByText('Panel B')).toBeTruthy()
   })
 })

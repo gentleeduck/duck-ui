@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { render, renderHook, screen } from '@testing-library/react'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { freshDom, wait } from '../../__tests__/dom'
 import {
   findNextItem,
@@ -368,7 +368,7 @@ describe('getNavigationCandidates', () => {
 })
 
 describe('useVimNavigation', () => {
-  const scrollIntoView = mock()
+  const scrollIntoView = vi.fn()
   const originalScrollIntoView = Element.prototype.scrollIntoView
   beforeEach(() => {
     Element.prototype.scrollIntoView = scrollIntoView
@@ -389,7 +389,7 @@ describe('useVimNavigation', () => {
       </>,
     )
     const items = Array.from(container.querySelectorAll('button'))
-    const onNavigate = mock(() => {})
+    const onNavigate = vi.fn(() => {})
     const { result } = renderHook(() => useVimNavigation({ onNavigate, ggTimeoutMs: 50 }))
     const press = (key: string, init: Partial<KeyboardEvent> = {}) => {
       const event = new KeyboardEvent('keydown', { cancelable: true, key, ...init })
@@ -401,7 +401,7 @@ describe('useVimNavigation', () => {
   it('takes G to the last item and gg to the first, after the keydown, and claims both keys', async () => {
     const { items, onNavigate, press } = list()
     items[1]?.focus()
-    const focusLast = spyOn(items[2] as HTMLButtonElement, 'focus')
+    const focusLast = vi.spyOn(items[2] as HTMLButtonElement, 'focus')
 
     expect(press('G', { shiftKey: true })).toEqual([true, true])
     expect(document.activeElement).toBe(items[1] ?? null)

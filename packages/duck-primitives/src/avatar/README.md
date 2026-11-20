@@ -39,61 +39,37 @@ The stories cover an image that loads, reporting each status it passes through; 
 source; a fallback held back by `delayMs`; and a source that changes from broken to loaded and back. The end-to-end
 suite runs each in Chromium, Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail. Setting `src` before `loading` and
-`crossOrigin` fails no test, since React 19, which the suite runs, sets an image's `src` last itself.
+Each test written for this module was proven by changing the code and watching a test fail. Setting `src` before
+`loading` and `crossOrigin` fails no test, since React 19, which the suite runs, sets an image's `src` last itself.
+The suites taken from Ark UI and Base UI run that library's own cases against this code. Each file's header names
+its source and every case left out, and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 68 | `avatar.radix.test.tsx` 35, `avatar.test.tsx` 33 |
+| Unit | 75 | `avatar.ark.test.tsx` 2, `avatar.base-ui.test.tsx` 5, `avatar.radix.test.tsx` 35, `avatar.test.tsx` 33 |
 | End to end | 5 | `avatar.e2e.ts` 5 |
 | registry-ui | 16 | `avatar.test.tsx` 14, `motion-avatar.test.tsx` 2 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>73 behaviours, one per test</summary>
+<summary>80 behaviours, one per test</summary>
 
-**Unit, `avatar.test.tsx`**
+**Unit, `avatar.ark.test.tsx`**
 
-- Avatar
-  - renders with data-slot="avatar"
-  - renders as a span
-  - forwards ref
-  - passes className through
-  - hands its parts the scope it is given
-  - names each part in React DevTools
-- AvatarFallback
-  - renders fallback with data-slot="avatar-fallback" when no image
-  - renders fallback as a span
-  - fallback forwards ref
-  - fallback passes className
-- Avatar (composition)
-  - renders avatar with children
-  - sets dir on avatar
-  - takes any dir an element takes, auto included, since it reads none
-  - leaves the direction to the document when no dir is passed
-- AvatarImage loading
-  - starts the download from the server HTML
-  - renders no image without a src or srcSet
-  - marks the image with data-slot="avatar-image"
-  - keeps the style it was given on a loading image
-  - says nothing about two images in production
-  - keeps a loading image laid out, so a lazy one near the viewport still loads
-  - shows the image once it loads, with the style it was given
-  - keeps the image hidden and the fallback shown when it fails
-  - shows an image that loaded before the page hydrated
-  - ignores a load that arrives while the image is not complete, as one for a replaced request does
-  - hides the image again while a new src loads, though the old image still reports complete
-  - hides the image again while a new srcSet loads under the same src
-  - shows the fallback while a src that went away and came back loads again
-  - shows a new src at once when the browser already has it
-  - loads and shows an image that has only a srcSet
-  - still calls the onLoad and onError it was given
-  - does not warn about two images when one replaces another
-- AvatarFallback delay
-  - shows the fallback after a delay of 0
-  - starts the wait over when the delay changes before it ends
+- Ark UI avatar
+  - has no axe violations
+  - shows its initials when given no src
+
+**Unit, `avatar.base-ui.test.tsx`**
+
+- Base UI avatar fallback delay
+  - shows the fallback once its delay has passed
+  - shows the fallback at once with a delay of 0
+  - shows the fallback once its delay changes to 0
+  - keeps a shown fallback shown when a delay is given later
+  - keeps a shown fallback shown as its delay goes from a number to none and back
 
 **Unit, `avatar.radix.test.tsx`**
 
@@ -144,6 +120,47 @@ Each test was proven by changing the code and watching a test fail. Setting `src
   - spreads props it does not consume onto the element it renders
   - forwards props to the child element when `asChild` is set
 
+**Unit, `avatar.test.tsx`**
+
+- Avatar
+  - renders with data-slot="avatar"
+  - renders as a span
+  - forwards ref
+  - passes className through
+  - hands its parts the scope it is given
+  - names each part in React DevTools
+- AvatarFallback
+  - renders fallback with data-slot="avatar-fallback" when no image
+  - renders fallback as a span
+  - fallback forwards ref
+  - fallback passes className
+- Avatar (composition)
+  - renders avatar with children
+  - sets dir on avatar
+  - takes any dir an element takes, auto included, since it reads none
+  - leaves the direction to the document when no dir is passed
+- AvatarImage loading
+  - starts the download from the server HTML
+  - renders no image without a src or srcSet
+  - marks the image with data-slot="avatar-image"
+  - keeps the style it was given on a loading image
+  - says nothing about two images in production
+  - keeps a loading image laid out, so a lazy one near the viewport still loads
+  - shows the image once it loads, with the style it was given
+  - keeps the image hidden and the fallback shown when it fails
+  - shows an image that loaded before the page hydrated
+  - ignores a load that arrives while the image is not complete, as one for a replaced request does
+  - hides the image again while a new src loads, though the old image still reports complete
+  - hides the image again while a new srcSet loads under the same src
+  - shows the fallback while a src that went away and came back loads again
+  - shows a new src at once when the browser already has it
+  - loads and shows an image that has only a srcSet
+  - still calls the onLoad and onError it was given
+  - does not warn about two images when one replaces another
+- AvatarFallback delay
+  - shows the fallback after a delay of 0
+  - starts the wait over when the delay changes before it ends
+
 **End to end, `avatar.e2e.ts`**
 
 - Avatar
@@ -164,6 +181,8 @@ Each test was proven by changing the code and watching a test fail. Setting `src
   `<img>` has. An image with only a `srcSet` loads.
 - The image carries `data-state` of `loading`, `loaded` or `error`, and the status type is exported as
   `IAvatar.ImageLoadingStatus`.
+- A fallback with `delayMs={0}` shows in the first render, as Base UI's does, where Radix waits a timer for it and
+  draws a blank frame first.
 
 ## Fixed
 

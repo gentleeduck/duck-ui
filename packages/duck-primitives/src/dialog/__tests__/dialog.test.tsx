@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   clickOutside,
   freshDom,
@@ -143,7 +143,7 @@ describe('Dialog', () => {
   // --- Controlled ---
 
   it('calls onOpenChange when trigger clicked', () => {
-    const handler = mock(() => {})
+    const handler = vi.fn(() => {})
     const { container } = renderDialog({ onOpenChange: handler })
     fireEvent.click(container.querySelector('[data-slot="dialog-trigger"]')!)
     expect(handler).toHaveBeenCalledWith(true)
@@ -293,7 +293,7 @@ describe('Dialog with modal', () => {
   })
 
   it('hands a focus outside to onFocusOutside and stays open, with the trap off', async () => {
-    const onFocusOutside = mock()
+    const onFocusOutside = vi.fn()
     const outside = renderBeside({ trapFocus: false, onFocusOutside })
     await wait(0)
 
@@ -331,7 +331,7 @@ describe('Dialog without modal', () => {
   })
 
   it('leaves its own trigger to the trigger', async () => {
-    const onInteractOutside = mock()
+    const onInteractOutside = vi.fn()
     const { trigger } = await openDialog({ onInteractOutside })
 
     fireEvent.pointerDown(trigger, { button: 1 })
@@ -346,7 +346,7 @@ describe('Dialog without modal', () => {
   })
 
   it('ignores the focus that follows a click outside while the content is still mounted', async () => {
-    const onInteractOutside = mock()
+    const onInteractOutside = vi.fn()
     const { outside } = await openDialog({ forceMount: true, onInteractOutside })
 
     await clickOutside(outside, { focus: true })
@@ -492,13 +492,13 @@ function renderOpen(children: React.ReactNode, contentProps: React.ComponentProp
 
 describe('Dialog accessibility warnings in development', () => {
   const nodeEnv = process.env.NODE_ENV
-  let error: ReturnType<typeof spyOn>
-  let warn: ReturnType<typeof spyOn>
+  let error: ReturnType<typeof vi.spyOn>
+  let warn: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
     process.env.NODE_ENV = 'development'
-    error = spyOn(console, 'error').mockImplementation(() => {})
-    warn = spyOn(console, 'warn').mockImplementation(() => {})
+    error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -540,8 +540,24 @@ describe('Dialog accessibility warnings in development', () => {
     )
 
     const title = error.mock.calls.find(([message]) => String(message).includes('requires a'))
-    expect(String(title?.[0])).toStartWith('`SheetContent` requires a `SheetTitle` for')
+    expect(String(title?.[0])).toMatch(/^`SheetContent` requires a `SheetTitle` for/)
     expect(String(warn.mock.calls[0]?.[0])).toContain('Render `SheetDescription` inside it')
+  })
+
+  it('renders its children alone in production', () => {
+    const env = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    try {
+      const { container } = render(
+        <WarningProvider contentName="SheetContent" titleName="SheetTitle" descriptionName="SheetDescription">
+          <span>Sheet</span>
+        </WarningProvider>,
+      )
+
+      expect(container.innerHTML).toBe('<span>Sheet</span>')
+    } finally {
+      process.env.NODE_ENV = env
+    }
   })
 
   it.each([{ 'aria-label': 'Ducks' }, { 'aria-labelledby': 'elsewhere' }])('takes %o in place of a title', (props) => {
@@ -562,7 +578,7 @@ describe('Dialog accessibility warnings in development', () => {
 
 describe('Dialog parts', () => {
   it('throws for a Title or Description outside the content', () => {
-    const error = spyOn(console, 'error').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     expect(() =>
       render(
@@ -1011,7 +1027,7 @@ describe('Dialog giving the page back on close', () => {
   it('gives the page its pointer events back while a CSS exit animation runs', () => {
     let animationName = 'none'
     const computedStyle = globalThis.getComputedStyle
-    const styleSpy = spyOn(globalThis, 'getComputedStyle').mockImplementation((element, pseudo) =>
+    const styleSpy = vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element, pseudo) =>
       element.getAttribute('role') === 'dialog'
         ? ({
             get animationName() {

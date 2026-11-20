@@ -1,10 +1,10 @@
 // From Radix UI primitives, packages/react/tooltip/src/tooltip.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import { afterEach, describe, expect, it } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import * as React from 'react'
-import { radixEnvironment, vi } from '../../__tests__/radix/harness'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { radixEnvironment } from '../../__tests__/radix/harness'
 import * as Tooltip from '../index'
 
 radixEnvironment()

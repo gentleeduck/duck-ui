@@ -27,14 +27,14 @@ covered by `toggle-group.radix.e2e.ts`.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 33 | `roving-focus.test.tsx` 33 |
+| Unit | 35 | `roving-focus.test.tsx` 35 |
 | End to end | 10 | `roving-focus.e2e.ts` 10 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>43 behaviours, one per test</summary>
+<summary>45 behaviours, one per test</summary>
 
 **Unit, `roving-focus.test.tsx`**
 
@@ -45,6 +45,8 @@ covered by `toggle-group.radix.e2e.ts`.
   - forwards ref to group
   - calls a function child with whether its item is the tab stop and whether the group has one
   - accepts orientation prop
+  - throws for an item outside any group
+  - gives an item outside any group no tab stop to take and nowhere to register
 - RovingFocusGroup pointer and tabbing
   - prevents a mouse down on an item that cannot take focus
   - makes the item a mouse down lands on the tab stop

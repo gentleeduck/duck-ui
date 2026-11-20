@@ -54,7 +54,7 @@ describe('resolveFocusTarget', () => {
 })
 
 describe('buildDayProps', () => {
-  it('marks a hidden day and the three parts of a range', () => {
+  it('marks a hidden day and the three parts of a range, every part of it selected', () => {
     const props = [
       day(new Date(2026, 2, 1), { isHidden: true, isOutside: true }),
       day(new Date(2026, 2, 2), { isRangeStart: true, isSelected: true }),
@@ -63,12 +63,18 @@ describe('buildDayProps', () => {
     ].map((d) => buildDayProps(d, new Date(2026, 2, 9), adapter, vi.fn(), vi.fn(), vi.fn()))
 
     expect(
-      props.map((p) => [p['data-hidden'], p['data-range-start'], p['data-range-middle'], p['data-range-end']]),
+      props.map((p) => [
+        p['data-hidden'],
+        p['data-range-start'],
+        p['data-range-middle'],
+        p['data-range-end'],
+        p['aria-selected'],
+      ]),
     ).toEqual([
-      ['true', undefined, undefined, undefined],
-      [undefined, 'true', undefined, undefined],
-      [undefined, undefined, 'true', undefined],
-      [undefined, undefined, undefined, 'true'],
+      ['true', undefined, undefined, undefined, false],
+      [undefined, 'true', undefined, undefined, true],
+      [undefined, undefined, 'true', undefined, true],
+      [undefined, undefined, undefined, 'true', true],
     ])
   })
 

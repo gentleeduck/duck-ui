@@ -1,8 +1,8 @@
-import { afterAll, beforeAll, describe, expect, it, mock, spyOn } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { createPortal } from 'react-dom'
 import { renderToString } from 'react-dom/server'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { DirectionProvider } from '../../direction'
 import {
@@ -223,7 +223,7 @@ describe('Command', () => {
 })
 
 // jsdom has no scrollIntoView.
-const scrollIntoView = mock()
+const scrollIntoView = vi.fn()
 const originalScrollIntoView = Element.prototype.scrollIntoView
 beforeAll(() => {
   Element.prototype.scrollIntoView = scrollIntoView
@@ -233,7 +233,7 @@ afterAll(() => {
 })
 
 function renderGroupedCommand(children?: React.ReactNode) {
-  const onSelect = mock()
+  const onSelect = vi.fn()
   render(
     <Command data-testid="root">
       <CommandInput aria-label="Search" />
@@ -575,7 +575,7 @@ describe('Command item', () => {
   })
 
   it('leaves the highlight where it is as the mouse moves with disablePointerSelection, and still selects on a click', () => {
-    const onSelect = mock()
+    const onSelect = vi.fn()
     render(
       <Fruits
         disablePointerSelection
@@ -816,7 +816,7 @@ describe('Command item', () => {
   })
 
   it('selects with an empty value when it names none', () => {
-    const onSelect = mock()
+    const onSelect = vi.fn()
     render(
       <Command>
         <CommandList>
@@ -987,7 +987,7 @@ const type = (search: string) => fireEvent.change(screen.getByRole('combobox'), 
 
 describe('Command highlight value', () => {
   it('tells onValueChange the value of each item the highlight moves to', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(<Fruits onValueChange={onValueChange} />)
 
     press(screen.getByRole('combobox'), 'ArrowDown', 'ArrowDown')
@@ -997,7 +997,7 @@ describe('Command highlight value', () => {
   })
 
   it('stays quiet when the highlight moves between items of the same value', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(
       <Command onValueChange={onValueChange}>
         <CommandList>
@@ -1084,7 +1084,7 @@ describe('Command highlight value', () => {
   })
 
   it('asks for the first match on a search, keeping the controlled item highlighted until the owner moves it', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(<Fruits value="banana" onValueChange={onValueChange} />)
 
     type('a')
@@ -1093,7 +1093,7 @@ describe('Command highlight value', () => {
   })
 
   it('asks for the first item when a controlled value names none, and highlights nothing for an empty one', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(<Fruits value="" onValueChange={onValueChange} />)
 
     expect([highlighted(), onValueChange.mock.calls]).toEqual([null, [['apple']]])
@@ -1118,7 +1118,7 @@ describe('Command ranking', () => {
   })
 
   it('passes the filter the text, the search and the keywords', () => {
-    const filter = mock(() => 1)
+    const filter = vi.fn(() => 1)
     render(
       <Command filter={filter}>
         <CommandInput aria-label="Search" />
@@ -1347,6 +1347,31 @@ describe('Command items changing', () => {
 
     expect(highlighted()).toBe('Banana')
   })
+
+  it('filters again on a rename in the list that stays when a list mounted before it leaves', () => {
+    let rename: (label: string) => void = () => {}
+    function Fruit() {
+      const [label, setLabel] = React.useState('Apple')
+      rename = setLabel
+      return <CommandItem value="fruit">{label}</CommandItem>
+    }
+    const lists = (both: boolean) => (
+      <Command>
+        <CommandInput aria-label="Search" />
+        {both ? <CommandList /> : null}
+        <CommandList>
+          <Fruit />
+        </CommandList>
+      </Command>
+    )
+    const { rerender } = render(lists(true))
+    type('apri')
+    rerender(lists(false))
+
+    act(() => rename('Apricot'))
+
+    expect(texts()).toEqual(['Apricot'])
+  })
 })
 
 describe('Command input default', () => {
@@ -1362,6 +1387,28 @@ describe('Command input default', () => {
     )
 
     expect([texts(), highlighted()]).toEqual([['Banana'], 'Banana'])
+  })
+
+  it('starts unfiltered through an input slotted onto a component that drops its ref, and filters as it is typed in', () => {
+    function NoRef({ ref: _ref, ...props }: React.ComponentProps<'input'>) {
+      return <input {...props} />
+    }
+    render(
+      <Command>
+        <CommandInput aria-label="Search" defaultValue="ban" asChild>
+          <NoRef />
+        </CommandInput>
+        <CommandList>
+          <CommandItem value="apple">Apple</CommandItem>
+          <CommandItem value="banana">Banana</CommandItem>
+        </CommandList>
+      </Command>,
+    )
+    const before = texts()
+
+    type('app')
+
+    expect([before, texts()]).toEqual([['Apple', 'Banana'], ['Apple']])
   })
 })
 
@@ -1719,7 +1766,7 @@ describe('Command list height', () => {
 
 describe('useCommandState', () => {
   it('settles on a selector that returns a new object, where each read made a fresh one', () => {
-    const errors = spyOn(console, 'error').mockImplementation(() => {})
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
     function Count() {
       const picked = useCommandState((state) => ({ count: state.count }))
       return <output data-testid="count">{picked.count}</output>
@@ -1945,7 +1992,7 @@ describe('Command virtual list', () => {
   })
 
   it('stops asking a virtual list to scroll once it unmounts', () => {
-    const scrollToIndex = mock()
+    const scrollToIndex = vi.fn()
     function Toggle() {
       const [shown, setShown] = React.useState(true)
       return (
@@ -2002,7 +2049,7 @@ describe('Command virtual list', () => {
   })
 
   it('keeps the highlight on a row scrolled out of the DOM, and draws it again when the row comes back', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(<Virtual onValueChange={onValueChange} />)
     keys('ArrowDown', 'ArrowDown')
     onValueChange.mockClear()
@@ -2051,7 +2098,9 @@ describe('Command virtual list', () => {
   it('pages by the rows the scrolling box shows, past the rows drawn', () => {
     render(<Virtual />)
     Object.defineProperties(screen.getByRole('listbox'), { clientHeight: { value: 60 }, scrollHeight: { value: 2000 } })
-    const rect = spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({ height: 20 }))
+    const rect = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockReturnValue(DOMRect.fromRect({ height: 20 }))
 
     const pages = [keys('PageDown'), keys('PageDown'), keys('PageDown'), keys('PageUp')]
     rect.mockRestore()
@@ -2062,7 +2111,9 @@ describe('Command virtual list', () => {
   it('pages one row at least when the box shows no more than the highlighted one', () => {
     render(<Virtual />)
     Object.defineProperties(screen.getByRole('listbox'), { clientHeight: { value: 20 }, scrollHeight: { value: 2000 } })
-    const rect = spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({ height: 20 }))
+    const rect = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockReturnValue(DOMRect.fromRect({ height: 20 }))
 
     const paged = keys('PageDown')
     rect.mockRestore()
@@ -2104,7 +2155,7 @@ describe('Command virtual list', () => {
   })
 
   it('forgets a row it asked for once a search runs, controlled', () => {
-    const asked = mock()
+    const asked = vi.fn()
     function Owned() {
       const [value, setValue] = React.useState('Row 0')
       return <Virtual value={value} onValueChange={setValue} asked={asked} />
@@ -2133,7 +2184,7 @@ describe('Command store', () => {
       </Command>,
     )
     const [store] = stores
-    const listener = mock()
+    const listener = vi.fn()
     const unsubscribe = store.subscribe(listener)
 
     store.set('search', '')
@@ -2168,7 +2219,7 @@ describe('Command parts', () => {
   })
 
   it("runs the root's own onKeyDown", () => {
-    const onKeyDown = mock()
+    const onKeyDown = vi.fn()
     render(<Fruits onKeyDown={onKeyDown} />)
 
     press(screen.getByRole('combobox'), 'ArrowDown')
@@ -2191,7 +2242,7 @@ describe('Command parts', () => {
   })
 
   it("runs an item's own onClick", () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     render(
       <Fruits
         extra={
@@ -2263,7 +2314,7 @@ describe('Command highlight marking', () => {
   })
 
   it('reports nothing when the pointer moves onto the value it already holds', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(<Fruits value="apple" onValueChange={onValueChange} />)
 
     fireEvent.pointerMove(option('Apple'), { pointerType: 'mouse' })
@@ -2332,7 +2383,7 @@ describe('Command keys', () => {
 
   it('gives focus back to the input without scrolling when the pointer reaches a disabled item', () => {
     const { input } = renderGroupedCommand()
-    const focus = spyOn(input, 'focus')
+    const focus = vi.spyOn(input, 'focus')
 
     fireEvent.pointerMove(option('Banana'), { pointerType: 'mouse' })
     const calls = focus.mock.calls
@@ -2344,7 +2395,7 @@ describe('Command keys', () => {
 
 describe('Command filtering again', () => {
   it('filters again only when an item changes what it shows, not each time it renders', () => {
-    const filter = mock(() => 1)
+    const filter = vi.fn(() => 1)
     const { rerender } = render(<Fruits filter={filter} />)
     type('a')
     filter.mockClear()

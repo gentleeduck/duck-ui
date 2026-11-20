@@ -43,8 +43,18 @@ function createCollection<ItemElement extends HTMLElement, ItemData = {}>(name: 
   const CollectionSlotImpl = createSlot(COLLECTION_SLOT_NAME)
   const CollectionSlot = React.forwardRef<CollectionElement, ICollectionProps>((props, forwardedRef) => {
     const { scope, children } = props
-    const context = useCollectionContext(COLLECTION_SLOT_NAME, scope)
-    const composedRefs = useComposedRefs(forwardedRef, context.collectionRef)
+    const { collectionRef } = useCollectionContext(COLLECTION_SLOT_NAME, scope)
+    // A slot mounted later takes the collection over while this one may still be mounted, so this one clears only its own.
+    const holdCollection = React.useCallback(
+      (node: CollectionElement | null) => {
+        collectionRef.current = node
+        return () => {
+          if (collectionRef.current === node) collectionRef.current = null
+        }
+      },
+      [collectionRef],
+    )
+    const composedRefs = useComposedRefs(forwardedRef, holdCollection)
     return <CollectionSlotImpl ref={composedRefs}>{children}</CollectionSlotImpl>
   })
 

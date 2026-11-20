@@ -1,6 +1,6 @@
-import { describe, expect, it, mock } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { describe, expect, it, vi } from 'vitest'
 import { freshDom, scrollable, scrolls, untilScrollLocked, wait } from '../../__tests__/dom'
 import { DirectionProvider } from '../../direction'
 import {
@@ -832,7 +832,7 @@ describe('Menubar disabled', () => {
   })
 
   it('keeps the open menu when the pointer moves onto a disabled trigger', async () => {
-    const onValueChange = mock((_value: string) => {})
+    const onValueChange = vi.fn((_value: string) => {})
     render(
       <Menubar defaultValue="file" onValueChange={onValueChange}>
         <MenubarMenu value="file">

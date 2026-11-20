@@ -33,14 +33,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 23 | `checkers.test.tsx` 23 |
+| Unit | 24 | `checkers.test.tsx` 24 |
 | End to end | 9 | `checkers.e2e.ts` 9 |
 | registry-ui | 84 | `checkbox.radix.test.tsx` 26, `checkbox.test.tsx` 22, `motion-checkbox.test.tsx` 3, `switch.radix.test.tsx` 13, `switch.test.tsx` 20 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>32 behaviours, one per test</summary>
+<summary>33 behaviours, one per test</summary>
 
 **Unit, `checkers.test.tsx`**
 
@@ -69,6 +69,7 @@ Each test was proven by changing the code and watching a test fail.
   - puts the owner's value back after a reset the owner does not follow
   - leaves an input that keeps its own state to the reset
   - hears an uncancelled reset of the form the input belongs to now
+  - hears no reset while it has no input, and runs nothing on one
   - puts nothing back once it unmounts
 
 **End to end, `checkers.e2e.ts`**

@@ -173,6 +173,20 @@ export const Skipped = () => (
   </div>
 )
 
+// Tab from a stop with tabIndex 1 reaches one with tabIndex 2 before the next stop inside the scope.
+export const PositiveTabIndex = () => (
+  <div className={styles.page}>
+    <div tabIndex={-1}>
+      <input aria-label="Outside second" tabIndex={2} />
+      <input aria-label="Outside first" tabIndex={1} />
+    </div>
+    <FocusScope aria-label="Scope" className={styles.scope} loop role="group" trapped>
+      <input aria-label="Inside first" tabIndex={1} />
+      <input aria-label="Inside second" />
+    </FocusScope>
+  </div>
+)
+
 export const Svg = () => (
   <div className={styles.page}>
     <FocusScope aria-label="Scope" className={styles.scope} loop role="group" trapped>

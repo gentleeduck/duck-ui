@@ -1,9 +1,9 @@
 // From Radix UI primitives, packages/react/navigation-menu/src/navigation-menu.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import { afterEach, describe, expect, it } from 'bun:test'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
-import { assertStableComposedRef, radixEnvironment, vi } from '../../__tests__/radix/harness'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { assertStableComposedRef, radixEnvironment } from '../../__tests__/radix/harness'
 import * as NavigationMenu from '../index'
 
 radixEnvironment()

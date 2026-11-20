@@ -37,19 +37,69 @@ highlight; a thousand rows drawn by a virtualizer; items rendered as links; a ri
 `defaultValue`; the vim keys turned off; and a forced group. The end-to-end suite runs each in Chromium,
 Firefox and WebKit.
 
-Each test was proven by changing the code and watching a test fail.
+Each test written for this module was proven by changing the code and watching a test fail. The suites taken from
+cmdk run that library's own cases against this code. Each file's header names its source and every case left out,
+and not every case in them was proven that way.
 
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 167 | `command.test.tsx` 167 |
+| Unit | 208 | `command.cmdk.test.tsx` 39, `command.test.tsx` 169 |
 | End to end | 22 | `command.e2e.ts` 22 |
 | registry-ui | 14 | `command.test.tsx` 14 |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>189 behaviours, one per test</summary>
+<summary>230 behaviours, one per test</summary>
+
+**Unit, `command.cmdk.test.tsx`**
+
+- cmdk basic behavior
+  - forwards the input props
+  - prefers the item value prop over its text
+  - calls onSelect on click
+  - highlights the first item by default
+  - highlights the first item when the search changes
+  - filters the items as the search changes
+  - filters the items by their keywords
+  - shows the empty state when nothing matches
+  - applies a className to each part
+- cmdk numeric values
+  - filters on a numeric search
+  - filters on a search that is not numeric
+- cmdk keybinds
+  - moves the highlight on ArrowDown and ArrowUp
+  - jumps to the first and last items on Meta with an arrow
+  - jumps to the next and previous group on Alt with an arrow
+  - moves the highlight on Ctrl+j and Ctrl+k
+  - jumps to the first and last items on Meta+Ctrl+j and Meta+Ctrl+k
+  - jumps to the next and previous group on Alt+Ctrl+j and Alt+Ctrl+k
+  - leaves Ctrl+j and Ctrl+k alone with vimBindings off
+  - moves the highlight on Ctrl+n and Ctrl+p
+  - jumps to the first and last items on Meta+Ctrl+n and Meta+Ctrl+p
+  - jumps to the next and previous group on Alt+Ctrl+n and Alt+Ctrl+p
+  - leaves Ctrl+n and Ctrl+p alone with vimBindings off
+- cmdk props
+  - keeps every item with filtering off
+  - matches by a custom filter
+  - follows a controlled value
+  - clears the controlled value while nothing matches, and takes it back once something does
+  - follows a controlled search
+  - keeps the highlight on the value it started with
+- cmdk items
+  - shows an item mounted under a search it matches
+  - hides an item mounted under a search it does not match
+  - highlights the next item when the highlighted one unmounts
+  - shows the empty state when the only match unmounts
+  - highlights an item mounted as the only match
+  - keeps the highlight where it is as items mount
+  - shows a forceMount item whatever the search
+  - filters again by the text of an item that renders again
+- cmdk groups
+  - shows and hides each group by whether its items match
+  - filters a group mounted under a search
+  - shows a forceMount group whatever the search
 
 **Unit, `command.test.tsx`**
 
@@ -155,8 +205,10 @@ Each test was proven by changing the code and watching a test fail.
   - filters again when an item is renamed under a search
   - moves the highlight to the first item when the highlighted one unmounts
   - keeps the highlight on its item while other items come and go
+  - filters again on a rename in the list that stays when a list mounted before it leaves
 - Command input default
   - filters by the text an uncontrolled input starts with
+  - starts unfiltered through an input slotted onto a component that drops its ref, and filters as it is typed in
 - Command shouldFilter off
   - shows the empty state, and hides the group, once the caller renders no item
   - shows again the items a search hid once filtering is turned off

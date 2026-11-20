@@ -45,7 +45,13 @@ const AccordionContentImpl = React.forwardRef<HTMLDivElement, IAccordion.IConten
     const composedRefs = useComposedRefs(forwardedRef, contentRef)
     const inlineStylesRef = React.useRef<Pick<CSSStyleDeclaration, 'animationName' | 'transitionDuration'>>(undefined)
     const findable = hiddenUntilFound && !present && !itemContext.disabled
-    const { open, onOpenToggle } = itemContext
+    const { open, onOpenToggle, onContentIdChange } = itemContext
+    const { id } = contentProps
+
+    useLayoutEffect(() => {
+      onContentIdChange(id)
+      return () => onContentIdChange(undefined)
+    }, [onContentIdChange, id])
 
     // React 19 writes hidden="until-found" as hidden="", so the server renders it hidden and the effect upgrades it.
     useLayoutEffect(() => {
@@ -105,13 +111,14 @@ const AccordionContentImpl = React.forwardRef<HTMLDivElement, IAccordion.IConten
         data-slot="accordion-content"
         data-state={open ? 'open' : 'closed'}
         data-disabled={itemContext.disabled ? '' : undefined}
-        id={itemContext.contentId}
         role="region"
         aria-labelledby={itemContext.triggerId}
         aria-hidden={!open || undefined}
         hidden={hiddenUntilFound && !present ? true : undefined}
         data-orientation={context.orientation}
         {...contentProps}
+        // After the props, so an id={undefined} passed on leaves the content the id its trigger points at.
+        id={itemContext.contentId}
         ref={composedRefs}
       />
     )

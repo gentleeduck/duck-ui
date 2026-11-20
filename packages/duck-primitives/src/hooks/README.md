@@ -46,19 +46,24 @@ tests for those hooks, from its main branch.
 <details>
 <summary>87 behaviours, one per test</summary>
 
-**Unit, `use-size.test.tsx`**
+**Unit, `focus-guards.radix.test.tsx`**
 
-- useSize
-  - applies a reported size on the next frame, not inside the observer callback
-  - applies only the last of several reports in one frame
-  - does not render again when a report repeats the size it already has
-  - does not render for the first report when it matches the offset size
-  - applies a change of height alone
-  - measures the offset size when a report carries no border box
-  - ignores a report with no entries
-  - stops observing and drops a pending report on unmount
-  - moves to a new element and drops a report still pending for the old one
-  - returns undefined once the element is gone
+- useFocusGuards
+  - injects a single pair of guards at the edges of &lt;body&gt;
+  - does not duplicate guards when multiple consumers mount
+  - removes the guards only after the last consumer unmounts
+  - does not write to the DOM when an extra consumer mounts and the guards are already in place
+  - re-asserts the trailing guard as the last child when a node is appended after it
+- FocusGuards
+  - renders text children
+  - renders JSX children
+  - injects a single pair of guards at the edges of &lt;body&gt;
+
+**Unit, `hooks-extra.test.tsx`**
+
+- useLayoutEffect
+  - is a function
+  - runs synchronously during render in jsdom
 
 **Unit, `hooks.test.tsx`**
 
@@ -107,29 +112,6 @@ tests for those hooks, from its main branch.
 - useLayoutEffect on the server
   - is a no-op rather than React's, which React 18 warns about there
 
-**Unit, `hooks-extra.test.tsx`**
-
-- useLayoutEffect
-  - is a function
-  - runs synchronously during render in jsdom
-
-**Unit, `use-size.radix.test.tsx`**
-
-- useSize
-  - returns `undefined` when the element is `null`
-  - provides the size synchronously from offset dimensions on mount
-  - observes the element using the `border-box` box model
-  - updates the size from `borderBoxSize` reported as an array
-  - updates the size from `borderBoxSize` reported as a plain object
-  - falls back to offset dimensions when `borderBoxSize` is unavailable
-  - ignores empty or non-array observer payloads
-  - resets the size to `undefined` when the element becomes `null`
-- useSize &gt; requestAnimationFrame batching
-  - defers observer-driven updates to the next animation frame
-  - coalesces rapid observations, cancelling the previously scheduled frames
-  - cancels a pending frame and un-observes on unmount
-  - does not warn or error when unmounted before a pending frame runs
-
 **Unit, `use-controllable-state.radix.test.tsx`**
 
 - useControllableState &gt; given a controlled value
@@ -155,18 +137,36 @@ tests for those hooks, from its main branch.
 - FocusGuards
   - renders its children and guards the body while mounted
 
-**Unit, `focus-guards.radix.test.tsx`**
+**Unit, `use-size.radix.test.tsx`**
 
-- useFocusGuards
-  - injects a single pair of guards at the edges of &lt;body&gt;
-  - does not duplicate guards when multiple consumers mount
-  - removes the guards only after the last consumer unmounts
-  - does not write to the DOM when an extra consumer mounts and the guards are already in place
-  - re-asserts the trailing guard as the last child when a node is appended after it
-- FocusGuards
-  - renders text children
-  - renders JSX children
-  - injects a single pair of guards at the edges of &lt;body&gt;
+- useSize
+  - returns `undefined` when the element is `null`
+  - provides the size synchronously from offset dimensions on mount
+  - observes the element using the `border-box` box model
+  - updates the size from `borderBoxSize` reported as an array
+  - updates the size from `borderBoxSize` reported as a plain object
+  - falls back to offset dimensions when `borderBoxSize` is unavailable
+  - ignores empty or non-array observer payloads
+  - resets the size to `undefined` when the element becomes `null`
+- useSize &gt; requestAnimationFrame batching
+  - defers observer-driven updates to the next animation frame
+  - coalesces rapid observations, cancelling the previously scheduled frames
+  - cancels a pending frame and un-observes on unmount
+  - does not warn or error when unmounted before a pending frame runs
+
+**Unit, `use-size.test.tsx`**
+
+- useSize
+  - applies a reported size on the next frame, not inside the observer callback
+  - applies only the last of several reports in one frame
+  - does not render again when a report repeats the size it already has
+  - does not render for the first report when it matches the offset size
+  - applies a change of height alone
+  - measures the offset size when a report carries no border box
+  - ignores a report with no entries
+  - stops observing and drops a pending report on unmount
+  - moves to a new element and drops a report still pending for the old one
+  - returns undefined once the element is gone
 
 **End to end, `hooks.e2e.ts`**
 

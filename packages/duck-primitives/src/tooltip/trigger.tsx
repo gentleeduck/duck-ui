@@ -37,7 +37,9 @@ export const TooltipTrigger = React.forwardRef<TooltipTriggerElement, ITooltip.I
         {...triggerProps}
         ref={composedRefs}
         onPointerMove={composeEventHandlers(props.onPointerMove, (event) => {
-          if (event.pointerType === 'touch') return
+          // A move over a trigger nested in another is the inner one's, which is heard first.
+          if (event.pointerType === 'touch' || claimedMoves.has(event.nativeEvent)) return
+          claimedMoves.add(event.nativeEvent)
           if (!hasPointerMoveOpenedRef.current && !providerContext.isPointerInTransitRef.current) {
             hasPointerMoveOpenedRef.current = context.onTriggerEnter()
           }
@@ -47,10 +49,9 @@ export const TooltipTrigger = React.forwardRef<TooltipTriggerElement, ITooltip.I
           context.triggerGraceRef.current?.(event)
           hasPointerMoveOpenedRef.current = false
         })}
+        // A press closes the tooltip, and drops one still waiting out its delay.
         onPointerDown={composeEventHandlers(props.onPointerDown, () => {
-          if (!disableCloseOnClick && context.open) {
-            context.onClose()
-          }
+          if (!disableCloseOnClick) context.onClose()
         })}
         onFocus={composeEventHandlers(props.onFocus, (event) => {
           // A menu item picked with the pointer hands focus back focus-visible, and a dialog closed with the pointer
@@ -65,3 +66,5 @@ export const TooltipTrigger = React.forwardRef<TooltipTriggerElement, ITooltip.I
 )
 
 TooltipTrigger.displayName = TRIGGER_NAME
+
+const claimedMoves = new WeakSet<Event>()

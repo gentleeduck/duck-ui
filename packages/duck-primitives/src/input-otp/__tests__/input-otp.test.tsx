@@ -1,6 +1,6 @@
-import { describe, expect, it, mock } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { describe, expect, it, vi } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { DirectionProvider } from '../../direction'
 import {
@@ -213,7 +213,7 @@ describe('InputOTPSeparator', () => {
 
 describe('InputOTP reporting the code', () => {
   it('reports the whole code as each digit is typed', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { container } = render(
       <InputOTP maxLength={3} onValueChange={onValueChange}>
         <InputOTPGroup>
@@ -280,7 +280,7 @@ describe('InputOTP value', () => {
   })
 
   it('keeps a controlled value the owner does not change', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { container } = render(<Code value="1" onValueChange={onValueChange} />)
     const [, second] = slotsOf(container)
 
@@ -322,7 +322,7 @@ describe('InputOTP value', () => {
 
 describe('InputOTP deleting', () => {
   it('Backspace in an empty slot removes the character before it and moves there', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { container } = render(<Code defaultValue="123" onValueChange={onValueChange} />)
     const slots = slotsOf(container)
 
@@ -344,7 +344,7 @@ describe('InputOTP deleting', () => {
   })
 
   it('Backspace with nothing typed changes nothing', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { container } = render(<Code onValueChange={onValueChange} />)
 
     fireEvent.keyDown(slotsOf(container)[0] as HTMLInputElement, { key: 'Backspace' })
@@ -363,7 +363,7 @@ describe('InputOTP deleting', () => {
   })
 
   it('Delete in an empty slot changes nothing', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { container } = render(<Code defaultValue="1" onValueChange={onValueChange} />)
 
     fireEvent.keyDown(slotsOf(container)[2] as HTMLInputElement, { key: 'Delete' })
@@ -393,7 +393,7 @@ describe('InputOTP keys and fields it does not own', () => {
   })
 
   it('leaves a field inside it that is not a slot to itself', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(
       <InputOTP maxLength={2} onValueChange={onValueChange}>
         <InputOTPGroup>
@@ -430,7 +430,7 @@ describe('InputOTP keys and fields it does not own', () => {
 
 describe('InputOTP pasting and autofill', () => {
   it('pastes only the characters the pattern accepts, as far as the slots go, in place of the browser', () => {
-    const onComplete = mock()
+    const onComplete = vi.fn()
     const { container } = render(<Code onComplete={onComplete} pattern={REGEXP_ONLY_DIGITS} />)
     const slots = slotsOf(container)
 
@@ -451,7 +451,7 @@ describe('InputOTP pasting and autofill', () => {
   })
 
   it('spreads a code autofilled into one slot across all of them', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { container } = render(<Code onValueChange={onValueChange} />)
     const first = slotsOf(container)[0] as HTMLInputElement
 
@@ -481,7 +481,7 @@ describe('InputOTP pasting and autofill', () => {
   })
 
   it('undoes a character typed that the pattern refuses', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { container } = render(<Code defaultValue="1" pattern={REGEXP_ONLY_DIGITS} onValueChange={onValueChange} />)
     const second = slotsOf(container)[1] as HTMLInputElement
 
@@ -502,7 +502,7 @@ describe('InputOTP pasting and autofill', () => {
 
 describe('InputOTP onComplete', () => {
   it('reports the code once the last slot is filled', () => {
-    const onComplete = mock()
+    const onComplete = vi.fn()
     const { container } = render(<Code defaultValue="123" onComplete={onComplete} />)
     const slots = slotsOf(container)
 
@@ -514,7 +514,7 @@ describe('InputOTP onComplete', () => {
   })
 
   it('stays quiet when a full code is typed over with the same character', () => {
-    const onComplete = mock()
+    const onComplete = vi.fn()
     const { container } = render(<Code defaultValue="1234" onComplete={onComplete} />)
 
     fireEvent.keyDown(slotsOf(container)[3] as HTMLInputElement, { key: '4' })
@@ -532,7 +532,7 @@ describe('InputOTP disabled and read-only', () => {
   })
 
   it('keeps a read-only code as it is but lets focus move', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { container } = render(<Code defaultValue="12" readOnly onValueChange={onValueChange} />)
     const slots = slotsOf(container)
 
@@ -565,7 +565,7 @@ describe('InputOTP slot disabled or read-only on its own', () => {
   })
 
   it('keeps a slot read-only on its own from a key and a paste', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { container } = render(
       <InputOTP maxLength={3} onValueChange={onValueChange}>
         <InputOTPSlot readOnly />
@@ -755,7 +755,7 @@ describe('InputOTP autoSubmit', () => {
   }
 
   it('submits its form with the whole code once the last slot is filled', () => {
-    const onSubmit = mock()
+    const onSubmit = vi.fn()
     const { container } = render(<Form autoSubmit onSubmit={onSubmit} />)
     const slots = slotsOf(container)
 
@@ -768,7 +768,7 @@ describe('InputOTP autoSubmit', () => {
   })
 
   it('waits for the code to be complete when its owner refuses the last character', () => {
-    const onSubmit = mock()
+    const onSubmit = vi.fn()
     const Refusing = () => (
       <form
         onSubmit={(event) => {
@@ -791,7 +791,7 @@ describe('InputOTP autoSubmit', () => {
   })
 
   it('leaves the form alone without autoSubmit', () => {
-    const onSubmit = mock()
+    const onSubmit = vi.fn()
     const { container } = render(<Form onSubmit={onSubmit} />)
 
     fireEvent.paste(slotsOf(container)[0] as HTMLInputElement, { clipboardData: { getData: () => '123' } })
@@ -857,7 +857,7 @@ describe('InputOTP in a form', () => {
   })
 
   it('reports an empty code to its owner when the form is reset', async () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { container } = render(
       <form>
         <Code value="12" onValueChange={onValueChange} />
@@ -883,7 +883,7 @@ describe('InputOTP in a form', () => {
   })
 
   it('stops listening for the form reset once it unmounts', async () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { container, rerender } = render(
       <form>
         <Code value="12" onValueChange={onValueChange} />
@@ -898,7 +898,7 @@ describe('InputOTP in a form', () => {
   })
 
   it('submits the form on Enter, as the only field of a form with no submit button does', () => {
-    const onSubmit = mock()
+    const onSubmit = vi.fn()
     const { container } = render(<Form defaultValue="12" onSubmit={onSubmit} />)
 
     fireEvent.keyDown(slotsOf(container)[2] as HTMLInputElement, { key: 'Enter' })
@@ -907,7 +907,7 @@ describe('InputOTP in a form', () => {
   })
 
   it('leaves Enter to the browser in a form with a submit button of any kind, which the browser presses', () => {
-    const onSubmit = mock()
+    const onSubmit = vi.fn()
     const buttons = [
       <button key="submit" type="submit">
         Verify
@@ -927,7 +927,7 @@ describe('InputOTP in a form', () => {
   })
 
   it('submits the form on Enter when its only button resets it', () => {
-    const onSubmit = mock()
+    const onSubmit = vi.fn()
     const { container } = render(
       <Form button={<button type="reset">Clear</button>} defaultValue="12" onSubmit={onSubmit} />,
     )
@@ -952,7 +952,7 @@ describe('InputOTP handlers of its own', () => {
 
   it('calls its own key, input and paste handlers first, and changes nothing when they prevent the default', () => {
     const calls: string[] = []
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     const { container } = render(
       <Code
         onInput={preventing(calls, 'input')}

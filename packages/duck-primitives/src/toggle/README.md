@@ -46,6 +46,23 @@ Each test was proven by changing the code and watching a test fail.
 <details>
 <summary>36 behaviours, one per test</summary>
 
+**Unit, `toggle.radix.test.tsx`**
+
+- given a Toggle with text
+  - should have no accessibility violations
+  - should render with attributes as false/off by default
+  - Click event should change pressed attributes to true/on
+- given a Toggle with text and defaultPressed="true"
+  - should render with attributes true/on by default
+  - Click event should change attributes back to off/false
+- given a Toggle with text and disabled="true"
+  - on click the attributes do not change
+- given a controlled Toggle (with pressed and onPressedChange)
+  - Click event should keep the same attributes, and pass the new state to onPressedChange
+- Toggle.Root
+  - spreads props it does not consume onto the element it renders
+  - forwards props to the child element when `asChild` is set
+
 **Unit, `toggle.test.tsx`**
 
 - Toggle
@@ -72,23 +89,6 @@ Each test was proven by changing the code and watching a test fail.
   - renders what the function returns for the pressed state
   - follows a controlled pressed state
   - hands the element it returns to asChild
-
-**Unit, `toggle.radix.test.tsx`**
-
-- given a Toggle with text
-  - should have no accessibility violations
-  - should render with attributes as false/off by default
-  - Click event should change pressed attributes to true/on
-- given a Toggle with text and defaultPressed="true"
-  - should render with attributes true/on by default
-  - Click event should change attributes back to off/false
-- given a Toggle with text and disabled="true"
-  - on click the attributes do not change
-- given a controlled Toggle (with pressed and onPressedChange)
-  - Click event should keep the same attributes, and pass the new state to onPressedChange
-- Toggle.Root
-  - spreads props it does not consume onto the element it renders
-  - forwards props to the child element when `asChild` is set
 
 **End to end, `toggle.e2e.ts`**
 

@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it } from 'bun:test'
 import { fireEvent, render } from '@testing-library/react'
 import axe from 'axe-core'
 import * as React from 'react'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { Avatar, AvatarFallback, AvatarImage } from '../avatar'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../command'
 import { ContextMenu, ContextMenuTrigger } from '../context-menu'

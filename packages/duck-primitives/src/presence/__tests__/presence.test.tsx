@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test'
 import { act, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { Presence } from '../presence'
 import { useHeldOpen } from '../presence.libs'
@@ -90,12 +90,12 @@ describe('Presence', () => {
 describe('Presence with a CSS exit animation', () => {
   let animationName = 'none'
   let animations: (Pick<Animation, 'finished' | 'pending' | 'playState'> & { animationName?: string })[] = []
-  let styleSpy: ReturnType<typeof spyOn>
+  let styleSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
     animationName = 'none'
     animations = []
-    styleSpy = spyOn(globalThis, 'getComputedStyle').mockImplementation(
+    styleSpy = vi.spyOn(globalThis, 'getComputedStyle').mockImplementation(
       () =>
         ({
           get animationName() {
@@ -157,6 +157,24 @@ describe('Presence with a CSS exit animation', () => {
       </Presence>,
     )
   }
+
+  it('leaves at once on a close in a DOM with no animations to wait for', () => {
+    Reflect.deleteProperty(HTMLElement.prototype, 'getAnimations')
+    const { rerender } = renderContent(true)
+
+    close(rerender, 'fade-out')
+
+    expect(screen.queryByTestId('content')).toBeNull()
+  })
+
+  it('reads an empty computed animation name as none, so it waits on no animation of its own', () => {
+    const { rerender } = renderContent(true)
+    animate('fade-in')
+
+    close(rerender, '')
+
+    expect(screen.queryByTestId('content')).toBeNull()
+  })
 
   it('stays mounted until the exit animation ends', async () => {
     const { rerender } = renderContent(true)

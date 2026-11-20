@@ -1,4 +1,4 @@
-import { describe, expect, it, mock, spyOn } from 'bun:test'
+import { describe, expect, it, vi } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { focusOn } from '../focus-on'
 
@@ -8,15 +8,15 @@ const autoFocus = () => new Event('focusScope.autoFocusOnMount', { cancelable: t
 
 describe('focusOn', () => {
   it('hands back the handler it is given when no target is named', () => {
-    const handler = mock((_event: Event) => {})
+    const handler = vi.fn((_event: Event) => {})
 
     expect(focusOn(handler, undefined)).toBe(handler)
   })
 
   it('calls the handler, keeps the focus scope from moving focus, and focuses the target without scrolling', () => {
     const target = document.body.appendChild(document.createElement('button'))
-    const focus = spyOn(target, 'focus')
-    const handler = mock((_event: Event) => {})
+    const focus = vi.spyOn(target, 'focus')
+    const handler = vi.fn((_event: Event) => {})
     const event = autoFocus()
 
     focusOn(handler, { current: target })?.(event)

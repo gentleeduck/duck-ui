@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test'
 import { render } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { ProgressIndicator } from '../indicator'
 import { ProgressLabel } from '../label'
@@ -120,10 +120,10 @@ describe('Progress', () => {
 })
 
 describe('Progress with invalid props', () => {
-  let errorSpy: ReturnType<typeof spyOn>
+  let errorSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {})
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -189,10 +189,10 @@ describe('Progress with invalid props', () => {
 })
 
 describe('Progress min', () => {
-  let errorSpy: ReturnType<typeof spyOn>
+  let errorSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
-    errorSpy = spyOn(console, 'error').mockImplementation(() => {})
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {

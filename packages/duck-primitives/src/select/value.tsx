@@ -19,21 +19,16 @@ export const SelectValue = React.forwardRef<HTMLSpanElement, ISelect.IValueProps
     const hasChildren = ownChildren !== undefined
     const composedRefs = useComposedRefs(forwardedRef, context.onValueNodeChange)
     const { value } = context
+    const picks = [value ?? []].flat()
     // The picked item's text is portalled into this node, where React would write a lone string child over it,
     // so the string needs a text node of its own.
     const label = context.multiple ? (
-      <SelectValueLabels __scopeSelect={__scopeSelect} />
+      <SelectValueLabels __scopeSelect={__scopeSelect} picks={picks} />
     ) : (
       context.items?.find((item) => item.value === value)?.label
     )
     const fill = (own: ISelect.IValueProps['children']) => (
-      <>
-        {shouldShowPlaceholder(value)
-          ? placeholder
-          : typeof own === 'function'
-            ? own([value ?? []].flat())
-            : (own ?? label)}
-      </>
+      <>{shouldShowPlaceholder(value) ? placeholder : typeof own === 'function' ? own(picks) : (own ?? label)}</>
     )
 
     useLayoutEffect(() => {
@@ -62,16 +57,15 @@ export const SelectValue = React.forwardRef<HTMLSpanElement, ISelect.IValueProps
 SelectValue.displayName = VALUE_NAME
 
 // Its own component, so a single select's value does not render again each time an item registers its option.
-function SelectValueLabels({ __scopeSelect }: ISelect.IScoped<object>) {
-  const { value, items } = useSelectContext(VALUE_NAME, __scopeSelect)
+function SelectValueLabels({ __scopeSelect, picks }: ISelect.IScoped<{ picks: string[] }>) {
+  const { items } = useSelectContext(VALUE_NAME, __scopeSelect)
   const { nativeOptions } = useSelectBubbleInputContext(VALUE_NAME, __scopeSelect)
   const labels = new Map<unknown, React.ReactNode>(
     items
       ? items.map((item) => [item.value, item.label])
       : Array.from(nativeOptions, ({ props }) => [props.value, props.children]),
   )
-  return [value ?? []]
-    .flat()
+  return picks
     .map((picked) => labels.get(picked))
     .filter(Boolean)
     .join(', ')

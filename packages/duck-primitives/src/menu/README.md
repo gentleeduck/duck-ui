@@ -37,14 +37,14 @@ Each test was proven by changing the code and watching a test fail.
 <!-- tests -->
 | Suite | Tests | Files |
 |---|--:|---|
-| Unit | 64 | `menu.test.tsx` 64 |
+| Unit | 65 | `menu.test.tsx` 65 |
 | End to end | 18 | `menu.e2e.ts` 18 |
 | registry-ui | 0 | - |
 <!-- /tests -->
 
 <!-- behaviour -->
 <details>
-<summary>82 behaviours, one per test</summary>
+<summary>83 behaviours, one per test</summary>
 
 **Unit, `menu.test.tsx`**
 
@@ -79,6 +79,7 @@ Each test was proven by changing the code and watching a test fail.
   - jumps with G to the last enabled item
 - Menu typeahead
   - passes over a disabled item
+  - passes over an item with no text to match
   - leaves focus where it is when the match is disabled before focus moves to it
   - reads only a character typed without Ctrl, Alt or Meta
   - starts the search over after a jump with G

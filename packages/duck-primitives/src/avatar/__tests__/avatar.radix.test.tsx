@@ -1,11 +1,11 @@
 // From Radix UI primitives, packages/react/avatar/src/avatar.test.tsx. MIT, see src/__tests__/radix/LICENSE.
 
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
 import type { RenderResult } from '@testing-library/react'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
 import { renderToString } from 'react-dom/server'
-import { axe, radixEnvironment, vi } from '../../__tests__/radix/harness'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { axe, radixEnvironment } from '../../__tests__/radix/harness'
 import * as Avatar from '../index'
 import { mockImageLoading } from './image-loading'
 

@@ -37,8 +37,8 @@ const RadioGroupItemBubbleInput = React.forwardRef<
 
   React.useEffect(() => {
     const input = ref.current
-    const root = input?.getRootNode()
-    if (!input || !root) return
+    if (!input) return
+    const root = input.getRootNode()
     // A reset puts the input back to its default after this event, which is not the pick the group shows when its
     // parent declined the reset or the input mounted after a change.
     const restore = (event: Event) => {

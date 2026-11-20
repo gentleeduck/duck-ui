@@ -1,6 +1,6 @@
-import { describe, expect, it, spyOn } from 'bun:test'
 import { render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { describe, expect, it, vi } from 'vitest'
 import { freshDom, wait } from '../../__tests__/dom'
 import { Mount, MountMinimal } from '../index'
 
@@ -145,7 +145,7 @@ describe('Mount', () => {
   })
 
   it('sets no exit timer while it starts closed', () => {
-    const timeout = spyOn(globalThis, 'setTimeout')
+    const timeout = vi.spyOn(globalThis, 'setTimeout')
     try {
       render(
         <Mount open={false} animationDuration={12_345}>
@@ -390,7 +390,7 @@ describe('MountMinimal exit', () => {
   })
 
   it('reads no style while it starts closed', () => {
-    const read = spyOn(globalThis, 'getComputedStyle')
+    const read = vi.spyOn(globalThis, 'getComputedStyle')
     try {
       render(
         <MountMinimal open={false} ref={transitioning('1s')}>

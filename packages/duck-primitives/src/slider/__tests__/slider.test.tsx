@@ -1,7 +1,7 @@
-import { describe, expect, it, mock, spyOn } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, it, vi } from 'vitest'
 import { freshDom } from '../../__tests__/dom'
 import { DirectionProvider } from '../../direction'
 import {
@@ -194,8 +194,8 @@ describe('Slider', () => {
 })
 
 function renderVerticalSlider(props: Partial<React.ComponentProps<typeof Slider>> = {}) {
-  const onValueChange = mock((_value: number[]) => {})
-  const onValueCommit = mock((_value: number[]) => {})
+  const onValueChange = vi.fn((_value: number[]) => {})
+  const onValueCommit = vi.fn((_value: number[]) => {})
   render(
     <Slider
       orientation="vertical"
@@ -302,7 +302,7 @@ describe('Slider thumb pointer', () => {
   })
 
   it('focuses a thumb pressed on its own content without moving the value', () => {
-    const onValueChange = mock((_value: number[]) => {})
+    const onValueChange = vi.fn((_value: number[]) => {})
     render(
       <Slider defaultValue={[50]} onValueChange={onValueChange} data-testid="slider">
         <SliderTrack>
@@ -361,7 +361,7 @@ describe('Slider presses that do not slide', () => {
 
 describe('Slider under StrictMode', () => {
   it('commits a key step once, though StrictMode runs each state update twice', () => {
-    const onValueCommit = mock((_value: number[]) => {})
+    const onValueCommit = vi.fn((_value: number[]) => {})
     render(
       <React.StrictMode>
         <Slider defaultValue={[50]} onValueCommit={onValueCommit}>
@@ -498,7 +498,7 @@ describe('Slider hidden input', () => {
   })
 
   it('lets through an input event it did not dispatch, after one it stopped', () => {
-    const onAncestorInput = mock(() => {})
+    const onAncestorInput = vi.fn(() => {})
     function Volume({ value }: { value: number[] }) {
       return (
         <form>
@@ -547,7 +547,7 @@ describe('Slider hidden input', () => {
   })
 
   it('treats a parent moving back to the last requested value as programmatic', () => {
-    const onAncestorInput = mock(() => {})
+    const onAncestorInput = vi.fn(() => {})
     let setValue: (value: number[]) => void = () => {}
     function App() {
       const [value, set] = React.useState([50])
@@ -669,7 +669,7 @@ describe('Slider on the server', () => {
 
 describe('Slider focus after a change', () => {
   it('shows the focus ring only when the keyboard moved the thumb', () => {
-    const focus = spyOn(HTMLElement.prototype, 'focus')
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus')
     try {
       const { slider, thumbs } = renderRangeSlider()
 
@@ -684,7 +684,7 @@ describe('Slider focus after a change', () => {
   })
 
   it('hides the focus ring for a press after a key that moved nothing', () => {
-    const focus = spyOn(HTMLElement.prototype, 'focus')
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus')
     try {
       const { slider, thumb } = renderHorizontalSlider({ defaultValue: [100] })
       fireEvent.keyDown(thumb, { key: 'ArrowRight' })
@@ -698,7 +698,7 @@ describe('Slider focus after a change', () => {
   })
 
   it('hides the focus ring for a press that leaves the value where it was', () => {
-    const focus = spyOn(HTMLElement.prototype, 'focus')
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus')
     try {
       const { slider } = renderHorizontalSlider({ defaultValue: [100] })
 
@@ -858,8 +858,8 @@ describe('Slider.Value', () => {
 })
 
 function renderHorizontalSlider(props: Partial<React.ComponentProps<typeof Slider>> = {}) {
-  const onValueChange = mock((_value: number[]) => {})
-  const onValueCommit = mock((_value: number[]) => {})
+  const onValueChange = vi.fn((_value: number[]) => {})
+  const onValueCommit = vi.fn((_value: number[]) => {})
   render(
     <Slider
       defaultValue={[50]}
@@ -957,7 +957,7 @@ describe('Slider pointer capture', () => {
   })
 
   it('commits the last move of a controlled slider when the release lands before that move renders', () => {
-    const onValueCommit = mock((_value: number[]) => {})
+    const onValueCommit = vi.fn((_value: number[]) => {})
     function Volume() {
       const [value, setValue] = React.useState([50])
       return (
@@ -1018,7 +1018,7 @@ describe('Slider disabled', () => {
   })
 
   it('commits nothing for a release while disabled, though its parent changed the value during the press', () => {
-    const onValueCommit = mock((_value: number[]) => {})
+    const onValueCommit = vi.fn((_value: number[]) => {})
     function Volume({ value }: { value: number[] }) {
       return (
         <Slider disabled value={value} onValueCommit={onValueCommit} data-testid="slider">
@@ -1068,7 +1068,7 @@ describe('Slider disabled', () => {
 
 describe('Slider minimum distance', () => {
   it('counts the minimum in steps', () => {
-    const onValueChange = mock((_value: number[]) => {})
+    const onValueChange = vi.fn((_value: number[]) => {})
     const { slider } = renderRangeSlider({ defaultValue: [10, 30], step: 5, minStepsBetweenThumbs: 2, onValueChange })
 
     fireEvent.pointerDown(slider, { pointerId: 1, clientX: 25 })
@@ -1082,7 +1082,7 @@ describe('Slider minimum distance', () => {
   })
 
   it('refuses a drag that would bring two thumbs closer than the minimum, even when they may swap', () => {
-    const onValueChange = mock((_value: number[]) => {})
+    const onValueChange = vi.fn((_value: number[]) => {})
     const { slider } = renderRangeSlider({ defaultValue: [10, 20], minStepsBetweenThumbs: 5, onValueChange })
 
     fireEvent.pointerDown(slider, { pointerId: 1, clientX: 10 })
@@ -1158,7 +1158,7 @@ describe('Slider parts', () => {
 
 describe('Slider with no values', () => {
   it('steps nothing for a key from a focusable element inside it', () => {
-    const onValueChange = mock((_value: number[]) => {})
+    const onValueChange = vi.fn((_value: number[]) => {})
     render(
       <Slider defaultValue={[]} onValueChange={onValueChange}>
         <SliderTrack>

@@ -1,5 +1,5 @@
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'bun:test'
 import { cleanup, render, screen } from '@testing-library/react'
+import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { MotionTooltip, MotionTooltipContent } from '../motion-tooltip'
 import { Tooltip, TooltipArrow, TooltipContent, TooltipProvider } from '../tooltip'
 

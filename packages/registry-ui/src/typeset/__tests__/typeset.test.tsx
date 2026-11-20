@@ -1,12 +1,13 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { cleanup, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test } from 'vitest'
 import { Typeset } from '../typeset'
 
 afterEach(cleanup)
 
-const stylesheet = readFileSync(new URL('../typeset.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
+const stylesheet = readFileSync(join(import.meta.dirname, '../typeset.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
 
 function topLevel(css: string) {
   const blocks: string[] = []

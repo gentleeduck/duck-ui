@@ -1,6 +1,6 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { MotionSelect, MotionSelectContent, MotionSelectTrigger } from '../motion-select'
 import {
   Select,
@@ -28,9 +28,9 @@ afterAll(() => {
 })
 
 // An update outside act is one the assertions before it never saw.
-let consoleError: ReturnType<typeof spyOn>
+let consoleError: ReturnType<typeof vi.spyOn>
 beforeEach(() => {
-  consoleError = spyOn(console, 'error')
+  consoleError = vi.spyOn(console, 'error')
 })
 afterEach(() => {
   cleanup()

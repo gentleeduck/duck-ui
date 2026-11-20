@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '../input-otp'
 import { MotionInputOTP } from '../motion-input-otp'
 
@@ -42,7 +42,7 @@ describe('registry-ui InputOTPGroup', () => {
 
 describe('registry-ui MotionInputOTP', () => {
   test('scales in a working field, and reports the code once every slot is filled', () => {
-    const onComplete = mock()
+    const onComplete = vi.fn()
     const { container } = render(
       <MotionInputOTP aria-label="Code" maxLength={2} onComplete={onComplete}>
         <InputOTPSlot />

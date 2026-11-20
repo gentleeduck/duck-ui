@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { hydrateOnMac } from '../../_internal/__tests__/hydrate-on-mac'
 import {
   Command,
@@ -157,8 +157,8 @@ describe('registry-ui Command', () => {
 
 describe('registry-ui CommandList', () => {
   test('keeps a wheel or a swipe inside it from reaching the page, whose scroll lock would cancel it', async () => {
-    const onWheel = mock()
-    const onTouchMove = mock()
+    const onWheel = vi.fn()
+    const onTouchMove = vi.fn()
     const { container } = render(
       <div onTouchMove={onTouchMove} onWheel={onWheel}>
         <Command>
@@ -182,7 +182,7 @@ describe('registry-ui CommandList', () => {
 
 describe('registry-ui CommandShortcut', () => {
   test('runs onKeysPressed on its keys with no KeyProvider above it, and stops once it is gone', async () => {
-    const onKeysPressed = mock()
+    const onKeysPressed = vi.fn()
     const { unmount } = render(
       <CommandShortcut keys="ctrl+shift+k" onKeysPressed={onKeysPressed} variant="secondary">
         Ctrl Shift K
@@ -204,7 +204,7 @@ describe('registry-ui CommandShortcut', () => {
   })
 
   test('draws a label alone, bound to nothing, when it has no keys', () => {
-    const warn = mock()
+    const warn = vi.fn()
     const quiet = console.warn
     console.warn = warn
 

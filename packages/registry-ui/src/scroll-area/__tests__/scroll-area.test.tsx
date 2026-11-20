@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test } from 'vitest'
 import { DirectionProvider } from '../../direction'
 import { MotionScrollArea } from '../motion-scroll-area'
 import { ScrollArea } from '../scroll-area'

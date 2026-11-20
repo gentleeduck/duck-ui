@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'bun:test'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, test } from 'vitest'
 import { DirectionProvider } from '../../direction'
 import { Carousel, CarouselNext, CarouselPrevious } from '../carousel'
 

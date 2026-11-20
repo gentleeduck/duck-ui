@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { MotionTabs, MotionTabsContent, MotionTabsContents, MotionTabsList, MotionTabsTrigger } from '../motion-tabs'
 import { type ITabsProps, Tabs, TabsContent, TabsList, TabsTrigger } from '../tabs'
 
@@ -80,7 +80,7 @@ describe.each([
   })
 
   test('a controlled tab stays put on a click its owner does not follow, and reports the click', () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(<Demo onValueChange={onValueChange} value="a" />)
 
     fireEvent.click(tab('Gamma'))
@@ -163,7 +163,7 @@ describe.each([
   })
 
   test("a click runs the trigger's own onClick, and a disabled trigger selects nothing", () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     render(<Demo defaultValue="a" disabledBeta gamma={{ onClick }} />)
 
     fireEvent.click(tab('Beta'))
@@ -218,7 +218,7 @@ describe.each([
 
 describe('registry-ui Tabs parts', () => {
   test('a part outside Tabs says where it belongs', () => {
-    const error = spyOn(console, 'error').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     expect(() => render(<TabsList />)).toThrow('must be used within Tabs')
     expect(() => render(<MotionTabsContents />)).toThrow('must be used within MotionTabs')

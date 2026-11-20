@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test } from 'vitest'
 import { Collapsible, CollapsibleTrigger } from '../collapsible'
 import { MotionCollapsibleContent } from '../motion-collapsible'
 

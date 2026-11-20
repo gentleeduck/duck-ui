@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { hydrateOnMac } from '../../_internal/__tests__/hydrate-on-mac'
 import {
   Menubar,
@@ -106,7 +106,7 @@ describe('registry-ui menubar content', () => {
 
 describe('registry-ui MenubarShortcut', () => {
   test('spells its keys out when it has no label, and runs onKeysPressed on them while mounted', () => {
-    const onKeysPressed = mock()
+    const onKeysPressed = vi.fn()
     const { unmount } = render(<MenubarShortcut keys="shift+n" onKeysPressed={onKeysPressed} />)
 
     expect(document.querySelector('[data-slot="menubar-shortcut"]')?.textContent).toBe('Shift+N')
@@ -185,8 +185,8 @@ const openView = async () => {
 
 describe('registry-ui menubar items', () => {
   test('marks the checked item and radio, insets a label and an item, and reports each choice', async () => {
-    const onShow = mock()
-    const onSort = mock()
+    const onShow = vi.fn()
+    const onSort = vi.fn()
     render(<View onShow={onShow} onSort={onSort} />)
     await openView()
 

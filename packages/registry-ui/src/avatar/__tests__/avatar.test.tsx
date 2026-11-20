@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, test } from 'vitest'
 import { AvatarGroup } from '../avatar'
 import type { IAvatarGroupProps } from '../avatar.types'
 import { MotionAvatarGroup } from '../motion-avatar'

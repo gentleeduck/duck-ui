@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { DirectionProvider } from '../../direction'
 import { MotionSidebar } from '../motion-sidebar'
 import {
@@ -117,7 +117,7 @@ describe('registry-ui SidebarProvider', () => {
   })
 
   test('controlled, the trigger asks onOpenChange and the open prop decides', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     const { rerender } = render(
       <SidebarProvider onOpenChange={onOpenChange} open>
         <Sidebar>body</Sidebar>
@@ -228,7 +228,7 @@ describe('registry-ui SidebarProvider', () => {
   })
 
   test('the trigger runs its own onClick first, and takes its label from text', () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     render(
       <SidebarProvider>
         <SidebarTrigger onClick={onClick} text="Menu" />
@@ -243,7 +243,7 @@ describe('registry-ui SidebarProvider', () => {
   })
 
   test('useSidebar outside a provider throws and names the provider', () => {
-    const error = spyOn(console, 'error').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     expect(() => render(<State />)).toThrow('useSidebar must be used within a SidebarProvider.')
     error.mockRestore()

@@ -1,6 +1,6 @@
-import { afterAll, afterEach, beforeAll, describe, expect, mock, test } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { hydrateOnMac } from '../../_internal/__tests__/hydrate-on-mac'
 import {
   DropdownMenu,
@@ -196,8 +196,8 @@ describe('registry-ui DropdownMenu items', () => {
   })
 
   test('marks the checked item and radio, insets a label and an item, and reports each choice', async () => {
-    const onShow = mock()
-    const onSort = mock()
+    const onShow = vi.fn()
+    const onSort = vi.fn()
     render(<View onShow={onShow} onSort={onSort} />)
     await open()
 
@@ -235,7 +235,7 @@ describe('registry-ui DropdownMenu items', () => {
 
 describe('registry-ui DropdownMenuShortcut', () => {
   test('spells its keys out when it has no label, and runs onKeysPressed on them while mounted', () => {
-    const onKeysPressed = mock()
+    const onKeysPressed = vi.fn()
     const { unmount } = render(<DropdownMenuShortcut keys="ctrl+shift+e" onKeysPressed={onKeysPressed} />)
 
     const shortcut = document.querySelector('[data-slot="dropdown-menu-shortcut"]')

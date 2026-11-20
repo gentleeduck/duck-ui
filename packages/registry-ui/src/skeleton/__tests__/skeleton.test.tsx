@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { act, cleanup, render } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test } from 'vitest'
 import { MotionSkeleton } from '../motion-skeleton'
 import { Skeleton } from '../skeleton'
 

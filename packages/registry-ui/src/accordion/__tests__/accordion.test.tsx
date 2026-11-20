@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, test } from 'vitest'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../accordion'
 import {
   MotionAccordion,
@@ -27,21 +27,13 @@ function markup(props: { renderOnce?: boolean } = {}) {
     </Accordion>,
   )
 
-  return (selector: string) => {
-    const found: IFound[] = []
-    new HTMLRewriter()
-      .on(selector, {
-        element(element) {
-          found.push({ attributes: Object.fromEntries(element.attributes), text: '' })
-        },
-        text(chunk) {
-          const last = found.at(-1)
-          if (last) last.text += chunk.text
-        },
-      })
-      .transform(html)
-    return found
-  }
+  const page = document.createElement('div')
+  page.innerHTML = html
+  return (selector: string): IFound[] =>
+    Array.from(page.querySelectorAll(selector), (element) => ({
+      attributes: Object.fromEntries(Array.from(element.attributes, ({ name, value }) => [name, value])),
+      text: element.textContent ?? '',
+    }))
 }
 
 describe('registry-ui accordion', () => {

@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, test } from 'vitest'
 import { ButtonGroup, ButtonGroupSeparator, ButtonGroupText } from '../button-group'
 import { MotionButtonGroup } from '../motion-button-group'
 

@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { useMotionContent } from '@gentleduck/motion/use-motion-root'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { hydrateOnMac } from '../../_internal/__tests__/hydrate-on-mac'
 import {
   ContextMenu,
@@ -130,8 +130,8 @@ describe('registry-ui ContextMenu items', () => {
   }
 
   test('marks the checked item and the chosen radio, and hands each change to its owner', async () => {
-    const onShow = mock()
-    const onZoom = mock()
+    const onShow = vi.fn()
+    const onZoom = vi.fn()
     render(<View onShow={onShow} onZoom={onZoom} />)
     fireEvent.contextMenu(screen.getByText('Canvas'))
     await act(async () => {})
@@ -154,7 +154,7 @@ describe('registry-ui ContextMenu items', () => {
 
 describe('registry-ui ContextMenuShortcut', () => {
   test('spells its keys out when it has no label, and runs onKeysPressed on them', () => {
-    const onKeysPressed = mock()
+    const onKeysPressed = vi.fn()
     const { unmount } = render(<ContextMenuShortcut keys="ctrl+shift+d" onKeysPressed={onKeysPressed} />)
     expect(document.querySelector('[data-slot="context-menu-shortcut"]')?.textContent).not.toBe('')
 
@@ -184,7 +184,7 @@ describe('registry-ui ContextMenuShortcut', () => {
 
 describe('registry-ui MotionContextMenuContent while it closes', () => {
   async function openThenChoose() {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(
       <>
         <MotionContextMenu onOpenChange={onOpenChange}>

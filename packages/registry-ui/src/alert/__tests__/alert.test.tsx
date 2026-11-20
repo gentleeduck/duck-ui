@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, test } from 'vitest'
 import { Alert, AlertDescription, AlertTitle } from '../alert'
 import { MotionAlert, MotionAlertDescription, MotionAlertTitle } from '../motion-alert'
 

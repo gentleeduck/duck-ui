@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { Calendar } from '../calendar'
 import type { ICalendarProps } from '../calendar.types'
 import { MotionCalendar } from '../motion-calendar'
@@ -97,7 +97,7 @@ describe.each([
     ['range', [10, 12], { from: new Date(2026, 2, 10), to: new Date(2026, 2, 12) }],
     ['multi-range', [10, 12], [{ from: new Date(2026, 2, 10), to: new Date(2026, 2, 12) }]],
   ] as const)('hands onSelect the %s value the clicked days make', (mode, days, expected) => {
-    const onSelect = mock()
+    const onSelect = vi.fn()
     render(<Component defaultMonth={march2026} showDropdowns={false} {...({ mode, onSelect } as ICalendarProps)} />)
 
     for (const day of days) fireEvent.click(screen.getByRole('button', { name: new RegExp(`March ${day}, 2026`) }))
@@ -150,7 +150,7 @@ describe.each([
   })
 
   test('picks a month and then a year from the header, each list closing on its pick', () => {
-    const onMonthChange = mock()
+    const onMonthChange = vi.fn()
     render(<Component defaultMonth={march2026} onMonthChange={onMonthChange} yearRange={{ from: 2020, to: 2032 }} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Mar', expanded: false }))
@@ -187,7 +187,7 @@ describe.each([
   })
 
   test('closes an open list on a pointer down outside it, and keeps one inside from reaching a popover', () => {
-    const onOutsidePointerDown = mock()
+    const onOutsidePointerDown = vi.fn()
     render(
       // biome-ignore lint/a11y/noStaticElementInteractions: stands in for a popover listening for a dismiss
       <div onPointerDown={onOutsidePointerDown}>

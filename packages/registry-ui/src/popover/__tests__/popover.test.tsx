@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import * as PopoverPrimitive from '@gentleduck/primitives/popover'
 import { cleanup, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, test } from 'vitest'
 import { MotionPopover, MotionPopoverContent } from '../motion-popover'
 import { Popover, PopoverArrow, PopoverContent, PopoverDescription, PopoverTitle } from '../popover'
 

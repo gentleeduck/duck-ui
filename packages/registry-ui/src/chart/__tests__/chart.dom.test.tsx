@@ -1,7 +1,7 @@
-import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from 'bun:test'
 import { cleanup, render, screen } from '@testing-library/react'
 import type * as React from 'react'
 import type { LegendPayload, TooltipPayloadEntry } from 'recharts'
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { ChartContainer, ChartLegendContent, ChartStyle, ChartTooltipContent } from '../chart'
 import { getPayloadConfigFromPayload, isSafeCssColor } from '../chart.libs'
 import type { IChartConfig } from '../chart.types'
@@ -156,7 +156,7 @@ describe('registry-ui ChartTooltipContent', () => {
   })
 
   test('refuses to render outside a ChartContainer', () => {
-    const quiet = spyOn(console, 'error').mockImplementation(() => {})
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(() => render(<ChartTooltipContent active payload={[mallards] as Entry[]} />)).toThrow(
       'useChart must be used within a <ChartContainer />',
     )

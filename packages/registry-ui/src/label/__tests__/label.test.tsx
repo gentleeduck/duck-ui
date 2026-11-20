@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { Checkbox } from '../../checkbox'
 import { Switch } from '../../switch'
 import { Label } from '../label'
@@ -66,7 +66,7 @@ describe('registry-ui Label', () => {
   })
 
   test('keeps a double click from selecting its text, but not inside a control it holds', () => {
-    const onMouseDown = mock((event: React.MouseEvent) => {
+    const onMouseDown = vi.fn((event: React.MouseEvent) => {
       if (event.button === 1) event.preventDefault()
     })
     render(

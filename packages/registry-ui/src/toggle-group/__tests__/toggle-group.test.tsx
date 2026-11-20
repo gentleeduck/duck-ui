@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, test } from 'vitest'
 import { MotionToggleGroup, MotionToggleGroupItem } from '../motion-toggle-group'
 import { ToggleGroup, ToggleGroupItem } from '../toggle-group'
 

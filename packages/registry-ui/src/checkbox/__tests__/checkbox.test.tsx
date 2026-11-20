@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { Checkbox, CheckboxGroup } from '../checkbox'
 import type { CheckedState } from '../checkbox.types'
 
@@ -38,7 +38,7 @@ describe('registry-ui Checkbox', () => {
   })
 
   test('hands a callback ref the input', () => {
-    const ref = mock()
+    const ref = vi.fn()
     render(<Checkbox ref={ref} defaultChecked="indeterminate" />)
 
     expect(ref).toHaveBeenCalledWith(box())
@@ -46,7 +46,7 @@ describe('registry-ui Checkbox', () => {
   })
 
   test('ticks on its own and reports it when given no value', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     render(<Checkbox onCheckedChange={onCheckedChange} />)
 
     fireEvent.click(box())
@@ -57,7 +57,7 @@ describe('registry-ui Checkbox', () => {
   })
 
   test('asks for the change and stays on its value until it gets one', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     render(<Checkbox checked={false} onCheckedChange={onCheckedChange} />)
 
     fireEvent.click(box())
@@ -77,7 +77,7 @@ describe('registry-ui Checkbox', () => {
   })
 
   test('shows the mixed state and leaves it for checked on a click', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     render(<Checkbox checked="indeterminate" onCheckedChange={onCheckedChange} />)
     expect(box().indeterminate).toBe(true)
 
@@ -99,7 +99,7 @@ describe('registry-ui Checkbox', () => {
   test('masks the mixed state with an indicator of its own', () => {
     render(<Checkbox indeterminateIndicator={glyph} />)
 
-    expect(box().style.getPropertyValue('--svg-indeterminate')).toStartWith('url("data:image/svg+xml,')
+    expect(box().style.getPropertyValue('--svg-indeterminate')).toMatch(/^url\("data:image\/svg\+xml,/)
     expect(box().className).toContain('data-[checked="indeterminate"]:after:mask-[var(--svg-indeterminate)]')
   })
 
@@ -113,7 +113,7 @@ describe('registry-ui Checkbox', () => {
 
 describe('registry-ui Checkbox in a form that is reset', () => {
   test('goes back to the state it started in', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     render(
       <form>
         <Checkbox defaultChecked="indeterminate" onCheckedChange={onCheckedChange} />
@@ -203,7 +203,7 @@ describe('registry-ui Checkbox in a form that is reset', () => {
   })
 
   test('asks a controlled checkbox for the value it was first given', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     const { rerender } = render(
       <form>
         <Checkbox checked onCheckedChange={onCheckedChange} />
@@ -221,7 +221,7 @@ describe('registry-ui Checkbox in a form that is reset', () => {
   })
 
   test('stops listening once it unmounts', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     const { container, rerender } = render(
       <form>
         <Checkbox checked onCheckedChange={onCheckedChange} />
@@ -244,9 +244,9 @@ describe('registry-ui Checkbox in a form that is reset', () => {
 const frame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
 
 describe('registry-ui Checkbox whose owner sets checked', () => {
-  const heard = mock()
-  const clicked = mock()
-  const asked = mock()
+  const heard = vi.fn()
+  const clicked = vi.fn()
+  const asked = vi.fn()
   const owned = (checked: CheckedState) => (
     <form onChange={(event) => heard((event.target as HTMLInputElement).checked)}>
       <div onClick={clicked}>
@@ -288,7 +288,7 @@ describe('registry-ui Checkbox whose owner sets checked', () => {
   })
 
   test('tells its form the value a reset the owner follows puts it on', async () => {
-    const onFormChange = mock()
+    const onFormChange = vi.fn()
     function Owner() {
       const [checked, setChecked] = React.useState<CheckedState>(false)
       return (

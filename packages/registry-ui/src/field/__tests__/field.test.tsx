@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { cleanup, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, test } from 'vitest'
 import { Checkbox } from '../../checkbox'
 import { RadioGroup, RadioGroupItem } from '../../radio-group'
 import {

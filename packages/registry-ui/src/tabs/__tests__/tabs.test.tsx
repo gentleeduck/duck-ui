@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'bun:test'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, test } from 'vitest'
 import { getTabsKeyTarget, Tabs, TabsContent, TabsList, TabsTrigger } from '../tabs'
 
 describe('registry-ui tabs', () => {

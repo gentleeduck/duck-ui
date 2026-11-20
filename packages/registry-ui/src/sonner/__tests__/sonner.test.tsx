@@ -1,9 +1,9 @@
-import { afterAll, afterEach, beforeAll, describe, expect, mock, spyOn, test } from 'bun:test'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { ThemeProvider } from 'next-themes'
 import * as React from 'react'
 import { toast } from 'sonner'
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { formatTime, SonnerUpload, Toaster } from '..'
 
 beforeAll(() => {
@@ -120,8 +120,8 @@ describe('registry-ui Toaster', () => {
 
 describe('registry-ui SonnerUpload', () => {
   test('while uploading, counts the files, shows the time left and the percent, and offers Cancel', () => {
-    const onCancel = mock()
-    const dismiss = spyOn(toast, 'dismiss')
+    const onCancel = vi.fn()
+    const dismiss = vi.spyOn(toast, 'dismiss')
 
     render(<SonnerUpload attachments={2} onCancel={onCancel} progress={40} remainingTime={90} />)
 
@@ -161,8 +161,8 @@ describe('registry-ui SonnerUpload', () => {
   )
 
   test.each([[100], [120]])('at %p percent it reads complete and offers Complete', (progress) => {
-    const onComplete = mock()
-    const dismiss = spyOn(toast, 'dismiss')
+    const onComplete = vi.fn()
+    const dismiss = vi.spyOn(toast, 'dismiss')
 
     render(<SonnerUpload attachments={3} onComplete={onComplete} progress={progress} remainingTime={30} />)
 

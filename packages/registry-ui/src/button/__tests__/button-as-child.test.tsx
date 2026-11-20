@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { Button } from '../button'
 import { MotionButton } from '../motion-button'
 
@@ -16,8 +16,8 @@ describe.each([
   ['MotionButton', MotionButton],
 ] as const)('registry-ui %s asChild', (_, Component) => {
   test('a disabled link is marked disabled, dims, and neither follows nor reports a click', () => {
-    const onClick = mock()
-    const onLinkClick = mock()
+    const onClick = vi.fn()
+    const onLinkClick = vi.fn()
     render(
       <Component asChild disabled onClick={onClick}>
         <a href="/lakes" onClick={onLinkClick}>
@@ -35,7 +35,7 @@ describe.each([
   })
 
   test('a loading link is busy and disabled; an enabled one follows and reports its click', () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     render(
       <>
         <Component asChild loading>
@@ -58,8 +58,8 @@ describe.each([
   })
 
   test("a loading link's own capture handler and aria state give way, and an enabled link's capture still runs", () => {
-    const onLakesCapture = mock()
-    const onRiversCapture = mock()
+    const onLakesCapture = vi.fn()
+    const onRiversCapture = vi.fn()
     render(
       <>
         <Component asChild loading>
@@ -87,7 +87,7 @@ describe.each([
 
 describe('registry-ui MotionButton asChild', () => {
   test('a disabled link stops a click that lands on the wrapper, where the pointer goes', () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     render(
       <div onClick={onClick}>
         <MotionButton asChild disabled>

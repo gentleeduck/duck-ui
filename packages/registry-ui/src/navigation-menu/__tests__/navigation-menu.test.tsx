@@ -1,5 +1,5 @@
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'bun:test'
 import { act, cleanup, render, screen } from '@testing-library/react'
+import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { MotionNavigationMenu } from '../motion-navigation-menu'
 import {
   NavigationMenu,

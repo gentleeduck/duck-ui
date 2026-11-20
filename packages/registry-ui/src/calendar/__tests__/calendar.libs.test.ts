@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from 'vitest'
 import { getCachedNumberFormat } from '../calendar.libs'
 
 const LOCALES = ['de', 'fr', 'es', 'it', 'pt', 'nl', 'sv', 'da', 'fi', 'pl', 'cs', 'hu', 'ro', 'tr', 'el', 'ru', 'uk']

@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import * as AlertDialogPrimitive from '@gentleduck/primitives/alert-dialog'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, test } from 'vitest'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -88,5 +88,18 @@ describe('registry-ui AlertDialog', () => {
     await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
 
     expect(document.activeElement).toBe(screen.getByLabelText('Pond name'))
+  })
+
+  test('keeps a closed alert dialog in the page with forceMount', () => {
+    render(
+      <AlertDialog>
+        <AlertDialogContent forceMount>
+          <AlertDialogTitle>Kept</AlertDialogTitle>
+          <AlertDialogDescription>Still here</AlertDialogDescription>
+        </AlertDialogContent>
+      </AlertDialog>,
+    )
+
+    expect(document.querySelector('[role="alertdialog"]')?.getAttribute('data-state')).toBe('closed')
   })
 })

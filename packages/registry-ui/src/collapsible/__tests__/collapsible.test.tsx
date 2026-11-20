@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, useCollapsible } from '../collapsible'
 
 afterEach(cleanup)
@@ -65,7 +65,7 @@ describe('Collapsible', () => {
   })
 
   test('calls onOpenChange once per click with the new state', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(details({ onOpenChange }))
 
     fireEvent.click(screen.getByRole('button'))
@@ -75,7 +75,7 @@ describe('Collapsible', () => {
   })
 
   test('stays as its open prop says when a click asks to change it', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(details({ onOpenChange, open: false }))
 
     fireEvent.click(screen.getByRole('button'))
@@ -85,7 +85,7 @@ describe('Collapsible', () => {
   })
 
   test('keeps its state when the trigger onClick prevents the default', () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(
       <Collapsible onOpenChange={onOpenChange}>
         <CollapsibleTrigger onClick={(event) => event.preventDefault()}>Details</CollapsibleTrigger>
@@ -132,7 +132,7 @@ describe('Collapsible', () => {
 
 describe('Collapsible refs', () => {
   test('runs the cleanup a callback ref returns, on every part', () => {
-    const cleanup = mock()
+    const cleanup = vi.fn()
     const { unmount } = render(
       <Collapsible open ref={() => cleanup}>
         <CollapsibleTrigger ref={() => cleanup}>Details</CollapsibleTrigger>

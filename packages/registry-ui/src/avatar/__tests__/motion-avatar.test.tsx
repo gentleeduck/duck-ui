@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, describe, expect, test } from 'vitest'
 import { MotionAvatarGroup } from '../motion-avatar'
 
 afterEach(cleanup)

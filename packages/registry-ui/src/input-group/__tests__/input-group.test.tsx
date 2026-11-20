@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
   InputGroup,
   InputGroupAddon,
@@ -112,7 +112,7 @@ describe('registry-ui InputGroup', () => {
   })
 
   test("runs an addon's own onClick before the focus, which it can prevent", () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     render(
       <InputGroup>
         <InputGroupInput aria-label="Pond" />

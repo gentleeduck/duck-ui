@@ -1,6 +1,6 @@
-import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from 'bun:test'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { Carousel, type CarouselApi, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '../carousel'
 
 // jsdom has no layout, no matchMedia, no ResizeObserver and no IntersectionObserver, which embla reads. Three 100px slides sit in a
@@ -184,7 +184,7 @@ describe('registry-ui Carousel in a DOM', () => {
   })
 
   test('refuses a part used outside a carousel', () => {
-    const quiet = spyOn(console, 'error').mockImplementation(() => {})
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(() => render(<CarouselItem>Stray</CarouselItem>)).toThrow('useCarousel must be used within a <Carousel />')
     quiet.mockRestore()
   })

@@ -1,8 +1,8 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import * as DialogPrimitive from '@gentleduck/primitives/dialog'
 import { cleanup, render } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, test } from 'vitest'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../dialog'
 import { dialogStackStyle } from '../dialog.constants'
 import { MotionDialog, MotionDialogContent } from '../motion-dialog'
@@ -58,5 +58,26 @@ describe('registry-ui Dialog opened from another', () => {
     expect(nestedOverlay?.classList.contains('data-[nested]:bg-transparent')).toBe(true)
     expect(holding?.getAttribute('aria-label')).toBe('Outer')
     expect(dialogStackStyle.split(' ').every((name) => holding?.classList.contains(name))).toBe(true)
+  })
+
+  test('keeps a closed dialog in the page with forceMount, as its overlay too', () => {
+    render(
+      <Dialog>
+        <DialogContent aria-describedby={undefined} forceMount>
+          <DialogTitle>Kept</DialogTitle>
+        </DialogContent>
+      </Dialog>,
+    )
+
+    const overlay = document.querySelector('[data-slot="dialog-overlay"]')
+
+    // Its exit fade holds its end and lets presses through, or the kept overlay would cover the page once it ends.
+    expect([
+      document.querySelector('[role="dialog"]')?.getAttribute('data-state'),
+      overlay?.getAttribute('data-state'),
+      ['data-[state=closed]:pointer-events-none', 'data-[state=closed]:fill-mode-forwards'].every((name) =>
+        overlay?.classList.contains(name),
+      ),
+    ]).toEqual(['closed', 'closed', true])
   })
 })

@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test } from 'vitest'
 import { MotionTextarea } from '../motion-textarea'
 import { Textarea } from '../textarea'
 

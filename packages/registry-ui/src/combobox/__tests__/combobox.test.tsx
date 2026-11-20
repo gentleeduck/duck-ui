@@ -1,7 +1,7 @@
-import { afterAll, afterEach, beforeAll, describe, expect, mock, test } from 'bun:test'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { Combobox, ComboboxGroup, ComboboxItem } from '../combobox'
 import { MotionCombobox, MotionComboboxItem } from '../motion-combobox'
 
@@ -50,7 +50,7 @@ describe.each([
   ['MotionCombobox', MotionCombobox, MotionComboboxItem],
 ] as const)('registry-ui %s', (_, Root, Item) => {
   test('picks one pond, names it by its label, closes, and clears when picked again', async () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(
       <Root commandTriggerPlaceholder="Pick a pond" defaultValue="lake" items={ponds} onValueChange={onValueChange}>
         {(items) => items.map((pond) => <Item item={pond} key={pond.value} />)}
@@ -89,7 +89,7 @@ describe.each([
   })
 
   test('picks several ponds, staying open, and folds them into a count past two', async () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(
       <Root defaultValue={['mill']} items={ponds} onValueChange={onValueChange} type="multiple">
         {(items) => items.map((pond) => <Item item={pond} key={pond.value} />)}
@@ -113,7 +113,7 @@ describe.each([
   })
 
   test('leaves a controlled value to its owner', async () => {
-    const onValueChange = mock()
+    const onValueChange = vi.fn()
     render(
       <Root items={ponds} onValueChange={onValueChange} value="mill">
         {(items) => items.map((pond) => <Item item={pond} key={pond.value} />)}
@@ -184,7 +184,7 @@ describe.each([
   })
 
   test('opens from its popover props, and tells them when a single pick closes it', async () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(
       <Root items={ponds} popover={{ defaultOpen: true, onOpenChange }}>
         {(items) => items.map((pond) => <Item item={pond} key={pond.value} />)}
@@ -210,7 +210,7 @@ describe.each([
   })
 
   test('works as a plain item outside a combobox, from its own checked and onSelect', async () => {
-    const onSelect = mock()
+    const onSelect = vi.fn()
     const { Command, CommandList } = await import('../../command')
     render(
       <Command>

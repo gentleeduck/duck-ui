@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test } from 'vitest'
 import { AlertDialogCancel, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger } from '../alert-dialog'
 import { MotionAlertDialog, MotionAlertDialogContent } from '../motion-alert-dialog'
 

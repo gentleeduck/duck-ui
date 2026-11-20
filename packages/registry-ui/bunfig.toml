@@ -1,3 +1,0 @@
-[test]
-preload = ["./jsdom-setup.ts"]
-timeout = 15000

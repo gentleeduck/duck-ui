@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { MotionSwitch } from '../motion-switch'
 import { Switch } from '../switch'
 
@@ -8,8 +8,8 @@ afterEach(cleanup)
 
 describe('registry-ui Switch', () => {
   test('reports the state a click moves it to', () => {
-    const onCheckedChange = mock()
-    const onChange = mock()
+    const onCheckedChange = vi.fn()
+    const onChange = vi.fn()
     render(<Switch onChange={onChange} onCheckedChange={onCheckedChange} />)
 
     fireEvent.click(screen.getByRole('switch'))
@@ -35,7 +35,7 @@ describe('registry-ui Switch', () => {
 
 describe('registry-ui Switch in a form that is reset', () => {
   test('tells the owner nothing of a reset a handler cancels', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     render(
       <form onReset={(event) => event.preventDefault()}>
         <Switch defaultChecked onCheckedChange={onCheckedChange} />
@@ -49,7 +49,7 @@ describe('registry-ui Switch in a form that is reset', () => {
   })
 
   test('tells the owner of an uncontrolled switch the value it goes back to', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     const { container } = render(
       <form>
         <Switch defaultChecked onCheckedChange={onCheckedChange} />
@@ -63,7 +63,7 @@ describe('registry-ui Switch in a form that is reset', () => {
   })
 
   test('asks a controlled switch nothing when it is already on its first value', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     const { container } = render(
       <form>
         <Switch checked onCheckedChange={onCheckedChange} />
@@ -76,7 +76,7 @@ describe('registry-ui Switch in a form that is reset', () => {
   })
 
   test('stops listening once it unmounts', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     const { container, rerender } = render(
       <form>
         <Switch checked onCheckedChange={onCheckedChange} />
@@ -98,7 +98,7 @@ describe('registry-ui Switch in a form that is reset', () => {
 
 describe('registry-ui MotionSwitch', () => {
   test('moves on a click and leaves its state to the input', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     render(<MotionSwitch onCheckedChange={onCheckedChange} />)
     const control = screen.getByRole('switch') as HTMLInputElement
 
@@ -141,7 +141,7 @@ describe('registry-ui MotionSwitch', () => {
 
 describe('registry-ui MotionSwitch in a form that is reset', () => {
   test('keeps its thumb and tells the owner nothing of a reset a handler cancels', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     const { container } = render(
       <form onReset={(event) => event.preventDefault()}>
         <MotionSwitch defaultChecked onCheckedChange={onCheckedChange} />
@@ -156,7 +156,7 @@ describe('registry-ui MotionSwitch in a form that is reset', () => {
   })
 
   test('moves its thumb back and tells the owner', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     const { container } = render(
       <form>
         <MotionSwitch defaultChecked onCheckedChange={onCheckedChange} />
@@ -172,7 +172,7 @@ describe('registry-ui MotionSwitch in a form that is reset', () => {
   })
 
   test('asks a controlled switch for the value it was first given', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     const { container, rerender } = render(
       <form>
         <MotionSwitch checked onCheckedChange={onCheckedChange} />
@@ -190,7 +190,7 @@ describe('registry-ui MotionSwitch in a form that is reset', () => {
   })
 
   test('asks nothing when it is already on its first value', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     const { container } = render(
       <form>
         <MotionSwitch defaultChecked onCheckedChange={onCheckedChange} />
@@ -203,7 +203,7 @@ describe('registry-ui MotionSwitch in a form that is reset', () => {
   })
 
   test('stops listening once it unmounts', () => {
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     const { container, rerender } = render(
       <form>
         <MotionSwitch checked onCheckedChange={onCheckedChange} />
@@ -231,10 +231,10 @@ for (const [name, Control] of [
   ['MotionSwitch', MotionSwitch],
 ] as const) {
   describe(`registry-ui ${name} whose owner sets checked`, () => {
-    const heard = mock()
-    const clicked = mock()
-    const asked = mock()
-    const changed = mock()
+    const heard = vi.fn()
+    const clicked = vi.fn()
+    const asked = vi.fn()
+    const changed = vi.fn()
     const owned = (checked: boolean) => (
       <form onChange={(event) => heard((event.target as HTMLInputElement).checked)}>
         <div onClick={clicked}>

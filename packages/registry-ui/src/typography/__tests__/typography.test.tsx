@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
   MotionTypographyBlockquote,
   MotionTypographyH1,
@@ -183,7 +183,7 @@ describe.each([
 
 describe('registry-ui MotionTypographyList', () => {
   test('turns each item into a list item that enters after the list, keeping its own props', () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     render(
       <MotionTypographyList className="ms-4" index={2}>
         <li className="font-bold" id="first" onClick={onClick}>
@@ -223,7 +223,7 @@ describe('registry-ui MotionTypographyList', () => {
   })
 
   test("leaves an item's animation start handler off, since motion would call it with its own arguments", async () => {
-    const onAnimationStart = mock()
+    const onAnimationStart = vi.fn()
     render(
       <MotionTypographyList>
         <li onAnimationStart={onAnimationStart}>One</li>

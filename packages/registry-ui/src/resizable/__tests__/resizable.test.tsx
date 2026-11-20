@@ -1,6 +1,6 @@
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'bun:test'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { DirectionProvider } from '../../direction'
 import { MotionResizablePanelGroup } from '../motion-resizable'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '../resizable'

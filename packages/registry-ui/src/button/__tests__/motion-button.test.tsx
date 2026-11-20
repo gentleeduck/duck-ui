@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, describe, expect, test } from 'vitest'
 import { MotionButton } from '../motion-button'
 
 afterEach(cleanup)

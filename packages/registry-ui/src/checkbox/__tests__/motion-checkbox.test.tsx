@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { MotionCheckbox, MotionCheckboxGroup } from '../motion-checkbox'
 
 afterEach(cleanup)
@@ -10,7 +10,7 @@ const box = () => document.querySelector('input') as HTMLInputElement
 describe('registry-ui MotionCheckbox', () => {
   test('hands a ref the input and reports a click', () => {
     const ref = React.createRef<HTMLInputElement>()
-    const onCheckedChange = mock()
+    const onCheckedChange = vi.fn()
     render(<MotionCheckbox onCheckedChange={onCheckedChange} ref={ref} />)
 
     fireEvent.click(box())

@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { MotionRadioGroup, MotionRadioGroupItem } from '../motion-radio-group'
 import { RadioGroup, RadioGroupItem } from '../radio-group'
 
@@ -118,8 +118,8 @@ describe('registry-ui MotionRadioGroup', () => {
   })
 
   test('a click checks the radio and still reaches the consumer onClick', () => {
-    const onClick = mock()
-    const onValueChange = mock()
+    const onClick = vi.fn()
+    const onValueChange = vi.fn()
     render(
       <MotionRadioGroup onValueChange={onValueChange}>
         <MotionRadioGroupItem onClick={onClick} value="pear">

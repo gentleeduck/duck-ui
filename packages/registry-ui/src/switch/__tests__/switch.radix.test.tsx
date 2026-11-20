@@ -3,9 +3,9 @@
 // hidden bubble input and its parts' spreads are left out, and a stopped click still reaches the form as a native
 // change.
 
-import { afterEach, describe, expect, it, mock } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Switch } from '../switch'
 
 afterEach(cleanup)
@@ -141,9 +141,9 @@ describe('given a Switch with a clickable ancestor inside a form', () => {
   }
 
   it('should not trigger the ancestor `onClick` when `checked` is updated programmatically', () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     const app = (checked: boolean) => (
-      <Harness onClick={onClick} onFormChange={mock()}>
+      <Harness onClick={onClick} onFormChange={vi.fn()}>
         <Switch checked={checked} onCheckedChange={() => undefined} />
       </Harness>
     )
@@ -156,9 +156,9 @@ describe('given a Switch with a clickable ancestor inside a form', () => {
   })
 
   it('should trigger the ancestor `onClick` on a real user click', () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     render(
-      <Harness onClick={onClick} onFormChange={mock()}>
+      <Harness onClick={onClick} onFormChange={vi.fn()}>
         <Switch />
       </Harness>,
     )
@@ -169,9 +169,9 @@ describe('given a Switch with a clickable ancestor inside a form', () => {
   })
 
   it('should not trigger the ancestor `onClick` on a programmatic update after a click that did not change `checked`', () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     const app = (checked: boolean) => (
-      <Harness onClick={onClick} onFormChange={mock()}>
+      <Harness onClick={onClick} onFormChange={vi.fn()}>
         <Switch checked={checked} onCheckedChange={() => undefined} />
       </Harness>
     )
@@ -185,9 +185,9 @@ describe('given a Switch with a clickable ancestor inside a form', () => {
   })
 
   it('should trigger the ancestor `onClick` for a user click that the controlled parent ignores', () => {
-    const onClick = mock()
+    const onClick = vi.fn()
     render(
-      <Harness onClick={onClick} onFormChange={mock()}>
+      <Harness onClick={onClick} onFormChange={vi.fn()}>
         <Switch checked={false} onCheckedChange={() => undefined} />
       </Harness>,
     )
@@ -199,8 +199,8 @@ describe('given a Switch with a clickable ancestor inside a form', () => {
   })
 
   it('should trigger the ancestor `onClick` once and notify the form when the controlled parent applies `checked` after a timeout', async () => {
-    const onClick = mock()
-    const onFormChange = mock()
+    const onClick = vi.fn()
+    const onFormChange = vi.fn()
     function DelayedApp() {
       const [checked, setChecked] = React.useState(false)
       return (
@@ -221,8 +221,8 @@ describe('given a Switch with a clickable ancestor inside a form', () => {
   })
 
   it('should trigger the ancestor `onClick` once and notify the form when the controlled parent applies `checked` in a transition', async () => {
-    const onClick = mock()
-    const onFormChange = mock()
+    const onClick = vi.fn()
+    const onFormChange = vi.fn()
     function TransitionApp() {
       const [checked, setChecked] = React.useState(false)
       return (
@@ -242,8 +242,8 @@ describe('given a Switch with a clickable ancestor inside a form', () => {
   })
 
   it('should not trigger the ancestor `onClick` when propagation is stopped on the trigger and the controlled parent applies `checked` later', async () => {
-    const onClick = mock()
-    const onFormChange = mock()
+    const onClick = vi.fn()
+    const onFormChange = vi.fn()
     function DelayedApp() {
       const [checked, setChecked] = React.useState(false)
       return (
@@ -268,8 +268,8 @@ describe('given a Switch with a clickable ancestor inside a form', () => {
   })
 
   it('should not trigger the ancestor `onClick` when propagation is stopped on the trigger', () => {
-    const onClick = mock()
-    const onFormChange = mock()
+    const onClick = vi.fn()
+    const onFormChange = vi.fn()
     render(
       <Harness onClick={onClick} onFormChange={onFormChange}>
         <Switch onClick={(event) => event.stopPropagation()} />

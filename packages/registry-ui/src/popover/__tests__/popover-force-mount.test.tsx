@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { cleanup, render } from '@testing-library/react'
+import { afterEach, describe, expect, test } from 'vitest'
 import { Popover, PopoverContent, PopoverTrigger } from '../popover'
 
 afterEach(cleanup)

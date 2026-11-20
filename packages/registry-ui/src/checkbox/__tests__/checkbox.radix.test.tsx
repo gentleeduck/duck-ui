@@ -3,10 +3,10 @@
 // hidden bubble input and its parts' spreads are left out, a stopped click still reaches the form as a native
 // change, and the Legacy cases repeating these are not repeated.
 
-import { afterEach, describe, expect, it, mock } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import axe from 'axe-core'
 import * as React from 'react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Checkbox } from '../checkbox'
 import type { CheckedState } from '../checkbox.types'
 
@@ -82,7 +82,7 @@ describe('Checkbox', () => {
     })
 
     it('should call `onCheckedChange` prop', () => {
-      const onCheckedChange = mock()
+      const onCheckedChange = vi.fn()
       render(<Checkbox aria-label="basic checkbox" defaultChecked onCheckedChange={onCheckedChange} />)
 
       fireEvent.click(box())
@@ -117,13 +117,13 @@ describe('Checkbox', () => {
     }
 
     it('should have no accessibility violations', async () => {
-      const { container } = render(<ControlledCheckbox onCheckedChange={mock()} />)
+      const { container } = render(<ControlledCheckbox onCheckedChange={vi.fn()} />)
 
       expect(await violations(container)).toEqual([])
     })
 
     it('should toggle the indicator', () => {
-      render(<ControlledCheckbox onCheckedChange={mock()} />)
+      render(<ControlledCheckbox onCheckedChange={vi.fn()} />)
 
       fireEvent.click(box())
 
@@ -131,7 +131,7 @@ describe('Checkbox', () => {
     })
 
     it('should call `onCheckedChange` prop', () => {
-      const onCheckedChange = mock()
+      const onCheckedChange = vi.fn()
       render(<ControlledCheckbox onCheckedChange={onCheckedChange} />)
 
       fireEvent.click(box())
@@ -140,7 +140,7 @@ describe('Checkbox', () => {
     })
 
     it('should not toggle unless state is updated', () => {
-      render(<ControlledCheckbox onCheckedChange={mock()} />)
+      render(<ControlledCheckbox onCheckedChange={vi.fn()} />)
 
       fireEvent.click(screen.getByText('Block checkbox'))
       fireEvent.click(box())
@@ -152,7 +152,7 @@ describe('Checkbox', () => {
 
   describe('given an uncontrolled Checkbox in a form', () => {
     it('should receive change event with next state', () => {
-      const onChange = mock()
+      const onChange = vi.fn()
       render(
         <form onChange={(event) => onChange(input(event).checked)}>
           <Checkbox aria-label="basic checkbox" />
@@ -165,7 +165,7 @@ describe('Checkbox', () => {
     })
 
     it('should receive change event with next state when `defaultChecked` is true', () => {
-      const onChange = mock()
+      const onChange = vi.fn()
       render(
         <form onChange={(event) => onChange(input(event).checked)}>
           <Checkbox aria-label="basic checkbox" defaultChecked />
@@ -180,7 +180,7 @@ describe('Checkbox', () => {
 
   describe('given a controlled Checkbox in a form', () => {
     it('should receive change event with controlled state when clicked', () => {
-      const onChange = mock()
+      const onChange = vi.fn()
       function ControlledCheckbox() {
         const [checked, setChecked] = React.useState<CheckedState>(false)
         return <Checkbox aria-label="basic checkbox" checked={checked} onCheckedChange={setChecked} />
@@ -213,9 +213,9 @@ describe('Checkbox', () => {
     }
 
     it('should not trigger the ancestor `onClick` when `checked` is updated programmatically', () => {
-      const onClick = mock()
+      const onClick = vi.fn()
       const app = (checked: boolean) => (
-        <Harness onClick={onClick} onFormChange={mock()}>
+        <Harness onClick={onClick} onFormChange={vi.fn()}>
           <Checkbox aria-label="basic checkbox" checked={checked} />
         </Harness>
       )
@@ -228,9 +228,9 @@ describe('Checkbox', () => {
     })
 
     it('should trigger the ancestor `onClick` on a real user click', () => {
-      const onClick = mock()
+      const onClick = vi.fn()
       render(
-        <Harness onClick={onClick} onFormChange={mock()}>
+        <Harness onClick={onClick} onFormChange={vi.fn()}>
           <Checkbox aria-label="basic checkbox" />
         </Harness>,
       )
@@ -241,9 +241,9 @@ describe('Checkbox', () => {
     })
 
     it('should not trigger the ancestor `onClick` on a programmatic update after a click that did not change `checked`', () => {
-      const onClick = mock()
+      const onClick = vi.fn()
       const app = (checked: boolean) => (
-        <Harness onClick={onClick} onFormChange={mock()}>
+        <Harness onClick={onClick} onFormChange={vi.fn()}>
           <Checkbox aria-label="basic checkbox" checked={checked} onCheckedChange={() => undefined} />
         </Harness>
       )
@@ -257,9 +257,9 @@ describe('Checkbox', () => {
     })
 
     it('should trigger the ancestor `onClick` for a user click that the controlled parent ignores', () => {
-      const onClick = mock()
+      const onClick = vi.fn()
       render(
-        <Harness onClick={onClick} onFormChange={mock()}>
+        <Harness onClick={onClick} onFormChange={vi.fn()}>
           <Checkbox aria-label="basic checkbox" checked={false} onCheckedChange={() => undefined} />
         </Harness>,
       )
@@ -271,8 +271,8 @@ describe('Checkbox', () => {
     })
 
     it('should trigger the ancestor `onClick` once and notify the form when the controlled parent applies `checked` after a timeout', async () => {
-      const onClick = mock()
-      const onFormChange = mock()
+      const onClick = vi.fn()
+      const onFormChange = vi.fn()
       function DelayedApp() {
         const [checked, setChecked] = React.useState<CheckedState>(false)
         return (
@@ -297,8 +297,8 @@ describe('Checkbox', () => {
     })
 
     it('should trigger the ancestor `onClick` once and notify the form when the controlled parent applies `checked` in a transition', async () => {
-      const onClick = mock()
-      const onFormChange = mock()
+      const onClick = vi.fn()
+      const onFormChange = vi.fn()
       function TransitionApp() {
         const [checked, setChecked] = React.useState<CheckedState>(false)
         return (
@@ -322,8 +322,8 @@ describe('Checkbox', () => {
     })
 
     it('should trigger the ancestor `onClick` once and notify the form when the controlled parent applies a different `checked` state than requested', () => {
-      const onClick = mock()
-      const onFormChange = mock()
+      const onClick = vi.fn()
+      const onFormChange = vi.fn()
       function CoercingApp() {
         const [checked, setChecked] = React.useState<CheckedState>(true)
         return (
@@ -348,8 +348,8 @@ describe('Checkbox', () => {
     })
 
     it('should not trigger the ancestor `onClick` when propagation is stopped on the trigger and the controlled parent applies `checked` later', async () => {
-      const onClick = mock()
-      const onFormChange = mock()
+      const onClick = vi.fn()
+      const onFormChange = vi.fn()
       function DelayedApp() {
         const [checked, setChecked] = React.useState<CheckedState>(false)
         return (
@@ -375,8 +375,8 @@ describe('Checkbox', () => {
     })
 
     it('should not trigger the ancestor `onClick` when propagation is stopped on the trigger', () => {
-      const onClick = mock()
-      const onFormChange = mock()
+      const onClick = vi.fn()
+      const onFormChange = vi.fn()
       render(
         <Harness onClick={onClick} onFormChange={onFormChange}>
           <Checkbox aria-label="basic checkbox" onClick={(event) => event.stopPropagation()} />

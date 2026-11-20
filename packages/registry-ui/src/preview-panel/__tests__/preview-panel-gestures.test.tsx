@@ -1,6 +1,6 @@
-import { afterAll, afterEach, beforeAll, describe, expect, mock, spyOn, test } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type * as React from 'react'
+import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { MotionPreviewPanel } from '../motion-preview-panel'
 import { PreviewPanel } from '../preview-panel'
 
@@ -51,7 +51,7 @@ function parts() {
 
 describe.each(panels)('registry-ui %s gestures', (_, Panel) => {
   test('the zoom buttons step by a quarter, stop at the limits, and reset to the initial zoom', () => {
-    const onStateChange = mock()
+    const onStateChange = vi.fn()
     render(<Panel initialZoom={1.5} maxZoom={2} minZoom={1} onStateChange={onStateChange} />)
     const { content } = parts()
     const zoomIn = screen.getByRole('button', { name: 'Zoom in' })
@@ -89,7 +89,7 @@ describe.each(panels)('registry-ui %s gestures', (_, Panel) => {
   })
 
   test('a locked view leaves the wheel, a drag and a pinch to the page', async () => {
-    const onStateChange = mock()
+    const onStateChange = vi.fn()
     render(<Panel onStateChange={onStateChange} />)
     const { content, viewport } = parts()
     const scroll = wheel(100)
@@ -111,7 +111,7 @@ describe.each(panels)('registry-ui %s gestures', (_, Panel) => {
   })
 
   test('unlocked, the wheel zooms by a tenth up to the limit, keeps the page still, and emits once a frame', async () => {
-    const onStateChange = mock()
+    const onStateChange = vi.fn()
     render(<Panel defaultLocked={false} maxZoom={1.1} onStateChange={onStateChange} />)
     const { content, viewport } = parts()
     const scroll = wheel(-100)
@@ -135,7 +135,7 @@ describe.each(panels)('registry-ui %s gestures', (_, Panel) => {
   })
 
   test('unlocked, a drag pans the content from where the last one ended', async () => {
-    const onStateChange = mock()
+    const onStateChange = vi.fn()
     render(<Panel defaultLocked={false} onStateChange={onStateChange} />)
     const { content, viewport } = parts()
 
@@ -262,7 +262,7 @@ describe.each(panels)('registry-ui %s gestures', (_, Panel) => {
   })
 
   test('unmounting drops the frame a gesture left pending', async () => {
-    const onStateChange = mock()
+    const onStateChange = vi.fn()
     const { unmount } = render(<Panel defaultLocked={false} onStateChange={onStateChange} />)
 
     fireEvent(parts().viewport, wheel(-100))
@@ -275,7 +275,7 @@ describe.each(panels)('registry-ui %s gestures', (_, Panel) => {
 
 describe.each(panels)('registry-ui %s unsafeHtml', (name, Panel) => {
   test('warns once in development when the markup carries a script or an inline handler', () => {
-    const warn = spyOn(console, 'warn').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     render(<Panel unsafeHtml="<b>safe</b>" />)
 
@@ -285,7 +285,7 @@ describe.each(panels)('registry-ui %s unsafeHtml', (name, Panel) => {
     render(<Panel unsafeHtml="<script>steal()</script>" />)
 
     expect(warn).toHaveBeenCalledTimes(1)
-    expect(String(warn.mock.calls[0]?.[0])).toStartWith(`[${name}] \`unsafeHtml\` contains`)
+    expect(String(warn.mock.calls[0]?.[0])).toMatch(new RegExp(`^\\[${name}\\] \`unsafeHtml\` contains`))
     warn.mockRestore()
   })
 })

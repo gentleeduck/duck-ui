@@ -1,8 +1,8 @@
-import { afterEach, beforeAll, describe, expect, mock, test } from 'bun:test'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@testing-library/react'
 import * as React from 'react'
 import { type Control, useForm, useWatch } from 'react-hook-form'
+import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { JsonTextareaField } from '../json-editor'
 import { useJsonEditorHotkeys } from '../json-editor.hooks'
 import { formatJson, isObjectLike, safeStringify, tryParseJson } from '../json-editor.libs'
@@ -112,7 +112,7 @@ describe('registry-ui JsonTextareaField', () => {
     type(editor(), '{bad')
     save(editor())
     const alert = screen.getByRole('alert')
-    expect(alert.textContent).toStartWith('Enter valid JSON.')
+    expect(alert.textContent).toMatch(/^Enter valid JSON\./)
     expect(editor().getAttribute('aria-invalid')).toBe('true')
     expect(editor().getAttribute('aria-describedby')).toContain(alert.id)
     expect(committed()).toBe('{"theme":"dark"}')
@@ -218,7 +218,7 @@ describe('registry-ui JsonTextareaField', () => {
     expect(screen.getByText('Modifie')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Annuler' })).toBeTruthy()
     save(editor())
-    expect(screen.getByRole('alert').textContent).toStartWith('JSON invalide.')
+    expect(screen.getByRole('alert').textContent).toMatch(/^JSON invalide\./)
     type(editor(), '[]')
     save(editor())
     expect(screen.getByRole('alert').textContent).toBe('Un objet JSON.')
@@ -234,7 +234,7 @@ describe('registry-ui JsonTextareaField', () => {
 
     const trigger = screen.getByRole('button', { name: /^Settings \{ "notes"/ })
     expect(trigger.textContent).toHaveLength(120)
-    expect(trigger.textContent).toEndWith('...')
+    expect(trigger.textContent).toMatch(/\.\.\.$/)
     fireEvent.click(trigger)
     type(editor(), '{"a":1}')
     save(editor())
@@ -300,7 +300,7 @@ describe('registry-ui JsonTextareaField', () => {
     const next = within(sheet).getByRole('textbox', { name: 'Settings' })
     type(next, '{bad')
     fireEvent.click(within(sheet).getByRole('button', { name: 'Save' }))
-    expect(within(sheet).getByRole('alert').textContent).toStartWith('Enter valid JSON.')
+    expect(within(sheet).getByRole('alert').textContent).toMatch(/^Enter valid JSON\./)
     expect(next.getAttribute('aria-invalid')).toBe('true')
     type(next, '{"theme":"sheet"}')
     save(next)
@@ -321,7 +321,7 @@ describe('registry-ui JsonTextareaField', () => {
   })
 
   test('with expandMode callback, Full hands the draft and its value to onExpandEditor', () => {
-    const onExpandEditor = mock()
+    const onExpandEditor = vi.fn()
     render(<Harness expandMode="callback" onExpandEditor={onExpandEditor} />)
 
     type(editor(), '{"a":1}')
@@ -431,13 +431,13 @@ describe('registry-ui useJsonEditorHotkeys', () => {
   const keyDown = (init: Partial<React.KeyboardEvent<HTMLTextAreaElement>>) =>
     ({
       nativeEvent: { isComposing: false },
-      preventDefault: mock(),
+      preventDefault: vi.fn(),
       ...init,
     }) as unknown as React.KeyboardEvent<HTMLTextAreaElement>
 
   test('calls onSave on Ctrl or Cmd and Enter and onEscape on Escape, only while enabled', () => {
-    const onEscape = mock()
-    const onSave = mock()
+    const onEscape = vi.fn()
+    const onSave = vi.fn()
     const { result, rerender } = renderHook(({ enabled }) => useJsonEditorHotkeys({ enabled, onEscape, onSave }), {
       initialProps: { enabled: true },
     })

@@ -1,18 +1,21 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { DirectionProvider } from '../../direction'
 import { MotionProgress } from '../motion-progress'
 import { Progress } from '../progress'
 
 afterEach(cleanup)
 
+// The bar springs to its scale, so a busy run can read it a hair short of rest.
+const scaleOf = (node: HTMLElement | null | undefined) => Number(node?.style.transform.match(/^scaleX\((.+)\)$/)?.[1])
+
 describe('registry-ui progress', () => {
-  let consoleError: ReturnType<typeof spyOn>
+  let consoleError: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
-    consoleError = spyOn(console, 'error').mockImplementation(() => {})
+    consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -76,7 +79,7 @@ describe('registry-ui motion progress', () => {
   })
 
   test('fills and pulses while indeterminate, and fills a value against the max the primitive falls back to', async () => {
-    const consoleError = spyOn(console, 'error').mockImplementation(() => {})
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     render(
       <>
         <MotionProgress aria-label="Waiting" value={null} />
@@ -86,7 +89,7 @@ describe('registry-ui motion progress', () => {
     const bar = (name: string) =>
       screen.getByRole('progressbar', { name }).querySelector<HTMLElement>('[data-slot="progress-indicator"]')
 
-    await waitFor(() => expect(bar('Copying')?.style.transform).toBe('scaleX(0.3)'))
+    await waitFor(() => expect(scaleOf(bar('Copying'))).toBeCloseTo(0.3, 6))
     await waitFor(() => expect(bar('Waiting')?.style.transform).toBe('none'))
     for (let pulse = 0; pulse < 2; pulse++) {
       await waitFor(() => expect(Number(bar('Waiting')?.style.opacity)).toBeGreaterThan(0.95), { timeout: 3000 })
@@ -143,7 +146,7 @@ describe('registry-ui progress direction', () => {
     const bar = screen.getByRole('progressbar', { name: 'Upload' })
     const fill = bar.querySelector<HTMLElement>('[data-slot="progress-indicator"]')
 
-    await waitFor(() => expect(fill?.style.transform).toBe('scaleX(0.3)'))
+    await waitFor(() => expect(scaleOf(fill)).toBeCloseTo(0.3, 6))
     expect(fill?.style.transformOrigin).toBe('')
   })
 })

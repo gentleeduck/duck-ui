@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, test } from 'bun:test'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, describe, expect, test } from 'vitest'
 import { PreviewPanelDialog } from '../preview-panel-dialog'
 
 afterEach(cleanup)

@@ -1,7 +1,7 @@
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'bun:test'
 import { act, cleanup, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { MotionSlider } from '../motion-slider'
 import { Slider } from '../slider'
 

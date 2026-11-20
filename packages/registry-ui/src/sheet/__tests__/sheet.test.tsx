@@ -1,9 +1,9 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test'
 import * as DialogPrimitive from '@gentleduck/primitives/dialog'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { MotionSheet, MotionSheetContent } from '../motion-sheet'
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '../sheet'
 import { sheetVariants } from '../sheet.constants'
@@ -235,7 +235,7 @@ describe('registry-ui MotionSheet', () => {
   })
 
   test('its close button, named by closeText, lets the overlay go through, then unmounts it after the exit', async () => {
-    const onOpenChange = mock()
+    const onOpenChange = vi.fn()
     render(
       <MotionSheet defaultOpen onOpenChange={onOpenChange}>
         <MotionSheetContent closeText="Dismiss">
@@ -310,5 +310,17 @@ describe('registry-ui MotionSheet', () => {
     await act(async () => {})
 
     expect(screen.queryByRole('button', { name: 'Close' })).toBeNull()
+  })
+
+  test('keeps a closed sheet in the page with forceMount', () => {
+    render(
+      <Sheet>
+        <SheetContent aria-describedby={undefined} forceMount>
+          <SheetTitle>Kept</SheetTitle>
+        </SheetContent>
+      </Sheet>,
+    )
+
+    expect(document.querySelector('[role="dialog"]')?.getAttribute('data-state')).toBe('closed')
   })
 })

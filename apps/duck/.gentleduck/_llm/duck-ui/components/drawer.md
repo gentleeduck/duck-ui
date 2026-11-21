@@ -303,7 +303,7 @@ export default function Demo() {
         <Button variant="outline">Edit Profile</Button>
       </DrawerTrigger>
       <DrawerContent>
-        <DrawerHeader className="text-left">
+        <DrawerHeader className="text-start">
           <DrawerTitle>Edit profile</DrawerTitle>
           <DrawerDescription>Make changes to your profile here. Click save when you're done.</DrawerDescription>
         </DrawerHeader>
@@ -621,7 +621,7 @@ export default function Demo() {
         <Button variant="outline">Open checklist</Button>
       </DrawerTrigger>
       <DrawerContent className="mx-auto max-w-md">
-        <DrawerHeader className="text-left">
+        <DrawerHeader className="text-start">
           <div className="flex items-center justify-between">
             <DrawerTitle>Launch checklist</DrawerTitle>
             <span
@@ -656,7 +656,7 @@ export default function Demo() {
                 type="button"
                 onClick={() => toggle(task.id)}
                 className={cn(
-                  'flex items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent/50',
+                  'flex items-start gap-3 rounded-lg px-3 py-2.5 text-start transition-colors hover:bg-accent/50',
                   done && 'opacity-60',
                 )}>
                 {done ? (
@@ -677,7 +677,7 @@ export default function Demo() {
           {allDone ? (
             <DrawerClose asChild>
               <Button className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700">
-                <Sparkles className="mr-2 h-4 w-4" />
+                <Sparkles className="me-2 h-4 w-4" />
                 Ship it
               </Button>
             </DrawerClose>
@@ -722,7 +722,7 @@ export default function Demo() {
         <Button
           variant="outline"
           className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:ring-2 data-[state=open]:ring-ring">
-          <Menu className="mr-2 h-4 w-4" />
+          <Menu className="me-2 h-4 w-4" />
           Open drawer
         </Button>
       </DrawerTrigger>
@@ -757,6 +757,8 @@ import {
   DrawerTrigger,
 } from '@gentleduck/registry-ui/drawer'
 
+const PARAGRAPHS = Array.from({ length: 10 }, (_, index) => index + 1)
+
 const DRAWER_SIDES = ['top', 'right', 'bottom', 'left'] as const
 
 export default function Demo() {
@@ -775,8 +777,8 @@ export default function Demo() {
               <DrawerDescription>Set your daily activity goal.</DrawerDescription>
             </DrawerHeader>
             <div className="no-scrollbar overflow-y-auto px-4">
-              {Array.from({ length: 10 }).map((_, index) => (
-                <p className="mb-4 leading-normal" key={index}>
+              {PARAGRAPHS.map((section) => (
+                <p className="mb-4 leading-normal" key={section}>
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
                   dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
                   aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
@@ -819,6 +821,8 @@ import {
   DrawerTrigger,
 } from '@gentleduck/registry-ui/drawer'
 
+const SECTIONS = Array.from({ length: 20 }, (_, index) => index + 1)
+
 export default function Demo() {
   return (
     <Drawer direction="right">
@@ -831,9 +835,9 @@ export default function Demo() {
           <DrawerDescription>Scroll through the content below.</DrawerDescription>
         </DrawerHeader>
         <div className="no-scrollbar flex-1 overflow-y-auto px-4">
-          {Array.from({ length: 20 }).map((_, index) => (
-            <p className="mb-4 text-sm leading-normal" key={index}>
-              <strong>Section {index + 1}.</strong> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
+          {SECTIONS.map((section) => (
+            <p className="mb-4 text-sm leading-normal" key={section}>
+              <strong>Section {section}.</strong> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
               eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
               exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
               reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
@@ -845,6 +849,46 @@ export default function Demo() {
           <Button>Accept</Button>
           <DrawerClose asChild>
             <Button variant="outline">Decline</Button>
+          </DrawerClose>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  )
+}
+```
+
+### Styling the backdrop
+
+```tsx title="components/drawer-11.tsx"
+// import from your project: import Demo from '@/components/drawer-11'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@gentleduck/registry-ui/drawer'
+
+export default function Demo() {
+  return (
+    <Drawer>
+      <DrawerTrigger asChild>
+        <Button variant="outline">Open over a tinted backdrop</Button>
+      </DrawerTrigger>
+      <DrawerContent overlayProps={{ className: 'bg-primary/30 backdrop-blur-sm' }}>
+        <DrawerHeader>
+          <DrawerTitle>Filters</DrawerTitle>
+          <DrawerDescription>overlayProps styles the backdrop behind the drawer.</DrawerDescription>
+        </DrawerHeader>
+        <DrawerFooter>
+          <DrawerClose asChild>
+            <Button>Done</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>

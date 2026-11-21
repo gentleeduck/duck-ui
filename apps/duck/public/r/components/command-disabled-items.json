@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Command from '@gentleduck/primitives/command'\nimport styles from '../primitives.module.css'\n\nexport default function CommandDisabledItemsExample() {\n  return (\n    <Command.Root className={styles.command} aria-label=\"Exports\">\n      <Command.Input className={styles.commandInput} placeholder=\"Export as...\" />\n      <Command.List className={styles.commandList}>\n        <Command.Item className={styles.item} value=\"pdf\">\n          PDF\n        </Command.Item>\n        <Command.Item className={styles.item} disabled value=\"docx\">\n          Word (needs a paid plan)\n        </Command.Item>\n        <Command.Item className={styles.item} value=\"csv\">\n          CSV\n        </Command.Item>\n      </Command.List>\n    </Command.Root>\n  )\n}\n",
+      "path": "internal-primitives/command-disabled-items/command-disabled-items.tsx",
+      "target": "components/command-disabled-items.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "command-disabled-items",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

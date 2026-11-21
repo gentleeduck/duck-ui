@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { toast } from 'sonner'\n\nconst POSITIONS = ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'] as const\n\nexport default function Demo() {\n  return (\n    <div className=\"grid grid-cols-3 gap-2\">\n      {POSITIONS.map((position) => (\n        <Button\n          key={position}\n          onClick={() => toast(`Shown ${position.replace('-', ' ')}`, { position })}\n          size=\"sm\"\n          variant=\"outline\">\n          {position}\n        </Button>\n      ))}\n    </div>\n  )\n}\n",
+      "path": "sonner/sonner-7.tsx",
+      "target": "components/sonner-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sonner-7",
+  "registryDependencies": [
+    "sonner"
+  ],
+  "root_folder": "sonner",
+  "source": "/registry-examples/src/sonner",
+  "type": "registry:example"
+}

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Accordion from '@gentleduck/primitives/accordion'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function AccordionItemOpenChangeExample() {\n  const [log, setLog] = React.useState<string[]>([])\n  const record = (section: string) => (open: boolean) =>\n    setLog((entries) => [`${section} ${open ? 'opened' : 'closed'}`, ...entries].slice(0, 4))\n\n  return (\n    <div className={styles.stack}>\n      <Accordion.Root className={styles.disclosure} collapsible type=\"single\">\n        {['Orders', 'Invoices'].map((section) => (\n          <Accordion.Item\n            className={styles.disclosureItem}\n            key={section}\n            onOpenChange={record(section)}\n            value={section}>\n            <Accordion.Header className={styles.disclosureHeader}>\n              <Accordion.Trigger className={styles.disclosureTrigger}>{section}</Accordion.Trigger>\n            </Accordion.Header>\n            <Accordion.Content className={styles.disclosureContent}>\n              <div>Recent {section.toLowerCase()}.</div>\n            </Accordion.Content>\n          </Accordion.Item>\n        ))}\n      </Accordion.Root>\n      <p className={styles.note}>{log.length ? log.join(', ') : 'Open an item to see its own onOpenChange.'}</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/accordion-item-open-change/accordion-item-open-change.tsx",
+      "target": "components/accordion-item-open-change.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "accordion-item-open-change",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

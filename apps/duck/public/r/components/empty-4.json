@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "@tabler/icons-react"
+  ],
   "files": [
     {
       "content": "import { Avatar, AvatarFallback, AvatarImage } from '@gentleduck/registry-ui/avatar'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Empty,\n  EmptyContent,\n  EmptyDescription,\n  EmptyHeader,\n  EmptyMedia,\n  EmptyTitle,\n} from '@gentleduck/registry-ui/empty'\n\nexport default function Demo() {\n  return (\n    <Empty>\n      <EmptyHeader>\n        <EmptyMedia variant=\"default\">\n          <Avatar className=\"size-12\">\n            <AvatarImage alt=\"a profile picture for wildduck2\" src=\"https://github.com/wildduck2.png\" />\n            <AvatarFallback>WD</AvatarFallback>\n          </Avatar>\n        </EmptyMedia>\n        <EmptyTitle>No Activity Yet</EmptyTitle>\n        <EmptyDescription>\n          This account has no recent activity. Start a conversation or share an update to get things going.\n        </EmptyDescription>\n      </EmptyHeader>\n      <EmptyContent>\n        <Button size=\"sm\">Share Update</Button>\n      </EmptyContent>\n    </Empty>\n  )\n}\n",
@@ -9,7 +12,11 @@
   ],
   "name": "empty-4",
   "registryDependencies": [
-    "empty"
+    "empty",
+    "avatar",
+    "button",
+    "input-group",
+    "kbd"
   ],
   "root_folder": "empty",
   "source": "/registry-examples/src/empty",

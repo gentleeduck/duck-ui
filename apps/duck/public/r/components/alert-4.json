@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "lucide-react"
+  ],
   "files": [
     {
       "content": "import { Alert, AlertDescription, AlertTitle } from '@gentleduck/registry-ui/alert'\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { AlertCircleIcon, CheckCircle2Icon, PopcornIcon } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <div className=\"grid w-full max-w-xl items-start gap-4\">\n        <Alert>\n          <CheckCircle2Icon aria-hidden=\"true\" />\n          <AlertTitle>تم حفظ التغييرات بنجاح</AlertTitle>\n          <AlertDescription>تنبيه يضم أيقونة وعنوانًا ووصفًا.</AlertDescription>\n        </Alert>\n        <Alert>\n          <PopcornIcon aria-hidden=\"true\" />\n          <AlertTitle>تنبيه بعنوان وأيقونة فقط، دون وصف.</AlertTitle>\n        </Alert>\n        <Alert variant=\"destructive\">\n          <AlertCircleIcon aria-hidden=\"true\" />\n          <AlertTitle>تعذّر إتمام عملية الدفع.</AlertTitle>\n          <AlertDescription>\n            <p>يرجى مراجعة بيانات الفوترة ثم المحاولة مرة أخرى.</p>\n            <ul className=\"list-inside list-disc text-sm\">\n              <li>تحقق من بيانات البطاقة</li>\n              <li>تأكد من توفر رصيد كافٍ</li>\n              <li>تحقق من عنوان الفوترة</li>\n            </ul>\n          </AlertDescription>\n        </Alert>\n      </div>\n    </DirectionProvider>\n  )\n}\n",

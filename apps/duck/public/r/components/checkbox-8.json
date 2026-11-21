@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Checkbox } from '@gentleduck/registry-ui/checkbox'\nimport {\n  Field,\n  FieldDescription,\n  FieldError,\n  FieldGroup,\n  FieldLabel,\n  FieldLegend,\n  FieldSet,\n} from '@gentleduck/registry-ui/field'\nimport { zodResolver } from '@hookform/resolvers/zod'\nimport { Controller, useForm } from 'react-hook-form'\nimport { toast } from 'sonner'\nimport { z } from 'zod'\n\nconst items = [\n  {\n    id: 'recents',\n    label: 'Recents',\n  },\n  {\n    id: 'home',\n    label: 'Home',\n  },\n  {\n    id: 'applications',\n    label: 'Applications',\n  },\n  {\n    id: 'desktop',\n    label: 'Desktop',\n  },\n  {\n    id: 'downloads',\n    label: 'Downloads',\n  },\n  {\n    id: 'documents',\n    label: 'Documents',\n  },\n] as const\n\nconst FormSchema = z.object({\n  items: z.array(z.string()).refine((value) => value.some((item) => item), {\n    message: 'You have to select at least one item.',\n  }),\n})\n\nexport default function Demo() {\n  const form = useForm<z.infer<typeof FormSchema>>({\n    defaultValues: {\n      items: ['recents', 'home'],\n    },\n    resolver: zodResolver(FormSchema),\n  })\n\n  function onSubmit(data: z.infer<typeof FormSchema>) {\n    toast('You submitted the following values', {\n      description: (\n        <pre className=\"mt-2 w-[320px] rounded-md bg-neutral-950 p-4\">\n          <code className=\"text-white\">{JSON.stringify(data, null, 2)}</code>\n        </pre>\n      ),\n    })\n  }\n\n  return (\n    <form className=\"space-y-8\" onSubmit={form.handleSubmit(onSubmit)}>\n      <Controller\n        control={form.control}\n        name=\"items\"\n        render={({ field, fieldState }) => (\n          <FieldSet>\n            <FieldLegend variant=\"label\">Sidebar</FieldLegend>\n            <FieldDescription>Select the items you want to display in the sidebar.</FieldDescription>\n            <FieldGroup data-slot=\"checkbox-group\">\n              {items.map((item) => (\n                <Field orientation=\"horizontal\" key={item.id} data-invalid={fieldState.invalid}>\n                  <Checkbox\n                    id={`form-rhf-checkbox-${item.id}`}\n                    name={field.name}\n                    aria-invalid={fieldState.invalid}\n                    checked={field.value.includes(item.id)}\n                    onCheckedChange={(checked) => {\n                      const nextValue = checked\n                        ? [...field.value, item.id]\n                        : field.value.filter((value) => value !== item.id)\n                      field.onChange(nextValue)\n                    }}\n                  />\n                  <FieldLabel className=\"font-normal text-sm\" htmlFor={`form-rhf-checkbox-${item.id}`}>\n                    {item.label}\n                  </FieldLabel>\n                </Field>\n              ))}\n            </FieldGroup>\n            {fieldState.invalid && fieldState.error && <FieldError errors={[fieldState.error]} />}\n          </FieldSet>\n        )}\n      />\n      <Button type=\"submit\">Submit</Button>\n    </form>\n  )\n}\n",
@@ -9,7 +15,9 @@
   ],
   "name": "checkbox-8",
   "registryDependencies": [
-    "checkbox"
+    "checkbox",
+    "button",
+    "field"
   ],
   "root_folder": "checkbox",
   "source": "/registry-examples/src/checkbox",

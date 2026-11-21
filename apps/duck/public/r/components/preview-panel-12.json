@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { MotionZoomControls } from '@gentleduck/registry-ui/preview-panel'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [zoom, setZoom] = React.useState(1)\n\n  return (\n    <div className=\"flex flex-col items-center gap-3\">\n      <span className=\"text-muted-foreground text-sm\">{Math.round(zoom * 100)}%</span>\n      <MotionZoomControls\n        onReset={() => setZoom(1)}\n        onZoomIn={() => setZoom((value) => Math.min(3, value + 0.25))}\n        onZoomOut={() => setZoom((value) => Math.max(0.25, value - 0.25))}\n        resetText=\"Back to 100%\"\n        zoom={zoom}\n        zoomInText=\"Bigger\"\n        zoomOutText=\"Smaller\"\n      />\n    </div>\n  )\n}\n",
+      "path": "preview-panel/preview-panel-12.tsx",
+      "target": "components/preview-panel-12.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "preview-panel-12",
+  "registryDependencies": [
+    "preview-panel"
+  ],
+  "root_folder": "preview-panel",
+  "source": "/registry-examples/src/preview-panel",
+  "type": "registry:example"
+}

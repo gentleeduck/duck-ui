@@ -9,7 +9,8 @@
   ],
   "name": "typography-2",
   "registryDependencies": [
-    "typography"
+    "typography",
+    "direction"
   ],
   "root_folder": "typography",
   "source": "/registry-examples/src/typography",

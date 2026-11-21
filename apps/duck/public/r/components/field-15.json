@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "content": "import { Checkbox } from '@gentleduck/registry-ui/checkbox'\nimport {\n  Field,\n  FieldContent,\n  FieldDescription,\n  FieldGroup,\n  FieldLabel,\n  FieldLegend,\n  FieldSet,\n  FieldTitle,\n} from '@gentleduck/registry-ui/field'\nimport { Switch } from '@gentleduck/registry-ui/switch'\n\nexport default function Demo() {\n  return (\n    <div className=\"w-full max-w-md\">\n      <FieldGroup>\n        <FieldSet>\n          <FieldLegend variant=\"label\">Notifications</FieldLegend>\n          <FieldDescription>Pick where updates reach you.</FieldDescription>\n          <FieldGroup className=\"gap-3\">\n            <FieldLabel htmlFor=\"notify-email-c7q\">\n              <Field orientation=\"horizontal\">\n                <Checkbox defaultChecked id=\"notify-email-c7q\" />\n                <FieldContent>\n                  <FieldTitle>Email</FieldTitle>\n                  <FieldDescription>A digest of the day&apos;s activity.</FieldDescription>\n                </FieldContent>\n              </Field>\n            </FieldLabel>\n            <FieldLabel htmlFor=\"notify-push-m2d\">\n              <Field orientation=\"horizontal\">\n                <Checkbox id=\"notify-push-m2d\" />\n                <FieldContent>\n                  <FieldTitle>Push</FieldTitle>\n                  <FieldDescription>Mentions and replies, as they happen.</FieldDescription>\n                </FieldContent>\n              </Field>\n            </FieldLabel>\n          </FieldGroup>\n        </FieldSet>\n        <FieldLabel htmlFor=\"share-usage-k8v\">\n          <Field orientation=\"horizontal\">\n            <FieldContent>\n              <FieldTitle>Share usage data</FieldTitle>\n              <FieldDescription>Help improve the product with anonymous usage data.</FieldDescription>\n            </FieldContent>\n            <Switch id=\"share-usage-k8v\" />\n          </Field>\n        </FieldLabel>\n      </FieldGroup>\n    </div>\n  )\n}\n",
+      "path": "field/field-15.tsx",
+      "target": "components/field-15.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "field-15",
+  "registryDependencies": [
+    "field",
+    "button",
+    "checkbox",
+    "input",
+    "radio-group",
+    "select",
+    "slider",
+    "switch",
+    "textarea"
+  ],
+  "root_folder": "field",
+  "source": "/registry-examples/src/field",
+  "type": "registry:example"
+}

@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@gentleduck/registry-ui/accordion'\nimport * as React from 'react'\n\nfunction Report({ name }: { name: string }) {\n  const [loadedAt] = React.useState(() => new Date().toLocaleTimeString())\n  return (\n    <p>\n      The {name} report, built at {loadedAt}. It is not built until first opened, and kept after.\n    </p>\n  )\n}\n\nexport default function Demo() {\n  return (\n    <Accordion className=\"w-[350px]\" collapsible renderOnce type=\"single\">\n      {['Sales', 'Traffic'].map((name) => (\n        <AccordionItem key={name} value={name}>\n          <AccordionTrigger>{name}</AccordionTrigger>\n          <AccordionContent>\n            <Report name={name.toLowerCase()} />\n          </AccordionContent>\n        </AccordionItem>\n      ))}\n    </Accordion>\n  )\n}\n",
+      "path": "accordion/accordion-10.tsx",
+      "target": "components/accordion-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "accordion-10",
+  "registryDependencies": [
+    "accordion",
+    "direction"
+  ],
+  "root_folder": "accordion",
+  "source": "/registry-examples/src/accordion",
+  "type": "registry:example"
+}

@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Dialog,\n  DialogClose,\n  DialogContent,\n  DialogDescription,\n  DialogFooter,\n  DialogHeader,\n  DialogTitle,\n  DialogTrigger,\n} from '@gentleduck/registry-ui/dialog'\nimport { Pencil } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Dialog>\n      <DialogTrigger asChild>\n        <Button\n          variant=\"outline\"\n          className=\"data-[state=open]:bg-primary data-[state=open]:text-primary-foreground data-[state=open]:ring-2 data-[state=open]:ring-primary/50\">\n          <Pencil className=\"mr-2 h-4 w-4\" />\n          Edit profile\n        </Button>\n      </DialogTrigger>\n      <DialogContent className=\"sm:max-w-md\">\n        <DialogHeader>\n          <DialogTitle>Edit profile</DialogTitle>\n          <DialogDescription>\n            Notice the trigger button stays highlighted while this dialog is open. Use{' '}\n            <code className=\"rounded bg-muted px-1 py-0.5 text-xs\">data-[state=open]</code> on the trigger to style its\n            active state.\n          </DialogDescription>\n        </DialogHeader>\n        <DialogFooter>\n          <DialogClose asChild>\n            <Button variant=\"outline\">Close</Button>\n          </DialogClose>\n        </DialogFooter>\n      </DialogContent>\n    </Dialog>\n  )\n}\n",
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Dialog,\n  DialogClose,\n  DialogContent,\n  DialogDescription,\n  DialogFooter,\n  DialogHeader,\n  DialogTitle,\n  DialogTrigger,\n} from '@gentleduck/registry-ui/dialog'\nimport { Pencil } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Dialog>\n      <DialogTrigger asChild>\n        <Button\n          variant=\"outline\"\n          className=\"data-[state=open]:bg-primary data-[state=open]:text-primary-foreground data-[state=open]:ring-2 data-[state=open]:ring-primary/50\">\n          <Pencil className=\"me-2 h-4 w-4\" />\n          Edit profile\n        </Button>\n      </DialogTrigger>\n      <DialogContent className=\"sm:max-w-md\">\n        <DialogHeader>\n          <DialogTitle>Edit profile</DialogTitle>\n          <DialogDescription>\n            Notice the trigger button stays highlighted while this dialog is open. Use{' '}\n            <code className=\"rounded bg-muted px-1 py-0.5 text-xs\">data-[state=open]</code> on the trigger to style its\n            active state.\n          </DialogDescription>\n        </DialogHeader>\n        <DialogFooter>\n          <DialogClose asChild>\n            <Button variant=\"outline\">Close</Button>\n          </DialogClose>\n        </DialogFooter>\n      </DialogContent>\n    </Dialog>\n  )\n}\n",
       "path": "dialog/dialog-4.tsx",
       "target": "components/dialog-4.tsx",
       "type": "registry:example"
@@ -9,7 +9,16 @@
   ],
   "name": "dialog-4",
   "registryDependencies": [
-    "dialog"
+    "dialog",
+    "button",
+    "calendar",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "popover",
+    "select",
+    "textarea"
   ],
   "root_folder": "dialog",
   "source": "/registry-examples/src/dialog",

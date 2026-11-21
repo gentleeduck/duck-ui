@@ -1,0 +1,23 @@
+{
+  "files": [
+    {
+      "content": "import { Label } from '@gentleduck/registry-ui/label'\nimport { Switch } from '@gentleduck/registry-ui/switch'\nimport { Tabs, TabsContent, TabsList, TabsTrigger } from '@gentleduck/registry-ui/tabs'\nimport { Bell, CreditCard, User } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Tabs className=\"flex w-full max-w-md gap-4\" defaultValue=\"profile\" orientation=\"vertical\">\n      <TabsList aria-label=\"Settings\">\n        <TabsTrigger className=\"justify-start\" value=\"profile\">\n          <User aria-hidden=\"true\" />\n          Profile\n        </TabsTrigger>\n        <TabsTrigger className=\"justify-start\" value=\"notifications\">\n          <Bell aria-hidden=\"true\" />\n          Notifications\n        </TabsTrigger>\n        <TabsTrigger\n          className=\"justify-start\"\n          disabled\n          title=\"Only the workspace owner can change billing\"\n          value=\"billing\">\n          <CreditCard aria-hidden=\"true\" />\n          Billing\n        </TabsTrigger>\n      </TabsList>\n      <TabsContent className=\"flex-1 space-y-1 rounded-lg border p-4 text-sm\" value=\"profile\">\n        <p className=\"font-medium\">Profile</p>\n        <p className=\"text-muted-foreground\">Your name and photo, as other members see them.</p>\n      </TabsContent>\n      <TabsContent className=\"flex-1 space-y-3 rounded-lg border p-4 text-sm\" value=\"notifications\">\n        <p className=\"font-medium\">Notifications</p>\n        <div className=\"flex items-center gap-2\">\n          <Switch defaultChecked id=\"tabs-vertical-mentions\" />\n          <Label htmlFor=\"tabs-vertical-mentions\">Email me when I am mentioned</Label>\n        </div>\n      </TabsContent>\n      <TabsContent className=\"flex-1 rounded-lg border p-4 text-sm\" value=\"billing\">\n        Billing\n      </TabsContent>\n    </Tabs>\n  )\n}\n",
+      "path": "tabs/tabs-7.tsx",
+      "target": "components/tabs-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "tabs-7",
+  "registryDependencies": [
+    "tabs",
+    "button",
+    "card",
+    "input",
+    "label",
+    "switch",
+    "textarea"
+  ],
+  "root_folder": "tabs",
+  "source": "/registry-examples/src/tabs",
+  "type": "registry:example"
+}

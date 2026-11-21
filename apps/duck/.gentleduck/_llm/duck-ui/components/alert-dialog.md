@@ -101,6 +101,130 @@ import {
 
 ## Examples
 
+### Focus
+
+An alert dialog focuses its Cancel button on open. `initialFocus` names another element, here the field that asks for the project's name before deleting it. `finalFocus` does the same on close, in place of the trigger.
+
+```tsx title="components/alert-dialog-5.tsx"
+// import from your project: import Demo from '@/components/alert-dialog-5'
+'use client'
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@gentleduck/registry-ui/alert-dialog'
+import { Button, buttonVariants } from '@gentleduck/registry-ui/button'
+import { Input } from '@gentleduck/registry-ui/input'
+import { Label } from '@gentleduck/registry-ui/label'
+import * as React from 'react'
+
+const PROJECT = 'duck-pond'
+
+export default function Demo() {
+  const field = React.useRef<HTMLInputElement>(null)
+  const [typed, setTyped] = React.useState('')
+
+  return (
+    <AlertDialog onOpenChange={() => setTyped('')}>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive">Delete project</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent initialFocus={field}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete {PROJECT}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This removes the project and its deployments. Type its name to confirm.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="grid gap-2">
+          <Label htmlFor="project-name">Project name</Label>
+          <Input
+            autoComplete="off"
+            id="project-name"
+            onChange={(event) => setTyped(event.target.value)}
+            placeholder={PROJECT}
+            ref={field}
+            value={typed}
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction className={buttonVariants({ variant: 'destructive' })} disabled={typed !== PROJECT}>
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+```
+
+### An action that waits
+
+An action closes the dialog on click unless its `onClick` calls `event.preventDefault()`. Here it deletes first and closes once the work is done, and `onOpenChange` ignores Escape while it runs.
+
+```tsx title="components/alert-dialog-6.tsx"
+// import from your project: import Demo from '@/components/alert-dialog-6'
+'use client'
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@gentleduck/registry-ui/alert-dialog'
+import { Button, buttonVariants } from '@gentleduck/registry-ui/button'
+import * as React from 'react'
+
+const deleteProject = () => new Promise((resolve) => setTimeout(resolve, 1200))
+
+export default function Demo() {
+  const [open, setOpen] = React.useState(false)
+  const [deleting, setDeleting] = React.useState(false)
+
+  return (
+    <AlertDialog open={open} onOpenChange={(next) => !deleting && setOpen(next)}>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive">Delete project</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete the project?</AlertDialogTitle>
+          <AlertDialogDescription>The dialog stays open until the project is gone.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className={buttonVariants({ variant: 'destructive' })}
+            disabled={deleting}
+            onClick={async (event) => {
+              event.preventDefault()
+              setDeleting(true)
+              await deleteProject()
+              setDeleting(false)
+              setOpen(false)
+            }}>
+            {deleting ? 'Deleting...' : 'Delete'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+```
+
 ### Active Trigger on Open
 
 Style the trigger to appear active while the alert dialog is open using `data-[state=open]`:
@@ -130,7 +254,7 @@ export default function Demo() {
         <Button
           variant="destructive"
           className="data-[state=open]:opacity-90 data-[state=open]:ring-2 data-[state=open]:ring-destructive/50">
-          <Trash2 className="mr-2 h-4 w-4" />
+          <Trash2 className="me-2 h-4 w-4" />
           Delete account
         </Button>
       </AlertDialogTrigger>
@@ -141,6 +265,98 @@ export default function Demo() {
             This action cannot be undone. The trigger button is highlighted while this dialog is open.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+```
+
+### Focus after closing
+
+```tsx title="components/alert-dialog-7.tsx"
+// import from your project: import Demo from '@/components/alert-dialog-7'
+'use client'
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@gentleduck/registry-ui/alert-dialog'
+import { Button } from '@gentleduck/registry-ui/button'
+import * as React from 'react'
+
+export default function Demo() {
+  const undo = React.useRef<HTMLButtonElement>(null)
+
+  return (
+    <div className="flex items-center gap-2">
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="destructive">Remove member</Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent finalFocus={undo}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Sam from the team?</AlertDialogTitle>
+            <AlertDialogDescription>
+              On close, focus moves to Undo instead of back to this button.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <Button ref={undo} variant="outline">
+        Undo
+      </Button>
+    </div>
+  )
+}
+```
+
+### Kept mounted
+
+```tsx title="components/alert-dialog-8.tsx"
+// import from your project: import Demo from '@/components/alert-dialog-8'
+'use client'
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@gentleduck/registry-ui/alert-dialog'
+import { Button } from '@gentleduck/registry-ui/button'
+import { Input } from '@gentleduck/registry-ui/input'
+
+export default function Demo() {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive">Delete repository</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent className="data-[state=closed]:hidden" forceMount>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Type the name to confirm</AlertDialogTitle>
+          <AlertDialogDescription>forceMount keeps what you typed if you cancel and come back.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <Input placeholder="gentleduck/duck-ui" />
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction>Delete</AlertDialogAction>
@@ -292,13 +508,13 @@ export default function Demo() {
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `children` | `React.ReactNode` | `--` | Content of the trigger |
-| `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Trigger>` | - | Additional props inherited from `AlertDialogPrimitive.Trigger`. Always renders a native `button` element; there is no `asChild`/`Slot` support. |
+| `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Trigger>` | - | Additional props inherited from `AlertDialogPrimitive.Trigger` |
 
 ### AlertDialogPortal
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `container` | `HTMLElement` | - | Optional portal container |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Optional portal container |
 | `forceMount` | `true` | - | Forces mounted state for all portal children |
 | `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Portal>` | - | Additional props inherited from `AlertDialogPrimitive.Portal` |
 
@@ -309,13 +525,17 @@ export default function Demo() {
 | `className` | `string` | - | Additional class names to apply |
 | `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>` | - | Additional props inherited from `AlertDialogPrimitive.Overlay` |
 
+Clear when the alert dialog is opened from a dialog's content, since the dialog's overlay already dims the page.
+
 ### AlertDialogContent
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `className` | `string` | `-` | Additional class names to apply |
 | `children` | `React.ReactNode` | `-` | Content displayed inside the dialog |
-| `forceMount` | `boolean` | `false` | If `true`, forces the content to stay mounted in the DOM |
+| `forceMount` | `true` | - | Forces the content to stay mounted in the DOM |
+| `initialFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on open in place of `AlertDialogCancel`. `false` leaves focus on the trigger |
+| `finalFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on close in place of the trigger. `false` moves focus nowhere |
 | `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>` | - | Additional props inherited from `AlertDialogPrimitive.Content` |
 
 ### MotionAlertDialog
@@ -326,7 +546,6 @@ Same props as `AlertDialog`. Wraps with `useMotionRoot` for exit animation suppo
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `open` | `boolean` | - | **Required.** Controlled open state for AnimatePresence enter/exit |
 | `className` | `string` | `-` | Additional class names to apply |
 | `children` | `React.ReactNode` | `-` | Content displayed inside the dialog |
 
@@ -346,7 +565,7 @@ Requires `motion` package installed. Content uses a `scaleIn` entrance (fade, sc
 | --- | --- | --- | --- |
 | `className` | `string` | `--` | Additional class names to apply |
 | `children` | `React.ReactNode` | `--` | Footer content (typically Action and Cancel buttons) |
-| `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Additional props to spread to the footer div |
 
 ### AlertDialogTitle
 

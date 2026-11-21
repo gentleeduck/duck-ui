@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport {\n  Breadcrumb,\n  BreadcrumbLink,\n  BreadcrumbPage,\n  MotionBreadcrumbItem,\n  MotionBreadcrumbList,\n  MotionBreadcrumbSeparator,\n} from '@gentleduck/registry-ui/breadcrumb'\nimport Link from 'next/link'\n\nexport default function Demo() {\n  return (\n    <Breadcrumb>\n      <MotionBreadcrumbList>\n        <MotionBreadcrumbItem>\n          <BreadcrumbLink asChild>\n            <Link href=\"/\">Home</Link>\n          </BreadcrumbLink>\n        </MotionBreadcrumbItem>\n        <MotionBreadcrumbSeparator />\n        <MotionBreadcrumbItem>\n          <BreadcrumbLink asChild>\n            <Link href=\"/docs\">Docs</Link>\n          </BreadcrumbLink>\n        </MotionBreadcrumbItem>\n        <MotionBreadcrumbSeparator />\n        <MotionBreadcrumbItem>\n          <BreadcrumbLink asChild>\n            <Link href=\"/docs/components\">Components</Link>\n          </BreadcrumbLink>\n        </MotionBreadcrumbItem>\n        <MotionBreadcrumbSeparator />\n        <MotionBreadcrumbItem>\n          <BreadcrumbPage>Breadcrumb</BreadcrumbPage>\n        </MotionBreadcrumbItem>\n      </MotionBreadcrumbList>\n    </Breadcrumb>\n  )\n}\n",
@@ -9,7 +12,10 @@
   ],
   "name": "breadcrumb-10",
   "registryDependencies": [
-    "breadcrumb"
+    "breadcrumb",
+    "button",
+    "drawer",
+    "dropdown-menu"
   ],
   "root_folder": "breadcrumb",
   "source": "/registry-examples/src/breadcrumb",

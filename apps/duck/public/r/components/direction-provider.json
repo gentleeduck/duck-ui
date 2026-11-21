@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { DirectionProvider } from '@gentleduck/primitives/direction'\nimport * as Slider from '@gentleduck/primitives/slider'\nimport * as ToggleGroup from '@gentleduck/primitives/toggle-group'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function DirectionProviderExample() {\n  const [dir, setDir] = React.useState<'ltr' | 'rtl'>('rtl')\n\n  return (\n    <div className={styles.stack}>\n      <button className={styles.button} onClick={() => setDir(dir === 'rtl' ? 'ltr' : 'rtl')} type=\"button\">\n        Direction: {dir}\n      </button>\n      <DirectionProvider dir={dir}>\n        <div className={styles.stack}>\n          <Slider.Root className={styles.slider} defaultValue={[30]}>\n            <Slider.Track className={styles.track}>\n              <Slider.Range className={styles.range} />\n            </Slider.Track>\n            <Slider.Thumb aria-label=\"Volume\" className={styles.thumb} />\n          </Slider.Root>\n          <ToggleGroup.Root aria-label=\"Alignment\" className={styles.group} defaultValue=\"start\" type=\"single\">\n            {['start', 'center', 'end'].map((value) => (\n              <ToggleGroup.Item className={styles.toggle} key={value} value={value}>\n                {value}\n              </ToggleGroup.Item>\n            ))}\n          </ToggleGroup.Root>\n        </div>\n      </DirectionProvider>\n      <p className={styles.note}>\n        Every primitive inside reads the provider: the slider fills from the right and the arrow keys flip.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/direction-provider/direction-provider.tsx",
+      "target": "components/direction-provider.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "direction-provider",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,7 +1,11 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks",
+    "@tabler/icons-react"
+  ],
   "files": [
     {
-      "content": "import {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\nimport { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@gentleduck/registry-ui/input-group'\nimport { ChevronDownIcon, MoreHorizontal } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-sm gap-4\">\n      <InputGroup>\n        <InputGroupInput placeholder=\"Enter commit message\" />\n        <InputGroupAddon align=\"inline-end\">\n          <DropdownMenu>\n            <DropdownMenuTrigger asChild>\n              <InputGroupButton aria-label=\"More\" size=\"icon-xs\" variant=\"ghost\">\n                <MoreHorizontal aria-hidden=\"true\" />\n              </InputGroupButton>\n            </DropdownMenuTrigger>\n            <DropdownMenuContent side=\"bottom\" align=\"end\">\n              <DropdownMenuItem>Amend last commit</DropdownMenuItem>\n              <DropdownMenuItem>Sign commit</DropdownMenuItem>\n              <DropdownMenuItem>View history</DropdownMenuItem>\n            </DropdownMenuContent>\n          </DropdownMenu>\n        </InputGroupAddon>\n      </InputGroup>\n      <InputGroup className=\"[--radius:1rem]\">\n        <InputGroupInput placeholder=\"Find components...\" />\n        <InputGroupAddon align=\"inline-end\">\n          <DropdownMenu>\n            <DropdownMenuTrigger asChild>\n              <InputGroupButton className=\"!pr-1.5 text-xs\" variant=\"ghost\">\n                Scope... <ChevronDownIcon className=\"size-3\" />\n              </InputGroupButton>\n            </DropdownMenuTrigger>\n            <DropdownMenuContent side=\"bottom\" align=\"end\" className=\"[--radius:0.95rem]\">\n              <DropdownMenuItem>All Packages</DropdownMenuItem>\n              <DropdownMenuItem>UI Components</DropdownMenuItem>\n              <DropdownMenuItem>Primitives</DropdownMenuItem>\n            </DropdownMenuContent>\n          </DropdownMenu>\n        </InputGroupAddon>\n      </InputGroup>\n    </div>\n  )\n}\n",
+      "content": "import {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\nimport { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@gentleduck/registry-ui/input-group'\nimport { ChevronDownIcon, MoreHorizontal } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-sm gap-4\">\n      <InputGroup>\n        <InputGroupInput placeholder=\"Enter commit message\" />\n        <InputGroupAddon align=\"inline-end\">\n          <DropdownMenu>\n            <DropdownMenuTrigger asChild>\n              <InputGroupButton aria-label=\"More\" size=\"icon-xs\" variant=\"ghost\">\n                <MoreHorizontal aria-hidden=\"true\" />\n              </InputGroupButton>\n            </DropdownMenuTrigger>\n            <DropdownMenuContent side=\"bottom\" align=\"end\">\n              <DropdownMenuItem>Amend last commit</DropdownMenuItem>\n              <DropdownMenuItem>Sign commit</DropdownMenuItem>\n              <DropdownMenuItem>View history</DropdownMenuItem>\n            </DropdownMenuContent>\n          </DropdownMenu>\n        </InputGroupAddon>\n      </InputGroup>\n      <InputGroup className=\"[--radius:1rem]\">\n        <InputGroupInput placeholder=\"Find components...\" />\n        <InputGroupAddon align=\"inline-end\">\n          <DropdownMenu>\n            <DropdownMenuTrigger asChild>\n              <InputGroupButton className=\"!pe-1.5 text-xs\" variant=\"ghost\">\n                Scope... <ChevronDownIcon className=\"size-3\" />\n              </InputGroupButton>\n            </DropdownMenuTrigger>\n            <DropdownMenuContent side=\"bottom\" align=\"end\" className=\"[--radius:0.95rem]\">\n              <DropdownMenuItem>All Packages</DropdownMenuItem>\n              <DropdownMenuItem>UI Components</DropdownMenuItem>\n              <DropdownMenuItem>Primitives</DropdownMenuItem>\n            </DropdownMenuContent>\n          </DropdownMenu>\n        </InputGroupAddon>\n      </InputGroup>\n    </div>\n  )\n}\n",
       "path": "input-group/input-group-9.tsx",
       "target": "components/input-group-9.tsx",
       "type": "registry:example"
@@ -9,7 +13,14 @@
   ],
   "name": "input-group-9",
   "registryDependencies": [
-    "input-group"
+    "input-group",
+    "button-group",
+    "dropdown-menu",
+    "kbd",
+    "label",
+    "popover",
+    "separator",
+    "tooltip"
   ],
   "root_folder": "input-group",
   "source": "/registry-examples/src/input-group",

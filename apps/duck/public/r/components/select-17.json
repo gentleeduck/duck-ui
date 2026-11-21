@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\nimport { Bike, Bus, Car, Plane, Ship, TrainFront } from 'lucide-react'\n\nconst transport = [\n  { value: 'bike', label: 'Bike', icon: Bike },\n  { value: 'bus', label: 'Bus', icon: Bus },\n  { value: 'car', label: 'Car', icon: Car },\n  { value: 'train', label: 'Train', icon: TrainFront },\n  { value: 'ferry', label: 'Ferry', icon: Ship },\n  { value: 'plane', label: 'Plane', icon: Plane, disabled: true },\n]\n\nexport default function Demo() {\n  return (\n    <Select defaultValue={['bike', 'train']} items={transport} multiple>\n      <SelectTrigger aria-label=\"Ways to travel\" className=\"w-[260px]\">\n        <SelectValue placeholder=\"Pick ways to travel\" />\n      </SelectTrigger>\n      <SelectContent>\n        {transport.map(({ icon: Icon, ...item }) => (\n          <SelectItem disabled={item.disabled} key={item.value} value={item.value}>\n            <span className=\"flex items-center gap-2\">\n              <Icon aria-hidden=\"true\" className=\"size-4\" />\n              {item.label}\n            </span>\n          </SelectItem>\n        ))}\n      </SelectContent>\n    </Select>\n  )\n}\n",
+      "path": "select/select-17.tsx",
+      "target": "components/select-17.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-17",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

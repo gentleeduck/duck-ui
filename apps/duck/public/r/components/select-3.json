@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Field,\n  FieldContent,\n  FieldDescription,\n  FieldError,\n  FieldGroup,\n  FieldLabel,\n} from '@gentleduck/registry-ui/field'\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\nimport { zodResolver } from '@hookform/resolvers/zod'\nimport Link from 'next/link'\nimport { Controller, useForm } from 'react-hook-form'\nimport { toast } from 'sonner'\nimport { z } from 'zod'\n\nconst FormSchema = z.object({\n  email: z.email({\n    error: 'Please select an email to display.',\n  }),\n})\n\nexport default function Demo() {\n  const form = useForm<z.infer<typeof FormSchema>>({\n    resolver: zodResolver(FormSchema),\n  })\n\n  function onSubmit(data: z.infer<typeof FormSchema>) {\n    toast.info(\n      <div>\n        <h4 className=\"font-medium text-lg\">You submitted the following values:</h4>\n        <pre className=\"mt-2 w-[340px] rounded-md bg-slate-950 p-4\">\n          <code className=\"text-white\">{JSON.stringify(data, null, 2)}</code>\n        </pre>\n      </div>,\n    )\n  }\n\n  return (\n    <form className=\"w-2/3 space-y-6\" onSubmit={form.handleSubmit(onSubmit)}>\n      <FieldGroup>\n        <Controller\n          control={form.control}\n          name=\"email\"\n          render={({ field, fieldState }) => (\n            <Field orientation=\"responsive\" data-invalid={fieldState.invalid}>\n              <FieldContent>\n                <FieldLabel htmlFor=\"form-rhf-select-email\">Email</FieldLabel>\n                <FieldDescription>\n                  You can manage email addresses in your <Link href=\"/examples/forms\">email settings</Link>.\n                </FieldDescription>\n                {fieldState.invalid && fieldState.error && <FieldError errors={[fieldState.error]} />}\n              </FieldContent>\n              <Select name={field.name} value={field.value} onValueChange={field.onChange}>\n                <SelectTrigger id=\"form-rhf-select-email\" aria-invalid={fieldState.invalid} className=\"min-w-[260px]\">\n                  <SelectValue placeholder=\"Select a verified email to display\" />\n                </SelectTrigger>\n                <SelectContent>\n                  <SelectItem value=\"m@example.com\">m@example.com</SelectItem>\n                  <SelectItem value=\"m@google.com\">m@google.com</SelectItem>\n                  <SelectItem value=\"m@support.com\">m@support.com</SelectItem>\n                </SelectContent>\n              </Select>\n            </Field>\n          )}\n        />\n      </FieldGroup>\n      <Button type=\"submit\">Submit</Button>\n    </form>\n  )\n}\n",
@@ -9,7 +15,11 @@
   ],
   "name": "select-3",
   "registryDependencies": [
-    "select"
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
   ],
   "root_folder": "select",
   "source": "/registry-examples/src/select",

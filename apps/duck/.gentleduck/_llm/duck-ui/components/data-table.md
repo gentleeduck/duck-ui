@@ -121,9 +121,9 @@ export const columns: ColumnDef<Payment>[] = [
         style: 'currency',
       }).format(amount)
 
-      return <div className="text-right font-medium text-sm">{formatted}</div>
+      return <div className="text-end font-medium text-sm">{formatted}</div>
     },
-    header: () => <div className="text-right">Amount</div>,
+    header: () => <div className="text-end">Amount</div>,
   },
   {
     cell: ({ row }) => {
@@ -132,7 +132,7 @@ export const columns: ColumnDef<Payment>[] = [
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button className="ml-auto h-8 w-8 p-0" size={'sm'} variant="ghost">
+            <Button className="ms-auto h-8 w-8 p-0" size={'sm'} variant="ghost">
               <span className="sr-only">Open menu</span>
               <MoreHorizontal aria-hidden="true" />
             </Button>
@@ -190,7 +190,7 @@ export default function Demo() {
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button className="ml-auto text-sm" variant="outline">
+            <Button className="ms-auto text-sm" variant="outline">
               Columns <ChevronDown aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
@@ -541,7 +541,7 @@ Update the `header` and `cell` definitions for amount as follows:
 export const columns: ColumnDef<Payment>[] = [
   {
     accessorKey: "amount",
-    header: () => <div className="text-right">Amount</div>,
+    header: () => <div className="text-end">Amount</div>,
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("amount"))
       const formatted = new Intl.NumberFormat("en-US", {
@@ -549,7 +549,7 @@ export const columns: ColumnDef<Payment>[] = [
         currency: "USD",
       }).format(amount)
 
-      return <div className="text-right font-medium">{formatted}</div>
+      return <div className="text-end font-medium">{formatted}</div>
     },
   },
 ]
@@ -767,7 +767,7 @@ export const columns: ColumnDef<Payment>[] = [
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Email
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ms-2 h-4 w-4" />
         </Button>
       )
     },
@@ -920,7 +920,7 @@ export function DataTable<TData, TValue>({
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
+            <Button variant="outline" className="ms-auto">
               Columns
             </Button>
           </DropdownMenuTrigger>

@@ -1,0 +1,17 @@
+{
+  "dependencies": [
+    "@gentleduck/vim"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { formatForDisplay } from '@gentleduck/vim/format'\nimport { detectPlatform } from '@gentleduck/vim/platform'\nimport * as React from 'react'\n\nconst subscribe = () => () => {}\n// A server cannot tell the platform, so it draws Linux's keys and the browser swaps in its own once hydrated.\nconst onServer = () => 'linux' as const\n\n/** Writes a binding such as `mod+k` out for the platform the page runs on, or `null` without one. */\nexport function useKeysLabel(keys: string | undefined) {\n  const platform = React.useSyncExternalStore(subscribe, detectPlatform, onServer)\n  return keys ? formatForDisplay(keys, { platform }) : null\n}\n",
+      "path": "_internal/keys-label.ts",
+      "target": "components/ui/keys-label.ts",
+      "type": "registry:ui"
+    }
+  ],
+  "name": "keys-label",
+  "root_folder": "_internal",
+  "source": "/registry-ui/src/_internal",
+  "type": "registry:ui"
+}

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Pagination from '@gentleduck/primitives/pagination'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nconst ITEMS = Array.from({ length: 47 }, (_, index) => `Order #${1000 + index}`)\nconst PER_PAGE = 5\n\nexport default function PaginationControlledExample() {\n  const [page, setPage] = React.useState(1)\n  const shown = ITEMS.slice((page - 1) * PER_PAGE, page * PER_PAGE)\n\n  return (\n    <div className={styles.stack}>\n      <ul className={styles.note} style={{ margin: 0, paddingInlineStart: '1rem' }}>\n        {shown.map((item) => (\n          <li key={item}>{item}</li>\n        ))}\n      </ul>\n      <Pagination.Root onPageChange={setPage} page={page} pageCount={Math.ceil(ITEMS.length / PER_PAGE)}>\n        <Pagination.Content className={styles.pages}>\n          <Pagination.Item>\n            <Pagination.Previous />\n          </Pagination.Item>\n          <Pagination.Pages />\n          <Pagination.Item>\n            <Pagination.Next />\n          </Pagination.Item>\n        </Pagination.Content>\n      </Pagination.Root>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/pagination-controlled/pagination-controlled.tsx",
+      "target": "components/pagination-controlled.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "pagination-controlled",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

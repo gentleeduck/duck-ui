@@ -3,9 +3,9 @@
 | | gentleduck/ui | shadcn/ui |
 |---|---|---|
 | **Styled components** | 57 | 50+ |
-| **Primitives** | Own (`@gentleduck/primitives`, 35 components) | Radix UI (external dependency) |
+| **Primitives** | Own (`@gentleduck/primitives`, 23 components) | Radix UI (external dependency) |
 | **Blocks** | 6 categories (auth, dashboard, calendar, charts, blog, sidebar) | 6 categories |
-| **Calendar** | Own engine (`@gentleduck/calendar`, ~5 KB, 0 deps) | react-day-picker (~20 KB + date-fns) |
+| **Calendar** | Own engine (`@gentleduck/calendar`, 9.7 KB as a calendar, 0 deps) | react-day-picker (20.0 KB with date-fns) |
 | **Variant system** | `@gentleduck/variants` (cva with memoization) | class-variance-authority |
 | **Motion / Animation** | `@gentleduck/motion` (tokens + reduced-motion) | None |
 | **Keyboard engine** | `@gentleduck/vim` (bindings, sequences, recorder) | None |
@@ -42,15 +42,15 @@ The difference is what happens underneath.
 
 shadcn/ui imports Radix UI from node\_modules. You own the styled layer, but the accessibility, focus management, dismiss behavior, and animation logic live in packages you cannot modify. When Radix ships a breaking change or deprecates an API, your components break and you wait for a fix.
 
-gentleduck/ui uses `@gentleduck/primitives` - 35 headless components with the same compound-component API as Radix, but 50-92% smaller because shared internals (Slot, Presence, Popper, focus scope) are deduplicated across all primitives instead of bundled per-package. You own the source. Modify focus trapping, dismiss behavior, or animation hooks directly.
+gentleduck/ui uses `@gentleduck/primitives` - 23 headless components with the same compound-component API as Radix, each 1% to 67% smaller gzipped. You own the source. Modify focus trapping, dismiss behavior, or animation hooks directly.
 
 See the [full primitives comparison](/www/comparisons/vs-radix).
 
 ### Calendar
 
-shadcn/ui wraps react-day-picker, which pulls in date-fns. That is ~20 KB gzipped for a single calendar system (Gregorian) with no adapter pattern.
+shadcn/ui wraps react-day-picker, which pulls in date-fns. That is 20.0 KB gzipped for a single calendar system (Gregorian).
 
-gentleduck/ui uses `@gentleduck/calendar` - ~5 KB gzipped with zero required dependencies. The adapter pattern lets you use native Date, date-fns, dayjs, or luxon without changing your components. Non-Gregorian calendars (Islamic, Persian, Hebrew) work through pluggable adapters. No other copy-paste component library ships this.
+gentleduck/ui uses `@gentleduck/calendar` - 9.7 KB gzipped for a whole calendar and 5.8 KB for the hook alone, with zero required dependencies. The adapter pattern lets you use native Date, date-fns, dayjs, or luxon without changing your components. Non-Gregorian calendars (Islamic, Persian, Hebrew) work through pluggable adapters. No other copy-paste component library ships this.
 
 See the [full calendar comparison](/www/comparisons/vs-react-day-picker).
 
@@ -154,13 +154,13 @@ return isDesktop ? <Dialog>...</Dialog> : <Drawer>...</Drawer>
 
 ### Calendar
 
-shadcn wraps react-day-picker (~20 KB + date-fns). gentleduck ships a full calendar system at ~5 KB with zero dependencies:
+shadcn wraps react-day-picker (20.0 KB with date-fns). gentleduck ships a full calendar at 9.7 KB with zero dependencies:
 
 | Feature | gentleduck | shadcn |
 |---|---|---|
-| Bundle size | ~5 KB gzipped | ~20 KB + date-fns |
-| Calendar systems | 4 (Gregorian, Islamic, Persian, Hebrew) | 1 (Gregorian) |
-| Date adapters | 7 (Native, date-fns, dayjs, luxon, + 3 calendar-specific) | date-fns only |
+| Bundle size | 9.7 KB gzipped | 20.0 KB gzipped, date-fns included |
+| Calendar systems | 4 (Gregorian, Islamic, Persian, Hebrew) | Gregorian, or another through a `dateLib` you supply |
+| Date adapters | 7 (Native, date-fns, dayjs, luxon, + 3 calendar-specific) | date-fns, overridable through `dateLib` |
 | Selection modes | Single, range, multi | Single, range, multi |
 | Render props | `renderDay`, `renderHeader`, `renderWeekday`, `renderFooter` | Limited |
 | Month/year dropdowns | `showDropdowns` prop | Manual implementation |
@@ -340,7 +340,7 @@ Same API. No code changes needed beyond the import path.
 
 ## Why teams switch
 
-A smaller bundle, immediately. The calendar drops from ~20 KB to ~5 KB. Each primitive is 50-92% lighter than its Radix equivalent. The variant system adds memoization. These land the moment you swap a component, with no refactoring.
+A smaller bundle, immediately. The calendar drops from 20.0 KB to 9.7 KB. Each primitive is 1% to 67% lighter than its Radix equivalent. The variant system adds memoization. These land the moment you swap a component, with no refactoring.
 
 The full stack is yours. With shadcn, you own the styled layer but depend on Radix for behavior. With gentleduck, you own primitives, calendar, keyboard engine, motion tokens, and state management. When something breaks, you fix it in your repo instead of filing an issue and waiting.
 

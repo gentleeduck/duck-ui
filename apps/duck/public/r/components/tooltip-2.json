@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks"
+  ],
   "files": [
     {
       "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\n\nexport default function Demo() {\n  return (\n    <TooltipProvider>\n      <Tooltip>\n        <TooltipTrigger asChild>\n          <Button variant=\"outline\">Hover</Button>\n        </TooltipTrigger>\n        <TooltipContent>Tooltip Content</TooltipContent>\n      </Tooltip>\n    </TooltipProvider>\n  )\n}\n",
@@ -9,7 +12,13 @@
   ],
   "name": "tooltip-2",
   "registryDependencies": [
-    "tooltip"
+    "tooltip",
+    "button",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "toggle"
   ],
   "root_folder": "tooltip",
   "source": "/registry-examples/src/tooltip",

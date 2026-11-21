@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  AlertDialog,\n  AlertDialogAction,\n  AlertDialogCancel,\n  AlertDialogContent,\n  AlertDialogDescription,\n  AlertDialogFooter,\n  AlertDialogHeader,\n  AlertDialogTitle,\n  AlertDialogTrigger,\n} from '@gentleduck/registry-ui/alert-dialog'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const undo = React.useRef<HTMLButtonElement>(null)\n\n  return (\n    <div className=\"flex items-center gap-2\">\n      <AlertDialog>\n        <AlertDialogTrigger asChild>\n          <Button variant=\"destructive\">Remove member</Button>\n        </AlertDialogTrigger>\n        <AlertDialogContent finalFocus={undo}>\n          <AlertDialogHeader>\n            <AlertDialogTitle>Remove Sam from the team?</AlertDialogTitle>\n            <AlertDialogDescription>\n              On close, focus moves to Undo instead of back to this button.\n            </AlertDialogDescription>\n          </AlertDialogHeader>\n          <AlertDialogFooter>\n            <AlertDialogCancel>Cancel</AlertDialogCancel>\n            <AlertDialogAction>Remove</AlertDialogAction>\n          </AlertDialogFooter>\n        </AlertDialogContent>\n      </AlertDialog>\n      <Button ref={undo} variant=\"outline\">\n        Undo\n      </Button>\n    </div>\n  )\n}\n",
+      "path": "alert-dialog/alert-dialog-7.tsx",
+      "target": "components/alert-dialog-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "alert-dialog-7",
+  "registryDependencies": [
+    "alert-dialog",
+    "direction",
+    "input",
+    "label"
+  ],
+  "root_folder": "alert-dialog",
+  "source": "/registry-examples/src/alert-dialog",
+  "type": "registry:example"
+}

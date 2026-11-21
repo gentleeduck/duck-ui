@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Field,\n  FieldContent,\n  FieldDescription,\n  FieldError,\n  FieldGroup,\n  FieldLabel,\n  FieldLegend,\n  FieldSet,\n  FieldTitle,\n} from '@gentleduck/registry-ui/field'\nimport { RadioGroup, RadioGroupItem } from '@gentleduck/registry-ui/radio-group'\nimport { zodResolver } from '@hookform/resolvers/zod'\nimport { Controller, useForm } from 'react-hook-form'\nimport { toast } from 'sonner'\nimport { z } from 'zod'\n\nconst FormSchema = z.object({\n  type: z.enum(['all', 'mentions', 'none'], {\n    error: 'You need to select a notification type.',\n  }),\n})\n\nconst notificationTypes = [\n  {\n    description: 'Receive updates for every new message.',\n    id: 'all',\n    title: 'All new messages',\n  },\n  {\n    description: 'Only direct mentions and private messages.',\n    id: 'mentions',\n    title: 'Direct messages and mentions',\n  },\n  {\n    description: 'Disable all notification alerts.',\n    id: 'none',\n    title: 'Nothing',\n  },\n] as const\n\nexport default function Demo() {\n  const form = useForm<z.infer<typeof FormSchema>>({\n    resolver: zodResolver(FormSchema),\n  })\n\n  function onSubmit(data: z.infer<typeof FormSchema>) {\n    toast.info(\n      <div>\n        <h4 className=\"font-medium text-md\">You submitted the following values:</h4>\n        <pre className=\"mt-2 w-[300px] rounded-md bg-slate-950 p-4\">\n          <code className=\"text-white\">{JSON.stringify(data, null, 2)}</code>\n        </pre>\n      </div>,\n    )\n  }\n\n  return (\n    <form className=\"w-full max-w-lg space-y-6\" onSubmit={form.handleSubmit(onSubmit)}>\n      <FieldGroup>\n        <Controller\n          control={form.control}\n          name=\"type\"\n          render={({ field, fieldState }) => (\n            <FieldSet>\n              <FieldLegend>Notify me about...</FieldLegend>\n              <FieldDescription>Choose which message types should trigger notifications.</FieldDescription>\n              <RadioGroup name={field.name} value={field.value} onValueChange={field.onChange}>\n                {notificationTypes.map((option) => (\n                  <FieldLabel htmlFor={`form-rhf-radio-${option.id}`} key={option.id}>\n                    <Field orientation=\"horizontal\" data-invalid={fieldState.invalid}>\n                      <FieldContent>\n                        <FieldTitle>{option.title}</FieldTitle>\n                        <FieldDescription>{option.description}</FieldDescription>\n                      </FieldContent>\n                      <RadioGroupItem\n                        id={`form-rhf-radio-${option.id}`}\n                        value={option.id}\n                        aria-invalid={fieldState.invalid}\n                      />\n                    </Field>\n                  </FieldLabel>\n                ))}\n              </RadioGroup>\n              {fieldState.invalid && fieldState.error && <FieldError errors={[fieldState.error]} />}\n            </FieldSet>\n          )}\n        />\n      </FieldGroup>\n      <Button type=\"submit\">Submit</Button>\n    </form>\n  )\n}\n",
@@ -9,7 +15,9 @@
   ],
   "name": "radio-group-2",
   "registryDependencies": [
-    "radio-group"
+    "radio-group",
+    "button",
+    "field"
   ],
   "root_folder": "radio-group",
   "source": "/registry-examples/src/radio-group",

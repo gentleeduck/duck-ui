@@ -1,0 +1,21 @@
+{
+  "dependencies": [
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "content": "import { ToggleGroup, ToggleGroupItem } from '@gentleduck/registry-ui/toggle-group'\n\nexport default function Demo() {\n  return (\n    <ToggleGroup\n      aria-label=\"Map style\"\n      className=\"w-40\"\n      defaultValue=\"map\"\n      deselectable={false}\n      orientation=\"vertical\"\n      type=\"single\"\n      variant=\"outline\">\n      <ToggleGroupItem value=\"map\">Map</ToggleGroupItem>\n      <ToggleGroupItem value=\"satellite\">Satellite</ToggleGroupItem>\n      <ToggleGroupItem disabled title=\"Terrain is not available for this area\" value=\"terrain\">\n        Terrain\n      </ToggleGroupItem>\n    </ToggleGroup>\n  )\n}\n",
+      "path": "toggle-group/toggle-group-11.tsx",
+      "target": "components/toggle-group-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "toggle-group-11",
+  "registryDependencies": [
+    "toggle-group",
+    "direction"
+  ],
+  "root_folder": "toggle-group",
+  "source": "/registry-examples/src/toggle-group",
+  "type": "registry:example"
+}

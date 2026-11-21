@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Sheet from '@gentleduck/primitives/sheet'\nimport styles from '../primitives.module.css'\n\nexport default function SheetSideExample() {\n  return (\n    <Sheet.Root>\n      <Sheet.Trigger className={styles.button}>Open filters</Sheet.Trigger>\n      <Sheet.Portal>\n        <Sheet.Overlay className={`${styles.overlay} ${styles.fade}`} />\n        <Sheet.Content className={styles.sheet}>\n          <Sheet.Title className={styles.title}>Filters</Sheet.Title>\n          <Sheet.Description className={styles.description}>Narrow the results.</Sheet.Description>\n          <label className={styles.choice}>\n            <input type=\"checkbox\" /> In stock only\n          </label>\n          <Sheet.Close className={styles.button}>Apply</Sheet.Close>\n        </Sheet.Content>\n      </Sheet.Portal>\n    </Sheet.Root>\n  )\n}\n",
+      "path": "internal-primitives/sheet-side/sheet-side.tsx",
+      "target": "components/sheet-side.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "sheet-side",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

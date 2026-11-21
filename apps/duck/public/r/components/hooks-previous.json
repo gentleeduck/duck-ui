@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { usePrevious } from '@gentleduck/primitives/hooks/use-previous'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function HooksPreviousExample() {\n  const [price, setPrice] = React.useState(42)\n  const [, rerender] = React.useState(0)\n  const previous = usePrevious(price)\n  const trend = price > previous ? 'up' : price < previous ? 'down' : 'flat'\n\n  return (\n    <div className={styles.stack}>\n      <div className={styles.row}>\n        <button className={styles.button} onClick={() => setPrice((value) => value + 1)} type=\"button\">\n          Raise\n        </button>\n        <button className={styles.button} onClick={() => setPrice((value) => value - 1)} type=\"button\">\n          Lower\n        </button>\n        <button className={styles.button} onClick={() => rerender((count) => count + 1)} type=\"button\">\n          Render again\n        </button>\n      </div>\n      <p className={styles.note}>\n        {price}, was {previous}, {trend}. A render that changes nothing keeps the previous value.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/hooks-previous/hooks-previous.tsx",
+      "target": "components/hooks-previous.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "hooks-previous",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Pagination,\n  PaginationContent,\n  PaginationItem,\n  PaginationLink,\n  PaginationWrapper,\n} from '@gentleduck/registry-ui/pagination'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-col items-center gap-6\">\n      <Pagination>\n        <PaginationContent>\n          {(['sm', 'icon', 'default'] as const).map((size, index) => (\n            <PaginationItem key={size}>\n              <PaginationLink href=\"#\" isActive={index === 1} size={size}>\n                {size}\n              </PaginationLink>\n            </PaginationItem>\n          ))}\n        </PaginationContent>\n      </Pagination>\n      <PaginationWrapper content={{ className: 'gap-4' }} item={{ className: 'rounded-full' }} />\n    </div>\n  )\n}\n",
+      "path": "pagination/pagination-9.tsx",
+      "target": "components/pagination-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "pagination-9",
+  "registryDependencies": [
+    "pagination"
+  ],
+  "root_folder": "pagination",
+  "source": "/registry-examples/src/pagination",
+  "type": "registry:example"
+}

@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { ButtonGroup } from '@gentleduck/registry-ui/button-group'\nimport { PreviewPanel, type PreviewPanelState } from '@gentleduck/registry-ui/preview-panel'\nimport * as React from 'react'\n\nconst ZOOMS = [0.5, 1, 2]\n\nexport default function Demo() {\n  const [view, setView] = React.useState<PreviewPanelState>({ x: 0, y: 0, zoom: 1 })\n\n  return (\n    <div className=\"flex w-full flex-col gap-3\">\n      <ButtonGroup aria-label=\"Zoom\">\n        {ZOOMS.map((zoom) => (\n          <Button\n            aria-pressed={view.zoom === zoom}\n            key={zoom}\n            onClick={() => setView({ x: 0, y: 0, zoom })}\n            size=\"sm\"\n            variant={view.zoom === zoom ? 'secondary' : 'outline'}>\n            {zoom * 100}%\n          </Button>\n        ))}\n      </ButtonGroup>\n      <PreviewPanel className=\"rounded-lg border bg-card\" maxHeight=\"320px\" showControls={false} syncState={view}>\n        <div className=\"flex flex-col items-center gap-3 p-8\">\n          <div className=\"size-20 rounded-full bg-primary/20\" />\n          <p className=\"text-muted-foreground text-sm\">Only the buttons above move this view.</p>\n        </div>\n      </PreviewPanel>\n    </div>\n  )\n}\n",
+      "path": "preview-panel/preview-panel-9.tsx",
+      "target": "components/preview-panel-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "preview-panel-9",
+  "registryDependencies": [
+    "preview-panel"
+  ],
+  "root_folder": "preview-panel",
+  "source": "/registry-examples/src/preview-panel",
+  "type": "registry:example"
+}

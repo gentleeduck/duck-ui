@@ -1,4 +1,8 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks",
+    "@tabler/icons-react"
+  ],
   "files": [
     {
       "content": "import { ButtonGroup, ButtonGroupText } from '@gentleduck/registry-ui/button-group'\nimport { InputGroup, InputGroupAddon, InputGroupInput } from '@gentleduck/registry-ui/input-group'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { SendIcon } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-sm gap-6\">\n      <ButtonGroup>\n        <ButtonGroupText asChild>\n          <Label htmlFor=\"endpoint\">api/v1/</Label>\n        </ButtonGroupText>\n        <InputGroup>\n          <InputGroupInput id=\"endpoint\" />\n          <InputGroupAddon align=\"inline-end\">\n            <SendIcon />\n          </InputGroupAddon>\n        </InputGroup>\n      </ButtonGroup>\n    </div>\n  )\n}\n",
@@ -9,7 +13,14 @@
   ],
   "name": "input-group-10",
   "registryDependencies": [
-    "input-group"
+    "input-group",
+    "button-group",
+    "dropdown-menu",
+    "kbd",
+    "label",
+    "popover",
+    "separator",
+    "tooltip"
   ],
   "root_folder": "input-group",
   "source": "/registry-examples/src/input-group",

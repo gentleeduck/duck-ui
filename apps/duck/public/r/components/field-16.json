@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@gentleduck/registry-ui/field'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport * as React from 'react'\n\nconst rules = [\n  { message: 'Use at least 8 characters.', test: (value: string) => value.length >= 8 },\n  { message: 'Include a number.', test: (value: string) => /\\d/.test(value) },\n]\n\nexport default function Demo() {\n  const [password, setPassword] = React.useState('duck')\n  const errors = rules.filter((rule) => !rule.test(password))\n  const invalid = errors.length > 0\n\n  return (\n    <div className=\"w-full max-w-md\">\n      <FieldGroup>\n        <Field data-invalid={invalid}>\n          <FieldLabel htmlFor=\"password-v3n\">Password</FieldLabel>\n          <Input\n            aria-invalid={invalid}\n            id=\"password-v3n\"\n            onChange={(event) => setPassword(event.target.value)}\n            type=\"password\"\n            value={password}\n          />\n          <FieldDescription>Type to see which rules it still breaks.</FieldDescription>\n          <FieldError errors={errors} />\n        </Field>\n      </FieldGroup>\n    </div>\n  )\n}\n",
+      "path": "field/field-16.tsx",
+      "target": "components/field-16.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "field-16",
+  "registryDependencies": [
+    "field",
+    "button",
+    "checkbox",
+    "input",
+    "radio-group",
+    "select",
+    "slider",
+    "switch",
+    "textarea"
+  ],
+  "root_folder": "field",
+  "source": "/registry-examples/src/field",
+  "type": "registry:example"
+}

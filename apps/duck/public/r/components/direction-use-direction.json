@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { DirectionProvider, useDirection } from '@gentleduck/primitives/direction'\nimport styles from '../primitives.module.css'\n\nfunction Breadcrumb({ dir }: { dir?: 'ltr' | 'rtl' }) {\n  const direction = useDirection(dir)\n  const separator = direction === 'rtl' ? '<' : '>'\n  return (\n    <p className={styles.note} dir={direction}>\n      Home {separator} Docs {separator} Direction ({direction})\n    </p>\n  )\n}\n\nexport default function DirectionUseDirectionExample() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <div className={styles.stack}>\n        <Breadcrumb />\n        <Breadcrumb dir=\"ltr\" />\n      </div>\n    </DirectionProvider>\n  )\n}\n",
+      "path": "internal-primitives/direction-use-direction/direction-use-direction.tsx",
+      "target": "components/direction-use-direction.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "direction-use-direction",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

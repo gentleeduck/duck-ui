@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks"
+  ],
   "files": [
     {
       "content": "import {\n  Breadcrumb,\n  BreadcrumbEllipsis,\n  BreadcrumbItem,\n  BreadcrumbLink,\n  BreadcrumbList,\n  BreadcrumbPage,\n  BreadcrumbSeparator,\n} from '@gentleduck/registry-ui/breadcrumb'\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\nimport Link from 'next/link'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Breadcrumb>\n        <BreadcrumbList>\n          <BreadcrumbItem>\n            <BreadcrumbLink asChild>\n              <Link href=\"/\">الرئيسية</Link>\n            </BreadcrumbLink>\n          </BreadcrumbItem>\n          <BreadcrumbSeparator />\n          <BreadcrumbItem>\n            <DropdownMenu onOpenChange={() => {}}>\n              <DropdownMenuTrigger className=\"flex items-center gap-1\">\n                <BreadcrumbEllipsis className=\"size-4\" />\n                <span className=\"sr-only\">عرض المزيد من الصفحات</span>\n              </DropdownMenuTrigger>\n              <DropdownMenuContent align=\"start\" side=\"top\">\n                <DropdownMenuItem>التوثيق</DropdownMenuItem>\n                <DropdownMenuItem>السمات</DropdownMenuItem>\n                <DropdownMenuItem>GitHub</DropdownMenuItem>\n              </DropdownMenuContent>\n            </DropdownMenu>\n          </BreadcrumbItem>\n          <BreadcrumbSeparator />\n          <BreadcrumbItem>\n            <BreadcrumbLink asChild>\n              <Link href=\"/docs/components\">المكونات</Link>\n            </BreadcrumbLink>\n          </BreadcrumbItem>\n          <BreadcrumbSeparator />\n          <BreadcrumbItem>\n            <BreadcrumbPage>مسار التنقل</BreadcrumbPage>\n          </BreadcrumbItem>\n        </BreadcrumbList>\n      </Breadcrumb>\n    </DirectionProvider>\n  )\n}\n",
@@ -9,7 +12,10 @@
   ],
   "name": "breadcrumb-9",
   "registryDependencies": [
-    "breadcrumb"
+    "breadcrumb",
+    "button",
+    "drawer",
+    "dropdown-menu"
   ],
   "root_folder": "breadcrumb",
   "source": "/registry-examples/src/breadcrumb",

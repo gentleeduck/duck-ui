@@ -9,7 +9,10 @@
   ],
   "name": "item-3",
   "registryDependencies": [
-    "item"
+    "item",
+    "avatar",
+    "button",
+    "dropdown-menu"
   ],
   "root_folder": "item",
   "source": "/registry-examples/src/item",

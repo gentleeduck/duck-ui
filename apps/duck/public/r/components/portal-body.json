@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Portal } from '@gentleduck/primitives/portal'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function PortalBodyExample() {\n  const [shown, setShown] = React.useState(false)\n\n  return (\n    <div className={styles.box} style={{ overflow: 'hidden', position: 'relative' }}>\n      <button className={styles.button} onClick={() => setShown((value) => !value)} type=\"button\">\n        {shown ? 'Remove the toast' : 'Show a toast'}\n      </button>\n      {shown ? (\n        <Portal>\n          <div\n            className={`${styles.content} ${styles.panel}`}\n            style={{ bottom: '1rem', insetInlineEnd: '1rem', position: 'fixed' }}>\n            Rendered into the body, so this box's overflow does not clip it.\n          </div>\n        </Portal>\n      ) : null}\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/portal-body/portal-body.tsx",
+      "target": "components/portal-body.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "portal-body",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

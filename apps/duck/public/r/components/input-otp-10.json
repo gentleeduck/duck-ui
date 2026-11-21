@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  InputOTP,\n  InputOTPGroup,\n  InputOTPHiddenInput,\n  InputOTPSlot,\n  REGEXP_ONLY_DIGITS,\n} from '@gentleduck/registry-ui/input-otp'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [sent, setSent] = React.useState('')\n\n  return (\n    <form\n      className=\"flex flex-col items-center gap-3\"\n      onReset={() => setSent('')}\n      onSubmit={(event) => {\n        event.preventDefault()\n        setSent(String(new FormData(event.currentTarget).get('code')))\n      }}>\n      <Label id=\"verification-code-label\">Verification code</Label>\n      <InputOTP aria-labelledby=\"verification-code-label\" maxLength={6} name=\"code\" pattern={REGEXP_ONLY_DIGITS}>\n        <InputOTPGroup>\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n        </InputOTPGroup>\n        <InputOTPHiddenInput />\n      </InputOTP>\n      <Button size=\"sm\" type=\"reset\" variant=\"outline\">\n        Clear\n      </Button>\n      <p aria-live=\"polite\" className=\"text-muted-foreground text-sm\">\n        {sent ? `Sent ${sent}.` : 'Press Enter to send the code.'}\n      </p>\n    </form>\n  )\n}\n",
+      "path": "input-otp/input-otp-10.tsx",
+      "target": "components/input-otp-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "input-otp-10",
+  "registryDependencies": [
+    "input-otp",
+    "button",
+    "field"
+  ],
+  "root_folder": "input-otp",
+  "source": "/registry-examples/src/input-otp",
+  "type": "registry:example"
+}

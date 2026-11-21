@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "@tabler/icons-react"
+  ],
   "files": [
     {
       "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Empty,\n  EmptyContent,\n  EmptyDescription,\n  EmptyHeader,\n  EmptyMedia,\n  EmptyTitle,\n} from '@gentleduck/registry-ui/empty'\nimport { IconChartBar } from '@tabler/icons-react'\nimport { RefreshCcwIcon } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Empty className=\"h-full bg-gradient-to-b from-30% from-muted/50 to-background\">\n      <EmptyHeader>\n        <EmptyMedia variant=\"icon\">\n          <IconChartBar />\n        </EmptyMedia>\n        <EmptyTitle>No Analytics Data</EmptyTitle>\n        <EmptyDescription>Once your site receives traffic, usage metrics and trends will appear here.</EmptyDescription>\n      </EmptyHeader>\n      <EmptyContent>\n        <Button size=\"sm\" variant=\"outline\">\n          <RefreshCcwIcon />\n          Refresh\n        </Button>\n      </EmptyContent>\n    </Empty>\n  )\n}\n",
@@ -9,7 +12,11 @@
   ],
   "name": "empty-3",
   "registryDependencies": [
-    "empty"
+    "empty",
+    "avatar",
+    "button",
+    "input-group",
+    "kbd"
   ],
   "root_folder": "empty",
   "source": "/registry-examples/src/empty",

@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  NavigationMenu,\n  NavigationMenuContent,\n  NavigationMenuItem,\n  NavigationMenuLink,\n  NavigationMenuList,\n  NavigationMenuTrigger,\n} from '@gentleduck/registry-ui/navigation-menu'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState('')\n  const [compared, setCompared] = React.useState<string[]>([])\n  const compare = (plan: string) => setCompared((plans) => (plans.includes(plan) ? plans : [...plans, plan]))\n\n  return (\n    <div className=\"flex flex-col items-center gap-3\">\n      <NavigationMenu activationMode=\"manual\" onValueChange={setOpen} value={open}>\n        <NavigationMenuList>\n          <NavigationMenuItem value=\"plans\">\n            <NavigationMenuTrigger>Plans</NavigationMenuTrigger>\n            <NavigationMenuContent>\n              <ul className=\"grid w-56 gap-1\">\n                {['Starter', 'Team', 'Enterprise'].map((plan) => (\n                  <li key={plan}>\n                    <NavigationMenuLink\n                      closeOnSelect={false}\n                      href={`#${plan.toLowerCase()}`}\n                      onSelect={() => compare(plan)}>\n                      Compare {plan}\n                    </NavigationMenuLink>\n                  </li>\n                ))}\n              </ul>\n            </NavigationMenuContent>\n          </NavigationMenuItem>\n          <NavigationMenuItem value=\"roadmap\">\n            <NavigationMenuTrigger disabled>Roadmap</NavigationMenuTrigger>\n            <NavigationMenuContent />\n          </NavigationMenuItem>\n        </NavigationMenuList>\n      </NavigationMenu>\n      <p className=\"text-muted-foreground text-sm\">\n        Open: {open || 'none'}, comparing: {compared.join(', ') || 'nothing yet'}\n      </p>\n    </div>\n  )\n}\n",
+      "path": "navigation-menu/navigation-menu-6.tsx",
+      "target": "components/navigation-menu-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "navigation-menu-6",
+  "registryDependencies": [
+    "navigation-menu",
+    "direction"
+  ],
+  "root_folder": "navigation-menu",
+  "source": "/registry-examples/src/navigation-menu",
+  "type": "registry:example"
+}

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Menu from '@gentleduck/primitives/menu'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function MenuAnchorExample() {\n  const [open, setOpen] = React.useState(false)\n\n  return (\n    <Menu.Root modal={false} onOpenChange={setOpen} open={open}>\n      <Menu.Anchor asChild>\n        <button\n          aria-expanded={open}\n          aria-haspopup=\"menu\"\n          className={styles.button}\n          onKeyDown={(event) => {\n            if (!['Enter', ' ', 'ArrowDown'].includes(event.key)) return\n            event.preventDefault()\n            setOpen(true)\n          }}\n          onPointerDown={(event) => {\n            if (event.button !== 0 || event.ctrlKey) return\n            setOpen(!open)\n            if (!open) event.preventDefault()\n          }}\n          type=\"button\">\n          A trigger of your own\n        </button>\n      </Menu.Anchor>\n      <Menu.Portal>\n        <Menu.Content align=\"start\" className={styles.content} sideOffset={6}>\n          <Menu.Item className={styles.item}>New tab</Menu.Item>\n          <Menu.Item className={styles.item}>New window</Menu.Item>\n          <Menu.Separator className={styles.separator} />\n          <Menu.Item className={styles.item}>Close</Menu.Item>\n        </Menu.Content>\n      </Menu.Portal>\n    </Menu.Root>\n  )\n}\n",
+      "path": "internal-primitives/menu-anchor/menu-anchor.tsx",
+      "target": "components/menu-anchor.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "menu-anchor",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Toaster } from '@gentleduck/registry-ui/sonner'\nimport * as React from 'react'\nimport { toast } from 'sonner'\n\nconst TOASTER_ID = 'sonner-placement'\nconst POSITIONS = ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'] as const\nconst THEMES = ['light', 'dark', 'system'] as const\n\nexport default function Demo() {\n  const [position, setPosition] = React.useState<(typeof POSITIONS)[number]>('top-center')\n  const [theme, setTheme] = React.useState<(typeof THEMES)[number]>('dark')\n\n  return (\n    <div className=\"flex flex-col items-center gap-3\">\n      <Toaster id={TOASTER_ID} position={position} theme={theme} />\n      <div className=\"flex flex-wrap justify-center gap-2\">\n        {POSITIONS.map((value) => (\n          <Button\n            key={value}\n            onClick={() => setPosition(value)}\n            size=\"sm\"\n            variant={value === position ? 'default' : 'outline'}>\n            {value}\n          </Button>\n        ))}\n      </div>\n      <div className=\"flex gap-2\">\n        {THEMES.map((value) => (\n          <Button\n            key={value}\n            onClick={() => setTheme(value)}\n            size=\"sm\"\n            variant={value === theme ? 'default' : 'outline'}>\n            {value}\n          </Button>\n        ))}\n      </div>\n      <Button onClick={() => toast('Saved', { description: `${position}, ${theme} theme`, toasterId: TOASTER_ID })}>\n        Show a toast\n      </Button>\n    </div>\n  )\n}\n",
+      "path": "sonner/sonner-11.tsx",
+      "target": "components/sonner-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sonner-11",
+  "registryDependencies": [
+    "sonner"
+  ],
+  "root_folder": "sonner",
+  "source": "/registry-examples/src/sonner",
+  "type": "registry:example"
+}

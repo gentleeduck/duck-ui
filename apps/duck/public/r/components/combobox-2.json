@@ -1,7 +1,13 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
-      "content": "'use client'\n\nimport { cn } from '@gentleduck/libs/cn'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Command,\n  CommandEmpty,\n  CommandGroup,\n  CommandInput,\n  CommandItem,\n  CommandList,\n} from '@gentleduck/registry-ui/command'\nimport { Popover, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'\nimport { Check, ChevronsUpDown } from 'lucide-react'\nimport * as React from 'react'\n\nconst frameworks = [\n  {\n    label: 'Next.js',\n    value: 'next.js',\n  },\n  {\n    label: 'SvelteKit',\n    value: 'sveltekit',\n  },\n  {\n    label: 'Nuxt.js',\n    value: 'nuxt.js',\n  },\n  {\n    label: 'Remix',\n    value: 'remix',\n  },\n  {\n    label: 'Astro',\n    value: 'astro',\n  },\n]\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n  const [value, setValue] = React.useState('')\n  return (\n    <Popover onOpenChange={setOpen} open={open}>\n      <PopoverTrigger asChild>\n        <Button aria-expanded={open} className=\"w-[230px] justify-between\" role=\"combobox\" variant=\"outline\">\n          {value ? frameworks.find((framework) => framework.value === value)?.label : 'Select framework...'}\n          <ChevronsUpDown className=\"opacity-50\" />\n        </Button>\n      </PopoverTrigger>\n      <PopoverContent className=\"w-[230px] min-w-auto p-0\">\n        <Command>\n          <CommandInput className=\"h-9\" placeholder=\"Search framework...\" />\n          <CommandList>\n            <CommandEmpty>No framework found.</CommandEmpty>\n            <CommandGroup>\n              {frameworks.map((framework) => (\n                <CommandItem\n                  key={framework.value}\n                  onSelect={(currentValue) => {\n                    setValue(currentValue === value ? '' : currentValue)\n                    setOpen(false)\n                  }}\n                  value={framework.value}>\n                  {framework.label}\n                  <Check className={cn('ml-auto', value === framework.value ? 'opacity-100' : 'opacity-0')} />\n                </CommandItem>\n              ))}\n            </CommandGroup>\n          </CommandList>\n        </Command>\n      </PopoverContent>\n    </Popover>\n  )\n}\n",
+      "content": "'use client'\n\nimport { cn } from '@gentleduck/libs/cn'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Command,\n  CommandEmpty,\n  CommandGroup,\n  CommandInput,\n  CommandItem,\n  CommandList,\n} from '@gentleduck/registry-ui/command'\nimport { Popover, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'\nimport { Check, ChevronsUpDown } from 'lucide-react'\nimport * as React from 'react'\n\nconst frameworks = [\n  {\n    label: 'Next.js',\n    value: 'next.js',\n  },\n  {\n    label: 'SvelteKit',\n    value: 'sveltekit',\n  },\n  {\n    label: 'Nuxt.js',\n    value: 'nuxt.js',\n  },\n  {\n    label: 'Remix',\n    value: 'remix',\n  },\n  {\n    label: 'Astro',\n    value: 'astro',\n  },\n]\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n  const [value, setValue] = React.useState('')\n  return (\n    <Popover onOpenChange={setOpen} open={open}>\n      <PopoverTrigger asChild>\n        <Button aria-expanded={open} className=\"w-[230px] justify-between\" role=\"combobox\" variant=\"outline\">\n          {value ? frameworks.find((framework) => framework.value === value)?.label : 'Select framework...'}\n          <ChevronsUpDown className=\"opacity-50\" />\n        </Button>\n      </PopoverTrigger>\n      <PopoverContent className=\"w-[230px] min-w-auto p-0\">\n        <Command>\n          <CommandInput className=\"h-9\" placeholder=\"Search framework...\" />\n          <CommandList>\n            <CommandEmpty>No framework found.</CommandEmpty>\n            <CommandGroup>\n              {frameworks.map((framework) => (\n                <CommandItem\n                  key={framework.value}\n                  onSelect={(currentValue) => {\n                    setValue(currentValue === value ? '' : currentValue)\n                    setOpen(false)\n                  }}\n                  value={framework.value}>\n                  {framework.label}\n                  <Check className={cn('ms-auto', value === framework.value ? 'opacity-100' : 'opacity-0')} />\n                </CommandItem>\n              ))}\n            </CommandGroup>\n          </CommandList>\n        </Command>\n      </PopoverContent>\n    </Popover>\n  )\n}\n",
       "path": "combobox/combobox-2.tsx",
       "target": "components/combobox-2.tsx",
       "type": "registry:example"
@@ -9,7 +15,9 @@
   ],
   "name": "combobox-2",
   "registryDependencies": [
-    "combobox"
+    "combobox",
+    "dropdown-menu",
+    "field"
   ],
   "root_folder": "combobox",
   "source": "/registry-examples/src/combobox",

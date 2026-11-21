@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "import { Label } from '@gentleduck/registry-ui/label'\nimport { Textarea } from '@gentleduck/registry-ui/textarea'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full gap-6\">\n      <div className=\"grid gap-1.5\">\n        <Label htmlFor=\"textarea-invalid\">Reason for refund</Label>\n        <Textarea aria-describedby=\"textarea-invalid-error\" aria-invalid=\"true\" defaultValue=\"\" id=\"textarea-invalid\" />\n        <p className=\"text-destructive text-sm\" id=\"textarea-invalid-error\">\n          Tell us why, so we can process the refund.\n        </p>\n      </div>\n      <div className=\"grid gap-1.5\">\n        <Label htmlFor=\"textarea-warning\">Note to the courier</Label>\n        <Textarea\n          aria-describedby=\"textarea-warning-hint\"\n          aria-warning=\"true\"\n          defaultValue=\"Call me on 0100 000 0000 when you arrive.\"\n          id=\"textarea-warning\"\n        />\n        <p className=\"text-sm text-warning\" id=\"textarea-warning-hint\">\n          Couriers see this note. Leave out anything private.\n        </p>\n      </div>\n    </div>\n  )\n}\n",
+      "path": "textarea/textarea-11.tsx",
+      "target": "components/textarea-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "textarea-11",
+  "registryDependencies": [
+    "textarea",
+    "button",
+    "field",
+    "label"
+  ],
+  "root_folder": "textarea",
+  "source": "/registry-examples/src/textarea",
+  "type": "registry:example"
+}

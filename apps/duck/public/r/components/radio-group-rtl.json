@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as RadioGroup from '@gentleduck/primitives/radio-group'\nimport styles from '../primitives.module.css'\n\nexport default function RadioGroupRtlExample() {\n  return (\n    <RadioGroup.Root aria-label=\"اللغة\" className={styles.choices} defaultValue=\"ar\" dir=\"rtl\" orientation=\"horizontal\">\n      {[\n        { value: 'ar', label: 'العربية' },\n        { value: 'en', label: 'الإنجليزية' },\n      ].map((option) => (\n        <div className={styles.choice} key={option.value}>\n          <RadioGroup.Item className={styles.radio} id={`lang-${option.value}`} value={option.value}>\n            <RadioGroup.Indicator className={styles.dot} />\n          </RadioGroup.Item>\n          <label htmlFor={`lang-${option.value}`}>{option.label}</label>\n        </div>\n      ))}\n    </RadioGroup.Root>\n  )\n}\n",
+      "path": "internal-primitives/radio-group-rtl/radio-group-rtl.tsx",
+      "target": "components/radio-group-rtl.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "radio-group-rtl",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

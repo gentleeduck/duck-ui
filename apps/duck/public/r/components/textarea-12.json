@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "import { Label } from '@gentleduck/registry-ui/label'\nimport { Textarea } from '@gentleduck/registry-ui/textarea'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full gap-1.5\">\n      <Label htmlFor=\"textarea-grow\">Release notes</Label>\n      <Textarea className=\"max-h-40 resize-none\" id=\"textarea-grow\" placeholder=\"Each new line makes the box taller.\" />\n    </div>\n  )\n}\n",
+      "path": "textarea/textarea-12.tsx",
+      "target": "components/textarea-12.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "textarea-12",
+  "registryDependencies": [
+    "textarea",
+    "button",
+    "field",
+    "label"
+  ],
+  "root_folder": "textarea",
+  "source": "/registry-examples/src/textarea",
+  "type": "registry:example"
+}

@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "import { ScrollArea } from '@gentleduck/registry-ui/scroll-area'\n\nconst months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']\nconst regions = ['North', 'South', 'East', 'West', 'Central', 'Coastal', 'Highlands', 'Islands', 'Metro', 'Rural']\n\nexport default function Demo() {\n  return (\n    <ScrollArea className=\"h-64 w-80 rounded-md border\">\n      <table className=\"w-max border-collapse text-sm\">\n        <thead>\n          <tr>\n            <th className=\"sticky top-0 bg-background px-3 py-2 text-start font-medium\">Region</th>\n            {months.map((month) => (\n              <th className=\"sticky top-0 bg-background px-3 py-2 text-end font-medium\" key={month}>\n                {month}\n              </th>\n            ))}\n          </tr>\n        </thead>\n        <tbody>\n          {regions.map((region, row) => (\n            <tr className=\"border-t\" key={region}>\n              <td className=\"px-3 py-2\">{region}</td>\n              {months.map((month, column) => (\n                <td className=\"px-3 py-2 text-end tabular-nums\" key={month}>\n                  {((row + 3) * (column + 7) * 37) % 900}\n                </td>\n              ))}\n            </tr>\n          ))}\n        </tbody>\n      </table>\n    </ScrollArea>\n  )\n}\n",
+      "path": "scroll-area/scroll-area-6.tsx",
+      "target": "components/scroll-area-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "scroll-area-6",
+  "registryDependencies": [
+    "scroll-area",
+    "badge",
+    "button",
+    "separator"
+  ],
+  "root_folder": "scroll-area",
+  "source": "/registry-examples/src/scroll-area",
+  "type": "registry:example"
+}

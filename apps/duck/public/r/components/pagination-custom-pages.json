@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Pagination from '@gentleduck/primitives/pagination'\nimport styles from '../primitives.module.css'\n\nexport default function PaginationCustomPagesExample() {\n  return (\n    <Pagination.Root defaultPage={4} pageCount={9}>\n      <Pagination.Content className={styles.pages}>\n        <Pagination.Pages>\n          {(items) =>\n            items.map((item) => (\n              <Pagination.Item key={item}>\n                {typeof item === 'number' ? (\n                  <Pagination.Page aria-label={`Page ${item}`} value={item}>\n                    {String(item).padStart(2, '0')}\n                  </Pagination.Page>\n                ) : (\n                  <Pagination.Ellipsis>...</Pagination.Ellipsis>\n                )}\n              </Pagination.Item>\n            ))\n          }\n        </Pagination.Pages>\n      </Pagination.Content>\n    </Pagination.Root>\n  )\n}\n",
+      "path": "internal-primitives/pagination-custom-pages/pagination-custom-pages.tsx",
+      "target": "components/pagination-custom-pages.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "pagination-custom-pages",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

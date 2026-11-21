@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Slider from '@gentleduck/primitives/slider'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function SliderCommitExample() {\n  const [live, setLive] = React.useState([30])\n  const [saved, setSaved] = React.useState([30])\n\n  return (\n    <div className={styles.stack}>\n      <Slider.Root className={styles.slider} onValueChange={setLive} onValueCommit={setSaved} value={live}>\n        <Slider.Track className={styles.track}>\n          <Slider.Range className={styles.range} />\n        </Slider.Track>\n        <Slider.Thumb aria-label=\"Brightness\" className={styles.thumb} />\n      </Slider.Root>\n      <p className={styles.note}>\n        While dragging: {live[0]}. Saved once the drag ends: {saved[0]}.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/slider-commit/slider-commit.tsx",
+      "target": "components/slider-commit.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "slider-commit",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

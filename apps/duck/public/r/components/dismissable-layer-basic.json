@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { DismissableLayer } from '@gentleduck/primitives/dismissable-layer'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function DismissableLayerBasicExample() {\n  const [open, setOpen] = React.useState(false)\n  const [reason, setReason] = React.useState('none yet')\n\n  return (\n    <div className={styles.stack}>\n      <button className={styles.button} onClick={() => setOpen(true)} type=\"button\">\n        Show panel\n      </button>\n      {open ? (\n        <DismissableLayer\n          className={`${styles.content} ${styles.panel}`}\n          onDismiss={() => setOpen(false)}\n          onEscapeKeyDown={() => setReason('Escape')}\n          onFocusOutside={() => setReason('focus moved out')}\n          onPointerDownOutside={() => setReason('press outside')}>\n          Press Escape, click outside, or Tab away.\n          <button className={styles.button} type=\"button\">\n            A button inside\n          </button>\n        </DismissableLayer>\n      ) : null}\n      <p className={styles.note}>Last dismissed by: {reason}.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/dismissable-layer-basic/dismissable-layer-basic.tsx",
+      "target": "components/dismissable-layer-basic.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dismissable-layer-basic",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

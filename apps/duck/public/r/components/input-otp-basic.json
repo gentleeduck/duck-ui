@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as InputOTP from '@gentleduck/primitives/input-otp'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function InputOTPBasicExample() {\n  const [done, setDone] = React.useState('')\n\n  return (\n    <div className={styles.stack}>\n      <InputOTP.Root aria-label=\"Verification code\" className={styles.otp} onComplete={setDone}>\n        <InputOTP.Group className={styles.otp}>\n          {[0, 1, 2].map((slot) => (\n            <InputOTP.Slot aria-label={`Digit ${slot + 1}`} className={styles.slot} key={slot} />\n          ))}\n        </InputOTP.Group>\n        <InputOTP.Separator>-</InputOTP.Separator>\n        <InputOTP.Group className={styles.otp}>\n          {[3, 4, 5].map((slot) => (\n            <InputOTP.Slot aria-label={`Digit ${slot + 1}`} className={styles.slot} key={slot} />\n          ))}\n        </InputOTP.Group>\n      </InputOTP.Root>\n      <p className={styles.note}>\n        {done ? `Complete: ${done}` : 'Type or paste a code. Backspace, Delete and the arrows move as in one field.'}\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/input-otp-basic/input-otp-basic.tsx",
+      "target": "components/input-otp-basic.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "input-otp-basic",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

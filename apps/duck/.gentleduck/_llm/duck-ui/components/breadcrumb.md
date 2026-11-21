@@ -274,7 +274,7 @@ import {
 
 ### Collapsed
 
-We provide a `<BreadcrumbEllipsis />` component to show a collapsed state when the breadcrumb is too long.
+We provide a `<BreadcrumbEllipsis />` component to show a collapsed state when the breadcrumb is too long. A screen reader hears it as `More`; pass `text` to say what it hides.
 
 ```tsx title="components/breadcrumb-4.tsx"
 // import from your project: import Demo from '@/components/breadcrumb-4'
@@ -300,7 +300,7 @@ export default function Demo() {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbEllipsis />
+          <BreadcrumbEllipsis text="Hidden pages" />
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -398,9 +398,7 @@ import Link from "next/link"
 
 ### Responsive
 
-Here's an example of a responsive breadcrumb that composes `<BreadcrumbItem />` with `<BreadcrumbEllipsis />`, `<DropdownMenu />`, and `<Drawer />`.
-
-It displays a dropdown on desktop and a drawer on mobile.
+A responsive breadcrumb keeps the first page and the last two, and folds the pages between behind `<BreadcrumbEllipsis />`. The ellipsis opens a `<DropdownMenu />` on desktop, whose items are the links themselves through `asChild`, and a `<Drawer />` on mobile. A separator is its own list item, so it goes beside a `<BreadcrumbItem />`, never inside one.
 
 ```tsx title="components/breadcrumb-6.tsx"
 // import from your project: import Demo from '@/components/breadcrumb-6'
@@ -465,7 +463,7 @@ export default function Demo() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side="bottom" align="start">
                     {items.slice(1, -2).map((item) => (
-                      <DropdownMenuItem key={item.label}>
+                      <DropdownMenuItem asChild key={item.label}>
                         <Link href={item.href ? item.href : '#'}>{item.label}</Link>
                       </DropdownMenuItem>
                     ))}
@@ -477,7 +475,7 @@ export default function Demo() {
                     <BreadcrumbEllipsis className="h-4 w-4" />
                   </DrawerTrigger>
                   <DrawerContent>
-                    <DrawerHeader className="text-left">
+                    <DrawerHeader className="text-start">
                       <DrawerTitle>Navigate to</DrawerTitle>
                       <DrawerDescription>Select a page to navigate to.</DrawerDescription>
                     </DrawerHeader>
@@ -501,142 +499,18 @@ export default function Demo() {
           </>
         ) : null}
         {items.slice(-ITEMS_TO_DISPLAY + 1).map((item) => (
-          <BreadcrumbItem key={item.label}>
-            {item.href ? (
-              <>
-                <BreadcrumbLink asChild className="max-w-20 truncate md:max-w-none">
-                  <Link href={item.href}>{item.label}</Link>
-                </BreadcrumbLink>
-                <BreadcrumbSeparator />
-              </>
-            ) : (
-              <BreadcrumbPage className="max-w-20 truncate md:max-w-none">{item.label}</BreadcrumbPage>
-            )}
-          </BreadcrumbItem>
-        ))}
-      </BreadcrumbList>
-    </Breadcrumb>
-  )
-}
-```
-
-***
-
-### Responsive with Ellipsis
-
-A responsive breadcrumb that collapses intermediate items behind an ellipsis, displaying a dropdown on desktop and a drawer on mobile.
-
-```tsx title="components/breadcrumb-7.tsx"
-// import from your project: import Demo from '@/components/breadcrumb-7'
-'use client'
-import { useMediaQuery } from '@gentleduck/hooks/use-media-query'
-import {
-  Breadcrumb,
-  BreadcrumbEllipsis,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@gentleduck/registry-ui/breadcrumb'
-import { Button } from '@gentleduck/registry-ui/button'
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@gentleduck/registry-ui/drawer'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@gentleduck/registry-ui/dropdown-menu'
-import Link from 'next/link'
-import * as React from 'react'
-
-const items: { href?: string; label: string }[] = [
-  { href: '#', label: 'Home' },
-  { href: '#', label: 'Documentation' },
-  { href: '#', label: 'Building Your Application' },
-  { href: '#', label: 'Data Fetching' },
-  { label: 'Caching and Revalidating' },
-]
-const ITEMS_TO_DISPLAY = 3
-export default function Demo() {
-  const [open, setOpen] = React.useState(false)
-  const isDesktop = useMediaQuery('(min-width: 768px)')
-  return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link href={items[0]?.href ?? '/'}>{items[0]?.label}</Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        {items.length > ITEMS_TO_DISPLAY ? (
-          <>
+          <React.Fragment key={item.label}>
             <BreadcrumbItem>
-              {isDesktop ? (
-                <DropdownMenu onOpenChange={setOpen} open={open}>
-                  <DropdownMenuTrigger aria-label="Toggle menu" className="flex items-center gap-1">
-                    <BreadcrumbEllipsis className="size-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent side="top" align="start">
-                    {items.slice(1, -2).map((item) => (
-                      <DropdownMenuItem key={item.label}>
-                        <Link href={item.href ? item.href : '#'}>{item.label}</Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Drawer onOpenChange={setOpen} open={open}>
-                  <DrawerTrigger aria-label="Toggle Menu">
-                    <BreadcrumbEllipsis className="h-4 w-4" />
-                  </DrawerTrigger>
-                  <DrawerContent>
-                    <DrawerHeader className="text-left">
-                      <DrawerTitle>Navigate to</DrawerTitle>
-                      <DrawerDescription>Select a page to navigate to.</DrawerDescription>
-                    </DrawerHeader>
-                    <div className="grid gap-1 px-4">
-                      {items.slice(1, -2).map((item) => (
-                        <Link className="py-1 text-sm" href={item.href ? item.href : '#'} key={item.label}>
-                          {item.label}
-                        </Link>
-                      ))}
-                    </div>
-                    <DrawerFooter className="pt-4">
-                      <DrawerClose asChild>
-                        <Button variant="outline">Close</Button>
-                      </DrawerClose>
-                    </DrawerFooter>
-                  </DrawerContent>
-                </Drawer>
-              )}
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-          </>
-        ) : null}
-        {items.slice(-ITEMS_TO_DISPLAY + 1).map((item) => (
-          <BreadcrumbItem key={item.label}>
-            {item.href ? (
-              <>
+              {item.href ? (
                 <BreadcrumbLink asChild className="max-w-20 truncate md:max-w-none">
                   <Link href={item.href}>{item.label}</Link>
                 </BreadcrumbLink>
-                <BreadcrumbSeparator />
-              </>
-            ) : (
-              <BreadcrumbPage className="max-w-20 truncate md:max-w-none">{item.label}</BreadcrumbPage>
-            )}
-          </BreadcrumbItem>
+              ) : (
+                <BreadcrumbPage className="max-w-20 truncate md:max-w-none">{item.label}</BreadcrumbPage>
+              )}
+            </BreadcrumbItem>
+            {item.href ? <BreadcrumbSeparator /> : null}
+          </React.Fragment>
         ))}
       </BreadcrumbList>
     </Breadcrumb>
@@ -846,7 +720,7 @@ Renders directly as `m.li` with a `scaleIn` entrance (fade, scale, and blur) usi
 
 ### MotionBreadcrumbSeparator
 
-Renders directly as `m.li` with a `slideFromLeft` entrance so the chevron slides in from the previous item. Requires the `motion` package.
+Renders directly as `m.li` with a `slideFromLeft` entrance, or `slideFromRight` in a right-to-left trail, so the chevron slides in from the item before it. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

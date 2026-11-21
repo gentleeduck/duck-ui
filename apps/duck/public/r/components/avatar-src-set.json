@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Avatar from '@gentleduck/primitives/avatar'\nimport styles from '../primitives.module.css'\n\nexport default function AvatarSrcSetExample() {\n  return (\n    <div className={styles.stack}>\n      <Avatar.Root className={styles.avatar} style={{ width: '3.5rem', height: '3.5rem' }}>\n        <Avatar.Image\n          alt=\"gentleduck\"\n          className={styles.avatarImage}\n          sizes=\"56px\"\n          srcSet=\"https://avatars.githubusercontent.com/u/108896341?v=4&s=56 1x, https://avatars.githubusercontent.com/u/108896341?v=4&s=112 2x\"\n        />\n        <Avatar.Fallback>GD</Avatar.Fallback>\n      </Avatar.Root>\n      <p className={styles.note}>A srcSet alone is enough: the browser picks the candidate for the screen.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/avatar-src-set/avatar-src-set.tsx",
+      "target": "components/avatar-src-set.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "avatar-src-set",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

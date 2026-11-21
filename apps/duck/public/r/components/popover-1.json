@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Popover, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'\n\nexport default function Demo() {\n  return (\n    <Popover>\n      <PopoverTrigger asChild>\n        <Button variant=\"outline\">Open popover</Button>\n      </PopoverTrigger>\n      <PopoverContent className=\"w-80\">\n        <div className=\"grid gap-4\">\n          <div className=\"space-y-2\">\n            <h4 className=\"font-medium leading-none\">Dimensions</h4>\n            <p className=\"text-muted-foreground text-sm\">Set the dimensions for the layer.</p>\n          </div>\n          <div className=\"grid gap-2\">\n            <div className=\"grid grid-cols-3 items-center gap-4\">\n              <Label htmlFor=\"width\">Width</Label>\n              <Input className=\"col-span-2 h-8\" defaultValue=\"100%\" id=\"width\" />\n            </div>\n            <div className=\"grid grid-cols-3 items-center gap-4\">\n              <Label htmlFor=\"maxWidth\">Max. width</Label>\n              <Input className=\"col-span-2 h-8\" defaultValue=\"300px\" id=\"maxWidth\" />\n            </div>\n            <div className=\"grid grid-cols-3 items-center gap-4\">\n              <Label htmlFor=\"height\">Height</Label>\n              <Input className=\"col-span-2 h-8\" defaultValue=\"25px\" id=\"height\" />\n            </div>\n            <div className=\"grid grid-cols-3 items-center gap-4\">\n              <Label htmlFor=\"maxHeight\">Max. height</Label>\n              <Input className=\"col-span-2 h-8\" defaultValue=\"none\" id=\"maxHeight\" />\n            </div>\n          </div>\n        </div>\n      </PopoverContent>\n    </Popover>\n  )\n}\n",
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport {\n  Popover,\n  PopoverContent,\n  PopoverDescription,\n  PopoverTitle,\n  PopoverTrigger,\n} from '@gentleduck/registry-ui/popover'\n\nexport default function Demo() {\n  return (\n    <Popover>\n      <PopoverTrigger asChild>\n        <Button variant=\"outline\">Open popover</Button>\n      </PopoverTrigger>\n      <PopoverContent className=\"w-80\">\n        <div className=\"grid gap-4\">\n          <div className=\"space-y-2\">\n            <PopoverTitle>Dimensions</PopoverTitle>\n            <PopoverDescription>Set the dimensions for the layer.</PopoverDescription>\n          </div>\n          <div className=\"grid gap-2\">\n            <div className=\"grid grid-cols-3 items-center gap-4\">\n              <Label htmlFor=\"width\">Width</Label>\n              <Input className=\"col-span-2 h-8\" defaultValue=\"100%\" id=\"width\" />\n            </div>\n            <div className=\"grid grid-cols-3 items-center gap-4\">\n              <Label htmlFor=\"maxWidth\">Max. width</Label>\n              <Input className=\"col-span-2 h-8\" defaultValue=\"300px\" id=\"maxWidth\" />\n            </div>\n            <div className=\"grid grid-cols-3 items-center gap-4\">\n              <Label htmlFor=\"height\">Height</Label>\n              <Input className=\"col-span-2 h-8\" defaultValue=\"25px\" id=\"height\" />\n            </div>\n            <div className=\"grid grid-cols-3 items-center gap-4\">\n              <Label htmlFor=\"maxHeight\">Max. height</Label>\n              <Input className=\"col-span-2 h-8\" defaultValue=\"none\" id=\"maxHeight\" />\n            </div>\n          </div>\n        </div>\n      </PopoverContent>\n    </Popover>\n  )\n}\n",
       "path": "popover/popover-1.tsx",
       "target": "components/popover-1.tsx",
       "type": "registry:example"
@@ -9,7 +9,12 @@
   ],
   "name": "popover-1",
   "registryDependencies": [
-    "popover"
+    "popover",
+    "button",
+    "direction",
+    "input",
+    "label",
+    "textarea"
   ],
   "root_folder": "popover",
   "source": "/registry-examples/src/popover",

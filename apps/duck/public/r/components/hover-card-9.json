@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { HoverCard, HoverCardContent, HoverCardTrigger } from '@gentleduck/registry-ui/hover-card'\n\nexport default function Demo() {\n  return (\n    <HoverCard defaultOpen>\n      <HoverCardTrigger border=\"primary\" variant=\"ghost\">\n        Open from the start\n      </HoverCardTrigger>\n      <HoverCardContent align=\"start\" alignOffset={8} className=\"w-64\" sideOffset={10}>\n        defaultOpen shows the card on load. It is aligned to the trigger's start and pushed 10px away.\n      </HoverCardContent>\n    </HoverCard>\n  )\n}\n",
+      "path": "hover-card/hover-card-9.tsx",
+      "target": "components/hover-card-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "hover-card-9",
+  "registryDependencies": [
+    "hover-card",
+    "avatar",
+    "direction",
+    "label",
+    "skeleton",
+    "switch"
+  ],
+  "root_folder": "hover-card",
+  "source": "/registry-examples/src/hover-card",
+  "type": "registry:example"
+}

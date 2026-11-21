@@ -5,7 +5,13 @@
 import { Button } from '@gentleduck/registry-ui/button'
 import { Input } from '@gentleduck/registry-ui/input'
 import { Label } from '@gentleduck/registry-ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@gentleduck/registry-ui/popover'
 
 export default function Demo() {
   return (
@@ -16,8 +22,8 @@ export default function Demo() {
       <PopoverContent className="w-80">
         <div className="grid gap-4">
           <div className="space-y-2">
-            <h4 className="font-medium leading-none">Dimensions</h4>
-            <p className="text-muted-foreground text-sm">Set the dimensions for the layer.</p>
+            <PopoverTitle>Dimensions</PopoverTitle>
+            <PopoverDescription>Set the dimensions for the layer.</PopoverDescription>
           </div>
           <div className="grid gap-2">
             <div className="grid grid-cols-3 items-center gap-4">
@@ -79,6 +85,8 @@ Update the import paths to match your project setup.
 import {
   Popover,
   PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover"
 ```
@@ -86,9 +94,14 @@ import {
 ```tsx showLineNumbers
 <Popover>
   <PopoverTrigger>Open</PopoverTrigger>
-  <PopoverContent>Place content for the popover here.</PopoverContent>
+  <PopoverContent>
+    <PopoverTitle>Dimensions</PopoverTitle>
+    <PopoverDescription>Set the dimensions for the layer.</PopoverDescription>
+  </PopoverContent>
 </Popover>
 ```
+
+`PopoverTitle` names the popover for screen readers and `PopoverDescription` describes it: while either is mounted, the content's `aria-labelledby` or `aria-describedby` points at it.
 
 ## Examples
 
@@ -250,7 +263,14 @@ export default function Demo() {
 import { Button } from '@gentleduck/registry-ui/button'
 import { Input } from '@gentleduck/registry-ui/input'
 import { Label } from '@gentleduck/registry-ui/label'
-import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'
+import {
+  Popover,
+  PopoverClose,
+  PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@gentleduck/registry-ui/popover'
 
 export default function Demo() {
   return (
@@ -265,8 +285,8 @@ export default function Demo() {
             e.preventDefault()
           }}>
           <div className="space-y-2">
-            <h4 className="font-medium leading-none">Dimensions</h4>
-            <p className="text-muted-foreground text-sm">Configure the dimensions for the layer.</p>
+            <PopoverTitle>Dimensions</PopoverTitle>
+            <PopoverDescription>Configure the dimensions for the layer.</PopoverDescription>
           </div>
           <div className="grid gap-2">
             <div className="grid grid-cols-3 items-center gap-4">
@@ -295,6 +315,43 @@ export default function Demo() {
 }
 ```
 
+### Focus
+
+`initialFocus` names the element focused on open, here the note rather than the Cancel button before it. `finalFocus` does the same on close, in place of the trigger.
+
+```tsx title="components/popover-8.tsx"
+// import from your project: import Demo from '@/components/popover-8'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Popover, PopoverClose, PopoverContent, PopoverTitle, PopoverTrigger } from '@gentleduck/registry-ui/popover'
+import { Textarea } from '@gentleduck/registry-ui/textarea'
+import * as React from 'react'
+
+export default function Demo() {
+  const note = React.useRef<HTMLTextAreaElement>(null)
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline">Add note</Button>
+      </PopoverTrigger>
+      <PopoverContent className="grid w-80 gap-3" initialFocus={note}>
+        <div className="flex items-center justify-between">
+          <PopoverTitle>Note</PopoverTitle>
+          <PopoverClose asChild>
+            <Button size="sm" variant="ghost">
+              Cancel
+            </Button>
+          </PopoverClose>
+        </div>
+        <Textarea placeholder="Write a note for this layer." ref={note} />
+      </PopoverContent>
+    </Popover>
+  )
+}
+```
+
 ### Active Trigger on Open
 
 Style the trigger to appear active while the popover is open using `data-[state=open]`:
@@ -304,7 +361,13 @@ Style the trigger to appear active while the popover is open using `data-[state=
 'use client'
 
 import { Button } from '@gentleduck/registry-ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@gentleduck/registry-ui/popover'
 import { Settings } from 'lucide-react'
 
 export default function Demo() {
@@ -314,14 +377,14 @@ export default function Demo() {
         <Button
           variant="outline"
           className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:ring-2 data-[state=open]:ring-ring">
-          <Settings className="mr-2 h-4 w-4" />
+          <Settings className="me-2 h-4 w-4" />
           Settings
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64">
         <div className="space-y-2">
-          <h4 className="font-medium leading-none">Preferences</h4>
-          <p className="text-muted-foreground text-sm">The trigger stays active while this is open.</p>
+          <PopoverTitle>Preferences</PopoverTitle>
+          <PopoverDescription>The trigger stays active while this is open.</PopoverDescription>
         </div>
       </PopoverContent>
     </Popover>
@@ -353,13 +416,138 @@ export default function Demo() {
 }
 ```
 
-Customize the border color via `--popover-border-color` on `PopoverContent`:
+Customize the border color via `--popover-border-color` on `PopoverContent`, in its `style` or as a class such as `[--popover-border-color:#5865f2]`. `MotionPopoverContent` takes it too:
 
 ```tsx
 <PopoverContent style={{ '--popover-border-color': '#5865f2' }}>
   ...
   <PopoverArrow />
 </PopoverContent>
+```
+
+### Custom anchor, controlled and modal
+
+`PopoverAnchor` positions the content against an element other than the trigger, here the whole field around a small trigger. `open` and `onOpenChange` hold the state, so a form can close the popover once it saves. `modal` keeps focus inside, hides the page from a screen reader and stops a click outside from reaching it.
+
+```tsx title="components/popover-9.tsx"
+// import from your project: import Demo from '@/components/popover-9'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Input } from '@gentleduck/registry-ui/input'
+import { Label } from '@gentleduck/registry-ui/label'
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@gentleduck/registry-ui/popover'
+import { Pencil } from 'lucide-react'
+import * as React from 'react'
+
+export default function Demo() {
+  const id = React.useId()
+  const [open, setOpen] = React.useState(false)
+  const [name, setName] = React.useState('Quarterly report')
+  const [draft, setDraft] = React.useState(name)
+
+  return (
+    <Popover
+      modal
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (next) setDraft(name)
+      }}
+      open={open}>
+      <PopoverAnchor className="flex w-72 items-center justify-between gap-2 rounded-md border px-3 py-1.5">
+        <span className="truncate text-sm">{name}</span>
+        <PopoverTrigger asChild>
+          <Button aria-label="Rename" size="icon-sm" variant="ghost">
+            <Pencil />
+          </Button>
+        </PopoverTrigger>
+      </PopoverAnchor>
+      <PopoverContent align="start" className="grid w-72 gap-3">
+        <div className="grid gap-1.5">
+          <PopoverTitle>Rename</PopoverTitle>
+          <PopoverDescription>The new name shows wherever the file is listed.</PopoverDescription>
+        </div>
+        <form
+          className="grid gap-2"
+          onSubmit={(event) => {
+            event.preventDefault()
+            setName(draft.trim() || name)
+            setOpen(false)
+          }}>
+          <Label htmlFor={id}>Name</Label>
+          <Input id={id} onChange={(event) => setDraft(event.target.value)} value={draft} />
+          <Button type="submit">Save</Button>
+        </form>
+      </PopoverContent>
+    </Popover>
+  )
+}
+```
+
+### Open from the start, with offsets
+
+```tsx title="components/popover-10.tsx"
+// import from your project: import Demo from '@/components/popover-10'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'
+import * as React from 'react'
+
+export default function Demo() {
+  const next = React.useRef<HTMLButtonElement>(null)
+
+  return (
+    <div className="flex items-center gap-2">
+      <Popover defaultOpen>
+        <PopoverTrigger asChild>
+          <Button variant="outline">Tip</Button>
+        </PopoverTrigger>
+        <PopoverContent alignOffset={8} className="w-60 text-sm" finalFocus={next} sideOffset={12}>
+          Open from the start, 12px from its trigger, with a wide arrow. On close, focus moves to Next.
+          <PopoverArrow height={10} width={20} />
+        </PopoverContent>
+      </Popover>
+      <Button ref={next} variant="outline">
+        Next
+      </Button>
+    </div>
+  )
+}
+```
+
+### Kept mounted
+
+```tsx title="components/popover-11.tsx"
+// import from your project: import Demo from '@/components/popover-11'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Input } from '@gentleduck/registry-ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'
+
+export default function Demo() {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline">Draft a note</Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 data-[state=closed]:hidden" forceMount>
+        <Input placeholder="Type, close and open again" />
+        <p className="mt-2 text-muted-foreground text-xs">
+          forceMount keeps the field, and what you typed, while closed.
+        </p>
+      </PopoverContent>
+    </Popover>
+  )
+}
 ```
 
 ## Component Composition
@@ -385,7 +573,13 @@ import { Button } from '@gentleduck/registry-ui/button'
 import { DirectionProvider } from '@gentleduck/registry-ui/direction'
 import { Input } from '@gentleduck/registry-ui/input'
 import { Label } from '@gentleduck/registry-ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@gentleduck/registry-ui/popover'
 
 export default function Demo() {
   return (
@@ -397,8 +591,8 @@ export default function Demo() {
         <PopoverContent className="w-80">
           <div className="grid gap-4">
             <div className="space-y-2">
-              <h4 className="font-medium leading-none">الأبعاد</h4>
-              <p className="text-muted-foreground text-sm">اضبط أبعاد الطبقة.</p>
+              <PopoverTitle>الأبعاد</PopoverTitle>
+              <PopoverDescription>اضبط أبعاد الطبقة.</PopoverDescription>
             </div>
             <div className="grid gap-2">
               <div className="grid grid-cols-3 items-center gap-4">
@@ -440,7 +634,13 @@ Use `MotionPopover` and `MotionPopoverContent` for smooth enter/exit animations 
 import { Button } from '@gentleduck/registry-ui/button'
 import { Input } from '@gentleduck/registry-ui/input'
 import { Label } from '@gentleduck/registry-ui/label'
-import { MotionPopover, MotionPopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'
+import {
+  MotionPopover,
+  MotionPopoverContent,
+  PopoverDescription,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@gentleduck/registry-ui/popover'
 
 export default function Demo() {
   return (
@@ -451,8 +651,8 @@ export default function Demo() {
       <MotionPopoverContent className="w-80">
         <div className="grid gap-4">
           <div className="space-y-2">
-            <h4 className="font-medium leading-none">Dimensions</h4>
-            <p className="text-muted-foreground text-sm">Set the dimensions for the layer.</p>
+            <PopoverTitle>Dimensions</PopoverTitle>
+            <PopoverDescription>Set the dimensions for the layer.</PopoverDescription>
           </div>
           <div className="grid gap-2">
             <div className="grid grid-cols-3 items-center gap-4">
@@ -500,19 +700,47 @@ export default function Demo() {
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `asChild` | `boolean` | `--` | Use the child element as the trigger |
+| `asChild` | `boolean` | `false` | Use the child element as the trigger |
 | `...props` | `React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Trigger>` | - | Additional props inherited from `Popover.Trigger`. |
 
 ### PopoverContent
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `forceMount` | `boolean` | `-` | Keep content mounted for animation control |
+| `forceMount` | `true` | - | Keeps the content in the page while closed, as `data-state="closed"`, for an exit animation to run on |
 | `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'` | Preferred side relative to the trigger |
 | `align` | `'start' \| 'center' \| 'end'` | `'center'` | Alignment on the chosen side |
 | `sideOffset` | `number` | `4` | Main-axis offset from trigger |
 | `alignOffset` | `number` | `0` | Cross-axis offset from trigger |
+| `initialFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on open in place of the first tabbable element; `false` leaves focus on the trigger |
+| `finalFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on close in place of the trigger; `false` moves focus nowhere |
 | `...props` | `React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>` | - | Additional props inherited from `Popover.Content`. |
+
+### PopoverTitle
+
+An `h2` styled `font-medium leading-none` that names the popover. Use `asChild` for another heading level.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `...props` | `React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Title>` | - | Additional props inherited from `Popover.Title`. |
+
+### PopoverDescription
+
+A muted `p` that describes the popover.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `...props` | `React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Description>` | - | Additional props inherited from `Popover.Description`. |
+
+### PopoverArrow
+
+A caret drawn in the content's fill and border colors.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `width` | `number` | `14` | Arrow width in pixels |
+| `height` | `number` | `7` | Arrow height in pixels |
+| `...props` | `React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Arrow>` | - | Additional props inherited from `Popover.Arrow`. |
 
 ### PopoverClose
 

@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "sonner"
+  ],
   "files": [
     {
       "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { Inbox } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Button aria-busy=\"true\" aria-label=\"Loading inbox button\" icon={<Inbox />} loading={true} type=\"button\">\n      <span>Button</span>\n    </Button>\n  )\n}\n",
@@ -9,7 +12,11 @@
   ],
   "name": "button-16",
   "registryDependencies": [
-    "button"
+    "button",
+    "command",
+    "direction",
+    "toggle",
+    "tooltip"
   ],
   "root_folder": "button",
   "source": "/registry-examples/src/button",

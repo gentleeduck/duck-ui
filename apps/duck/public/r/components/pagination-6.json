@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Pagination,\n  PaginationContent,\n  PaginationItem,\n  PaginationNextTrigger,\n  PaginationPages,\n  PaginationPreviousTrigger,\n} from '@gentleduck/registry-ui/pagination'\n\nexport default function Demo() {\n  return (\n    <Pagination getPageHref={(page) => `#results-page-${page}`} pageCount={12}>\n      <PaginationContent>\n        <PaginationItem>\n          <PaginationPreviousTrigger />\n        </PaginationItem>\n        <PaginationPages />\n        <PaginationItem>\n          <PaginationNextTrigger />\n        </PaginationItem>\n      </PaginationContent>\n    </Pagination>\n  )\n}\n",
+      "path": "pagination/pagination-6.tsx",
+      "target": "components/pagination-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "pagination-6",
+  "registryDependencies": [
+    "pagination"
+  ],
+  "root_folder": "pagination",
+  "source": "/registry-examples/src/pagination",
+  "type": "registry:example"
+}

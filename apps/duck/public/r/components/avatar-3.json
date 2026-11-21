@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "content": "'use client'\n\nimport { AvatarFallback, AvatarImage, MotionAvatar, MotionAvatarGroup } from '@gentleduck/registry-ui/avatar'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-row flex-wrap items-center gap-12\">\n      <MotionAvatar>\n        <AvatarImage\n          alt=\"GD\"\n          src=\"https://github.com/gentleeduck/gentleduck/blob/master/apps/duck-ui-docs/public/static/LOGO.png?raw=true\"\n        />\n        <AvatarFallback>GD</AvatarFallback>\n      </MotionAvatar>\n      <MotionAvatar className=\"rounded-lg\">\n        <AvatarImage alt=\"WD\" src=\"https://avatars.githubusercontent.com/u/108896341?v=4\" />\n        <AvatarFallback className=\"rounded-lg\">WD</AvatarFallback>\n      </MotionAvatar>\n      <MotionAvatarGroup\n        imgs={[\n          {\n            id: '1',\n            src: 'https://github.com/gentleeduck/gentleduck/blob/master/apps/duck-ui-docs/public/static/LOGO.png?raw=true',\n            alt: 'GD',\n            fallback: 'GD',\n          },\n          { id: '2', src: 'https://avatars.githubusercontent.com/u/108896341?v=4', alt: 'WD', fallback: 'WD' },\n          {\n            id: '3',\n            src: 'https://raw.githubusercontent.com/wildduck2/duck-starter-kit/15fbc61fb02cd21a873108b380ca12fe31f50099/apps/document-client/public/placeholder2.webp',\n            alt: 'GD',\n            fallback: 'GD',\n          },\n          { id: '4', alt: 'JD', fallback: 'JD' },\n          { id: '5', alt: 'MK', fallback: 'MK' },\n        ]}\n        maxVisible={3}\n      />\n    </div>\n  )\n}\n",
+      "content": "'use client'\n\nimport { AvatarFallback, AvatarImage, MotionAvatar, MotionAvatarGroup } from '@gentleduck/registry-ui/avatar'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-row flex-wrap items-center gap-12\">\n      <MotionAvatar>\n        <AvatarImage\n          alt=\"gentleduck\"\n          src=\"https://github.com/gentleeduck/gentleduck/blob/master/apps/duck-ui-docs/public/static/LOGO.png?raw=true\"\n        />\n        <AvatarFallback>GD</AvatarFallback>\n      </MotionAvatar>\n      <MotionAvatar className=\"rounded-lg\">\n        <AvatarImage alt=\"wildduck\" src=\"https://avatars.githubusercontent.com/u/108896341?v=4\" />\n        <AvatarFallback className=\"rounded-lg\">WD</AvatarFallback>\n      </MotionAvatar>\n      <MotionAvatarGroup\n        imgs={[\n          {\n            id: '1',\n            src: 'https://github.com/gentleeduck/gentleduck/blob/master/apps/duck-ui-docs/public/static/LOGO.png?raw=true',\n            alt: 'gentleduck',\n            fallback: 'GD',\n          },\n          { id: '2', src: 'https://avatars.githubusercontent.com/u/108896341?v=4', alt: 'wildduck', fallback: 'WD' },\n          {\n            id: '3',\n            src: 'https://raw.githubusercontent.com/wildduck2/duck-starter-kit/15fbc61fb02cd21a873108b380ca12fe31f50099/apps/document-client/public/placeholder2.webp',\n            alt: 'Guest',\n            fallback: 'GD',\n          },\n          { id: '4', alt: 'Jane Doe', fallback: 'JD' },\n          { id: '5', alt: 'Max Klein', fallback: 'MK' },\n        ]}\n        maxVisible={3}\n      />\n    </div>\n  )\n}\n",
       "path": "avatar/avatar-3.tsx",
       "target": "components/avatar-3.tsx",
       "type": "registry:example"
@@ -9,7 +9,8 @@
   ],
   "name": "avatar-3",
   "registryDependencies": [
-    "avatar"
+    "avatar",
+    "direction"
   ],
   "root_folder": "avatar",
   "source": "/registry-examples/src/avatar",

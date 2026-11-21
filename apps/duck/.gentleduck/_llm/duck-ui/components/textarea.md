@@ -3,7 +3,7 @@
 import { Textarea } from '@gentleduck/registry-ui/textarea'
 
 export default function Demo() {
-  return <Textarea placeholder="Type your message here." />
+  return <Textarea aria-label="Message" placeholder="Type your message here." />
 }
 ```
 
@@ -42,14 +42,39 @@ import { Textarea } from '@/components/ui/textarea'
 
 ## Examples
 
-### Default
+### Character count
+
+`maxLength` stops typing at the limit. Point `aria-describedby` at the count so a screen reader reads it with the field.
 
 ```tsx title="components/textarea-2.tsx"
 // import from your project: import Demo from '@/components/textarea-2'
+'use client'
+
+import { Label } from '@gentleduck/registry-ui/label'
 import { Textarea } from '@gentleduck/registry-ui/textarea'
+import * as React from 'react'
+
+const LIMIT = 140
 
 export default function Demo() {
-  return <Textarea placeholder="Type your message here." />
+  const [text, setText] = React.useState('')
+
+  return (
+    <div className="grid w-full gap-1.5">
+      <Label htmlFor="textarea-count">Status</Label>
+      <Textarea
+        aria-describedby="textarea-count-left"
+        id="textarea-count"
+        maxLength={LIMIT}
+        onChange={(event) => setText(event.target.value)}
+        placeholder="What are you working on?"
+        value={text}
+      />
+      <p className="text-end text-muted-foreground text-sm tabular-nums" id="textarea-count-left">
+        {LIMIT - text.length} characters left
+      </p>
+    </div>
+  )
 }
 ```
 
@@ -60,7 +85,7 @@ export default function Demo() {
 import { Textarea } from '@gentleduck/registry-ui/textarea'
 
 export default function Demo() {
-  return <Textarea disabled placeholder="Type your message here." />
+  return <Textarea aria-label="Message" disabled placeholder="Type your message here." />
 }
 ```
 
@@ -92,8 +117,10 @@ export default function Demo() {
   return (
     <div className="grid w-full gap-1.5">
       <Label htmlFor="message-5">Your message</Label>
-      <Textarea id="message-5" placeholder="Type your message here." />
-      <p className="text-muted-foreground text-sm">Your message will be copied to the support team.</p>
+      <Textarea aria-describedby="message-5-hint" id="message-5" placeholder="Type your message here." />
+      <p className="text-muted-foreground text-sm" id="message-5-hint">
+        Your message will be copied to the support team.
+      </p>
     </div>
   )
 }
@@ -109,7 +136,7 @@ import { Textarea } from '@gentleduck/registry-ui/textarea'
 export default function Demo() {
   return (
     <div className="grid w-full gap-2">
-      <Textarea placeholder="Type your message here." />
+      <Textarea aria-label="Message" placeholder="Type your message here." />
       <Button>Send message</Button>
     </div>
   )
@@ -137,12 +164,13 @@ const FormSchema = z.object({
       message: 'Bio must be at least 10 characters.',
     })
     .max(160, {
-      message: 'Bio must not be longer than 30 characters.',
+      message: 'Bio must not be longer than 160 characters.',
     }),
 })
 
 export default function Demo() {
   const form = useForm<z.infer<typeof FormSchema>>({
+    defaultValues: { bio: '' },
     resolver: zodResolver(FormSchema),
   })
 
@@ -188,6 +216,88 @@ export default function Demo() {
 }
 ```
 
+### Invalid and warning
+
+`aria-invalid="true"` draws the textarea in the destructive colour and `aria-warning="true"` in the warning colour, as on `Input`. Link the message with `aria-describedby`.
+
+```tsx title="components/textarea-11.tsx"
+// import from your project: import Demo from '@/components/textarea-11'
+import { Label } from '@gentleduck/registry-ui/label'
+import { Textarea } from '@gentleduck/registry-ui/textarea'
+
+export default function Demo() {
+  return (
+    <div className="grid w-full gap-6">
+      <div className="grid gap-1.5">
+        <Label htmlFor="textarea-invalid">Reason for refund</Label>
+        <Textarea aria-describedby="textarea-invalid-error" aria-invalid="true" defaultValue="" id="textarea-invalid" />
+        <p className="text-destructive text-sm" id="textarea-invalid-error">
+          Tell us why, so we can process the refund.
+        </p>
+      </div>
+      <div className="grid gap-1.5">
+        <Label htmlFor="textarea-warning">Note to the courier</Label>
+        <Textarea
+          aria-describedby="textarea-warning-hint"
+          aria-warning="true"
+          defaultValue="Call me on 0100 000 0000 when you arrive."
+          id="textarea-warning"
+        />
+        <p className="text-sm text-warning" id="textarea-warning-hint">
+          Couriers see this note. Leave out anything private.
+        </p>
+      </div>
+    </div>
+  )
+}
+```
+
+### Grows with its text
+
+The textarea grows with its text through `field-sizing: content`. Cap it with a `max-h-*` class and it scrolls past that. A browser without `field-sizing` keeps it at its minimum height and scrolls.
+
+```tsx title="components/textarea-12.tsx"
+// import from your project: import Demo from '@/components/textarea-12'
+import { Label } from '@gentleduck/registry-ui/label'
+import { Textarea } from '@gentleduck/registry-ui/textarea'
+
+export default function Demo() {
+  return (
+    <div className="grid w-full gap-1.5">
+      <Label htmlFor="textarea-grow">Release notes</Label>
+      <Textarea className="max-h-40 resize-none" id="textarea-grow" placeholder="Each new line makes the box taller." />
+    </div>
+  )
+}
+```
+
+### Direction from the text
+
+`dir="auto"` is kept as it is, so the text typed decides the direction rather than the page. Use it where people may write in either a right-to-left or a left-to-right language.
+
+```tsx title="components/textarea-10.tsx"
+// import from your project: import Demo from '@/components/textarea-10'
+import { Label } from '@gentleduck/registry-ui/label'
+import { Textarea } from '@gentleduck/registry-ui/textarea'
+
+export default function Demo() {
+  return (
+    <div className="grid w-full gap-1.5">
+      <Label htmlFor="textarea-auto">Review</Label>
+      <Textarea
+        defaultValue="شكراً، وصل الطلب في موعده."
+        dir="auto"
+        id="textarea-auto"
+        placeholder="Write in any language"
+      />
+      <p className="text-muted-foreground text-sm">
+        With <code>dir="auto"</code> the text sets its own direction: Arabic starts on the right, English on the left.
+      </p>
+    </div>
+  )
+}
+```
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and `Textarea` follows it. No `dir` prop needed.
@@ -224,7 +334,7 @@ Use `MotionTextarea` for a smooth entrance animation powered by [motion](https:/
 import { MotionTextarea } from '@gentleduck/registry-ui/textarea'
 
 export default function Demo() {
-  return <MotionTextarea placeholder="Type your message here." />
+  return <MotionTextarea aria-label="Message" placeholder="Type your message here." />
 }
 ```
 
@@ -235,7 +345,9 @@ export default function Demo() {
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
+| `dir` | `'ltr' \| 'rtl' \| 'auto'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). `'auto'` is kept as it is, so the text typed decides |
+| `aria-invalid` | `boolean \| 'true'` | - | Draws the border and ring in the destructive colour |
+| `aria-warning` | `'true'` | - | Draws the border and ring in the warning colour. Not an ARIA attribute, so pair it with a message linked by `aria-describedby` |
 | `className` | `string` | - | Additional CSS class names |
 | `...props` | `React.HTMLProps<HTMLTextAreaElement>` | - | Additional props to spread to the textarea element |
 

@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "lucide-react"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { MotionToggle } from '@gentleduck/registry-ui/toggle'\nimport { AlignLeft, Bold, Italic, Star, Underline } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-wrap items-center gap-2\">\n      <MotionToggle aria-label=\"Toggle bold\" variant=\"outline\">\n        <Bold />\n      </MotionToggle>\n      <MotionToggle aria-label=\"Toggle italic\" variant=\"outline\">\n        <Italic />\n        Italic\n      </MotionToggle>\n      <MotionToggle aria-label=\"Toggle underline\" variant=\"outline\">\n        <Underline />\n        Underline\n      </MotionToggle>\n      <MotionToggle aria-label=\"Toggle align\" variant=\"outline\" size=\"lg\">\n        <AlignLeft />\n        Align Left\n      </MotionToggle>\n      <MotionToggle aria-label=\"Toggle favorite\" variant=\"outline\" size=\"sm\">\n        <Star />\n      </MotionToggle>\n    </div>\n  )\n}\n",
@@ -9,7 +12,10 @@
   ],
   "name": "toggle-9",
   "registryDependencies": [
-    "toggle"
+    "toggle",
+    "direction",
+    "input",
+    "label"
   ],
   "root_folder": "toggle",
   "source": "/registry-examples/src/toggle",

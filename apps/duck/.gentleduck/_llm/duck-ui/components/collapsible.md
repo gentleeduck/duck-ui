@@ -116,6 +116,114 @@ export default function Demo() {
 }
 ```
 
+### Open by default
+
+`defaultOpen` starts it open and leaves it to the user from there, with no state of your own.
+
+```tsx title="components/collapsible-5.tsx"
+// import from your project: import Demo from '@/components/collapsible-5'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@gentleduck/registry-ui/collapsible'
+import { ChevronsUpDown } from 'lucide-react'
+
+export default function Demo() {
+  return (
+    <Collapsible className="w-80 space-y-2" defaultOpen>
+      <div className="flex items-center justify-between">
+        <h4 className="font-semibold text-sm">Release notes</h4>
+        <CollapsibleTrigger asChild>
+          <Button size="sm" variant="ghost">
+            <ChevronsUpDown className="h-4 w-4" />
+            <span className="sr-only">Toggle release notes</span>
+          </Button>
+        </CollapsibleTrigger>
+      </div>
+      <CollapsibleContent className="space-y-1 text-muted-foreground text-sm">
+        <p>Command takes a fuzzy filter and a result limit.</p>
+        <p>Calendar pages every month it shows.</p>
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+```
+
+### Guarded and kept mounted
+
+```tsx title="components/collapsible-6.tsx"
+// import from your project: import Demo from '@/components/collapsible-6'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@gentleduck/registry-ui/collapsible'
+import * as React from 'react'
+
+export default function Demo() {
+  const [unlocked, setUnlocked] = React.useState(false)
+
+  return (
+    <div className="flex w-[350px] flex-col gap-3">
+      <label className="flex items-center gap-2 text-sm">
+        <input checked={unlocked} onChange={(event) => setUnlocked(event.target.checked)} type="checkbox" />I have read
+        the warning
+      </label>
+      <Collapsible>
+        <CollapsibleTrigger asChild onClick={(event) => unlocked || event.preventDefault()}>
+          <Button variant="outline">Advanced settings</Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-2 rounded-md border p-3 text-sm data-[state=closed]:hidden" forceMount>
+          Kept in the page while closed, so a search of the page or a form inside still sees it.
+        </CollapsibleContent>
+      </Collapsible>
+      <p className="text-muted-foreground text-sm">
+        The trigger's onClick prevents the toggle until the box is ticked.
+      </p>
+    </div>
+  )
+}
+```
+
+### Reading its state
+
+```tsx title="components/collapsible-7.tsx"
+// import from your project: import Demo from '@/components/collapsible-7'
+'use client'
+
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  useCollapsible,
+} from '@gentleduck/registry-ui/collapsible'
+
+function Status() {
+  const { open, contentId, onOpenChange } = useCollapsible()
+  return (
+    <div className="flex items-center justify-between gap-2 text-sm">
+      <span>
+        {open ? 'Open' : 'Closed'}, controlling #{contentId}
+      </span>
+      <button className="underline" onClick={() => onOpenChange(!open)} type="button">
+        Toggle from inside
+      </button>
+    </div>
+  )
+}
+
+export default function Demo() {
+  return (
+    <Collapsible className="flex w-[350px] flex-col gap-2 rounded-md border p-3">
+      <Status />
+      <CollapsibleTrigger className="text-start font-medium">Release notes</CollapsibleTrigger>
+      <CollapsibleContent className="text-muted-foreground text-sm">
+        Fixed the date picker in Safari.
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+```
+
 ## Component Composition
 
 ## RTL Support
@@ -202,10 +310,10 @@ export default function Demo() {
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `open` | `boolean` | - | Controlled open state |
-| `onOpenChange` | `(open: boolean) => void` | - | Callback fired when open state changes |
+| `onOpenChange` | `(open: boolean) => void` | - | Called once with the new state when the trigger is clicked |
 | `defaultOpen` | `boolean` | `false` | Initial open state when uncontrolled |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
-| `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `dir` | `'ltr' \| 'rtl'` | - | Lands on the root as its `dir` attribute. Without it the root carries none and follows the page. |
+| `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Additional props to spread to the root div |
 
 ### CollapsibleTrigger
 
@@ -213,10 +321,12 @@ export default function Demo() {
 | --- | --- | --- | --- |
 | `variant` | `ButtonVariant` | `'ghost'` | Button variant passed to the underlying `Button` component |
 | `children` | `React.ReactNode` | - | Trigger content |
-| `onClick` | `React.MouseEventHandler` | - | Additional click handler; open/close toggle is handled internally |
+| `onClick` | `React.MouseEventHandler` | - | Called before the toggle; `event.preventDefault()` keeps the collapsible as it is |
 | `...props` | `React.ComponentPropsWithoutRef<typeof Button>` | - | Additional props inherited from `Button`. |
 
 ### CollapsibleContent
+
+Its children unmount once the section's close transition ends, a `transition-delay` and the longest of several transitions included. Under `motion-reduce:transition-none` they unmount at once.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -239,7 +349,7 @@ const { open, onOpenChange } = useCollapsible()
 | `onOpenChange` | `(open: boolean) => void` | Function to update open state |
 | `wrapperRef` | `React.RefObject<HTMLDivElement \| null>` | Ref to the root collapsible element |
 | `triggerRef` | `React.RefObject<HTMLButtonElement \| null>` | Ref to the trigger button |
-| `contentRef` | `React.RefObject<HTMLDivElement \| null>` | Ref to the content section |
+| `contentRef` | `React.RefObject<HTMLElement \| null>` | Ref to the content section |
 | `contentId` | `string` | Auto-generated ID linking trigger and content via `aria-controls` |
 
 ### MotionCollapsibleContent

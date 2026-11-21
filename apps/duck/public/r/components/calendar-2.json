@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport type { Selection } from '@gentleduck/calendar'\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const today = new Date()\n  const initialFrom = new Date(today.getFullYear(), 0, 12)\n  const initialTo = new Date(today.getFullYear(), 1, 11)\n\n  const [dateRange, setDateRange] = React.useState<Selection.DateRange<Date> | null>({\n    from: initialFrom,\n    to: initialTo,\n  })\n\n  return (\n    <Calendar\n      className=\"rounded-md border shadow-sm\"\n      mode=\"range\"\n      defaultMonth={dateRange?.from}\n      numberOfMonths={2}\n      selected={dateRange}\n      onSelect={setDateRange}\n      disabled={(date) => date > new Date() || date < new Date('1900-01-01')}\n      showDropdowns={false}\n    />\n  )\n}\n",
@@ -9,7 +15,13 @@
   ],
   "name": "calendar-2",
   "registryDependencies": [
-    "calendar"
+    "calendar",
+    "direction",
+    "field",
+    "input",
+    "label",
+    "popover",
+    "switch"
   ],
   "root_folder": "calendar",
   "source": "/registry-examples/src/calendar",

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Avatar from '@gentleduck/primitives/avatar'\nimport styles from '../primitives.module.css'\n\nexport default function AvatarFallbackExample() {\n  return (\n    <div className={styles.row}>\n      <Avatar.Root className={styles.avatar}>\n        <Avatar.Image\n          alt=\"gentleduck\"\n          className={styles.avatarImage}\n          src=\"https://avatars.githubusercontent.com/u/108896341?v=4\"\n        />\n        <Avatar.Fallback>GD</Avatar.Fallback>\n      </Avatar.Root>\n      <Avatar.Root className={styles.avatar}>\n        <Avatar.Fallback>AB</Avatar.Fallback>\n      </Avatar.Root>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/avatar-fallback/avatar-fallback.tsx",
+      "target": "components/avatar-fallback.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "avatar-fallback",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

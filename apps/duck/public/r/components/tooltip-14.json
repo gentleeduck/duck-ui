@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@gentleduck/hooks"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Tooltip, TooltipArrow, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\n\nexport default function Demo() {\n  return (\n    <TooltipProvider delayDuration={200}>\n      <Tooltip>\n        <TooltipTrigger asChild>\n          <Button variant=\"outline\">Pinned tip</Button>\n        </TooltipTrigger>\n        <TooltipContent\n          align=\"start\"\n          alignOffset={4}\n          avoidCollisions\n          collisionPadding={12}\n          onEscapeKeyDown={(event) => event.preventDefault()}\n          onPointerDownOutside={(event) => event.preventDefault()}\n          sideOffset={10}>\n          Escape and a press outside leave this open.\n          <TooltipArrow height={8} width={16} />\n        </TooltipContent>\n      </Tooltip>\n    </TooltipProvider>\n  )\n}\n",
+      "path": "tooltip/tooltip-14.tsx",
+      "target": "components/tooltip-14.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "tooltip-14",
+  "registryDependencies": [
+    "tooltip",
+    "button",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "toggle"
+  ],
+  "root_folder": "tooltip",
+  "source": "/registry-examples/src/tooltip",
+  "type": "registry:example"
+}

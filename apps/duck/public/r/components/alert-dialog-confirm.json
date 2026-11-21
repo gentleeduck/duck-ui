@@ -1,4 +1,8 @@
 {
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport * as AlertDialog from '@gentleduck/primitives/alert-dialog'\nimport styles from './styles.module.css'\n\nexport default function AlertDialogConfirmInternalExample() {\n  return (\n    <div className={styles.frame}>\n      <p className={styles.label}>Destructive confirmation</p>\n      <AlertDialog.AlertDialog>\n        <AlertDialog.AlertDialogTrigger className={styles.trigger}>Open confirm</AlertDialog.AlertDialogTrigger>\n        <AlertDialog.AlertDialogPortal>\n          <AlertDialog.AlertDialogOverlay className={styles.overlay} />\n          <AlertDialog.AlertDialogContent className={styles.content}>\n            <AlertDialog.AlertDialogTitle className={styles.title}>Delete resource?</AlertDialog.AlertDialogTitle>\n            <AlertDialog.AlertDialogDescription className={styles.description}>\n              This action is permanent and cannot be undone.\n            </AlertDialog.AlertDialogDescription>\n            <div className={styles.actions}>\n              <AlertDialog.AlertDialogCancel className={styles.secondary}>Cancel</AlertDialog.AlertDialogCancel>\n              <AlertDialog.AlertDialogAction className={styles.danger}>Delete</AlertDialog.AlertDialogAction>\n            </div>\n          </AlertDialog.AlertDialogContent>\n        </AlertDialog.AlertDialogPortal>\n      </AlertDialog.AlertDialog>\n    </div>\n  )\n}\n",
@@ -8,9 +12,6 @@
     }
   ],
   "name": "alert-dialog-confirm",
-  "registryDependencies": [
-    "@gentleduck/primitives"
-  ],
   "root_folder": "internal-primitives",
   "source": "/registry-internals/src/internal-primitives",
   "type": "registry:internal"

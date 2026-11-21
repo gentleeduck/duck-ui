@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "import { TypographyTable, TypographyTd, TypographyTh, TypographyTr } from '@gentleduck/registry-ui/typography'\n\nconst PLANS = [\n  { name: 'Starter', price: '$0', seats: '1' },\n  { name: 'Team', price: '$24', seats: '10' },\n  { name: 'Business', price: '$96', seats: '50' },\n]\n\nexport default function Demo() {\n  return (\n    <TypographyTable aria-label=\"Plans\" wrapperClassName=\"max-w-md\">\n      <thead>\n        <TypographyTr>\n          <TypographyTh>Plan</TypographyTh>\n          <TypographyTh align=\"center\">Seats</TypographyTh>\n          <TypographyTh align=\"right\">Price a month</TypographyTh>\n        </TypographyTr>\n      </thead>\n      <tbody>\n        {PLANS.map((plan) => (\n          <TypographyTr key={plan.name}>\n            <TypographyTd>{plan.name}</TypographyTd>\n            <TypographyTd align=\"center\">{plan.seats}</TypographyTd>\n            <TypographyTd align=\"right\">{plan.price}</TypographyTd>\n          </TypographyTr>\n        ))}\n      </tbody>\n    </TypographyTable>\n  )\n}\n",
+      "path": "typography/typography-18.tsx",
+      "target": "components/typography-18.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "typography-18",
+  "registryDependencies": [
+    "typography",
+    "direction"
+  ],
+  "root_folder": "typography",
+  "source": "/registry-examples/src/typography",
+  "type": "registry:example"
+}

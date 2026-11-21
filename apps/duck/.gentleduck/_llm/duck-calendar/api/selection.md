@@ -34,7 +34,7 @@ selectDay(adapter: Adapter.IDateAdapter<TDate>, mode: Selection.SelectionMode, c
 
 ### `applySelection`
 
-Decorate an array of weeks with selection flags (`isSelected`, `isRangeStart`, `isRangeMiddle`, `isRangeEnd`, `isDisabled`). This is what makes the `data-*` attributes work.
+Decorate an array of weeks with selection flags (`isSelected`, `isRangeStart`, `isRangeMiddle`, `isRangeEnd`, `isDisabled`, `isUnavailable`). This is what makes the `data-*` attributes work.
 
 ```tsx
 applySelection(
@@ -52,7 +52,7 @@ applySelection(
 | `adapter` | `Adapter.IDateAdapter<TDate>` | Date adapter |
 | `mode` | `Selection.SelectionMode` | Selection mode |
 | `selected` | `Selection.CalendarValue<TDate, M>` | Current selection |
-| `constraints` | `Selection.ISelectionConstraints<TDate>` | Optional. Disabled dates, fromDate, toDate. Defaults to `{}` |
+| `constraints` | `Selection.ISelectionConstraints<TDate>` | Optional. Disabled and unavailable dates, fromDate, toDate. Defaults to `{}` |
 
 **Selection.ISelectionConstraints:**
 
@@ -61,6 +61,7 @@ applySelection(
 | `disabled` | `TDate[] \| (date) => boolean` | Disabled dates |
 | `fromDate` | `TDate` | Earliest selectable date |
 | `toDate` | `TDate` | Latest selectable date |
+| `unavailable` | `TDate[] \| (date) => boolean` | Dates that stay focusable but cannot be picked |
 
 ***
 

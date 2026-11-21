@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "import {\n  Select,\n  SelectContent,\n  SelectGroup,\n  SelectItem,\n  SelectLabel,\n  SelectSeparator,\n  SelectTrigger,\n  SelectValue,\n} from '@gentleduck/registry-ui/select'\n\nexport default function Demo() {\n  return (\n    <Select defaultValue={['mozzarella', 'basil']} multiple>\n      <SelectTrigger aria-label=\"Toppings\" className=\"w-[280px]\">\n        <SelectValue placeholder=\"Pick your toppings\" />\n      </SelectTrigger>\n      <SelectContent>\n        <SelectGroup>\n          <SelectLabel>Cheese</SelectLabel>\n          <SelectItem value=\"mozzarella\">Mozzarella</SelectItem>\n          <SelectItem value=\"parmesan\">Parmesan</SelectItem>\n          <SelectItem value=\"gorgonzola\">Gorgonzola</SelectItem>\n        </SelectGroup>\n        <SelectSeparator />\n        <SelectGroup>\n          <SelectLabel>Meat</SelectLabel>\n          <SelectItem value=\"pepperoni\">Pepperoni</SelectItem>\n          <SelectItem value=\"ham\">Ham</SelectItem>\n          <SelectItem disabled value=\"nduja\">\n            Nduja (sold out)\n          </SelectItem>\n        </SelectGroup>\n        <SelectSeparator />\n        <SelectGroup>\n          <SelectLabel>Greens</SelectLabel>\n          <SelectItem value=\"basil\">Basil</SelectItem>\n          <SelectItem value=\"rocket\">Rocket</SelectItem>\n          <SelectItem value=\"spinach\">Spinach</SelectItem>\n        </SelectGroup>\n      </SelectContent>\n    </Select>\n  )\n}\n",
+      "path": "select/select-14.tsx",
+      "target": "components/select-14.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-14",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

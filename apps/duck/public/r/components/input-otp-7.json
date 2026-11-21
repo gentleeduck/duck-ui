@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "import { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '@gentleduck/registry-ui/input-otp'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <InputOTP aria-label=\"رمز التحقق\" maxLength={6}>\n        <InputOTPGroup>\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n        </InputOTPGroup>\n        <InputOTPSeparator />\n        <InputOTPGroup>\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n        </InputOTPGroup>\n      </InputOTP>\n    </DirectionProvider>\n  )\n}\n",

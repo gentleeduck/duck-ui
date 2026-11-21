@@ -101,6 +101,8 @@ import { DirectionProvider } from '@/components/ui/direction'
 
 Components resolve direction from their own `dir` prop, then the nearest `DirectionProvider`, then `<html dir>`. Changes to `<html dir>` are picked up at runtime. On the server the document is not available, so in server-rendered apps use `DirectionProvider` (it can sit right inside `<html dir="rtl">`) to get the right direction on first paint.
 
+`DirectionProvider` renders a `div` with `dir` and `display: contents`, so your own logical classes and `rtl:` variants follow it too, and it adds no box to the layout. A flex or grid row orders its items by its own direction, so put the provider around the row, not inside it.
+
 ### Custom components
 
 Use `useDirection` when your own component needs the direction in JavaScript, such as picking an icon or flipping a key. For layout, prefer logical classes (`ms-*`, `pe-*`, `start-*`, `text-start`), which follow `dir` without any code.
@@ -112,6 +114,164 @@ import { useDirection } from '@/components/ui/direction'
 function NextIcon() {
   const dir = useDirection()
   return dir === 'rtl' ? <ArrowLeft /> : <ArrowRight />
+}
+```
+
+## Examples
+
+### Switch at runtime
+
+Change the provider's `dir` and everything under it follows: the slider fills from the other side and its arrow keys turn around, and the menu and its submenu open toward the start. `toDirection` narrows the string the toggle group reports, which is empty when its pressed item is pressed again.
+
+```tsx title="components/direction-2.tsx"
+// import from your project: import Demo from '@/components/direction-2'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { DirectionProvider, type IDirection, toDirection } from '@gentleduck/registry-ui/direction'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@gentleduck/registry-ui/dropdown-menu'
+import { Slider } from '@gentleduck/registry-ui/slider'
+import { ToggleGroup, ToggleGroupItem } from '@gentleduck/registry-ui/toggle-group'
+import * as React from 'react'
+
+export default function Demo() {
+  const [dir, setDir] = React.useState<IDirection.Kind>('rtl')
+
+  return (
+    <div className="grid w-full max-w-sm gap-4">
+      <ToggleGroup
+        aria-label="Direction"
+        onValueChange={(value) => setDir((current) => toDirection(value) ?? current)}
+        type="single"
+        value={dir}
+        variant="outline">
+        <ToggleGroupItem value="ltr">Left to right</ToggleGroupItem>
+        <ToggleGroupItem value="rtl">Right to left</ToggleGroupItem>
+      </ToggleGroup>
+      <DirectionProvider dir={dir}>
+        <div className="grid gap-4 rounded-lg border p-4">
+          <Slider aria-label="Volume" defaultValue={[60]} max={100} step={1} />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="justify-self-start" variant="outline">
+                Share
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem>Copy link</DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Send to</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem>Email</DropdownMenuItem>
+                  <DropdownMenuItem>Message</DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </DirectionProvider>
+    </div>
+  )
+}
+```
+
+### Nested directions
+
+A provider inside another wins for its subtree. Here an Arabic card keeps its install commands, and the tabs that switch them, left to right.
+
+```tsx title="components/direction-3.tsx"
+// import from your project: import Demo from '@/components/direction-3'
+'use client'
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@gentleduck/registry-ui/card'
+import { DirectionProvider } from '@gentleduck/registry-ui/direction'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@gentleduck/registry-ui/tabs'
+
+const COMMANDS = [
+  ['npm', 'npm install @gentleduck/primitives'],
+  ['bun', 'bun add @gentleduck/primitives'],
+  ['pnpm', 'pnpm add @gentleduck/primitives'],
+] as const
+
+export default function Demo() {
+  return (
+    <DirectionProvider dir="rtl">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>التثبيت</CardTitle>
+          <CardDescription>
+            ثبّت الحزمة باستخدام مدير الحزم الذي تفضّله. تبقى الأوامر وتبويباتها من اليسار إلى اليمين.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DirectionProvider dir="ltr">
+            <Tabs defaultValue="npm">
+              <TabsList>
+                {COMMANDS.map(([name]) => (
+                  <TabsTrigger key={name} value={name}>
+                    {name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {COMMANDS.map(([name, command]) => (
+                <TabsContent key={name} value={name}>
+                  <pre className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-sm">
+                    <code>{command}</code>
+                  </pre>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </DirectionProvider>
+        </CardContent>
+      </Card>
+    </DirectionProvider>
+  )
+}
+```
+
+### Reading the direction
+
+```tsx title="components/direction-4.tsx"
+// import from your project: import Demo from '@/components/direction-4'
+'use client'
+
+import { DirectionProvider, Provider, toDirection, useDirection } from '@gentleduck/registry-ui/direction'
+
+function Arrow({ dir }: { dir?: string }) {
+  const direction = useDirection(toDirection(dir))
+  return (
+    <span className="rounded-md border px-3 py-1 text-sm">
+      {direction === 'rtl' ? '<-' : '->'} {direction}
+    </span>
+  )
+}
+
+export default function Demo() {
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <DirectionProvider dir="rtl">
+        <div className="flex gap-2">
+          <Arrow />
+          <Arrow dir="ltr" />
+          <Arrow dir="sideways" />
+        </div>
+      </DirectionProvider>
+      <Provider dir="ltr">
+        <Arrow />
+      </Provider>
+      <p className="text-muted-foreground text-sm">
+        toDirection drops a value that is not ltr or rtl, so useDirection falls back to the provider.
+      </p>
+    </div>
+  )
 }
 ```
 

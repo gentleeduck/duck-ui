@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "import { CheckboxGroup, type CheckboxGroupSubtasks } from '@gentleduck/registry-ui/checkbox'\nimport { toast } from 'sonner'\n\nexport default function Demo() {\n  const subtasks: CheckboxGroupSubtasks[] = [\n    { id: 'subtask-1', title: 'Design wireframes' },\n    { id: 'subtask-2', title: 'Build UI components' },\n    { id: 'subtask-3', title: 'Write documentation' },\n  ]\n\n  return (\n    <CheckboxGroup\n      subtasks={subtasks}\n      defaults={{\n        checkbox: { onCheckedChange: (state) => toast.info(`Checkbox ${state ? 'checked' : 'unchecked'}`) },\n        label: { className: 'text-sm text-muted-foreground' },\n      }}\n    />\n  )\n}\n",
@@ -9,7 +15,9 @@
   ],
   "name": "checkbox-6",
   "registryDependencies": [
-    "checkbox"
+    "checkbox",
+    "button",
+    "field"
   ],
   "root_folder": "checkbox",
   "source": "/registry-examples/src/checkbox",

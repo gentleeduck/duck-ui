@@ -524,6 +524,66 @@ export default function Demo() {
 }
 ```
 
+A card shows as checked when the checkbox, switch or radio item inside it is.
+
+```tsx title="components/field-15.tsx"
+// import from your project: import Demo from '@/components/field-15'
+import { Checkbox } from '@gentleduck/registry-ui/checkbox'
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+  FieldTitle,
+} from '@gentleduck/registry-ui/field'
+import { Switch } from '@gentleduck/registry-ui/switch'
+
+export default function Demo() {
+  return (
+    <div className="w-full max-w-md">
+      <FieldGroup>
+        <FieldSet>
+          <FieldLegend variant="label">Notifications</FieldLegend>
+          <FieldDescription>Pick where updates reach you.</FieldDescription>
+          <FieldGroup className="gap-3">
+            <FieldLabel htmlFor="notify-email-c7q">
+              <Field orientation="horizontal">
+                <Checkbox defaultChecked id="notify-email-c7q" />
+                <FieldContent>
+                  <FieldTitle>Email</FieldTitle>
+                  <FieldDescription>A digest of the day&apos;s activity.</FieldDescription>
+                </FieldContent>
+              </Field>
+            </FieldLabel>
+            <FieldLabel htmlFor="notify-push-m2d">
+              <Field orientation="horizontal">
+                <Checkbox id="notify-push-m2d" />
+                <FieldContent>
+                  <FieldTitle>Push</FieldTitle>
+                  <FieldDescription>Mentions and replies, as they happen.</FieldDescription>
+                </FieldContent>
+              </Field>
+            </FieldLabel>
+          </FieldGroup>
+        </FieldSet>
+        <FieldLabel htmlFor="share-usage-k8v">
+          <Field orientation="horizontal">
+            <FieldContent>
+              <FieldTitle>Share usage data</FieldTitle>
+              <FieldDescription>Help improve the product with anonymous usage data.</FieldDescription>
+            </FieldContent>
+            <Switch id="share-usage-k8v" />
+          </Field>
+        </FieldLabel>
+      </FieldGroup>
+    </div>
+  )
+}
+```
+
 ### Field Group
 
 Stack `Field` components with `FieldGroup`. Add `FieldSeparator` to divide them.
@@ -580,6 +640,37 @@ export default function Demo() {
             </Field>
           </FieldGroup>
         </FieldSet>
+      </FieldGroup>
+    </div>
+  )
+}
+```
+
+### Separator with text
+
+Give `FieldSeparator` children to write them across the line.
+
+```tsx title="components/field-17.tsx"
+// import from your project: import Demo from '@/components/field-17'
+import { Button } from '@gentleduck/registry-ui/button'
+import { Field, FieldGroup, FieldLabel, FieldSeparator } from '@gentleduck/registry-ui/field'
+import { Input } from '@gentleduck/registry-ui/input'
+
+export default function Demo() {
+  return (
+    <div className="w-full max-w-sm">
+      <FieldGroup>
+        <Field>
+          <Button variant="outline">Continue with a passkey</Button>
+        </Field>
+        <FieldSeparator>Or continue with</FieldSeparator>
+        <Field>
+          <FieldLabel htmlFor="email-s4p">Email</FieldLabel>
+          <Input id="email-s4p" placeholder="you@example.com" type="email" />
+        </Field>
+        <Field>
+          <Button>Sign in</Button>
+        </Field>
       </FieldGroup>
     </div>
   )
@@ -650,6 +741,41 @@ export default function Demo() {
 }
 ```
 
+### An animated error
+
+```tsx title="components/field-18.tsx"
+// import from your project: import Demo from '@/components/field-18'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Field, FieldLabel, MotionFieldError } from '@gentleduck/registry-ui/field'
+import { Input } from '@gentleduck/registry-ui/input'
+import * as React from 'react'
+
+export default function Demo() {
+  const [error, setError] = React.useState<string | null>(null)
+
+  return (
+    <form
+      className="flex w-[300px] flex-col gap-3"
+      onSubmit={(event) => {
+        event.preventDefault()
+        const value = String(new FormData(event.currentTarget).get('username'))
+        setError(value.length < 3 ? 'Use at least three characters.' : null)
+      }}>
+      <Field data-invalid={error ? true : undefined}>
+        <FieldLabel htmlFor="field-18-username">Username</FieldLabel>
+        <Input aria-invalid={error ? true : undefined} id="field-18-username" name="username" />
+        {error ? <MotionFieldError errors={[{ message: error }]} key={error} /> : null}
+      </Field>
+      <Button className="self-start" type="submit">
+        Check
+      </Button>
+    </form>
+  )
+}
+```
+
 ## Component Composition
 
 ## Anatomy
@@ -672,7 +798,7 @@ The `Field` family is designed for composing accessible forms. A typical field i
 ## Responsive Layout
 
 * **Vertical fields:** Default orientation stacks label, control, and helper text  -  ideal for mobile-first layouts.
-* **Horizontal fields:** Set `orientation="horizontal"` on `Field` to align the label and control side-by-side. Pair with `FieldContent` to keep descriptions aligned.
+* **Horizontal fields:** Set `orientation="horizontal"` on `Field` to align the label and control side-by-side. Pair with `FieldContent` to keep descriptions aligned. With a `FieldContent` the row aligns to the top, and a `Checkbox` or `RadioGroupItem` drops a pixel to line up with the title.
 * **Responsive fields:** Set `orientation="responsive"` for automatic column layouts inside container-aware parents. Apply `@container/field-group` classes on `FieldGroup` to switch orientations at specific breakpoints.
 
 ```tsx title="components/field-12.tsx"
@@ -749,6 +875,47 @@ export default function Demo() {
   <Input id="email" type="email" aria-invalid />
   <FieldError>Enter a valid email address.</FieldError>
 </Field>
+```
+
+Pass `errors` to `FieldError` to show what a form library or your own rules report: one message as text, several as a list.
+
+```tsx title="components/field-16.tsx"
+// import from your project: import Demo from '@/components/field-16'
+'use client'
+
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@gentleduck/registry-ui/field'
+import { Input } from '@gentleduck/registry-ui/input'
+import * as React from 'react'
+
+const rules = [
+  { message: 'Use at least 8 characters.', test: (value: string) => value.length >= 8 },
+  { message: 'Include a number.', test: (value: string) => /\d/.test(value) },
+]
+
+export default function Demo() {
+  const [password, setPassword] = React.useState('duck')
+  const errors = rules.filter((rule) => !rule.test(password))
+  const invalid = errors.length > 0
+
+  return (
+    <div className="w-full max-w-md">
+      <FieldGroup>
+        <Field data-invalid={invalid}>
+          <FieldLabel htmlFor="password-v3n">Password</FieldLabel>
+          <Input
+            aria-invalid={invalid}
+            id="password-v3n"
+            onChange={(event) => setPassword(event.target.value)}
+            type="password"
+            value={password}
+          />
+          <FieldDescription>Type to see which rules it still breaks.</FieldDescription>
+          <FieldError errors={errors} />
+        </Field>
+      </FieldGroup>
+    </div>
+  )
+}
 ```
 
 ## Accessibility
@@ -999,7 +1166,7 @@ Flex column that groups control and descriptions when the label sits beside the 
 
 ### FieldLabel
 
-Label styled for both direct inputs and nested `Field` children.
+Label styled for both direct inputs and nested `Field` children. Wrapped around a `Field`, it draws a choice card that shows as checked when the checkbox, switch or radio item inside it is.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

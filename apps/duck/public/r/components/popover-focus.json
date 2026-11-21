@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Popover from '@gentleduck/primitives/popover'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function PopoverFocusExample() {\n  const comment = React.useRef<HTMLTextAreaElement>(null)\n\n  return (\n    <Popover.Root>\n      <Popover.Trigger className={styles.button}>Comment</Popover.Trigger>\n      <Popover.Portal>\n        <Popover.Content\n          className={`${styles.content} ${styles.panel} ${styles.stack}`}\n          initialFocus={comment}\n          sideOffset={8}>\n          <button className={styles.button} type=\"button\">\n            Attach\n          </button>\n          <textarea className={styles.input} placeholder=\"Focus starts here\" ref={comment} rows={3} />\n        </Popover.Content>\n      </Popover.Portal>\n    </Popover.Root>\n  )\n}\n",
+      "path": "internal-primitives/popover-focus/popover-focus.tsx",
+      "target": "components/popover-focus.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "popover-focus",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -66,7 +66,7 @@ export default function Demo() {
                   }}
                   value={framework.value}>
                   {framework.label}
-                  <Check className={cn('ml-auto', value === framework.value ? 'opacity-100' : 'opacity-0')} />
+                  <Check className={cn('ms-auto', value === framework.value ? 'opacity-100' : 'opacity-0')} />
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -80,7 +80,7 @@ export default function Demo() {
 
 ## Philosophy
 
-Comboboxes solve the "too many options" problem  -  they combine a text input with a filterable dropdown. We make the component fully generic (`Combobox<TData, TType>`) because your data shape shouldn't be our concern. The composition with Popover and Command means you get search, keyboard navigation, and multi-select for free.
+Comboboxes solve the "too many options" problem  -  they combine a text input with a filterable dropdown. Compose `Popover` and `Command` by hand for full control, or use `Combobox`, which composes them for you: it keeps the value, shows the picked items' labels in the trigger, and picks one item or many.
 
 ## How It's Built
 
@@ -154,7 +154,7 @@ export function ExampleCombobox() {
           {value
             ? frameworks.find((framework) => framework.value === value)?.label
             : "Select framework..."}
-          <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDownIcon className="ms-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
@@ -174,7 +174,7 @@ export function ExampleCombobox() {
                 >
                   <CheckIcon
                     className={cn(
-                      "mr-2 h-4 w-4",
+                      "me-2 h-4 w-4",
                       value === framework.value ? "opacity-100" : "opacity-0"
                     )}
                   />
@@ -190,7 +190,7 @@ export function ExampleCombobox() {
 }
 ```
 
-Note: The `Combobox` wrapper component (`@/components/ui/combobox`) uses item `value`s for `value`, `defaultValue`, and `onValueChange`. Use `label` for display only.
+The `Combobox` component (`@/components/ui/combobox`) does this composition for you. It takes item `value`s for `value`, `defaultValue` and `onValueChange`, and shows each item's `label`.
 
 ## Examples
 
@@ -262,7 +262,7 @@ export default function Demo() {
                   }}
                   value={framework.value}>
                   {framework.label}
-                  <Check className={cn('ml-auto', value === framework.value ? 'opacity-100' : 'opacity-0')} />
+                  <Check className={cn('ms-auto', value === framework.value ? 'opacity-100' : 'opacity-0')} />
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -395,7 +395,7 @@ export default function Demo() {
   return (
     <div className="flex w-full flex-col items-start justify-between rounded-md border px-4 py-3 sm:flex-row sm:items-center">
       <p className="font-medium text-sm leading-none">
-        <span className="mr-2 rounded-lg bg-primary px-2 py-1 text-primary-foreground text-xs">{label}</span>
+        <span className="me-2 rounded-lg bg-primary px-2 py-1 text-primary-foreground text-xs">{label}</span>
         <span className="text-muted-foreground">Create a new project</span>
       </p>
       <DropdownMenu onOpenChange={setOpen} open={open}>
@@ -684,6 +684,163 @@ export default function Demo() {
 }
 ```
 
+### Combobox component
+
+`Combobox` takes the `items` and a function that renders a `ComboboxItem` for each. It keeps the value itself, or takes `value` and `onValueChange`, and shows the picked item's label in the trigger. A pick closes the popover, and picking the picked item again clears the value to an empty string.
+
+```tsx title="components/combobox-9.tsx"
+// import from your project: import Demo from '@/components/combobox-9'
+'use client'
+
+import { Combobox, ComboboxItem } from '@gentleduck/registry-ui/combobox'
+import * as React from 'react'
+
+const frameworks = [
+  { label: 'Next.js', value: 'next.js' },
+  { label: 'SvelteKit', value: 'sveltekit' },
+  { label: 'Nuxt.js', value: 'nuxt.js' },
+  { label: 'Remix', value: 'remix' },
+  { label: 'Astro', value: 'astro' },
+]
+
+export default function Demo() {
+  const [framework, setFramework] = React.useState('')
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <Combobox
+        commandEmpty="No framework found."
+        commandInput={{ placeholder: 'Search framework...' }}
+        commandTriggerPlaceholder="Select framework..."
+        items={frameworks}
+        onValueChange={setFramework}
+        popoverTrigger={{ className: 'w-57.5 justify-start', variant: 'outline' }}
+        value={framework}>
+        {(items) => items.map((item) => <ComboboxItem item={item} key={item.value} />)}
+      </Combobox>
+      <p className="text-muted-foreground text-sm">{framework ? `Value: ${framework}` : 'Nothing picked.'}</p>
+    </div>
+  )
+}
+```
+
+### Multiple
+
+`type="multiple"` picks any number of items and keeps the popover open while it does. The trigger shows each pick as a badge after the trigger's own `children`, and folds them into a count past two. `ComboboxGroup` puts a heading over the items.
+
+```tsx title="components/combobox-10.tsx"
+// import from your project: import Demo from '@/components/combobox-10'
+'use client'
+
+import { Combobox, ComboboxGroup, ComboboxItem } from '@gentleduck/registry-ui/combobox'
+import { PlusCircle } from 'lucide-react'
+
+const statuses = [
+  { label: 'Backlog', value: 'backlog' },
+  { label: 'Todo', value: 'todo' },
+  { label: 'In progress', value: 'in-progress' },
+  { label: 'Done', value: 'done' },
+  { label: 'Canceled', value: 'canceled' },
+]
+
+export default function Demo() {
+  return (
+    <Combobox
+      commandInput={{ placeholder: 'Status' }}
+      commandTriggerPlaceholder=""
+      defaultValue={['todo', 'in-progress']}
+      items={statuses}
+      popoverContent={{ className: 'w-50' }}
+      popoverTrigger={{
+        children: (
+          <>
+            <PlusCircle aria-hidden="true" />
+            Status
+          </>
+        ),
+        size: 'sm',
+      }}
+      type="multiple">
+      {(items) => (
+        <ComboboxGroup heading="Status">
+          {items.map((item) => (
+            <ComboboxItem item={item} key={item.value} />
+          ))}
+        </ComboboxGroup>
+      )}
+    </Combobox>
+  )
+}
+```
+
+### No search, a controlled popover
+
+```tsx title="components/combobox-11.tsx"
+// import from your project: import Demo from '@/components/combobox-11'
+'use client'
+
+import { Combobox, ComboboxItem } from '@gentleduck/registry-ui/combobox'
+import * as React from 'react'
+
+const sizes = [
+  { label: 'Small', value: 's' },
+  { label: 'Medium', value: 'm' },
+  { label: 'Large', value: 'l' },
+]
+
+export default function Demo() {
+  const [value, setValue] = React.useState('m')
+  const [open, setOpen] = React.useState(false)
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <Combobox
+        command={{ loop: true }}
+        commandTriggerPlaceholder="Pick a size"
+        items={sizes}
+        onValueChange={setValue}
+        popover={{ onOpenChange: setOpen, open }}
+        showSelected={false}
+        value={value}
+        withSearch={false}>
+        {(items) => items.map((item) => <ComboboxItem item={item} key={item.value} />)}
+      </Combobox>
+      <p className="text-muted-foreground text-sm">
+        No search box for three items, the trigger keeps its placeholder, and the popover is {open ? 'open' : 'closed'}.
+        Picked: {value || 'nothing'}.
+      </p>
+    </div>
+  )
+}
+```
+
+### An item checked of its own
+
+```tsx title="components/combobox-12.tsx"
+// import from your project: import Demo from '@/components/combobox-12'
+'use client'
+
+import { Combobox, ComboboxItem } from '@gentleduck/registry-ui/combobox'
+
+const toppings = [
+  { label: 'Cheese', value: 'cheese' },
+  { label: 'Mushroom', value: 'mushroom' },
+  { label: 'Olive', value: 'olive' },
+]
+
+export default function Demo() {
+  return (
+    <Combobox commandTriggerPlaceholder="Toppings" defaultValue={['mushroom']} items={toppings} type="multiple">
+      {(items) =>
+        items.map((item) => (
+          <ComboboxItem checked={item.value === 'cheese' ? true : undefined} item={item} key={item.value} />
+        ))
+      }
+    </Combobox>
+  )
+}
+```
+
 ## Component Composition
 
 ## RTL Support
@@ -766,25 +923,13 @@ export default function Demo() {
 } title="Alpha: Motion Compositions" tone="warning">
   Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 
-Use `MotionCombobox` and `MotionComboboxItem` for motion-powered popover and checkbox animations. The trigger uses `MotionButton`, the dropdown uses `MotionPopoverContent`, and each item's checkbox bounces on toggle.
+Use `MotionCombobox` and `MotionComboboxItem` for motion-powered popover and checkbox animations. The trigger uses `MotionButton`, the dropdown uses `MotionPopoverContent`, and each item's checkbox bounces on toggle. Pass each `MotionComboboxItem` its `index` to stagger their entrance.
 
 ```tsx title="components/combobox-8.tsx"
 // import from your project: import Demo from '@/components/combobox-8'
 'use client'
 
-import { cn } from '@gentleduck/libs/cn'
-import { MotionButton } from '@gentleduck/registry-ui/button'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@gentleduck/registry-ui/command'
-import { MotionPopover, MotionPopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'
-import { Check, ChevronsUpDown } from 'lucide-react'
-import * as React from 'react'
+import { MotionCombobox, MotionComboboxItem } from '@gentleduck/registry-ui/combobox'
 
 const frameworks = [
   { label: 'Next.js', value: 'next.js' },
@@ -795,40 +940,16 @@ const frameworks = [
 ]
 
 export default function Demo() {
-  const [open, setOpen] = React.useState(false)
-  const [value, setValue] = React.useState('')
-
   return (
-    <MotionPopover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger asChild>
-        <MotionButton aria-expanded={open} className="w-57.5 justify-between" role="combobox" variant="outline">
-          {value ? frameworks.find((f) => f.value === value)?.label : 'Select framework...'}
-          <ChevronsUpDown className="opacity-50" />
-        </MotionButton>
-      </PopoverTrigger>
-      <MotionPopoverContent className="w-57.5 min-w-auto p-0">
-        <Command>
-          <CommandInput className="h-9" placeholder="Search framework..." />
-          <CommandList>
-            <CommandEmpty>No framework found.</CommandEmpty>
-            <CommandGroup>
-              {frameworks.map((framework, _i) => (
-                <CommandItem
-                  key={framework.value}
-                  onSelect={(currentValue) => {
-                    setValue(currentValue === value ? '' : currentValue)
-                    setOpen(false)
-                  }}
-                  value={framework.value}>
-                  {framework.label}
-                  <Check className={cn('ml-auto', value === framework.value ? 'opacity-100' : 'opacity-0')} />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </MotionPopoverContent>
-    </MotionPopover>
+    <MotionCombobox
+      commandEmpty="No framework found."
+      commandInput={{ placeholder: 'Search framework...' }}
+      commandTriggerPlaceholder="Select frameworks..."
+      items={frameworks}
+      popoverTrigger={{ className: 'min-w-57.5 justify-start', variant: 'outline' }}
+      type="multiple">
+      {(items) => items.map((item, index) => <MotionComboboxItem index={index} item={item} key={item.value} />)}
+    </MotionCombobox>
   )
 }
 ```
@@ -838,36 +959,37 @@ export default function Demo() {
 
 ## API Reference
 
-### Combobox\<TData, TType>
+### Combobox
 
-A generic combobox component built on top of `Popover` and `Command`. Supports both single and multiple selection via the `TType` generic parameter (defaults to `'single'`).
+A combobox built on `Popover` and `Command`, picking one item or many.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `items` | `TData` | - | (required) Readonly array of `{ label: string; value: string }` objects to display as options. |
-| `children` | `(item: TData) => React.ReactNode` | - | (required) Render function that receives the `items` array and returns the list content (e.g. `ComboboxItem` elements). |
-| `value` | `TData[number]['value']` (single) or `TData[number]['value'][]` (multiple) | - | Controlled selected value. Shape depends on `TType`. |
-| `defaultValue` | `TData[number]['value']` (single) or `TData[number]['value'][]` (multiple) | - | Uncontrolled default value. Shape depends on `TType`. |
-| `onValueChange` | `(value) => void` | - | Callback fired when the value changes. Receives a single string (single mode) or string array (multiple mode). |
+| `items` | `readonly { label: string; value: string }[]` | - | (required) The options. |
+| `children` | `(items) => React.ReactNode` | - | (required) Render function that receives the `items` and returns the list content, such as `ComboboxItem` elements. |
+| `type` | `'single' \| 'multiple'` | `'single'` | `single` picks one item and closes, and picking it again clears the value to `''`. `multiple` picks any number and stays open. |
+| `value` | `string` (single) or `string[]` (multiple) | - | Controlled value, `''` when a single combobox has nothing picked. |
+| `defaultValue` | `string` (single) or `string[]` (multiple) | - | Value to start from when uncontrolled. |
+| `onValueChange` | `(value: string) => void` (single) or `(value: string[]) => void` (multiple) | - | Called with the new value on each pick. |
 | `withSearch` | `boolean` | `true` | Whether to show the search input inside the command list. |
-| `showSelected` | `boolean` | `true` | Whether to display the currently selected value(s) in the trigger button. In multiple mode, values beyond 2 are collapsed into a "+N Selected" badge. |
+| `showSelected` | `boolean` | `true` | Whether to show the picked items' labels in the trigger. In multiple mode, more than 2 are collapsed into a "+N Selected" badge. |
 | `commandTriggerPlaceholder` | `string` | `'Select item...'` | Placeholder text shown in the trigger button when no value is selected. |
 | `commandEmpty` | `string` | `'Nothing found.'` | Text shown inside the command list when no results match the search query. |
-| `popover` | `React.ComponentPropsWithoutRef<typeof Popover>` | - | Props spread onto the root `Popover` component. |
+| `popover` | `React.ComponentPropsWithoutRef<typeof Popover>` | - | Props spread onto the root `Popover`. Its `open`, `defaultOpen` and `onOpenChange` control the popover, which a single pick closes. |
 | `popoverTrigger` | `React.ComponentPropsWithoutRef<typeof Button>` | - | Props spread onto the trigger `Button`. The `variant` defaults to `'dashed'` when not provided. |
 | `popoverContent` | `React.ComponentPropsWithoutRef<typeof PopoverContent>` | - | Props spread onto `PopoverContent`. `className` is merged with the default `'w-(--gentleduck-popover-trigger-width) p-0'`. |
 | `command` | `React.ComponentPropsWithoutRef<typeof Command>` | - | Props spread onto the inner `Command` component. |
-| `commandInput` | `React.ComponentPropsWithoutRef<typeof CommandInput>` | - | Props spread onto `CommandInput` when `withSearch` is `true`. |
+| `commandInput` | `React.ComponentPropsWithoutRef<typeof CommandInput>` | - | Props spread onto `CommandInput` when `withSearch` is `true`. `className` is merged with the default. |
 
-### ComboboxItem\<T>
+### ComboboxItem
 
 A single selectable item inside the combobox list. Renders a `CommandItem` with a `Checkbox` indicator.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `item` | `T extends { label: string; value: string }` | - | (required) The item object. Its `label` is displayed as text and `value` is used for selection. |
-| `onSelect` | `(value: T['value']) => void` | - | Callback fired when this item is selected. Receives the item's `value`. |
-| `checked` | `boolean` | - | Whether the checkbox indicator shows as checked. |
+| `item` | `{ label: string; value: string }` | - | (required) The item object. Its `label` is displayed as text and `value` is used for selection. |
+| `onSelect` | `(value: string) => void` | - | Called with the item's `value` when it is picked, after the combobox updates its value. |
+| `checked` | `boolean` | - | Whether the checkbox shows as checked. Inside a `Combobox` it follows the combobox's value unless given. |
 | `...props` | `Omit<React.ComponentPropsWithoutRef<typeof CommandItem>, 'onSelect'>` | - | Additional props inherited from `CommandItem` (excluding `onSelect`). |
 
 ### ComboboxGroup

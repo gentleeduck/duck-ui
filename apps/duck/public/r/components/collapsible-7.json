@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Collapsible,\n  CollapsibleContent,\n  CollapsibleTrigger,\n  useCollapsible,\n} from '@gentleduck/registry-ui/collapsible'\n\nfunction Status() {\n  const { open, contentId, onOpenChange } = useCollapsible()\n  return (\n    <div className=\"flex items-center justify-between gap-2 text-sm\">\n      <span>\n        {open ? 'Open' : 'Closed'}, controlling #{contentId}\n      </span>\n      <button className=\"underline\" onClick={() => onOpenChange(!open)} type=\"button\">\n        Toggle from inside\n      </button>\n    </div>\n  )\n}\n\nexport default function Demo() {\n  return (\n    <Collapsible className=\"flex w-[350px] flex-col gap-2 rounded-md border p-3\">\n      <Status />\n      <CollapsibleTrigger className=\"text-start font-medium\">Release notes</CollapsibleTrigger>\n      <CollapsibleContent className=\"text-muted-foreground text-sm\">\n        Fixed the date picker in Safari.\n      </CollapsibleContent>\n    </Collapsible>\n  )\n}\n",
+      "path": "collapsible/collapsible-7.tsx",
+      "target": "components/collapsible-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "collapsible-7",
+  "registryDependencies": [
+    "collapsible"
+  ],
+  "root_folder": "collapsible",
+  "source": "/registry-examples/src/collapsible",
+  "type": "registry:example"
+}

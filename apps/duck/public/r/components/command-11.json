@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Command,\n  CommandEmpty,\n  CommandInput,\n  CommandItem,\n  CommandList,\n  CommandLoading,\n  useCommandSearch,\n} from '@gentleduck/registry-ui/command'\nimport * as React from 'react'\n\nconst CITIES = ['Amsterdam', 'Athens', 'Berlin', 'Bogota', 'Cairo', 'Dublin']\n\nfunction Results({ onProgress }: { onProgress: (progress: number | null) => void }) {\n  const search = useCommandSearch()\n  const [hits, setHits] = React.useState<string[]>(CITIES)\n\n  React.useEffect(() => {\n    let progress = 0\n    onProgress(0)\n    const timer = setInterval(() => {\n      progress += 25\n      onProgress(progress)\n      if (progress >= 100) {\n        clearInterval(timer)\n        setHits(CITIES.filter((city) => city.toLowerCase().includes(search.toLowerCase())))\n        onProgress(null)\n      }\n    }, 150)\n    return () => clearInterval(timer)\n  }, [search, onProgress])\n\n  return hits.map((city) => <CommandItem key={city}>{city}</CommandItem>)\n}\n\nexport default function Demo() {\n  const [progress, setProgress] = React.useState<number | null>(null)\n  const [typed, setTyped] = React.useState(0)\n\n  return (\n    <Command className=\"w-[320px] rounded-lg border\" shouldFilter={false}>\n      <CommandInput\n        autoFocus\n        onChange={() => setTyped((count) => count + 1)}\n        placeholder=\"Search cities...\"\n        wrapperClassName=\"px-3\"\n      />\n      <CommandList>\n        {progress === null ? null : <CommandLoading progress={progress}>Searching... {progress}%</CommandLoading>}\n        <CommandEmpty>No city found.</CommandEmpty>\n        <Results onProgress={setProgress} />\n      </CommandList>\n      <p className=\"px-3 pb-2 text-muted-foreground text-xs\">{typed} keystrokes heard by onChange.</p>\n    </Command>\n  )\n}\n",
+      "path": "command/command-11.tsx",
+      "target": "components/command-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "command-11",
+  "registryDependencies": [
+    "command",
+    "button"
+  ],
+  "root_folder": "command",
+  "source": "/registry-examples/src/command",
+  "type": "registry:example"
+}

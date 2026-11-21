@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  AlertDialog,\n  AlertDialogAction,\n  AlertDialogCancel,\n  AlertDialogContent,\n  AlertDialogDescription,\n  AlertDialogFooter,\n  AlertDialogHeader,\n  AlertDialogTitle,\n  AlertDialogTrigger,\n} from '@gentleduck/registry-ui/alert-dialog'\nimport { Button, buttonVariants } from '@gentleduck/registry-ui/button'\nimport * as React from 'react'\n\nconst deleteProject = () => new Promise((resolve) => setTimeout(resolve, 1200))\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n  const [deleting, setDeleting] = React.useState(false)\n\n  return (\n    <AlertDialog open={open} onOpenChange={(next) => !deleting && setOpen(next)}>\n      <AlertDialogTrigger asChild>\n        <Button variant=\"destructive\">Delete project</Button>\n      </AlertDialogTrigger>\n      <AlertDialogContent>\n        <AlertDialogHeader>\n          <AlertDialogTitle>Delete the project?</AlertDialogTitle>\n          <AlertDialogDescription>The dialog stays open until the project is gone.</AlertDialogDescription>\n        </AlertDialogHeader>\n        <AlertDialogFooter>\n          <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>\n          <AlertDialogAction\n            className={buttonVariants({ variant: 'destructive' })}\n            disabled={deleting}\n            onClick={async (event) => {\n              event.preventDefault()\n              setDeleting(true)\n              await deleteProject()\n              setDeleting(false)\n              setOpen(false)\n            }}>\n            {deleting ? 'Deleting...' : 'Delete'}\n          </AlertDialogAction>\n        </AlertDialogFooter>\n      </AlertDialogContent>\n    </AlertDialog>\n  )\n}\n",
+      "path": "alert-dialog/alert-dialog-6.tsx",
+      "target": "components/alert-dialog-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "alert-dialog-6",
+  "registryDependencies": [
+    "alert-dialog",
+    "direction",
+    "input",
+    "label"
+  ],
+  "root_folder": "alert-dialog",
+  "source": "/registry-examples/src/alert-dialog",
+  "type": "registry:example"
+}

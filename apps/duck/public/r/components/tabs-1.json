@@ -9,7 +9,13 @@
   ],
   "name": "tabs-1",
   "registryDependencies": [
-    "tabs"
+    "tabs",
+    "button",
+    "card",
+    "input",
+    "label",
+    "switch",
+    "textarea"
   ],
   "root_folder": "tabs",
   "source": "/registry-examples/src/tabs",

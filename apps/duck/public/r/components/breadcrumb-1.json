@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks"
+  ],
   "files": [
     {
       "content": "import {\n  Breadcrumb,\n  BreadcrumbEllipsis,\n  BreadcrumbItem,\n  BreadcrumbLink,\n  BreadcrumbList,\n  BreadcrumbPage,\n  BreadcrumbSeparator,\n} from '@gentleduck/registry-ui/breadcrumb'\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\nimport Link from 'next/link'\n\nexport default function Demo() {\n  return (\n    <Breadcrumb>\n      <BreadcrumbList>\n        <BreadcrumbItem>\n          <BreadcrumbLink asChild>\n            <Link href=\"/\">Home</Link>\n          </BreadcrumbLink>\n        </BreadcrumbItem>\n        <BreadcrumbSeparator />\n        <BreadcrumbItem>\n          <DropdownMenu onOpenChange={() => {}}>\n            <DropdownMenuTrigger className=\"flex items-center gap-1\">\n              <BreadcrumbEllipsis className=\"size-4\" />\n              <span className=\"sr-only\">Toggle menu</span>\n            </DropdownMenuTrigger>\n            <DropdownMenuContent align=\"start\" side=\"top\">\n              <DropdownMenuItem>Documentation</DropdownMenuItem>\n              <DropdownMenuItem>Themes</DropdownMenuItem>\n              <DropdownMenuItem>GitHub</DropdownMenuItem>\n            </DropdownMenuContent>\n          </DropdownMenu>\n        </BreadcrumbItem>\n        <BreadcrumbSeparator />\n        <BreadcrumbItem>\n          <BreadcrumbLink asChild>\n            <Link href=\"/docs/components\">Components</Link>\n          </BreadcrumbLink>\n        </BreadcrumbItem>\n        <BreadcrumbSeparator />\n        <BreadcrumbItem>\n          <BreadcrumbPage>Breadcrumb</BreadcrumbPage>\n        </BreadcrumbItem>\n      </BreadcrumbList>\n    </Breadcrumb>\n  )\n}\n",
@@ -9,7 +12,10 @@
   ],
   "name": "breadcrumb-1",
   "registryDependencies": [
-    "breadcrumb"
+    "breadcrumb",
+    "button",
+    "drawer",
+    "dropdown-menu"
   ],
   "root_folder": "breadcrumb",
   "source": "/registry-examples/src/breadcrumb",

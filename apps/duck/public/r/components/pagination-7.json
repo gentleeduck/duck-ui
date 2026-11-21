@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Pagination,\n  PaginationContent,\n  PaginationEllipsis,\n  PaginationItem,\n  PaginationNextTrigger,\n  PaginationPage,\n  PaginationPages,\n  PaginationPreviousTrigger,\n} from '@gentleduck/registry-ui/pagination'\nimport { ArrowLeft, ArrowRight } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Pagination aria-label=\"Search results\" boundaryCount={0} defaultPage={9} pageCount={40} siblingCount={2}>\n      <PaginationContent>\n        <PaginationItem>\n          <PaginationPreviousTrigger aria-label=\"Newer results\" className=\"w-auto gap-1 px-3\">\n            <ArrowLeft aria-hidden=\"true\" className=\"rtl:rotate-180\" />\n            Newer\n          </PaginationPreviousTrigger>\n        </PaginationItem>\n        <PaginationPages>\n          {(items) =>\n            items.map((item) => (\n              <PaginationItem key={item}>\n                {typeof item === 'number' ? (\n                  <PaginationPage aria-label={`Results page ${item}`} value={item} />\n                ) : (\n                  <PaginationEllipsis text={item === 'start-ellipsis' ? 'Newer pages' : 'Older pages'} />\n                )}\n              </PaginationItem>\n            ))\n          }\n        </PaginationPages>\n        <PaginationItem>\n          <PaginationNextTrigger aria-label=\"Older results\" className=\"w-auto gap-1 px-3\">\n            Older\n            <ArrowRight aria-hidden=\"true\" className=\"rtl:rotate-180\" />\n          </PaginationNextTrigger>\n        </PaginationItem>\n      </PaginationContent>\n    </Pagination>\n  )\n}\n",
+      "path": "pagination/pagination-7.tsx",
+      "target": "components/pagination-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "pagination-7",
+  "registryDependencies": [
+    "pagination"
+  ],
+  "root_folder": "pagination",
+  "source": "/registry-examples/src/pagination",
+  "type": "registry:example"
+}

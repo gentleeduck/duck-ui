@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Command from '@gentleduck/primitives/command'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nconst PACKAGES = ['react', 'react-dom', 'react-router', 'redux', 'remix', 'rollup', 'rxjs', 'vite', 'vitest', 'vue']\n\nfunction Results({ onLoading }: { onLoading: (loading: boolean) => void }) {\n  const search = Command.useCommandSearch()\n  const [hits, setHits] = React.useState<string[]>([])\n\n  React.useEffect(() => {\n    onLoading(true)\n    const timer = setTimeout(() => {\n      setHits(search ? PACKAGES.filter((name) => name.includes(search.toLowerCase())) : [])\n      onLoading(false)\n    }, 400)\n    return () => clearTimeout(timer)\n  }, [search, onLoading])\n\n  return hits.map((name) => (\n    <Command.Item className={styles.item} key={name} value={name}>\n      {name}\n    </Command.Item>\n  ))\n}\n\nexport default function CommandAsyncExample() {\n  const [loading, setLoading] = React.useState(false)\n\n  return (\n    <Command.Root className={styles.command} aria-label=\"Packages\" shouldFilter={false}>\n      <Command.Input className={styles.commandInput} placeholder=\"Search packages...\" />\n      <Command.Status className={styles.note} style={{ padding: '0.3rem 0.75rem' }}>\n        {(count) => (loading ? 'Searching...' : `${count} results`)}\n      </Command.Status>\n      <Command.List className={styles.commandList}>\n        {loading ? <Command.Loading className={styles.commandEmpty}>Fetching packages...</Command.Loading> : null}\n        {loading ? null : <Command.Empty className={styles.commandEmpty}>Type to search.</Command.Empty>}\n        <Results onLoading={setLoading} />\n      </Command.List>\n    </Command.Root>\n  )\n}\n",
+      "path": "internal-primitives/command-async/command-async.tsx",
+      "target": "components/command-async.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "command-async",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -142,7 +142,7 @@ export default function Demo() {
               return (
                 <button
                   aria-pressed={activeChart === chart}
-                  className="relative z-30 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-muted/50 sm:border-t-0 sm:border-l sm:px-8 sm:py-6"
+                  className="relative z-30 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-start even:border-s data-[active=true]:bg-muted/50 sm:border-s sm:border-t-0 sm:px-8 sm:py-6"
                   data-active={activeChart === chart}
                   key={chart}
                   onClick={() => setActiveChart(chart)}
@@ -713,6 +713,60 @@ Done. You've built your first chart! What's next?
 * [Tooltip](/duck-ui/components/chart#tooltip)
 * [Legend](/duck-ui/components/chart#legend)
 
+### Tooltip and legend options
+
+```tsx title="components/chart-10.tsx"
+// import from your project: import Demo from '@/components/chart-10'
+'use client'
+
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@gentleduck/registry-ui/chart'
+import { Monitor, Smartphone } from 'lucide-react'
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
+
+const data = [
+  { browser: 'chrome', desktop: 186, mobile: 80 },
+  { browser: 'safari', desktop: 305, mobile: 200 },
+  { browser: 'firefox', desktop: 237, mobile: 120 },
+]
+
+const config = {
+  chrome: { label: 'Chrome' },
+  desktop: { color: 'var(--chart-1)', icon: Monitor, label: 'Desktop' },
+  firefox: { label: 'Firefox' },
+  mobile: { color: 'var(--chart-2)', icon: Smartphone, label: 'Mobile' },
+  safari: { label: 'Safari' },
+} satisfies ChartConfig
+
+export default function Demo() {
+  return (
+    <ChartContainer className="h-[220px] w-full max-w-md" config={config}>
+      <BarChart accessibilityLayer data={data}>
+        <CartesianGrid vertical={false} />
+        <XAxis
+          axisLine={false}
+          dataKey="browser"
+          tickFormatter={(value) => config[value as keyof typeof config].label}
+          tickLine={false}
+        />
+        <ChartTooltip
+          content={<ChartTooltipContent hideIndicator labelClassName="text-primary" labelKey="browser" />}
+        />
+        <ChartLegend content={<ChartLegendContent hideIcon />} />
+        <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
+        <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+      </BarChart>
+    </ChartContainer>
+  )
+}
+```
+
 ## Chart Config
 
 The chart config is where you define the labels, icons and colors for a chart.
@@ -813,7 +867,7 @@ const chartData = [
 #### Tailwind
 
 ```tsx
-<LabelList className="fill-[--color-desktop]" />
+<LabelList className="fill-(--color-desktop)" />
 ```
 
 ## Tooltip
@@ -984,7 +1038,7 @@ function TooltipDemo({
               key={item.name}>
               {!hideIndicator && (
                 <div
-                  className={cn('shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]', {
+                  className={cn('shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg)', {
                     'h-2.5 w-2.5': indicator === 'dot',
                     'my-0.5': nestLabel && indicator === 'dashed',
                     'w-0 border-[1.5px] border-dashed bg-transparent': indicator === 'dashed',
@@ -1112,6 +1166,80 @@ const chartConfig = {
 ```
 
 This will use `Chrome` and `Safari` for the legend names.
+
+### Icons, formatter and placement
+
+A series given an `icon` in the config shows it in the legend and the tooltip in place of its colour swatch; `hideIcon` on `ChartLegendContent` keeps the swatch. `verticalAlign="top"` on `ChartLegend` puts the legend above the chart, and `ChartLegendContent` pads it from below. `formatter` on `ChartTooltipContent` draws each tooltip row itself, and a series given a `theme` takes its light or dark colour from the page.
+
+```tsx title="components/chart-9.tsx"
+// import from your project: import Demo from '@/components/chart-9'
+'use client'
+
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@gentleduck/registry-ui/chart'
+import { Bird, Feather } from 'lucide-react'
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
+
+const chartData = [
+  { mallard: 42, month: 'January', swan: 6 },
+  { mallard: 38, month: 'February', swan: 4 },
+  { mallard: 51, month: 'March', swan: 0 },
+  { mallard: 64, month: 'April', swan: 3 },
+]
+
+const chartConfig = {
+  mallard: {
+    color: '#2563eb',
+    icon: Bird,
+    label: 'Mallards',
+  },
+  swan: {
+    icon: Feather,
+    label: 'Swans',
+    theme: { dark: '#e2e8f0', light: '#64748b' },
+  },
+} satisfies ChartConfig
+
+export default function Demo() {
+  return (
+    <ChartContainer className="min-h-[200px] w-full" config={chartConfig}>
+      <BarChart accessibilityLayer data={chartData}>
+        <CartesianGrid vertical={false} />
+        <XAxis
+          axisLine={false}
+          dataKey="month"
+          tickFormatter={(value) => value.slice(0, 3)}
+          tickLine={false}
+          tickMargin={10}
+        />
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              formatter={(value, name) => (
+                <span className="flex w-full justify-between gap-4">
+                  <span className="text-muted-foreground">{chartConfig[name as keyof typeof chartConfig].label}</span>
+                  <span className="font-medium font-mono tabular-nums">
+                    {value} {value === 1 ? 'bird' : 'birds'}
+                  </span>
+                </span>
+              )}
+            />
+          }
+        />
+        <ChartLegend content={<ChartLegendContent />} verticalAlign="top" />
+        <Bar dataKey="mallard" fill="var(--color-mallard)" radius={4} stackId="ponds" />
+        <Bar dataKey="swan" fill="var(--color-swan)" radius={4} stackId="ponds" />
+      </BarChart>
+    </ChartContainer>
+  )
+}
+```
 
 ## Accessibility
 
@@ -1397,7 +1525,7 @@ Custom content renderer for `<ChartLegend>` (Recharts `Legend`). Reads theme col
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `nameKey` | `string` | - | Config or data key to use for legend item names. |
-| `hideIcon` | `boolean` | `false` | Whether to hide the icon or color swatch for each legend entry. |
+| `hideIcon` | `boolean` | `false` | Shows the colour swatch in place of a series' config `icon`. |
 | `verticalAlign` | `'top' \| 'middle' \| 'bottom'` | `'bottom'` | Vertical alignment of the legend relative to the chart. Controls top/bottom padding. |
 | `payload` | `RechartsPrimitive.LegendProps['payload']` | - | Legend payload provided automatically by Recharts. |
 | `className` | `string` | - | Additional CSS classes applied to the legend container. |

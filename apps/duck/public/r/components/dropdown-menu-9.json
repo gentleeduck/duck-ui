@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  DropdownMenu,\n  DropdownMenuCheckboxItem,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuSeparator,\n  DropdownMenuShortcut,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n  const [pinned, setPinned] = React.useState(false)\n  const [last, setLast] = React.useState('nothing yet')\n\n  return (\n    <div className=\"flex flex-col items-center gap-3\">\n      <DropdownMenu onOpenChange={setOpen} open={open}>\n        <DropdownMenuTrigger asChild>\n          <Button variant=\"outline\">File</Button>\n        </DropdownMenuTrigger>\n        <DropdownMenuContent className=\"w-56\">\n          <DropdownMenuItem onSelect={() => setLast('rename')}>\n            Rename\n            <DropdownMenuShortcut keys=\"mod+shift+r\" onKeysPressed={() => setLast('rename, from its keys')} />\n          </DropdownMenuItem>\n          <DropdownMenuItem onSelect={() => setLast('export')}>\n            Export\n            <DropdownMenuShortcut keys=\"mod+shift+e\" onKeysPressed={() => setLast('export, from its keys')} />\n          </DropdownMenuItem>\n          <DropdownMenuCheckboxItem checked={pinned} closeOnSelect={false} onCheckedChange={setPinned}>\n            Pin to sidebar\n          </DropdownMenuCheckboxItem>\n          <DropdownMenuSeparator />\n          <DropdownMenuItem onSelect={() => setLast('delete')} variant=\"destructive\">\n            Delete\n          </DropdownMenuItem>\n        </DropdownMenuContent>\n      </DropdownMenu>\n      <p className=\"text-muted-foreground text-sm\">\n        Menu {open ? 'open' : 'closed'}, {pinned ? 'pinned' : 'not pinned'}, last: {last}\n      </p>\n    </div>\n  )\n}\n",
+      "path": "dropdown-menu/dropdown-menu-9.tsx",
+      "target": "components/dropdown-menu-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "dropdown-menu-9",
+  "registryDependencies": [
+    "dropdown-menu",
+    "button",
+    "dialog",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "dropdown-menu",
+  "source": "/registry-examples/src/dropdown-menu",
+  "type": "registry:example"
+}

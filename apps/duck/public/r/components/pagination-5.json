@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Pagination,\n  PaginationContent,\n  PaginationFirstTrigger,\n  PaginationItem,\n  PaginationLastTrigger,\n  PaginationNextTrigger,\n  PaginationPages,\n  PaginationPreviousTrigger,\n} from '@gentleduck/registry-ui/pagination'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [page, setPage] = React.useState(6)\n\n  return (\n    <div className=\"flex flex-col items-center gap-3\">\n      <Pagination onPageChange={setPage} page={page} pageCount={20}>\n        <PaginationContent>\n          <PaginationItem>\n            <PaginationFirstTrigger />\n          </PaginationItem>\n          <PaginationItem>\n            <PaginationPreviousTrigger />\n          </PaginationItem>\n          <PaginationPages />\n          <PaginationItem>\n            <PaginationNextTrigger />\n          </PaginationItem>\n          <PaginationItem>\n            <PaginationLastTrigger />\n          </PaginationItem>\n        </PaginationContent>\n      </Pagination>\n      <p className=\"text-muted-foreground text-sm\">Page {page} of 20</p>\n    </div>\n  )\n}\n",
+      "path": "pagination/pagination-5.tsx",
+      "target": "components/pagination-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "pagination-5",
+  "registryDependencies": [
+    "pagination"
+  ],
+  "root_folder": "pagination",
+  "source": "/registry-examples/src/pagination",
+  "type": "registry:example"
+}

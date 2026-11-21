@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as DropdownMenu from '@gentleduck/primitives/dropdown-menu'\nimport styles from '../primitives.module.css'\n\nexport default function DropdownMenuSubmenuExample() {\n  return (\n    <DropdownMenu.Root>\n      <DropdownMenu.Trigger className={styles.button}>Insert</DropdownMenu.Trigger>\n      <DropdownMenu.Portal>\n        <DropdownMenu.Content align=\"start\" className={styles.content} sideOffset={6}>\n          <DropdownMenu.Item className={styles.item}>Text</DropdownMenu.Item>\n          <DropdownMenu.Sub>\n            <DropdownMenu.SubTrigger className={styles.item}>\n              Media <span className={styles.shortcut}>{'>'}</span>\n            </DropdownMenu.SubTrigger>\n            <DropdownMenu.Portal>\n              <DropdownMenu.SubContent className={styles.content} sideOffset={4}>\n                <DropdownMenu.Item className={styles.item}>Image</DropdownMenu.Item>\n                <DropdownMenu.Item className={styles.item}>Video</DropdownMenu.Item>\n                <DropdownMenu.Sub>\n                  <DropdownMenu.SubTrigger className={styles.item}>\n                    Embed <span className={styles.shortcut}>{'>'}</span>\n                  </DropdownMenu.SubTrigger>\n                  <DropdownMenu.Portal>\n                    <DropdownMenu.SubContent className={styles.content} sideOffset={4}>\n                      <DropdownMenu.Item className={styles.item}>Map</DropdownMenu.Item>\n                      <DropdownMenu.Item className={styles.item}>Chart</DropdownMenu.Item>\n                    </DropdownMenu.SubContent>\n                  </DropdownMenu.Portal>\n                </DropdownMenu.Sub>\n              </DropdownMenu.SubContent>\n            </DropdownMenu.Portal>\n          </DropdownMenu.Sub>\n          <DropdownMenu.Item className={styles.item}>Table</DropdownMenu.Item>\n        </DropdownMenu.Content>\n      </DropdownMenu.Portal>\n    </DropdownMenu.Root>\n  )\n}\n",
+      "path": "internal-primitives/dropdown-menu-submenu/dropdown-menu-submenu.tsx",
+      "target": "components/dropdown-menu-submenu.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dropdown-menu-submenu",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

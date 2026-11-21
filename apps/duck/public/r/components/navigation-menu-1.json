@@ -9,7 +9,8 @@
   ],
   "name": "navigation-menu-1",
   "registryDependencies": [
-    "navigation-menu"
+    "navigation-menu",
+    "direction"
   ],
   "root_folder": "navigation-menu",
   "source": "/registry-examples/src/navigation-menu",

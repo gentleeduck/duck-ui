@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Popover from '@gentleduck/primitives/popover'\nimport styles from '../primitives.module.css'\n\nexport default function PopoverBasicExample() {\n  return (\n    <Popover.Root>\n      <Popover.Trigger className={styles.button}>Dimensions</Popover.Trigger>\n      <Popover.Portal>\n        <Popover.Content className={`${styles.content} ${styles.panel} ${styles.stack}`} sideOffset={8}>\n          <Popover.Title className={styles.title}>Dimensions</Popover.Title>\n          <Popover.Description className={styles.description}>Set the layer's size.</Popover.Description>\n          <label className={styles.row}>\n            <span className={styles.label}>Width</span>\n            <input className={styles.input} defaultValue=\"100%\" />\n          </label>\n          <Popover.Close className={styles.button}>Done</Popover.Close>\n          <Popover.Arrow className={styles.arrow} />\n        </Popover.Content>\n      </Popover.Portal>\n    </Popover.Root>\n  )\n}\n",
+      "path": "internal-primitives/popover-basic/popover-basic.tsx",
+      "target": "components/popover-basic.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "popover-basic",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Switch } from '@gentleduck/registry-ui/switch'\nimport { Moon, Sun } from 'lucide-react'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [dark, setDark] = React.useState(false)\n\n  return (\n    <div className=\"flex flex-col gap-4\">\n      <div className=\"flex items-center gap-2\">\n        <Switch\n          checked={dark}\n          checkedIndicator={<Moon />}\n          id=\"theme-switch\"\n          indicator={<Sun />}\n          onCheckedChange={setDark}\n        />\n        <Label htmlFor=\"theme-switch\">Dark theme: {dark ? 'on' : 'off'}</Label>\n      </div>\n      <div className=\"flex items-center gap-2\">\n        <Switch defaultChecked disabled id=\"sync-switch\" />\n        <Label htmlFor=\"sync-switch\">Sync (managed by your organisation)</Label>\n      </div>\n    </div>\n  )\n}\n",
+      "path": "switch/switch-5.tsx",
+      "target": "components/switch-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "switch-5",
+  "registryDependencies": [
+    "switch",
+    "button",
+    "field",
+    "label"
+  ],
+  "root_folder": "switch",
+  "source": "/registry-examples/src/switch",
+  "type": "registry:example"
+}

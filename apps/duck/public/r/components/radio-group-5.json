@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { RadioGroup, RadioGroupItem } from '@gentleduck/registry-ui/radio-group'\n\nexport default function Demo() {\n  return (\n    <RadioGroup aria-label=\"Delivery\" className=\"flex-row gap-6\" defaultValue=\"standard\" orientation=\"horizontal\">\n      <RadioGroupItem value=\"standard\">Standard</RadioGroupItem>\n      <RadioGroupItem value=\"express\">Express</RadioGroupItem>\n      <RadioGroupItem disabled value=\"same-day\">\n        Same day\n      </RadioGroupItem>\n    </RadioGroup>\n  )\n}\n",
+      "path": "radio-group/radio-group-5.tsx",
+      "target": "components/radio-group-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "radio-group-5",
+  "registryDependencies": [
+    "radio-group",
+    "button",
+    "field"
+  ],
+  "root_folder": "radio-group",
+  "source": "/registry-examples/src/radio-group",
+  "type": "registry:example"
+}

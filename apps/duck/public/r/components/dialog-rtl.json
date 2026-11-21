@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Dialog from '@gentleduck/primitives/dialog'\nimport styles from '../primitives.module.css'\n\nexport default function DialogRtlExample() {\n  return (\n    <Dialog.Root dir=\"rtl\">\n      <Dialog.Trigger className={styles.button}>تعديل الملف</Dialog.Trigger>\n      <Dialog.Portal>\n        <Dialog.Overlay className={`${styles.overlay} ${styles.fade}`} />\n        <Dialog.Content className={styles.dialog}>\n          <Dialog.Title className={styles.title}>تعديل الملف الشخصي</Dialog.Title>\n          <Dialog.Description className={styles.description}>تظهر التغييرات في صفحتك العامة.</Dialog.Description>\n          <div className={styles.actions}>\n            <Dialog.Close className={styles.button}>إغلاق</Dialog.Close>\n          </div>\n        </Dialog.Content>\n      </Dialog.Portal>\n    </Dialog.Root>\n  )\n}\n",
+      "path": "internal-primitives/dialog-rtl/dialog-rtl.tsx",
+      "target": "components/dialog-rtl.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dialog-rtl",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

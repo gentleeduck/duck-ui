@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  MotionTypographyH3,\n  MotionTypographyInlineCode,\n  MotionTypographyLead,\n  MotionTypographyList,\n  MotionTypographyMuted,\n  MotionTypographyTable,\n  TypographyTd,\n  TypographyTh,\n  TypographyTr,\n} from '@gentleduck/registry-ui/typography'\n\nexport default function Demo() {\n  return (\n    <div className=\"w-full max-w-lg\">\n      <MotionTypographyH3 index={0}>Version 2.4</MotionTypographyH3>\n      <MotionTypographyLead index={1}>The calendar selects ranges.</MotionTypographyLead>\n      <MotionTypographyMuted index={2}>\n        Pass <MotionTypographyInlineCode index={3}>mode=\"range\"</MotionTypographyInlineCode> to turn it on.\n      </MotionTypographyMuted>\n      <MotionTypographyList index={3}>\n        <li>A first click sets the start</li>\n        <li className=\"font-medium\">A second click sets the end</li>\n      </MotionTypographyList>\n      <MotionTypographyTable index={6}>\n        <thead>\n          <TypographyTr>\n            <TypographyTh>Prop</TypographyTh>\n            <TypographyTh>Value</TypographyTh>\n          </TypographyTr>\n        </thead>\n        <tbody>\n          <TypographyTr>\n            <TypographyTd>mode</TypographyTd>\n            <TypographyTd>\"range\"</TypographyTd>\n          </TypographyTr>\n        </tbody>\n      </MotionTypographyTable>\n    </div>\n  )\n}\n",
+      "path": "typography/typography-17.tsx",
+      "target": "components/typography-17.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "typography-17",
+  "registryDependencies": [
+    "typography",
+    "direction"
+  ],
+  "root_folder": "typography",
+  "source": "/registry-examples/src/typography",
+  "type": "registry:example"
+}

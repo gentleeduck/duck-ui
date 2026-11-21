@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Card,\n  CardAction,\n  CardContent,\n  CardDescription,\n  CardFooter,\n  CardHeader,\n  CardTitle,\n} from '@gentleduck/registry-ui/card'\n\nexport default function Demo() {\n  return (\n    <Card className=\"w-[350px]\">\n      <CardHeader className=\"border-b\">\n        <CardTitle>Mill pond</CardTitle>\n        <CardDescription>Twelve ducks, open all year.</CardDescription>\n        <CardAction>\n          <Button size=\"sm\" variant=\"outline\">\n            Follow\n          </Button>\n        </CardAction>\n      </CardHeader>\n      <CardContent>\n        <p className=\"text-sm\">The ducks are fed at nine and at four. Bring oats, never bread.</p>\n      </CardContent>\n      <CardFooter className=\"border-t\">\n        <Button variant=\"ghost\">Share</Button>\n        <Button>Visit</Button>\n      </CardFooter>\n    </Card>\n  )\n}\n",
+      "path": "card/card-5.tsx",
+      "target": "components/card-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "card-5",
+  "registryDependencies": [
+    "card",
+    "button",
+    "input",
+    "label",
+    "select",
+    "switch"
+  ],
+  "root_folder": "card",
+  "source": "/registry-examples/src/card",
+  "type": "registry:example"
+}

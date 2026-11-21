@@ -9,7 +9,10 @@
   ],
   "name": "alert-dialog-4",
   "registryDependencies": [
-    "alert-dialog"
+    "alert-dialog",
+    "direction",
+    "input",
+    "label"
   ],
   "root_folder": "alert-dialog",
   "source": "/registry-examples/src/alert-dialog",

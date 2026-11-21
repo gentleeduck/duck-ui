@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Badge } from '@gentleduck/registry-ui/badge'\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\n\nconst frameworks = [\n  { value: 'next', label: 'Next.js' },\n  { value: 'remix', label: 'Remix' },\n  { value: 'astro', label: 'Astro' },\n  { value: 'nuxt', label: 'Nuxt' },\n  { value: 'svelte-kit', label: 'SvelteKit' },\n  { value: 'solid-start', label: 'SolidStart' },\n]\n\nconst labelOf = (value: string) => frameworks.find((framework) => framework.value === value)?.label\n\nexport default function Demo() {\n  return (\n    <Select defaultValue={['next', 'astro', 'svelte-kit']} multiple>\n      <SelectTrigger aria-label=\"Frameworks\" className=\"w-[300px]\">\n        <SelectValue placeholder=\"Pick frameworks\">\n          {(picked) => (\n            <span className=\"flex gap-1\">\n              {picked.slice(0, 2).map((value) => (\n                <Badge key={value} size=\"sm\" variant=\"secondary\">\n                  {labelOf(value)}\n                </Badge>\n              ))}\n              {picked.length > 2 ? (\n                <Badge size=\"sm\" variant=\"outline\">\n                  +{picked.length - 2} more\n                </Badge>\n              ) : null}\n            </span>\n          )}\n        </SelectValue>\n      </SelectTrigger>\n      <SelectContent>\n        {frameworks.map((framework) => (\n          <SelectItem key={framework.value} value={framework.value}>\n            {framework.label}\n          </SelectItem>\n        ))}\n      </SelectContent>\n    </Select>\n  )\n}\n",
+      "path": "select/select-13.tsx",
+      "target": "components/select-13.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-13",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

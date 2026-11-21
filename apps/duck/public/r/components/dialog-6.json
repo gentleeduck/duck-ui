@@ -1,0 +1,26 @@
+{
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Dialog,\n  DialogClose,\n  DialogContent,\n  DialogDescription,\n  DialogFooter,\n  DialogHeader,\n  DialogTitle,\n  DialogTrigger,\n} from '@gentleduck/registry-ui/dialog'\n\nexport default function Demo() {\n  return (\n    <Dialog>\n      <DialogTrigger asChild>\n        <Button variant=\"outline\">Open settings</Button>\n      </DialogTrigger>\n      <DialogContent className=\"sm:max-w-[425px]\">\n        <DialogHeader>\n          <DialogTitle>Account settings</DialogTitle>\n          <DialogDescription>Manage your account and the data it holds.</DialogDescription>\n        </DialogHeader>\n        <DialogFooter>\n          <Dialog>\n            <DialogTrigger asChild>\n              <Button variant=\"destructive\">Delete account</Button>\n            </DialogTrigger>\n            <DialogContent className=\"sm:max-w-[380px]\">\n              <DialogHeader>\n                <DialogTitle>Delete your account?</DialogTitle>\n                <DialogDescription>Your projects and settings go with it. This cannot be undone.</DialogDescription>\n              </DialogHeader>\n              <DialogFooter>\n                <DialogClose asChild>\n                  <Button variant=\"outline\">Keep it</Button>\n                </DialogClose>\n                <DialogClose asChild>\n                  <Button variant=\"destructive\">Delete</Button>\n                </DialogClose>\n              </DialogFooter>\n            </DialogContent>\n          </Dialog>\n        </DialogFooter>\n      </DialogContent>\n    </Dialog>\n  )\n}\n",
+      "path": "dialog/dialog-6.tsx",
+      "target": "components/dialog-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "dialog-6",
+  "registryDependencies": [
+    "dialog",
+    "button",
+    "calendar",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "popover",
+    "select",
+    "textarea"
+  ],
+  "root_folder": "dialog",
+  "source": "/registry-examples/src/dialog",
+  "type": "registry:example"
+}

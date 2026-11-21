@@ -1,0 +1,24 @@
+{
+  "dependencies": [
+    "sonner"
+  ],
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { Plus } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-col items-center gap-4\">\n      <div className=\"flex flex-wrap items-center gap-2\">\n        <Button size=\"sm\" variant=\"outline\">\n          Small\n        </Button>\n        <Button variant=\"outline\">Default</Button>\n        <Button size=\"lg\" variant=\"outline\">\n          Large\n        </Button>\n      </div>\n      <div className=\"flex flex-wrap items-center gap-2\">\n        <Button aria-label=\"Add, small\" size=\"icon-sm\" variant=\"outline\">\n          <Plus aria-hidden=\"true\" />\n        </Button>\n        <Button aria-label=\"Add\" size=\"icon\" variant=\"outline\">\n          <Plus aria-hidden=\"true\" />\n        </Button>\n        <Button aria-label=\"Add, large\" size=\"icon-lg\" variant=\"outline\">\n          <Plus aria-hidden=\"true\" />\n        </Button>\n      </div>\n    </div>\n  )\n}\n",
+      "path": "button/button-23.tsx",
+      "target": "components/button-23.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "button-23",
+  "registryDependencies": [
+    "button",
+    "command",
+    "direction",
+    "toggle",
+    "tooltip"
+  ],
+  "root_folder": "button",
+  "source": "/registry-examples/src/button",
+  "type": "registry:example"
+}

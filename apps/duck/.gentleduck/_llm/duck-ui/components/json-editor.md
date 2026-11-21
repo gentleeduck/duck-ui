@@ -87,10 +87,10 @@ npx @gentleduck/cli add json-editor
 Install the following dependencies:
 
 ```bash
-npm install @gentleduck/libs @gentleduck/primitives react-hook-form sonner lucide-react
+npm install @gentleduck/libs @gentleduck/primitives react-hook-form lucide-react
 ```
 
-The `json-editor` component depends on the [`alert-dialog`](/duck-ui/components/alert-dialog), [`button`](/duck-ui/components/button), [`field`](/duck-ui/components/field), [`popover`](/duck-ui/components/popover), and [`sheet`](/duck-ui/components/sheet) components.
+The `json-editor` component depends on the [`alert-dialog`](/duck-ui/components/alert-dialog), [`button`](/duck-ui/components/button), [`field`](/duck-ui/components/field), [`popover`](/duck-ui/components/popover), [`sheet`](/duck-ui/components/sheet), and [`textarea`](/duck-ui/components/textarea) components.
 
 Copy and paste the following code into your project.
 
@@ -128,6 +128,8 @@ const form = useForm<FormValues>({
   </form>
 </FormProvider>
 ```
+
+The field holds any JSON value, and an empty editor saves `null`. A string value shows quoted, so it saves again unchanged, unless it holds JSON text, which shows as that text.
 
 ## Examples
 
@@ -328,6 +330,141 @@ export default function Demo() {
 }
 ```
 
+### Objects only
+
+Set `allowArray={false}` to take only a JSON object, or nothing. A draft that is not JSON, or is not an object here, is refused under the editor, which is marked invalid until the draft changes. The form's own error for the field shows in the same place, so a rule of your own, such as a required key, reads like the editor's. No `Toaster` is needed.
+
+```tsx title="components/json-editor-6.tsx"
+// import from your project: import Demo from '@/components/json-editor-6'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { JsonTextareaField } from '@gentleduck/registry-ui/json-editor'
+import { FormProvider, useForm } from 'react-hook-form'
+
+type JsonEditorWebhookValues = {
+  webhook: Record<string, unknown> | null
+}
+
+export default function Demo() {
+  const form = useForm<JsonEditorWebhookValues>({
+    defaultValues: {
+      webhook: {
+        events: ['order.paid', 'order.refunded'],
+      },
+    },
+  })
+
+  function onSubmit(values: JsonEditorWebhookValues) {
+    if (typeof values.webhook?.url !== 'string') {
+      form.setError('webhook', { message: 'Add a "url" for the webhook to call.' })
+      return
+    }
+    form.clearErrors('webhook')
+  }
+
+  return (
+    <FormProvider {...form}>
+      <form className="w-full max-w-2xl space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+        <JsonTextareaField
+          allowArray={false}
+          control={form.control}
+          description="A JSON object. An array or a single value is refused."
+          label="Webhook"
+          name="webhook"
+          rows={8}
+        />
+
+        <div className="flex items-center justify-end">
+          <Button type="submit">Save webhook</Button>
+        </div>
+      </form>
+    </FormProvider>
+  )
+}
+```
+
+### Read only
+
+Set `isEditable={false}` to show a value that cannot be saved. This one also leaves out the line numbers and the `Full` action.
+
+```tsx title="components/json-editor-7.tsx"
+// import from your project: import Demo from '@/components/json-editor-7'
+'use client'
+
+import { JsonTextareaField } from '@gentleduck/registry-ui/json-editor'
+import { FormProvider, useForm } from 'react-hook-form'
+
+type JsonEditorAuditValues = {
+  event: Record<string, unknown> | null
+}
+
+export default function Demo() {
+  const form = useForm<JsonEditorAuditValues>({
+    defaultValues: {
+      event: {
+        action: 'member.invited',
+        actor: 'duck@gentleduck.org',
+        at: '2026-11-12T09:30:00Z',
+      },
+    },
+  })
+
+  return (
+    <FormProvider {...form}>
+      <form className="w-full max-w-2xl">
+        <JsonTextareaField
+          control={form.control}
+          description="Recorded events cannot be changed."
+          expandMode="none"
+          isEditable={false}
+          label="Audit event"
+          lineNumbers={false}
+          name="event"
+          rows={6}
+        />
+      </form>
+    </FormProvider>
+  )
+}
+```
+
+### Sheet on the left
+
+```tsx title="components/json-editor-8.tsx"
+// import from your project: import Demo from '@/components/json-editor-8'
+'use client'
+
+import { JsonTextareaField } from '@gentleduck/registry-ui/json-editor'
+import { FormProvider, useForm } from 'react-hook-form'
+
+type Values = { headers: Record<string, unknown> | null }
+
+export default function Demo() {
+  const form = useForm<Values>({ defaultValues: { headers: null } })
+
+  return (
+    <FormProvider {...form}>
+      <form className="w-full max-w-xl">
+        <JsonTextareaField
+          actionsClassName="justify-start"
+          control={form.control}
+          description="Opens in a sheet from the left, with a taller line height."
+          expandMode="sheet"
+          label="Request headers"
+          lineHeightPx={24}
+          name="headers"
+          placeholder={'{\n  "Accept": "application/json"\n}'}
+          rows={6}
+          sheetSide="left"
+          sheetTitle="Edit request headers"
+        />
+      </form>
+    </FormProvider>
+  )
+}
+```
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the editor follows: labels, buttons, and the expand sheet, popover, and dialog mirror, while the JSON code and its line-number gutter stay LTR. Pass `lang` for locale-aware line numbers and `text` to translate labels and messages.
@@ -515,12 +652,12 @@ export default function Demo() {
 | --- | --- | --- | --- |
 | `control` | `Control<TFieldValues>` | `-` | React Hook Form control object from `useForm` |
 | `name` | `FieldPath<TFieldValues>` | `-` | Field path in your form values |
-| `label` | `string` | `-` | Visible label rendered above the editor |
+| `label` | `string` | `-` | Visible label rendered above the editor. It names the editor, and the popover trigger beside its preview. |
 | `description` | `string` | `-` | Helper text rendered under the label |
 | `className` | `string` | `-` | Additional CSS classes for the field root |
 | `actionsClassName` | `string` | `-` | Additional CSS classes for the action buttons row |
 | `isEditable` | `boolean` | `true` | Disables editing and save actions when set to `false` |
-| `allowArray` | `boolean` | `true` | When `false`, only JSON objects are accepted (arrays rejected) |
+| `allowArray` | `boolean` | `true` | When `false`, only a JSON object or an empty editor is saved, and anything else is refused with `text.notAnObject` |
 | `mode` | `'inline' \| 'popover'` | `'inline'` | Presentation mode for the editor |
 | `rows` | `number` | `12` | Number of rows for the inline textarea |
 | `placeholder` | `string` | `'{\n  "theme": "dark"\n}'` | Placeholder content shown when empty |
@@ -554,6 +691,8 @@ type JsonEditorText = {
   unsavedChanges?: string // "Unsaved changes"
   saved?: string         // "Saved"
   nullPreview?: string   // "NULL"
+  invalidJson?: string   // "Enter valid JSON." Opens the refusal, before the parser's message.
+  notAnObject?: string   // "Enter a JSON object."
 }
 ```
 
@@ -574,7 +713,7 @@ Same props as `JsonTextareaField`. Adds a `scaleIn` entrance animation (fade, sc
 ### Keyboard shortcuts
 
 * `Ctrl/Cmd + Enter` saves the current editor buffer.
-* `Esc` cancels inline edits or closes the expanded sheet.
+* `Esc` cancels inline edits or closes the expanded sheet, asking first when the sheet has unsaved changes.
 
 ## See also
 

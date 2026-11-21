@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { MountMinimal } from '@gentleduck/primitives/mount'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nfunction Expensive() {\n  const [mountedAt] = React.useState(() => new Date().toLocaleTimeString())\n  return <p className={styles.note}>Mounted at {mountedAt}. It keeps its state while hidden.</p>\n}\n\nexport default function MountRenderOnceExample() {\n  const [open, setOpen] = React.useState(false)\n\n  return (\n    <div className={styles.stack}>\n      <button className={styles.button} onClick={() => setOpen((value) => !value)} type=\"button\">\n        {open ? 'Hide' : 'Show'}\n      </button>\n      <div hidden={!open}>\n        <MountMinimal open={open} renderOnce>\n          <Expensive />\n        </MountMinimal>\n      </div>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/mount-render-once/mount-render-once.tsx",
+      "target": "components/mount-render-once.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "mount-render-once",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

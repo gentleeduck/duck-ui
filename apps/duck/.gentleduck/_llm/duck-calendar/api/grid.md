@@ -32,7 +32,7 @@ buildCalendarMonth(adapter: Adapter.IDateAdapter<TDate>, viewDate: TDate, config
 | :--- | :--- | :--- | :--- |
 | `showOutsideDays` | `boolean` | `true` | When false, outside days are marked as hidden and disabled |
 | `fixedWeeks` | `boolean` | `false` | Always produce 6 weeks |
-| `locale` | `Calendar.ICalendarLocaleConfig` | - | Locale config containing `weekStartDay`, `locale`, `direction`, etc. |
+| `locale` | `Calendar.ICalendarLocaleConfig` | - | Locale config containing `weekStartDay`, `locale`, `direction`, etc. Without `weekStartDay` the week starts on the locale's first day |
 
 **Returns** a `Grid.ICalendarMonth<TDate>`:
 
@@ -45,7 +45,7 @@ Each `Grid.ICalendarWeek<TDate>` has:
 
 | Property | Type | Description |
 | :--- | :--- | :--- |
-| `weekNumber` | `number` | ISO week number |
+| `weekNumber` | `number` | ISO week number of the row, read from its Thursday, so a row starting on Sunday or Saturday is numbered right |
 | `days` | `Grid.ICalendarDay<TDate>[]` | 7 day cells |
 
 Each `Grid.ICalendarDay<TDate>` has:
@@ -56,9 +56,10 @@ Each `Grid.ICalendarDay<TDate>` has:
 | `isToday` | `boolean` | Whether this is today |
 | `isOutside` | `boolean` | Whether this day is from an adjacent month |
 | `isHidden` | `boolean` | Whether this day should be hidden (outside day when `showOutsideDays` is false) |
-| `isWeekend` | `boolean` | Whether this is a weekend |
+| `isWeekend` | `boolean` | Whether this falls on the locale's weekend, Saturday and Sunday with no locale |
 | `isSelected` | `boolean` | Whether this day is selected (set by `applySelection`) |
 | `isDisabled` | `boolean` | Whether this day is disabled (set by `applySelection`) |
+| `isUnavailable` | `boolean` | Whether this day stays focusable but cannot be picked (set by `applySelection`) |
 | `isRangeStart` | `boolean` | Whether this day is the start of a range |
 | `isRangeEnd` | `boolean` | Whether this day is the end of a range |
 | `isRangeMiddle` | `boolean` | Whether this day is in the middle of a range |
@@ -124,6 +125,20 @@ Each `Grid.IDecadeEntry` has:
 ***
 
 ## Utility Functions
+
+### `getLocaleWeekInfo`
+
+The first day and the weekend of a locale's week, read from `Intl.Locale`. With no locale, or a runtime that cannot describe it, the week starts on Sunday and its weekend is Saturday and Sunday.
+
+```tsx
+getLocaleWeekInfo(locale: string | undefined) => Grid.IWeekInfo // { firstDay: WeekStartDay, weekend: number[] }
+```
+
+```tsx
+getLocaleWeekInfo('de-DE') // { firstDay: 1, weekend: [6, 0] }
+```
+
+***
 
 ### `getLocalizedWeekdays`
 

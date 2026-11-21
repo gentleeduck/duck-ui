@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuLabel,\n  DropdownMenuSeparator,\n  DropdownMenuSub,\n  DropdownMenuSubContent,\n  DropdownMenuSubTrigger,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\nimport { Copy, Scissors } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <DropdownMenu>\n      <DropdownMenuTrigger asChild>\n        <Button variant=\"outline\">Edit</Button>\n      </DropdownMenuTrigger>\n      <DropdownMenuContent className=\"w-52\">\n        <DropdownMenuLabel inset>Clipboard</DropdownMenuLabel>\n        <DropdownMenuItem textValue=\"Cut\">\n          <Scissors aria-hidden=\"true\" /> Cut\n        </DropdownMenuItem>\n        <DropdownMenuItem textValue=\"Copy\">\n          <Copy aria-hidden=\"true\" /> Copy\n        </DropdownMenuItem>\n        <DropdownMenuItem inset>Paste</DropdownMenuItem>\n        <DropdownMenuSeparator />\n        <DropdownMenuSub defaultOpen>\n          <DropdownMenuSubTrigger inset>Paste special</DropdownMenuSubTrigger>\n          <DropdownMenuSubContent alignOffset={-4} sideOffset={6}>\n            <DropdownMenuItem>Values only</DropdownMenuItem>\n            <DropdownMenuItem>Formatting only</DropdownMenuItem>\n          </DropdownMenuSubContent>\n        </DropdownMenuSub>\n      </DropdownMenuContent>\n    </DropdownMenu>\n  )\n}\n",
+      "path": "dropdown-menu/dropdown-menu-13.tsx",
+      "target": "components/dropdown-menu-13.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "dropdown-menu-13",
+  "registryDependencies": [
+    "dropdown-menu",
+    "button",
+    "dialog",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "dropdown-menu",
+  "source": "/registry-examples/src/dropdown-menu",
+  "type": "registry:example"
+}

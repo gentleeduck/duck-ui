@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as DropdownMenu from '@gentleduck/primitives/dropdown-menu'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nconst SIDES = ['top', 'right', 'bottom', 'left'] as const\nconst ALIGNS = ['start', 'center', 'end'] as const\n\nexport default function DropdownMenuPositioningExample() {\n  const [side, setSide] = React.useState<(typeof SIDES)[number]>('bottom')\n  const [align, setAlign] = React.useState<(typeof ALIGNS)[number]>('center')\n\n  return (\n    <div className={styles.stack}>\n      <div className={styles.row}>\n        {SIDES.map((value) => (\n          <button className={styles.button} key={value} onClick={() => setSide(value)} type=\"button\">\n            {value === side ? `[${value}]` : value}\n          </button>\n        ))}\n      </div>\n      <div className={styles.row}>\n        {ALIGNS.map((value) => (\n          <button className={styles.button} key={value} onClick={() => setAlign(value)} type=\"button\">\n            {value === align ? `[${value}]` : value}\n          </button>\n        ))}\n      </div>\n      <DropdownMenu.Root>\n        <DropdownMenu.Trigger className={styles.button}>\n          Open {side} {align}\n        </DropdownMenu.Trigger>\n        <DropdownMenu.Portal>\n          <DropdownMenu.Content\n            align={align}\n            className={styles.content}\n            collisionPadding={8}\n            side={side}\n            sideOffset={8}>\n            <DropdownMenu.Item className={styles.item}>One</DropdownMenu.Item>\n            <DropdownMenu.Item className={styles.item}>Two</DropdownMenu.Item>\n            <DropdownMenu.Arrow className={styles.arrow} />\n          </DropdownMenu.Content>\n        </DropdownMenu.Portal>\n      </DropdownMenu.Root>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/dropdown-menu-positioning/dropdown-menu-positioning.tsx",
+      "target": "components/dropdown-menu-positioning.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dropdown-menu-positioning",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "@tabler/icons-react"
+  ],
   "files": [
     {
       "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Empty,\n  EmptyContent,\n  EmptyDescription,\n  EmptyHeader,\n  EmptyMedia,\n  EmptyTitle,\n} from '@gentleduck/registry-ui/empty'\nimport { IconInbox } from '@tabler/icons-react'\nimport { ArrowUpRightIcon } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Empty>\n      <EmptyHeader>\n        <EmptyMedia variant=\"icon\">\n          <IconInbox />\n        </EmptyMedia>\n        <EmptyTitle>Your Inbox is Empty</EmptyTitle>\n        <EmptyDescription>\n          No messages waiting for you. New conversations will show up here when someone reaches out.\n        </EmptyDescription>\n      </EmptyHeader>\n      <EmptyContent>\n        <div className=\"flex gap-2\">\n          <Button>Compose Message</Button>\n          <Button variant=\"outline\">View Archived</Button>\n        </div>\n      </EmptyContent>\n      <Button asChild className=\"text-muted-foreground\" size=\"sm\" variant=\"link\">\n        {/* biome-ignore lint/a11y/useValidAnchor: placeholder href in demo component */}\n        <a href=\"#\">\n          Manage Preferences <ArrowUpRightIcon />\n        </a>\n      </Button>\n    </Empty>\n  )\n}\n",
@@ -9,7 +12,11 @@
   ],
   "name": "empty-1",
   "registryDependencies": [
-    "empty"
+    "empty",
+    "avatar",
+    "button",
+    "input-group",
+    "kbd"
   ],
   "root_folder": "empty",
   "source": "/registry-examples/src/empty",

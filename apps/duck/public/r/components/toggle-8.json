@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "lucide-react"
+  ],
   "files": [
     {
       "content": "import { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { Toggle } from '@gentleduck/registry-ui/toggle'\nimport { Bookmark } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Toggle variant=\"outline\">\n        <Bookmark />\n        إشارة مرجعية\n      </Toggle>\n    </DirectionProvider>\n  )\n}\n",
@@ -9,7 +12,10 @@
   ],
   "name": "toggle-8",
   "registryDependencies": [
-    "toggle"
+    "toggle",
+    "direction",
+    "input",
+    "label"
   ],
   "root_folder": "toggle",
   "source": "/registry-examples/src/toggle",

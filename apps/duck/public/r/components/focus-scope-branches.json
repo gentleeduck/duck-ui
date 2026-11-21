@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { FocusScope } from '@gentleduck/primitives/focus-scope'\nimport { Portal } from '@gentleduck/primitives/portal'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function FocusScopeBranchesExample() {\n  const [branch, setBranch] = React.useState<HTMLDivElement | null>(null)\n\n  return (\n    <div className={styles.stack}>\n      <FocusScope branches={branch ? [branch] : []} className={`${styles.box} ${styles.stack}`} loop trapped>\n        <input className={styles.input} placeholder=\"Inside the scope\" />\n        <Portal>\n          <div\n            className={`${styles.content} ${styles.panel}`}\n            ref={setBranch}\n            style={{ position: 'fixed', bottom: '1rem', insetInlineEnd: '1rem' }}>\n            <button className={styles.button} type=\"button\">\n              Portalled, still reachable\n            </button>\n          </div>\n        </Portal>\n      </FocusScope>\n      <p className={styles.note}>The trapped scope lets focus into the portalled panel, its branch, and back.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/focus-scope-branches/focus-scope-branches.tsx",
+      "target": "components/focus-scope-branches.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "focus-scope-branches",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

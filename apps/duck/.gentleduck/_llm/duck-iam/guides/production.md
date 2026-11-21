@@ -1,7 +1,7 @@
 Everything here is operational: what to set, what it costs, and what breaks if you skip it. Single-node development setups can ignore it. Read it before mounting duck-iam in any deployment with more than one engine instance, a network adapter, a revocation SLA, or a latency SLO. The [pre-flight checklist](#pre-flight-checklist) at the bottom links every item back to the section or page that explains it.
 
 The package ships a 10-section Deployment Hardening Guide in
-[SECURITY.md](https://github.com/wildduck2/duck-iam/blob/main/packages/duck-iam/SECURITY.md)
+[SECURITY.md](https://github.com/gentleeduck/duck-iam/blob/main/packages/duck-iam/SECURITY.md)
 covering identity sourcing, admin CSRF, Redis tenancy, cache
 scoping, `defaultEffect: 'allow'`, `explain()` output trust, adapter trust,
 file `rootDir`, HTTP `allowedHosts`, and observability wiring. This page is

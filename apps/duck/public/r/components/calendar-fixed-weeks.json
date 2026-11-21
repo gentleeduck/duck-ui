@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { NativeAdapter } from '@gentleduck/calendar'\nimport * as Calendar from '@gentleduck/primitives/calendar'\nimport styles from '../primitives.module.css'\n\nconst adapter = new NativeAdapter()\n\nexport default function CalendarFixedWeeksExample() {\n  return (\n    <Calendar.Root\n      adapter={adapter}\n      className={styles.calendar}\n      defaultMonth={new Date(2026, 1, 1)}\n      fixedWeeks\n      locale={{ locale: 'en-US' }}\n      mode=\"single\"\n      showOutsideDays={false}>\n      <Calendar.Nav>\n        <Calendar.PrevButton>{'<'}</Calendar.PrevButton>\n        <Calendar.Header />\n        <Calendar.NextButton>{'>'}</Calendar.NextButton>\n      </Calendar.Nav>\n      <Calendar.Grid />\n    </Calendar.Root>\n  )\n}\n",
+      "path": "internal-primitives/calendar-fixed-weeks/calendar-fixed-weeks.tsx",
+      "target": "components/calendar-fixed-weeks.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "calendar-fixed-weeks",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

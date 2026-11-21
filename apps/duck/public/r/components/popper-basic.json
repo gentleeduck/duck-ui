@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Popper from '@gentleduck/primitives/popper'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nconst SIDES = ['top', 'right', 'bottom', 'left'] as const\n\nexport default function PopperBasicExample() {\n  const [side, setSide] = React.useState<(typeof SIDES)[number]>('top')\n\n  return (\n    <div className={styles.stack}>\n      <div className={styles.row}>\n        {SIDES.map((value) => (\n          <button className={styles.button} key={value} onClick={() => setSide(value)} type=\"button\">\n            {value === side ? `[${value}]` : value}\n          </button>\n        ))}\n      </div>\n      <div style={{ padding: '3rem 6rem' }}>\n        <Popper.Root>\n          <Popper.Anchor className={styles.box}>Anchor</Popper.Anchor>\n          <Popper.Content\n            className={`${styles.content} ${styles.panel}`}\n            side={side}\n            sideOffset={6}\n            style={{ minWidth: 0 }}>\n            {side}\n            <Popper.Arrow className={styles.arrow} />\n          </Popper.Content>\n        </Popper.Root>\n      </div>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/popper-basic/popper-basic.tsx",
+      "target": "components/popper-basic.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "popper-basic",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

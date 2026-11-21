@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { HoverCard, HoverCardContent, HoverCardTrigger } from '@gentleduck/registry-ui/hover-card'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Switch } from '@gentleduck/registry-ui/switch'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [previews, setPreviews] = React.useState(true)\n\n  return (\n    <div className=\"flex flex-col items-center gap-4\">\n      <div className=\"flex items-center gap-2\">\n        <Switch checked={previews} id=\"hover-card-previews\" onCheckedChange={setPreviews} />\n        <Label htmlFor=\"hover-card-previews\">Link previews</Label>\n      </div>\n      <HoverCard disabled={!previews}>\n        <HoverCardTrigger variant=\"link\">@gentleduck</HoverCardTrigger>\n        <HoverCardContent side=\"bottom\">\n          <h4 className=\"font-semibold text-sm\">@gentleduck</h4>\n          <p className=\"text-sm\">Accessible primitives and the components built on them.</p>\n        </HoverCardContent>\n      </HoverCard>\n    </div>\n  )\n}\n",
+      "path": "hover-card/hover-card-6.tsx",
+      "target": "components/hover-card-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "hover-card-6",
+  "registryDependencies": [
+    "hover-card",
+    "avatar",
+    "direction",
+    "label",
+    "skeleton",
+    "switch"
+  ],
+  "root_folder": "hover-card",
+  "source": "/registry-examples/src/hover-card",
+  "type": "registry:example"
+}

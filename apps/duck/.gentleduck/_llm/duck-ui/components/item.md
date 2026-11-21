@@ -311,7 +311,7 @@ export default function Demo() {
     <div className="flex w-full max-w-md flex-col gap-6">
       <ItemGroup className="gap-4">
         {articles.map((article) => (
-          <Item asChild key={article.title} role="listitem" variant="outline">
+          <Item asChild key={article.title} variant="outline">
             {/* biome-ignore lint/a11y/useValidAnchor: placeholder href in demo component */}
             <a href="#">
               <ItemMedia variant="image">
@@ -462,9 +462,53 @@ export default function Demo() {
 }
 ```
 
+### Footer
+
+`ItemFooter` spans the full width of the item, below everything else in it.
+
+```tsx title="components/item-13.tsx"
+// import from your project: import Demo from '@/components/item-13'
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemFooter,
+  ItemMedia,
+  ItemTitle,
+} from '@gentleduck/registry-ui/item'
+import { GitBranch } from 'lucide-react'
+
+export default function Demo() {
+  return (
+    <div className="flex w-full max-w-md flex-col gap-6">
+      <Item variant="outline">
+        <ItemMedia variant="icon">
+          <GitBranch aria-hidden="true" />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle>feat/pond-search</ItemTitle>
+          <ItemDescription>Deployed to preview 4 minutes ago.</ItemDescription>
+        </ItemContent>
+        <ItemActions>
+          <Button size="sm" variant="outline">
+            Visit
+          </Button>
+        </ItemActions>
+        <ItemFooter className="text-muted-foreground text-xs">
+          <span>3 commits ahead of main</span>
+          <span>Built in 1m 12s</span>
+        </ItemFooter>
+      </Item>
+    </div>
+  )
+}
+```
+
 ### Link
 
-To render an item as a link, use the `asChild` prop. The hover and focus states will be applied to the anchor element.
+To render an item as a link, use the `asChild` prop. The hover and focus states will be applied to the anchor element, and it stays a link to a screen reader.
 
 ```tsx title="components/item-9.tsx"
 // import from your project: import Demo from '@/components/item-9'
@@ -715,7 +759,7 @@ The main component for displaying content with media, title, description, and ac
 | `className` | `string` | - | Additional class names for the item container |
 | `variant` | `"default" \| "muted" \| "outline"` | `"default"` | Visual variant of the item |
 | `size` | `"default" \| "sm"` | `"default"` | Size of the item |
-| `asChild` | `boolean` | `false` | Render as a child element using `Slot` |
+| `asChild` | `boolean` | `false` | Render as a child element using `Slot`. The child keeps its own role. |
 | `children` | `React.ReactNode` | - | Item content (media, content, actions, etc.) |
 | `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
 
@@ -751,7 +795,7 @@ export function ItemLink() {
 
 ### ItemGroup
 
-A container that groups related items together with consistent styling.
+A container that groups related items together with consistent styling. It is a list, and each `Item` in it a list item. An item given `asChild` is wrapped in a list item that takes no layout, so a link stays a link.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -761,7 +805,7 @@ A container that groups related items together with consistent styling.
 
 ### ItemSeparator
 
-A horizontal separator between items in a group.
+A horizontal separator between items in a group. Inside an `ItemGroup` it is drawn but not announced, since a list holds only list items.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

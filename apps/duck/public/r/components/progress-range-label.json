@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Progress from '@gentleduck/primitives/progress'\nimport styles from '../primitives.module.css'\n\nexport default function ProgressRangeLabelExample() {\n  const used = 7.5\n  const total = 15\n\n  return (\n    <Progress.Root\n      className={styles.stack}\n      getValueLabel={(value, max) => `${value} of ${max} GB`}\n      max={total}\n      value={used}>\n      <Progress.Label className={styles.label}>Storage</Progress.Label>\n      <div className={styles.progress}>\n        <Progress.Indicator\n          className={styles.progressIndicator}\n          style={{ transform: `translateX(-${100 - (used / total) * 100}%)` }}\n        />\n      </div>\n      <Progress.Value className={styles.note}>{(label) => `${label} used`}</Progress.Value>\n    </Progress.Root>\n  )\n}\n",
+      "path": "internal-primitives/progress-range-label/progress-range-label.tsx",
+      "target": "components/progress-range-label.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "progress-range-label",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

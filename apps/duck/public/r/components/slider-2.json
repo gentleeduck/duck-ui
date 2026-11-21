@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "content": "import { Slider } from '@gentleduck/registry-ui/slider'\n\nexport default function Demo() {\n  return <Slider defaultValue={[25, 50]} max={100} step={5} className=\"mx-auto w-full max-w-xs\" />\n}\n",
+      "content": "import { Slider } from '@gentleduck/registry-ui/slider'\n\nexport default function Demo() {\n  return (\n    <Slider aria-label=\"Price range\" defaultValue={[25, 50]} max={100} step={5} className=\"mx-auto w-full max-w-xs\" />\n  )\n}\n",
       "path": "slider/slider-2.tsx",
       "target": "components/slider-2.tsx",
       "type": "registry:example"
@@ -9,7 +9,9 @@
   ],
   "name": "slider-2",
   "registryDependencies": [
-    "slider"
+    "slider",
+    "button",
+    "direction"
   ],
   "root_folder": "slider",
   "source": "/registry-examples/src/slider",

@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "import { Typeset } from '@gentleduck/registry-ui/typeset'\n\nconst RELEASES = [\n  {\n    downloads: '1,204,311',\n    gzip: '12.9 kB',\n    highlight: 'Range selection',\n    released: '2026-10-02',\n    size: '41.2 kB',\n    version: '2.4.0',\n  },\n  {\n    downloads: '1,180,042',\n    gzip: '12.8 kB',\n    highlight: 'Accordion arrow keys',\n    released: '2026-09-14',\n    size: '40.8 kB',\n    version: '2.3.0',\n  },\n  {\n    downloads: '1,091,876',\n    gzip: '12.6 kB',\n    highlight: 'Sheet focus trap',\n    released: '2026-08-30',\n    size: '40.1 kB',\n    version: '2.2.0',\n  },\n]\n\nexport default function Demo() {\n  return (\n    <Typeset asChild className=\"w-full max-w-sm\">\n      <article>\n        <h3>Release history</h3>\n        <p>The table wraps its text first. What still does not fit scrolls inside the wrapper, not the page.</p>\n        <div className=\"typeset-scroll\">\n          <table>\n            <thead>\n              <tr>\n                <th>Version</th>\n                <th>Released</th>\n                <th align=\"right\">Size</th>\n                <th align=\"right\">Gzipped</th>\n                <th align=\"right\">Downloads</th>\n                <th>Highlight</th>\n              </tr>\n            </thead>\n            <tbody>\n              {RELEASES.map((release) => (\n                <tr key={release.version}>\n                  <td>\n                    <code>{release.version}</code>\n                  </td>\n                  <td>{release.released}</td>\n                  <td align=\"right\">{release.size}</td>\n                  <td align=\"right\">{release.gzip}</td>\n                  <td align=\"right\">{release.downloads}</td>\n                  <td>{release.highlight}</td>\n                </tr>\n              ))}\n            </tbody>\n          </table>\n        </div>\n      </article>\n    </Typeset>\n  )\n}\n",
+      "path": "typeset/typeset-6.tsx",
+      "target": "components/typeset-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "typeset-6",
+  "registryDependencies": [
+    "typeset",
+    "button"
+  ],
+  "root_folder": "typeset",
+  "source": "/registry-examples/src/typeset",
+  "type": "registry:example"
+}

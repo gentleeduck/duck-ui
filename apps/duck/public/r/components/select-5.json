@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\n\nexport default function Demo() {\n  return (\n    <Select>\n      <SelectTrigger className=\"w-48 data-[state=open]:border-ring data-[state=open]:ring-2 data-[state=open]:ring-ring\">\n        <SelectValue placeholder=\"Select a fruit\" />\n      </SelectTrigger>\n      <SelectContent>\n        <SelectItem value=\"apple\">Apple</SelectItem>\n        <SelectItem value=\"banana\">Banana</SelectItem>\n        <SelectItem value=\"cherry\">Cherry</SelectItem>\n        <SelectItem value=\"mango\">Mango</SelectItem>\n      </SelectContent>\n    </Select>\n  )\n}\n",
@@ -9,7 +15,11 @@
   ],
   "name": "select-5",
   "registryDependencies": [
-    "select"
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
   ],
   "root_folder": "select",
   "source": "/registry-examples/src/select",

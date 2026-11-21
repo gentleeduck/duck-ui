@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@gentleduck/registry-ui/collapsible'\nimport {\n  Sidebar,\n  SidebarContent,\n  SidebarGroup,\n  SidebarGroupContent,\n  SidebarGroupLabel,\n  SidebarInset,\n  SidebarMenu,\n  SidebarMenuButton,\n  SidebarMenuItem,\n  SidebarMenuSub,\n  SidebarMenuSubButton,\n  SidebarMenuSubItem,\n  SidebarProvider,\n  SidebarTrigger,\n} from '@gentleduck/registry-ui/sidebar'\nimport { BookOpen, ChevronDown, Rocket } from 'lucide-react'\n\nconst SECTIONS = [\n  {\n    open: true,\n    pages: [\n      { icon: Rocket, pages: ['Installation', 'Project structure'], title: 'Getting started' },\n      { icon: BookOpen, pages: ['Theming', 'Dark mode', 'RTL'], title: 'Guides' },\n    ],\n    title: 'Documentation',\n  },\n  {\n    open: false,\n    pages: [{ icon: BookOpen, pages: ['Changelog', 'Roadmap'], title: 'Releases' }],\n    title: 'Project',\n  },\n]\n\nexport default function Demo() {\n  return (\n    <div className=\"relative flex h-full w-full overflow-hidden [transform:translateZ(0)]\">\n      <SidebarProvider>\n        <Sidebar>\n          <SidebarContent>\n            {SECTIONS.map((section) => (\n              <SidebarGroup key={section.title}>\n                <Collapsible className=\"group/collapsible gap-0\" defaultOpen={section.open}>\n                  <SidebarGroupLabel\n                    asChild\n                    className=\"w-full justify-between hover:bg-sidebar-accent hover:text-sidebar-accent-foreground has-[>svg]:px-2\">\n                    <CollapsibleTrigger variant=\"nothing\">\n                      {section.title}\n                      <ChevronDown\n                        aria-hidden=\"true\"\n                        className=\"transition-transform group-data-[open=true]/collapsible:rotate-180\"\n                      />\n                    </CollapsibleTrigger>\n                  </SidebarGroupLabel>\n                  <CollapsibleContent>\n                    <SidebarGroupContent>\n                      <SidebarMenu>\n                        {section.pages.map((page) => (\n                          <SidebarMenuItem key={page.title}>\n                            <SidebarMenuButton>\n                              <page.icon aria-hidden=\"true\" />\n                              <span>{page.title}</span>\n                            </SidebarMenuButton>\n                            <SidebarMenuSub>\n                              {page.pages.map((name, index) => (\n                                <SidebarMenuSubItem key={name}>\n                                  <SidebarMenuSubButton\n                                    href={`#${name.toLowerCase().replace(' ', '-')}`}\n                                    isActive={section.open && index === 0}\n                                    size=\"sm\">\n                                    {name}\n                                  </SidebarMenuSubButton>\n                                </SidebarMenuSubItem>\n                              ))}\n                            </SidebarMenuSub>\n                          </SidebarMenuItem>\n                        ))}\n                      </SidebarMenu>\n                    </SidebarGroupContent>\n                  </CollapsibleContent>\n                </Collapsible>\n              </SidebarGroup>\n            ))}\n          </SidebarContent>\n        </Sidebar>\n        <SidebarInset>\n          <header className=\"flex h-16 shrink-0 items-center border-b px-4\">\n            <SidebarTrigger />\n          </header>\n        </SidebarInset>\n      </SidebarProvider>\n    </div>\n  )\n}\n",
+      "path": "sidebar/sidebar-17.tsx",
+      "target": "components/sidebar-17.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sidebar-17",
+  "registryDependencies": [
+    "sidebar",
+    "avatar",
+    "collapsible",
+    "dropdown-menu"
+  ],
+  "root_folder": "sidebar",
+  "source": "/registry-examples/src/sidebar",
+  "type": "registry:example"
+}

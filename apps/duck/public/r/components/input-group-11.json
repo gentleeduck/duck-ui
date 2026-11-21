@@ -1,7 +1,11 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks",
+    "@tabler/icons-react"
+  ],
   "files": [
     {
-      "content": "'use client'\n\nimport { InputGroup, InputGroupAddon, InputGroupButton } from '@gentleduck/registry-ui/input-group'\nimport { Textarea } from '@gentleduck/registry-ui/textarea'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-sm gap-6\">\n      <InputGroup>\n        <Textarea\n          className=\"field-sizing-content flex min-h-16 w-full resize-none rounded-md bg-transparent px-3 py-2.5 text-base outline-none transition-[color,box-shadow] md:text-sm\"\n          data-slot=\"input-group-control\"\n          placeholder=\"Share your feedback...\"\n        />\n        <InputGroupAddon align=\"block-end\">\n          <InputGroupButton className=\"ml-auto\" size=\"sm\" variant=\"default\">\n            Send\n          </InputGroupButton>\n        </InputGroupAddon>\n      </InputGroup>\n    </div>\n  )\n}\n",
+      "content": "'use client'\n\nimport { InputGroup, InputGroupAddon, InputGroupButton } from '@gentleduck/registry-ui/input-group'\nimport { Textarea } from '@gentleduck/registry-ui/textarea'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-sm gap-6\">\n      <InputGroup>\n        <Textarea\n          className=\"field-sizing-content flex min-h-16 w-full resize-none rounded-md bg-transparent px-3 py-2.5 text-base outline-none transition-[color,box-shadow] md:text-sm\"\n          data-slot=\"input-group-control\"\n          placeholder=\"Share your feedback...\"\n        />\n        <InputGroupAddon align=\"block-end\">\n          <InputGroupButton className=\"ms-auto\" size=\"sm\" variant=\"default\">\n            Send\n          </InputGroupButton>\n        </InputGroupAddon>\n      </InputGroup>\n    </div>\n  )\n}\n",
       "path": "input-group/input-group-11.tsx",
       "target": "components/input-group-11.tsx",
       "type": "registry:example"
@@ -9,7 +13,14 @@
   ],
   "name": "input-group-11",
   "registryDependencies": [
-    "input-group"
+    "input-group",
+    "button-group",
+    "dropdown-menu",
+    "kbd",
+    "label",
+    "popover",
+    "separator",
+    "tooltip"
   ],
   "root_folder": "input-group",
   "source": "/registry-examples/src/input-group",

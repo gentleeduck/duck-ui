@@ -1,7 +1,11 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks",
+    "@tabler/icons-react"
+  ],
   "files": [
     {
-      "content": "import {\n  InputGroup,\n  InputGroupAddon,\n  InputGroupButton,\n  InputGroupText,\n  InputGroupTextarea,\n} from '@gentleduck/registry-ui/input-group'\nimport { IconCopy, IconCornerDownLeft, IconDatabase, IconRefresh } from '@tabler/icons-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-md gap-4\">\n      <InputGroup>\n        <InputGroupTextarea\n          className=\"min-h-[200px]\"\n          id=\"textarea-code-32\"\n          placeholder=\"SELECT * FROM users WHERE active = true;\"\n        />\n        <InputGroupAddon align=\"block-end\" className=\"border-t\">\n          <InputGroupText>Row 1, Col 1</InputGroupText>\n          <InputGroupButton className=\"ml-auto\" size=\"sm\" variant=\"default\">\n            Execute <IconCornerDownLeft />\n          </InputGroupButton>\n        </InputGroupAddon>\n        <InputGroupAddon align=\"block-start\" className=\"border-b\">\n          <InputGroupText className=\"font-medium font-mono\">\n            <IconDatabase />\n            production.sql\n          </InputGroupText>\n          <InputGroupButton aria-label=\"Refresh\" className=\"ml-auto\" size=\"icon-xs\">\n            <IconRefresh aria-hidden=\"true\" />\n          </InputGroupButton>\n          <InputGroupButton aria-label=\"Copy\" size=\"icon-xs\" variant=\"ghost\">\n            <IconCopy aria-hidden=\"true\" />\n          </InputGroupButton>\n        </InputGroupAddon>\n      </InputGroup>\n    </div>\n  )\n}\n",
+      "content": "import {\n  InputGroup,\n  InputGroupAddon,\n  InputGroupButton,\n  InputGroupText,\n  InputGroupTextarea,\n} from '@gentleduck/registry-ui/input-group'\nimport { IconCopy, IconCornerDownLeft, IconDatabase, IconRefresh } from '@tabler/icons-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-md gap-4\">\n      <InputGroup>\n        <InputGroupTextarea\n          className=\"min-h-[200px]\"\n          id=\"textarea-code-32\"\n          placeholder=\"SELECT * FROM users WHERE active = true;\"\n        />\n        <InputGroupAddon align=\"block-end\" className=\"border-t\">\n          <InputGroupText>Row 1, Col 1</InputGroupText>\n          <InputGroupButton className=\"ms-auto\" size=\"sm\" variant=\"default\">\n            Execute <IconCornerDownLeft />\n          </InputGroupButton>\n        </InputGroupAddon>\n        <InputGroupAddon align=\"block-start\" className=\"border-b\">\n          <InputGroupText className=\"font-medium font-mono\">\n            <IconDatabase />\n            production.sql\n          </InputGroupText>\n          <InputGroupButton aria-label=\"Refresh\" className=\"ms-auto\" size=\"icon-xs\">\n            <IconRefresh aria-hidden=\"true\" />\n          </InputGroupButton>\n          <InputGroupButton aria-label=\"Copy\" size=\"icon-xs\" variant=\"ghost\">\n            <IconCopy aria-hidden=\"true\" />\n          </InputGroupButton>\n        </InputGroupAddon>\n      </InputGroup>\n    </div>\n  )\n}\n",
       "path": "input-group/input-group-6.tsx",
       "target": "components/input-group-6.tsx",
       "type": "registry:example"
@@ -9,7 +13,14 @@
   ],
   "name": "input-group-6",
   "registryDependencies": [
-    "input-group"
+    "input-group",
+    "button-group",
+    "dropdown-menu",
+    "kbd",
+    "label",
+    "popover",
+    "separator",
+    "tooltip"
   ],
   "root_folder": "input-group",
   "source": "/registry-examples/src/input-group",

@@ -1,0 +1,27 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@gentleduck/registry-ui/card'\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { Tabs, TabsContent, TabsList, TabsTrigger } from '@gentleduck/registry-ui/tabs'\n\nconst COMMANDS = [\n  ['npm', 'npm install @gentleduck/primitives'],\n  ['bun', 'bun add @gentleduck/primitives'],\n  ['pnpm', 'pnpm add @gentleduck/primitives'],\n] as const\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Card className=\"w-full max-w-md\">\n        <CardHeader>\n          <CardTitle>التثبيت</CardTitle>\n          <CardDescription>\n            ثبّت الحزمة باستخدام مدير الحزم الذي تفضّله. تبقى الأوامر وتبويباتها من اليسار إلى اليمين.\n          </CardDescription>\n        </CardHeader>\n        <CardContent>\n          <DirectionProvider dir=\"ltr\">\n            <Tabs defaultValue=\"npm\">\n              <TabsList>\n                {COMMANDS.map(([name]) => (\n                  <TabsTrigger key={name} value={name}>\n                    {name}\n                  </TabsTrigger>\n                ))}\n              </TabsList>\n              {COMMANDS.map(([name, command]) => (\n                <TabsContent key={name} value={name}>\n                  <pre className=\"overflow-x-auto rounded-md bg-muted p-3 font-mono text-sm\">\n                    <code>{command}</code>\n                  </pre>\n                </TabsContent>\n              ))}\n            </Tabs>\n          </DirectionProvider>\n        </CardContent>\n      </Card>\n    </DirectionProvider>\n  )\n}\n",
+      "path": "direction/direction-3.tsx",
+      "target": "components/direction-3.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "direction-3",
+  "registryDependencies": [
+    "direction",
+    "avatar",
+    "badge",
+    "button",
+    "card",
+    "dropdown-menu",
+    "label",
+    "slider",
+    "switch",
+    "tabs",
+    "toggle-group"
+  ],
+  "root_folder": "direction",
+  "source": "/registry-examples/src/direction",
+  "type": "registry:example"
+}

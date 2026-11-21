@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Slider from '@gentleduck/primitives/slider'\nimport styles from '../primitives.module.css'\n\nexport default function SliderBasicExample() {\n  return (\n    <div className={styles.stack}>\n      <Slider.Root className={styles.slider} defaultValue={[40]} max={100} step={5}>\n        <Slider.Track className={styles.track}>\n          <Slider.Range className={styles.range} />\n        </Slider.Track>\n        <Slider.Thumb aria-label=\"Volume\" className={styles.thumb} />\n      </Slider.Root>\n      <p className={styles.note}>step 5; Shift with an arrow, or PageUp and PageDown, take larger steps.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/slider-basic/slider-basic.tsx",
+      "target": "components/slider-basic.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "slider-basic",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

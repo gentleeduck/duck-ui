@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Primitive } from '@gentleduck/primitives/primitive-elements'\nimport styles from '../primitives.module.css'\n\nexport default function PrimitiveAsChildExample() {\n  return (\n    <div className={styles.row}>\n      <Primitive.button className={styles.button} onClick={() => undefined} type=\"button\">\n        A native button\n      </Primitive.button>\n      <Primitive.button asChild className={styles.button}>\n        <a href=\"#next\">A link that takes the button's props</a>\n      </Primitive.button>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/primitive-as-child/primitive-as-child.tsx",
+      "target": "components/primitive-as-child.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "primitive-as-child",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

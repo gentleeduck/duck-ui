@@ -9,7 +9,10 @@
   ],
   "name": "menubar-3",
   "registryDependencies": [
-    "menubar"
+    "menubar",
+    "direction",
+    "label",
+    "switch"
   ],
   "root_folder": "menubar",
   "source": "/registry-examples/src/menubar",

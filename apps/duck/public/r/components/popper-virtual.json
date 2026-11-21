@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Popper from '@gentleduck/primitives/popper'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function PopperVirtualExample() {\n  const point = React.useRef({ getBoundingClientRect: () => new DOMRect(0, 0, 0, 0) })\n  const [, rerender] = React.useState(0)\n\n  return (\n    <Popper.Root>\n      <Popper.Anchor virtualRef={point} />\n      <div\n        className={styles.contextArea}\n        onPointerMove={(event) => {\n          point.current = { getBoundingClientRect: () => new DOMRect(event.clientX, event.clientY, 0, 0) }\n          rerender((count) => count + 1)\n        }}>\n        Move the pointer here\n      </div>\n      <Popper.Content\n        className={`${styles.content} ${styles.panel}`}\n        side=\"right\"\n        sideOffset={12}\n        style={{ minWidth: 0 }}>\n        Following a virtual anchor\n      </Popper.Content>\n    </Popper.Root>\n  )\n}\n",
+      "path": "internal-primitives/popper-virtual/popper-virtual.tsx",
+      "target": "components/popper-virtual.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "popper-virtual",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

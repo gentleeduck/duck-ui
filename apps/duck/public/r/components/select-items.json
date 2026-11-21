@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Select from '@gentleduck/primitives/select'\nimport styles from '../primitives.module.css'\n\nconst COUNTRIES = [\n  { value: 'de', label: 'Germany' },\n  { value: 'eg', label: 'Egypt' },\n  { value: 'jp', label: 'Japan' },\n  { value: 'kp', label: 'North Korea', disabled: true },\n]\n\nexport default function SelectItemsExample() {\n  return (\n    <Select.Root defaultValue=\"eg\" items={COUNTRIES}>\n      <Select.Trigger aria-label=\"Country\" className={styles.trigger}>\n        <Select.Value />\n      </Select.Trigger>\n      <Select.Portal>\n        <Select.Content className={styles.content}>\n          <Select.Viewport>\n            {COUNTRIES.map((country) => (\n              <Select.Item\n                className={styles.item}\n                disabled={country.disabled}\n                key={country.value}\n                value={country.value}>\n                <Select.ItemText>{country.label}</Select.ItemText>\n              </Select.Item>\n            ))}\n          </Select.Viewport>\n        </Select.Content>\n      </Select.Portal>\n    </Select.Root>\n  )\n}\n",
+      "path": "internal-primitives/select-items/select-items.tsx",
+      "target": "components/select-items.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "select-items",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { ShieldAlert } from 'lucide-react'\nimport { toast } from 'sonner'\n\nexport default function Demo() {\n  return (\n    <Button\n      onClick={() =>\n        toast('Actions have been triggered', {\n          action: {\n            label: 'Undo',\n            onClick: () => console.log('Undo'),\n          },\n          className: 'gap-3',\n          description: `you have clicked the 'super button' button, and btw i can be loading.`,\n          icon: <ShieldAlert />,\n        })\n      }\n      variant=\"outline\">\n      Show Toast\n    </Button>\n  )\n}\n",
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { ShieldAlert } from 'lucide-react'\nimport { toast } from 'sonner'\n\nexport default function Demo() {\n  return (\n    <Button\n      onClick={() =>\n        toast('Your session expires in 5 minutes', {\n          action: {\n            label: 'Stay signed in',\n            onClick: () => toast.success('Session extended'),\n          },\n          className: 'gap-3',\n          description: 'Save your work to keep it.',\n          icon: <ShieldAlert />,\n        })\n      }\n      variant=\"outline\">\n      Show Toast\n    </Button>\n  )\n}\n",
       "path": "sonner/sonner-2.tsx",
       "target": "components/sonner-2.tsx",
       "type": "registry:example"

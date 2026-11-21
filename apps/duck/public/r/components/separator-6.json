@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "import { Separator } from '@gentleduck/registry-ui/separator'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-72 gap-6 text-muted-foreground text-sm\">\n      <div className=\"grid gap-2\">\n        Primary\n        <Separator className=\"bg-primary\" />\n      </div>\n      <div className=\"grid gap-2\">\n        Thicker\n        <Separator className=\"h-1 rounded-full\" />\n      </div>\n      <div className=\"grid gap-2\">\n        Dashed\n        <Separator className=\"border-t border-dashed bg-transparent\" />\n      </div>\n    </div>\n  )\n}\n",
+      "path": "separator/separator-6.tsx",
+      "target": "components/separator-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "separator-6",
+  "registryDependencies": [
+    "separator",
+    "button"
+  ],
+  "root_folder": "separator",
+  "source": "/registry-examples/src/separator",
+  "type": "registry:example"
+}

@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Menubar,\n  MenubarContent,\n  MenubarItem,\n  MenubarMenu,\n  MenubarSeparator,\n  MenubarShortcut,\n  MenubarTrigger,\n} from '@gentleduck/registry-ui/menubar'\n\nexport default function Demo() {\n  return (\n    <Menubar orientation=\"vertical\" className=\"w-40\">\n      <MenubarMenu>\n        <MenubarTrigger>File</MenubarTrigger>\n        <MenubarContent>\n          <MenubarItem>\n            New Tab <MenubarShortcut>⌘T</MenubarShortcut>\n          </MenubarItem>\n          <MenubarItem>New Window</MenubarItem>\n          <MenubarSeparator />\n          <MenubarItem>Print</MenubarItem>\n        </MenubarContent>\n      </MenubarMenu>\n      <MenubarMenu>\n        <MenubarTrigger>Edit</MenubarTrigger>\n        <MenubarContent>\n          <MenubarItem>\n            Undo <MenubarShortcut>⌘Z</MenubarShortcut>\n          </MenubarItem>\n          <MenubarItem>\n            Redo <MenubarShortcut>⇧⌘Z</MenubarShortcut>\n          </MenubarItem>\n        </MenubarContent>\n      </MenubarMenu>\n      <MenubarMenu>\n        <MenubarTrigger>View</MenubarTrigger>\n        <MenubarContent>\n          <MenubarItem>Reload</MenubarItem>\n          <MenubarItem>Toggle Fullscreen</MenubarItem>\n        </MenubarContent>\n      </MenubarMenu>\n    </Menubar>\n  )\n}\n",
+      "path": "menubar/menubar-4.tsx",
+      "target": "components/menubar-4.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "menubar-4",
+  "registryDependencies": [
+    "menubar",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "menubar",
+  "source": "/registry-examples/src/menubar",
+  "type": "registry:example"
+}

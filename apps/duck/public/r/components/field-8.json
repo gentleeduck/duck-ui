@@ -9,7 +9,15 @@
   ],
   "name": "field-8",
   "registryDependencies": [
-    "field"
+    "field",
+    "button",
+    "checkbox",
+    "input",
+    "radio-group",
+    "select",
+    "slider",
+    "switch",
+    "textarea"
   ],
   "root_folder": "field",
   "source": "/registry-examples/src/field",

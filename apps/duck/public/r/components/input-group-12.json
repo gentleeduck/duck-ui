@@ -1,4 +1,8 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks",
+    "@tabler/icons-react"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\nimport {\n  InputGroup,\n  InputGroupAddon,\n  InputGroupButton,\n  InputGroupInput,\n  InputGroupText,\n  InputGroupTextarea,\n} from '@gentleduck/registry-ui/input-group'\nimport { Separator } from '@gentleduck/registry-ui/separator'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\nimport { IconCheck, IconInfoCircle, IconPaperclip } from '@tabler/icons-react'\nimport { ArrowUpIcon, FilterIcon } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <TooltipProvider>\n        <div className=\"grid w-full max-w-sm gap-6\">\n          <InputGroup>\n            <InputGroupInput placeholder=\"تصفية السجلات...\" />\n            <InputGroupAddon>\n              <FilterIcon aria-hidden=\"true\" />\n            </InputGroupAddon>\n            <InputGroupAddon align=\"inline-end\">24 سجلًا</InputGroupAddon>\n          </InputGroup>\n          <InputGroup>\n            <InputGroupInput inputMode=\"decimal\" placeholder=\"0.00\" />\n            <InputGroupAddon>\n              <InputGroupText>المبلغ</InputGroupText>\n            </InputGroupAddon>\n            <InputGroupAddon align=\"inline-end\">\n              <InputGroupText>ر.س</InputGroupText>\n              <Tooltip>\n                <TooltipTrigger asChild>\n                  <InputGroupButton aria-label=\"معلومات\" className=\"rounded-full\" size=\"icon-xs\">\n                    <IconInfoCircle aria-hidden=\"true\" />\n                  </InputGroupButton>\n                </TooltipTrigger>\n                <TooltipContent>المبلغ شامل ضريبة القيمة المضافة.</TooltipContent>\n              </Tooltip>\n            </InputGroupAddon>\n          </InputGroup>\n          <InputGroup>\n            <InputGroupTextarea placeholder=\"اشرح مشكلتك...\" />\n            <InputGroupAddon align=\"block-end\">\n              <InputGroupButton aria-label=\"إرفاق ملف\" className=\"rounded-full\" size=\"icon-xs\" variant=\"outline\">\n                <IconPaperclip aria-hidden=\"true\" />\n              </InputGroupButton>\n              <DropdownMenu>\n                <DropdownMenuTrigger asChild>\n                  <InputGroupButton variant=\"ghost\">منخفضة</InputGroupButton>\n                </DropdownMenuTrigger>\n                <DropdownMenuContent align=\"start\" className=\"[--radius:0.95rem]\" side=\"top\">\n                  <DropdownMenuItem>منخفضة</DropdownMenuItem>\n                  <DropdownMenuItem>متوسطة</DropdownMenuItem>\n                  <DropdownMenuItem>عالية</DropdownMenuItem>\n                </DropdownMenuContent>\n              </DropdownMenu>\n              <InputGroupText className=\"ms-auto\">3 مرفقات</InputGroupText>\n              <Separator className=\"!h-4\" orientation=\"vertical\" />\n              <InputGroupButton className=\"rounded-full\" disabled size=\"icon-xs\" variant=\"default\">\n                <ArrowUpIcon aria-hidden=\"true\" />\n                <span className=\"sr-only\">إرسال</span>\n              </InputGroupButton>\n            </InputGroupAddon>\n          </InputGroup>\n          <InputGroup>\n            <InputGroupInput placeholder=\"فريق ألفا\" />\n            <InputGroupAddon align=\"inline-end\">\n              <div className=\"flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground\">\n                <IconCheck className=\"size-3\" />\n              </div>\n            </InputGroupAddon>\n          </InputGroup>\n        </div>\n      </TooltipProvider>\n    </DirectionProvider>\n  )\n}\n",
@@ -9,7 +13,14 @@
   ],
   "name": "input-group-12",
   "registryDependencies": [
-    "input-group"
+    "input-group",
+    "button-group",
+    "dropdown-menu",
+    "kbd",
+    "label",
+    "popover",
+    "separator",
+    "tooltip"
   ],
   "root_folder": "input-group",
   "source": "/registry-examples/src/input-group",

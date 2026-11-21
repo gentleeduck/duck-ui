@@ -9,7 +9,12 @@
   ],
   "name": "popover-2",
   "registryDependencies": [
-    "popover"
+    "popover",
+    "button",
+    "direction",
+    "input",
+    "label",
+    "textarea"
   ],
   "root_folder": "popover",
   "source": "/registry-examples/src/popover",

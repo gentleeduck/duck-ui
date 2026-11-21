@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@gentleduck/registry-ui/accordion'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState('shipping')\n  return (\n    <div className=\"flex w-87.5 flex-col gap-3\">\n      <p className=\"text-muted-foreground text-sm\">Open: {open || 'none'}</p>\n      <Accordion type=\"single\" collapsible value={open} onValueChange={setOpen}>\n        <AccordionItem value=\"shipping\">\n          <AccordionTrigger>Shipping</AccordionTrigger>\n          <AccordionContent>Three to five working days, tracked from the day it leaves us.</AccordionContent>\n        </AccordionItem>\n        <AccordionItem value=\"returns\">\n          <AccordionTrigger>Returns</AccordionTrigger>\n          <AccordionContent>Free within thirty days, in the box it came in.</AccordionContent>\n        </AccordionItem>\n        <AccordionItem value=\"gift\" disabled>\n          <AccordionTrigger>Gift wrapping (sold out)</AccordionTrigger>\n          <AccordionContent>Wrapped in recycled paper with a handwritten card.</AccordionContent>\n        </AccordionItem>\n      </Accordion>\n    </div>\n  )\n}\n",
+      "path": "accordion/accordion-8.tsx",
+      "target": "components/accordion-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "accordion-8",
+  "registryDependencies": [
+    "accordion",
+    "direction"
+  ],
+  "root_folder": "accordion",
+  "source": "/registry-examples/src/accordion",
+  "type": "registry:example"
+}

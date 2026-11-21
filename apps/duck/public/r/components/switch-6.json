@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Switch } from '@gentleduck/registry-ui/switch'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [newsletter, setNewsletter] = React.useState(true)\n  const [submitted, setSubmitted] = React.useState('')\n\n  return (\n    <form\n      className=\"flex flex-col gap-4\"\n      onSubmit={(event) => {\n        event.preventDefault()\n        const entries = Array.from(new FormData(event.currentTarget), ([name, value]) => `${name}=${value}`)\n        setSubmitted(entries.join('&') || 'nothing')\n      }}>\n      <div className=\"flex items-center gap-2\">\n        <Switch defaultChecked id=\"form-newsletter\" name=\"newsletter\" onCheckedChange={setNewsletter} />\n        <Label htmlFor=\"form-newsletter\">Newsletter: {newsletter ? 'on' : 'off'}</Label>\n      </div>\n      <div className=\"flex gap-2\">\n        <Button size=\"sm\" type=\"submit\">\n          Save\n        </Button>\n        <Button onClick={() => setSubmitted('')} size=\"sm\" type=\"reset\" variant=\"outline\">\n          Reset\n        </Button>\n      </div>\n      <p aria-live=\"polite\" className=\"text-muted-foreground text-sm\">\n        {submitted ? `Submitted ${submitted}.` : 'Nothing submitted yet.'}\n      </p>\n    </form>\n  )\n}\n",
+      "path": "switch/switch-6.tsx",
+      "target": "components/switch-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "switch-6",
+  "registryDependencies": [
+    "switch",
+    "button",
+    "field",
+    "label"
+  ],
+  "root_folder": "switch",
+  "source": "/registry-examples/src/switch",
+  "type": "registry:example"
+}

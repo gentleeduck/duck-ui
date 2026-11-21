@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Dialog from '@gentleduck/primitives/dialog'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function DialogFocusExample() {\n  const email = React.useRef<HTMLInputElement>(null)\n  const after = React.useRef<HTMLButtonElement>(null)\n\n  return (\n    <div className={styles.row}>\n      <Dialog.Root>\n        <Dialog.Trigger className={styles.button}>Invite</Dialog.Trigger>\n        <Dialog.Portal>\n          <Dialog.Overlay className={`${styles.overlay} ${styles.fade}`} />\n          <Dialog.Content className={styles.dialog} finalFocus={after} initialFocus={email}>\n            <Dialog.Title className={styles.title}>Invite a teammate</Dialog.Title>\n            <Dialog.Description className={styles.description}>\n              Focus starts in the email field, not on the first field, and lands on \"Next step\" once closed.\n            </Dialog.Description>\n            <input className={styles.input} placeholder=\"Name\" />\n            <input className={styles.input} placeholder=\"Email\" ref={email} type=\"email\" />\n            <div className={styles.actions}>\n              <Dialog.Close className={styles.button}>Done</Dialog.Close>\n            </div>\n          </Dialog.Content>\n        </Dialog.Portal>\n      </Dialog.Root>\n      <button className={styles.button} ref={after} type=\"button\">\n        Next step\n      </button>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/dialog-focus/dialog-focus.tsx",
+      "target": "components/dialog-focus.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dialog-focus",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as NavigationMenu from '@gentleduck/primitives/navigation-menu'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function NavigationMenuLinksExample() {\n  const [page, setPage] = React.useState('#overview')\n  const [filters, setFilters] = React.useState(0)\n\n  return (\n    <NavigationMenu.Root className={styles.relative}>\n      <NavigationMenu.List className={styles.navList}>\n        <NavigationMenu.Item value=\"pages\">\n          <NavigationMenu.Trigger className={styles.menubarTrigger}>Pages</NavigationMenu.Trigger>\n          <NavigationMenu.Content className={styles.navContent}>\n            {['#overview', '#activity', '#billing'].map((href) => (\n              <NavigationMenu.Link\n                active={href === page}\n                className={styles.navLink}\n                href={href}\n                key={href}\n                onSelect={(event) => {\n                  event.preventDefault()\n                  setPage(href)\n                }}>\n                {href.slice(1)}\n              </NavigationMenu.Link>\n            ))}\n            <NavigationMenu.Link\n              className={styles.navLink}\n              closeOnSelect={false}\n              href=\"#\"\n              onSelect={(event) => {\n                event.preventDefault()\n                setFilters((count) => count + 1)\n              }}>\n              Add a filter ({filters}), keeps the menu open\n            </NavigationMenu.Link>\n          </NavigationMenu.Content>\n        </NavigationMenu.Item>\n      </NavigationMenu.List>\n      <NavigationMenu.Viewport className={styles.viewport} />\n    </NavigationMenu.Root>\n  )\n}\n",
+      "path": "internal-primitives/navigation-menu-links/navigation-menu-links.tsx",
+      "target": "components/navigation-menu-links.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "navigation-menu-links",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

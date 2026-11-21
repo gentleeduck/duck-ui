@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Sidebar,\n  SidebarContent,\n  SidebarGroup,\n  SidebarMenu,\n  SidebarMenuButton,\n  SidebarMenuItem,\n  SidebarProvider,\n  useSidebar,\n} from '@gentleduck/registry-ui/sidebar'\n\nfunction Controls() {\n  const { open, setOpen, toggleSidebar, isMobile, openMobile, setOpenMobile } = useSidebar()\n  return (\n    <main className=\"flex flex-col gap-2 p-4 text-sm\">\n      <div className=\"flex gap-2\">\n        <Button onClick={toggleSidebar} size=\"sm\" variant=\"outline\">\n          Toggle\n        </Button>\n        <Button onClick={() => setOpen(true)} size=\"sm\" variant=\"outline\">\n          Open\n        </Button>\n        <Button onClick={() => setOpenMobile(!openMobile)} size=\"sm\" variant=\"outline\">\n          Mobile sheet\n        </Button>\n      </div>\n      <p className=\"text-muted-foreground\">\n        {isMobile\n          ? `On a phone, the sheet is ${openMobile ? 'open' : 'closed'}.`\n          : `The sidebar is ${open ? 'open' : 'closed'}.`}\n      </p>\n    </main>\n  )\n}\n\nexport default function Demo() {\n  return (\n    <SidebarProvider className=\"min-h-0\">\n      <Sidebar collapsible=\"offcanvas\">\n        <SidebarContent>\n          <SidebarGroup>\n            <SidebarMenu>\n              {['Inbox', 'Sent', 'Archive'].map((folder) => (\n                <SidebarMenuItem key={folder}>\n                  <SidebarMenuButton>{folder}</SidebarMenuButton>\n                </SidebarMenuItem>\n              ))}\n            </SidebarMenu>\n          </SidebarGroup>\n        </SidebarContent>\n      </Sidebar>\n      <Controls />\n    </SidebarProvider>\n  )\n}\n",
+      "path": "sidebar/sidebar-20.tsx",
+      "target": "components/sidebar-20.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sidebar-20",
+  "registryDependencies": [
+    "sidebar",
+    "avatar",
+    "collapsible",
+    "dropdown-menu"
+  ],
+  "root_folder": "sidebar",
+  "source": "/registry-examples/src/sidebar",
+  "type": "registry:example"
+}

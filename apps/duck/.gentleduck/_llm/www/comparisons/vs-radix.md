@@ -103,64 +103,16 @@ gentleduck's Tooltip adds `disableCloseOnClick` on the trigger. In Radix, wrappi
 
 ### Bundled together
 
-Radix ships each primitive as a separate npm package (`@radix-ui/react-dialog`, `@radix-ui/react-popover`, etc.), each with their own internal utilities. Every package bundles its own copy of react-slot, react-primitive, react-context, react-dismissable-layer, and react-focus-scope. Install 5 Radix primitives and you pay ~25 KB in duplicated internals.
+Radix ships each primitive as a separate npm package (`@radix-ui/react-dialog`, `@radix-ui/react-popover`, etc.), built on shared internal packages such as react-slot, react-primitive and react-dismissable-layer. A bundler includes each of those once only while every primitive asks for the same version of it.
 
-gentleduck ships all primitives from a single package with shared internals. Slot, Presence, Popper, focus scope, and dismissable layer load once. Every additional primitive adds only its own code.
+gentleduck ships all primitives from a single package, so Slot, Presence, Popper, focus scope and the dismissable layer are one copy whatever you install. Every additional primitive adds only its own code.
 
 ### Bundle size
 
-Real numbers from bundlephobia.com (Radix) and built dist measurement (gentleduck), verified 2026-03-22:
-
-```tsx title="components/chart-benchmark-primitives-vs.tsx"
-// import from your project: import Demo from '@/components/chart-benchmark-primitives-vs'
-'use client'
-
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@gentleduck/registry-ui/chart'
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
-import data from '../../../../apps/duck/public/data/benchmarks/primitives.json'
-
-const config = {
-  gentleduck: { label: 'gentleduck (KB)', color: 'var(--chart-1)' },
-  radix: { label: 'Radix UI (KB)', color: 'var(--chart-2)' },
-} satisfies ChartConfig
-
-const chartData = data.savingsVsRadix.map((s: { name: string; gentleduckKB: number; competitorKB: number }) => ({
-  name: s.name,
-  gentleduck: s.gentleduckKB,
-  radix: s.competitorKB,
-}))
-
-export default function PrimitivesVsRadix() {
-  return (
-    <div className="w-full">
-      <p className="mb-3 text-muted-foreground text-xs">
-        {chartData.length} components with verified bundlephobia data. Per-component gzipped size (KB).
-      </p>
-      <ChartContainer className="aspect-[3/2] min-h-[450px] w-full" config={config}>
-        <BarChart data={chartData} layout="vertical" margin={{ left: 20, right: 20, top: 10, bottom: 10 }}>
-          <CartesianGrid horizontal={false} />
-          <YAxis dataKey="name" type="category" width={110} tickLine={false} axisLine={false} fontSize={11} />
-          <XAxis type="number" tickLine={false} axisLine={false} fontSize={10} />
-          <ChartTooltip content={<ChartTooltipContent indicator="dashed" />} />
-          <ChartLegend content={<ChartLegendContent />} />
-          <Bar dataKey="gentleduck" fill="var(--color-gentleduck)" radius={[0, 4, 4, 0]} barSize={10} />
-          <Bar dataKey="radix" fill="var(--color-radix)" radius={[0, 4, 4, 0]} barSize={10} />
-        </BarChart>
-      </ChartContainer>
-    </div>
-  )
-}
-```
+Both libraries go through the same build: an entry re-exporting the component, bundled and minified by esbuild with React external, then gzipped.
 
 }>
-  **Note:** Radio Group is one case where Radix is actually smaller (1.0 KB vs 1.9 KB). We include honest numbers - not every primitive is smaller.
+  **Note:** every primitive both libraries ship is smaller in gentleduck, by between 2% (Alert Dialog) and 67% (Input OTP). The margin is thinnest for the overlays, which both position with Floating UI. Over the 18 components both ship, gentleduck's bundle is 60 KB to Radix's 69 KB; gentleduck's whole library, all 36 modules, is 71 KB.
 
 See the full [primitives benchmark](/duck-primitives/benchmarks) for the comparison table across all libraries.
 
@@ -229,7 +181,7 @@ The component API, data attributes, and ARIA patterns are the same. Run your tes
 | Progress | Yes | Yes |
 | Calendar | Yes | No |
 | Command | Yes | No (cmdk) |
-| Input OTP | Yes | No (input-otp) |
+| Input OTP | Yes | Preview (`unstable_OneTimePasswordField`) |
 | Sheet | Yes | No (Dialog variant) |
 | Pagination | Yes | No |
 
@@ -239,9 +191,9 @@ The component API, data attributes, and ARIA patterns are the same. Run your tes
 
 You get the same API with less code. The Dialog, Popover, Select, and Tooltip work identically to their Radix equivalents - same compound pattern, same data-state attributes, same ARIA behavior. Migration is a namespace change in your imports.
 
-You get a smaller bundle immediately. Alert Dialog drops from 18.6 KB to 1.6 KB. Popover drops from 19.6 KB to 2.4 KB. Dialog drops from 10.6 KB to 3.1 KB. These savings compound - install 5 primitives and you save 50-70 KB of duplicated internals.
+You get a smaller bundle for every primitive both libraries ship. A Radio Group is 6.9 KB against 10.1 KB, a Slider 6.4 KB against 9.5 KB, a Dialog 12.9 KB against 13.4 KB.
 
-You get primitives Radix does not ship. Calendar with 4 calendar systems, Command for command palettes, Input OTP, Sheet, and Pagination are built-in. With Radix, these require separate third-party libraries.
+You get primitives Radix does not ship. Calendar with 4 calendar systems, Command for command palettes, Sheet, and Pagination are built-in, and Input OTP is stable where Radix's is a preview. With Radix, these require separate third-party libraries.
 
 You own the source. When a Radix primitive doesn't behave the way you need - focus trapping in a specific edge case, dismiss behavior for nested overlays, animation timing - you modify it directly in your monorepo. No fork. No wrapper hack. No waiting for an upstream release.
 

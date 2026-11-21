@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as HoverCard from '@gentleduck/primitives/hover-card'\nimport styles from '../primitives.module.css'\n\nfunction Card({ label, openDelay, closeDelay }: { label: string; openDelay: number; closeDelay: number }) {\n  return (\n    <HoverCard.Root closeDelay={closeDelay} openDelay={openDelay}>\n      <HoverCard.Trigger className={styles.button} href=\"#\">\n        {label}\n      </HoverCard.Trigger>\n      <HoverCard.Portal>\n        <HoverCard.Content className={`${styles.content} ${styles.panel}`} sideOffset={8}>\n          Opens after {openDelay}ms, closes {closeDelay}ms after the pointer leaves.\n        </HoverCard.Content>\n      </HoverCard.Portal>\n    </HoverCard.Root>\n  )\n}\n\nexport default function HoverCardDelaysExample() {\n  return (\n    <div className={styles.row}>\n      <Card closeDelay={100} label=\"Quick\" openDelay={150} />\n      <Card closeDelay={300} label=\"Default\" openDelay={700} />\n      <Card closeDelay={1000} label=\"Lingering\" openDelay={400} />\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/hover-card-delays/hover-card-delays.tsx",
+      "target": "components/hover-card-delays.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "hover-card-delays",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

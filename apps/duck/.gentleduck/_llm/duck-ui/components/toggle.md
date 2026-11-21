@@ -6,7 +6,7 @@ import { Bold } from 'lucide-react'
 export default function Demo() {
   return (
     <Toggle aria-label="Toggle bold">
-      <Bold className="h-4 w-4" />
+      <Bold />
     </Toggle>
   )
 }
@@ -61,7 +61,7 @@ import { Italic } from 'lucide-react'
 export default function Demo() {
   return (
     <Toggle aria-label="Toggle italic">
-      <Italic className="h-4 w-4" />
+      <Italic />
     </Toggle>
   )
 }
@@ -77,7 +77,7 @@ import { Bold } from 'lucide-react'
 export default function Demo() {
   return (
     <Toggle aria-label="Toggle bold" variant={'outline'}>
-      <Bold className="h-4 w-4" />
+      <Bold />
     </Toggle>
   )
 }
@@ -92,7 +92,7 @@ import { Italic } from 'lucide-react'
 
 export default function Demo() {
   return (
-    <Toggle aria-label="Toggle italic" className="flex items-center">
+    <Toggle>
       <Italic />
       Italic
     </Toggle>
@@ -110,7 +110,7 @@ import { Italic } from 'lucide-react'
 export default function Demo() {
   return (
     <Toggle aria-label="Toggle italic" size="sm">
-      <Italic className="h-4 w-4" />
+      <Italic />
     </Toggle>
   )
 }
@@ -126,7 +126,7 @@ import { Italic } from 'lucide-react'
 export default function Demo() {
   return (
     <Toggle aria-label="Toggle italic" size="lg">
-      <Italic className="h-4 w-4" />
+      <Italic />
     </Toggle>
   )
 }
@@ -142,8 +142,85 @@ import { Underline } from 'lucide-react'
 export default function Demo() {
   return (
     <Toggle aria-label="Toggle underline" disabled>
-      <Underline className="h-4 w-4" />
+      <Underline />
     </Toggle>
+  )
+}
+```
+
+### Content that follows the state
+
+Pass a function as the child to render content from the pressed state, such as an icon that changes when the toggle turns on.
+
+```tsx title="components/toggle-10.tsx"
+// import from your project: import Demo from '@/components/toggle-10'
+import { Toggle } from '@gentleduck/registry-ui/toggle'
+import { Volume2, VolumeX } from 'lucide-react'
+
+export default function Demo() {
+  return (
+    <Toggle aria-label="Mute" variant="outline">
+      {(pressed) => (pressed ? <VolumeX /> : <Volume2 />)}
+    </Toggle>
+  )
+}
+```
+
+### Controlled
+
+Hold the state yourself with `pressed` and `onPressedChange` when something else reads it, here the password field's `type`.
+
+```tsx title="components/toggle-11.tsx"
+// import from your project: import Demo from '@/components/toggle-11'
+'use client'
+
+import { Input } from '@gentleduck/registry-ui/input'
+import { Label } from '@gentleduck/registry-ui/label'
+import { Toggle } from '@gentleduck/registry-ui/toggle'
+import { Eye, EyeOff } from 'lucide-react'
+import * as React from 'react'
+
+export default function Demo() {
+  const [shown, setShown] = React.useState(false)
+
+  return (
+    <div className="grid w-full max-w-sm gap-1.5">
+      <Label htmlFor="toggle-password">Password</Label>
+      <div className="flex gap-2">
+        <Input autoComplete="current-password" id="toggle-password" type={shown ? 'text' : 'password'} />
+        <Toggle aria-label="Show password" onPressedChange={setShown} pressed={shown} variant="outline">
+          {shown ? <EyeOff /> : <Eye />}
+        </Toggle>
+      </div>
+    </div>
+  )
+}
+```
+
+### Starts pressed
+
+`defaultPressed` starts the toggle on and leaves the state to it. `onPressedChange` still reports each change.
+
+```tsx title="components/toggle-12.tsx"
+// import from your project: import Demo from '@/components/toggle-12'
+'use client'
+
+import { Toggle } from '@gentleduck/registry-ui/toggle'
+import { Pin } from 'lucide-react'
+import * as React from 'react'
+
+export default function Demo() {
+  const [pinned, setPinned] = React.useState(true)
+
+  return (
+    <div className="flex items-center gap-3">
+      <Toggle aria-label="Pin to the sidebar" defaultPressed onPressedChange={setPinned} variant="outline">
+        <Pin />
+      </Toggle>
+      <p aria-live="polite" className="text-muted-foreground text-sm">
+        {pinned ? 'Pinned to the sidebar.' : 'Not pinned.'}
+      </p>
+    </div>
   )
 }
 ```
@@ -175,7 +252,7 @@ export default function Demo() {
 } title="Alpha: Motion Compositions" tone="warning">
   Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 
-Use `MotionToggle` for tap feedback and a staggered entrance animation powered by [motion](https://motion.dev). Each child is wrapped in a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition, staggered by 50ms per child, and the toggle scales to 0.97 on tap for a physical press feel.
+Use `MotionToggle` for tap feedback and a staggered entrance animation powered by [motion](https://motion.dev). Each child is wrapped in a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition, staggered by 50ms per child, and the toggle scales to 0.97 on tap for a physical press feel and back on the same 15ms tween.
 
 ```tsx title="components/toggle-9.tsx"
 // import from your project: import Demo from '@/components/toggle-9'
@@ -226,8 +303,9 @@ export default function Demo() {
 | `variant` | `'default' \| 'outline'` | `'default'` | Visual style variant of the toggle |
 | `size` | `'default' \| 'sm' \| 'lg'` | `'default'` | Size variant of the toggle |
 | `disabled` | `boolean` | `false` | Disables the toggle if set to `true` |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
-| `children` | `React.ReactNode` | - | Content rendered inside the toggle button |
+| `dir` | `string` | - | Sets the `dir` attribute, `auto` included. Leave it out and the toggle follows the page |
+| `children` | `React.ReactNode \| ((pressed: boolean) => React.ReactNode)` | - | Content rendered inside the toggle button, or a function of the pressed state |
+| `asChild` | `boolean` | `false` | Render the child element instead of a `button`, merging the toggle's props, state and ref onto it |
 | `ref` | `React.Ref<HTMLButtonElement>` | - | Ref forwarded to the underlying button element |
 
 ### Data Attributes
@@ -239,7 +317,7 @@ export default function Demo() {
 
 ### MotionToggle
 
-Adds `whileTap` press feedback (scale 0.97) and a staggered `scaleIn` entrance (fade, scale, and blur) on each child, delayed 50ms per index, with a `springBouncy` transition. Requires the `motion` package.
+Adds `whileTap` press feedback (scale 0.97, in and out on a 15ms tween) and a staggered `scaleIn` entrance (fade, scale, and blur) on each child, delayed 50ms per index, with a `springBouncy` transition. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

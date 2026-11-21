@@ -1,4 +1,8 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks",
+    "@tabler/icons-react"
+  ],
   "files": [
     {
       "content": "import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@gentleduck/registry-ui/input-group'\nimport { Loader } from 'lucide-react'\n\nfunction Spinner({ className, ...props }: React.ComponentProps<'svg'>) {\n  return <Loader aria-label=\"Loading\" className={'size-4 animate-spin'} role=\"status\" {...props} />\n}\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-sm gap-4\">\n      <InputGroup data-disabled>\n        <InputGroupInput disabled placeholder=\"Uploading assets...\" />\n        <InputGroupAddon align=\"inline-end\">\n          <Spinner />\n        </InputGroupAddon>\n      </InputGroup>\n      <InputGroup data-disabled>\n        <InputGroupInput disabled placeholder=\"Connecting to server...\" />\n        <InputGroupAddon>\n          <Spinner />\n        </InputGroupAddon>\n      </InputGroup>\n      <InputGroup data-disabled>\n        <InputGroupInput disabled placeholder=\"Syncing changes...\" />\n        <InputGroupAddon align=\"inline-end\">\n          <InputGroupText>Syncing...</InputGroupText>\n          <Spinner />\n        </InputGroupAddon>\n      </InputGroup>\n      <InputGroup data-disabled>\n        <InputGroupInput disabled placeholder=\"Validating configuration...\" />\n        <InputGroupAddon>\n          <Loader className=\"animate-spin\" />\n        </InputGroupAddon>\n        <InputGroupAddon align=\"inline-end\">\n          <InputGroupText className=\"text-muted-foreground\">Almost done...</InputGroupText>\n        </InputGroupAddon>\n      </InputGroup>\n    </div>\n  )\n}\n",
@@ -9,7 +13,14 @@
   ],
   "name": "input-group-7",
   "registryDependencies": [
-    "input-group"
+    "input-group",
+    "button-group",
+    "dropdown-menu",
+    "kbd",
+    "label",
+    "popover",
+    "separator",
+    "tooltip"
   ],
   "root_folder": "input-group",
   "source": "/registry-examples/src/input-group",

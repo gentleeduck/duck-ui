@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  CommandDialog,\n  CommandEmpty,\n  CommandGroup,\n  CommandInput,\n  CommandItem,\n  CommandList,\n  CommandShortcut,\n} from '@gentleduck/registry-ui/command'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n\n  return (\n    <>\n      <Button onClick={() => setOpen(true)} variant=\"outline\">\n        Open the small palette\n      </Button>\n      <CommandDialog\n        contentClassName=\"h-80 lg:w-110\"\n        description=\"Jump to a page\"\n        onOpenChange={setOpen}\n        open={open}\n        title=\"Quick jump\">\n        <CommandInput placeholder=\"Where to?\" />\n        <CommandList>\n          <CommandEmpty>Nothing matches.</CommandEmpty>\n          <CommandGroup heading=\"Pages\">\n            <CommandItem onSelect={() => setOpen(false)}>\n              Inbox <CommandShortcut keys=\"g+i\" />\n            </CommandItem>\n            <CommandItem onSelect={() => setOpen(false)}>\n              Drafts <CommandShortcut keys=\"g+d\" variant=\"secondary\" />\n            </CommandItem>\n          </CommandGroup>\n        </CommandList>\n      </CommandDialog>\n    </>\n  )\n}\n",
+      "path": "command/command-10.tsx",
+      "target": "components/command-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "command-10",
+  "registryDependencies": [
+    "command",
+    "button"
+  ],
+  "root_folder": "command",
+  "source": "/registry-examples/src/command",
+  "type": "registry:example"
+}

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as ContextMenu from '@gentleduck/primitives/context-menu'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function ContextMenuBasicExample() {\n  const [last, setLast] = React.useState('nothing')\n\n  return (\n    <div className={styles.stack}>\n      <ContextMenu.Root>\n        <ContextMenu.Trigger className={styles.contextArea}>Right-click or long-press here</ContextMenu.Trigger>\n        <ContextMenu.Portal>\n          <ContextMenu.Content className={styles.content}>\n            <ContextMenu.Label className={styles.groupLabel}>Edit</ContextMenu.Label>\n            <ContextMenu.Item className={styles.item} onSelect={() => setLast('Back')}>\n              Back <span className={styles.shortcut}>Alt Left</span>\n            </ContextMenu.Item>\n            <ContextMenu.Item className={styles.item} disabled>\n              Forward <span className={styles.shortcut}>Alt Right</span>\n            </ContextMenu.Item>\n            <ContextMenu.Item className={styles.item} onSelect={() => setLast('Reload')}>\n              Reload <span className={styles.shortcut}>Ctrl R</span>\n            </ContextMenu.Item>\n            <ContextMenu.Separator className={styles.separator} />\n            <ContextMenu.Item className={styles.item} onSelect={() => setLast('Inspect')}>\n              Inspect\n            </ContextMenu.Item>\n          </ContextMenu.Content>\n        </ContextMenu.Portal>\n      </ContextMenu.Root>\n      <p className={styles.note}>Last chosen: {last}.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/context-menu-basic/context-menu-basic.tsx",
+      "target": "components/context-menu-basic.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "context-menu-basic",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

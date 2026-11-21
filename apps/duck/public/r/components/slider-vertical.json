@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Slider from '@gentleduck/primitives/slider'\nimport styles from '../primitives.module.css'\n\nexport default function SliderVerticalExample() {\n  return (\n    <div className={styles.row} style={{ gap: '2rem' }}>\n      {['Bass', 'Mid', 'Treble'].map((band) => (\n        <Slider.Root className={styles.slider} defaultValue={[50]} key={band} orientation=\"vertical\">\n          <Slider.Track className={styles.track}>\n            <Slider.Range className={styles.range} />\n          </Slider.Track>\n          <Slider.Thumb aria-label={band} className={styles.thumb} />\n        </Slider.Root>\n      ))}\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/slider-vertical/slider-vertical.tsx",
+      "target": "components/slider-vertical.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "slider-vertical",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

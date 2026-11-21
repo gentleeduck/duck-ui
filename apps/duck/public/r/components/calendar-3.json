@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport type { Selection } from '@gentleduck/calendar'\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [date, setDate] = React.useState<Selection.DateRange<Date> | null>(null)\n\n  return <Calendar className=\"rounded-md border shadow-sm\" mode=\"range\" selected={date} onSelect={setDate} />\n}\n",
@@ -9,7 +15,13 @@
   ],
   "name": "calendar-3",
   "registryDependencies": [
-    "calendar"
+    "calendar",
+    "direction",
+    "field",
+    "input",
+    "label",
+    "popover",
+    "switch"
   ],
   "root_folder": "calendar",
   "source": "/registry-examples/src/calendar",

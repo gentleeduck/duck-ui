@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuSeparator,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\n\nexport default function Demo() {\n  return (\n    <DropdownMenu>\n      <DropdownMenuTrigger asChild>\n        <Button variant=\"outline\">Account</Button>\n      </DropdownMenuTrigger>\n      <DropdownMenuContent>\n        <DropdownMenuItem asChild>\n          <a href=\"#account-profile\">Profile</a>\n        </DropdownMenuItem>\n        <DropdownMenuItem asChild>\n          <a href=\"#account-billing\">Billing</a>\n        </DropdownMenuItem>\n        <DropdownMenuItem asChild disabled>\n          <a href=\"#account-team\">Team</a>\n        </DropdownMenuItem>\n        <DropdownMenuSeparator />\n        <DropdownMenuItem asChild>\n          <a href=\"https://github.com/gentleeduck/gentleduck\" rel=\"noreferrer\" target=\"_blank\">\n            Source\n          </a>\n        </DropdownMenuItem>\n      </DropdownMenuContent>\n    </DropdownMenu>\n  )\n}\n",
+      "path": "dropdown-menu/dropdown-menu-12.tsx",
+      "target": "components/dropdown-menu-12.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "dropdown-menu-12",
+  "registryDependencies": [
+    "dropdown-menu",
+    "button",
+    "dialog",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "dropdown-menu",
+  "source": "/registry-examples/src/dropdown-menu",
+  "type": "registry:example"
+}

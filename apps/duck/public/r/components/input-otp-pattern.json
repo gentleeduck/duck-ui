@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as InputOTP from '@gentleduck/primitives/input-otp'\nimport styles from '../primitives.module.css'\n\nfunction Code({ label, pattern }: { label: string; pattern: RegExp }) {\n  return (\n    <div className={styles.stack}>\n      <span className={styles.label}>{label}</span>\n      <InputOTP.Root aria-label={label} className={styles.otp} pattern={pattern}>\n        {[0, 1, 2, 3].map((slot) => (\n          <InputOTP.Slot aria-label={`${label} ${slot + 1}`} className={styles.slot} key={slot} />\n        ))}\n      </InputOTP.Root>\n    </div>\n  )\n}\n\nexport default function InputOTPPatternExample() {\n  return (\n    <div className={styles.row}>\n      <Code label=\"Digits only\" pattern={InputOTP.REGEXP_ONLY_DIGITS} />\n      <Code label=\"Letters only\" pattern={InputOTP.REGEXP_ONLY_CHARS} />\n      <Code label=\"Hex\" pattern={/^[0-9a-fA-F]$/} />\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/input-otp-pattern/input-otp-pattern.tsx",
+      "target": "components/input-otp-pattern.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "input-otp-pattern",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

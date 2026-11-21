@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Menu from '@gentleduck/primitives/menu'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function MenuShortcutTriggerExample() {\n  const [open, setOpen] = React.useState(false)\n\n  React.useEffect(() => {\n    const onKey = (event: KeyboardEvent) => {\n      if (event.key === '.' && (event.ctrlKey || event.metaKey)) {\n        event.preventDefault()\n        setOpen(true)\n      }\n    }\n    document.addEventListener('keydown', onKey)\n    return () => document.removeEventListener('keydown', onKey)\n  }, [])\n\n  return (\n    <Menu.Root onOpenChange={setOpen} open={open}>\n      <Menu.Anchor className={styles.box}>Press Ctrl . to open the quick actions here</Menu.Anchor>\n      <Menu.Portal>\n        <Menu.Content className={styles.content} sideOffset={6}>\n          <Menu.Item className={styles.item}>Quick fix</Menu.Item>\n          <Menu.Item className={styles.item}>Rename symbol</Menu.Item>\n        </Menu.Content>\n      </Menu.Portal>\n    </Menu.Root>\n  )\n}\n",
+      "path": "internal-primitives/menu-shortcut-trigger/menu-shortcut-trigger.tsx",
+      "target": "components/menu-shortcut-trigger.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "menu-shortcut-trigger",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

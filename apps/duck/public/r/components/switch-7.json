@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Switch } from '@gentleduck/registry-ui/switch'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [events, setEvents] = React.useState(0)\n\n  return (\n    <div className=\"flex flex-col gap-2\">\n      <div className=\"flex items-center gap-2\">\n        <Switch id=\"switch-7\" name=\"beta\" onChange={() => setEvents((count) => count + 1)} />\n        <Label htmlFor=\"switch-7\">Join the beta</Label>\n      </div>\n      <p className=\"text-muted-foreground text-sm\">The native change event fired {events} times.</p>\n    </div>\n  )\n}\n",
+      "path": "switch/switch-7.tsx",
+      "target": "components/switch-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "switch-7",
+  "registryDependencies": [
+    "switch",
+    "button",
+    "field",
+    "label"
+  ],
+  "root_folder": "switch",
+  "source": "/registry-examples/src/switch",
+  "type": "registry:example"
+}

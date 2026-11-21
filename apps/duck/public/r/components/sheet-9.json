@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Sheet,\n  SheetClose,\n  SheetContent,\n  SheetDescription,\n  SheetFooter,\n  SheetHeader,\n  SheetTitle,\n  SheetTrigger,\n} from '@gentleduck/registry-ui/sheet'\n\nexport default function Demo() {\n  return (\n    <Sheet>\n      <SheetTrigger asChild>\n        <Button variant=\"outline\">Order</Button>\n      </SheetTrigger>\n      <SheetContent>\n        <SheetHeader>\n          <SheetTitle>Order 1042</SheetTitle>\n          <SheetDescription>Two items, paid by card.</SheetDescription>\n        </SheetHeader>\n        <Sheet>\n          <SheetTrigger asChild>\n            <Button className=\"self-start\" variant=\"secondary\">\n              Show the customer\n            </Button>\n          </SheetTrigger>\n          <SheetContent className=\"sm:max-w-xs\">\n            <SheetHeader>\n              <SheetTitle>Ada Lovelace</SheetTitle>\n              <SheetDescription>Escape closes this sheet and leaves the order open.</SheetDescription>\n            </SheetHeader>\n            <SheetFooter className=\"mt-auto\">\n              <SheetClose asChild>\n                <Button variant=\"outline\">Back to the order</Button>\n              </SheetClose>\n            </SheetFooter>\n          </SheetContent>\n        </Sheet>\n      </SheetContent>\n    </Sheet>\n  )\n}\n",
+      "path": "sheet/sheet-9.tsx",
+      "target": "components/sheet-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sheet-9",
+  "registryDependencies": [
+    "sheet",
+    "button",
+    "input",
+    "label"
+  ],
+  "root_folder": "sheet",
+  "source": "/registry-examples/src/sheet",
+  "type": "registry:example"
+}

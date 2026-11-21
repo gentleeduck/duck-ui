@@ -2,10 +2,16 @@
 // import from your project: import Demo from '@/components/switch-1'
 'use client'
 
+import { Label } from '@gentleduck/registry-ui/label'
 import { Switch } from '@gentleduck/registry-ui/switch'
 
 export default function Demo() {
-  return <Switch />
+  return (
+    <div className="flex items-center gap-2">
+      <Switch id="airplane-mode" />
+      <Label htmlFor="airplane-mode">Airplane mode</Label>
+    </div>
+  )
 }
 ```
 
@@ -152,6 +158,115 @@ export default function Demo() {
 }
 ```
 
+Inside a `<form>`, a form reset puts the switch back on `defaultChecked` and calls `onCheckedChange` with that value. A value set through `checked` fires the form's `change` event as a click would, without running the switch's own `onChange`, `onClick` or `onCheckedChange`. If the owner does not follow a reset, a controlled switch goes back to its `checked` before the next paint. `MotionSwitch` does the same.
+
+### Native form
+
+With a `name`, a checked switch submits `name=on` and an unchecked one submits nothing, as a checkbox does. Reset puts it back on `defaultChecked` and tells `onCheckedChange`, so the label follows.
+
+```tsx title="components/switch-6.tsx"
+// import from your project: import Demo from '@/components/switch-6'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Label } from '@gentleduck/registry-ui/label'
+import { Switch } from '@gentleduck/registry-ui/switch'
+import * as React from 'react'
+
+export default function Demo() {
+  const [newsletter, setNewsletter] = React.useState(true)
+  const [submitted, setSubmitted] = React.useState('')
+
+  return (
+    <form
+      className="flex flex-col gap-4"
+      onSubmit={(event) => {
+        event.preventDefault()
+        const entries = Array.from(new FormData(event.currentTarget), ([name, value]) => `${name}=${value}`)
+        setSubmitted(entries.join('&') || 'nothing')
+      }}>
+      <div className="flex items-center gap-2">
+        <Switch defaultChecked id="form-newsletter" name="newsletter" onCheckedChange={setNewsletter} />
+        <Label htmlFor="form-newsletter">Newsletter: {newsletter ? 'on' : 'off'}</Label>
+      </div>
+      <div className="flex gap-2">
+        <Button size="sm" type="submit">
+          Save
+        </Button>
+        <Button onClick={() => setSubmitted('')} size="sm" type="reset" variant="outline">
+          Reset
+        </Button>
+      </div>
+      <p aria-live="polite" className="text-muted-foreground text-sm">
+        {submitted ? `Submitted ${submitted}.` : 'Nothing submitted yet.'}
+      </p>
+    </form>
+  )
+}
+```
+
+### Icons, controlled and disabled
+
+`indicator` is drawn on the thumb while the switch is off and `checkedIndicator` while it is on. `checked` with `onCheckedChange` holds the value, and `disabled` keeps it where it is.
+
+```tsx title="components/switch-5.tsx"
+// import from your project: import Demo from '@/components/switch-5'
+'use client'
+
+import { Label } from '@gentleduck/registry-ui/label'
+import { Switch } from '@gentleduck/registry-ui/switch'
+import { Moon, Sun } from 'lucide-react'
+import * as React from 'react'
+
+export default function Demo() {
+  const [dark, setDark] = React.useState(false)
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-2">
+        <Switch
+          checked={dark}
+          checkedIndicator={<Moon />}
+          id="theme-switch"
+          indicator={<Sun />}
+          onCheckedChange={setDark}
+        />
+        <Label htmlFor="theme-switch">Dark theme: {dark ? 'on' : 'off'}</Label>
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch defaultChecked disabled id="sync-switch" />
+        <Label htmlFor="sync-switch">Sync (managed by your organisation)</Label>
+      </div>
+    </div>
+  )
+}
+```
+
+### The native change event
+
+```tsx title="components/switch-7.tsx"
+// import from your project: import Demo from '@/components/switch-7'
+'use client'
+
+import { Label } from '@gentleduck/registry-ui/label'
+import { Switch } from '@gentleduck/registry-ui/switch'
+import * as React from 'react'
+
+export default function Demo() {
+  const [events, setEvents] = React.useState(0)
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <Switch id="switch-7" name="beta" onChange={() => setEvents((count) => count + 1)} />
+        <Label htmlFor="switch-7">Join the beta</Label>
+      </div>
+      <p className="text-muted-foreground text-sm">The native change event fired {events} times.</p>
+    </div>
+  )
+}
+```
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and `Switch` follows it: the thumb starts on the right and slides left when checked. No `dir` prop or `rtl:` classes needed.
@@ -187,10 +302,16 @@ Use `MotionSwitch` for a physical-feeling toggle powered by [motion](https://mot
 // import from your project: import Demo from '@/components/switch-4'
 'use client'
 
+import { Label } from '@gentleduck/registry-ui/label'
 import { MotionSwitch } from '@gentleduck/registry-ui/switch'
 
 export default function Demo() {
-  return <MotionSwitch />
+  return (
+    <div className="flex items-center gap-2">
+      <MotionSwitch id="motion-wifi" />
+      <Label htmlFor="motion-wifi">Wi-Fi</Label>
+    </div>
+  )
 }
 ```
 
@@ -205,10 +326,10 @@ export default function Demo() {
 | --- | --- | --- | --- |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `className` | `string` | - | Additional class names for the checkbox input |
-| `indicator` | `React.ReactElement` | - | Custom element for the unchecked state indicator |
-| `checkedIndicator` | `React.ReactElement` | - | Custom element for the checked state indicator |
+| `indicator` | `React.ReactElement` | - | Icon drawn on the thumb while off. Without `checkedIndicator` the thumb is plain while on |
+| `checkedIndicator` | `React.ReactElement` | - | Icon drawn on the thumb while on |
 | `onChange` | `(event: ChangeEvent) => void` | - | Native checkbox `change` event handler |
-| `onCheckedChange` | `(checked: boolean) => void` | - | Callback with the new checked boolean when toggled |
+| `onCheckedChange` | `(checked: boolean) => void` | - | Called with the new checked state on a click, and on a form reset that moves it back |
 | `ref` | `React.Ref<HTMLInputElement>` | - | Ref forwarded to the native checkbox input |
 | `style` | `React.CSSProperties` | - | Inline styles applied to the input element |
 | `...props` | `React.HTMLProps<HTMLInputElement>` | - | Additional props to spread to the input element |
@@ -224,7 +345,7 @@ Renders its own motion-controlled track and thumb. The thumb slides with a bounc
 | `defaultChecked` | `boolean` | `false` | Uncontrolled initial checked state |
 | `disabled` | `boolean` | `false` | Disables interaction and lowers opacity |
 | `onChange` | `(event: ChangeEvent) => void` | - | Native checkbox `change` event handler |
-| `onCheckedChange` | `(checked: boolean) => void` | - | Callback with the new checked boolean when toggled |
+| `onCheckedChange` | `(checked: boolean) => void` | - | Called with the new checked state on a click, and on a form reset that moves it back |
 | `className` | `string` | - | Additional class names for the outer track label |
 | `style` | `React.CSSProperties` | - | Inline styles applied to the outer track label |
 | `...props` | `React.HTMLProps<HTMLInputElement>` | - | Additional props spread onto the hidden input element |

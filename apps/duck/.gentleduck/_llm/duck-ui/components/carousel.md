@@ -140,31 +140,33 @@ export default function Demo() {
 
 ```tsx showLineNumbers /-ml-4/ /pl-4/
 <Carousel>
-  <CarouselContent className="-ml-4">
-    <CarouselItem className="pl-4">...</CarouselItem>
-    <CarouselItem className="pl-4">...</CarouselItem>
-    <CarouselItem className="pl-4">...</CarouselItem>
+  <CarouselContent className="-ms-4">
+    <CarouselItem className="ps-4">...</CarouselItem>
+    <CarouselItem className="ps-4">...</CarouselItem>
+    <CarouselItem className="ps-4">...</CarouselItem>
   </CarouselContent>
 </Carousel>
 ```
 
 ```tsx showLineNumbers /-ml-2/ /pl-2/ /md:-ml-4/ /md:pl-4/
 <Carousel>
-  <CarouselContent className="-ml-2 md:-ml-4">
-    <CarouselItem className="pl-2 md:pl-4">...</CarouselItem>
-    <CarouselItem className="pl-2 md:pl-4">...</CarouselItem>
-    <CarouselItem className="pl-2 md:pl-4">...</CarouselItem>
+  <CarouselContent className="-ms-2 md:-ms-4">
+    <CarouselItem className="ps-2 md:ps-4">...</CarouselItem>
+    <CarouselItem className="ps-2 md:ps-4">...</CarouselItem>
+    <CarouselItem className="ps-2 md:ps-4">...</CarouselItem>
   </CarouselContent>
 </Carousel>
 ```
 
 ### Spacing
 
-To set the spacing between the items, we use a `pl-[VALUE]` utility on the `<CarouselItem />` and a negative `-ml-[VALUE]` on the `<CarouselContent />`.
+To set the spacing between the items, we use a `ps-[VALUE]` utility on the `<CarouselItem />` and a negative `-ms-[VALUE]` on the `<CarouselContent />`.
+
+Use the logical `ps-` and `-ms-`. The carousel spaces its items with them, so they replace its spacing, where `pl-` and `-ml-` would sit beside it and, in a right-to-left carousel, pull the other way.
 
 } className="mt-6">
   **Why:** I have been using the `gap` property or a `grid` layout on the `   <CarouselContent />` but it required a lot of math and mental effort to get the
-  spacing right. I found `pl-[VALUE]` and `-ml-[VALUE]` utilities much easier to
+  spacing right. I found `ps-[VALUE]` and `-ms-[VALUE]` utilities much easier to
   use.
 
   You can always adjust this in your own project if you need to.
@@ -184,10 +186,10 @@ import {
 export default function Demo() {
   return (
     <Carousel className="w-full max-w-sm">
-      <CarouselContent className="-ml-1">
+      <CarouselContent className="-ms-1">
         {Array.from({ length: 5 }).map((_, index) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: static list generated from Array.from
-          <CarouselItem className="pl-1 md:basis-1/2 lg:basis-1/3" key={`item-${index + 1}`}>
+          <CarouselItem className="ps-1 md:basis-1/2 lg:basis-1/3" key={`item-${index + 1}`}>
             <div className="p-1">
               <Card>
                 <CardContent className="flex aspect-square items-center justify-center p-6">
@@ -207,20 +209,20 @@ export default function Demo() {
 
 ```tsx showLineNumbers /-ml-4/ /pl-4/
 <Carousel>
-  <CarouselContent className="-ml-4">
-    <CarouselItem className="pl-4">...</CarouselItem>
-    <CarouselItem className="pl-4">...</CarouselItem>
-    <CarouselItem className="pl-4">...</CarouselItem>
+  <CarouselContent className="-ms-4">
+    <CarouselItem className="ps-4">...</CarouselItem>
+    <CarouselItem className="ps-4">...</CarouselItem>
+    <CarouselItem className="ps-4">...</CarouselItem>
   </CarouselContent>
 </Carousel>
 ```
 
 ```tsx showLineNumbers /-ml-2/ /pl-2/ /md:-ml-4/ /md:pl-4/
 <Carousel>
-  <CarouselContent className="-ml-2 md:-ml-4">
-    <CarouselItem className="pl-2 md:pl-4">...</CarouselItem>
-    <CarouselItem className="pl-2 md:pl-4">...</CarouselItem>
-    <CarouselItem className="pl-2 md:pl-4">...</CarouselItem>
+  <CarouselContent className="-ms-2 md:-ms-4">
+    <CarouselItem className="ps-2 md:ps-4">...</CarouselItem>
+    <CarouselItem className="ps-2 md:ps-4">...</CarouselItem>
+    <CarouselItem className="ps-2 md:ps-4">...</CarouselItem>
   </CarouselContent>
 </Carousel>
 ```
@@ -278,6 +280,49 @@ export default function Demo() {
     <CarouselItem>...</CarouselItem>
   </CarouselContent>
 </Carousel>
+```
+
+### Loop, icons and labels
+
+With `opts={{ loop: true }}` the last slide leads back to the first, so neither arrow is ever disabled. `icon` swaps the arrow for one of your own, which follows the direction only if you give it `rtl:rotate-180`, and `text` names the button for a screen reader. The left and right arrow keys move the carousel while focus is inside it.
+
+```tsx title="components/carousel-8.tsx"
+// import from your project: import Demo from '@/components/carousel-8'
+'use client'
+
+import { Card, CardContent } from '@gentleduck/registry-ui/card'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@gentleduck/registry-ui/carousel'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+
+const ponds = ['Mill pond', 'Lake', 'Marsh', 'Canal']
+
+export default function Demo() {
+  return (
+    <Carousel aria-label="Ponds" className="w-full max-w-xs" opts={{ loop: true }}>
+      <CarouselContent>
+        {ponds.map((pond) => (
+          <CarouselItem key={pond}>
+            <div className="p-1">
+              <Card>
+                <CardContent className="flex aspect-video items-center justify-center p-6">
+                  <span className="font-semibold text-2xl">{pond}</span>
+                </CardContent>
+              </Card>
+            </div>
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+      <CarouselPrevious icon={<ChevronLeft aria-hidden="true" className="rtl:rotate-180" />} text="Previous pond" />
+      <CarouselNext icon={<ChevronRight aria-hidden="true" className="rtl:rotate-180" />} text="Next pond" />
+    </Carousel>
+  )
+}
 ```
 
 ### Slide Counter (API)
@@ -383,6 +428,42 @@ export default function Demo() {
       </CarouselContent>
       <CarouselPrevious />
       <CarouselNext />
+    </Carousel>
+  )
+}
+```
+
+### Styled controls
+
+```tsx title="components/carousel-9.tsx"
+// import from your project: import Demo from '@/components/carousel-9'
+'use client'
+
+import { Card, CardContent } from '@gentleduck/registry-ui/card'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@gentleduck/registry-ui/carousel'
+
+export default function Demo() {
+  return (
+    <Carousel className="w-full max-w-xs">
+      <CarouselContent>
+        {[1, 2, 3, 4, 5].map((slide) => (
+          <CarouselItem key={slide}>
+            <Card>
+              <CardContent className="flex aspect-square items-center justify-center p-6">
+                <span className="font-semibold text-4xl">{slide}</span>
+              </CardContent>
+            </Card>
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+      <CarouselPrevious size="icon-sm" variant="secondary" />
+      <CarouselNext size="icon-sm" variant="secondary" />
     </Carousel>
   )
 }
@@ -569,7 +650,7 @@ export default function Demo() {
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Carousel axis direction |
 | `dir` | `'ltr' \| 'rtl'` | - | Direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `setApi` | `(api: CarouselApi) => void` | - | Callback to expose the Embla API |
-| `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `...props` | `React.HTMLAttributes<HTMLElement>` | - | Additional props to spread to the `section` |
 
 ### CarouselContent
 
@@ -593,7 +674,8 @@ export default function Demo() {
 | --- | --- | --- | --- |
 | `variant` | `string` | `'outline'` | Variant prop for the `Button` component |
 | `size` | `string` | `'icon'` | Size prop for the `Button` component |
-| `text` | `string` | `'Previous slide'` | Accessible label for the button (`aria-label`) |
+| `text` | `string` | `'Previous slide'` | Name of the button, as text only a screen reader reads |
+| `icon` | `React.ReactNode` | arrow | Replaces the arrow, which points the other way in a right-to-left carousel |
 | `...props` | `React.ComponentPropsWithoutRef<typeof Button>` | - | Additional props inherited from `Button`. |
 
 ### CarouselNext
@@ -602,7 +684,8 @@ export default function Demo() {
 | --- | --- | --- | --- |
 | `variant` | `string` | `'outline'` | Variant prop for the `Button` component |
 | `size` | `string` | `'icon'` | Size prop for the `Button` component |
-| `text` | `string` | `'Next slide'` | Accessible label for the button (`aria-label`) |
+| `text` | `string` | `'Next slide'` | Name of the button, as text only a screen reader reads |
+| `icon` | `React.ReactNode` | arrow | Replaces the arrow, which points the other way in a right-to-left carousel |
 | `...props` | `React.ComponentPropsWithoutRef<typeof Button>` | - | Additional props inherited from `Button`. |
 
 ### Types

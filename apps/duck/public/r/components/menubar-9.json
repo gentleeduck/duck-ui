@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from '@gentleduck/registry-ui/menubar'\n\nexport default function Demo() {\n  return (\n    <Menubar>\n      <MenubarMenu value=\"edit\">\n        <MenubarTrigger>Edit</MenubarTrigger>\n        <MenubarContent className=\"data-[state=closed]:hidden\" forceMount>\n          <MenubarItem>Undo</MenubarItem>\n          <MenubarItem>Redo</MenubarItem>\n        </MenubarContent>\n      </MenubarMenu>\n    </Menubar>\n  )\n}\n",
+      "path": "menubar/menubar-9.tsx",
+      "target": "components/menubar-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "menubar-9",
+  "registryDependencies": [
+    "menubar",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "menubar",
+  "source": "/registry-examples/src/menubar",
+  "type": "registry:example"
+}

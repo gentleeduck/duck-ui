@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as ContextMenu from '@gentleduck/primitives/context-menu'\nimport styles from '../primitives.module.css'\n\nexport default function ContextMenuSubmenuExample() {\n  return (\n    <ContextMenu.Root>\n      <ContextMenu.Trigger className={styles.contextArea}>Right-click a file</ContextMenu.Trigger>\n      <ContextMenu.Portal>\n        <ContextMenu.Content className={styles.content}>\n          <ContextMenu.Item className={styles.item}>Open</ContextMenu.Item>\n          <ContextMenu.Sub>\n            <ContextMenu.SubTrigger className={styles.item}>\n              Share <span className={styles.shortcut}>{'>'}</span>\n            </ContextMenu.SubTrigger>\n            <ContextMenu.Portal>\n              <ContextMenu.SubContent className={styles.content} sideOffset={4}>\n                <ContextMenu.Item className={styles.item}>Email link</ContextMenu.Item>\n                <ContextMenu.Item className={styles.item}>Copy link</ContextMenu.Item>\n                <ContextMenu.Sub>\n                  <ContextMenu.SubTrigger className={styles.item}>\n                    More <span className={styles.shortcut}>{'>'}</span>\n                  </ContextMenu.SubTrigger>\n                  <ContextMenu.Portal>\n                    <ContextMenu.SubContent className={styles.content} sideOffset={4}>\n                      <ContextMenu.Item className={styles.item}>Embed</ContextMenu.Item>\n                    </ContextMenu.SubContent>\n                  </ContextMenu.Portal>\n                </ContextMenu.Sub>\n              </ContextMenu.SubContent>\n            </ContextMenu.Portal>\n          </ContextMenu.Sub>\n          <ContextMenu.Separator className={styles.separator} />\n          <ContextMenu.Item className={styles.item}>Delete</ContextMenu.Item>\n        </ContextMenu.Content>\n      </ContextMenu.Portal>\n    </ContextMenu.Root>\n  )\n}\n",
+      "path": "internal-primitives/context-menu-submenu/context-menu-submenu.tsx",
+      "target": "components/context-menu-submenu.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "context-menu-submenu",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

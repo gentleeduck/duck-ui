@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Avatar, AvatarFallback, AvatarGroup, AvatarImage } from '@gentleduck/registry-ui/avatar'\nimport * as React from 'react'\n\nconst team = [\n  { alt: 'Ana', id: 'ana', src: 'https://avatars.githubusercontent.com/u/108896341?v=4' },\n  { alt: 'Bruno', id: 'bruno' },\n  { alt: 'Carla', id: 'carla' },\n  { alt: 'Diego', id: 'diego' },\n  { alt: 'Elena', id: 'elena' },\n]\n\nexport default function Demo() {\n  const [status, setStatus] = React.useState('idle')\n\n  return (\n    <div className=\"flex flex-col items-center gap-6\">\n      <div className=\"flex items-center gap-3\">\n        <Avatar className=\"size-14\">\n          <AvatarImage\n            alt=\"gentleduck\"\n            onLoadingStatusChange={setStatus}\n            sizes=\"56px\"\n            srcSet=\"https://avatars.githubusercontent.com/u/108896341?v=4&s=56 1x, https://avatars.githubusercontent.com/u/108896341?v=4&s=112 2x\"\n          />\n          <AvatarFallback>GD</AvatarFallback>\n        </Avatar>\n        <span className=\"text-muted-foreground text-sm\">srcSet alone, status: {status}</span>\n      </div>\n      <AvatarGroup getOverflowLabel={(count) => `${count} personas más`} imgs={team} maxVisible={3} />\n    </div>\n  )\n}\n",
+      "path": "avatar/avatar-5.tsx",
+      "target": "components/avatar-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "avatar-5",
+  "registryDependencies": [
+    "avatar",
+    "direction"
+  ],
+  "root_folder": "avatar",
+  "source": "/registry-examples/src/avatar",
+  "type": "registry:example"
+}

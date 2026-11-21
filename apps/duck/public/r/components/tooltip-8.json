@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@gentleduck/hooks"
+  ],
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\nimport { Bold, Italic, Underline } from 'lucide-react'\n\nconst TOOLS = [\n  { icon: Bold, label: 'Bold' },\n  { icon: Italic, label: 'Italic' },\n  { icon: Underline, label: 'Underline' },\n]\n\nexport default function Demo() {\n  return (\n    <TooltipProvider closeDelay={300} delayDuration={200}>\n      <div className=\"flex gap-1\">\n        {TOOLS.map(({ icon: Icon, label }) => (\n          <Tooltip key={label}>\n            <TooltipTrigger asChild>\n              <Button aria-label={label} size=\"icon\" variant=\"ghost\">\n                <Icon />\n              </Button>\n            </TooltipTrigger>\n            <TooltipContent>{label}</TooltipContent>\n          </Tooltip>\n        ))}\n      </div>\n    </TooltipProvider>\n  )\n}\n",
+      "path": "tooltip/tooltip-8.tsx",
+      "target": "components/tooltip-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "tooltip-8",
+  "registryDependencies": [
+    "tooltip",
+    "button",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "toggle"
+  ],
+  "root_folder": "tooltip",
+  "source": "/registry-examples/src/tooltip",
+  "type": "registry:example"
+}

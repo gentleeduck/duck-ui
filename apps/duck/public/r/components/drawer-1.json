@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "recharts"
+  ],
   "files": [
     {
       "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Drawer,\n  DrawerClose,\n  DrawerContent,\n  DrawerDescription,\n  DrawerFooter,\n  DrawerHeader,\n  DrawerTitle,\n  DrawerTrigger,\n} from '@gentleduck/registry-ui/drawer'\nimport { Minus, Plus } from 'lucide-react'\nimport * as React from 'react'\nimport { Bar, BarChart } from 'recharts'\n\nfunction generateRandomGoals(count: number, minGoal: number = 100, maxGoal: number = 500): { goal: number }[] {\n  const goals: { goal: number }[] = []\n  for (let i = 0; i < count; i++) {\n    goals.push({\n      goal: Math.floor(Math.random() * (maxGoal - minGoal + 1)) + minGoal,\n    })\n  }\n  return goals\n}\n\nconst data = generateRandomGoals(20)\n\nexport default function Demo() {\n  const [goal, setGoal] = React.useState(350)\n\n  function onClick(adjustment: number) {\n    setGoal(Math.max(200, Math.min(400, goal + adjustment)))\n  }\n\n  return (\n    <Drawer>\n      <DrawerTrigger asChild>\n        <Button variant=\"outline\">Open Drawer</Button>\n      </DrawerTrigger>\n      <DrawerContent>\n        <div className=\"mx-auto w-full max-w-sm\">\n          <DrawerHeader>\n            <DrawerTitle>Move Goal</DrawerTitle>\n            <DrawerDescription>Set your daily activity goal.</DrawerDescription>\n          </DrawerHeader>\n          <div className=\"p-4 pb-0\">\n            <div className=\"flex items-center justify-center space-x-2\">\n              <Button className=\"h-8 w-8\" disabled={goal <= 200} onClick={() => onClick(-10)} variant=\"outline\">\n                <Minus aria-hidden=\"true\" className=\"h-4 w-4\" />\n                <span className=\"sr-only\">Decrease</span>\n              </Button>\n              <div className=\"flex-1 text-center\">\n                <div className=\"font-bold text-7xl tracking-tighter\">{goal}</div>\n                <div className=\"text-[0.70rem] text-muted-foreground uppercase\">Calories/day</div>\n              </div>\n              <Button className=\"h-8 w-8\" disabled={goal >= 400} onClick={() => onClick(10)} variant=\"outline\">\n                <Plus aria-hidden=\"true\" />\n                <span className=\"sr-only\">Increase</span>\n              </Button>\n            </div>\n            <div className=\"mt-3 h-[120px]\">\n              <BarChart data={data} height={120} width={320}>\n                <Bar\n                  dataKey=\"goal\"\n                  style={\n                    {\n                      fill: 'var(--foreground)',\n                      opacity: 0.9,\n                    } as React.CSSProperties\n                  }\n                />\n              </BarChart>\n            </div>\n          </div>\n          <DrawerFooter>\n            <Button>Submit</Button>\n            <DrawerClose asChild>\n              <Button variant=\"outline\">Cancel</Button>\n            </DrawerClose>\n          </DrawerFooter>\n        </div>\n      </DrawerContent>\n    </Drawer>\n  )\n}\n",
@@ -9,7 +12,13 @@
   ],
   "name": "drawer-1",
   "registryDependencies": [
-    "drawer"
+    "drawer",
+    "button",
+    "dialog",
+    "direction",
+    "input",
+    "label",
+    "separator"
   ],
   "root_folder": "drawer",
   "source": "/registry-examples/src/drawer",

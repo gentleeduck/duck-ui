@@ -1,0 +1,21 @@
+{
+  "dependencies": [
+    "embla-carousel-autoplay"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Card, CardContent } from '@gentleduck/registry-ui/card'\nimport {\n  Carousel,\n  CarouselContent,\n  CarouselItem,\n  CarouselNext,\n  CarouselPrevious,\n} from '@gentleduck/registry-ui/carousel'\nimport { ChevronLeft, ChevronRight } from 'lucide-react'\n\nconst ponds = ['Mill pond', 'Lake', 'Marsh', 'Canal']\n\nexport default function Demo() {\n  return (\n    <Carousel aria-label=\"Ponds\" className=\"w-full max-w-xs\" opts={{ loop: true }}>\n      <CarouselContent>\n        {ponds.map((pond) => (\n          <CarouselItem key={pond}>\n            <div className=\"p-1\">\n              <Card>\n                <CardContent className=\"flex aspect-video items-center justify-center p-6\">\n                  <span className=\"font-semibold text-2xl\">{pond}</span>\n                </CardContent>\n              </Card>\n            </div>\n          </CarouselItem>\n        ))}\n      </CarouselContent>\n      <CarouselPrevious icon={<ChevronLeft aria-hidden=\"true\" className=\"rtl:rotate-180\" />} text=\"Previous pond\" />\n      <CarouselNext icon={<ChevronRight aria-hidden=\"true\" className=\"rtl:rotate-180\" />} text=\"Next pond\" />\n    </Carousel>\n  )\n}\n",
+      "path": "carousel/carousel-8.tsx",
+      "target": "components/carousel-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "carousel-8",
+  "registryDependencies": [
+    "carousel",
+    "card"
+  ],
+  "root_folder": "carousel",
+  "source": "/registry-examples/src/carousel",
+  "type": "registry:example"
+}

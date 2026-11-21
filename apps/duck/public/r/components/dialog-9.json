@@ -1,0 +1,26 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  DialogCloseResponsive,\n  DialogContentResponsive,\n  DialogDescriptionResponsive,\n  DialogFooterResponsive,\n  DialogHeaderResponsive,\n  DialogResponsive,\n  DialogTitleResponsive,\n  DialogTriggerResponsive,\n} from '@gentleduck/registry-ui/dialog'\nimport { Input } from '@gentleduck/registry-ui/input'\n\nexport default function Demo() {\n  return (\n    <DialogResponsive>\n      <DialogTriggerResponsive asChild>\n        <Button variant=\"outline\">Share</Button>\n      </DialogTriggerResponsive>\n      <DialogContentResponsive className=\"sm:max-w-md\">\n        <DialogHeaderResponsive>\n          <DialogTitleResponsive>Share the board</DialogTitleResponsive>\n          <DialogDescriptionResponsive>\n            A dialog at 768px and wider, a drawer from the bottom below that.\n          </DialogDescriptionResponsive>\n        </DialogHeaderResponsive>\n        <div className=\"px-4 sm:px-0\">\n          <Input aria-label=\"Link\" defaultValue=\"https://duck.example/board/42\" readOnly />\n        </div>\n        <DialogFooterResponsive>\n          <DialogCloseResponsive asChild>\n            <Button>Done</Button>\n          </DialogCloseResponsive>\n        </DialogFooterResponsive>\n      </DialogContentResponsive>\n    </DialogResponsive>\n  )\n}\n",
+      "path": "dialog/dialog-9.tsx",
+      "target": "components/dialog-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "dialog-9",
+  "registryDependencies": [
+    "dialog",
+    "button",
+    "calendar",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "popover",
+    "select",
+    "textarea"
+  ],
+  "root_folder": "dialog",
+  "source": "/registry-examples/src/dialog",
+  "type": "registry:example"
+}

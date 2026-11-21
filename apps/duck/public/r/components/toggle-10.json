@@ -1,0 +1,23 @@
+{
+  "dependencies": [
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "content": "import { Toggle } from '@gentleduck/registry-ui/toggle'\nimport { Volume2, VolumeX } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Toggle aria-label=\"Mute\" variant=\"outline\">\n      {(pressed) => (pressed ? <VolumeX /> : <Volume2 />)}\n    </Toggle>\n  )\n}\n",
+      "path": "toggle/toggle-10.tsx",
+      "target": "components/toggle-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "toggle-10",
+  "registryDependencies": [
+    "toggle",
+    "direction",
+    "input",
+    "label"
+  ],
+  "root_folder": "toggle",
+  "source": "/registry-examples/src/toggle",
+  "type": "registry:example"
+}

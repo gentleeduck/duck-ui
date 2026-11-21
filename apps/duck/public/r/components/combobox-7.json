@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { cn } from '@gentleduck/libs/cn'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Command,\n  CommandEmpty,\n  CommandGroup,\n  CommandInput,\n  CommandItem,\n  CommandList,\n} from '@gentleduck/registry-ui/command'\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { Popover, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'\nimport { Check, ChevronsUpDown } from 'lucide-react'\nimport * as React from 'react'\n\nconst options = [\n  { label: 'صفحة هبوط', value: 'landing' },\n  { label: 'لوحة تحكم', value: 'dashboard' },\n  { label: 'متجر إلكتروني', value: 'ecommerce' },\n  { label: 'مدونة', value: 'blog' },\n  { label: 'معرض أعمال', value: 'portfolio' },\n  { label: 'نظام حجوزات', value: 'booking' },\n]\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n  const [value, setValue] = React.useState('')\n\n  const selectedLabel = value ? options.find((option) => option.value === value)?.label : undefined\n\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Popover onOpenChange={setOpen} open={open}>\n        <PopoverTrigger asChild>\n          <Button aria-expanded={open} className=\"w-57.5 justify-between\" role=\"combobox\" variant=\"outline\">\n            {selectedLabel ?? 'اختر نوع المشروع...'}\n            <ChevronsUpDown className=\"opacity-50\" />\n          </Button>\n        </PopoverTrigger>\n        <PopoverContent className=\"w-57.5 min-w-auto p-0\">\n          <Command>\n            <CommandInput className=\"h-9\" placeholder=\"ابحث عن نوع المشروع...\" />\n            <CommandList>\n              <CommandEmpty>لم يتم العثور على نتائج.</CommandEmpty>\n              <CommandGroup>\n                {options.map((option) => (\n                  <CommandItem\n                    key={option.value}\n                    onSelect={(currentValue) => {\n                      setValue(currentValue === value ? '' : currentValue)\n                      setOpen(false)\n                    }}\n                    value={option.value}>\n                    {option.label}\n                    <Check className={cn('ms-auto', value === option.value ? 'opacity-100' : 'opacity-0')} />\n                  </CommandItem>\n                ))}\n              </CommandGroup>\n            </CommandList>\n          </Command>\n        </PopoverContent>\n      </Popover>\n    </DirectionProvider>\n  )\n}\n",
@@ -9,7 +15,9 @@
   ],
   "name": "combobox-7",
   "registryDependencies": [
-    "combobox"
+    "combobox",
+    "dropdown-menu",
+    "field"
   ],
   "root_folder": "combobox",
   "source": "/registry-examples/src/combobox",

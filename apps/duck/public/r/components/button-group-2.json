@@ -9,7 +9,15 @@
   ],
   "name": "button-group-2",
   "registryDependencies": [
-    "button-group"
+    "button-group",
+    "dropdown-menu",
+    "input",
+    "input-group",
+    "label",
+    "popover",
+    "select",
+    "textarea",
+    "tooltip"
   ],
   "root_folder": "button-group",
   "source": "/registry-examples/src/button-group",

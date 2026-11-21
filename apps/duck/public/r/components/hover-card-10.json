@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { HoverCardTrigger, MotionHoverCard, MotionHoverCardContent } from '@gentleduck/registry-ui/hover-card'\n\nconst SIDES = ['top', 'right', 'bottom', 'left'] as const\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-wrap items-center justify-center gap-3\">\n      {SIDES.map((side) => (\n        <MotionHoverCard key={side} openDelay={150} placement={side}>\n          <HoverCardTrigger variant=\"outline\">{side}</HoverCardTrigger>\n          <MotionHoverCardContent className=\"w-48\">Opens on the {side} and animates from it.</MotionHoverCardContent>\n        </MotionHoverCard>\n      ))}\n    </div>\n  )\n}\n",
+      "path": "hover-card/hover-card-10.tsx",
+      "target": "components/hover-card-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "hover-card-10",
+  "registryDependencies": [
+    "hover-card",
+    "avatar",
+    "direction",
+    "label",
+    "skeleton",
+    "switch"
+  ],
+  "root_folder": "hover-card",
+  "source": "/registry-examples/src/hover-card",
+  "type": "registry:example"
+}

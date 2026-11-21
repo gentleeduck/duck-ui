@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "sonner"
+  ],
   "files": [
     {
       "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { ChevronLeft, ChevronRight, Save, Trash2 } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <div className=\"flex flex-wrap items-center gap-4\">\n        <Button icon={<Save />}>حفظ</Button>\n        <Button icon={<ChevronRight />} variant=\"outline\">\n          السابق\n        </Button>\n        <Button secondIcon={<ChevronLeft />} variant=\"outline\">\n          التالي\n        </Button>\n        <Button variant=\"secondary\">تسجيل الدخول</Button>\n        <Button icon={<Trash2 />} variant=\"destructive\">\n          حذف\n        </Button>\n      </div>\n    </DirectionProvider>\n  )\n}\n",
@@ -9,7 +12,11 @@
   ],
   "name": "button-21",
   "registryDependencies": [
-    "button"
+    "button",
+    "command",
+    "direction",
+    "toggle",
+    "tooltip"
   ],
   "root_folder": "button",
   "source": "/registry-examples/src/button",

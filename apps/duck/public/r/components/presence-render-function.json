@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Presence } from '@gentleduck/primitives/presence'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function PresenceRenderFunctionExample() {\n  const [open, setOpen] = React.useState(true)\n\n  return (\n    <div className={styles.stack}>\n      <button className={styles.button} onClick={() => setOpen((value) => !value)} type=\"button\">\n        {open ? 'Hide' : 'Show'}\n      </button>\n      <Presence present={open}>\n        {({ present }) => (\n          <div className={`${styles.content} ${styles.panel} ${styles.fade}`} data-state={present ? 'open' : 'closed'}>\n            The child reads present itself while it animates out.\n          </div>\n        )}\n      </Presence>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/presence-render-function/presence-render-function.tsx",
+      "target": "components/presence-render-function.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "presence-render-function",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

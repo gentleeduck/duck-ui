@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Command,\n  CommandEmpty,\n  CommandGroup,\n  CommandInput,\n  CommandItem,\n  CommandList,\n  CommandSeparator,\n  CommandShortcut,\n} from '@gentleduck/registry-ui/command'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [ran, setRan] = React.useState('nothing yet')\n\n  return (\n    <div className=\"flex w-80 flex-col gap-2\">\n      <Command className=\"h-fit border pt-0\" defaultValue=\"paste\" disablePointerSelection loop vimBindings={false}>\n        <CommandInput placeholder=\"Try history or clipboard...\" />\n        <CommandList>\n          <CommandEmpty>No action found.</CommandEmpty>\n          <CommandGroup forceMount heading=\"Pinned\">\n            <CommandItem keywords={['history', 'back']} onSelect={setRan} value=\"undo\">\n              Undo\n              <CommandShortcut keys=\"mod+shift+u\" onKeysPressed={() => setRan('undo, from its shortcut')}>\n                ⇧⌘U\n              </CommandShortcut>\n            </CommandItem>\n          </CommandGroup>\n          <CommandSeparator />\n          <CommandGroup heading=\"Edit\">\n            <CommandItem keywords={['clipboard']} onSelect={setRan} value=\"copy\">\n              Copy\n            </CommandItem>\n            <CommandItem keywords={['clipboard']} onSelect={setRan} value=\"paste\">\n              Paste\n            </CommandItem>\n            <CommandItem keywords={['clipboard']} onSelect={setRan} value=\"cut\">\n              Cut\n            </CommandItem>\n          </CommandGroup>\n        </CommandList>\n      </Command>\n      <p className=\"text-muted-foreground text-sm\">Ran: {ran}</p>\n    </div>\n  )\n}\n",
+      "path": "command/command-8.tsx",
+      "target": "components/command-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "command-8",
+  "registryDependencies": [
+    "command",
+    "button"
+  ],
+  "root_folder": "command",
+  "source": "/registry-examples/src/command",
+  "type": "registry:example"
+}

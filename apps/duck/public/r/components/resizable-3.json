@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "content": "import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@gentleduck/registry-ui/resizable'\n\nexport default function Demo() {\n  return (\n    <ResizablePanelGroup className=\"min-h-[200px] max-w-md rounded-lg border md:min-w-[450px]\" orientation=\"horizontal\">\n      <ResizablePanel defaultSize={25}>\n        <div className=\"flex h-full items-center justify-center p-6\">\n          <span className=\"font-semibold\">Sidebar</span>\n        </div>\n      </ResizablePanel>\n      <ResizableHandle withHandle />\n      <ResizablePanel defaultSize={75}>\n        <div className=\"flex h-full items-center justify-center p-6\">\n          <span className=\"font-semibold\">Content</span>\n        </div>\n      </ResizablePanel>\n    </ResizablePanelGroup>\n  )\n}\n",
+      "content": "import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@gentleduck/registry-ui/resizable'\n\nexport default function Demo() {\n  return (\n    <ResizablePanelGroup className=\"min-h-[200px] max-w-md rounded-lg border md:min-w-[450px]\" orientation=\"horizontal\">\n      <ResizablePanel defaultSize=\"25%\">\n        <div className=\"flex h-full items-center justify-center p-6\">\n          <span className=\"font-semibold\">Sidebar</span>\n        </div>\n      </ResizablePanel>\n      <ResizableHandle withHandle={false} />\n      <ResizablePanel defaultSize=\"75%\">\n        <div className=\"flex h-full items-center justify-center p-6\">\n          <span className=\"font-semibold\">Content</span>\n        </div>\n      </ResizablePanel>\n    </ResizablePanelGroup>\n  )\n}\n",
       "path": "resizable/resizable-3.tsx",
       "target": "components/resizable-3.tsx",
       "type": "registry:example"
@@ -9,7 +9,8 @@
   ],
   "name": "resizable-3",
   "registryDependencies": [
-    "resizable"
+    "resizable",
+    "button"
   ],
   "root_folder": "resizable",
   "source": "/registry-examples/src/resizable",

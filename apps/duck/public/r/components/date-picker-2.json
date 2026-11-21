@@ -1,4 +1,11 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "date-fns",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Popover, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'\nimport { ChevronDownIcon, XIcon } from 'lucide-react'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n  const [date, setDate] = React.useState<Date | undefined>(new Date())\n\n  return (\n    <div className=\"flex flex-col gap-3\">\n      <Label className=\"px-1\" htmlFor=\"date-preselected\">\n        Event date\n      </Label>\n      <div className=\"flex items-center gap-2\">\n        <Popover onOpenChange={setOpen} open={open}>\n          <PopoverTrigger asChild>\n            <Button className=\"w-48 justify-between font-normal\" id=\"date-preselected\" variant=\"outline\">\n              {date ? date.toLocaleDateString() : 'Select date'}\n              <ChevronDownIcon aria-hidden=\"true\" />\n            </Button>\n          </PopoverTrigger>\n          <PopoverContent side=\"bottom\" align=\"end\" className=\"w-auto p-0\">\n            <Calendar\n              showDropdowns={false}\n              mode=\"single\"\n              onSelect={(date) => {\n                setDate(date ?? undefined)\n                requestAnimationFrame(() => setOpen(false))\n              }}\n              selected={date}\n            />\n          </PopoverContent>\n        </Popover>\n        {date && (\n          <Button variant=\"ghost\" size=\"icon\" aria-label=\"Clear date\" onClick={() => setDate(undefined)}>\n            <XIcon className=\"size-4\" />\n          </Button>\n        )}\n      </div>\n    </div>\n  )\n}\n",
@@ -11,7 +18,11 @@
   "registryDependencies": [
     "calendar",
     "popover",
-    "button"
+    "button",
+    "direction",
+    "field",
+    "input",
+    "label"
   ],
   "root_folder": "date-picker",
   "source": "/registry-examples/src/date-picker",

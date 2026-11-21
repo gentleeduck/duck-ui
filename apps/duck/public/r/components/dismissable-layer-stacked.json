@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { DismissableLayer } from '@gentleduck/primitives/dismissable-layer'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function DismissableLayerStackedExample() {\n  const [outer, setOuter] = React.useState(false)\n  const [inner, setInner] = React.useState(false)\n\n  return (\n    <div className={styles.stack}>\n      <button className={styles.button} onClick={() => setOuter(true)} type=\"button\">\n        Open the first layer\n      </button>\n      {outer ? (\n        <DismissableLayer\n          className={`${styles.content} ${styles.panel} ${styles.stack}`}\n          onDismiss={() => setOuter(false)}>\n          First layer\n          <button className={styles.button} onClick={() => setInner(true)} type=\"button\">\n            Open a second layer\n          </button>\n          {inner ? (\n            <DismissableLayer className={`${styles.content} ${styles.panel}`} onDismiss={() => setInner(false)}>\n              Second layer: Escape closes this one first.\n            </DismissableLayer>\n          ) : null}\n        </DismissableLayer>\n      ) : null}\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/dismissable-layer-stacked/dismissable-layer-stacked.tsx",
+      "target": "components/dismissable-layer-stacked.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dismissable-layer-stacked",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

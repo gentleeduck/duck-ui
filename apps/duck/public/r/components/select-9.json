@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\nimport { Monitor, Moon, Sun } from 'lucide-react'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [theme, setTheme] = React.useState('')\n\n  return (\n    <div className=\"flex items-center gap-2\">\n      <Select onValueChange={setTheme} value={theme}>\n        <SelectTrigger aria-label=\"Theme\" className=\"w-[180px]\">\n          <SelectValue placeholder=\"Follow the system\" />\n        </SelectTrigger>\n        <SelectContent>\n          <SelectItem value=\"light\">\n            <span className=\"flex items-center gap-2\">\n              <Sun aria-hidden=\"true\" className=\"size-4\" />\n              Light\n            </span>\n          </SelectItem>\n          <SelectItem value=\"dark\">\n            <span className=\"flex items-center gap-2\">\n              <Moon aria-hidden=\"true\" className=\"size-4\" />\n              Dark\n            </span>\n          </SelectItem>\n          <SelectItem value=\"contrast\">\n            <span className=\"flex items-center gap-2\">\n              <Monitor aria-hidden=\"true\" className=\"size-4\" />\n              High contrast\n            </span>\n          </SelectItem>\n        </SelectContent>\n      </Select>\n      <Button disabled={theme === ''} onClick={() => setTheme('')} size=\"sm\" variant=\"outline\">\n        Clear\n      </Button>\n    </div>\n  )\n}\n",
+      "path": "select/select-9.tsx",
+      "target": "components/select-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-9",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

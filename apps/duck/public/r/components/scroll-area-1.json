@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "content": "import { ScrollArea } from '@gentleduck/registry-ui/scroll-area'\nimport { Separator } from '@gentleduck/registry-ui/separator'\n\nconst tags = Array.from({ length: 50 }).map((_, i, a) => `v1.2.0-beta.${a.length - i}`)\n\nexport default function Demo() {\n  return (\n    <ScrollArea className=\"h-72 w-48 rounded-md border\">\n      <div className=\"p-4\">\n        <h4 className=\"mb-4 font-medium text-sm leading-none\">Tags</h4>\n        {tags.map((tag) => (\n          <>\n            <div className=\"text-sm\" key={tag}>\n              {tag}\n            </div>\n            <Separator className=\"my-2\" />\n          </>\n        ))}\n      </div>\n    </ScrollArea>\n  )\n}\n",
+      "content": "import { ScrollArea } from '@gentleduck/registry-ui/scroll-area'\nimport { Separator } from '@gentleduck/registry-ui/separator'\nimport * as React from 'react'\n\nconst tags = Array.from({ length: 50 }).map((_, i, a) => `v1.2.0-beta.${a.length - i}`)\n\nexport default function Demo() {\n  return (\n    <ScrollArea className=\"h-72 w-48 rounded-md border\">\n      <div className=\"p-4\">\n        <h4 className=\"mb-4 font-medium text-sm leading-none\">Tags</h4>\n        {tags.map((tag) => (\n          <React.Fragment key={tag}>\n            <div className=\"text-sm\">{tag}</div>\n            <Separator className=\"my-2\" />\n          </React.Fragment>\n        ))}\n      </div>\n    </ScrollArea>\n  )\n}\n",
       "path": "scroll-area/scroll-area-1.tsx",
       "target": "components/scroll-area-1.tsx",
       "type": "registry:example"
@@ -9,7 +9,10 @@
   ],
   "name": "scroll-area-1",
   "registryDependencies": [
-    "scroll-area"
+    "scroll-area",
+    "badge",
+    "button",
+    "separator"
   ],
   "root_folder": "scroll-area",
   "source": "/registry-examples/src/scroll-area",

@@ -1,0 +1,27 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { DirectionProvider, Provider, toDirection, useDirection } from '@gentleduck/registry-ui/direction'\n\nfunction Arrow({ dir }: { dir?: string }) {\n  const direction = useDirection(toDirection(dir))\n  return (\n    <span className=\"rounded-md border px-3 py-1 text-sm\">\n      {direction === 'rtl' ? '<-' : '->'} {direction}\n    </span>\n  )\n}\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-col items-center gap-3\">\n      <DirectionProvider dir=\"rtl\">\n        <div className=\"flex gap-2\">\n          <Arrow />\n          <Arrow dir=\"ltr\" />\n          <Arrow dir=\"sideways\" />\n        </div>\n      </DirectionProvider>\n      <Provider dir=\"ltr\">\n        <Arrow />\n      </Provider>\n      <p className=\"text-muted-foreground text-sm\">\n        toDirection drops a value that is not ltr or rtl, so useDirection falls back to the provider.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "direction/direction-4.tsx",
+      "target": "components/direction-4.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "direction-4",
+  "registryDependencies": [
+    "direction",
+    "avatar",
+    "badge",
+    "button",
+    "card",
+    "dropdown-menu",
+    "label",
+    "slider",
+    "switch",
+    "tabs",
+    "toggle-group"
+  ],
+  "root_folder": "direction",
+  "source": "/registry-examples/src/direction",
+  "type": "registry:example"
+}

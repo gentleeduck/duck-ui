@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Popover from '@gentleduck/primitives/popover'\nimport styles from '../primitives.module.css'\n\nexport default function PopoverAnchorExample() {\n  return (\n    <Popover.Root>\n      <Popover.Anchor className={`${styles.box} ${styles.row}`}>\n        <input className={styles.input} placeholder=\"Search...\" />\n        <Popover.Trigger className={styles.button}>Filters</Popover.Trigger>\n      </Popover.Anchor>\n      <Popover.Portal>\n        <Popover.Content align=\"start\" className={`${styles.content} ${styles.panel}`} sideOffset={6}>\n          Placed against the whole bar, not the Filters button.\n        </Popover.Content>\n      </Popover.Portal>\n    </Popover.Root>\n  )\n}\n",
+      "path": "internal-primitives/popover-anchor/popover-anchor.tsx",
+      "target": "components/popover-anchor.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "popover-anchor",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

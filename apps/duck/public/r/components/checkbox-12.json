@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { MotionCheckboxGroup } from '@gentleduck/registry-ui/checkbox'\n\nexport default function Demo() {\n  return (\n    <MotionCheckboxGroup\n      subtasks={[\n        { checked: true, id: 'checkbox-12-design', title: 'Design the page' },\n        { id: 'checkbox-12-build', title: 'Build it' },\n        { id: 'checkbox-12-ship', title: 'Ship it' },\n      ]}\n    />\n  )\n}\n",
+      "path": "checkbox/checkbox-12.tsx",
+      "target": "components/checkbox-12.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "checkbox-12",
+  "registryDependencies": [
+    "checkbox",
+    "button",
+    "field"
+  ],
+  "root_folder": "checkbox",
+  "source": "/registry-examples/src/checkbox",
+  "type": "registry:example"
+}

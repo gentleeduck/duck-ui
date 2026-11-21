@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Menubar,\n  MenubarContent,\n  MenubarGroup,\n  MenubarItem,\n  MenubarLabel,\n  MenubarMenu,\n  MenubarSeparator,\n  MenubarTrigger,\n} from '@gentleduck/registry-ui/menubar'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [log, setLog] = React.useState<string[]>([])\n  const record = (menu: string) => (open: boolean) =>\n    setLog((entries) => [`${menu} ${open ? 'opened' : 'closed'}`, ...entries].slice(0, 3))\n\n  return (\n    <div className=\"flex flex-col items-center gap-3\">\n      <Menubar defaultValue=\"\" loop={false}>\n        <MenubarMenu onOpenChange={record('File')} value=\"file\">\n          <MenubarTrigger>File</MenubarTrigger>\n          <MenubarContent>\n            <MenubarGroup>\n              <MenubarLabel>Recent</MenubarLabel>\n              <MenubarItem>notes.md</MenubarItem>\n              <MenubarItem>todo.md</MenubarItem>\n            </MenubarGroup>\n            <MenubarSeparator />\n            <MenubarItem>Close window</MenubarItem>\n          </MenubarContent>\n        </MenubarMenu>\n        <MenubarMenu onOpenChange={record('Help')} value=\"help\">\n          <MenubarTrigger>Help</MenubarTrigger>\n          <MenubarContent>\n            <MenubarItem>Documentation</MenubarItem>\n          </MenubarContent>\n        </MenubarMenu>\n      </Menubar>\n      <p className=\"text-muted-foreground text-sm\">\n        {log.join(', ') || 'loop off stops the arrow keys at either end of the bar.'}\n      </p>\n    </div>\n  )\n}\n",
+      "path": "menubar/menubar-7.tsx",
+      "target": "components/menubar-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "menubar-7",
+  "registryDependencies": [
+    "menubar",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "menubar",
+  "source": "/registry-examples/src/menubar",
+  "type": "registry:example"
+}

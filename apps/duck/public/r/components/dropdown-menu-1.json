@@ -9,7 +9,12 @@
   ],
   "name": "dropdown-menu-1",
   "registryDependencies": [
-    "dropdown-menu"
+    "dropdown-menu",
+    "button",
+    "dialog",
+    "direction",
+    "label",
+    "switch"
   ],
   "root_folder": "dropdown-menu",
   "source": "/registry-examples/src/dropdown-menu",

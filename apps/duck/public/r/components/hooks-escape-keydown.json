@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { useEscapeKeydown } from '@gentleduck/primitives/hooks/use-escape-keydown'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function HooksEscapeKeydownExample() {\n  const [count, setCount] = React.useState(0)\n  useEscapeKeydown(() => setCount((value) => value + 1))\n\n  return (\n    <div className={styles.stack}>\n      <input className={styles.input} placeholder=\"Type in Japanese, then Escape\" />\n      <p className={styles.note}>\n        Escape pressed {count} times. One that ends an input method's composition is not counted.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/hooks-escape-keydown/hooks-escape-keydown.tsx",
+      "target": "components/hooks-escape-keydown.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "hooks-escape-keydown",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

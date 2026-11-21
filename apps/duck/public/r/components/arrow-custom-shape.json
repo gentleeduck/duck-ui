@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Arrow from '@gentleduck/primitives/arrow'\nimport styles from '../primitives.module.css'\n\nexport default function ArrowCustomShapeExample() {\n  return (\n    <div className={styles.row}>\n      <div className={styles.stack} style={{ justifyItems: 'center' }}>\n        <div className={`${styles.content} ${styles.panel}`} style={{ minWidth: 0 }}>\n          Sharp\n        </div>\n        <Arrow.Root aria-hidden asChild className={styles.arrow} height={8} style={{ marginTop: '-0.8rem' }} width={16}>\n          <polygon points=\"0,0 30,0 15,10\" />\n        </Arrow.Root>\n      </div>\n      <div className={styles.stack} style={{ justifyItems: 'center' }}>\n        <div className={`${styles.content} ${styles.panel}`} style={{ minWidth: 0 }}>\n          Notched\n        </div>\n        <Arrow.Root aria-hidden asChild className={styles.arrow} height={8} style={{ marginTop: '-0.8rem' }} width={16}>\n          <path d=\"M0 0h30L20 10h-10z\" />\n        </Arrow.Root>\n      </div>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/arrow-custom-shape/arrow-custom-shape.tsx",
+      "target": "components/arrow-custom-shape.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "arrow-custom-shape",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

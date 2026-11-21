@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Accordion from '@gentleduck/primitives/accordion'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function AccordionDisabledExample() {\n  const [locked, setLocked] = React.useState(false)\n\n  return (\n    <div className={styles.stack}>\n      <Accordion.Root className={styles.disclosure} collapsible disabled={locked} type=\"single\">\n        <Accordion.Item className={styles.disclosureItem} value=\"plan\">\n          <Accordion.Header className={styles.disclosureHeader}>\n            <Accordion.Trigger className={styles.disclosureTrigger}>Plan</Accordion.Trigger>\n          </Accordion.Header>\n          <Accordion.Content className={styles.disclosureContent}>\n            <div>Free plan, renewed monthly.</div>\n          </Accordion.Content>\n        </Accordion.Item>\n        <Accordion.Item className={styles.disclosureItem} disabled value=\"sso\">\n          <Accordion.Header className={styles.disclosureHeader}>\n            <Accordion.Trigger className={styles.disclosureTrigger}>Single sign-on (Enterprise only)</Accordion.Trigger>\n          </Accordion.Header>\n          <Accordion.Content className={styles.disclosureContent}>\n            <div>Connect your identity provider.</div>\n          </Accordion.Content>\n        </Accordion.Item>\n        <Accordion.Item className={styles.disclosureItem} value=\"usage\">\n          <Accordion.Header className={styles.disclosureHeader}>\n            <Accordion.Trigger className={styles.disclosureTrigger}>Usage</Accordion.Trigger>\n          </Accordion.Header>\n          <Accordion.Content className={styles.disclosureContent}>\n            <div>1,204 of 5,000 requests this month.</div>\n          </Accordion.Content>\n        </Accordion.Item>\n      </Accordion.Root>\n      <button className={styles.button} onClick={() => setLocked((value) => !value)} type=\"button\">\n        {locked ? 'Unlock every item' : 'Disable every item'}\n      </button>\n      <p className={styles.note}>The arrow keys pass over a disabled trigger.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/accordion-disabled/accordion-disabled.tsx",
+      "target": "components/accordion-disabled.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "accordion-disabled",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

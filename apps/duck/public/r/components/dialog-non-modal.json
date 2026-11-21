@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Dialog from '@gentleduck/primitives/dialog'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function DialogNonModalExample() {\n  const [notes, setNotes] = React.useState('')\n\n  return (\n    <div className={styles.stack}>\n      <Dialog.Root modal={false}>\n        <Dialog.Trigger className={styles.button}>Open notes</Dialog.Trigger>\n        <Dialog.Portal>\n          <Dialog.Content\n            aria-describedby={undefined}\n            className={styles.dialog}\n            onInteractOutside={(event) => event.preventDefault()}\n            style={{ top: 'auto', bottom: '1rem', left: 'auto', right: '1rem', transform: 'none' }}>\n            <Dialog.Title className={styles.title}>Notes</Dialog.Title>\n            <textarea\n              className={styles.input}\n              onChange={(event) => setNotes(event.target.value)}\n              rows={4}\n              value={notes}\n            />\n            <Dialog.Close className={styles.button}>Close</Dialog.Close>\n          </Dialog.Content>\n        </Dialog.Portal>\n      </Dialog.Root>\n      <p className={styles.note}>\n        modal off traps no focus and locks nothing, so the page stays usable beside it, and a press outside is kept from\n        closing it here.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/dialog-non-modal/dialog-non-modal.tsx",
+      "target": "components/dialog-non-modal.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dialog-non-modal",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

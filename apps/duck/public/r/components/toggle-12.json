@@ -1,0 +1,23 @@
+{
+  "dependencies": [
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Toggle } from '@gentleduck/registry-ui/toggle'\nimport { Pin } from 'lucide-react'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [pinned, setPinned] = React.useState(true)\n\n  return (\n    <div className=\"flex items-center gap-3\">\n      <Toggle aria-label=\"Pin to the sidebar\" defaultPressed onPressedChange={setPinned} variant=\"outline\">\n        <Pin />\n      </Toggle>\n      <p aria-live=\"polite\" className=\"text-muted-foreground text-sm\">\n        {pinned ? 'Pinned to the sidebar.' : 'Not pinned.'}\n      </p>\n    </div>\n  )\n}\n",
+      "path": "toggle/toggle-12.tsx",
+      "target": "components/toggle-12.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "toggle-12",
+  "registryDependencies": [
+    "toggle",
+    "direction",
+    "input",
+    "label"
+  ],
+  "root_folder": "toggle",
+  "source": "/registry-examples/src/toggle",
+  "type": "registry:example"
+}

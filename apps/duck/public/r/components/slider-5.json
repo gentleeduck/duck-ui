@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "content": "import { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { Slider } from '@gentleduck/registry-ui/slider'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Slider className=\"mx-auto w-full max-w-xs\" defaultValue={[75]} max={100} step={1} />\n    </DirectionProvider>\n  )\n}\n",
+      "content": "import { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { Slider } from '@gentleduck/registry-ui/slider'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Slider aria-label=\"مستوى الصوت\" className=\"mx-auto w-full max-w-xs\" defaultValue={[75]} max={100} step={1} />\n    </DirectionProvider>\n  )\n}\n",
       "path": "slider/slider-5.tsx",
       "target": "components/slider-5.tsx",
       "type": "registry:example"
@@ -9,7 +9,9 @@
   ],
   "name": "slider-5",
   "registryDependencies": [
-    "slider"
+    "slider",
+    "button",
+    "direction"
   ],
   "root_folder": "slider",
   "source": "/registry-examples/src/slider",

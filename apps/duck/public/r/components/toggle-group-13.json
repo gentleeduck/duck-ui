@@ -1,0 +1,21 @@
+{
+  "dependencies": [
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { ToggleGroup, ToggleGroupItem } from '@gentleduck/registry-ui/toggle-group'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-col items-center gap-4\">\n      <ToggleGroup aria-label=\"Status filters\" rovingFocus={false} type=\"multiple\" variant=\"outline\">\n        <ToggleGroupItem value=\"open\">Open</ToggleGroupItem>\n        <ToggleGroupItem value=\"closed\">Closed</ToggleGroupItem>\n        <ToggleGroupItem value=\"draft\">Draft</ToggleGroupItem>\n      </ToggleGroup>\n      <ToggleGroup aria-label=\"Sort\" defaultValue=\"new\" loop={false} type=\"single\" variant=\"outline\">\n        <ToggleGroupItem value=\"new\">Newest</ToggleGroupItem>\n        <ToggleGroupItem value=\"old\">Oldest</ToggleGroupItem>\n        <ToggleGroupItem value=\"top\">Top</ToggleGroupItem>\n      </ToggleGroup>\n      <p className=\"text-muted-foreground text-sm\">\n        The first makes each item a Tab stop. The second stops the arrows at either end.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "toggle-group/toggle-group-13.tsx",
+      "target": "components/toggle-group-13.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "toggle-group-13",
+  "registryDependencies": [
+    "toggle-group",
+    "direction"
+  ],
+  "root_folder": "toggle-group",
+  "source": "/registry-examples/src/toggle-group",
+  "type": "registry:example"
+}

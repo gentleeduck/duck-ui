@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "import { Separator } from '@gentleduck/registry-ui/separator'\nimport * as React from 'react'\n\nconst RELEASES = [\n  { name: 'v2.4.0', note: 'Calendar date fields' },\n  { name: 'v2.3.1', note: 'Select highlight fix' },\n  { name: 'v2.3.0', note: 'Resizable collapsing' },\n]\n\nexport default function Demo() {\n  return (\n    <div className=\"w-72 rounded-md border\">\n      {RELEASES.map((release, index) => (\n        <React.Fragment key={release.name}>\n          {index > 0 ? <Separator /> : null}\n          <div className=\"flex items-center justify-between px-4 py-3 text-sm\">\n            <span className=\"font-medium\">{release.name}</span>\n            <span className=\"text-muted-foreground\">{release.note}</span>\n          </div>\n        </React.Fragment>\n      ))}\n    </div>\n  )\n}\n",
+      "path": "separator/separator-5.tsx",
+      "target": "components/separator-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "separator-5",
+  "registryDependencies": [
+    "separator",
+    "button"
+  ],
+  "root_folder": "separator",
+  "source": "/registry-examples/src/separator",
+  "type": "registry:example"
+}

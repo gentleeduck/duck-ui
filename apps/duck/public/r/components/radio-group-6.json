@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { RadioGroup, RadioGroupItem } from '@gentleduck/registry-ui/radio-group'\nimport { Check, X } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <RadioGroup aria-label=\"Attending\" defaultValue=\"yes\">\n      <RadioGroupItem checkedIndicator={<Check />} indicator={<X />} value=\"yes\">\n        Yes, I will be there\n      </RadioGroupItem>\n      <RadioGroupItem checkedIndicator={<Check />} indicator={<X />} value=\"no\">\n        No, I cannot make it\n      </RadioGroupItem>\n    </RadioGroup>\n  )\n}\n",
+      "path": "radio-group/radio-group-6.tsx",
+      "target": "components/radio-group-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "radio-group-6",
+  "registryDependencies": [
+    "radio-group",
+    "button",
+    "field"
+  ],
+  "root_folder": "radio-group",
+  "source": "/registry-examples/src/radio-group",
+  "type": "registry:example"
+}

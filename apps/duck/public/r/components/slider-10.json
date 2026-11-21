@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "content": "import { Slider } from '@gentleduck/registry-ui/slider'\n\nexport default function Demo() {\n  return <Slider aria-label=\"Volume\" className=\"mx-auto w-full max-w-xs\" defaultValue={[40]} disabled />\n}\n",
+      "path": "slider/slider-10.tsx",
+      "target": "components/slider-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "slider-10",
+  "registryDependencies": [
+    "slider",
+    "button",
+    "direction"
+  ],
+  "root_folder": "slider",
+  "source": "/registry-examples/src/slider",
+  "type": "registry:example"
+}

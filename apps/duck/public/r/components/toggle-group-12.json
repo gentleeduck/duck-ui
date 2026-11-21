@@ -1,0 +1,21 @@
+{
+  "dependencies": [
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { ToggleGroup, ToggleGroupItem } from '@gentleduck/registry-ui/toggle-group'\nimport * as React from 'react'\n\nconst days = [\n  ['mon', 'M', 'Monday'],\n  ['tue', 'T', 'Tuesday'],\n  ['wed', 'W', 'Wednesday'],\n  ['thu', 'T', 'Thursday'],\n  ['fri', 'F', 'Friday'],\n  ['sat', 'S', 'Saturday'],\n  ['sun', 'S', 'Sunday'],\n] as const\n\nconst list = new Intl.ListFormat('en', { type: 'conjunction' })\n\nexport default function Demo() {\n  const [picked, setPicked] = React.useState<string[]>(['mon', 'wed', 'fri'])\n  const names = days.filter(([value]) => picked.includes(value)).map(([, , name]) => name)\n\n  return (\n    <div className=\"grid gap-3\">\n      <ToggleGroup\n        aria-label=\"Repeat on\"\n        className=\"justify-start\"\n        onValueChange={setPicked}\n        size=\"sm\"\n        type=\"multiple\"\n        value={picked}\n        variant=\"outline\">\n        {days.map(([value, letter, name]) => (\n          <ToggleGroupItem aria-label={name} className=\"w-9\" key={value} value={value}>\n            {letter}\n          </ToggleGroupItem>\n        ))}\n      </ToggleGroup>\n      <p aria-live=\"polite\" className=\"text-muted-foreground text-sm\">\n        {names.length > 0 ? `Repeats every ${list.format(names)}.` : 'Does not repeat.'}\n      </p>\n    </div>\n  )\n}\n",
+      "path": "toggle-group/toggle-group-12.tsx",
+      "target": "components/toggle-group-12.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "toggle-group-12",
+  "registryDependencies": [
+    "toggle-group",
+    "direction"
+  ],
+  "root_folder": "toggle-group",
+  "source": "/registry-examples/src/toggle-group",
+  "type": "registry:example"
+}

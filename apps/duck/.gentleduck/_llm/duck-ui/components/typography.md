@@ -248,6 +248,42 @@ export default function Demo() {
 }
 ```
 
+A head or cell given `align="center"` or `align="right"` lines its text up that way. `wrapperClassName` styles the `div` around the table, which scrolls a table too wide for it.
+
+```tsx title="components/typography-18.tsx"
+// import from your project: import Demo from '@/components/typography-18'
+import { TypographyTable, TypographyTd, TypographyTh, TypographyTr } from '@gentleduck/registry-ui/typography'
+
+const PLANS = [
+  { name: 'Starter', price: '$0', seats: '1' },
+  { name: 'Team', price: '$24', seats: '10' },
+  { name: 'Business', price: '$96', seats: '50' },
+]
+
+export default function Demo() {
+  return (
+    <TypographyTable aria-label="Plans" wrapperClassName="max-w-md">
+      <thead>
+        <TypographyTr>
+          <TypographyTh>Plan</TypographyTh>
+          <TypographyTh align="center">Seats</TypographyTh>
+          <TypographyTh align="right">Price a month</TypographyTh>
+        </TypographyTr>
+      </thead>
+      <tbody>
+        {PLANS.map((plan) => (
+          <TypographyTr key={plan.name}>
+            <TypographyTd>{plan.name}</TypographyTd>
+            <TypographyTd align="center">{plan.seats}</TypographyTd>
+            <TypographyTd align="right">{plan.price}</TypographyTd>
+          </TypographyTr>
+        ))}
+      </tbody>
+    </TypographyTable>
+  )
+}
+```
+
 ### list
 
 ```tsx title="components/typography-9.tsx"
@@ -321,6 +357,35 @@ import { TypographyMuted } from '@gentleduck/registry-ui/typography'
 
 export default function Demo() {
   return <TypographyMuted>Enter your email address.</TypographyMuted>
+}
+```
+
+### More motion parts
+
+```tsx title="components/typography-19.tsx"
+// import from your project: import Demo from '@/components/typography-19'
+'use client'
+
+import {
+  MotionTypographyH4,
+  MotionTypographyLarge,
+  MotionTypographyList,
+  MotionTypographyListItem,
+  MotionTypographySmall,
+} from '@gentleduck/registry-ui/typography'
+
+export default function Demo() {
+  return (
+    <div className="flex max-w-md flex-col gap-3">
+      <MotionTypographyH4>Release 2.4</MotionTypographyH4>
+      <MotionTypographyLarge>Faster startup, smaller bundles.</MotionTypographyLarge>
+      <MotionTypographyList>
+        <MotionTypographyListItem>Cold start down by 30%</MotionTypographyListItem>
+        <MotionTypographyListItem>Twelve fewer dependencies</MotionTypographyListItem>
+      </MotionTypographyList>
+      <MotionTypographySmall>Each part animates in as it mounts.</MotionTypographySmall>
+    </div>
+  )
 }
 ```
 
@@ -480,6 +545,55 @@ export default function Demo() {
 }>
   Requires the `motion` package. Each `Motion*` component uses the shared `slideUp` preset with a `springBouncy` transition and `delay: index * 0.05`.
 
+`MotionTypographyList` turns each `li` it is given into a `MotionTypographyListItem`, keeping the item's own props, and the items enter one after another from the list's `index`. `MotionTypographyTable` animates the wrapper around the table, so its rows and cells are the plain `TypographyTr`, `TypographyTh` and `TypographyTd`. Under reduced motion every entrance is skipped.
+
+```tsx title="components/typography-17.tsx"
+// import from your project: import Demo from '@/components/typography-17'
+'use client'
+
+import {
+  MotionTypographyH3,
+  MotionTypographyInlineCode,
+  MotionTypographyLead,
+  MotionTypographyList,
+  MotionTypographyMuted,
+  MotionTypographyTable,
+  TypographyTd,
+  TypographyTh,
+  TypographyTr,
+} from '@gentleduck/registry-ui/typography'
+
+export default function Demo() {
+  return (
+    <div className="w-full max-w-lg">
+      <MotionTypographyH3 index={0}>Version 2.4</MotionTypographyH3>
+      <MotionTypographyLead index={1}>The calendar selects ranges.</MotionTypographyLead>
+      <MotionTypographyMuted index={2}>
+        Pass <MotionTypographyInlineCode index={3}>mode="range"</MotionTypographyInlineCode> to turn it on.
+      </MotionTypographyMuted>
+      <MotionTypographyList index={3}>
+        <li>A first click sets the start</li>
+        <li className="font-medium">A second click sets the end</li>
+      </MotionTypographyList>
+      <MotionTypographyTable index={6}>
+        <thead>
+          <TypographyTr>
+            <TypographyTh>Prop</TypographyTh>
+            <TypographyTh>Value</TypographyTh>
+          </TypographyTr>
+        </thead>
+        <tbody>
+          <TypographyTr>
+            <TypographyTd>mode</TypographyTd>
+            <TypographyTd>"range"</TypographyTd>
+          </TypographyTr>
+        </tbody>
+      </MotionTypographyTable>
+    </div>
+  )
+}
+```
+
 ## API Reference
 
 ### Typography components
@@ -489,10 +603,10 @@ Every base `Typography*` component is a thin `forwardRef` wrapper around the mat
 | Component | Element | Classes |
 | --- | --- | --- |
 | `TypographyH1` | `h1` | `scroll-m-20 font-extrabold text-4xl tracking-tight lg:text-5xl` |
-| `TypographyH2` | `h2` | `scroll-m-20 border-b pb-2 font-semibold text-3xl tracking-tight first:mt-0` |
+| `TypographyH2` | `h2` | `scroll-m-20 border-b pb-2 font-semibold text-3xl tracking-tight transition-colors first:mt-0` |
 | `TypographyH3` | `h3` | `scroll-m-20 font-semibold text-2xl tracking-tight` |
 | `TypographyH4` | `h4` | `scroll-m-20 font-semibold text-xl tracking-tight` |
-| `TypographyP` | `p` | `leading-7 [&:not(:first-child)]:mt-6` |
+| `TypographyP` | `p` | `leading-7 mt-6 first:mt-0`. A margin in your `className`, such as `mt-0`, replaces the `mt-6` |
 | `TypographyBlockquote` | `blockquote` | `mt-6 border-s-2 ps-6 italic rtl:not-italic` |
 | `TypographyList` | `ul` | `my-6 ms-6 list-disc [&>li]:mt-2` |
 | `TypographyInlineCode` | `code` | `relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono font-semibold text-sm` |
@@ -502,12 +616,12 @@ Every base `Typography*` component is a thin `forwardRef` wrapper around the mat
 | `TypographyMuted` | `p` | `text-muted-foreground text-sm` |
 | `TypographyTable` | `div > table` | wrapper + `w-full` (accepts `wrapperClassName` for the outer div) |
 | `TypographyTr` | `tr` | `m-0 border-t p-0 even:bg-muted` |
-| `TypographyTh` | `th` | `border px-4 py-2 text-start font-bold` |
-| `TypographyTd` | `td` | `border px-4 py-2 text-start` |
+| `TypographyTh` | `th` | `border px-4 py-2 text-start font-bold`, centred or right-aligned by its `align` |
+| `TypographyTd` | `td` | `border px-4 py-2 text-start`, centred or right-aligned by its `align` |
 
 ### Motion variants
 
-Every `Motion*` variant supports all the props of its base component plus an optional `index` prop.
+Every `Motion*` variant supports all the props of its base component plus an optional `index` prop. There is a motion version of each part except `TypographyTr`, `TypographyTh` and `TypographyTd`, plus `MotionTypographyListItem`, the `li` that `MotionTypographyList` wraps its items in.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as ToggleGroup from '@gentleduck/primitives/toggle-group'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function ToggleGroupMultipleExample() {\n  const [marks, setMarks] = React.useState<string[]>(['bold'])\n\n  return (\n    <div className={styles.stack}>\n      <ToggleGroup.Root\n        aria-label=\"Formatting\"\n        className={styles.group}\n        onValueChange={setMarks}\n        type=\"multiple\"\n        value={marks}>\n        {['bold', 'italic', 'underline'].map((value) => (\n          <ToggleGroup.Item className={styles.toggle} key={value} value={value}>\n            {value}\n          </ToggleGroup.Item>\n        ))}\n      </ToggleGroup.Root>\n      <p className={styles.note}>On: {marks.join(', ') || 'none'}</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/toggle-group-multiple/toggle-group-multiple.tsx",
+      "target": "components/toggle-group-multiple.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "toggle-group-multiple",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

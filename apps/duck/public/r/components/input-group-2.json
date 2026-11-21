@@ -1,4 +1,8 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks",
+    "@tabler/icons-react"
+  ],
   "files": [
     {
       "content": "import { InputGroup, InputGroupAddon, InputGroupInput } from '@gentleduck/registry-ui/input-group'\nimport { AtSignIcon, CheckCircleIcon, GlobeIcon, LinkIcon, PackageIcon, PhoneIcon } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-sm gap-6\">\n      <InputGroup>\n        <InputGroupInput placeholder=\"+1 (555) 000-0000\" type=\"tel\" />\n        <InputGroupAddon>\n          <PhoneIcon />\n        </InputGroupAddon>\n      </InputGroup>\n      <InputGroup>\n        <InputGroupInput placeholder=\"Enter tracking number\" />\n        <InputGroupAddon>\n          <PackageIcon />\n        </InputGroupAddon>\n      </InputGroup>\n      <InputGroup>\n        <InputGroupInput placeholder=\"Look up domain\" />\n        <InputGroupAddon>\n          <GlobeIcon />\n        </InputGroupAddon>\n        <InputGroupAddon align=\"inline-end\">\n          <CheckCircleIcon />\n        </InputGroupAddon>\n      </InputGroup>\n      <InputGroup>\n        <InputGroupInput placeholder=\"username\" />\n        <InputGroupAddon>\n          <AtSignIcon />\n        </InputGroupAddon>\n        <InputGroupAddon align=\"inline-end\">\n          <LinkIcon />\n        </InputGroupAddon>\n      </InputGroup>\n    </div>\n  )\n}\n",
@@ -9,7 +13,14 @@
   ],
   "name": "input-group-2",
   "registryDependencies": [
-    "input-group"
+    "input-group",
+    "button-group",
+    "dropdown-menu",
+    "kbd",
+    "label",
+    "popover",
+    "separator",
+    "tooltip"
   ],
   "root_folder": "input-group",
   "source": "/registry-examples/src/input-group",

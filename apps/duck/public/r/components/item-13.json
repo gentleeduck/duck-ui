@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Item,\n  ItemActions,\n  ItemContent,\n  ItemDescription,\n  ItemFooter,\n  ItemMedia,\n  ItemTitle,\n} from '@gentleduck/registry-ui/item'\nimport { GitBranch } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex w-full max-w-md flex-col gap-6\">\n      <Item variant=\"outline\">\n        <ItemMedia variant=\"icon\">\n          <GitBranch aria-hidden=\"true\" />\n        </ItemMedia>\n        <ItemContent>\n          <ItemTitle>feat/pond-search</ItemTitle>\n          <ItemDescription>Deployed to preview 4 minutes ago.</ItemDescription>\n        </ItemContent>\n        <ItemActions>\n          <Button size=\"sm\" variant=\"outline\">\n            Visit\n          </Button>\n        </ItemActions>\n        <ItemFooter className=\"text-muted-foreground text-xs\">\n          <span>3 commits ahead of main</span>\n          <span>Built in 1m 12s</span>\n        </ItemFooter>\n      </Item>\n    </div>\n  )\n}\n",
+      "path": "item/item-13.tsx",
+      "target": "components/item-13.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "item-13",
+  "registryDependencies": [
+    "item",
+    "avatar",
+    "button",
+    "dropdown-menu"
+  ],
+  "root_folder": "item",
+  "source": "/registry-examples/src/item",
+  "type": "registry:example"
+}

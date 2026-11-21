@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "import { Checkbox } from '@gentleduck/registry-ui/checkbox'\n\nexport default function Demo() {\n  return <Checkbox defaultChecked={false} />\n}\n",
@@ -9,7 +15,9 @@
   ],
   "name": "checkbox-2",
   "registryDependencies": [
-    "checkbox"
+    "checkbox",
+    "button",
+    "field"
   ],
   "root_folder": "checkbox",
   "source": "/registry-examples/src/checkbox",

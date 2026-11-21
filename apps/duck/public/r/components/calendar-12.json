@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { NativeAdapter } from '@gentleduck/calendar'\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport * as React from 'react'\n\nconst adapter = new NativeAdapter()\n\nconst BOOKED_DATES = [\n  new Date(2026, 2, 19),\n  new Date(2026, 2, 20),\n  new Date(2026, 2, 21),\n  new Date(2026, 2, 26),\n  new Date(2026, 2, 27),\n]\n\nfunction isBooked(date: Date): boolean {\n  return BOOKED_DATES.some((d) => adapter.isSameDay(d, date))\n}\n\nexport default function Demo() {\n  const [selected, setSelected] = React.useState<Date | null>(null)\n  const today = new Date()\n\n  return (\n    <div className=\"space-y-4\">\n      <Calendar\n        className=\"rounded-md border shadow-sm\"\n        mode=\"single\"\n        selected={selected}\n        onSelect={setSelected}\n        disabled={isBooked}\n        fromDate={today}\n        fixedWeeks\n      />\n      {selected ? (\n        <div className=\"rounded-md border bg-muted/50 p-3 text-sm\">\n          <p className=\"font-medium\">Booking confirmed</p>\n          <p className=\"text-muted-foreground\">\n            {selected.toLocaleDateString('en-US', {\n              weekday: 'long',\n              month: 'long',\n              day: 'numeric',\n              year: 'numeric',\n            })}\n          </p>\n        </div>\n      ) : (\n        <p className=\"text-muted-foreground text-sm\">Select an available date to book</p>\n      )}\n    </div>\n  )\n}\n",
@@ -9,7 +15,13 @@
   ],
   "name": "calendar-12",
   "registryDependencies": [
-    "calendar"
+    "calendar",
+    "direction",
+    "field",
+    "input",
+    "label",
+    "popover",
+    "switch"
   ],
   "root_folder": "calendar",
   "source": "/registry-examples/src/calendar",

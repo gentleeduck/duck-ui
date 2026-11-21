@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as ToggleGroup from '@gentleduck/primitives/toggle-group'\nimport styles from '../primitives.module.css'\n\nexport default function ToggleGroupSingleExample() {\n  return (\n    <ToggleGroup.Root aria-label=\"Text alignment\" className={styles.group} defaultValue=\"left\" type=\"single\">\n      {['left', 'center', 'right'].map((value) => (\n        <ToggleGroup.Item aria-label={`Align ${value}`} className={styles.toggle} key={value} value={value}>\n          {value}\n        </ToggleGroup.Item>\n      ))}\n    </ToggleGroup.Root>\n  )\n}\n",
+      "path": "internal-primitives/toggle-group-single/toggle-group-single.tsx",
+      "target": "components/toggle-group-single.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "toggle-group-single",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

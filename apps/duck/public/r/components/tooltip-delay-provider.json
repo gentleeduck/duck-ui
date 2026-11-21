@@ -1,4 +1,8 @@
 {
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport * as Tooltip from '@gentleduck/primitives/tooltip'\nimport styles from './styles.module.css'\n\nexport default function TooltipDelayProviderInternalExample() {\n  return (\n    <Tooltip.TooltipProvider delayDuration={500} skipDelayDuration={280}>\n      <Tooltip.Tooltip>\n        <Tooltip.TooltipTrigger className={styles.trigger}>Hover trigger</Tooltip.TooltipTrigger>\n        <Tooltip.TooltipPortal>\n          <Tooltip.TooltipContent className={styles.content} side=\"top\" sideOffset={8}>\n            Delayed tooltip with shared provider timings.\n          </Tooltip.TooltipContent>\n        </Tooltip.TooltipPortal>\n      </Tooltip.Tooltip>\n    </Tooltip.TooltipProvider>\n  )\n}\n",
@@ -8,9 +12,6 @@
     }
   ],
   "name": "tooltip-delay-provider",
-  "registryDependencies": [
-    "@gentleduck/primitives"
-  ],
   "root_folder": "internal-primitives",
   "source": "/registry-internals/src/internal-primitives",
   "type": "registry:internal"

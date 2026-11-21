@@ -187,6 +187,216 @@ import {
 </NavigationMenu>
 ```
 
+## Examples
+
+### Without a viewport
+
+`viewport={false}` drops each item's content right under its own trigger instead of in one shared panel that resizes between items. `NavigationMenuIndicator` in the list draws an arrow under the open trigger, and `active` on a link marks the current page.
+
+```tsx title="components/navigation-menu-4.tsx"
+// import from your project: import Demo from '@/components/navigation-menu-4'
+'use client'
+
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuIndicator,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from '@gentleduck/registry-ui/navigation-menu'
+
+export default function Demo() {
+  return (
+    <NavigationMenu viewport={false}>
+      <NavigationMenuList>
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>Products</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-48 gap-1">
+              <li>
+                <NavigationMenuLink href="#analytics">Analytics</NavigationMenuLink>
+              </li>
+              <li>
+                <NavigationMenuLink href="#automation">Automation</NavigationMenuLink>
+              </li>
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>Company</NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-48 gap-1">
+              <li>
+                <NavigationMenuLink href="#about">About</NavigationMenuLink>
+              </li>
+              <li>
+                <NavigationMenuLink href="#careers">Careers</NavigationMenuLink>
+              </li>
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+        <NavigationMenuItem>
+          <NavigationMenuLink active className={navigationMenuTriggerStyle()} href="#pricing">
+            Pricing
+          </NavigationMenuLink>
+        </NavigationMenuItem>
+        <NavigationMenuIndicator />
+      </NavigationMenuList>
+    </NavigationMenu>
+  )
+}
+```
+
+### Vertical
+
+`orientation="vertical"` stacks the list and opens each item to its side, with the indicator and the chevron pointing at it. `ArrowUp` and `ArrowDown` move between the triggers, the arrow pointing away from the list enters the content, and a new item's content slides in from above or below.
+
+```tsx title="components/navigation-menu-5.tsx"
+// import from your project: import Demo from '@/components/navigation-menu-5'
+'use client'
+
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuIndicator,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from '@gentleduck/registry-ui/navigation-menu'
+
+const sections = [
+  { links: ['Overview', 'Members', 'Billing'], title: 'Workspace' },
+  { links: ['Profile', 'Notifications', 'Security'], title: 'Account' },
+  { links: ['Guides', 'Changelog'], title: 'Help' },
+]
+
+export default function Demo() {
+  return (
+    <NavigationMenu className="items-start" orientation="vertical">
+      <NavigationMenuList className="w-44">
+        {sections.map((section) => (
+          <NavigationMenuItem key={section.title} value={section.title}>
+            <NavigationMenuTrigger>{section.title}</NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <ul className="grid w-48 gap-1">
+                {section.links.map((link) => (
+                  <li key={link}>
+                    <NavigationMenuLink href={`#${link.toLowerCase()}`}>{link}</NavigationMenuLink>
+                  </li>
+                ))}
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        ))}
+        <NavigationMenuIndicator />
+      </NavigationMenuList>
+    </NavigationMenu>
+  )
+}
+```
+
+### Controlled and manual
+
+`value` and `onValueChange` hold the open item. `activationMode="manual"` opens an item on a click only and keeps it open once the pointer leaves, `closeOnSelect={false}` on a link keeps the menu open after it, and a `disabled` trigger opens nothing and is passed over by the arrow keys.
+
+```tsx title="components/navigation-menu-6.tsx"
+// import from your project: import Demo from '@/components/navigation-menu-6'
+'use client'
+
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from '@gentleduck/registry-ui/navigation-menu'
+import * as React from 'react'
+
+export default function Demo() {
+  const [open, setOpen] = React.useState('')
+  const [compared, setCompared] = React.useState<string[]>([])
+  const compare = (plan: string) => setCompared((plans) => (plans.includes(plan) ? plans : [...plans, plan]))
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <NavigationMenu activationMode="manual" onValueChange={setOpen} value={open}>
+        <NavigationMenuList>
+          <NavigationMenuItem value="plans">
+            <NavigationMenuTrigger>Plans</NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <ul className="grid w-56 gap-1">
+                {['Starter', 'Team', 'Enterprise'].map((plan) => (
+                  <li key={plan}>
+                    <NavigationMenuLink
+                      closeOnSelect={false}
+                      href={`#${plan.toLowerCase()}`}
+                      onSelect={() => compare(plan)}>
+                      Compare {plan}
+                    </NavigationMenuLink>
+                  </li>
+                ))}
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+          <NavigationMenuItem value="roadmap">
+            <NavigationMenuTrigger disabled>Roadmap</NavigationMenuTrigger>
+            <NavigationMenuContent />
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
+      <p className="text-muted-foreground text-sm">
+        Open: {open || 'none'}, comparing: {compared.join(', ') || 'nothing yet'}
+      </p>
+    </div>
+  )
+}
+```
+
+### Delays and a kept indicator
+
+```tsx title="components/navigation-menu-7.tsx"
+// import from your project: import Demo from '@/components/navigation-menu-7'
+'use client'
+
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuIndicator,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  NavigationMenuViewport,
+} from '@gentleduck/registry-ui/navigation-menu'
+
+export default function Demo() {
+  return (
+    <NavigationMenu closeDelay={400} defaultValue="" delayDuration={500} skipDelayDuration={1000}>
+      <NavigationMenuList>
+        {['Products', 'Solutions', 'Pricing'].map((name) => (
+          <NavigationMenuItem key={name} value={name}>
+            <NavigationMenuTrigger>{name}</NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <div className="grid w-60 gap-1 p-2">
+                <NavigationMenuLink href="#">All {name.toLowerCase()}</NavigationMenuLink>
+                <NavigationMenuLink href="#">What is new</NavigationMenuLink>
+              </div>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        ))}
+        <NavigationMenuIndicator forceMount />
+      </NavigationMenuList>
+      <NavigationMenuViewport />
+    </NavigationMenu>
+  )
+}
+```
+
 ## Component Composition
 
 ## Link
@@ -354,7 +564,7 @@ ListItem.displayName = 'ListItem'
 } title="Alpha: Motion Compositions" tone="warning">
   Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 
-Use `MotionNavigationMenu` for a `scaleIn` entrance animation (fade, scale, and blur) with a bouncy spring transition, powered by [motion](https://motion.dev).
+Use `MotionNavigationMenu` to open the viewport with a `scaleIn` animation (fade, scale, and blur) on a bouncy spring, powered by [motion](https://motion.dev). The bar itself stays still, and the viewport plays its exit before it leaves.
 
 ```tsx title="components/navigation-menu-3.tsx"
 // import from your project: import Demo from '@/components/navigation-menu-3'
@@ -511,8 +721,10 @@ Root container that wraps the navigation menu and optionally renders the viewpor
 | `viewport` | `boolean` | `true` | Whether to render the `NavigationMenuViewport` automatically |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`) and inherited by descendants. |
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | The orientation of the menu |
-| `delayDuration` | `number` | `200` | Duration in ms from when the pointer enters a trigger until the content opens |
+| `delayDuration` | `number` | `200` | Duration in ms from when the pointer enters a trigger until the content opens. A click on the trigger before then cancels the open |
 | `skipDelayDuration` | `number` | `300` | Duration in ms a user has to enter another trigger without incurring a delay again |
+| `closeDelay` | `number` | `150` | Duration in ms an item stays open after the pointer leaves it |
+| `activationMode` | `'automatic' \| 'manual'` | `'automatic'` | `manual` opens and closes an item only on a click of its trigger, and ignores the pointer resting on it |
 | `className` | `string` | - | Additional CSS classes for the root element |
 | `children` | `React.ReactNode` | - | Navigation menu list and other elements |
 | `...props` | `React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root>` | - | Additional props inherited from `NavigationMenu.Root`. |
@@ -551,6 +763,9 @@ Root container that wraps the navigation menu and optionally renders the viewpor
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `className` | `string` | `--` | Additional CSS classes for the link |
+| `active` | `boolean` | `false` | Marks the link as the current page and draws it highlighted |
+| `closeOnSelect` | `boolean` | `true` | `false` keeps the menu open once the link is selected. A click with Cmd, Ctrl, Shift or Alt held leaves it open either way, since the link opens elsewhere and the page stays |
+| `onSelect` | `(event: Event) => void` | - | Called when the link is chosen. `event.preventDefault()` keeps the menu open |
 | `...props` | `React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Link>` | - | Additional props inherited from `NavigationMenu.Link`. |
 
 ### NavigationMenuViewport
@@ -562,9 +777,12 @@ Root container that wraps the navigation menu and optionally renders the viewpor
 
 ### NavigationMenuIndicator
 
+Place it in `NavigationMenuList`. It draws an arrow under the open trigger, or beside it in a vertical menu.
+
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `className` | `string` | `--` | Additional CSS classes for the indicator |
+| `forceMount` | `true` | - | Keeps the indicator drawn, as `data-state="hidden"`, while no item is open |
 | `...props` | `React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Indicator>` | - | Additional props inherited from `NavigationMenu.Indicator`. |
 
 ### navigationMenuTriggerStyle
@@ -581,4 +799,4 @@ import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu"
 
 ### MotionNavigationMenu
 
-Same props as `NavigationMenu`. Adds a `scaleIn` entrance animation (fade, scale, and blur) with a bouncy spring transition via motion. Requires the `motion` package.
+Same props as `NavigationMenu`. Its viewport opens with a `scaleIn` animation (fade, scale, and blur) on a bouncy spring and stays mounted through its exit, in place of the CSS animation `NavigationMenuViewport` plays. With `viewport={false}` the contents keep their CSS animation. Requires the `motion` package.

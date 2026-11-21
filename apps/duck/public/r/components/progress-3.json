@@ -9,7 +9,9 @@
   ],
   "name": "progress-3",
   "registryDependencies": [
-    "progress"
+    "progress",
+    "button",
+    "direction"
   ],
   "root_folder": "progress",
   "source": "/registry-examples/src/progress",

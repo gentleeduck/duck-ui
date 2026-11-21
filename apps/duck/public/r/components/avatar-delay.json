@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Avatar from '@gentleduck/primitives/avatar'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function AvatarDelayExample() {\n  const [key, setKey] = React.useState(0)\n\n  return (\n    <div className={styles.stack}>\n      <div className={styles.row} key={key}>\n        <Avatar.Root className={styles.avatar}>\n          <Avatar.Image alt=\"Slow\" className={styles.avatarImage} src=\"https://example.invalid/slow.png\" />\n          <Avatar.Fallback delayMs={600}>600</Avatar.Fallback>\n        </Avatar.Root>\n        <Avatar.Root className={styles.avatar}>\n          <Avatar.Image alt=\"Slow\" className={styles.avatarImage} src=\"https://example.invalid/slow.png\" />\n          <Avatar.Fallback delayMs={0}>0</Avatar.Fallback>\n        </Avatar.Root>\n      </div>\n      <button className={styles.button} onClick={() => setKey((value) => value + 1)} type=\"button\">\n        Mount again\n      </button>\n      <p className={styles.note}>\n        delayMs keeps a fallback back so a fast image never flashes it. At 0 it shows on the first render.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/avatar-delay/avatar-delay.tsx",
+      "target": "components/avatar-delay.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "avatar-delay",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

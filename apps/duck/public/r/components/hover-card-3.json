@@ -9,7 +9,12 @@
   ],
   "name": "hover-card-3",
   "registryDependencies": [
-    "hover-card"
+    "hover-card",
+    "avatar",
+    "direction",
+    "label",
+    "skeleton",
+    "switch"
   ],
   "root_folder": "hover-card",
   "source": "/registry-examples/src/hover-card",

@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { NativeAdapter } from '@gentleduck/calendar'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport * as React from 'react'\n\nconst adapter = new NativeAdapter()\n\nconst PRESETS = [\n  { label: 'Today', days: 0 },\n  { label: 'Tomorrow', days: 1 },\n  { label: '3 days', days: 3 },\n  { label: '1 week', days: 7 },\n  { label: '2 weeks', days: 14 },\n  { label: '1 month', days: 30 },\n]\n\nexport default function Demo() {\n  const [date, setDate] = React.useState<Date | null>(new Date())\n  const [month, setMonth] = React.useState<Date>(new Date(new Date().getFullYear(), new Date().getMonth(), 1))\n\n  return (\n    <div className=\"w-fit rounded-md border shadow-sm\">\n      <Calendar\n        className=\"mx-auto p-3\"\n        mode=\"single\"\n        selected={date}\n        onSelect={setDate}\n        month={month}\n        onMonthChange={setMonth}\n        fixedWeeks\n        showDropdowns={false}\n      />\n      <div className=\"grid grid-cols-3 gap-1.5 border-t p-3\">\n        {PRESETS.map((preset) => (\n          <Button\n            key={preset.days}\n            variant=\"outline\"\n            size=\"sm\"\n            className=\"text-xs\"\n            onClick={() => {\n              const target = adapter.addDays(adapter.today(), preset.days)\n              setDate(target)\n              setMonth(new Date(target.getFullYear(), target.getMonth(), 1))\n            }}>\n            {preset.label}\n          </Button>\n        ))}\n      </div>\n    </div>\n  )\n}\n",
@@ -9,7 +15,13 @@
   ],
   "name": "calendar-17",
   "registryDependencies": [
-    "calendar"
+    "calendar",
+    "direction",
+    "field",
+    "input",
+    "label",
+    "popover",
+    "switch"
   ],
   "root_folder": "calendar",
   "source": "/registry-examples/src/calendar",

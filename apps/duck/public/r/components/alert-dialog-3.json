@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "content": "'use client'\n\nimport {\n  AlertDialog,\n  AlertDialogAction,\n  AlertDialogCancel,\n  AlertDialogContent,\n  AlertDialogDescription,\n  AlertDialogFooter,\n  AlertDialogHeader,\n  AlertDialogTitle,\n  AlertDialogTrigger,\n} from '@gentleduck/registry-ui/alert-dialog'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Trash2 } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <AlertDialog>\n      <AlertDialogTrigger asChild>\n        <Button\n          variant=\"destructive\"\n          className=\"data-[state=open]:opacity-90 data-[state=open]:ring-2 data-[state=open]:ring-destructive/50\">\n          <Trash2 className=\"mr-2 h-4 w-4\" />\n          Delete account\n        </Button>\n      </AlertDialogTrigger>\n      <AlertDialogContent>\n        <AlertDialogHeader>\n          <AlertDialogTitle>Are you sure?</AlertDialogTitle>\n          <AlertDialogDescription>\n            This action cannot be undone. The trigger button is highlighted while this dialog is open.\n          </AlertDialogDescription>\n        </AlertDialogHeader>\n        <AlertDialogFooter>\n          <AlertDialogCancel>Cancel</AlertDialogCancel>\n          <AlertDialogAction>Delete</AlertDialogAction>\n        </AlertDialogFooter>\n      </AlertDialogContent>\n    </AlertDialog>\n  )\n}\n",
+      "content": "'use client'\n\nimport {\n  AlertDialog,\n  AlertDialogAction,\n  AlertDialogCancel,\n  AlertDialogContent,\n  AlertDialogDescription,\n  AlertDialogFooter,\n  AlertDialogHeader,\n  AlertDialogTitle,\n  AlertDialogTrigger,\n} from '@gentleduck/registry-ui/alert-dialog'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Trash2 } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <AlertDialog>\n      <AlertDialogTrigger asChild>\n        <Button\n          variant=\"destructive\"\n          className=\"data-[state=open]:opacity-90 data-[state=open]:ring-2 data-[state=open]:ring-destructive/50\">\n          <Trash2 className=\"me-2 h-4 w-4\" />\n          Delete account\n        </Button>\n      </AlertDialogTrigger>\n      <AlertDialogContent>\n        <AlertDialogHeader>\n          <AlertDialogTitle>Are you sure?</AlertDialogTitle>\n          <AlertDialogDescription>\n            This action cannot be undone. The trigger button is highlighted while this dialog is open.\n          </AlertDialogDescription>\n        </AlertDialogHeader>\n        <AlertDialogFooter>\n          <AlertDialogCancel>Cancel</AlertDialogCancel>\n          <AlertDialogAction>Delete</AlertDialogAction>\n        </AlertDialogFooter>\n      </AlertDialogContent>\n    </AlertDialog>\n  )\n}\n",
       "path": "alert-dialog/alert-dialog-3.tsx",
       "target": "components/alert-dialog-3.tsx",
       "type": "registry:example"
@@ -9,7 +9,10 @@
   ],
   "name": "alert-dialog-3",
   "registryDependencies": [
-    "alert-dialog"
+    "alert-dialog",
+    "direction",
+    "input",
+    "label"
   ],
   "root_folder": "alert-dialog",
   "source": "/registry-examples/src/alert-dialog",

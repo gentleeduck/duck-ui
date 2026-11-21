@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [presses, setPresses] = React.useState(0)\n\n  return (\n    <div className=\"flex w-[280px] flex-col gap-2\">\n      <Label htmlFor=\"label-6-email\" onMouseDown={() => setPresses((count) => count + 1)}>\n        Double-click this label\n      </Label>\n      <Input id=\"label-6-email\" placeholder=\"you@example.com\" />\n      <p className=\"text-muted-foreground text-sm\">\n        onMouseDown ran {presses} times, and a double click still selects none of the label's text.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "label/label-6.tsx",
+      "target": "components/label-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "label-6",
+  "registryDependencies": [
+    "label",
+    "checkbox",
+    "input",
+    "switch"
+  ],
+  "root_folder": "label",
+  "source": "/registry-examples/src/label",
+  "type": "registry:example"
+}

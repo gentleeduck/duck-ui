@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as NavigationMenu from '@gentleduck/primitives/navigation-menu'\nimport styles from '../primitives.module.css'\n\nexport default function NavigationMenuSubExample() {\n  return (\n    <NavigationMenu.Root className={styles.relative}>\n      <NavigationMenu.List className={styles.navList}>\n        <NavigationMenu.Item value=\"guides\">\n          <NavigationMenu.Trigger className={styles.menubarTrigger}>Guides</NavigationMenu.Trigger>\n          <NavigationMenu.Content className={styles.navContent}>\n            <NavigationMenu.Sub defaultValue=\"react\" disableToggle={false}>\n              <NavigationMenu.List className={styles.navList}>\n                {['react', 'vue'].map((framework) => (\n                  <NavigationMenu.Item key={framework} value={framework}>\n                    <NavigationMenu.Trigger className={styles.menubarTrigger}>{framework}</NavigationMenu.Trigger>\n                    <NavigationMenu.Content className={styles.navContent}>\n                      <NavigationMenu.Link className={styles.navLink} href={`#${framework}-setup`}>\n                        Set up {framework}\n                      </NavigationMenu.Link>\n                    </NavigationMenu.Content>\n                  </NavigationMenu.Item>\n                ))}\n              </NavigationMenu.List>\n            </NavigationMenu.Sub>\n          </NavigationMenu.Content>\n        </NavigationMenu.Item>\n      </NavigationMenu.List>\n      <NavigationMenu.Viewport className={styles.viewport} />\n    </NavigationMenu.Root>\n  )\n}\n",
+      "path": "internal-primitives/navigation-menu-sub/navigation-menu-sub.tsx",
+      "target": "components/navigation-menu-sub.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "navigation-menu-sub",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport {\n  Select,\n  SelectContent,\n  SelectGroup,\n  SelectItem,\n  SelectLabel,\n  SelectTrigger,\n  SelectValue,\n} from '@gentleduck/registry-ui/select'\n\nconst fruits = [\n  { value: 'apple', label: 'تفاح' },\n  { value: 'banana', label: 'موز' },\n  { value: 'blueberry', label: 'توت أزرق' },\n  { value: 'grapes', label: 'عنب' },\n  { value: 'pineapple', label: 'أناناس' },\n]\n\nconst labelOf = (value: string) => fruits.find((fruit) => fruit.value === value)?.label\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Select defaultValue={['grapes', 'apple']} multiple>\n        <SelectTrigger aria-label=\"الفواكه\" className=\"w-[240px]\">\n          <SelectValue placeholder=\"اختر بعض الفواكه\">{(picked) => picked.map(labelOf).join('، ')}</SelectValue>\n        </SelectTrigger>\n        <SelectContent>\n          <SelectGroup>\n            <SelectLabel>الفواكه</SelectLabel>\n            {fruits.map((fruit) => (\n              <SelectItem key={fruit.value} value={fruit.value}>\n                {fruit.label}\n              </SelectItem>\n            ))}\n          </SelectGroup>\n        </SelectContent>\n      </Select>\n    </DirectionProvider>\n  )\n}\n",
+      "path": "select/select-19.tsx",
+      "target": "components/select-19.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-19",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

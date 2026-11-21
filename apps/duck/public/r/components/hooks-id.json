@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { useId } from '@gentleduck/primitives/hooks/use-id'\nimport styles from '../primitives.module.css'\n\nfunction Field({ label, id }: { label: string; id?: string }) {\n  const inputId = useId(id)\n  return (\n    <div className={styles.stack}>\n      <label className={styles.label} htmlFor={inputId}>\n        {label}\n      </label>\n      <input className={styles.input} id={inputId} />\n      <span className={styles.note}>id: {inputId}</span>\n    </div>\n  )\n}\n\nexport default function HooksIdExample() {\n  return (\n    <div className={styles.row}>\n      <Field label=\"Generated\" />\n      <Field id=\"billing-email\" label=\"Given\" />\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/hooks-id/hooks-id.tsx",
+      "target": "components/hooks-id.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "hooks-id",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

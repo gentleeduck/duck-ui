@@ -1,7 +1,13 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
-      "content": "'use client'\nimport { InputOTP, InputOTPGroup, InputOTPSlot } from '@gentleduck/registry-ui/input-otp'\nimport React from 'react'\n\nexport default function Demo() {\n  const [value, setValue] = React.useState('')\n\n  return (\n    <div className=\"space-y-2\">\n      <InputOTP maxLength={6} onValueChange={(value) => setValue(value)} value={value}>\n        <InputOTPGroup>\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n        </InputOTPGroup>\n      </InputOTP>\n      <div className=\"text-center text-sm\">\n        {value === '' ? 'Enter your one-time password.' : <>You entered: {value}</>}\n      </div>\n    </div>\n  )\n}\n",
+      "content": "'use client'\nimport { InputOTP, InputOTPGroup, InputOTPSlot } from '@gentleduck/registry-ui/input-otp'\nimport React from 'react'\n\nexport default function Demo() {\n  const [value, setValue] = React.useState('')\n\n  return (\n    <div className=\"space-y-2\">\n      <InputOTP aria-label=\"One-time code\" maxLength={6} onValueChange={(value) => setValue(value)} value={value}>\n        <InputOTPGroup>\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n        </InputOTPGroup>\n      </InputOTP>\n      <div className=\"text-center text-sm\">\n        {value === '' ? 'Enter your one-time password.' : <>You entered: {value}</>}\n      </div>\n    </div>\n  )\n}\n",
       "path": "input-otp/input-otp-4.tsx",
       "target": "components/input-otp-4.tsx",
       "type": "registry:example"

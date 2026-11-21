@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@gentleduck/hooks"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\n\nexport default function Demo() {\n  return (\n    <TooltipProvider delayDuration={300} disableHoverableContent skipDelayDuration={800}>\n      <div className=\"flex items-center gap-2\">\n        {['Bold', 'Italic', 'Underline'].map((mark) => (\n          <Tooltip key={mark}>\n            <TooltipTrigger asChild>\n              <Button size=\"sm\" variant=\"outline\">\n                {mark[0]}\n              </Button>\n            </TooltipTrigger>\n            <TooltipContent>{mark}</TooltipContent>\n          </Tooltip>\n        ))}\n        <Tooltip defaultOpen disableHoverableContent={false}>\n          <TooltipTrigger asChild>\n            <Button size=\"sm\" variant=\"outline\">\n              ?\n            </Button>\n          </TooltipTrigger>\n          <TooltipContent>Open from the start, and hoverable unlike the others</TooltipContent>\n        </Tooltip>\n      </div>\n    </TooltipProvider>\n  )\n}\n",
+      "path": "tooltip/tooltip-13.tsx",
+      "target": "components/tooltip-13.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "tooltip-13",
+  "registryDependencies": [
+    "tooltip",
+    "button",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "toggle"
+  ],
+  "root_folder": "tooltip",
+  "source": "/registry-examples/src/tooltip",
+  "type": "registry:example"
+}

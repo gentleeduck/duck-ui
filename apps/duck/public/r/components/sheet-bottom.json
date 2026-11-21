@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Sheet from '@gentleduck/primitives/sheet'\nimport styles from '../primitives.module.css'\n\nexport default function SheetBottomExample() {\n  return (\n    <Sheet.Root>\n      <Sheet.Trigger className={styles.button}>Share</Sheet.Trigger>\n      <Sheet.Portal>\n        <Sheet.Overlay className={`${styles.overlay} ${styles.fade}`} />\n        <Sheet.Content\n          aria-describedby={undefined}\n          className={styles.sheet}\n          style={{\n            borderInlineStart: 0,\n            borderTop: '1px solid var(--border)',\n            insetBlock: 'auto 0',\n            insetInline: 0,\n            width: 'auto',\n          }}>\n          <Sheet.Title className={styles.title}>Share to</Sheet.Title>\n          <div className={styles.row}>\n            {['Mail', 'Messages', 'Copy link'].map((target) => (\n              <Sheet.Close className={styles.button} key={target}>\n                {target}\n              </Sheet.Close>\n            ))}\n          </div>\n        </Sheet.Content>\n      </Sheet.Portal>\n    </Sheet.Root>\n  )\n}\n",
+      "path": "internal-primitives/sheet-bottom/sheet-bottom.tsx",
+      "target": "components/sheet-bottom.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "sheet-bottom",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

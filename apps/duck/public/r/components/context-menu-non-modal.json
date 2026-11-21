@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as ContextMenu from '@gentleduck/primitives/context-menu'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function ContextMenuNonModalExample() {\n  const [clicks, setClicks] = React.useState(0)\n\n  return (\n    <div className={styles.stack}>\n      <ContextMenu.Root modal={false}>\n        <ContextMenu.Trigger className={styles.contextArea}>Right-click, then use the button</ContextMenu.Trigger>\n        <ContextMenu.Portal>\n          <ContextMenu.Content className={styles.content}>\n            <ContextMenu.Item className={styles.item}>Copy</ContextMenu.Item>\n            <ContextMenu.Item className={styles.item}>Paste</ContextMenu.Item>\n          </ContextMenu.Content>\n        </ContextMenu.Portal>\n      </ContextMenu.Root>\n      <button className={styles.button} onClick={() => setClicks((count) => count + 1)} type=\"button\">\n        Clicked {clicks} times\n      </button>\n      <p className={styles.note}>modal off leaves the page scrollable and clickable while the menu is open.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/context-menu-non-modal/context-menu-non-modal.tsx",
+      "target": "components/context-menu-non-modal.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "context-menu-non-modal",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

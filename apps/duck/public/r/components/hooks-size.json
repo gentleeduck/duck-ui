@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { useSize } from '@gentleduck/primitives/hooks/use-size'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function HooksSizeExample() {\n  const [element, setElement] = React.useState<HTMLTextAreaElement | null>(null)\n  const size = useSize(element)\n\n  return (\n    <div className={styles.stack}>\n      <textarea\n        className={styles.input}\n        defaultValue=\"Drag my corner.\"\n        ref={setElement}\n        rows={3}\n        style={{ resize: 'both' }}\n      />\n      <p className={styles.note}>{size ? `${Math.round(size.width)} x ${Math.round(size.height)}` : 'Measuring...'}</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/hooks-size/hooks-size.tsx",
+      "target": "components/hooks-size.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "hooks-size",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

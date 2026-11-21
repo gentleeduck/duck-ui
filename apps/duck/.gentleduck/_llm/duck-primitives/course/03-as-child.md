@@ -51,7 +51,7 @@ Then:
 
 ## Common failure modes
 
-1. Multiple children under `asChild`.
+1. Text or several children under `asChild`, which throws an error naming the primitive.
 2. Child component that drops incoming props.
 3. Child component that does not forward ref.
 4. Overriding `onClick` and forgetting composed behavior.

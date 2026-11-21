@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { MotionRadioGroup, MotionRadioGroupItem } from '@gentleduck/registry-ui/radio-group'\n\nexport default function Demo() {\n  return (\n    <MotionRadioGroup\n      className=\"[&>div]:felx flex flex-col space-y-1 [&>div]:items-center [&>div]:space-x-3 [&>div]:space-y-0\"\n      defaultValue=\"comfortable\">\n      <MotionRadioGroupItem value=\"default\">Default</MotionRadioGroupItem>\n      <MotionRadioGroupItem value=\"comfortable\">Comfortable</MotionRadioGroupItem>\n      <MotionRadioGroupItem value=\"compact\">Compact</MotionRadioGroupItem>\n    </MotionRadioGroup>\n  )\n}\n",
@@ -9,7 +15,9 @@
   ],
   "name": "radio-group-4",
   "registryDependencies": [
-    "radio-group"
+    "radio-group",
+    "button",
+    "field"
   ],
   "root_folder": "radio-group",
   "source": "/registry-examples/src/radio-group",

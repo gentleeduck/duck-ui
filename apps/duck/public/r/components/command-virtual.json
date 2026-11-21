@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Command from '@gentleduck/primitives/command'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nconst ROWS = Array.from({ length: 5000 }, (_, index) => `Row ${index + 1}`)\nconst ROW = 32\nconst VIEW = 256\n\nexport default function CommandVirtualExample() {\n  const view = React.useRef<HTMLDivElement>(null)\n  const [top, setTop] = React.useState(0)\n  const first = Math.max(0, Math.floor(top / ROW) - 3)\n  const last = Math.min(ROWS.length, Math.ceil((top + VIEW) / ROW) + 3)\n  const scrollToIndex = React.useCallback((index: number) => {\n    const box = view.current\n    if (!box) return\n    if (index * ROW < box.scrollTop) box.scrollTop = index * ROW\n    else if ((index + 1) * ROW > box.scrollTop + VIEW) box.scrollTop = (index + 1) * ROW - VIEW\n  }, [])\n\n  return (\n    <Command.Root className={styles.command} aria-label=\"Rows\" shouldFilter={false}>\n      <Command.Input className={styles.commandInput} placeholder=\"Arrow through 5,000 rows...\" />\n      <div\n        onScroll={(event) => setTop(event.currentTarget.scrollTop)}\n        ref={view}\n        style={{ height: VIEW, overflow: 'auto' }}>\n        <Command.List\n          style={{ height: ROWS.length * ROW, position: 'relative' }}\n          virtual={{ count: ROWS.length, scrollToIndex }}>\n          {ROWS.slice(first, last).map((row, offset) => (\n            <Command.Item\n              className={styles.item}\n              index={first + offset}\n              key={row}\n              style={{ height: ROW, insetInline: 0, position: 'absolute', top: (first + offset) * ROW }}\n              value={row}>\n              {row}\n            </Command.Item>\n          ))}\n        </Command.List>\n      </div>\n    </Command.Root>\n  )\n}\n",
+      "path": "internal-primitives/command-virtual/command-virtual.tsx",
+      "target": "components/command-virtual.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "command-virtual",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

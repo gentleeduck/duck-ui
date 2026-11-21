@@ -24,13 +24,15 @@ Every day cell gets these attributes via `getDayProps`:
 | `data-selected="true"` | Day is selected |
 | `data-today="true"` | Day is today |
 | `data-disabled="true"` | Day is disabled |
+| `data-unavailable="true"` | Day is `unavailable`: focusable, but it cannot be picked |
+| `data-invalid="true"` | Selected day while the selection is invalid |
 | `data-outside-month="true"` | Day belongs to adjacent month |
 | `data-hidden="true"` | Day should be hidden (`showOutsideDays` is false) |
 | `data-range-start="true"` | First day in range |
 | `data-range-middle="true"` | Day is within range |
 | `data-range-end="true"` | Last day in range |
 | `data-focused="true"` | Day has keyboard focus |
-| `data-weekend="true"` | Day is Saturday or Sunday |
+| `data-weekend="true"` | Day falls on the locale's weekend, Saturday and Sunday with no locale |
 
 ***
 
@@ -123,6 +125,8 @@ function StyledCalendar() {
 [data-slot="calendar-nav-button"] { /* prev/next buttons */ }
 [data-slot="calendar-grid"] { /* day grid */ }
 [data-slot="calendar-weekdays"] { /* weekday header row */ }
+[data-slot="calendar-week"] { /* each week row */ }
+[data-slot="calendar-week-number"] { /* week number, with showWeekNumber */ }
 [data-slot="calendar-day"] { /* individual day cell */ }
 ```
 

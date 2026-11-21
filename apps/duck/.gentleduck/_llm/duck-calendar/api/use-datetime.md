@@ -65,6 +65,8 @@ A full `UseTimePicker.IUseTimePickerReturn`. See [useTimePicker](/duck-calendar/
 | :--- | :--- | :--- |
 | `value` | `TDate \| null` | Combined date + time value |
 
+A time picked before any date shows in `timePicker` and goes onto the date picked next. Picking it does not call `onChange`, since there is no date yet.
+
 ### `actions`
 
 | Method | Signature | Description |

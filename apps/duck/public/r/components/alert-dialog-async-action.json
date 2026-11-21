@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as AlertDialog from '@gentleduck/primitives/alert-dialog'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function AlertDialogAsyncActionExample() {\n  const [open, setOpen] = React.useState(false)\n  const [busy, setBusy] = React.useState(false)\n  const [archived, setArchived] = React.useState(0)\n\n  async function archive(event: React.MouseEvent) {\n    event.preventDefault()\n    setBusy(true)\n    await new Promise((resolve) => setTimeout(resolve, 900))\n    setBusy(false)\n    setArchived((count) => count + 1)\n    setOpen(false)\n  }\n\n  return (\n    <div className={styles.stack}>\n      <AlertDialog.Root onOpenChange={(next) => busy || setOpen(next)} open={open}>\n        <AlertDialog.Trigger className={styles.button}>Archive workspace</AlertDialog.Trigger>\n        <AlertDialog.Portal>\n          <AlertDialog.Overlay className={`${styles.overlay} ${styles.fade}`} />\n          <AlertDialog.Content className={styles.dialog}>\n            <AlertDialog.Title className={styles.title}>Archive this workspace?</AlertDialog.Title>\n            <AlertDialog.Description className={styles.description}>\n              Members lose access until an owner restores it.\n            </AlertDialog.Description>\n            <div className={styles.actions}>\n              <AlertDialog.Cancel className={styles.button} disabled={busy}>\n                Cancel\n              </AlertDialog.Cancel>\n              <AlertDialog.Action className={`${styles.button} ${styles.danger}`} disabled={busy} onClick={archive}>\n                {busy ? 'Archiving...' : 'Archive'}\n              </AlertDialog.Action>\n            </div>\n          </AlertDialog.Content>\n        </AlertDialog.Portal>\n      </AlertDialog.Root>\n      <p className={styles.note}>\n        The action prevents the close, waits for its work, then closes itself. Archived {archived} times.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/alert-dialog-async-action/alert-dialog-async-action.tsx",
+      "target": "components/alert-dialog-async-action.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "alert-dialog-async-action",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

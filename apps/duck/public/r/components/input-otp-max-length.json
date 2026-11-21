@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as InputOTP from '@gentleduck/primitives/input-otp'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function InputOTPMaxLengthExample() {\n  const [length, setLength] = React.useState(4)\n  const [done, setDone] = React.useState('')\n\n  return (\n    <div className={styles.stack}>\n      <div className={styles.row}>\n        {[4, 6].map((value) => (\n          <button className={styles.button} key={value} onClick={() => setLength(value)} type=\"button\">\n            {value === length ? `[${value} digits]` : `${value} digits`}\n          </button>\n        ))}\n      </div>\n      <InputOTP.Root aria-label=\"Code\" className={styles.otp} maxLength={length} onComplete={setDone}>\n        {[0, 1, 2, 3, 4, 5].map((slot) => (\n          <InputOTP.Slot aria-label={`Digit ${slot + 1}`} className={styles.slot} hidden={slot >= length} key={slot} />\n        ))}\n      </InputOTP.Root>\n      <p className={styles.note}>\n        {done ? `Complete at ${done.length}: ${done}` : 'maxLength counts only the first slots as the code.'}\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/input-otp-max-length/input-otp-max-length.tsx",
+      "target": "components/input-otp-max-length.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "input-otp-max-length",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

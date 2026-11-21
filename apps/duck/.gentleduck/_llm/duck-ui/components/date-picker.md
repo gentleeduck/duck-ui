@@ -206,7 +206,7 @@ export default function Demo() {
       </Label>
       <div className="relative flex gap-2">
         <Input
-          className="bg-background pr-10"
+          className="bg-background pe-10"
           id="date"
           onChange={(e) => {
             const date = new Date(e.currentTarget.value)
@@ -228,7 +228,7 @@ export default function Demo() {
         <Popover onOpenChange={setOpen} open={open}>
           <PopoverTrigger asChild>
             <Button
-              className="absolute top-1/2 right-1 h-fit w-2 -translate-y-1/2 p-1 px-1.5 [&_svg]:w-4"
+              className="absolute end-1 top-1/2 h-fit w-2 -translate-y-1/2 p-1 px-1.5 [&_svg]:w-4"
               id="date-picker"
               variant="ghost">
               <CalendarIcon />
@@ -359,7 +359,7 @@ export default function Demo() {
       </Label>
       <div className="relative flex gap-2">
         <Input
-          className="bg-background pr-10"
+          className="bg-background pe-10"
           id="date"
           onChange={(e) => {
             setValue(e.currentTarget.value)
@@ -381,7 +381,7 @@ export default function Demo() {
         <Popover onOpenChange={setOpen} open={open}>
           <PopoverTrigger asChild>
             <Button
-              className="absolute top-1/2 right-1 h-fit w-2 -translate-y-1/2 p-1 px-1.5 [&_svg]:w-4"
+              className="absolute end-1 top-1/2 h-fit w-2 -translate-y-1/2 p-1 px-1.5 [&_svg]:w-4"
               id="date-picker"
               variant="default">
               <CalendarIcon />
@@ -559,7 +559,7 @@ export default function Demo() {
       </Label>
       <div className="relative flex gap-2">
         <Input
-          className="bg-background pr-10"
+          className="bg-background pe-10"
           id="date"
           onChange={(e) => {
             setValue(e.currentTarget.value)
@@ -582,7 +582,7 @@ export default function Demo() {
           <PopoverTrigger asChild>
             <Button
               variant="nothing"
-              className="absolute top-1/2 right-1 h-fit -translate-y-1/2 p-1 px-1.5 [&_svg]:w-4"
+              className="absolute end-1 top-1/2 h-fit -translate-y-1/2 p-1 px-1.5 [&_svg]:w-4"
               id="date-picker">
               <CalendarIcon />
               <span className="sr-only">Select date</span>
@@ -663,7 +663,7 @@ export default function Demo() {
                 <PopoverTrigger asChild>
                   <Button
                     id="form-rhf-calendar-dob"
-                    className={cn('w-[240px] px-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                    className={cn('w-[240px] px-3 text-start font-normal', !field.value && 'text-muted-foreground')}
                     variant="outline"
                     aria-invalid={fieldState.invalid}>
                     <div className="flex w-full items-center justify-between">
@@ -749,7 +749,7 @@ export default function Demo() {
                   <Button
                     id="form-rhf-date-picker-dob"
                     className={cn(
-                      'w-60 px-2 text-left font-normal [&_svg]:w-4',
+                      'w-60 px-2 text-start font-normal [&_svg]:w-4',
                       !field.value && 'text-muted-foreground',
                     )}
                     variant="outline"

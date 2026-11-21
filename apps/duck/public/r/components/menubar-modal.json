@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Menubar from '@gentleduck/primitives/menubar'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function MenubarModalExample() {\n  const [modal, setModal] = React.useState(true)\n\n  return (\n    <div className={styles.stack}>\n      <label className={styles.choice}>\n        <input checked={modal} onChange={(event) => setModal(event.target.checked)} type=\"checkbox\" />\n        modal\n      </label>\n      <Menubar.Root className={styles.menubar} modal={modal}>\n        <Menubar.Menu value=\"file\">\n          <Menubar.Trigger className={styles.menubarTrigger}>File</Menubar.Trigger>\n          <Menubar.Portal>\n            <Menubar.Content className={styles.content} sideOffset={6}>\n              <Menubar.Item className={styles.item}>Save</Menubar.Item>\n            </Menubar.Content>\n          </Menubar.Portal>\n        </Menubar.Menu>\n      </Menubar.Root>\n      <p className={styles.note}>\n        Modal locks the page's scroll and keeps focus in the open menu. Off, the page stays usable.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/menubar-modal/menubar-modal.tsx",
+      "target": "components/menubar-modal.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "menubar-modal",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Command from '@gentleduck/primitives/command'\nimport styles from '../primitives.module.css'\n\nexport default function CommandRtlExample() {\n  return (\n    <Command.Root className={styles.command} dir=\"rtl\" aria-label=\"بحث\">\n      <Command.Input className={styles.commandInput} placeholder=\"ابحث...\" />\n      <Command.List className={styles.commandList}>\n        <Command.Empty className={styles.commandEmpty}>لا توجد نتائج.</Command.Empty>\n        <Command.Group heading=\"الصفحات\">\n          <Command.Item className={styles.item} value=\"home\">\n            الرئيسية\n          </Command.Item>\n          <Command.Item className={styles.item} value=\"settings\">\n            الإعدادات\n          </Command.Item>\n        </Command.Group>\n      </Command.List>\n    </Command.Root>\n  )\n}\n",
+      "path": "internal-primitives/command-rtl/command-rtl.tsx",
+      "target": "components/command-rtl.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "command-rtl",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

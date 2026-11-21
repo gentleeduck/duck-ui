@@ -1,0 +1,21 @@
+{
+  "dependencies": [
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { ToggleGroup, ToggleGroupItem } from '@gentleduck/registry-ui/toggle-group'\nimport { LayoutGrid, List } from 'lucide-react'\nimport * as React from 'react'\n\nconst files = ['invoice.pdf', 'logo.svg', 'notes.md', 'photo.jpg']\n\nexport default function Demo() {\n  const [view, setView] = React.useState('list')\n\n  return (\n    <div className=\"grid w-full max-w-sm gap-3\">\n      <ToggleGroup\n        aria-label=\"View\"\n        className=\"justify-self-end\"\n        deselectable={false}\n        onValueChange={setView}\n        type=\"single\"\n        value={view}\n        variant=\"outline\">\n        <ToggleGroupItem aria-label=\"List\" value=\"list\">\n          <List />\n        </ToggleGroupItem>\n        <ToggleGroupItem aria-label=\"Grid\" value=\"grid\">\n          <LayoutGrid />\n        </ToggleGroupItem>\n      </ToggleGroup>\n      <ul className={view === 'grid' ? 'grid grid-cols-2 gap-2' : 'grid gap-1'}>\n        {files.map((file) => (\n          <li className=\"rounded-md border px-3 py-2 text-sm\" key={file}>\n            {file}\n          </li>\n        ))}\n      </ul>\n    </div>\n  )\n}\n",
+      "path": "toggle-group/toggle-group-10.tsx",
+      "target": "components/toggle-group-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "toggle-group-10",
+  "registryDependencies": [
+    "toggle-group",
+    "direction"
+  ],
+  "root_folder": "toggle-group",
+  "source": "/registry-examples/src/toggle-group",
+  "type": "registry:example"
+}

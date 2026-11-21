@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Slider from '@gentleduck/primitives/slider'\nimport styles from '../primitives.module.css'\n\nexport default function SliderDisabledExample() {\n  return (\n    <Slider.Root className={styles.slider} defaultValue={[60]} disabled>\n      <Slider.Track className={styles.track}>\n        <Slider.Range className={styles.range} />\n      </Slider.Track>\n      <Slider.Thumb aria-label=\"Locked level\" className={styles.thumb} />\n    </Slider.Root>\n  )\n}\n",
+      "path": "internal-primitives/slider-disabled/slider-disabled.tsx",
+      "target": "components/slider-disabled.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "slider-disabled",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

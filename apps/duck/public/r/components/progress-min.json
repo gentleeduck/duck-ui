@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Progress from '@gentleduck/primitives/progress'\nimport styles from '../primitives.module.css'\n\nexport default function ProgressMinExample() {\n  const year = 2026\n  return (\n    <Progress.Root className={styles.stack} max={2030} min={2020} value={year}>\n      <Progress.Label className={styles.label}>Plan from 2020 to 2030</Progress.Label>\n      <div className={styles.progress}>\n        <Progress.Indicator\n          className={styles.progressIndicator}\n          style={{ transform: `translateX(-${100 - (year - 2020) * 10}%)` }}\n        />\n      </div>\n      <Progress.Value className={styles.note} />\n    </Progress.Root>\n  )\n}\n",
+      "path": "internal-primitives/progress-min/progress-min.tsx",
+      "target": "components/progress-min.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "progress-min",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

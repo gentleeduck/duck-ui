@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "sonner"
+  ],
   "files": [
     {
       "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { ChevronsRight } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Button aria-label=\"Inbox button with 23 notifications\" secondIcon={<ChevronsRight />} type=\"button\">\n      Button\n    </Button>\n  )\n}\n",
@@ -9,7 +12,11 @@
   ],
   "name": "button-17",
   "registryDependencies": [
-    "button"
+    "button",
+    "command",
+    "direction",
+    "toggle",
+    "tooltip"
   ],
   "root_folder": "button",
   "source": "/registry-examples/src/button",

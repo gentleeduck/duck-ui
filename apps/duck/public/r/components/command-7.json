@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Command,\n  CommandEmpty,\n  CommandInput,\n  CommandItem,\n  CommandList,\n  CommandStatus,\n  fuzzyFilter,\n} from '@gentleduck/registry-ui/command'\n\nconst DISHES = [\n  'Apple pie',\n  'Applesauce',\n  'Banana bread',\n  'Café au lait',\n  'Carrot cake',\n  'Crème brûlée',\n  'Green apple sorbet',\n  'Pineapple upside-down cake',\n  'Tarte Tatin',\n]\n\nexport default function Demo() {\n  return (\n    <Command className=\"h-fit w-80 border pt-0\" filter={fuzzyFilter} limit={4}>\n      <CommandInput placeholder=\"Try apl, creme or cafe...\" />\n      <CommandList>\n        <CommandEmpty>No dish found.</CommandEmpty>\n        {DISHES.map((dish) => (\n          <CommandItem key={dish} value={dish}>\n            {dish}\n          </CommandItem>\n        ))}\n      </CommandList>\n      <CommandStatus className=\"not-sr-only border-t px-3 py-2 text-muted-foreground text-xs\">\n        {(count) => `${count} shown, the best four at most`}\n      </CommandStatus>\n    </Command>\n  )\n}\n",
+      "path": "command/command-7.tsx",
+      "target": "components/command-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "command-7",
+  "registryDependencies": [
+    "command",
+    "button"
+  ],
+  "root_folder": "command",
+  "source": "/registry-examples/src/command",
+  "type": "registry:example"
+}

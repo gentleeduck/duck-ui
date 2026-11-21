@@ -1,0 +1,27 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { DirectionProvider, type IDirection, toDirection } from '@gentleduck/registry-ui/direction'\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuSub,\n  DropdownMenuSubContent,\n  DropdownMenuSubTrigger,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\nimport { Slider } from '@gentleduck/registry-ui/slider'\nimport { ToggleGroup, ToggleGroupItem } from '@gentleduck/registry-ui/toggle-group'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [dir, setDir] = React.useState<IDirection.Kind>('rtl')\n\n  return (\n    <div className=\"grid w-full max-w-sm gap-4\">\n      <ToggleGroup\n        aria-label=\"Direction\"\n        onValueChange={(value) => setDir((current) => toDirection(value) ?? current)}\n        type=\"single\"\n        value={dir}\n        variant=\"outline\">\n        <ToggleGroupItem value=\"ltr\">Left to right</ToggleGroupItem>\n        <ToggleGroupItem value=\"rtl\">Right to left</ToggleGroupItem>\n      </ToggleGroup>\n      <DirectionProvider dir={dir}>\n        <div className=\"grid gap-4 rounded-lg border p-4\">\n          <Slider aria-label=\"Volume\" defaultValue={[60]} max={100} step={1} />\n          <DropdownMenu>\n            <DropdownMenuTrigger asChild>\n              <Button className=\"justify-self-start\" variant=\"outline\">\n                Share\n              </Button>\n            </DropdownMenuTrigger>\n            <DropdownMenuContent align=\"start\">\n              <DropdownMenuItem>Copy link</DropdownMenuItem>\n              <DropdownMenuSub>\n                <DropdownMenuSubTrigger>Send to</DropdownMenuSubTrigger>\n                <DropdownMenuSubContent>\n                  <DropdownMenuItem>Email</DropdownMenuItem>\n                  <DropdownMenuItem>Message</DropdownMenuItem>\n                </DropdownMenuSubContent>\n              </DropdownMenuSub>\n            </DropdownMenuContent>\n          </DropdownMenu>\n        </div>\n      </DirectionProvider>\n    </div>\n  )\n}\n",
+      "path": "direction/direction-2.tsx",
+      "target": "components/direction-2.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "direction-2",
+  "registryDependencies": [
+    "direction",
+    "avatar",
+    "badge",
+    "button",
+    "card",
+    "dropdown-menu",
+    "label",
+    "slider",
+    "switch",
+    "tabs",
+    "toggle-group"
+  ],
+  "root_folder": "direction",
+  "source": "/registry-examples/src/direction",
+  "type": "registry:example"
+}

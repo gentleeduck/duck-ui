@@ -105,7 +105,9 @@ toast('Event has been created.')
 
 ## Examples
 
-### Default
+### Custom icon
+
+`icon` replaces the toast's icon, and `action` adds a button that runs its `onClick` and closes the toast.
 
 ```tsx title="components/sonner-2.tsx"
 // import from your project: import Demo from '@/components/sonner-2'
@@ -119,13 +121,13 @@ export default function Demo() {
   return (
     <Button
       onClick={() =>
-        toast('Actions have been triggered', {
+        toast('Your session expires in 5 minutes', {
           action: {
-            label: 'Undo',
-            onClick: () => console.log('Undo'),
+            label: 'Stay signed in',
+            onClick: () => toast.success('Session extended'),
           },
           className: 'gap-3',
-          description: `you have clicked the 'super button' button, and btw i can be loading.`,
+          description: 'Save your work to keep it.',
           icon: <ShieldAlert />,
         })
       }
@@ -140,68 +142,65 @@ export default function Demo() {
 
 ```tsx title="components/sonner-3.tsx"
 // import from your project: import Demo from '@/components/sonner-3'
+'use client'
+
 import { Button } from '@gentleduck/registry-ui/button'
 import { SonnerUpload } from '@gentleduck/registry-ui/sonner'
 import React from 'react'
 import { toast } from 'sonner'
+
+const TOAST_ID = 'sonner-upload'
 
 export default function Demo() {
   const controllerRef = React.useRef(new AbortController())
   const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null)
   const progressRef = React.useRef(0)
 
-  const updateToast = (progress: number) => {
+  const stop = React.useCallback(() => {
+    controllerRef.current.abort()
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    intervalRef.current = null
+  }, [])
+
+  // The toaster outlives the demo, so the toast it owns goes with it.
+  React.useEffect(
+    () => () => {
+      stop()
+      toast.dismiss(TOAST_ID)
+    },
+    [stop],
+  )
+
+  const show = (progress: number) => {
     toast(
       <SonnerUpload
         attachments={2}
-        onCancel={handleCancel}
-        onComplete={handleComplete}
+        onCancel={(_, dismiss) => {
+          stop()
+          dismiss(TOAST_ID)
+        }}
+        onComplete={(_, dismiss) => dismiss(TOAST_ID)}
         progress={progress}
         remainingTime={Math.max(0, 3000 - progress * 30)}
       />,
-      { dismissible: false, duration: 30000, id: 'sonner' },
+      { dismissible: false, duration: 30000, id: TOAST_ID },
     )
   }
 
-  const startProgress = () => {
+  const start = () => {
+    stop()
+    controllerRef.current = new AbortController()
     progressRef.current = 0
-    updateToast(0)
-
+    show(0)
     intervalRef.current = setInterval(() => {
-      const randomStep = Math.floor(Math.random() * 11) + 5 // 5-15%
-      progressRef.current = Math.min(progressRef.current + randomStep, 100)
-      updateToast(progressRef.current)
-
-      if (progressRef.current >= 100) {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current)
-        }
-        intervalRef.current = null
-      }
+      progressRef.current = Math.min(progressRef.current + Math.floor(Math.random() * 11) + 5, 100)
+      show(progressRef.current)
+      if (progressRef.current >= 100) stop()
     }, 400)
   }
 
-  const handleCancel = () => {
-    toast.dismiss('sonner')
-    controllerRef.current.abort()
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-  }
-
-  const handleComplete = () => {
-    toast.dismiss('sonner')
-  }
-
-  const handleClick = () => {
-    handleCancel() // Ensure no previous interval is running
-    controllerRef.current = new AbortController()
-    startProgress()
-  }
-
   return (
-    <Button border="default" onClick={handleClick} size="sm" variant="outline">
+    <Button border="default" onClick={start} size="sm" variant="outline">
       Show Upload Toast
     </Button>
   )
@@ -286,19 +285,20 @@ export default function Demo() {
       progressRef.current = Math.min(progressRef.current + step, 100)
       updateToast(progressRef.current)
 
-      if (progressRef.current >= 100 && intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
+      if (progressRef.current >= 100) stop()
     }, 600)
   }
 
+  const stop = React.useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    intervalRef.current = null
+  }, [])
+
+  React.useEffect(() => stop, [stop])
+
   const handleCancel = () => {
     toast.dismiss(toastId)
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
+    stop()
   }
 
   const handleComplete = () => {
@@ -315,6 +315,175 @@ export default function Demo() {
     <Button border="default" onClick={handleClick} size="sm" variant="outline">
       Upload 5 Files
     </Button>
+  )
+}
+```
+
+### Position
+
+A toast's `position` overrides the `Toaster`'s for that toast alone.
+
+```tsx title="components/sonner-7.tsx"
+// import from your project: import Demo from '@/components/sonner-7'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { toast } from 'sonner'
+
+const POSITIONS = ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'] as const
+
+export default function Demo() {
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {POSITIONS.map((position) => (
+        <Button
+          key={position}
+          onClick={() => toast(`Shown ${position.replace('-', ' ')}`, { position })}
+          size="sm"
+          variant="outline">
+          {position}
+        </Button>
+      ))}
+    </div>
+  )
+}
+```
+
+### Rich colours and close button
+
+`richColors` tints success, error, warning and info toasts, `closeButton` gives each toast a close button, and `expand` shows the stack open. These are `Toaster` props, so this example mounts its own `Toaster` with an `id` and sends its toasts there with `toasterId`, leaving the page's `Toaster` as it is.
+
+```tsx title="components/sonner-8.tsx"
+// import from your project: import Demo from '@/components/sonner-8'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Toaster } from '@gentleduck/registry-ui/sonner'
+import { toast } from 'sonner'
+
+const TOASTER_ID = 'sonner-rich'
+
+export default function Demo() {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Toaster closeButton expand id={TOASTER_ID} richColors />
+      <Button onClick={() => toast.success('Payment received', { toasterId: TOASTER_ID })} variant="outline">
+        Success
+      </Button>
+      <Button onClick={() => toast.error('Card declined', { toasterId: TOASTER_ID })} variant="outline">
+        Error
+      </Button>
+      <Button onClick={() => toast.warning('Card expires next month', { toasterId: TOASTER_ID })} variant="outline">
+        Warning
+      </Button>
+      <Button onClick={() => toast.info('Receipt sent by email', { toasterId: TOASTER_ID })} variant="outline">
+        Info
+      </Button>
+    </div>
+  )
+}
+```
+
+### Loading, then done
+
+`toast.loading` returns the toast's id. Pass it as `id` to `toast.success` or `toast.error` and the same toast changes in place, rather than a second one appearing.
+
+```tsx title="components/sonner-9.tsx"
+// import from your project: import Demo from '@/components/sonner-9'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { toast } from 'sonner'
+
+export default function Demo() {
+  return (
+    <Button
+      onClick={() => {
+        const id = toast.loading('Saving the draft...')
+        setTimeout(() => toast.success('Draft saved', { description: 'Saved to your workspace.', id }), 1500)
+      }}
+      variant="outline">
+      Save Draft
+    </Button>
+  )
+}
+```
+
+### Action and cancel
+
+`action` and `cancel` each add a button. Both close the toast; `cancel` is drawn quieter, for the choice that changes nothing.
+
+```tsx title="components/sonner-10.tsx"
+// import from your project: import Demo from '@/components/sonner-10'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { toast } from 'sonner'
+
+export default function Demo() {
+  return (
+    <Button
+      onClick={() =>
+        toast('Message archived', {
+          action: { label: 'Undo', onClick: () => toast.success('Message restored') },
+          cancel: { label: 'Dismiss', onClick: () => {} },
+        })
+      }
+      variant="outline">
+      Archive Message
+    </Button>
+  )
+}
+```
+
+### Position and theme
+
+```tsx title="components/sonner-11.tsx"
+// import from your project: import Demo from '@/components/sonner-11'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Toaster } from '@gentleduck/registry-ui/sonner'
+import * as React from 'react'
+import { toast } from 'sonner'
+
+const TOASTER_ID = 'sonner-placement'
+const POSITIONS = ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'] as const
+const THEMES = ['light', 'dark', 'system'] as const
+
+export default function Demo() {
+  const [position, setPosition] = React.useState<(typeof POSITIONS)[number]>('top-center')
+  const [theme, setTheme] = React.useState<(typeof THEMES)[number]>('dark')
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <Toaster id={TOASTER_ID} position={position} theme={theme} />
+      <div className="flex flex-wrap justify-center gap-2">
+        {POSITIONS.map((value) => (
+          <Button
+            key={value}
+            onClick={() => setPosition(value)}
+            size="sm"
+            variant={value === position ? 'default' : 'outline'}>
+            {value}
+          </Button>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        {THEMES.map((value) => (
+          <Button
+            key={value}
+            onClick={() => setTheme(value)}
+            size="sm"
+            variant={value === theme ? 'default' : 'outline'}>
+            {value}
+          </Button>
+        ))}
+      </div>
+      <Button onClick={() => toast('Saved', { description: `${position}, ${theme} theme`, toasterId: TOASTER_ID })}>
+        Show a toast
+      </Button>
+    </div>
   )
 }
 ```
@@ -370,6 +539,7 @@ The `Toaster` component wraps the `Sonner` `Toaster` from the `sonner` library, 
 | `dir` | `'ltr' \| 'rtl'` | - | Optional override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `position` | `ToasterProps['position']` | `'bottom-right'` | Corner the toasts stack in. Left and right mirror in RTL |
 | `theme` | `'light' \| 'dark' \| 'system'` | `'system'` | Toast theme. Auto-detected from `next-themes` `useTheme()` |
+| `style` | `React.CSSProperties` | - | Merged over the popover colours the toasts take, `--normal-bg`, `--normal-border` and `--normal-text`, so one of those can be overridden and the rest kept |
 | `...props` | `ToasterProps` | - | Additional props inherited from the `sonner` toaster. |
 
 ### SonnerUpload
@@ -382,7 +552,7 @@ The `Toaster` component wraps the `Sonner` `Toaster` from the `sonner` library, 
 | `onCancel` | `(e: React.MouseEvent<HTMLButtonElement>, dismiss: (id: string) => void) => void` | - | Callback triggered when the Cancel button is clicked. Receives the click event and a function to dismiss the toast by ID |
 | `onComplete` | `(e: React.MouseEvent<HTMLButtonElement>, dismiss: (id: string) => void) => void` | - | Callback triggered when the Complete button is clicked. Receives the click event and a function to dismiss the toast by ID |
 
-`SonnerUpload` shows a spinning `Loader` icon while `progress < 100` and switches to a success `CircleCheck` icon at completion.
+While `progress` is under 100, `SonnerUpload` shows a spinning `Loader`, the time left when `remainingTime` is above zero, and a Cancel button. From 100 up it shows a `CircleCheck`, a full bar at 100%, reads "Upload complete", says it is safe to close the browser, and offers Complete. The bar is named "Upload progress". It adds no live region of its own, since the `Toaster` already announces what changes in a toast.
 
 ### Utility Function
 
@@ -390,10 +560,12 @@ The `Toaster` component wraps the `Sonner` `Toaster` from the `sonner` library, 
 
 Formats a duration in seconds into a human-readable string:
 
-* Returns days if >= 1 day (`'Xd '`),
-* else hours if >= 1 hour (`'Xh '`),
-* else minutes if >= 1 minute (`'Xm '`),
+* Returns days if >= 1 day (`'Xd'`),
+* else hours if >= 1 hour (`'Xh'`),
+* else minutes if >= 1 minute (`'Xm'`),
 * else seconds (`'Xs'`).
+
+Each is rounded down, so `formatTime(119)` is `'1m'`.
 
 ### Types
 

@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Field,\n  FieldContent,\n  FieldDescription,\n  FieldError,\n  FieldGroup,\n  FieldLabel,\n} from '@gentleduck/registry-ui/field'\nimport { Switch } from '@gentleduck/registry-ui/switch'\nimport { zodResolver } from '@hookform/resolvers/zod'\nimport { Controller, useForm } from 'react-hook-form'\nimport { toast } from 'sonner'\nimport { z } from 'zod'\n\nconst FormSchema = z.object({\n  marketing_emails: z.boolean().default(false).optional(),\n  security_emails: z.boolean(),\n})\n\nexport default function Demo() {\n  const form = useForm<z.infer<typeof FormSchema>>({\n    defaultValues: {\n      security_emails: true,\n    },\n    resolver: zodResolver(FormSchema),\n  })\n\n  function onSubmit(data: z.infer<typeof FormSchema>) {\n    toast.info(\n      <div>\n        <h4 className=\"font-medium text-lg\">You submitted the following values:</h4>\n        <pre className=\"mt-2 w-[270px] rounded-md bg-slate-950 p-4\">\n          <code className=\"text-white\">{JSON.stringify(data, null, 2)}</code>\n        </pre>\n      </div>,\n    )\n  }\n\n  return (\n    <form className=\"w-full space-y-6\" onSubmit={form.handleSubmit(onSubmit)}>\n      <div>\n        <h3 className=\"mb-4 font-medium text-lg\">Email Notifications</h3>\n        <FieldGroup className=\"space-y-4\">\n          <Controller\n            control={form.control}\n            name=\"marketing_emails\"\n            render={({ field, fieldState }) => (\n              <Field\n                className=\"justify-between rounded-lg border p-3 shadow-sm\"\n                orientation=\"horizontal\"\n                data-invalid={fieldState.invalid}>\n                <FieldContent>\n                  <FieldLabel htmlFor=\"switch-marketing-emails\">Marketing emails</FieldLabel>\n                  <FieldDescription>Receive emails about new products, features, and more.</FieldDescription>\n                  {fieldState.invalid && fieldState.error && <FieldError errors={[fieldState.error]} />}\n                </FieldContent>\n                <Switch\n                  id=\"switch-marketing-emails\"\n                  name={field.name}\n                  checked={field.value}\n                  onCheckedChange={field.onChange}\n                  aria-invalid={fieldState.invalid}\n                />\n              </Field>\n            )}\n          />\n\n          <Controller\n            control={form.control}\n            name=\"security_emails\"\n            render={({ field, fieldState }) => (\n              <Field\n                className=\"justify-between rounded-lg border p-3 shadow-sm\"\n                orientation=\"horizontal\"\n                data-invalid={fieldState.invalid}>\n                <FieldContent>\n                  <FieldLabel htmlFor=\"switch-security-emails\">Security emails</FieldLabel>\n                  <FieldDescription>Receive emails about your account security.</FieldDescription>\n                  {fieldState.invalid && fieldState.error && <FieldError errors={[fieldState.error]} />}\n                </FieldContent>\n                <Switch\n                  id=\"switch-security-emails\"\n                  name={field.name}\n                  checked={field.value}\n                  disabled\n                  onCheckedChange={field.onChange}\n                  aria-invalid={fieldState.invalid}\n                />\n              </Field>\n            )}\n          />\n        </FieldGroup>\n      </div>\n      <Button type=\"submit\">Submit</Button>\n    </form>\n  )\n}\n",
@@ -9,7 +15,10 @@
   ],
   "name": "switch-2",
   "registryDependencies": [
-    "switch"
+    "switch",
+    "button",
+    "field",
+    "label"
   ],
   "root_folder": "switch",
   "source": "/registry-examples/src/switch",

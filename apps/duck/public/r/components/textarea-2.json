@@ -1,7 +1,13 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
-      "content": "import { Textarea } from '@gentleduck/registry-ui/textarea'\n\nexport default function Demo() {\n  return <Textarea placeholder=\"Type your message here.\" />\n}\n",
+      "content": "'use client'\n\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Textarea } from '@gentleduck/registry-ui/textarea'\nimport * as React from 'react'\n\nconst LIMIT = 140\n\nexport default function Demo() {\n  const [text, setText] = React.useState('')\n\n  return (\n    <div className=\"grid w-full gap-1.5\">\n      <Label htmlFor=\"textarea-count\">Status</Label>\n      <Textarea\n        aria-describedby=\"textarea-count-left\"\n        id=\"textarea-count\"\n        maxLength={LIMIT}\n        onChange={(event) => setText(event.target.value)}\n        placeholder=\"What are you working on?\"\n        value={text}\n      />\n      <p className=\"text-end text-muted-foreground text-sm tabular-nums\" id=\"textarea-count-left\">\n        {LIMIT - text.length} characters left\n      </p>\n    </div>\n  )\n}\n",
       "path": "textarea/textarea-2.tsx",
       "target": "components/textarea-2.tsx",
       "type": "registry:example"
@@ -9,7 +15,10 @@
   ],
   "name": "textarea-2",
   "registryDependencies": [
-    "textarea"
+    "textarea",
+    "button",
+    "field",
+    "label"
   ],
   "root_folder": "textarea",
   "source": "/registry-examples/src/textarea",

@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "import { Checkbox } from '@gentleduck/registry-ui/checkbox'\nimport { Gem, Minus } from 'lucide-react'\n\nexport default function Demo() {\n  return <Checkbox checkedIndicator={<Gem className=\"h-3 w-3\" />} indicator={<Minus className=\"h-3 w-3\" />} />\n}\n",
@@ -9,7 +15,9 @@
   ],
   "name": "checkbox-7",
   "registryDependencies": [
-    "checkbox"
+    "checkbox",
+    "button",
+    "field"
   ],
   "root_folder": "checkbox",
   "source": "/registry-examples/src/checkbox",

@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { HoverCard, HoverCardContent, HoverCardTrigger } from '@gentleduck/registry-ui/hover-card'\nimport * as React from 'react'\n\nconst USERS = [\n  { handle: '@quick', note: 'Opens at once and closes as soon as you leave.', openDelay: 0, closeDelay: 0 },\n  { handle: '@patient', note: 'Waits a second to open and lingers a second after.', openDelay: 1000, closeDelay: 1000 },\n] as const\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState<string | null>(null)\n\n  return (\n    <div className=\"flex flex-col items-center gap-4\">\n      <div className=\"flex gap-6\">\n        {USERS.map((user) => (\n          <HoverCard\n            closeDelay={user.closeDelay}\n            key={user.handle}\n            onOpenChange={(next) =>\n              setOpen((current) => (next ? user.handle : current === user.handle ? null : current))\n            }\n            openDelay={user.openDelay}>\n            <HoverCardTrigger href=\"#\" variant=\"link\">\n              {user.handle}\n            </HoverCardTrigger>\n            <HoverCardContent className=\"w-64 text-sm\">{user.note}</HoverCardContent>\n          </HoverCard>\n        ))}\n      </div>\n      <p className=\"text-muted-foreground text-sm\">Open: {open ?? 'none'}</p>\n    </div>\n  )\n}\n",
+      "path": "hover-card/hover-card-7.tsx",
+      "target": "components/hover-card-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "hover-card-7",
+  "registryDependencies": [
+    "hover-card",
+    "avatar",
+    "direction",
+    "label",
+    "skeleton",
+    "switch"
+  ],
+  "root_folder": "hover-card",
+  "source": "/registry-examples/src/hover-card",
+  "type": "registry:example"
+}

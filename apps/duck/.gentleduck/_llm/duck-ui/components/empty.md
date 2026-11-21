@@ -85,9 +85,9 @@ import {
     <EmptyMedia variant="icon">
       <Icon />
     </EmptyMedia>
+    <EmptyTitle>No data</EmptyTitle>
+    <EmptyDescription>No data found</EmptyDescription>
   </EmptyHeader>
-  <EmptyTitle>No data</EmptyTitle>
-  <EmptyDescription>No data found</EmptyDescription>
   <EmptyContent>
     <Button>Add data</Button>
   </EmptyContent>
@@ -98,7 +98,7 @@ import {
 
 ### Outline
 
-Use the `border` utility class to create a outline empty state.
+Use the `border` utility class to create an outline empty state.
 
 ```tsx title="components/empty-2.tsx"
 // import from your project: import Demo from '@/components/empty-2'
@@ -304,6 +304,43 @@ export default function Demo() {
 }
 ```
 
+### Link
+
+A link inside `EmptyDescription` is underlined, and takes the primary colour on hover.
+
+```tsx title="components/empty-9.tsx"
+// import from your project: import Demo from '@/components/empty-9'
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@gentleduck/registry-ui/empty'
+import { FolderOpen } from 'lucide-react'
+
+export default function Demo() {
+  return (
+    <Empty className="border border-dashed">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <FolderOpen aria-hidden="true" />
+        </EmptyMedia>
+        <EmptyTitle>No projects yet</EmptyTitle>
+        <EmptyDescription>
+          Create a project to get started, or <a href="#import">import one</a> from another workspace.
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button size="sm">Create project</Button>
+      </EmptyContent>
+    </Empty>
+  )
+}
+```
+
 ## Component Composition
 
 ## RTL Support
@@ -413,7 +450,7 @@ The main component of the empty state. Wraps the `EmptyHeader` and `EmptyContent
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `className` | `string` | `--` | Additional CSS classes |
 | `children` | `React.ReactNode` | `--` | Empty state content |
-| `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `...props` | `React.ComponentProps<'div'>` | - | Additional props to spread to the div |
 
 ### EmptyHeader
 
@@ -423,7 +460,7 @@ The `EmptyHeader` component wraps the empty media, title, and description.
 | --- | --- | --- | --- |
 | `className` | `string` | `--` | Additional CSS classes |
 | `children` | `React.ReactNode` | `--` | Header content (media, title, description) |
-| `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `...props` | `React.ComponentProps<'div'>` | - | Additional props to spread to the div |
 
 ### EmptyMedia
 
@@ -434,7 +471,7 @@ Use the `EmptyMedia` component to display the media of the empty state such as a
 | `variant` | `'default' \| 'icon'` | `'default'` | Visual variant of the media container |
 | `className` | `string` | `--` | Additional CSS classes |
 | `children` | `React.ReactNode` | `--` | Media content (icon, avatar, image) |
-| `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `...props` | `React.ComponentProps<'div'>` | - | Additional props to spread to the div |
 
 ### EmptyTitle
 
@@ -444,7 +481,7 @@ Use the `EmptyTitle` component to display the title of the empty state.
 | --- | --- | --- | --- |
 | `className` | `string` | `--` | Additional CSS classes |
 | `children` | `React.ReactNode` | `--` | Title text |
-| `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `...props` | `React.ComponentProps<'div'>` | - | Additional props to spread to the div |
 
 ### EmptyDescription
 
@@ -464,7 +501,7 @@ Use the `EmptyContent` component to display the content of the empty state such 
 | --- | --- | --- | --- |
 | `className` | `string` | `--` | Additional CSS classes |
 | `children` | `React.ReactNode` | `--` | Action content (buttons, links, inputs) |
-| `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `...props` | `React.ComponentProps<'div'>` | - | Additional props to spread to the div |
 
 ### MotionEmpty
 

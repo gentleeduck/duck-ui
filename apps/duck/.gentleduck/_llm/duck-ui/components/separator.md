@@ -6,7 +6,7 @@ export default function Demo() {
   return (
     <div>
       <div className="space-y-1">
-        <h4 className="font-medium text-sm leading-none">Radix Primitives</h4>
+        <h4 className="font-medium text-sm leading-none">Duck UI</h4>
         <p className="text-muted-foreground text-sm">An open-source UI component library.</p>
       </div>
       <Separator className="my-4" />
@@ -55,6 +55,90 @@ import { Separator } from "@/components/ui/separator"
 <Separator />
 ```
 
+## Examples
+
+### Labelled divider
+
+Two separators that share a row with `flex-1` leave the label between them.
+
+```tsx title="components/separator-4.tsx"
+// import from your project: import Demo from '@/components/separator-4'
+import { Button } from '@gentleduck/registry-ui/button'
+import { Separator } from '@gentleduck/registry-ui/separator'
+
+export default function Demo() {
+  return (
+    <div className="grid w-72 gap-4">
+      <Button>Sign in with a passkey</Button>
+      <div className="flex items-center gap-3">
+        <Separator className="flex-1" />
+        <span className="text-muted-foreground text-xs uppercase">or</span>
+        <Separator className="flex-1" />
+      </div>
+      <Button variant="outline">Email me a link</Button>
+    </div>
+  )
+}
+```
+
+### Between rows
+
+```tsx title="components/separator-5.tsx"
+// import from your project: import Demo from '@/components/separator-5'
+import { Separator } from '@gentleduck/registry-ui/separator'
+import * as React from 'react'
+
+const RELEASES = [
+  { name: 'v2.4.0', note: 'Calendar date fields' },
+  { name: 'v2.3.1', note: 'Select highlight fix' },
+  { name: 'v2.3.0', note: 'Resizable collapsing' },
+]
+
+export default function Demo() {
+  return (
+    <div className="w-72 rounded-md border">
+      {RELEASES.map((release, index) => (
+        <React.Fragment key={release.name}>
+          {index > 0 ? <Separator /> : null}
+          <div className="flex items-center justify-between px-4 py-3 text-sm">
+            <span className="font-medium">{release.name}</span>
+            <span className="text-muted-foreground">{release.note}</span>
+          </div>
+        </React.Fragment>
+      ))}
+    </div>
+  )
+}
+```
+
+### Colour and thickness
+
+The line is the separator's background, so a `bg-*` class colours it and a height class thickens a horizontal one. A dashed line is a top border with the background cleared.
+
+```tsx title="components/separator-6.tsx"
+// import from your project: import Demo from '@/components/separator-6'
+import { Separator } from '@gentleduck/registry-ui/separator'
+
+export default function Demo() {
+  return (
+    <div className="grid w-72 gap-6 text-muted-foreground text-sm">
+      <div className="grid gap-2">
+        Primary
+        <Separator className="bg-primary" />
+      </div>
+      <div className="grid gap-2">
+        Thicker
+        <Separator className="h-1 rounded-full" />
+      </div>
+      <div className="grid gap-2">
+        Dashed
+        <Separator className="border-t border-dashed bg-transparent" />
+      </div>
+    </div>
+  )
+}
+```
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the separator follows it. No `dir` prop or `rtl:` classes needed.
@@ -101,7 +185,7 @@ export default function Demo() {
   return (
     <div>
       <div className="space-y-1">
-        <h4 className="font-medium text-sm leading-none">Radix Primitives</h4>
+        <h4 className="font-medium text-sm leading-none">Duck UI</h4>
         <p className="text-muted-foreground text-sm">An open-source UI component library.</p>
       </div>
       <MotionSeparator className="my-4" />
@@ -124,12 +208,14 @@ export default function Demo() {
 
 ### Separator
 
+Writes the orientation as both `aria-orientation` and `data-orientation`, so a class such as `data-[orientation=vertical]:h-auto` can key on it.
+
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Controls the orientation of the separator line |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `className` | `string` | - | Additional CSS class names |
-| `...props` | `React.HTMLProps<HTMLHRElement>` | - | Additional props to spread to the hr element |
+| `...props` | `React.HTMLAttributes<HTMLHRElement>` | - | Additional props to spread to the hr element |
 
 ### MotionSeparator
 

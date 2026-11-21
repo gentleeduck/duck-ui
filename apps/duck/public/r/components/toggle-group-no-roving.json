@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as ToggleGroup from '@gentleduck/primitives/toggle-group'\nimport styles from '../primitives.module.css'\n\nexport default function ToggleGroupNoRovingExample() {\n  return (\n    <div className={styles.stack}>\n      <ToggleGroup.Root aria-label=\"Filters\" className={styles.group} rovingFocus={false} type=\"multiple\">\n        {['open', 'closed', 'draft'].map((value) => (\n          <ToggleGroup.Item className={styles.toggle} key={value} value={value}>\n            {value}\n          </ToggleGroup.Item>\n        ))}\n      </ToggleGroup.Root>\n      <p className={styles.note}>rovingFocus off makes every item its own Tab stop.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/toggle-group-no-roving/toggle-group-no-roving.tsx",
+      "target": "components/toggle-group-no-roving.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "toggle-group-no-roving",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

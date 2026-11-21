@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "sonner"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { MotionButton } from '@gentleduck/registry-ui/button'\nimport { ArrowRight, Mail, PanelLeftClose, RefreshCw, Send } from 'lucide-react'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [loading1, setLoading1] = React.useState(false)\n  const [loading2, setLoading2] = React.useState(false)\n  const [collapsed, setCollapsed] = React.useState(false)\n\n  const handleLoad = (setter: React.Dispatch<React.SetStateAction<boolean>>) => {\n    setter(true)\n    setTimeout(() => setter(false), 2000)\n  }\n\n  return (\n    <div className=\"flex flex-wrap items-center gap-4\">\n      <MotionButton>Default</MotionButton>\n      <MotionButton variant=\"outline\" icon={<Mail />}>\n        Email\n      </MotionButton>\n      <MotionButton variant=\"ghost\" secondIcon={<ArrowRight />}>\n        Next\n      </MotionButton>\n      <MotionButton variant=\"default\" icon={<Send />} loading={loading1} onClick={() => handleLoad(setLoading1)}>\n        Submit\n      </MotionButton>\n      <MotionButton\n        variant=\"secondary\"\n        icon={<RefreshCw />}\n        secondIcon={<ArrowRight />}\n        loading={loading2}\n        onClick={() => handleLoad(setLoading2)}>\n        Sync\n      </MotionButton>\n      <MotionButton\n        variant=\"outline\"\n        icon={<PanelLeftClose />}\n        isCollapsed={collapsed}\n        onClick={() => setCollapsed((c) => !c)}>\n        Sidebar\n      </MotionButton>\n    </div>\n  )\n}\n",
@@ -9,7 +12,11 @@
   ],
   "name": "button-10",
   "registryDependencies": [
-    "button"
+    "button",
+    "command",
+    "direction",
+    "toggle",
+    "tooltip"
   ],
   "root_folder": "button",
   "source": "/registry-examples/src/button",

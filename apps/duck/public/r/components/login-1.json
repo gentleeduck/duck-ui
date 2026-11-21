@@ -3,9 +3,6 @@
     "authentications",
     "login"
   ],
-  "dependencies": [
-    "react-hook-form"
-  ],
   "files": [
     {
       "content": "import { LoginForm } from './components/login-form'\n\nexport default function Page() {\n  return (\n    <div className=\"flex min-h-svh w-full items-center justify-center p-6 md:p-10\">\n      <div className=\"w-full max-w-sm\">\n        <LoginForm />\n      </div>\n    </div>\n  )\n}\n",
@@ -14,7 +11,7 @@
       "type": "registry:block"
     },
     {
-      "content": "import { cn } from '@gentleduck/libs/cn'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@gentleduck/registry-ui/card'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\n\nexport function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {\n  return (\n    <div className={cn('flex flex-col gap-6', className)} {...props}>\n      <Card>\n        <CardHeader>\n          <CardTitle className=\"text-2xl\">Login</CardTitle>\n          <CardDescription>Enter your email below to login to your account</CardDescription>\n        </CardHeader>\n        <CardContent>\n          <form>\n            <div className=\"flex flex-col gap-6\">\n              <div className=\"grid gap-2\">\n                <Label htmlFor=\"email\">Email</Label>\n                <Input id=\"email\" placeholder=\"m@example.com\" required type=\"email\" />\n              </div>\n              <div className=\"grid gap-2\">\n                <div className=\"flex items-center\">\n                  <Label htmlFor=\"password\">Password</Label>\n                  <a className=\"ml-auto inline-block text-sm underline-offset-4 hover:underline\" href=\"#placeholder\">\n                    Forgot your password?\n                  </a>\n                </div>\n                <Input id=\"password\" required type=\"password\" />\n              </div>\n              <Button className=\"w-full\" type=\"submit\">\n                Login\n              </Button>\n              <Button className=\"w-full\" variant=\"outline\">\n                Login with Google\n              </Button>\n            </div>\n            <div className=\"mt-4 text-center text-sm\">\n              Don&apos;t have an account?{' '}\n              <a className=\"underline underline-offset-4\" href=\"#placeholder\">\n                Sign up\n              </a>\n            </div>\n          </form>\n        </CardContent>\n      </Card>\n    </div>\n  )\n}\n",
+      "content": "import { cn } from '@gentleduck/libs/cn'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@gentleduck/registry-ui/card'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\n\nexport function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {\n  return (\n    <div className={cn('flex flex-col gap-6', className)} {...props}>\n      <Card>\n        <CardHeader>\n          <CardTitle className=\"text-2xl\">Login</CardTitle>\n          <CardDescription>Enter your email below to login to your account</CardDescription>\n        </CardHeader>\n        <CardContent>\n          <form>\n            <div className=\"flex flex-col gap-6\">\n              <div className=\"grid gap-2\">\n                <Label htmlFor=\"email\">Email</Label>\n                <Input id=\"email\" placeholder=\"m@example.com\" required type=\"email\" />\n              </div>\n              <div className=\"grid gap-2\">\n                <div className=\"flex items-center\">\n                  <Label htmlFor=\"password\">Password</Label>\n                  <a className=\"ms-auto inline-block text-sm underline-offset-4 hover:underline\" href=\"#placeholder\">\n                    Forgot your password?\n                  </a>\n                </div>\n                <Input id=\"password\" required type=\"password\" />\n              </div>\n              <Button className=\"w-full\" type=\"submit\">\n                Login\n              </Button>\n              <Button className=\"w-full\" variant=\"outline\">\n                Login with Google\n              </Button>\n            </div>\n            <div className=\"mt-4 text-center text-sm\">\n              Don&apos;t have an account?{' '}\n              <a className=\"underline underline-offset-4\" href=\"#placeholder\">\n                Sign up\n              </a>\n            </div>\n          </form>\n        </CardContent>\n      </Card>\n    </div>\n  )\n}\n",
       "path": "authentications/login-1/components/login-form.tsx",
       "target": "components/login-form.tsx",
       "type": "registry:block"
@@ -26,7 +23,8 @@
     "input",
     "avatar",
     "separator",
-    "label"
+    "label",
+    "card"
   ],
   "root_folder": "authentications/login-1",
   "source": "/registry-blocks/src/authentications/login-1",

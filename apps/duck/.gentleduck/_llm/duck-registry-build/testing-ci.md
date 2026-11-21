@@ -20,7 +20,7 @@ For the package itself:
 
 ```bash
 bun run check-types
-bun test
+bun run test
 bun run build
 ```
 

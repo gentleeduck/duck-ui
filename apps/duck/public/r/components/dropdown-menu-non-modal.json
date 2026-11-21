@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as DropdownMenu from '@gentleduck/primitives/dropdown-menu'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function DropdownMenuNonModalExample() {\n  const [text, setText] = React.useState('')\n\n  return (\n    <div className={styles.stack}>\n      <DropdownMenu.Root modal={false}>\n        <DropdownMenu.Trigger className={styles.button}>Formatting</DropdownMenu.Trigger>\n        <DropdownMenu.Portal>\n          <DropdownMenu.Content align=\"start\" className={styles.content} sideOffset={6}>\n            <DropdownMenu.Item className={styles.item}>Bold</DropdownMenu.Item>\n            <DropdownMenu.Item className={styles.item}>Italic</DropdownMenu.Item>\n          </DropdownMenu.Content>\n        </DropdownMenu.Portal>\n      </DropdownMenu.Root>\n      <input\n        className={styles.input}\n        onChange={(event) => setText(event.target.value)}\n        placeholder=\"Still clickable with the menu open\"\n        value={text}\n      />\n      <p className={styles.note}>\n        modal off leaves the page scrollable and the field clickable while the menu is open.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/dropdown-menu-non-modal/dropdown-menu-non-modal.tsx",
+      "target": "components/dropdown-menu-non-modal.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dropdown-menu-non-modal",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

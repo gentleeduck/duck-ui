@@ -162,15 +162,15 @@ function TeamSwitcher({
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                 <activeTeam.logo aria-hidden="true" className="size-4" />
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-start text-sm leading-tight">
                 <span className="truncate font-medium">{activeTeam.name}</span>
                 <span className="truncate text-xs">{activeTeam.plan}</span>
               </div>
-              <ChevronsUpDown aria-hidden="true" className="ml-auto" />
+              <ChevronsUpDown aria-hidden="true" className="ms-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--gentleduck-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             align="start"
             side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}>
@@ -233,7 +233,7 @@ function NavMain({
                       <span>{item.title}</span>
                       <ChevronRight
                         aria-hidden="true"
-                        className="ml-auto transition-transform duration-200 group-data-[open=true]/collapsible:rotate-90"
+                        className="ms-auto transition-transform duration-200 group-data-[open=true]/collapsible:rotate-90"
                       />{' '}
                     </>
                   )}
@@ -349,26 +349,26 @@ function NavUser({
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback className="rounded-lg">AM</AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-start text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
-              <ChevronsUpDown aria-hidden="true" className="ml-auto size-4" />
+              <ChevronsUpDown aria-hidden="true" className="ms-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--gentleduck-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={isMobile ? 'bottom' : 'right'}
             align="end"
             sideOffset={4}>
             <DropdownMenuGroup>
               <DropdownMenuLabel className="p-0 font-normal">
-                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback className="rounded-lg">AM</AvatarFallback>
                   </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
+                  <div className="grid flex-1 text-start text-sm leading-tight">
                     <span className="truncate font-medium">{user.name}</span>
                     <span className="truncate text-xs">{user.email}</span>
                   </div>
@@ -431,7 +431,7 @@ export default function Demo() {
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
+              <SidebarTrigger className="-ms-1" />
             </div>
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4">
@@ -587,13 +587,13 @@ export default function Demo() {
                         <span className="font-semibold">Documentation</span>
                         <span className="">v{selectedVersion}</span>
                       </div>
-                      <ChevronsUpDown aria-hidden="true" className="ml-auto" />
+                      <ChevronsUpDown aria-hidden="true" className="ms-auto" />
                     </SidebarMenuButton>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-(--radix-dropdown-menu-trigger-width)">
+                  <DropdownMenuContent align="start" className="w-(--gentleduck-dropdown-menu-trigger-width)">
                     {data.versions.map((version) => (
                       <DropdownMenuItem key={version} onSelect={() => setSelectedVersion(version)}>
-                        v{version} {version === selectedVersion && <Check aria-hidden="true" className="ml-auto" />}
+                        v{version} {version === selectedVersion && <Check aria-hidden="true" className="ms-auto" />}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
@@ -626,7 +626,7 @@ export default function Demo() {
         </Sidebar>
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
+            <SidebarTrigger className="-ms-1" />
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4">
             <div className="grid auto-rows-min gap-4 md:grid-cols-3">
@@ -730,7 +730,7 @@ export default function Demo() {
         </Sidebar>
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
+            <SidebarTrigger className="-ms-1" />
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4">
             <div className="grid auto-rows-min gap-4 md:grid-cols-3">
@@ -847,7 +847,7 @@ export default function Demo() {
         </Sidebar>
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
+            <SidebarTrigger className="-ms-1" />
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4">
             <div className="grid auto-rows-min gap-4 md:grid-cols-3">
@@ -955,8 +955,8 @@ export default function Demo() {
         </Sidebar>
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="ml-auto flex items-center gap-2">
+            <SidebarTrigger className="-ms-1" />
+            <div className="ms-auto flex items-center gap-2">
               <span className="text-muted-foreground text-sm">Sidebar is {open ? 'open' : 'closed'}</span>
               <Button variant="outline" size="sm" onClick={() => setOpen(!open)}>
                 Toggle
@@ -984,6 +984,501 @@ export function AppSidebar() {
   return (
     <SidebarProvider open={open} onOpenChange={setOpen}>
       <Sidebar />
+    </SidebarProvider>
+  )
+}
+```
+
+### Right side, search and badges
+
+`side="right"` puts the sidebar on the inline-end edge; render it after `SidebarInset` so its gap lands on that side. `SidebarInput` filters the menu, `SidebarGroupAction` adds a channel, and `SidebarMenuBadge` shows the unread count beside each item.
+
+```tsx title="components/sidebar-8.tsx"
+// import from your project: import Demo from '@/components/sidebar-8'
+'use client'
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupAction,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInput,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarSeparator,
+  SidebarTrigger,
+} from '@gentleduck/registry-ui/sidebar'
+import { Hash, Plus } from 'lucide-react'
+import * as React from 'react'
+
+const CHANNELS = [
+  { name: 'general', unread: 4 },
+  { name: 'design', unread: 0 },
+  { name: 'releases', unread: 12 },
+  { name: 'support', unread: 1 },
+]
+
+export default function Demo() {
+  const [channels, setChannels] = React.useState(CHANNELS)
+  const [active, setActive] = React.useState('general')
+  const [query, setQuery] = React.useState('')
+  const shown = channels.filter((channel) => channel.name.includes(query.trim().toLowerCase()))
+
+  return (
+    <div className="relative flex h-full w-full overflow-hidden [transform:translateZ(0)]">
+      <SidebarProvider>
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
+            <span className="font-medium">#{active}</span>
+            <SidebarTrigger />
+          </header>
+          <p className="p-4 text-muted-foreground text-sm">The sidebar sits on the inline-end edge.</p>
+        </SidebarInset>
+        <Sidebar side="right">
+          <SidebarHeader>
+            <SidebarInput
+              aria-label="Find a channel"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Find a channel"
+              value={query}
+            />
+          </SidebarHeader>
+          <SidebarSeparator />
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>Channels</SidebarGroupLabel>
+              <SidebarGroupAction
+                onClick={() => setChannels((list) => [...list, { name: `channel-${list.length + 1}`, unread: 0 }])}
+                title="Add a channel">
+                <Plus aria-hidden="true" />
+                <span className="sr-only">Add a channel</span>
+              </SidebarGroupAction>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {shown.map((channel) => (
+                    <SidebarMenuItem key={channel.name}>
+                      <SidebarMenuButton
+                        isActive={channel.name === active}
+                        onClick={() => {
+                          setActive(channel.name)
+                          setChannels((list) =>
+                            list.map((item) => (item.name === channel.name ? { ...item, unread: 0 } : item)),
+                          )
+                        }}>
+                        <Hash aria-hidden="true" />
+                        <span>{channel.name}</span>
+                      </SidebarMenuButton>
+                      {channel.unread > 0 && <SidebarMenuBadge>{channel.unread}</SidebarMenuBadge>}
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+                {shown.length === 0 && <p className="px-2 py-1.5 text-muted-foreground text-xs">No channel matches.</p>}
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
+      </SidebarProvider>
+    </div>
+  )
+}
+```
+
+### Loading
+
+`SidebarMenuSkeleton` holds each row's place while the menu loads. Pass `index` to vary the widths, which are fixed so the server and the client render the same markup, and `showIcon` for the icon's place.
+
+```tsx title="components/sidebar-9.tsx"
+// import from your project: import Demo from '@/components/sidebar-9'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSkeleton,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@gentleduck/registry-ui/sidebar'
+import { BarChart3, Box, Home, ShoppingCart, Users } from 'lucide-react'
+import * as React from 'react'
+
+const PAGES = [
+  { icon: Home, title: 'Overview' },
+  { icon: ShoppingCart, title: 'Orders' },
+  { icon: Users, title: 'Customers' },
+  { icon: Box, title: 'Products' },
+  { icon: BarChart3, title: 'Reports' },
+]
+
+export default function Demo() {
+  const [loading, setLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    if (!loading) return
+    const timer = setTimeout(() => setLoading(false), 1500)
+    return () => clearTimeout(timer)
+  }, [loading])
+
+  return (
+    <div className="relative flex h-full w-full overflow-hidden [transform:translateZ(0)]">
+      <SidebarProvider>
+        <Sidebar>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>Store</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu aria-busy={loading}>
+                  {PAGES.map((page, index) => (
+                    <SidebarMenuItem key={page.title}>
+                      {loading ? (
+                        <SidebarMenuSkeleton index={index} showIcon />
+                      ) : (
+                        <SidebarMenuButton isActive={index === 0}>
+                          <page.icon aria-hidden="true" />
+                          <span>{page.title}</span>
+                        </SidebarMenuButton>
+                      )}
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger />
+            <Button disabled={loading} onClick={() => setLoading(true)} size="sm" variant="outline">
+              Reload
+            </Button>
+          </header>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
+  )
+}
+```
+
+### Collapsible groups
+
+A `Collapsible` around each group folds it away, with the group label as its trigger. `SidebarMenuSub` nests the pages under each item, and `size="sm"` makes the sub buttons smaller.
+
+```tsx title="components/sidebar-17.tsx"
+// import from your project: import Demo from '@/components/sidebar-17'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@gentleduck/registry-ui/collapsible'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@gentleduck/registry-ui/sidebar'
+import { BookOpen, ChevronDown, Rocket } from 'lucide-react'
+
+const SECTIONS = [
+  {
+    open: true,
+    pages: [
+      { icon: Rocket, pages: ['Installation', 'Project structure'], title: 'Getting started' },
+      { icon: BookOpen, pages: ['Theming', 'Dark mode', 'RTL'], title: 'Guides' },
+    ],
+    title: 'Documentation',
+  },
+  {
+    open: false,
+    pages: [{ icon: BookOpen, pages: ['Changelog', 'Roadmap'], title: 'Releases' }],
+    title: 'Project',
+  },
+]
+
+export default function Demo() {
+  return (
+    <div className="relative flex h-full w-full overflow-hidden [transform:translateZ(0)]">
+      <SidebarProvider>
+        <Sidebar>
+          <SidebarContent>
+            {SECTIONS.map((section) => (
+              <SidebarGroup key={section.title}>
+                <Collapsible className="group/collapsible gap-0" defaultOpen={section.open}>
+                  <SidebarGroupLabel
+                    asChild
+                    className="w-full justify-between hover:bg-sidebar-accent hover:text-sidebar-accent-foreground has-[>svg]:px-2">
+                    <CollapsibleTrigger variant="nothing">
+                      {section.title}
+                      <ChevronDown
+                        aria-hidden="true"
+                        className="transition-transform group-data-[open=true]/collapsible:rotate-180"
+                      />
+                    </CollapsibleTrigger>
+                  </SidebarGroupLabel>
+                  <CollapsibleContent>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {section.pages.map((page) => (
+                          <SidebarMenuItem key={page.title}>
+                            <SidebarMenuButton>
+                              <page.icon aria-hidden="true" />
+                              <span>{page.title}</span>
+                            </SidebarMenuButton>
+                            <SidebarMenuSub>
+                              {page.pages.map((name, index) => (
+                                <SidebarMenuSubItem key={name}>
+                                  <SidebarMenuSubButton
+                                    href={`#${name.toLowerCase().replace(' ', '-')}`}
+                                    isActive={section.open && index === 0}
+                                    size="sm">
+                                    {name}
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          </SidebarMenuItem>
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </SidebarGroup>
+            ))}
+          </SidebarContent>
+        </Sidebar>
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center border-b px-4">
+            <SidebarTrigger />
+          </header>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
+  )
+}
+```
+
+### Non-collapsing
+
+`collapsible="none"` renders a plain column with no fixed position and no toggle, for a sidebar inside a page such as a settings panel. Give the provider `min-h-0`, since it fills the viewport's height by default.
+
+```tsx title="components/sidebar-18.tsx"
+// import from your project: import Demo from '@/components/sidebar-18'
+'use client'
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from '@gentleduck/registry-ui/sidebar'
+import { Bell, Lock, Palette, User } from 'lucide-react'
+import * as React from 'react'
+
+const SECTIONS = [
+  { description: 'Your name, photo and email address.', icon: User, title: 'Profile' },
+  { description: 'Which events reach you, and where.', icon: Bell, title: 'Notifications' },
+  { description: 'Theme, density and the language of the interface.', icon: Palette, title: 'Appearance' },
+  { description: 'Your password and the devices signed in.', icon: Lock, title: 'Security' },
+]
+
+export default function Demo() {
+  const [current, setCurrent] = React.useState(SECTIONS[0])
+
+  return (
+    <SidebarProvider className="min-h-0 p-6">
+      <div className="flex w-full max-w-2xl overflow-hidden rounded-lg border">
+        <Sidebar className="w-44 border-e" collapsible="none">
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {SECTIONS.map((section) => (
+                    <SidebarMenuItem key={section.title}>
+                      <SidebarMenuButton isActive={section === current} onClick={() => setCurrent(section)}>
+                        <section.icon aria-hidden="true" />
+                        <span>{section.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
+        <section className="grid flex-1 content-start gap-1 p-6">
+          <h3 className="font-semibold">{current.title}</h3>
+          <p className="text-muted-foreground text-sm">{current.description}</p>
+        </section>
+      </div>
+    </SidebarProvider>
+  )
+}
+```
+
+### Naming the mobile sheet
+
+```tsx title="components/sidebar-19.tsx"
+// import from your project: import Demo from '@/components/sidebar-19'
+'use client'
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@gentleduck/registry-ui/sidebar'
+
+export default function Demo() {
+  return (
+    <SidebarProvider className="min-h-0">
+      <Sidebar mobileDescription="Every page of the help centre." mobileTitle="Help centre">
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarMenu>
+              {['Getting started', 'Billing', 'Accounts'].map((page) => (
+                <SidebarMenuItem key={page}>
+                  <SidebarMenuButton>{page}</SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+      <main className="flex items-center gap-2 p-4 text-sm">
+        <SidebarTrigger />
+        On a phone the sidebar opens as a sheet named by mobileTitle and mobileDescription.
+      </main>
+    </SidebarProvider>
+  )
+}
+```
+
+### Controlled from the hook
+
+```tsx title="components/sidebar-20.tsx"
+// import from your project: import Demo from '@/components/sidebar-20'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  useSidebar,
+} from '@gentleduck/registry-ui/sidebar'
+
+function Controls() {
+  const { open, setOpen, toggleSidebar, isMobile, openMobile, setOpenMobile } = useSidebar()
+  return (
+    <main className="flex flex-col gap-2 p-4 text-sm">
+      <div className="flex gap-2">
+        <Button onClick={toggleSidebar} size="sm" variant="outline">
+          Toggle
+        </Button>
+        <Button onClick={() => setOpen(true)} size="sm" variant="outline">
+          Open
+        </Button>
+        <Button onClick={() => setOpenMobile(!openMobile)} size="sm" variant="outline">
+          Mobile sheet
+        </Button>
+      </div>
+      <p className="text-muted-foreground">
+        {isMobile
+          ? `On a phone, the sheet is ${openMobile ? 'open' : 'closed'}.`
+          : `The sidebar is ${open ? 'open' : 'closed'}.`}
+      </p>
+    </main>
+  )
+}
+
+export default function Demo() {
+  return (
+    <SidebarProvider className="min-h-0">
+      <Sidebar collapsible="offcanvas">
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarMenu>
+              {['Inbox', 'Sent', 'Archive'].map((folder) => (
+                <SidebarMenuItem key={folder}>
+                  <SidebarMenuButton>{folder}</SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+      <Controls />
+    </SidebarProvider>
+  )
+}
+```
+
+### A visible scrollbar
+
+```tsx title="components/sidebar-21.tsx"
+// import from your project: import Demo from '@/components/sidebar-21'
+'use client'
+
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from '@gentleduck/registry-ui/sidebar'
+
+const CHANNELS = Array.from({ length: 30 }, (_, index) => `channel-${index + 1}`)
+
+export default function Demo() {
+  return (
+    <SidebarProvider className="h-72 min-h-0">
+      <Sidebar className="h-72 border-e" collapsible="none">
+        <SidebarContent noScroll={false}>
+          <SidebarGroup>
+            <SidebarMenu>
+              {CHANNELS.map((channel) => (
+                <SidebarMenuItem key={channel}>
+                  <SidebarMenuButton>#{channel}</SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+      <main className="p-4 text-muted-foreground text-sm">noScroll off shows the scrollbar on a long list.</main>
     </SidebarProvider>
   )
 }
@@ -1020,14 +1515,13 @@ const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_WIDTH_ICON = "3rem"
 ```
 
-For multiple sidebars in your application, you can use the `--sidebar-width` and `--sidebar-width-mobile` CSS variables in the `style` prop.
+For multiple sidebars in your application, you can use the `--sidebar-width` and `--sidebar-width-icon` CSS variables in the `style` prop. `MotionSidebar` animates to the same variables. On mobile the sidebar opens in a sheet portalled out of the provider, so it takes `SIDEBAR_WIDTH_MOBILE` whatever the provider sets.
 
 ```tsx showLineNumbers
 <SidebarProvider
   style={
     {
       "--sidebar-width": "20rem",
-      "--sidebar-width-mobile": "20rem",
     } as React.CSSProperties
   }
 >
@@ -1106,7 +1600,7 @@ Use the `SidebarHeader` component to add a sticky header to the sidebar.
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton>
               Select Workspace
-              <ChevronDown className="ml-auto" />
+              <ChevronDown className="ms-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-(--gentleduck-dropdown-menu-trigger-width)">
@@ -1183,20 +1677,22 @@ A `SidebarGroup` has a `SidebarGroupLabel`, a `SidebarGroupContent` and an optio
 To make a `SidebarGroup` collapsible, wrap it in a `Collapsible`.
 
 ```tsx showLineNumbers
-<Collapsible defaultOpen className="group/collapsible">
-  <SidebarGroup>
-    <SidebarGroupLabel asChild>
-      <CollapsibleTrigger>
+<SidebarGroup>
+  <Collapsible defaultOpen className="group/collapsible gap-0">
+    <SidebarGroupLabel asChild className="w-full justify-between hover:bg-sidebar-accent has-[>svg]:px-2">
+      <CollapsibleTrigger variant="nothing">
         Help
-        <ChevronDown className="ml-auto transition-transform group-data-[open=true]/collapsible:rotate-180" />
+        <ChevronDown className="transition-transform group-data-[open=true]/collapsible:rotate-180" />
       </CollapsibleTrigger>
     </SidebarGroupLabel>
     <CollapsibleContent>
       <SidebarGroupContent />
     </CollapsibleContent>
-  </SidebarGroup>
-</Collapsible>
+  </Collapsible>
+</SidebarGroup>
 ```
+
+`CollapsibleTrigger` is a `Button`, so `variant="nothing"` drops its ghost style and the label's classes win. See [Collapsible groups](#collapsible-groups).
 
 ## SidebarMenu
 
@@ -1239,7 +1735,7 @@ By default, the `SidebarMenuButton` renders a button but you can use the `asChil
 
 ### Tooltip
 
-Use the `tooltip` prop to show a tooltip when the sidebar is collapsed to icons.
+Use the `tooltip` prop to show a tooltip when the sidebar is collapsed to icons. `SidebarProvider` supplies the `TooltipProvider` it needs, with no delay, so the label shows as soon as an icon is hovered or focused.
 
 ```tsx showLineNumbers
 <SidebarMenuButton tooltip="Home">
@@ -1644,7 +2140,7 @@ function TeamSwitcher({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--gentleduck-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             align="start"
             side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}>
@@ -1831,7 +2327,7 @@ function NavUser({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--gentleduck-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={isMobile ? 'bottom' : 'right'}
             align="end"
             sideOffset={4}>
@@ -2105,15 +2601,15 @@ function TeamSwitcher({
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                 <activeTeam.logo aria-hidden="true" className="size-4" />
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-start text-sm leading-tight">
                 <span className="truncate font-medium">{activeTeam.name}</span>
                 <span className="truncate text-xs">{activeTeam.plan}</span>
               </div>
-              <ChevronsUpDown aria-hidden="true" className="ml-auto" />
+              <ChevronsUpDown aria-hidden="true" className="ms-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--gentleduck-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             align="start"
             side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}>
@@ -2176,7 +2672,7 @@ function NavMain({
                       <span>{item.title}</span>
                       <ChevronRight
                         aria-hidden="true"
-                        className="ml-auto transition-transform duration-200 group-data-[open=true]/collapsible:rotate-90"
+                        className="ms-auto transition-transform duration-200 group-data-[open=true]/collapsible:rotate-90"
                       />{' '}
                     </>
                   )}
@@ -2292,26 +2788,26 @@ function NavUser({
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback className="rounded-lg">AM</AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-start text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
-              <ChevronsUpDown aria-hidden="true" className="ml-auto size-4" />
+              <ChevronsUpDown aria-hidden="true" className="ms-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--gentleduck-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={isMobile ? 'bottom' : 'right'}
             align="end"
             sideOffset={4}>
             <DropdownMenuGroup>
               <DropdownMenuLabel className="p-0 font-normal">
-                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback className="rounded-lg">AM</AvatarFallback>
                   </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
+                  <div className="grid flex-1 text-start text-sm leading-tight">
                     <span className="truncate font-medium">{user.name}</span>
                     <span className="truncate text-xs">{user.email}</span>
                   </div>
@@ -2374,7 +2870,7 @@ export default function Demo() {
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
             <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
+              <SidebarTrigger className="-ms-1" />
             </div>
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4">
@@ -2397,4 +2893,4 @@ export default function Demo() {
 
 ### MotionSidebar
 
-Same props as `Sidebar`. Replaces CSS width transition with motion `m.div animate` using a `springBouncy` spring transition. Handles icon collapse, offcanvas slide, and floating/inset variants. On mobile, renders through the regular (non-motion) `Sheet`/`SheetContent`. Requires the `motion` package.
+Same props as `Sidebar`, less `onAnimationStart`, `onDrag`, `onDragStart` and `onDragEnd`, which motion uses for its own callbacks. Replaces CSS width transition with motion `m.div animate` using a `springBouncy` spring transition. Handles icon collapse, offcanvas slide, and floating/inset variants. On mobile, renders through the regular (non-motion) `Sheet`/`SheetContent`. Requires the `motion` package.

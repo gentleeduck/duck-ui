@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Sidebar,\n  SidebarContent,\n  SidebarGroup,\n  SidebarGroupContent,\n  SidebarMenu,\n  SidebarMenuButton,\n  SidebarMenuItem,\n  SidebarProvider,\n} from '@gentleduck/registry-ui/sidebar'\nimport { Bell, Lock, Palette, User } from 'lucide-react'\nimport * as React from 'react'\n\nconst SECTIONS = [\n  { description: 'Your name, photo and email address.', icon: User, title: 'Profile' },\n  { description: 'Which events reach you, and where.', icon: Bell, title: 'Notifications' },\n  { description: 'Theme, density and the language of the interface.', icon: Palette, title: 'Appearance' },\n  { description: 'Your password and the devices signed in.', icon: Lock, title: 'Security' },\n]\n\nexport default function Demo() {\n  const [current, setCurrent] = React.useState(SECTIONS[0])\n\n  return (\n    <SidebarProvider className=\"min-h-0 p-6\">\n      <div className=\"flex w-full max-w-2xl overflow-hidden rounded-lg border\">\n        <Sidebar className=\"w-44 border-e\" collapsible=\"none\">\n          <SidebarContent>\n            <SidebarGroup>\n              <SidebarGroupContent>\n                <SidebarMenu>\n                  {SECTIONS.map((section) => (\n                    <SidebarMenuItem key={section.title}>\n                      <SidebarMenuButton isActive={section === current} onClick={() => setCurrent(section)}>\n                        <section.icon aria-hidden=\"true\" />\n                        <span>{section.title}</span>\n                      </SidebarMenuButton>\n                    </SidebarMenuItem>\n                  ))}\n                </SidebarMenu>\n              </SidebarGroupContent>\n            </SidebarGroup>\n          </SidebarContent>\n        </Sidebar>\n        <section className=\"grid flex-1 content-start gap-1 p-6\">\n          <h3 className=\"font-semibold\">{current.title}</h3>\n          <p className=\"text-muted-foreground text-sm\">{current.description}</p>\n        </section>\n      </div>\n    </SidebarProvider>\n  )\n}\n",
+      "path": "sidebar/sidebar-18.tsx",
+      "target": "components/sidebar-18.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sidebar-18",
+  "registryDependencies": [
+    "sidebar",
+    "avatar",
+    "collapsible",
+    "dropdown-menu"
+  ],
+  "root_folder": "sidebar",
+  "source": "/registry-examples/src/sidebar",
+  "type": "registry:example"
+}

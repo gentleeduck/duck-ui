@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from '@gentleduck/registry-ui/menubar'\nimport { Switch } from '@gentleduck/registry-ui/switch'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [modal, setModal] = React.useState(false)\n  const [locked, setLocked] = React.useState(false)\n\n  return (\n    <div className=\"flex flex-col items-center gap-4\">\n      <div className=\"flex gap-6\">\n        <div className=\"flex items-center gap-2\">\n          <Switch checked={modal} id=\"menubar-modal\" onCheckedChange={setModal} />\n          <Label htmlFor=\"menubar-modal\">Modal</Label>\n        </div>\n        <div className=\"flex items-center gap-2\">\n          <Switch checked={locked} id=\"menubar-locked\" onCheckedChange={setLocked} />\n          <Label htmlFor=\"menubar-locked\">Lock the bar</Label>\n        </div>\n      </div>\n      <Menubar disabled={locked} modal={modal}>\n        <MenubarMenu value=\"file\">\n          <MenubarTrigger>File</MenubarTrigger>\n          <MenubarContent>\n            <MenubarItem>New Tab</MenubarItem>\n            <MenubarItem>New Window</MenubarItem>\n          </MenubarContent>\n        </MenubarMenu>\n        <MenubarMenu value=\"edit\">\n          <MenubarTrigger>Edit</MenubarTrigger>\n          <MenubarContent>\n            <MenubarItem>Undo</MenubarItem>\n            <MenubarItem>Redo</MenubarItem>\n          </MenubarContent>\n        </MenubarMenu>\n        <MenubarMenu value=\"help\">\n          <MenubarTrigger disabled>Help</MenubarTrigger>\n        </MenubarMenu>\n      </Menubar>\n      <p className=\"max-w-64 text-center text-muted-foreground text-sm\">\n        {modal\n          ? 'A click outside closes the menu and goes no further.'\n          : 'The page still takes clicks while a menu is open.'}\n      </p>\n    </div>\n  )\n}\n",
+      "path": "menubar/menubar-6.tsx",
+      "target": "components/menubar-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "menubar-6",
+  "registryDependencies": [
+    "menubar",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "menubar",
+  "source": "/registry-examples/src/menubar",
+  "type": "registry:example"
+}

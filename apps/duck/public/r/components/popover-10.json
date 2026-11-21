@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const next = React.useRef<HTMLButtonElement>(null)\n\n  return (\n    <div className=\"flex items-center gap-2\">\n      <Popover defaultOpen>\n        <PopoverTrigger asChild>\n          <Button variant=\"outline\">Tip</Button>\n        </PopoverTrigger>\n        <PopoverContent alignOffset={8} className=\"w-60 text-sm\" finalFocus={next} sideOffset={12}>\n          Open from the start, 12px from its trigger, with a wide arrow. On close, focus moves to Next.\n          <PopoverArrow height={10} width={20} />\n        </PopoverContent>\n      </Popover>\n      <Button ref={next} variant=\"outline\">\n        Next\n      </Button>\n    </div>\n  )\n}\n",
+      "path": "popover/popover-10.tsx",
+      "target": "components/popover-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "popover-10",
+  "registryDependencies": [
+    "popover",
+    "button",
+    "direction",
+    "input",
+    "label",
+    "textarea"
+  ],
+  "root_folder": "popover",
+  "source": "/registry-examples/src/popover",
+  "type": "registry:example"
+}

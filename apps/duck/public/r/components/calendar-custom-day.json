@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { NativeAdapter } from '@gentleduck/calendar'\nimport * as Calendar from '@gentleduck/primitives/calendar'\nimport styles from '../primitives.module.css'\n\nconst adapter = new NativeAdapter()\nconst busy = new Set([3, 9, 17, 24])\n\nexport default function CalendarCustomDayExample() {\n  return (\n    <Calendar.Root adapter={adapter} className={styles.calendar} locale={{ locale: 'en-US' }} mode=\"single\">\n      <Calendar.Nav>\n        <Calendar.PrevButton>{'<'}</Calendar.PrevButton>\n        <Calendar.Header\n          formatMonth={(month) => month.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })}\n        />\n        <Calendar.NextButton>{'>'}</Calendar.NextButton>\n      </Calendar.Nav>\n      <Calendar.Grid>\n        {(day) => (\n          <Calendar.Day day={day}>\n            <span style={{ display: 'grid', justifyItems: 'center', lineHeight: 1 }}>\n              {day.date.getDate()}\n              {busy.has(day.date.getDate()) && !day.isOutside ? <span aria-hidden>.</span> : null}\n            </span>\n          </Calendar.Day>\n        )}\n      </Calendar.Grid>\n    </Calendar.Root>\n  )\n}\n",
+      "path": "internal-primitives/calendar-custom-day/calendar-custom-day.tsx",
+      "target": "components/calendar-custom-day.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "calendar-custom-day",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Field, FieldLabel, MotionFieldError } from '@gentleduck/registry-ui/field'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [error, setError] = React.useState<string | null>(null)\n\n  return (\n    <form\n      className=\"flex w-[300px] flex-col gap-3\"\n      onSubmit={(event) => {\n        event.preventDefault()\n        const value = String(new FormData(event.currentTarget).get('username'))\n        setError(value.length < 3 ? 'Use at least three characters.' : null)\n      }}>\n      <Field data-invalid={error ? true : undefined}>\n        <FieldLabel htmlFor=\"field-18-username\">Username</FieldLabel>\n        <Input aria-invalid={error ? true : undefined} id=\"field-18-username\" name=\"username\" />\n        {error ? <MotionFieldError errors={[{ message: error }]} key={error} /> : null}\n      </Field>\n      <Button className=\"self-start\" type=\"submit\">\n        Check\n      </Button>\n    </form>\n  )\n}\n",
+      "path": "field/field-18.tsx",
+      "target": "components/field-18.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "field-18",
+  "registryDependencies": [
+    "field",
+    "button",
+    "checkbox",
+    "input",
+    "radio-group",
+    "select",
+    "slider",
+    "switch",
+    "textarea"
+  ],
+  "root_folder": "field",
+  "source": "/registry-examples/src/field",
+  "type": "registry:example"
+}

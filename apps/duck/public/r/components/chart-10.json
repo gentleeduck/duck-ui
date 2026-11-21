@@ -1,0 +1,21 @@
+{
+  "dependencies": [
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  type ChartConfig,\n  ChartContainer,\n  ChartLegend,\n  ChartLegendContent,\n  ChartTooltip,\n  ChartTooltipContent,\n} from '@gentleduck/registry-ui/chart'\nimport { Monitor, Smartphone } from 'lucide-react'\nimport { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'\n\nconst data = [\n  { browser: 'chrome', desktop: 186, mobile: 80 },\n  { browser: 'safari', desktop: 305, mobile: 200 },\n  { browser: 'firefox', desktop: 237, mobile: 120 },\n]\n\nconst config = {\n  chrome: { label: 'Chrome' },\n  desktop: { color: 'var(--chart-1)', icon: Monitor, label: 'Desktop' },\n  firefox: { label: 'Firefox' },\n  mobile: { color: 'var(--chart-2)', icon: Smartphone, label: 'Mobile' },\n  safari: { label: 'Safari' },\n} satisfies ChartConfig\n\nexport default function Demo() {\n  return (\n    <ChartContainer className=\"h-[220px] w-full max-w-md\" config={config}>\n      <BarChart accessibilityLayer data={data}>\n        <CartesianGrid vertical={false} />\n        <XAxis\n          axisLine={false}\n          dataKey=\"browser\"\n          tickFormatter={(value) => config[value as keyof typeof config].label}\n          tickLine={false}\n        />\n        <ChartTooltip\n          content={<ChartTooltipContent hideIndicator labelClassName=\"text-primary\" labelKey=\"browser\" />}\n        />\n        <ChartLegend content={<ChartLegendContent hideIcon />} />\n        <Bar dataKey=\"desktop\" fill=\"var(--color-desktop)\" radius={4} />\n        <Bar dataKey=\"mobile\" fill=\"var(--color-mobile)\" radius={4} />\n      </BarChart>\n    </ChartContainer>\n  )\n}\n",
+      "path": "chart/chart-10.tsx",
+      "target": "components/chart-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "chart-10",
+  "registryDependencies": [
+    "chart",
+    "card"
+  ],
+  "root_folder": "chart",
+  "source": "/registry-examples/src/chart",
+  "type": "registry:example"
+}

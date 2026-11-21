@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as RadioGroup from '@gentleduck/primitives/radio-group'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function RadioGroupControlledExample() {\n  const [value, setValue] = React.useState<string | null>(null)\n\n  return (\n    <div className={styles.stack}>\n      <RadioGroup.Root aria-label=\"Shipping\" className={styles.choices} onValueChange={setValue} value={value}>\n        {['standard', 'express'].map((option) => (\n          <div className={styles.choice} key={option}>\n            <RadioGroup.Item className={styles.radio} id={`ship-${option}`} value={option}>\n              <RadioGroup.Indicator className={styles.dot} />\n            </RadioGroup.Item>\n            <label htmlFor={`ship-${option}`}>{option}</label>\n          </div>\n        ))}\n      </RadioGroup.Root>\n      <button className={styles.button} onClick={() => setValue(null)} type=\"button\">\n        Clear the choice\n      </button>\n      <p className={styles.note}>Picked: {value ?? 'nothing'}. null selects nothing.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/radio-group-controlled/radio-group-controlled.tsx",
+      "target": "components/radio-group-controlled.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "radio-group-controlled",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

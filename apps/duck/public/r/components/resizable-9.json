@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@gentleduck/registry-ui/resizable'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [saved, setSaved] = React.useState('50, 50')\n\n  return (\n    <div className=\"flex flex-col items-center gap-3\">\n      <ResizablePanelGroup\n        className=\"max-w-md rounded-lg border md:min-w-[450px]\"\n        onLayoutChanged={(layout) =>\n          setSaved(\n            Object.values(layout)\n              .map((size) => Math.round(size))\n              .join(', '),\n          )\n        }\n        orientation=\"horizontal\">\n        <ResizablePanel defaultSize=\"50%\">\n          <div className=\"flex h-[120px] items-center justify-center\">Editor</div>\n        </ResizablePanel>\n        <ResizableHandle withHandle />\n        <ResizablePanel defaultSize=\"50%\">\n          <div className=\"flex h-[120px] items-center justify-center\">Preview</div>\n        </ResizablePanel>\n      </ResizablePanelGroup>\n      <p className=\"text-muted-foreground text-sm\">Saved once the drag settles: {saved}</p>\n    </div>\n  )\n}\n",
+      "path": "resizable/resizable-9.tsx",
+      "target": "components/resizable-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "resizable-9",
+  "registryDependencies": [
+    "resizable",
+    "button"
+  ],
+  "root_folder": "resizable",
+  "source": "/registry-examples/src/resizable",
+  "type": "registry:example"
+}

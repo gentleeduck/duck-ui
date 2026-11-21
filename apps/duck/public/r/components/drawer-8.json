@@ -1,7 +1,10 @@
 {
+  "dependencies": [
+    "recharts"
+  ],
   "files": [
     {
-      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Drawer,\n  DrawerContent,\n  DrawerDescription,\n  DrawerHeader,\n  DrawerTitle,\n  DrawerTrigger,\n} from '@gentleduck/registry-ui/drawer'\nimport { Menu } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Drawer shouldScaleBackground={false}>\n      <DrawerTrigger asChild>\n        <Button\n          variant=\"outline\"\n          className=\"data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:ring-2 data-[state=open]:ring-ring\">\n          <Menu className=\"mr-2 h-4 w-4\" />\n          Open drawer\n        </Button>\n      </DrawerTrigger>\n      <DrawerContent>\n        <DrawerHeader>\n          <DrawerTitle>Drawer</DrawerTitle>\n          <DrawerDescription>The trigger stays active while the drawer is open.</DrawerDescription>\n        </DrawerHeader>\n      </DrawerContent>\n    </Drawer>\n  )\n}\n",
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Drawer,\n  DrawerContent,\n  DrawerDescription,\n  DrawerHeader,\n  DrawerTitle,\n  DrawerTrigger,\n} from '@gentleduck/registry-ui/drawer'\nimport { Menu } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Drawer shouldScaleBackground={false}>\n      <DrawerTrigger asChild>\n        <Button\n          variant=\"outline\"\n          className=\"data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:ring-2 data-[state=open]:ring-ring\">\n          <Menu className=\"me-2 h-4 w-4\" />\n          Open drawer\n        </Button>\n      </DrawerTrigger>\n      <DrawerContent>\n        <DrawerHeader>\n          <DrawerTitle>Drawer</DrawerTitle>\n          <DrawerDescription>The trigger stays active while the drawer is open.</DrawerDescription>\n        </DrawerHeader>\n      </DrawerContent>\n    </Drawer>\n  )\n}\n",
       "path": "drawer/drawer-8.tsx",
       "target": "components/drawer-8.tsx",
       "type": "registry:example"
@@ -9,7 +12,13 @@
   ],
   "name": "drawer-8",
   "registryDependencies": [
-    "drawer"
+    "drawer",
+    "button",
+    "dialog",
+    "direction",
+    "input",
+    "label",
+    "separator"
   ],
   "root_folder": "drawer",
   "source": "/registry-examples/src/drawer",

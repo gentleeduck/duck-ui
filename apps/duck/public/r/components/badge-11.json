@@ -1,0 +1,22 @@
+{
+  "dependencies": [
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "content": "import { Badge } from '@gentleduck/registry-ui/badge'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-col items-center gap-4\">\n      <div className=\"flex flex-wrap items-center gap-2\">\n        <Badge border=\"primary\" variant=\"outline\">\n          Primary border\n        </Badge>\n        <Badge border=\"secondary\">Secondary border</Badge>\n        <Badge border=\"destructive\">Destructive border</Badge>\n        <Badge border=\"warning\">Warning border</Badge>\n      </div>\n      <div className=\"flex flex-wrap items-center gap-2\">\n        <Badge size=\"sm\">Small</Badge>\n        <Badge>Default</Badge>\n        <Badge size=\"lg\">Large</Badge>\n        <Badge className=\"underline\" variant=\"nothing\">\n          Unstyled\n        </Badge>\n      </div>\n    </div>\n  )\n}\n",
+      "path": "badge/badge-11.tsx",
+      "target": "components/badge-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "badge-11",
+  "registryDependencies": [
+    "badge",
+    "direction",
+    "tooltip"
+  ],
+  "root_folder": "badge",
+  "source": "/registry-examples/src/badge",
+  "type": "registry:example"
+}

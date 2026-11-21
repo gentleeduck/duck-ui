@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "import { Checkbox } from '@gentleduck/registry-ui/checkbox'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Switch } from '@gentleduck/registry-ui/switch'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-col gap-4\">\n      <div className=\"flex items-center gap-2\">\n        <Checkbox defaultChecked disabled id=\"label-disabled-digest\" />\n        <Label htmlFor=\"label-disabled-digest\">Weekly digest</Label>\n      </div>\n      <Label className=\"flex items-center gap-2\">\n        <Switch disabled />\n        Beta features\n      </Label>\n    </div>\n  )\n}\n",
+      "path": "label/label-5.tsx",
+      "target": "components/label-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "label-5",
+  "registryDependencies": [
+    "label",
+    "checkbox",
+    "input",
+    "switch"
+  ],
+  "root_folder": "label",
+  "source": "/registry-examples/src/label",
+  "type": "registry:example"
+}

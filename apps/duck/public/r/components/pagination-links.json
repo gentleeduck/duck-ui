@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Pagination from '@gentleduck/primitives/pagination'\nimport styles from '../primitives.module.css'\n\nexport default function PaginationLinksExample() {\n  return (\n    <div className={styles.stack}>\n      <Pagination.Root defaultPage={2} getPageHref={(page) => `?page=${page}`} pageCount={6}>\n        <Pagination.Content className={styles.pages}>\n          <Pagination.Item>\n            <Pagination.Previous />\n          </Pagination.Item>\n          <Pagination.Pages />\n          <Pagination.Item>\n            <Pagination.Next rel=\"next\" />\n          </Pagination.Item>\n          <Pagination.Item>\n            <Pagination.Last rel=\"noopener\" target=\"_blank\">\n              Last, in a new tab\n            </Pagination.Last>\n          </Pagination.Item>\n        </Pagination.Content>\n      </Pagination.Root>\n      <p className={styles.note}>\n        getPageHref makes every control a link, with a link's own target and rel. One with nowhere to go loses its\n        address.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/pagination-links/pagination-links.tsx",
+      "target": "components/pagination-links.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "pagination-links",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

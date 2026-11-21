@@ -1,7 +1,11 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks",
+    "@tabler/icons-react"
+  ],
   "files": [
     {
-      "content": "import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@gentleduck/registry-ui/input-group'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\nimport { InfoIcon } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <TooltipProvider>\n      <div className=\"grid w-full max-w-sm gap-4\">\n        <InputGroup>\n          <InputGroupInput id=\"project\" placeholder=\"my-project\" />\n          <InputGroupAddon>\n            <Label htmlFor=\"project\">/</Label>\n          </InputGroupAddon>\n        </InputGroup>\n        <InputGroup>\n          <InputGroupInput id=\"workspace\" placeholder=\"acme-workspace\" />\n          <InputGroupAddon align=\"block-start\">\n            <Label className=\"text-foreground\" htmlFor=\"workspace\">\n              Workspace\n            </Label>\n            <Tooltip>\n              <TooltipTrigger asChild>\n                <InputGroupButton aria-label=\"Help\" className=\"ml-auto rounded-full\" size=\"icon-xs\" variant=\"ghost\">\n                  <InfoIcon />\n                </InputGroupButton>\n              </TooltipTrigger>\n              <TooltipContent>\n                <p>Workspace names must be unique across your organization</p>\n              </TooltipContent>\n            </Tooltip>\n          </InputGroupAddon>\n        </InputGroup>\n      </div>\n    </TooltipProvider>\n  )\n}\n",
+      "content": "import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@gentleduck/registry-ui/input-group'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\nimport { InfoIcon } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <TooltipProvider>\n      <div className=\"grid w-full max-w-sm gap-4\">\n        <InputGroup>\n          <InputGroupInput id=\"project\" placeholder=\"my-project\" />\n          <InputGroupAddon>\n            <Label htmlFor=\"project\">/</Label>\n          </InputGroupAddon>\n        </InputGroup>\n        <InputGroup>\n          <InputGroupInput id=\"workspace\" placeholder=\"acme-workspace\" />\n          <InputGroupAddon align=\"block-start\">\n            <Label className=\"text-foreground\" htmlFor=\"workspace\">\n              Workspace\n            </Label>\n            <Tooltip>\n              <TooltipTrigger asChild>\n                <InputGroupButton aria-label=\"Help\" className=\"ms-auto rounded-full\" size=\"icon-xs\" variant=\"ghost\">\n                  <InfoIcon />\n                </InputGroupButton>\n              </TooltipTrigger>\n              <TooltipContent>\n                <p>Workspace names must be unique across your organization</p>\n              </TooltipContent>\n            </Tooltip>\n          </InputGroupAddon>\n        </InputGroup>\n      </div>\n    </TooltipProvider>\n  )\n}\n",
       "path": "input-group/input-group-8.tsx",
       "target": "components/input-group-8.tsx",
       "type": "registry:example"
@@ -9,7 +13,14 @@
   ],
   "name": "input-group-8",
   "registryDependencies": [
-    "input-group"
+    "input-group",
+    "button-group",
+    "dropdown-menu",
+    "kbd",
+    "label",
+    "popover",
+    "separator",
+    "tooltip"
   ],
   "root_folder": "input-group",
   "source": "/registry-examples/src/input-group",

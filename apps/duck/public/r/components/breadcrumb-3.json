@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks"
+  ],
   "files": [
     {
       "content": "import {\n  Breadcrumb,\n  BreadcrumbItem,\n  BreadcrumbLink,\n  BreadcrumbList,\n  BreadcrumbPage,\n  BreadcrumbSeparator,\n} from '@gentleduck/registry-ui/breadcrumb'\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\nimport { ChevronDownIcon, SlashIcon } from 'lucide-react'\nimport Link from 'next/link'\n\nexport default function Demo() {\n  return (\n    <Breadcrumb>\n      <BreadcrumbList>\n        <BreadcrumbItem>\n          <BreadcrumbLink asChild>\n            <Link href=\"/\">Home</Link>\n          </BreadcrumbLink>\n        </BreadcrumbItem>\n        <BreadcrumbSeparator>\n          <SlashIcon />\n        </BreadcrumbSeparator>\n        <BreadcrumbItem>\n          <DropdownMenu>\n            <DropdownMenuTrigger className=\"flex items-center gap-1 [&_svg:not([class*='size-'])]:size-3.5 [&_svg]:pointer-events-none [&_svg]:shrink-0\">\n              Components\n              <ChevronDownIcon aria-hidden=\"true\" />\n            </DropdownMenuTrigger>\n            <DropdownMenuContent side=\"top\" align=\"start\">\n              <DropdownMenuItem>Documentation</DropdownMenuItem>\n              <DropdownMenuItem>Themes</DropdownMenuItem>\n              <DropdownMenuItem>GitHub</DropdownMenuItem>\n            </DropdownMenuContent>\n          </DropdownMenu>\n        </BreadcrumbItem>\n        <BreadcrumbSeparator>\n          <SlashIcon />\n        </BreadcrumbSeparator>\n        <BreadcrumbItem>\n          <BreadcrumbPage>Breadcrumb</BreadcrumbPage>\n        </BreadcrumbItem>\n      </BreadcrumbList>\n    </Breadcrumb>\n  )\n}\n",
@@ -9,7 +12,10 @@
   ],
   "name": "breadcrumb-3",
   "registryDependencies": [
-    "breadcrumb"
+    "breadcrumb",
+    "button",
+    "drawer",
+    "dropdown-menu"
   ],
   "root_folder": "breadcrumb",
   "source": "/registry-examples/src/breadcrumb",

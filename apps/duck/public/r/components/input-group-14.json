@@ -1,0 +1,28 @@
+{
+  "dependencies": [
+    "@gentleduck/hooks",
+    "@tabler/icons-react"
+  ],
+  "files": [
+    {
+      "content": "import { InputGroup, InputGroupAddon, InputGroupInput } from '@gentleduck/registry-ui/input-group'\nimport { Kbd } from '@gentleduck/registry-ui/kbd'\nimport { Search } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-sm gap-6\">\n      <InputGroup>\n        <InputGroupInput aria-label=\"Search\" placeholder=\"Search...\" />\n        <InputGroupAddon>\n          <Search aria-hidden=\"true\" />\n        </InputGroupAddon>\n        <InputGroupAddon align=\"inline-end\">\n          <Kbd>/</Kbd>\n        </InputGroupAddon>\n      </InputGroup>\n    </div>\n  )\n}\n",
+      "path": "input-group/input-group-14.tsx",
+      "target": "components/input-group-14.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "input-group-14",
+  "registryDependencies": [
+    "input-group",
+    "button-group",
+    "dropdown-menu",
+    "kbd",
+    "label",
+    "popover",
+    "separator",
+    "tooltip"
+  ],
+  "root_folder": "input-group",
+  "source": "/registry-examples/src/input-group",
+  "type": "registry:example"
+}

@@ -9,7 +9,8 @@
   ],
   "name": "separator-2",
   "registryDependencies": [
-    "separator"
+    "separator",
+    "button"
   ],
   "root_folder": "separator",
   "source": "/registry-examples/src/separator",

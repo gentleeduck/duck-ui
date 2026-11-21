@@ -2,6 +2,7 @@
 // import from your project: import Demo from '@/components/scroll-area-1'
 import { ScrollArea } from '@gentleduck/registry-ui/scroll-area'
 import { Separator } from '@gentleduck/registry-ui/separator'
+import * as React from 'react'
 
 const tags = Array.from({ length: 50 }).map((_, i, a) => `v1.2.0-beta.${a.length - i}`)
 
@@ -11,12 +12,10 @@ export default function Demo() {
       <div className="p-4">
         <h4 className="mb-4 font-medium text-sm leading-none">Tags</h4>
         {tags.map((tag) => (
-          <>
-            <div className="text-sm" key={tag}>
-              {tag}
-            </div>
+          <React.Fragment key={tag}>
+            <div className="text-sm">{tag}</div>
             <Separator className="my-2" />
-          </>
+          </React.Fragment>
         ))}
       </div>
     </ScrollArea>
@@ -165,16 +164,111 @@ export default function Demo() {
 }
 ```
 
+### Both directions
+
+Content wider and taller than the frame scrolls both ways in the one viewport. Sticky cells stick to the viewport, so a table header stays in view.
+
+```tsx title="components/scroll-area-6.tsx"
+// import from your project: import Demo from '@/components/scroll-area-6'
+import { ScrollArea } from '@gentleduck/registry-ui/scroll-area'
+
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const regions = ['North', 'South', 'East', 'West', 'Central', 'Coastal', 'Highlands', 'Islands', 'Metro', 'Rural']
+
+export default function Demo() {
+  return (
+    <ScrollArea className="h-64 w-80 rounded-md border">
+      <table className="w-max border-collapse text-sm">
+        <thead>
+          <tr>
+            <th className="sticky top-0 bg-background px-3 py-2 text-start font-medium">Region</th>
+            {months.map((month) => (
+              <th className="sticky top-0 bg-background px-3 py-2 text-end font-medium" key={month}>
+                {month}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {regions.map((region, row) => (
+            <tr className="border-t" key={region}>
+              <td className="px-3 py-2">{region}</td>
+              {months.map((month, column) => (
+                <td className="px-3 py-2 text-end tabular-nums" key={month}>
+                  {((row + 3) * (column + 7) * 37) % 900}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </ScrollArea>
+  )
+}
+```
+
+### Scrolling from code
+
+`viewportRef` reaches the element that scrolls, so `scrollTo` and `scrollTop` work on it. Here two buttons move a build log to its start and its end. Pass `role="region"` and an `aria-label` when the area is a landmark of its own.
+
+```tsx title="components/scroll-area-5.tsx"
+// import from your project: import Demo from '@/components/scroll-area-5'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { ScrollArea } from '@gentleduck/registry-ui/scroll-area'
+import * as React from 'react'
+
+const lines = Array.from({ length: 40 }, (_, i) => `[12:${String(i).padStart(2, '0')}] build step ${i + 1} finished`)
+
+export default function Demo() {
+  const viewportRef = React.useRef<HTMLDivElement>(null)
+  const scrollTo = (top: number) => viewportRef.current?.scrollTo({ behavior: 'smooth', top })
+
+  return (
+    <div className="flex w-80 flex-col gap-2">
+      <ScrollArea aria-label="Build log" className="h-56 rounded-md border" role="region" viewportRef={viewportRef}>
+        <pre className="p-4 font-mono text-xs leading-6">{lines.join('\n')}</pre>
+      </ScrollArea>
+      <div className="flex gap-2">
+        <Button onClick={() => scrollTo(0)} size="sm" variant="outline">
+          Back to top
+        </Button>
+        <Button onClick={() => scrollTo(viewportRef.current?.scrollHeight ?? 0)} size="sm" variant="outline">
+          Jump to latest
+        </Button>
+      </div>
+    </div>
+  )
+}
+```
+
 ## Scrollbar
 
 The viewport shows the native scrollbar, styled by the `::-webkit-scrollbar` rules from the installation step. Chromium and Safari use those rules; Firefox ignores them and draws its own thin scrollbar.
 
-To keep scrolling but hide the bar, pass `scrollbar-none` to the viewport. Use it sparingly: without a bar, nothing tells people the content scrolls.
+To keep scrolling but hide the bar, pass `scrollbar-none` to the viewport. Use it sparingly: without a bar, nothing tells people the content scrolls. A row cut off at the edge, as here, is one way to show it.
 
-```tsx
-<ScrollArea className="h-48" viewportClassName="scrollbar-none">
-  ...
-</ScrollArea>
+```tsx title="components/scroll-area-7.tsx"
+// import from your project: import Demo from '@/components/scroll-area-7'
+import { Badge } from '@gentleduck/registry-ui/badge'
+import { ScrollArea } from '@gentleduck/registry-ui/scroll-area'
+
+const topics = ['Design', 'Engineering', 'Product', 'Research', 'Marketing', 'Sales', 'Support', 'Finance', 'Legal']
+
+export default function Demo() {
+  return (
+    <ScrollArea className="w-72" viewportClassName="scrollbar-none snap-x">
+      <div className="flex w-max gap-2 py-1">
+        {topics.map((topic) => (
+          <Badge className="snap-start" key={topic} variant="secondary">
+            {topic}
+          </Badge>
+        ))}
+      </div>
+    </ScrollArea>
+  )
+}
 ```
 
 ## RTL Support
@@ -257,7 +351,7 @@ export default function Demo() {
 | `className` | `string` | `--` | Additional CSS classes for the outer container |
 | `style` | `React.CSSProperties` | `--` | Inline styles for the outer container |
 | `children` | `React.ReactNode` | `--` | Scrollable content |
-| `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+| `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Additional props for the outer container, which `ref` also reaches |
 
 ### MotionScrollArea
 

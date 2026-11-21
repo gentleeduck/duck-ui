@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Field,\n  FieldContent,\n  FieldDescription,\n  FieldError,\n  FieldGroup,\n  FieldLabel,\n} from '@gentleduck/registry-ui/field'\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\nimport { zodResolver } from '@hookform/resolvers/zod'\nimport { Controller, useForm } from 'react-hook-form'\nimport { toast } from 'sonner'\nimport { z } from 'zod'\n\nconst FormSchema = z.object({\n  languages: z\n    .array(z.string())\n    .min(1, { error: 'Pick at least one language.' })\n    .max(3, { error: 'Pick three languages at most.' }),\n})\n\nexport default function Demo() {\n  const form = useForm<z.infer<typeof FormSchema>>({\n    defaultValues: { languages: [] },\n    resolver: zodResolver(FormSchema),\n  })\n\n  function onSubmit(data: z.infer<typeof FormSchema>) {\n    toast.info(\n      <div>\n        <h4 className=\"font-medium text-lg\">You submitted the following values:</h4>\n        <pre className=\"mt-2 w-[340px] rounded-md bg-slate-950 p-4\">\n          <code className=\"text-white\">{JSON.stringify(data, null, 2)}</code>\n        </pre>\n      </div>,\n    )\n  }\n\n  return (\n    <form className=\"w-2/3 space-y-6\" onSubmit={form.handleSubmit(onSubmit)}>\n      <FieldGroup>\n        <Controller\n          control={form.control}\n          name=\"languages\"\n          render={({ field, fieldState }) => (\n            <Field data-invalid={fieldState.invalid} orientation=\"responsive\">\n              <FieldContent>\n                <FieldLabel htmlFor=\"form-rhf-select-languages\">Languages</FieldLabel>\n                <FieldDescription>The languages you can review code in, up to three.</FieldDescription>\n                {fieldState.invalid && fieldState.error && <FieldError errors={[fieldState.error]} />}\n              </FieldContent>\n              <Select multiple name={field.name} onValueChange={field.onChange} value={field.value}>\n                <SelectTrigger\n                  aria-invalid={fieldState.invalid}\n                  className=\"min-w-[260px]\"\n                  id=\"form-rhf-select-languages\">\n                  <SelectValue placeholder=\"Pick languages\" />\n                </SelectTrigger>\n                <SelectContent>\n                  <SelectItem value=\"typescript\">TypeScript</SelectItem>\n                  <SelectItem value=\"go\">Go</SelectItem>\n                  <SelectItem value=\"rust\">Rust</SelectItem>\n                  <SelectItem value=\"python\">Python</SelectItem>\n                  <SelectItem value=\"kotlin\">Kotlin</SelectItem>\n                </SelectContent>\n              </Select>\n            </Field>\n          )}\n        />\n      </FieldGroup>\n      <Button type=\"submit\">Submit</Button>\n    </form>\n  )\n}\n",
+      "path": "select/select-15.tsx",
+      "target": "components/select-15.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-15",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

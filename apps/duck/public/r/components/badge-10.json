@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "lucide-react"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { MotionBadge } from '@gentleduck/registry-ui/badge'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-wrap items-center gap-3\">\n      <MotionBadge>Default</MotionBadge>\n      <MotionBadge variant=\"secondary\">Secondary</MotionBadge>\n      <MotionBadge variant=\"destructive\">Destructive</MotionBadge>\n      <MotionBadge variant=\"outline\">Outline</MotionBadge>\n    </div>\n  )\n}\n",
@@ -9,7 +12,9 @@
   ],
   "name": "badge-10",
   "registryDependencies": [
-    "badge"
+    "badge",
+    "direction",
+    "tooltip"
   ],
   "root_folder": "badge",
   "source": "/registry-examples/src/badge",

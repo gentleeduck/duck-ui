@@ -1,0 +1,23 @@
+{
+  "dependencies": [
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Toggle } from '@gentleduck/registry-ui/toggle'\nimport { Eye, EyeOff } from 'lucide-react'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [shown, setShown] = React.useState(false)\n\n  return (\n    <div className=\"grid w-full max-w-sm gap-1.5\">\n      <Label htmlFor=\"toggle-password\">Password</Label>\n      <div className=\"flex gap-2\">\n        <Input autoComplete=\"current-password\" id=\"toggle-password\" type={shown ? 'text' : 'password'} />\n        <Toggle aria-label=\"Show password\" onPressedChange={setShown} pressed={shown} variant=\"outline\">\n          {shown ? <EyeOff /> : <Eye />}\n        </Toggle>\n      </div>\n    </div>\n  )\n}\n",
+      "path": "toggle/toggle-11.tsx",
+      "target": "components/toggle-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "toggle-11",
+  "registryDependencies": [
+    "toggle",
+    "direction",
+    "input",
+    "label"
+  ],
+  "root_folder": "toggle",
+  "source": "/registry-examples/src/toggle",
+  "type": "registry:example"
+}

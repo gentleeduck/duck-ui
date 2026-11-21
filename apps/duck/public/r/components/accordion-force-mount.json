@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Accordion from '@gentleduck/primitives/accordion'\nimport styles from '../primitives.module.css'\n\nexport default function AccordionForceMountExample() {\n  return (\n    <Accordion.Root className={styles.disclosure} collapsible type=\"single\">\n      {['Summary', 'Details'].map((section) => (\n        <Accordion.Item className={styles.disclosureItem} key={section} value={section}>\n          <Accordion.Header className={styles.disclosureHeader}>\n            <Accordion.Trigger className={styles.disclosureTrigger}>{section}</Accordion.Trigger>\n          </Accordion.Header>\n          <Accordion.Content className={`${styles.disclosureContent} ${styles.collapse}`} forceMount>\n            <div>Kept in the page while closed, so its own styles collapse it.</div>\n          </Accordion.Content>\n        </Accordion.Item>\n      ))}\n    </Accordion.Root>\n  )\n}\n",
+      "path": "internal-primitives/accordion-force-mount/accordion-force-mount.tsx",
+      "target": "components/accordion-force-mount.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "accordion-force-mount",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

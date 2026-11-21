@@ -1,24 +1,22 @@
 {
   "dependencies": [
-    "@gentleduck/libs",
-    "@gentleduck/primitives",
-    "@gentleduck/vim"
+    "@gentleduck/libs"
   ],
   "files": [
     {
-      "content": "export { Kbd, KbdGroup } from './kbd'\nexport { MotionKbd } from './motion-kbd'\n",
+      "content": "export type { IKbdProps } from './kbd'\nexport { Kbd, KbdGroup } from './kbd'\nexport { MotionKbd } from './motion-kbd'\n",
       "path": "kbd/index.ts",
       "target": "components/ui/index.ts",
       "type": "registry:ui"
     },
     {
-      "content": "'use client'\n\nimport { cn } from '@gentleduck/libs/cn'\nimport { formatForDisplay } from '@gentleduck/vim/format'\nimport * as React from 'react'\n\ninterface IKbdProps extends React.ComponentPropsWithoutRef<'kbd'> {\n  keys?: string\n}\n\n/**\n * Key labels such as `Ctrl+S` or `⌘+K` keep their order on RTL pages, so direction follows the label\n * (`dir=\"auto\"`) instead of the page. Pass `dir` to override.\n */\nconst Kbd = React.forwardRef<HTMLElement, IKbdProps>(({ className, keys, children, ...props }, ref) => (\n  <kbd\n    className={cn(\n      'pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm bg-muted px-1 font-medium font-sans text-muted-foreground text-xs',\n      \"[&_svg:not([class*='size-'])]:size-3\",\n      className,\n    )}\n    data-slot=\"kbd\"\n    dir=\"auto\"\n    ref={ref}\n    {...props}>\n    {children ?? (keys ? formatForDisplay(keys) : null)}\n  </kbd>\n))\nKbd.displayName = 'Kbd'\n\nconst KbdGroup = React.forwardRef<HTMLDivElement, React.ComponentPropsWithoutRef<'div'>>(\n  ({ className, ...props }, ref) => {\n    return (\n      <kbd\n        className={cn('inline-flex items-center gap-1', className)}\n        data-slot=\"kbd-group\"\n        dir=\"auto\"\n        ref={ref as React.Ref<HTMLElement>}\n        {...props}\n      />\n    )\n  },\n)\nKbdGroup.displayName = 'KbdGroup'\n\nexport { Kbd, KbdGroup }\n",
+      "content": "'use client'\n\nimport { cn } from '@gentleduck/libs/cn'\nimport * as React from 'react'\nimport { useKeysLabel } from '../_internal/keys-label'\n\ninterface IKbdProps extends React.ComponentPropsWithoutRef<'kbd'> {\n  keys?: string\n}\n\n/**\n * Key labels such as `Ctrl+S` or `⌘+K` keep their order on RTL pages, so direction follows the label\n * (`dir=\"auto\"`) instead of the page. Pass `dir` to override.\n */\nconst Kbd = React.forwardRef<HTMLElement, IKbdProps>(({ className, keys, children, ...props }, ref) => {\n  const label = useKeysLabel(keys)\n  return (\n    <kbd\n      className={cn(\n        'pointer-events-none inline-flex h-5 w-fit min-w-5 select-none items-center justify-center gap-1 rounded-sm bg-muted px-1 font-medium font-sans text-muted-foreground text-xs',\n        \"[&_svg:not([class*='size-'])]:size-3\",\n        className,\n      )}\n      data-slot=\"kbd\"\n      dir=\"auto\"\n      ref={ref}\n      {...props}>\n      {children ?? label}\n    </kbd>\n  )\n})\nKbd.displayName = 'Kbd'\n\nconst KbdGroup = React.forwardRef<HTMLElement, React.ComponentPropsWithoutRef<'kbd'>>(\n  ({ className, ...props }, ref) => (\n    <kbd\n      className={cn('inline-flex items-center gap-1', className)}\n      data-slot=\"kbd-group\"\n      dir=\"auto\"\n      ref={ref}\n      {...props}\n    />\n  ),\n)\nKbdGroup.displayName = 'KbdGroup'\n\nexport type { IKbdProps }\nexport { Kbd, KbdGroup }\n",
       "path": "kbd/kbd.tsx",
       "target": "components/ui/kbd.tsx",
       "type": "registry:ui"
     },
     {
-      "content": "'use client'\n\nimport { scaleIn } from '@gentleduck/motion/presets/scale-in'\nimport { springBouncy } from '@gentleduck/motion/transitions/springs'\nimport type * as React from 'react'\nimport { withMotion } from '../_internal/motion-shell'\nimport { Kbd } from './kbd'\n\nconst MOTION_KBD_STAGGER = 0.03\n\nconst MotionKbd = withMotion<React.ComponentPropsWithoutRef<'kbd'> & { index?: number }, HTMLElement>(\n  Kbd,\n  scaleIn,\n  { transition: springBouncy },\n  {\n    wrapperClassName: 'inline-flex',\n    optionsFromProps: ({ index = 0 }) => ({ delay: index * MOTION_KBD_STAGGER }),\n  },\n)\n\nexport { MotionKbd }\n",
+      "content": "'use client'\n\nimport { scaleIn } from '@gentleduck/motion/presets/scale-in'\nimport { springBouncy } from '@gentleduck/motion/transitions/springs'\nimport type * as React from 'react'\nimport { withMotion } from '../_internal/motion-shell'\nimport { Kbd } from './kbd'\n\nconst MOTION_KBD_STAGGER = 0.03\n\nconst MotionKbd = withMotion<React.ComponentPropsWithoutRef<typeof Kbd> & { index?: number }, HTMLElement>(\n  Kbd,\n  scaleIn,\n  { transition: springBouncy },\n  {\n    wrapperClassName: 'inline-flex',\n    stagger: MOTION_KBD_STAGGER,\n  },\n)\n\nexport { MotionKbd }\n",
       "path": "kbd/motion-kbd.tsx",
       "target": "components/ui/motion-kbd.tsx",
       "type": "registry:ui"
@@ -26,7 +24,7 @@
   ],
   "name": "kbd",
   "registryDependencies": [
-    "direction",
+    "keys-label",
     "motion-shell"
   ],
   "root_folder": "kbd",

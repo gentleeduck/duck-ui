@@ -185,7 +185,7 @@ export default function Demo() {
         </AccordionTrigger>
         <AccordionContent>
           Accordions are versatile and can be used in a variety of scenarios, such as:
-          <ul className="mt-2 ml-5 list-disc">
+          <ul className="ms-5 mt-2 list-disc">
             <li>FAQ sections to organize questions and answers.</li>
             <li>Collapsible menus or sub-menus in navigation systems.</li>
             <li>Displaying content-heavy sections in a compact way, such as product details or documentation.</li>
@@ -229,6 +229,120 @@ export default function Demo() {
         </AccordionTrigger>
         <AccordionContent>Yes. It's animated by default, but you can disable it if you prefer.</AccordionContent>
       </AccordionItem>
+    </Accordion>
+  )
+}
+```
+
+### Controlled, with a disabled item
+
+`value` and `onValueChange` hold which item is open in your own state. A `disabled` item stays shut, and the arrow keys pass over it.
+
+```tsx title="components/accordion-8.tsx"
+// import from your project: import Demo from '@/components/accordion-8'
+'use client'
+
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@gentleduck/registry-ui/accordion'
+import * as React from 'react'
+
+export default function Demo() {
+  const [open, setOpen] = React.useState('shipping')
+  return (
+    <div className="flex w-87.5 flex-col gap-3">
+      <p className="text-muted-foreground text-sm">Open: {open || 'none'}</p>
+      <Accordion type="single" collapsible value={open} onValueChange={setOpen}>
+        <AccordionItem value="shipping">
+          <AccordionTrigger>Shipping</AccordionTrigger>
+          <AccordionContent>Three to five working days, tracked from the day it leaves us.</AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="returns">
+          <AccordionTrigger>Returns</AccordionTrigger>
+          <AccordionContent>Free within thirty days, in the box it came in.</AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="gift" disabled>
+          <AccordionTrigger>Gift wrapping (sold out)</AccordionTrigger>
+          <AccordionContent>Wrapped in recycled paper with a handwritten card.</AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
+  )
+}
+```
+
+### Horizontal, without looping
+
+```tsx title="components/accordion-9.tsx"
+// import from your project: import Demo from '@/components/accordion-9'
+'use client'
+
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@gentleduck/registry-ui/accordion'
+import * as React from 'react'
+
+const DAYS = ['Monday', 'Tuesday', 'Wednesday']
+
+export default function Demo() {
+  const [focused, setFocused] = React.useState<string | null>(null)
+  const [log, setLog] = React.useState<string[]>([])
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Accordion
+        className="flex w-[420px]"
+        collapsible
+        loop={false}
+        onFocusChange={setFocused}
+        orientation="horizontal"
+        type="single">
+        {DAYS.map((day) => (
+          <AccordionItem
+            className="flex-1 border-e last:border-e-0"
+            key={day}
+            onOpenChange={(open) =>
+              setLog((entries) => [`${day} ${open ? 'opened' : 'closed'}`, ...entries].slice(0, 3))
+            }
+            value={day}>
+            <AccordionTrigger className="px-3">{day}</AccordionTrigger>
+            <AccordionContent className="px-3">Shifts on {day}.</AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+      <p className="text-muted-foreground text-sm">
+        Focused: {focused ?? 'none'}. {log.join(', ') || 'ArrowLeft and ArrowRight move, and stop at either end.'}
+      </p>
+    </div>
+  )
+}
+```
+
+### Built on first open
+
+```tsx title="components/accordion-10.tsx"
+// import from your project: import Demo from '@/components/accordion-10'
+'use client'
+
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@gentleduck/registry-ui/accordion'
+import * as React from 'react'
+
+function Report({ name }: { name: string }) {
+  const [loadedAt] = React.useState(() => new Date().toLocaleTimeString())
+  return (
+    <p>
+      The {name} report, built at {loadedAt}. It is not built until first opened, and kept after.
+    </p>
+  )
+}
+
+export default function Demo() {
+  return (
+    <Accordion className="w-[350px]" collapsible renderOnce type="single">
+      {['Sales', 'Traffic'].map((name) => (
+        <AccordionItem key={name} value={name}>
+          <AccordionTrigger>{name}</AccordionTrigger>
+          <AccordionContent>
+            <Report name={name.toLowerCase()} />
+          </AccordionContent>
+        </AccordionItem>
+      ))}
     </Accordion>
   )
 }
@@ -322,8 +436,12 @@ export default function Demo() {
 | `defaultValue` | `string \| string[]` | - | Sets initial open state(s); string for single type, array for multiple |
 | `value` | `string \| string[]` | - | Controlled open state(s); requires `onValueChange` for updates |
 | `onValueChange` | `(value: string \| string[]) => void` | - | Callback fired when open state changes |
-| `collapsible` | `boolean` | `true` | Allows collapsing the currently open item by clicking again (single type only) |
+| `collapsible` | `boolean` | `false` | Allows collapsing the currently open item by clicking again (single type only) |
 | `renderOnce` | `boolean` | `false` | Mounts content only on first expand and preserves it afterward |
+| `disabled` | `boolean` | `false` | Disables every item |
+| `orientation` | `'vertical' \| 'horizontal'` | `'vertical'` | Which arrow keys move focus between triggers |
+| `loop` | `boolean` | `true` | Arrow keys wrap from the last trigger to the first and back |
+| `onFocusChange` | `(value: string \| null) => void` | - | Called with the focused item's value, and with `null` once focus leaves the triggers |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `className` | `string` | - | Additional CSS classes applied to the root div |
 | `children` | `React.ReactNode` | - | AccordionItem elements to render inside the accordion |
@@ -333,19 +451,23 @@ export default function Demo() {
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `string` | (required) | Unique identifier tying trigger to content |
-| `children` | `[trigger: ReactNode, content: ReactNode]` | (required) | Two nodes: first the `AccordionTrigger`, second the `AccordionContent` |
-| `className` | `string` | - | Additional CSS classes applied to the details element |
-| `...props` | `React.HTMLProps<HTMLDetailsElement>` | - | Additional props to spread to the details element |
+| `value` | `string` | a generated id | Identifies the item in the root's `value` |
+| `children` | `React.ReactNode` | - | The item's `AccordionTrigger` and `AccordionContent` |
+| `disabled` | `boolean` | `false` | Prevents the item from being opened or closed |
+| `onOpenChange` | `(open: boolean) => void` | - | Called when the item's trigger, or the browser's find-in-page, opens or closes it |
+| `className` | `string` | - | Additional CSS classes applied to the item div |
+| `...props` | `React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>` | - | Additional props inherited from `Accordion.Item` |
 
 ### AccordionTrigger
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `icon` | `React.ReactNode` | - | Custom icon component; defaults to a rotating ChevronDown |
-| `className` | `string` | - | Additional CSS classes applied to the summary element |
+| `className` | `string` | - | Additional CSS classes applied to the trigger button |
 | `children` | `React.ReactNode` | - | Content rendered as the trigger label |
-| `...props` | `React.HTMLProps<HTMLElement>` | - | Additional props to spread to the summary element |
+| `...props` | `React.HTMLProps<HTMLButtonElement>` | - | Additional props to spread to the trigger button |
+
+The trigger sits in an `h3`, so assistive technology lists each section, and its icon is hidden from it.
 
 ### AccordionContent
 
@@ -354,6 +476,8 @@ export default function Demo() {
 | `className` | `string` | - | Additional CSS classes applied to the content div |
 | `children` | `React.ReactNode` | - | Content to reveal when the accordion item is expanded |
 | `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |
+
+Closed content stays in the page as `hidden="until-found"`, so the browser's find-in-page opens the item holding the match. Its height animates with `tw-animate-css`'s `animate-accordion-down` and `animate-accordion-up`, which every browser runs.
 
 ### MotionAccordion
 
@@ -365,7 +489,7 @@ Wraps `Accordion` and auto-injects a stagger `index` into each `MotionAccordionI
 
 ### MotionAccordionItem
 
-Replaces `AccordionItem`. Keeps the `<details>` element open for motion height animation, and renders with a staggered `scaleIn` entrance (fade, scale, and blur; 50ms per index). Requires the `motion` package.
+Replaces `AccordionItem`. Renders with a staggered `scaleIn` entrance (fade, scale, and blur; 50ms per index). Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

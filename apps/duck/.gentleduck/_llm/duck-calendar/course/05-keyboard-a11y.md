@@ -9,13 +9,13 @@
 | :--- | :--- |
 | <Kbd>ArrowLeft</Kbd> / <Kbd>ArrowRight</Kbd> | Move focus +/- 1 day |
 | <Kbd>ArrowUp</Kbd> / <Kbd>ArrowDown</Kbd> | Move focus +/- 1 week |
-| <Kbd>PageUp</Kbd> / <Kbd>PageDown</Kbd> | Move focus +/- 1 month |
+| <Kbd>PageUp</Kbd> / <Kbd>PageDown</Kbd> | Move focus +/- 1 month, or every shown month with `pageBehavior: 'visible'` |
 | <Kbd>Shift+PageUp</Kbd> / <Kbd>Shift+PageDown</Kbd> | Move focus +/- 1 year |
 | <Kbd>Home</Kbd> / <Kbd>End</Kbd> | Move to start/end of week |
 | <Kbd>Enter</Kbd> / <Kbd>Space</Kbd> | Select focused date |
 | <Kbd>Escape</Kbd> | Dismiss (calls `onDismiss`) |
 
-Spread `getDayProps(day)` on each day element and you get all of this.
+Spread `getDayProps(day)` on each day element and you get all of this. The arrow keys skip a `disabled` day but stop on an `unavailable` one, and with `readOnly` focus still moves while nothing can be picked.
 
 ***
 
@@ -23,12 +23,12 @@ Spread `getDayProps(day)` on each day element and you get all of this.
 
 The calendar uses roving `tabIndex`:
 
-* The focused date has `tabIndex=0`.
+* One day has `tabIndex=0`: the focused date while a shown month holds it, otherwise the first selected day, today, or the first day that can be picked.
 * Other days have `tabIndex=-1`.
-* <Kbd>Tab</Kbd> enters the grid on the focused date, then leaves.
+* <Kbd>Tab</Kbd> enters the grid on that day, then leaves.
 * Arrow keys move focus inside the grid.
 
-Focus crossing a month boundary (e.g. <Kbd>ArrowRight</Kbd> on the last day) auto-advances the displayed month.
+Focus moving past the shown months (e.g. <Kbd>ArrowRight</Kbd> on the last day) moves the view by one month. Moving between shown months leaves the view where it is.
 
 ***
 
@@ -42,6 +42,7 @@ The prop getters apply all required ARIA attributes:
   role: 'grid',
   'aria-labelledby': '<header-id>',
   'aria-roledescription': 'calendar',
+  'aria-readonly': undefined, // true with readOnly
 }
 
 // getDayProps(day) produces:
@@ -49,7 +50,8 @@ The prop getters apply all required ARIA attributes:
   role: 'gridcell',
   'aria-label': 'Saturday, March 14, 2026',
   'aria-selected': true,
-  'aria-disabled': false,
+  'aria-disabled': false, // true when disabled or unavailable
+  'aria-invalid': undefined, // true on a selected day while the selection is invalid
   'aria-current': 'date', // only for today
   tabIndex: 0, // or -1
 }
@@ -70,7 +72,7 @@ The internal `useAnnouncer` hook adds a visually hidden `aria-live="polite"` reg
 
 * **Month changes**: "March 2026"
 * **Selection changes**: "March 14 selected" (or "Range: March 14 to March 18" in range mode)
-* **Disabled attempts**: "March 14 is unavailable"
+* **Refused picks**: "March 14 is unavailable", for a disabled or `unavailable` day or a range spanning one
 
 Compound components render the announcer inside `Calendar.Root` automatically.
 
@@ -99,7 +101,7 @@ Things to verify:
 * Each day announces its full date.
 * Selected days announce "selected".
 * Month changes are announced.
-* Disabled days announce as disabled.
+* Disabled and unavailable days announce as dimmed or unavailable.
 
 }>
   Next: [Lesson 6 - Time Picker](/duck-calendar/course/06-time-picker)

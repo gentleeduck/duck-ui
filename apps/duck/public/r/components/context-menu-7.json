@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  ContextMenu,\n  ContextMenuContent,\n  ContextMenuItem,\n  ContextMenuTrigger,\n} from '@gentleduck/registry-ui/context-menu'\n\nexport default function Demo() {\n  return (\n    <ContextMenu>\n      <ContextMenuTrigger className=\"flex h-[150px] w-[300px] items-center justify-center rounded-md border border-dashed text-sm\">\n        Right-click here\n      </ContextMenuTrigger>\n      <ContextMenuContent className=\"data-[state=closed]:hidden\" forceMount>\n        <ContextMenuItem>Kept in the page while closed</ContextMenuItem>\n        <ContextMenuItem>for an animation of your own</ContextMenuItem>\n      </ContextMenuContent>\n    </ContextMenu>\n  )\n}\n",
+      "path": "context-menu/context-menu-7.tsx",
+      "target": "components/context-menu-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "context-menu-7",
+  "registryDependencies": [
+    "context-menu",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "context-menu",
+  "source": "/registry-examples/src/context-menu",
+  "type": "registry:example"
+}

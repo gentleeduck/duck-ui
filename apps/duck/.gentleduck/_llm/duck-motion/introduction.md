@@ -322,6 +322,43 @@ All basic presets return `{ initial, animate, exit }` objects. Spread them direc
 
 There is no `fadeOut` preset; `fadeIn`'s `exit` state already fades to `opacity: 0`.
 
+### `useMotionPreset`
+
+Turns a preset into motion props that follow the reduced-motion setting. Each target carries its own transition, so `animate={open ? content.animate : content.exit}` enters and leaves on the right one.
+
+Under a spring, the blur takes the same spring critically damped, so it comes to rest at `blur(0px)` without passing it. A spring that bounces past zero writes a negative radius, which is invalid CSS, and the browser keeps the last frame's blur for that frame.
+
+```tsx
+import { useMotionPreset } from '@gentleduck/motion/motion-presets'
+import { scaleIn } from '@gentleduck/motion/presets/scale-in'
+import { springBouncy } from '@gentleduck/motion/transitions/springs'
+
+const content = useMotionPreset(scaleIn, { delay: 0.1, transition: springBouncy })
+
+<m.div initial={content.initial} animate={content.animate} transition={content.transition} />
+```
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `transition` | `Transition` | `springDefault` | The transition for both directions |
+| `enterTransition` | `Transition` | - | The entrance's own transition |
+| `exitTransition` | `Transition` | - | The exit's own transition |
+| `delay` | `number` | - | Seconds the whole entrance waits, scale included |
+| `direction` | `'top' \| 'bottom' \| 'left' \| 'right'` | - | Uses a directional preset in place of the one given |
+| `tap` | `boolean` | `false` | Set it when the same element takes `whileTap`. motion releases a press through the `animate` target's transition, delay included, so `tap` moves the entrance's scale onto `scaleX` and `scaleY`, which motion multiplies with `scale`, and gives `scale` the 15ms tap tween. The element still scales in, and a press releases at once. |
+
+A target's own transition wins over the `transition` prop, so to stagger several elements that share one result, put the delay in the target:
+
+```tsx
+items.map((item, i) => (
+  <m.li
+    key={item.id}
+    initial={content.initial}
+    animate={{ ...content.animate, transition: { ...content.transition, delay: i * 0.05 } }}
+  />
+))
+```
+
 ### `heightAuto`
 
 Height expand/collapse preset for accordion and collapsible content. Stays mounted and toggles between `open` and `closed` states.
@@ -366,7 +403,7 @@ import { createSlidePreset, createSlideEdge, createTooltipPreset } from '@gentle
 
 | Factory | Signature | Use case |
 | --- | --- | --- |
-| `createSlidePreset` | `(direction, enterOffset = 8, exitOffset = 30)` | Pure slide, no scale; what `slideUp`/`slideDown`/`slideFromLeft`/`slideFromRight` are built from |
+| `createSlidePreset` | `(direction, enterOffset = 8, exitOffset = 30)` | Pure slide, no scale; what `slideUp`/`slideDown`/`slideFromLeft`/`slideFromRight` are built from. `direction` is the way the element moves, so `slideFromLeft` passes `'right'` |
 | `createSlideEdge` | `(side)` | Edge-anchored panels (sheets, drawers) that slide in from 100% off-screen |
 | `createTooltipPreset` | `(side, offset = 4)` | Tooltips and hover cards that shift toward the trigger on enter |
 
@@ -395,7 +432,7 @@ import { AnimVariants } from '@gentleduck/motion'
 
 ### `checkersStylePattern`
 
-CVA variant for checkbox, radio, and switch patterns.
+CVA variant for checkbox, radio, and switch patterns. It carries Tailwind's `peer` class, so an element after the control, such as its label, can style itself with `peer-disabled:` or `peer-checked:`.
 
 ```tsx
 import { checkersStylePattern } from '@gentleduck/motion'

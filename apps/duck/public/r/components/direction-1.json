@@ -9,7 +9,17 @@
   ],
   "name": "direction-1",
   "registryDependencies": [
-    "direction"
+    "direction",
+    "avatar",
+    "badge",
+    "button",
+    "card",
+    "dropdown-menu",
+    "label",
+    "slider",
+    "switch",
+    "tabs",
+    "toggle-group"
   ],
   "root_folder": "direction",
   "source": "/registry-examples/src/direction",

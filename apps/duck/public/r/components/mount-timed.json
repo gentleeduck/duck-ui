@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Mount } from '@gentleduck/primitives/mount'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function MountTimedExample() {\n  const [open, setOpen] = React.useState(true)\n\n  return (\n    <div className={styles.stack}>\n      <button className={styles.button} onClick={() => setOpen((value) => !value)} type=\"button\">\n        {open ? 'Hide' : 'Show'}\n      </button>\n      <Mount animationDuration={300} open={open}>\n        <div className={`${styles.content} ${styles.panel} ${styles.fade}`} data-state={open ? 'open' : 'closed'}>\n          Unmounted 300ms after it closes, long enough for its fade.\n        </div>\n      </Mount>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/mount-timed/mount-timed.tsx",
+      "target": "components/mount-timed.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "mount-timed",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

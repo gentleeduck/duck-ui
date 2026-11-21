@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as DropdownMenu from '@gentleduck/primitives/dropdown-menu'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function DropdownMenuKeepOpenExample() {\n  const [zoom, setZoom] = React.useState(100)\n\n  return (\n    <DropdownMenu.Root>\n      <DropdownMenu.Trigger className={styles.button}>Zoom {zoom}%</DropdownMenu.Trigger>\n      <DropdownMenu.Portal>\n        <DropdownMenu.Content align=\"start\" className={styles.content} sideOffset={6}>\n          <DropdownMenu.Item\n            className={styles.item}\n            closeOnSelect={false}\n            onSelect={() => setZoom((value) => value + 10)}>\n            Zoom in <span className={styles.shortcut}>{zoom + 10}%</span>\n          </DropdownMenu.Item>\n          <DropdownMenu.Item\n            className={styles.item}\n            closeOnSelect={false}\n            onSelect={() => setZoom((value) => Math.max(10, value - 10))}>\n            Zoom out <span className={styles.shortcut}>{Math.max(10, zoom - 10)}%</span>\n          </DropdownMenu.Item>\n          <DropdownMenu.Separator className={styles.separator} />\n          <DropdownMenu.Item className={styles.item} onSelect={() => setZoom(100)}>\n            Reset and close\n          </DropdownMenu.Item>\n        </DropdownMenu.Content>\n      </DropdownMenu.Portal>\n    </DropdownMenu.Root>\n  )\n}\n",
+      "path": "internal-primitives/dropdown-menu-keep-open/dropdown-menu-keep-open.tsx",
+      "target": "components/dropdown-menu-keep-open.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dropdown-menu-keep-open",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,0 +1,26 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Dialog,\n  DialogContent,\n  DialogDescription,\n  DialogHeader,\n  DialogTitle,\n  DialogTrigger,\n} from '@gentleduck/registry-ui/dialog'\nimport { Kbd, KbdGroup } from '@gentleduck/registry-ui/kbd'\nimport * as React from 'react'\n\nconst SHORTCUTS = [\n  ['Search', ['Ctrl', 'K']],\n  ['New file', ['Ctrl', 'N']],\n  ['Save', ['Ctrl', 'S']],\n] as const\n\nexport default function Demo() {\n  const [presses, setPresses] = React.useState(0)\n\n  return (\n    <div className=\"flex flex-wrap items-center gap-2\">\n      <Dialog modal={false}>\n        <DialogTrigger asChild>\n          <Button variant=\"outline\">Show shortcuts</Button>\n        </DialogTrigger>\n        <DialogContent className=\"sm:max-w-xs\" onInteractOutside={(event) => event.preventDefault()}>\n          <DialogHeader>\n            <DialogTitle>Keyboard shortcuts</DialogTitle>\n            <DialogDescription>It stays open while you use the page behind it.</DialogDescription>\n          </DialogHeader>\n          <dl className=\"grid grid-cols-[1fr_auto] gap-2 text-sm\">\n            {SHORTCUTS.map(([action, keys]) => (\n              <React.Fragment key={action}>\n                <dt>{action}</dt>\n                <dd>\n                  <KbdGroup>\n                    {keys.map((key) => (\n                      <Kbd key={key}>{key}</Kbd>\n                    ))}\n                  </KbdGroup>\n                </dd>\n              </React.Fragment>\n            ))}\n          </dl>\n        </DialogContent>\n      </Dialog>\n      <Button onClick={() => setPresses((count) => count + 1)} variant=\"secondary\">\n        Pressed {presses} times\n      </Button>\n    </div>\n  )\n}\n",
+      "path": "dialog/dialog-11.tsx",
+      "target": "components/dialog-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "dialog-11",
+  "registryDependencies": [
+    "dialog",
+    "button",
+    "calendar",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "popover",
+    "select",
+    "textarea"
+  ],
+  "root_folder": "dialog",
+  "source": "/registry-examples/src/dialog",
+  "type": "registry:example"
+}

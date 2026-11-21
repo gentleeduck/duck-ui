@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { NativeAdapter } from '@gentleduck/calendar'\nimport * as Calendar from '@gentleduck/primitives/calendar'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nconst adapter = new NativeAdapter()\nconst today = new Date()\nconst due = new Date(today.getFullYear(), today.getMonth(), 15)\n\nexport default function CalendarReadOnlyExample() {\n  const [invalid, setInvalid] = React.useState(false)\n\n  return (\n    <div className={styles.stack}>\n      <Calendar.Root\n        adapter={adapter}\n        className={styles.calendar}\n        defaultSelected={due}\n        invalid={invalid}\n        locale={{ locale: 'en-US' }}\n        mode=\"single\"\n        readOnly>\n        <Calendar.Header />\n        <Calendar.Grid />\n      </Calendar.Root>\n      <button className={styles.button} onClick={() => setInvalid((value) => !value)} type=\"button\">\n        {invalid ? 'Mark valid' : 'Mark invalid'}\n      </button>\n      <p className={styles.note}>\n        readOnly lets focus move but picks nothing. invalid marks the selection for the eye and aria-invalid.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/calendar-read-only/calendar-read-only.tsx",
+      "target": "components/calendar-read-only.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "calendar-read-only",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

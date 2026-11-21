@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  CommandEmpty,\n  CommandInput,\n  CommandItem,\n  CommandList,\n  MotionCommandDialog,\n} from '@gentleduck/registry-ui/command'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n\n  return (\n    <>\n      <Button onClick={() => setOpen(true)} variant=\"outline\">\n        Open the animated palette\n      </Button>\n      <MotionCommandDialog onOpenChange={setOpen} open={open}>\n        <CommandInput placeholder=\"Search...\" />\n        <CommandList>\n          <CommandEmpty>No results.</CommandEmpty>\n          {['New file', 'New folder', 'Open recent'].map((action) => (\n            <CommandItem key={action} onSelect={() => setOpen(false)}>\n              {action}\n            </CommandItem>\n          ))}\n        </CommandList>\n      </MotionCommandDialog>\n    </>\n  )\n}\n",
+      "path": "command/command-12.tsx",
+      "target": "components/command-12.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "command-12",
+  "registryDependencies": [
+    "command",
+    "button"
+  ],
+  "root_folder": "command",
+  "source": "/registry-examples/src/command",
+  "type": "registry:example"
+}

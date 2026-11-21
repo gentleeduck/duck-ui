@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { useStateMachine } from '@gentleduck/primitives/hooks/use-state-machine'\nimport styles from '../primitives.module.css'\n\nexport default function HooksStateMachineExample() {\n  const [state, send] = useStateMachine('stopped', {\n    paused: { play: 'playing', stop: 'stopped' },\n    playing: { pause: 'paused', stop: 'stopped' },\n    stopped: { play: 'playing' },\n  })\n\n  return (\n    <div className={styles.stack}>\n      <div className={styles.row}>\n        <button className={styles.button} onClick={() => send('play')} type=\"button\">\n          Play\n        </button>\n        <button className={styles.button} onClick={() => send('pause')} type=\"button\">\n          Pause\n        </button>\n        <button className={styles.button} onClick={() => send('stop')} type=\"button\">\n          Stop\n        </button>\n      </div>\n      <p className={styles.note}>State: {state}. An event the state has no move for is dropped.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/hooks-state-machine/hooks-state-machine.tsx",
+      "target": "components/hooks-state-machine.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "hooks-state-machine",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

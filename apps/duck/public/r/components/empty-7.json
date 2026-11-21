@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "@tabler/icons-react"
+  ],
   "files": [
     {
       "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport {\n  Empty,\n  EmptyContent,\n  EmptyDescription,\n  EmptyHeader,\n  EmptyMedia,\n  EmptyTitle,\n} from '@gentleduck/registry-ui/empty'\nimport { IconInbox } from '@tabler/icons-react'\nimport { ArrowUpLeftIcon } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Empty>\n        <EmptyHeader>\n          <EmptyMedia variant=\"icon\">\n            <IconInbox />\n          </EmptyMedia>\n          <EmptyTitle>صندوق الوارد فارغ</EmptyTitle>\n          <EmptyDescription>لا توجد رسائل جديدة. ستظهر هنا المحادثات الجديدة فور تواصل أحد معك.</EmptyDescription>\n        </EmptyHeader>\n        <EmptyContent>\n          <div className=\"flex gap-2\">\n            <Button>رسالة جديدة</Button>\n            <Button variant=\"outline\">عرض الأرشيف</Button>\n          </div>\n        </EmptyContent>\n        <Button asChild className=\"text-muted-foreground\" size=\"sm\" variant=\"link\">\n          {/* biome-ignore lint/a11y/useValidAnchor: placeholder href in demo component */}\n          <a href=\"#\">\n            إدارة الإعدادات <ArrowUpLeftIcon />\n          </a>\n        </Button>\n      </Empty>\n    </DirectionProvider>\n  )\n}\n",
@@ -9,7 +12,11 @@
   ],
   "name": "empty-7",
   "registryDependencies": [
-    "empty"
+    "empty",
+    "avatar",
+    "button",
+    "input-group",
+    "kbd"
   ],
   "root_folder": "empty",
   "source": "/registry-examples/src/empty",

@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { IslamicAdapter } from '@gentleduck/calendar'\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport * as React from 'react'\n\nconst adapter = new IslamicAdapter()\n\nexport default function Demo() {\n  const [date, setDate] = React.useState<Date | null>(new Date())\n\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Calendar\n        adapter={adapter}\n        className=\"rounded-md border shadow-sm\"\n        locale=\"ar-SA\"\n        mode=\"single\"\n        onSelect={setDate}\n        selected={date}\n        showDropdowns\n        yearRange={{ from: 1400, to: 1500 }}\n      />\n    </DirectionProvider>\n  )\n}\n",
@@ -9,7 +15,13 @@
   ],
   "name": "calendar-19",
   "registryDependencies": [
-    "calendar"
+    "calendar",
+    "direction",
+    "field",
+    "input",
+    "label",
+    "popover",
+    "switch"
   ],
   "root_folder": "calendar",
   "source": "/registry-examples/src/calendar",

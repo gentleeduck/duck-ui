@@ -1,3 +1,11 @@
+## 0.8.1
+
+### Patch Changes
+
+* 47f9fd3: `FieldDescription` is `text-xs` and, together with `FieldError`, tucks up against the label or control above it in a vertical `Field`. `FieldError` skips entries without a `message`: one message renders as plain text, several as a list, and none renders nothing, where an array of empty entries used to render an empty list.
+* a6f949d: The `TooltipArrow`, `PopoverArrow`, `HoverCardArrow` and `DropdownMenuArrow` outline is 1px, like the content border it meets, and is drawn over the fill so the line sits on the curve instead of outside it. The fill comes from `--popover` directly, so the arrow no longer needs the `fill-popover` class.
+* a592829: `Sidebar` and `MotionSidebar` sit at `z-5` instead of `z-10`. `SidebarInset` has `min-w-0`, so wide content such as a table scrolls inside it instead of pushing the page wider, and a hidden `SidebarGroupLabel` in icon mode no longer takes clicks. `Badge` size `sm` uses `.75rem` text. Chart tooltip and legend icons keep a `size-*` class you give them instead of being forced to the default size.
+
 ## 0.8.0
 
 ### Minor Changes

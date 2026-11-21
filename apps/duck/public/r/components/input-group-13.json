@@ -1,4 +1,8 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks",
+    "@tabler/icons-react"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { InputGroupAddon, InputGroupInput, InputGroupText, MotionInputGroup } from '@gentleduck/registry-ui/input-group'\nimport { MotionLabel } from '@gentleduck/registry-ui/label'\nimport { AtSignIcon, GlobeIcon, LockIcon } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex w-full max-w-sm flex-col gap-4 p-4\">\n      <div className=\"flex flex-col gap-1.5\">\n        <MotionLabel htmlFor=\"motion-ig-email\">Email</MotionLabel>\n        <MotionInputGroup index={0}>\n          <InputGroupAddon>\n            <InputGroupText>\n              <AtSignIcon />\n            </InputGroupText>\n          </InputGroupAddon>\n          <InputGroupInput id=\"motion-ig-email\" placeholder=\"you@example.com\" />\n        </MotionInputGroup>\n      </div>\n      <div className=\"flex flex-col gap-1.5\">\n        <MotionLabel htmlFor=\"motion-ig-website\">Website</MotionLabel>\n        <MotionInputGroup index={1}>\n          <InputGroupAddon>\n            <InputGroupText>\n              <GlobeIcon />\n            </InputGroupText>\n          </InputGroupAddon>\n          <InputGroupInput id=\"motion-ig-website\" placeholder=\"https://example.com\" />\n        </MotionInputGroup>\n      </div>\n      <div className=\"flex flex-col gap-1.5\">\n        <MotionLabel htmlFor=\"motion-ig-password\">Password</MotionLabel>\n        <MotionInputGroup index={2}>\n          <InputGroupAddon>\n            <InputGroupText>\n              <LockIcon />\n            </InputGroupText>\n          </InputGroupAddon>\n          <InputGroupInput id=\"motion-ig-password\" type=\"password\" placeholder=\"Enter password\" />\n        </MotionInputGroup>\n      </div>\n    </div>\n  )\n}\n",
@@ -9,7 +13,14 @@
   ],
   "name": "input-group-13",
   "registryDependencies": [
-    "input-group"
+    "input-group",
+    "button-group",
+    "dropdown-menu",
+    "kbd",
+    "label",
+    "popover",
+    "separator",
+    "tooltip"
   ],
   "root_folder": "input-group",
   "source": "/registry-examples/src/input-group",

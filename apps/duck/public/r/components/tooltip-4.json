@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks"
+  ],
   "files": [
     {
       "content": "import { Toggle } from '@gentleduck/registry-ui/toggle'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\nimport { Bold } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <TooltipProvider>\n      <Tooltip>\n        <TooltipTrigger asChild disableCloseOnClick>\n          <Toggle aria-label=\"Toggle bold\">\n            <Bold className=\"h-4 w-4\" />\n          </Toggle>\n        </TooltipTrigger>\n\n        <TooltipContent>\n          <p>Toggle bold</p>\n        </TooltipContent>\n      </Tooltip>\n    </TooltipProvider>\n  )\n}\n",
@@ -9,7 +12,13 @@
   ],
   "name": "tooltip-4",
   "registryDependencies": [
-    "tooltip"
+    "tooltip",
+    "button",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "toggle"
   ],
   "root_folder": "tooltip",
   "source": "/registry-examples/src/tooltip",

@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "import { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-sm gap-6\">\n      <div className=\"grid gap-2\">\n        <Label htmlFor=\"email-invalid-r4k\">Email</Label>\n        <Input\n          aria-describedby=\"email-invalid-r4k-error\"\n          aria-invalid=\"true\"\n          defaultValue=\"duck@\"\n          id=\"email-invalid-r4k\"\n        />\n        <p className=\"text-destructive text-sm\" id=\"email-invalid-r4k-error\">\n          Enter the whole address.\n        </p>\n      </div>\n      <div className=\"grid gap-2\">\n        <Label htmlFor=\"password-warning-n8j\">Password</Label>\n        <Input\n          aria-describedby=\"password-warning-n8j-hint\"\n          aria-warning=\"true\"\n          defaultValue=\"quackquack\"\n          id=\"password-warning-n8j\"\n          type=\"password\"\n        />\n        <p className=\"text-sm text-warning\" id=\"password-warning-n8j-hint\">\n          This password is allowed, but easy to guess.\n        </p>\n      </div>\n    </div>\n  )\n}\n",
+      "path": "input/input-10.tsx",
+      "target": "components/input-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "input-10",
+  "registryDependencies": [
+    "input",
+    "button",
+    "field",
+    "label"
+  ],
+  "root_folder": "input",
+  "source": "/registry-examples/src/input",
+  "type": "registry:example"
+}

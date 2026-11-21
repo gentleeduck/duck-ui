@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Popper from '@gentleduck/primitives/popper'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function PopperCollisionsExample() {\n  const [box, setBox] = React.useState<HTMLDivElement | null>(null)\n\n  return (\n    <div\n      className={styles.box}\n      ref={setBox}\n      style={{ height: '12rem', overflow: 'auto', position: 'relative', width: '20rem' }}>\n      <div style={{ height: '30rem', paddingTop: '9rem', paddingInlineStart: '1rem' }}>\n        <Popper.Root>\n          <Popper.Anchor className={styles.button}>Scroll the box</Popper.Anchor>\n          <Popper.Content\n            className={`${styles.content} ${styles.panel}`}\n            collisionBoundary={box}\n            collisionPadding={8}\n            hideWhenDetached\n            side=\"bottom\"\n            sticky=\"always\"\n            style={{ minWidth: 0 }}>\n            Flips to stay in the box, and hides once its anchor scrolls out.\n          </Popper.Content>\n        </Popper.Root>\n      </div>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/popper-collisions/popper-collisions.tsx",
+      "target": "components/popper-collisions.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "popper-collisions",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as ToggleGroup from '@gentleduck/primitives/toggle-group'\nimport styles from '../primitives.module.css'\n\nexport default function ToggleGroupSegmentedExample() {\n  return (\n    <div className={styles.stack}>\n      <ToggleGroup.Root\n        aria-label=\"View\"\n        className={styles.group}\n        defaultValue=\"list\"\n        deselectable={false}\n        type=\"single\">\n        {['list', 'grid', 'board'].map((value) => (\n          <ToggleGroup.Item className={styles.toggle} key={value} value={value}>\n            {value}\n          </ToggleGroup.Item>\n        ))}\n      </ToggleGroup.Root>\n      <p className={styles.note}>deselectable off keeps one item on, as a segmented control does.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/toggle-group-segmented/toggle-group-segmented.tsx",
+      "target": "components/toggle-group-segmented.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "toggle-group-segmented",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

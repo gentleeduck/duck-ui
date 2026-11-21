@@ -159,6 +159,144 @@ export default function Demo() {
 }
 ```
 
+### Horizontal, with a disabled option
+
+`orientation="horizontal"` lays the items in a row and keeps the arrow keys to Left and Right. A disabled item is skipped by the arrow keys, and its label dims with it.
+
+```tsx title="components/radio-group-5.tsx"
+// import from your project: import Demo from '@/components/radio-group-5'
+'use client'
+
+import { RadioGroup, RadioGroupItem } from '@gentleduck/registry-ui/radio-group'
+
+export default function Demo() {
+  return (
+    <RadioGroup aria-label="Delivery" className="flex-row gap-6" defaultValue="standard" orientation="horizontal">
+      <RadioGroupItem value="standard">Standard</RadioGroupItem>
+      <RadioGroupItem value="express">Express</RadioGroupItem>
+      <RadioGroupItem disabled value="same-day">
+        Same day
+      </RadioGroupItem>
+    </RadioGroup>
+  )
+}
+```
+
+### Custom indicators
+
+`indicator` draws an icon on an item while it is not selected, and `checkedIndicator` replaces the dot once it is.
+
+```tsx title="components/radio-group-6.tsx"
+// import from your project: import Demo from '@/components/radio-group-6'
+'use client'
+
+import { RadioGroup, RadioGroupItem } from '@gentleduck/registry-ui/radio-group'
+import { Check, X } from 'lucide-react'
+
+export default function Demo() {
+  return (
+    <RadioGroup aria-label="Attending" defaultValue="yes">
+      <RadioGroupItem checkedIndicator={<Check />} indicator={<X />} value="yes">
+        Yes, I will be there
+      </RadioGroupItem>
+      <RadioGroupItem checkedIndicator={<Check />} indicator={<X />} value="no">
+        No, I cannot make it
+      </RadioGroupItem>
+    </RadioGroup>
+  )
+}
+```
+
+### Read-only until edited
+
+`readOnly` keeps the selection fixed while the items stay focusable and readable, which suits a setting shown before it is edited. Here `value` and `onValueChange` hold the plan outside the group.
+
+```tsx title="components/radio-group-7.tsx"
+// import from your project: import Demo from '@/components/radio-group-7'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { RadioGroup, RadioGroupItem } from '@gentleduck/registry-ui/radio-group'
+import * as React from 'react'
+
+const PLANS: Record<string, string> = { hobby: 'Hobby', pro: 'Pro', team: 'Team' }
+
+export default function Demo() {
+  const [plan, setPlan] = React.useState('pro')
+  const [editing, setEditing] = React.useState(false)
+
+  return (
+    <div className="flex flex-col gap-4">
+      <RadioGroup
+        aria-label="Plan"
+        onValueChange={(next) => next !== null && setPlan(next)}
+        readOnly={!editing}
+        value={plan}>
+        {Object.entries(PLANS).map(([value, name]) => (
+          <RadioGroupItem key={value} value={value}>
+            {name}
+          </RadioGroupItem>
+        ))}
+      </RadioGroup>
+      <div className="flex items-center gap-3">
+        <Button onClick={() => setEditing(!editing)} size="sm" variant="outline">
+          {editing ? 'Done' : 'Change plan'}
+        </Button>
+        <span className="text-muted-foreground text-sm">Billed on the {PLANS[plan]} plan</span>
+      </div>
+    </div>
+  )
+}
+```
+
+### Required, without looping
+
+```tsx title="components/radio-group-8.tsx"
+// import from your project: import Demo from '@/components/radio-group-8'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Label } from '@gentleduck/registry-ui/label'
+import { RadioGroup, RadioGroupItem } from '@gentleduck/registry-ui/radio-group'
+import * as React from 'react'
+
+const PLANS = [
+  { label: 'Hobby, free', text: 'Hobby', value: 'hobby' },
+  { label: 'Pro, 20 a month', text: 'Pro', value: 'pro' },
+  { label: 'Team, 50 a month', text: 'Team', value: 'team' },
+]
+
+export default function Demo() {
+  const [sent, setSent] = React.useState('')
+
+  return (
+    <form
+      className="flex flex-col gap-3"
+      onSubmit={(event) => {
+        event.preventDefault()
+        setSent(String(new FormData(event.currentTarget).get('plan')))
+      }}>
+      <RadioGroup loop={false} name="plan" required>
+        {PLANS.map((plan) => (
+          <div className="flex items-center gap-2" key={plan.value}>
+            <RadioGroupItem id={`radio-8-${plan.value}`} textValue={plan.text} value={plan.value} />
+            <Label htmlFor={`radio-8-${plan.value}`}>{plan.label}</Label>
+          </div>
+        ))}
+      </RadioGroup>
+      <Button className="self-start" type="submit">
+        Continue
+      </Button>
+      <p className="text-muted-foreground text-sm">
+        {sent
+          ? `Submitted plan=${sent}`
+          : 'required refuses an empty pick. Typing P jumps to Pro through its textValue.'}
+      </p>
+    </form>
+  )
+}
+```
+
 ## Component Composition
 
 ## Keyboard Navigation
@@ -178,6 +316,9 @@ export default function Demo() {
 | `G` | Jump to last item and select it |
 | `Tab` | Move focus into/out of the radio group |
 | `Space` | Select the focused item (if not already selected) |
+| `Enter` | Nothing, as on a native radio |
+
+In a `readOnly` group these keys move focus without selecting.
 
 ## RTL Support
 
@@ -238,12 +379,14 @@ export default function Demo() {
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `string` | - | Controlled value of the selected radio item |
+| `value` | `string \| null` | - | Controlled value of the selected radio item. `null` or `''` selects nothing |
 | `defaultValue` | `string` | - | Initial selected value when uncontrolled |
 | `onValueChange` | `(value: string) => void` | - | Callback fired when selection changes |
 | `disabled` | `boolean` | `false` | Whether the entire group is disabled |
-| `required` | `boolean` | `false` | Whether the group is required in a form |
+| `readOnly` | `boolean` | `false` | Keeps the selection fixed while the items stay focusable |
+| `required` | `boolean` | `false` | Whether the form refuses to submit with nothing selected |
 | `name` | `string` | - | The name used when submitting an HTML form |
+| `form` | `string` | - | Id of a form outside the group that it submits with |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `orientation` | `'horizontal' \| 'vertical'` | - | The orientation of the group for arrow key navigation |
 | `loop` | `boolean` | `true` | Whether keyboard navigation should loop |
@@ -254,9 +397,10 @@ export default function Demo() {
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `value` | `string` | (required) | Unique value for the radio item |
-| `disabled` | `boolean` | `false` | Whether this item is disabled |
-| `indicator` | `React.ReactElement` | - | Custom SVG or element for unchecked state indicator |
-| `checkedIndicator` | `React.ReactElement` | - | Custom SVG or element for checked state indicator |
+| `disabled` | `boolean` | `false` | Whether this item is disabled. Its label dims with it, as it does when the whole group is disabled |
+| `id` | `string` | generated | Id of the radio control, which the label points at |
+| `indicator` | `React.ReactElement` | - | Icon shown while the item is not selected, in the muted foreground colour. Without `checkedIndicator` the item draws its own dot once selected |
+| `checkedIndicator` | `React.ReactElement` | - | Icon shown while the item is selected, in place of the dot |
 | `textValue` | `string` | - | Optional text used for keyboard typeahead matching (`a-z`). In the registry component, plain string/number children are inferred automatically. |
 | `children` | `React.ReactNode` | - | Label content. When provided, a clickable label is rendered next to the control and selects the item on click. |
 | `className` | `string` | - | Additional CSS classes for the radio button control |
@@ -283,4 +427,4 @@ Wraps `RadioGroupItem` with a staggered `scaleIn` entrance animation (fade, scal
 * [Checkbox](/duck-ui/components/checkbox)  -  Multi-selection toggle control
 * [Switch](/duck-ui/components/switch)  -  Toggle between on and off states
 * [Select](/duck-ui/components/select)  -  Dropdown selection from a list
-* [Radio Group Primitive API](/duck-primitives/api/radio-group)  -  Headless primitive reference (`Root`, `Item`, `Indicator`)
+* [Radio Group Primitive API](/duck-primitives/api/radio-group)  -  Headless primitive reference (`Root`, `Item`, `Indicator`, `ItemProvider`, `ItemTrigger`, `ItemBubbleInput`)

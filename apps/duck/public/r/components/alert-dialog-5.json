@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  AlertDialog,\n  AlertDialogAction,\n  AlertDialogCancel,\n  AlertDialogContent,\n  AlertDialogDescription,\n  AlertDialogFooter,\n  AlertDialogHeader,\n  AlertDialogTitle,\n  AlertDialogTrigger,\n} from '@gentleduck/registry-ui/alert-dialog'\nimport { Button, buttonVariants } from '@gentleduck/registry-ui/button'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport * as React from 'react'\n\nconst PROJECT = 'duck-pond'\n\nexport default function Demo() {\n  const field = React.useRef<HTMLInputElement>(null)\n  const [typed, setTyped] = React.useState('')\n\n  return (\n    <AlertDialog onOpenChange={() => setTyped('')}>\n      <AlertDialogTrigger asChild>\n        <Button variant=\"destructive\">Delete project</Button>\n      </AlertDialogTrigger>\n      <AlertDialogContent initialFocus={field}>\n        <AlertDialogHeader>\n          <AlertDialogTitle>Delete {PROJECT}?</AlertDialogTitle>\n          <AlertDialogDescription>\n            This removes the project and its deployments. Type its name to confirm.\n          </AlertDialogDescription>\n        </AlertDialogHeader>\n        <div className=\"grid gap-2\">\n          <Label htmlFor=\"project-name\">Project name</Label>\n          <Input\n            autoComplete=\"off\"\n            id=\"project-name\"\n            onChange={(event) => setTyped(event.target.value)}\n            placeholder={PROJECT}\n            ref={field}\n            value={typed}\n          />\n        </div>\n        <AlertDialogFooter>\n          <AlertDialogCancel>Cancel</AlertDialogCancel>\n          <AlertDialogAction className={buttonVariants({ variant: 'destructive' })} disabled={typed !== PROJECT}>\n            Delete\n          </AlertDialogAction>\n        </AlertDialogFooter>\n      </AlertDialogContent>\n    </AlertDialog>\n  )\n}\n",
+      "path": "alert-dialog/alert-dialog-5.tsx",
+      "target": "components/alert-dialog-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "alert-dialog-5",
+  "registryDependencies": [
+    "alert-dialog",
+    "direction",
+    "input",
+    "label"
+  ],
+  "root_folder": "alert-dialog",
+  "source": "/registry-examples/src/alert-dialog",
+  "type": "registry:example"
+}

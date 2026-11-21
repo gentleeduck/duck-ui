@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Slot } from '@gentleduck/primitives/slot'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function SlotMergePropsExample() {\n  const [log, setLog] = React.useState<string[]>([])\n  const add = (entry: string) => () => setLog((entries) => [...entries, entry].slice(-4))\n\n  return (\n    <div className={styles.stack}>\n      <Slot className={styles.button} onClick={add('slot handler')} style={{ padding: '0.6rem 1rem' }}>\n        <button className={styles.primary} onClick={add('child handler')} style={{ padding: '0.3rem' }} type=\"button\">\n          Click me\n        </button>\n      </Slot>\n      <p className={styles.note}>\n        Both classes apply, the child's padding wins, and both handlers run, the child's first. {log.join(', ')}\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/slot-merge-props/slot-merge-props.tsx",
+      "target": "components/slot-merge-props.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "slot-merge-props",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

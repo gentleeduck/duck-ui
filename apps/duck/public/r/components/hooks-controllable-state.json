@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { useControllableState } from '@gentleduck/primitives/hooks/use-controllable-state'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nfunction Stepper({\n  value,\n  defaultValue = 0,\n  onValueChange,\n}: {\n  value?: number\n  defaultValue?: number\n  onValueChange?: (value: number) => void\n}) {\n  const [count, setCount] = useControllableState({\n    caller: 'Stepper',\n    defaultProp: defaultValue,\n    onChange: onValueChange,\n    prop: value,\n  })\n  return (\n    <div className={styles.row}>\n      <button className={styles.button} onClick={() => setCount(count - 1)} type=\"button\">\n        -\n      </button>\n      <span className={styles.note}>{count}</span>\n      <button className={styles.button} onClick={() => setCount(count + 1)} type=\"button\">\n        +\n      </button>\n    </div>\n  )\n}\n\nexport default function HooksControllableStateExample() {\n  const [value, setValue] = React.useState(10)\n\n  return (\n    <div className={styles.stack}>\n      <span className={styles.label}>Uncontrolled, starting at 3</span>\n      <Stepper defaultValue={3} />\n      <span className={styles.label}>Controlled by the page ({value})</span>\n      <Stepper onValueChange={setValue} value={value} />\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/hooks-controllable-state/hooks-controllable-state.tsx",
+      "target": "components/hooks-controllable-state.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "hooks-controllable-state",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

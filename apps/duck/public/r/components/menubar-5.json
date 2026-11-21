@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Menubar,\n  MenubarCheckboxItem,\n  MenubarContent,\n  MenubarItem,\n  MenubarMenu,\n  MenubarSeparator,\n  MenubarShortcut,\n  MenubarTrigger,\n} from '@gentleduck/registry-ui/menubar'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [menu, setMenu] = React.useState('')\n  const [wrap, setWrap] = React.useState(true)\n  const [last, setLast] = React.useState('nothing yet')\n\n  return (\n    <div className=\"flex flex-col items-center gap-3\">\n      <Menubar onValueChange={setMenu} value={menu}>\n        <MenubarMenu value=\"file\">\n          <MenubarTrigger>File</MenubarTrigger>\n          <MenubarContent>\n            <MenubarItem onSelect={() => setLast('save')}>\n              Save\n              <MenubarShortcut keys=\"mod+s\" onKeysPressed={() => setLast('save, from its keys')} />\n            </MenubarItem>\n            <MenubarItem onSelect={() => setLast('export')}>\n              Export\n              <MenubarShortcut keys=\"mod+shift+e\" onKeysPressed={() => setLast('export, from its keys')} />\n            </MenubarItem>\n          </MenubarContent>\n        </MenubarMenu>\n        <MenubarMenu value=\"view\">\n          <MenubarTrigger>View</MenubarTrigger>\n          <MenubarContent>\n            <MenubarCheckboxItem checked={wrap} closeOnSelect={false} onCheckedChange={setWrap}>\n              Word wrap\n            </MenubarCheckboxItem>\n            <MenubarSeparator />\n            <MenubarItem onSelect={() => setMenu('file')}>Go to the File menu</MenubarItem>\n          </MenubarContent>\n        </MenubarMenu>\n      </Menubar>\n      <p className=\"text-muted-foreground text-sm\">\n        Open: {menu || 'none'}, wrap {wrap ? 'on' : 'off'}, last: {last}\n      </p>\n    </div>\n  )\n}\n",
+      "path": "menubar/menubar-5.tsx",
+      "target": "components/menubar-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "menubar-5",
+  "registryDependencies": [
+    "menubar",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "menubar",
+  "source": "/registry-examples/src/menubar",
+  "type": "registry:example"
+}

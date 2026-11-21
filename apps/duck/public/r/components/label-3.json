@@ -9,7 +9,10 @@
   ],
   "name": "label-3",
   "registryDependencies": [
-    "label"
+    "label",
+    "checkbox",
+    "input",
+    "switch"
   ],
   "root_folder": "label",
   "source": "/registry-examples/src/label",

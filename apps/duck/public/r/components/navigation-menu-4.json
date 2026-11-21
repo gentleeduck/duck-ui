@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  NavigationMenu,\n  NavigationMenuContent,\n  NavigationMenuIndicator,\n  NavigationMenuItem,\n  NavigationMenuLink,\n  NavigationMenuList,\n  NavigationMenuTrigger,\n  navigationMenuTriggerStyle,\n} from '@gentleduck/registry-ui/navigation-menu'\n\nexport default function Demo() {\n  return (\n    <NavigationMenu viewport={false}>\n      <NavigationMenuList>\n        <NavigationMenuItem>\n          <NavigationMenuTrigger>Products</NavigationMenuTrigger>\n          <NavigationMenuContent>\n            <ul className=\"grid w-48 gap-1\">\n              <li>\n                <NavigationMenuLink href=\"#analytics\">Analytics</NavigationMenuLink>\n              </li>\n              <li>\n                <NavigationMenuLink href=\"#automation\">Automation</NavigationMenuLink>\n              </li>\n            </ul>\n          </NavigationMenuContent>\n        </NavigationMenuItem>\n        <NavigationMenuItem>\n          <NavigationMenuTrigger>Company</NavigationMenuTrigger>\n          <NavigationMenuContent>\n            <ul className=\"grid w-48 gap-1\">\n              <li>\n                <NavigationMenuLink href=\"#about\">About</NavigationMenuLink>\n              </li>\n              <li>\n                <NavigationMenuLink href=\"#careers\">Careers</NavigationMenuLink>\n              </li>\n            </ul>\n          </NavigationMenuContent>\n        </NavigationMenuItem>\n        <NavigationMenuItem>\n          <NavigationMenuLink active className={navigationMenuTriggerStyle()} href=\"#pricing\">\n            Pricing\n          </NavigationMenuLink>\n        </NavigationMenuItem>\n        <NavigationMenuIndicator />\n      </NavigationMenuList>\n    </NavigationMenu>\n  )\n}\n",
+      "path": "navigation-menu/navigation-menu-4.tsx",
+      "target": "components/navigation-menu-4.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "navigation-menu-4",
+  "registryDependencies": [
+    "navigation-menu",
+    "direction"
+  ],
+  "root_folder": "navigation-menu",
+  "source": "/registry-examples/src/navigation-menu",
+  "type": "registry:example"
+}

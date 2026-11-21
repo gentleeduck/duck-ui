@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Progress } from '@gentleduck/registry-ui/progress'\nimport * as React from 'react'\n\nconst STEPS = 5\n\nexport default function Demo() {\n  const [step, setStep] = React.useState(1)\n\n  return (\n    <div className=\"flex w-[60%] flex-col gap-3\">\n      <p className=\"font-medium text-sm\">\n        Step {step} of {STEPS}\n      </p>\n      <Progress\n        aria-label=\"Setup\"\n        getValueLabel={(value, max) => `Step ${value} of ${max}`}\n        max={STEPS}\n        min={1}\n        value={step}\n      />\n      <div className=\"flex gap-2\">\n        <Button disabled={step === 1} onClick={() => setStep((at) => at - 1)} size=\"sm\" variant=\"outline\">\n          Back\n        </Button>\n        <Button disabled={step === STEPS} onClick={() => setStep((at) => at + 1)} size=\"sm\">\n          Next\n        </Button>\n      </div>\n    </div>\n  )\n}\n",
+      "path": "progress/progress-5.tsx",
+      "target": "components/progress-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "progress-5",
+  "registryDependencies": [
+    "progress",
+    "button",
+    "direction"
+  ],
+  "root_folder": "progress",
+  "source": "/registry-examples/src/progress",
+  "type": "registry:example"
+}

@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@gentleduck/hooks"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [title, setTitle] = React.useState('')\n  const [published, setPublished] = React.useState('')\n  const ready = title.trim() !== ''\n\n  return (\n    <TooltipProvider>\n      <form\n        className=\"flex w-full max-w-sm flex-col gap-2\"\n        onSubmit={(event) => {\n          event.preventDefault()\n          if (ready) setPublished(title.trim())\n        }}>\n        <Label htmlFor=\"post-title\">Title</Label>\n        <div className=\"flex gap-2\">\n          <Input id=\"post-title\" onChange={(event) => setTitle(event.target.value)} value={title} />\n          <Tooltip disabled={ready}>\n            <TooltipTrigger asChild>\n              {/* aria-disabled, not disabled: a disabled button takes no focus or hover, so it could never explain itself. */}\n              <Button aria-disabled={!ready || undefined} className=\"aria-disabled:opacity-50\" type=\"submit\">\n                Publish\n              </Button>\n            </TooltipTrigger>\n            <TooltipContent>Add a title before you publish.</TooltipContent>\n          </Tooltip>\n        </div>\n        <p aria-live=\"polite\" className=\"text-muted-foreground text-sm\">\n          {published ? `Published \"${published}\".` : ''}\n        </p>\n      </form>\n    </TooltipProvider>\n  )\n}\n",
+      "path": "tooltip/tooltip-11.tsx",
+      "target": "components/tooltip-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "tooltip-11",
+  "registryDependencies": [
+    "tooltip",
+    "button",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "toggle"
+  ],
+  "root_folder": "tooltip",
+  "source": "/registry-examples/src/tooltip",
+  "type": "registry:example"
+}

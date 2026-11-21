@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "import { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex w-full max-w-sm flex-col space-y-2\">\n      <Label htmlFor=\"email\">Email</Label>\n      <Input id=\"email\" placeholder=\"Email\" type=\"email\" />\n    </div>\n  )\n}\n",
@@ -9,7 +15,10 @@
   ],
   "name": "input-5",
   "registryDependencies": [
-    "input"
+    "input",
+    "button",
+    "field",
+    "label"
   ],
   "root_folder": "input",
   "source": "/registry-examples/src/input",

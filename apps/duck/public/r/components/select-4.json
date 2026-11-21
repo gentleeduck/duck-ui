@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport {\n  Select,\n  SelectContent,\n  SelectGroup,\n  SelectItem,\n  SelectLabel,\n  SelectTrigger,\n  SelectValue,\n} from '@gentleduck/registry-ui/select'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Select>\n        <SelectTrigger className=\"w-[180px]\">\n          <SelectValue placeholder=\"اختر فاكهة\" />\n        </SelectTrigger>\n        <SelectContent>\n          <SelectGroup>\n            <SelectLabel>الفواكه</SelectLabel>\n            <SelectItem value=\"apple\">تفاح</SelectItem>\n            <SelectItem value=\"banana\">موز</SelectItem>\n            <SelectItem value=\"blueberry\">توت أزرق</SelectItem>\n            <SelectItem value=\"grapes\">عنب</SelectItem>\n            <SelectItem value=\"pineapple\">أناناس</SelectItem>\n          </SelectGroup>\n        </SelectContent>\n      </Select>\n    </DirectionProvider>\n  )\n}\n",
@@ -9,7 +15,11 @@
   ],
   "name": "select-4",
   "registryDependencies": [
-    "select"
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
   ],
   "root_folder": "select",
   "source": "/registry-examples/src/select",

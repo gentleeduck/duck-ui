@@ -1,4 +1,8 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks",
+    "@tabler/icons-react"
+  ],
   "files": [
     {
       "content": "import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@gentleduck/registry-ui/input-group'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\nimport { HelpCircle, InfoIcon } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <TooltipProvider>\n      <div className=\"grid w-full max-w-sm gap-4\">\n        <InputGroup>\n          <InputGroupInput placeholder=\"Paste your SSH public key\" />\n          <InputGroupAddon align=\"inline-end\">\n            <Tooltip>\n              <TooltipTrigger asChild>\n                <InputGroupButton aria-label=\"Info\" size=\"icon-xs\" variant=\"ghost\">\n                  <InfoIcon />\n                </InputGroupButton>\n              </TooltipTrigger>\n              <TooltipContent align=\"end\" side=\"top\">\n                <p>Starts with ssh-rsa, ssh-ed25519, or ecdsa-sha2</p>\n              </TooltipContent>\n            </Tooltip>\n          </InputGroupAddon>\n        </InputGroup>\n        <InputGroup>\n          <InputGroupInput placeholder=\"https://hooks.example.com/events\" />\n          <InputGroupAddon align=\"inline-end\">\n            <Tooltip>\n              <TooltipTrigger asChild>\n                <InputGroupButton aria-label=\"Help\" size=\"icon-xs\" variant=\"ghost\">\n                  <HelpCircle />\n                </InputGroupButton>\n              </TooltipTrigger>\n              <TooltipContent align=\"end\" side=\"top\">\n                <p>Webhook events are sent as POST requests</p>\n              </TooltipContent>\n            </Tooltip>\n          </InputGroupAddon>\n        </InputGroup>\n        <InputGroup>\n          <InputGroupInput placeholder=\"DATABASE_URL\" />\n          <Tooltip>\n            <TooltipTrigger asChild>\n              <InputGroupAddon>\n                <InputGroupButton aria-label=\"Help\" size=\"icon-xs\" variant=\"ghost\">\n                  <HelpCircle />\n                </InputGroupButton>\n              </InputGroupAddon>\n            </TooltipTrigger>\n            <TooltipContent align=\"end\" side=\"top\">\n              <p>Environment variables are encrypted at rest</p>\n            </TooltipContent>\n          </Tooltip>\n        </InputGroup>\n      </div>\n    </TooltipProvider>\n  )\n}\n",
@@ -9,7 +13,14 @@
   ],
   "name": "input-group-5",
   "registryDependencies": [
-    "input-group"
+    "input-group",
+    "button-group",
+    "dropdown-menu",
+    "kbd",
+    "label",
+    "popover",
+    "separator",
+    "tooltip"
   ],
   "root_folder": "input-group",
   "source": "/registry-examples/src/input-group",

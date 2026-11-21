@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { DismissableLayer, useDismissableLayerSurface } from '@gentleduck/primitives/dismissable-layer'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nfunction Backdrop() {\n  const ref = useDismissableLayerSurface()\n  return (\n    <div\n      className={styles.overlay}\n      onPointerDown={(event) => event.stopPropagation()}\n      ref={ref}\n      style={{ background: 'color-mix(in oklab, black 20%, transparent)' }}\n    />\n  )\n}\n\nexport default function DismissableLayerSurfaceExample() {\n  const [open, setOpen] = React.useState(false)\n\n  return (\n    <>\n      <button className={styles.button} onClick={() => setOpen(true)} type=\"button\">\n        Open over a backdrop\n      </button>\n      {open ? (\n        <>\n          <Backdrop />\n          <DismissableLayer className={styles.dialog} onDismiss={() => setOpen(false)}>\n            The backdrop stops every press it gets, and a press on it still closes this layer.\n          </DismissableLayer>\n        </>\n      ) : null}\n    </>\n  )\n}\n",
+      "path": "internal-primitives/dismissable-layer-surface/dismissable-layer-surface.tsx",
+      "target": "components/dismissable-layer-surface.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dismissable-layer-surface",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

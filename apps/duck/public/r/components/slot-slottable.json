@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Slot, Slottable } from '@gentleduck/primitives/slot'\nimport type * as React from 'react'\nimport styles from '../primitives.module.css'\n\nfunction IconButton({ asChild, children, ...props }: React.ComponentProps<'button'> & { asChild?: boolean }) {\n  const Component = asChild ? Slot : 'button'\n  return (\n    <Component className={styles.button} {...props}>\n      <span aria-hidden>+</span>\n      <Slottable>{children}</Slottable>\n    </Component>\n  )\n}\n\nexport default function SlotSlottableExample() {\n  return (\n    <div className={styles.row}>\n      <IconButton type=\"button\">New file</IconButton>\n      <IconButton asChild>\n        <a href=\"#new\">New file as a link</a>\n      </IconButton>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/slot-slottable/slot-slottable.tsx",
+      "target": "components/slot-slottable.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "slot-slottable",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

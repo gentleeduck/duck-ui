@@ -17,12 +17,12 @@ import { Presence } from '@gentleduck/primitives/presence'
 
 ***
 
-## State machine mental model
+## State mental model
 
-`Presence` transitions through:
+`Presence` moves through:
 
 1. `mounted`
-2. `unmountSuspended`
+2. `exiting`
 3. `unmounted`
 
 When `present` becomes false, it checks animation state and waits for completion.

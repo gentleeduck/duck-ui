@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { NativeAdapter } from '@gentleduck/calendar'\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport * as React from 'react'\n\nconst adapter = new NativeAdapter()\n\nconst EVENTS: Record<string, { title: string; color: string }[]> = {\n  '2026-2-15': [\n    { title: 'Team standup', color: '#3b82f6' },\n    { title: 'Design review', color: '#8b5cf6' },\n  ],\n  '2026-2-18': [\n    { title: 'Sprint planning', color: '#f59e0b' },\n    { title: '1:1 with manager', color: '#10b981' },\n  ],\n  '2026-2-20': [{ title: 'Product launch', color: '#ef4444' }],\n  '2026-2-25': [\n    { title: 'Team retrospective', color: '#3b82f6' },\n    { title: 'All-hands meeting', color: '#8b5cf6' },\n    { title: 'Stakeholder demo', color: '#f59e0b' },\n  ],\n}\n\nfunction getKey(d: Date) {\n  return `${adapter.getYear(d)}-${adapter.getMonth(d)}-${adapter.getDate(d)}`\n}\n\nfunction getEvents(d: Date) {\n  return EVENTS[getKey(d)] ?? []\n}\n\nexport default function Demo() {\n  const [selected, setSelected] = React.useState<Date | null>(new Date())\n  const selectedEvents = selected ? getEvents(selected) : []\n\n  return (\n    <div className=\"flex gap-6\">\n      <Calendar\n        className=\"rounded-md border shadow-sm\"\n        mode=\"single\"\n        selected={selected}\n        onSelect={setSelected}\n        fixedWeeks\n        showDropdowns\n        renderDay={(day, children) => {\n          const events = getEvents(day.date)\n          if (events.length === 0) return children\n          return (\n            <span className=\"flex flex-col items-center gap-0.5\">\n              {children}\n              <span className=\"flex gap-0.5\">\n                {events.slice(0, 3).map((e) => (\n                  <span key={e.title} className=\"size-1 rounded-full\" style={{ backgroundColor: e.color }} />\n                ))}\n              </span>\n            </span>\n          )\n        }}\n      />\n      <div className=\"min-w-[200px] space-y-2\">\n        <h3 className=\"font-semibold text-sm\">\n          {selected?.toLocaleDateString('en-US', {\n            weekday: 'long',\n            month: 'long',\n            day: 'numeric',\n          })}\n        </h3>\n        {selectedEvents.length > 0 ? (\n          <ul className=\"space-y-1\">\n            {selectedEvents.map((event) => (\n              <li key={event.title} className=\"flex items-center gap-2 text-sm\">\n                <span className=\"size-2 rounded-full\" style={{ backgroundColor: event.color }} />\n                {event.title}\n              </li>\n            ))}\n          </ul>\n        ) : (\n          <p className=\"text-muted-foreground text-sm\">No events</p>\n        )}\n      </div>\n    </div>\n  )\n}\n",
@@ -9,7 +15,13 @@
   ],
   "name": "calendar-11",
   "registryDependencies": [
-    "calendar"
+    "calendar",
+    "direction",
+    "field",
+    "input",
+    "label",
+    "popover",
+    "switch"
   ],
   "root_folder": "calendar",
   "source": "/registry-examples/src/calendar",

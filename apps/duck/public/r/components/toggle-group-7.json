@@ -1,7 +1,10 @@
 {
+  "dependencies": [
+    "lucide-react"
+  ],
   "files": [
     {
-      "content": "import { ToggleGroup, ToggleGroupItem } from '@gentleduck/registry-ui/toggle-group'\nimport { Bold, Italic, Underline } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <ToggleGroup type=\"single\">\n      <ToggleGroupItem aria-label=\"Toggle bold\" disabled value=\"bold\">\n        <Bold className=\"h-4 w-4\" />\n      </ToggleGroupItem>\n      <ToggleGroupItem aria-label=\"Toggle italic\" disabled value=\"italic\">\n        <Italic className=\"h-4 w-4\" />\n      </ToggleGroupItem>\n      <ToggleGroupItem aria-label=\"Toggle underline\" disabled value=\"underline\">\n        <Underline className=\"h-4 w-4\" />\n      </ToggleGroupItem>\n    </ToggleGroup>\n  )\n}\n",
+      "content": "import { ToggleGroup, ToggleGroupItem } from '@gentleduck/registry-ui/toggle-group'\nimport { Bold, Italic, Underline } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <ToggleGroup aria-label=\"Text style\" disabled type=\"single\">\n      <ToggleGroupItem aria-label=\"Toggle bold\" value=\"bold\">\n        <Bold className=\"h-4 w-4\" />\n      </ToggleGroupItem>\n      <ToggleGroupItem aria-label=\"Toggle italic\" value=\"italic\">\n        <Italic className=\"h-4 w-4\" />\n      </ToggleGroupItem>\n      <ToggleGroupItem aria-label=\"Toggle underline\" value=\"underline\">\n        <Underline className=\"h-4 w-4\" />\n      </ToggleGroupItem>\n    </ToggleGroup>\n  )\n}\n",
       "path": "toggle-group/toggle-group-7.tsx",
       "target": "components/toggle-group-7.tsx",
       "type": "registry:example"
@@ -9,7 +12,8 @@
   ],
   "name": "toggle-group-7",
   "registryDependencies": [
-    "toggle-group"
+    "toggle-group",
+    "direction"
   ],
   "root_folder": "toggle-group",
   "source": "/registry-examples/src/toggle-group",

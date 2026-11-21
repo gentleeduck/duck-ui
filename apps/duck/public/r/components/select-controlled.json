@@ -1,4 +1,8 @@
 {
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport * as Select from '@gentleduck/primitives/select'\nimport * as React from 'react'\nimport styles from './styles.module.css'\n\nexport default function SelectControlledInternalExample() {\n  const [value, setValue] = React.useState('apple')\n\n  return (\n    <Select.Select value={value} onValueChange={setValue}>\n      <Select.SelectTrigger className={styles.trigger}>\n        <Select.SelectValue placeholder=\"Choose fruit\" />\n      </Select.SelectTrigger>\n      <Select.SelectPortal>\n        <Select.SelectContent className={styles.content} sideOffset={8}>\n          <Select.SelectViewport>\n            <Select.SelectItem className={styles.item} value=\"apple\">\n              <Select.SelectItemText>Apple</Select.SelectItemText>\n            </Select.SelectItem>\n            <Select.SelectItem className={styles.item} value=\"banana\">\n              <Select.SelectItemText>Banana</Select.SelectItemText>\n            </Select.SelectItem>\n            <Select.SelectItem className={styles.item} value=\"orange\">\n              <Select.SelectItemText>Orange</Select.SelectItemText>\n            </Select.SelectItem>\n          </Select.SelectViewport>\n        </Select.SelectContent>\n      </Select.SelectPortal>\n    </Select.Select>\n  )\n}\n",
@@ -8,9 +12,6 @@
     }
   ],
   "name": "select-controlled",
-  "registryDependencies": [
-    "@gentleduck/primitives"
-  ],
   "root_folder": "internal-primitives",
   "source": "/registry-internals/src/internal-primitives",
   "type": "registry:internal"

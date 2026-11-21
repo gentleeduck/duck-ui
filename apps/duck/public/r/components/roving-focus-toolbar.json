@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as RovingFocus from '@gentleduck/primitives/roving-focus'\nimport styles from '../primitives.module.css'\n\nexport default function RovingFocusToolbarExample() {\n  return (\n    <div className={styles.stack}>\n      <RovingFocus.Root aria-label=\"Formatting\" className={styles.group} loop orientation=\"horizontal\" role=\"toolbar\">\n        {['Bold', 'Italic', 'Underline', 'Strike'].map((name) => (\n          <RovingFocus.Item asChild key={name}>\n            <button className={styles.button} type=\"button\">\n              {name}\n            </button>\n          </RovingFocus.Item>\n        ))}\n      </RovingFocus.Root>\n      <p className={styles.note}>One Tab stop for the whole toolbar; the arrow keys, Home and End move inside it.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/roving-focus-toolbar/roving-focus-toolbar.tsx",
+      "target": "components/roving-focus-toolbar.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "roving-focus-toolbar",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

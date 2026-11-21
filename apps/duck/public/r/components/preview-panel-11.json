@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { ZoomControls } from '@gentleduck/registry-ui/preview-panel'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [zoom, setZoom] = React.useState(1)\n  const [locked, setLocked] = React.useState(false)\n\n  return (\n    <div className=\"flex flex-col items-center gap-3\">\n      <div className=\"flex h-40 w-72 items-center justify-center overflow-hidden rounded-md border\">\n        <div className=\"size-16 rounded-md bg-primary transition-transform\" style={{ transform: `scale(${zoom})` }} />\n      </div>\n      <ZoomControls\n        locked={locked}\n        onReset={() => setZoom(1)}\n        onToggleLock={() => setLocked((value) => !value)}\n        onZoomIn={() => locked || setZoom((value) => Math.min(3, value + 0.25))}\n        onZoomOut={() => locked || setZoom((value) => Math.max(0.25, value - 0.25))}\n        zoom={zoom}\n      />\n    </div>\n  )\n}\n",
+      "path": "preview-panel/preview-panel-11.tsx",
+      "target": "components/preview-panel-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "preview-panel-11",
+  "registryDependencies": [
+    "preview-panel"
+  ],
+  "root_folder": "preview-panel",
+  "source": "/registry-examples/src/preview-panel",
+  "type": "registry:example"
+}

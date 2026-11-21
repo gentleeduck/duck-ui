@@ -1,0 +1,26 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@gentleduck/registry-ui/dialog'\nimport { Textarea } from '@gentleduck/registry-ui/textarea'\n\nexport default function Demo() {\n  return (\n    <Dialog>\n      <DialogTrigger asChild>\n        <Button variant=\"outline\">Write feedback</Button>\n      </DialogTrigger>\n      <DialogContent aria-describedby={undefined} className=\"data-[state=closed]:hidden\" forceMount>\n        <DialogHeader>\n          <DialogTitle>Feedback</DialogTitle>\n        </DialogHeader>\n        <Textarea placeholder=\"Close and reopen: the text is still here\" rows={4} />\n      </DialogContent>\n    </Dialog>\n  )\n}\n",
+      "path": "dialog/dialog-13.tsx",
+      "target": "components/dialog-13.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "dialog-13",
+  "registryDependencies": [
+    "dialog",
+    "button",
+    "calendar",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "popover",
+    "select",
+    "textarea"
+  ],
+  "root_folder": "dialog",
+  "source": "/registry-examples/src/dialog",
+  "type": "registry:example"
+}

@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "embla-carousel-autoplay"
+  ],
   "files": [
     {
       "content": "'use client'\nimport { Card, CardContent } from '@gentleduck/registry-ui/card'\n\nimport {\n  Carousel,\n  CarouselContent,\n  CarouselItem,\n  CarouselNext,\n  CarouselPrevious,\n} from '@gentleduck/registry-ui/carousel'\n\nexport default function Demo() {\n  return (\n    <Carousel className=\"w-full max-w-xs\">\n      <CarouselContent>\n        {Array.from({ length: 5 }).map((_, index) => (\n          // biome-ignore lint/suspicious/noArrayIndexKey: static list generated from Array.from\n          <CarouselItem key={`item-${index + 1}`}>\n            <div className=\"p-1\">\n              <Card>\n                <CardContent className=\"flex aspect-square items-center justify-center p-6\">\n                  <span className=\"font-semibold text-4xl\">{index + 1}</span>\n                </CardContent>\n              </Card>\n            </div>\n          </CarouselItem>\n        ))}\n      </CarouselContent>\n      <CarouselPrevious />\n      <CarouselNext />\n    </Carousel>\n  )\n}\n",
@@ -9,7 +12,8 @@
   ],
   "name": "carousel-1",
   "registryDependencies": [
-    "carousel"
+    "carousel",
+    "card"
   ],
   "root_folder": "carousel",
   "source": "/registry-examples/src/carousel",

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as NavigationMenu from '@gentleduck/primitives/navigation-menu'\nimport styles from '../primitives.module.css'\n\nexport default function NavigationMenuManualExample() {\n  return (\n    <NavigationMenu.Root activationMode=\"manual\" className={styles.relative}>\n      <NavigationMenu.List className={styles.navList}>\n        {['Docs', 'Blog', 'Community'].map((name) => (\n          <NavigationMenu.Item key={name} value={name}>\n            <NavigationMenu.Trigger className={styles.menubarTrigger}>{name}</NavigationMenu.Trigger>\n            <NavigationMenu.Content className={styles.navContent}>\n              <NavigationMenu.Link className={styles.navLink} href={`#${name.toLowerCase()}`}>\n                Latest in {name.toLowerCase()}\n              </NavigationMenu.Link>\n            </NavigationMenu.Content>\n          </NavigationMenu.Item>\n        ))}\n      </NavigationMenu.List>\n      <NavigationMenu.Viewport className={styles.viewport} />\n    </NavigationMenu.Root>\n  )\n}\n",
+      "path": "internal-primitives/navigation-menu-manual/navigation-menu-manual.tsx",
+      "target": "components/navigation-menu-manual.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "navigation-menu-manual",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

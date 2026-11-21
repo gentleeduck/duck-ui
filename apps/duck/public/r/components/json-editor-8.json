@@ -1,0 +1,20 @@
+{
+  "dependencies": [
+    "sonner"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { JsonTextareaField } from '@gentleduck/registry-ui/json-editor'\nimport { FormProvider, useForm } from 'react-hook-form'\n\ntype Values = { headers: Record<string, unknown> | null }\n\nexport default function Demo() {\n  const form = useForm<Values>({ defaultValues: { headers: null } })\n\n  return (\n    <FormProvider {...form}>\n      <form className=\"w-full max-w-xl\">\n        <JsonTextareaField\n          actionsClassName=\"justify-start\"\n          control={form.control}\n          description=\"Opens in a sheet from the left, with a taller line height.\"\n          expandMode=\"sheet\"\n          label=\"Request headers\"\n          lineHeightPx={24}\n          name=\"headers\"\n          placeholder={'{\\n  \"Accept\": \"application/json\"\\n}'}\n          rows={6}\n          sheetSide=\"left\"\n          sheetTitle=\"Edit request headers\"\n        />\n      </form>\n    </FormProvider>\n  )\n}\n",
+      "path": "json-editor/json-editor-8.tsx",
+      "target": "components/json-editor-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "json-editor-8",
+  "registryDependencies": [
+    "json-editor"
+  ],
+  "root_folder": "json-editor",
+  "source": "/registry-examples/src/json-editor",
+  "type": "registry:example"
+}

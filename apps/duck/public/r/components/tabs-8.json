@@ -1,0 +1,23 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Tabs, TabsContent, TabsList, TabsTrigger } from '@gentleduck/registry-ui/tabs'\nimport * as React from 'react'\n\nfunction Draft() {\n  const [text, setText] = React.useState('')\n  return (\n    <textarea\n      className=\"w-full rounded-md border p-2 text-sm\"\n      onChange={(event) => setText(event.target.value)}\n      placeholder=\"Type, switch tabs and come back\"\n      rows={3}\n      value={text}\n    />\n  )\n}\n\nexport default function Demo() {\n  return (\n    <Tabs className=\"w-[360px]\" defaultValue=\"write\">\n      <TabsList>\n        <TabsTrigger value=\"write\">Write</TabsTrigger>\n        <TabsTrigger value=\"preview\">Preview</TabsTrigger>\n      </TabsList>\n      <TabsContent forceMount value=\"write\">\n        <Draft />\n      </TabsContent>\n      <TabsContent value=\"preview\">\n        <p className=\"text-muted-foreground text-sm\">forceMount keeps the draft mounted, so its text survives.</p>\n      </TabsContent>\n    </Tabs>\n  )\n}\n",
+      "path": "tabs/tabs-8.tsx",
+      "target": "components/tabs-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "tabs-8",
+  "registryDependencies": [
+    "tabs",
+    "button",
+    "card",
+    "input",
+    "label",
+    "switch",
+    "textarea"
+  ],
+  "root_folder": "tabs",
+  "source": "/registry-examples/src/tabs",
+  "type": "registry:example"
+}

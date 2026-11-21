@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Sheet,\n  SheetContent,\n  SheetDescription,\n  SheetHeader,\n  SheetTitle,\n  SheetTrigger,\n} from '@gentleduck/registry-ui/sheet'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex gap-2\">\n      <Sheet>\n        <SheetTrigger asChild>\n          <Button variant=\"outline\">Wide</Button>\n        </SheetTrigger>\n        <SheetContent className=\"sm:max-w-xl\">\n          <SheetHeader>\n            <SheetTitle>Release notes</SheetTitle>\n            <SheetDescription>A side sheet stops at a small width unless its class lifts the cap.</SheetDescription>\n          </SheetHeader>\n        </SheetContent>\n      </Sheet>\n      <Sheet>\n        <SheetTrigger asChild>\n          <Button variant=\"outline\">Short</Button>\n        </SheetTrigger>\n        <SheetContent className=\"h-1/3\" side=\"bottom\">\n          <SheetHeader>\n            <SheetTitle>Cookie settings</SheetTitle>\n            <SheetDescription>A top or bottom sheet takes a height class.</SheetDescription>\n          </SheetHeader>\n        </SheetContent>\n      </Sheet>\n    </div>\n  )\n}\n",
+      "path": "sheet/sheet-6.tsx",
+      "target": "components/sheet-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sheet-6",
+  "registryDependencies": [
+    "sheet",
+    "button",
+    "input",
+    "label"
+  ],
+  "root_folder": "sheet",
+  "source": "/registry-examples/src/sheet",
+  "type": "registry:example"
+}

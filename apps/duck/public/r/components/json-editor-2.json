@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "sonner"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { JsonTextareaField } from '@gentleduck/registry-ui/json-editor'\nimport { FormProvider, useForm } from 'react-hook-form'\nimport { toast } from 'sonner'\n\ntype JsonEditorPopoverValues = {\n  filters: Record<string, unknown> | null\n}\n\nexport default function Demo() {\n  const form = useForm<JsonEditorPopoverValues>({\n    defaultValues: {\n      filters: {\n        includeArchived: false,\n        limit: 25,\n        sortBy: 'createdAt',\n      },\n    },\n  })\n\n  function onSubmit(values: JsonEditorPopoverValues) {\n    toast('Filters applied', {\n      description: (\n        <pre className=\"max-w-[420px] overflow-x-auto rounded-md border bg-muted p-3 text-xs\">\n          {JSON.stringify(values.filters, null, 2)}\n        </pre>\n      ),\n    })\n  }\n\n  return (\n    <FormProvider {...form}>\n      <form className=\"w-full max-w-xl space-y-4\" onSubmit={form.handleSubmit(onSubmit)}>\n        <JsonTextareaField\n          control={form.control}\n          description=\"Click the field to open a compact editor in a popover.\"\n          expandMode=\"none\"\n          label=\"Query Filters\"\n          mode=\"popover\"\n          name=\"filters\"\n          rows={10}\n        />\n\n        <Button type=\"submit\">Apply filters</Button>\n      </form>\n    </FormProvider>\n  )\n}\n",

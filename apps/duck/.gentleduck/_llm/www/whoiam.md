@@ -14,8 +14,8 @@ My expertise spans **zero-dependency libraries**, **Rust-powered tooling**, **AI
 
 A full-stack component ecosystem built from scratch - own primitives, own calendar engine, own keyboard system. No Radix dependency, no react-day-picker, no external UI frameworks. gentleduck/ui delivers:
 
-* **57 styled components** backed by **35 headless primitives** that are 50-92% smaller than Radix
-* **Calendar engine** at ~5 KB with 4 calendar systems (Gregorian, Islamic, Persian, Hebrew) vs react-day-picker's ~20 KB
+* **57 styled components** backed by **23 headless primitives** that are 1% to 67% smaller than Radix
+* **Calendar engine** with 4 calendar systems (Gregorian, Islamic, Persian, Hebrew): 9.7 KB for a calendar against react-day-picker's 20.0 KB
 * **Interactive CLI** with hunk-by-hunk merge TUI for updating components without losing local changes
 * Production-ready, accessible UI with WAI-ARIA compliance and keyboard navigation
 

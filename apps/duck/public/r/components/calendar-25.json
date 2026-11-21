@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { MotionCalendar } from '@gentleduck/registry-ui/calendar'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [date, setDate] = React.useState<Date | null>(new Date())\n\n  return <MotionCalendar className=\"rounded-md border shadow-sm\" mode=\"single\" onSelect={setDate} selected={date} />\n}\n",
@@ -9,7 +15,13 @@
   ],
   "name": "calendar-25",
   "registryDependencies": [
-    "calendar"
+    "calendar",
+    "direction",
+    "field",
+    "input",
+    "label",
+    "popover",
+    "switch"
   ],
   "root_folder": "calendar",
   "source": "/registry-examples/src/calendar",

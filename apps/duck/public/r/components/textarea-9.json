@@ -1,7 +1,13 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
-      "content": "'use client'\n\nimport { MotionTextarea } from '@gentleduck/registry-ui/textarea'\n\nexport default function Demo() {\n  return <MotionTextarea placeholder=\"Type your message here.\" />\n}\n",
+      "content": "'use client'\n\nimport { MotionTextarea } from '@gentleduck/registry-ui/textarea'\n\nexport default function Demo() {\n  return <MotionTextarea aria-label=\"Message\" placeholder=\"Type your message here.\" />\n}\n",
       "path": "textarea/textarea-9.tsx",
       "target": "components/textarea-9.tsx",
       "type": "registry:example"
@@ -9,7 +15,10 @@
   ],
   "name": "textarea-9",
   "registryDependencies": [
-    "textarea"
+    "textarea",
+    "button",
+    "field",
+    "label"
   ],
   "root_folder": "textarea",
   "source": "/registry-examples/src/textarea",

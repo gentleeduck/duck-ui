@@ -1,7 +1,13 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
-      "content": "'use client'\n\nimport { NativeAdapter } from '@gentleduck/calendar'\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport * as React from 'react'\n\nconst adapter = new NativeAdapter()\n\nconst BOOKED_DATES = [\n  new Date(2026, 2, 3),\n  new Date(2026, 2, 4),\n  new Date(2026, 2, 10),\n  new Date(2026, 2, 11),\n  new Date(2026, 2, 17),\n  new Date(2026, 2, 24),\n  new Date(2026, 2, 25),\n]\n\nfunction isBooked(date: Date) {\n  return BOOKED_DATES.some((d) => adapter.isSameDay(d, date))\n}\n\nexport default function Demo() {\n  const [date, setDate] = React.useState<Date | null>(null)\n  const now = new Date()\n  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())\n\n  return (\n    <Calendar\n      className=\"rounded-md border shadow-sm\"\n      mode=\"single\"\n      defaultMonth={new Date(2026, 2, 1)}\n      selected={date}\n      onSelect={setDate}\n      disabled={(d) => isBooked(d)}\n      fromDate={today}\n      showDropdowns={false}\n      renderDay={(day, children) => {\n        if (day.isDisabled && isBooked(day.date)) {\n          return <span className=\"text-muted-foreground/40 line-through\">{children}</span>\n        }\n        return children\n      }}\n      renderFooter={() => (\n        <div className=\"flex items-center gap-4 px-0 pt-2 text-muted-foreground text-xs\">\n          <div className=\"flex items-center gap-1.5\">\n            <span className=\"size-2 rounded-full bg-primary\" />\n            Available\n          </div>\n          <div className=\"flex items-center gap-1.5\">\n            <span className=\"size-2 rounded-full bg-muted-foreground/30\" />\n            <span className=\"line-through\">Booked</span>\n          </div>\n        </div>\n      )}\n    />\n  )\n}\n",
+      "content": "'use client'\n\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport * as React from 'react'\n\nconst BOOKED_DAYS = [3, 4, 10, 11, 17, 24, 25]\n\nfunction thisMonthsDates() {\n  const now = new Date()\n  const year = now.getFullYear()\n  const month = now.getMonth()\n  return {\n    today: new Date(year, month, now.getDate()),\n    thisMonth: new Date(year, month, 1),\n    booked: BOOKED_DAYS.map((day) => new Date(year, month, day)),\n  }\n}\n\nexport default function Demo() {\n  const [{ today, thisMonth, booked }] = React.useState(thisMonthsDates)\n  const [date, setDate] = React.useState<Date | null>(null)\n\n  return (\n    <Calendar\n      className=\"rounded-md border shadow-sm\"\n      mode=\"single\"\n      defaultMonth={thisMonth}\n      selected={date}\n      onSelect={setDate}\n      unavailable={booked}\n      fromDate={today}\n      showDropdowns={false}\n      renderFooter={() => (\n        <div className=\"flex items-center gap-4 px-0 pt-2 text-muted-foreground text-xs\">\n          <div className=\"flex items-center gap-1.5\">\n            <span className=\"size-2 rounded-full bg-primary\" />\n            Available\n          </div>\n          <div className=\"flex items-center gap-1.5\">\n            <span className=\"size-2 rounded-full bg-muted-foreground/30\" />\n            <span className=\"line-through\">Booked</span>\n          </div>\n        </div>\n      )}\n    />\n  )\n}\n",
       "path": "calendar/calendar-16.tsx",
       "target": "components/calendar-16.tsx",
       "type": "registry:example"
@@ -9,7 +15,13 @@
   ],
   "name": "calendar-16",
   "registryDependencies": [
-    "calendar"
+    "calendar",
+    "direction",
+    "field",
+    "input",
+    "label",
+    "popover",
+    "switch"
   ],
   "root_folder": "calendar",
   "source": "/registry-examples/src/calendar",

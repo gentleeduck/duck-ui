@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\nimport { ChevronDown, LogOut, Settings, User } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <DropdownMenu>\n      <DropdownMenuTrigger asChild>\n        <Button\n          variant=\"outline\"\n          className=\"data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:ring-2 data-[state=open]:ring-ring\">\n          Account\n          <ChevronDown className=\"ml-2 h-4 w-4 transition-transform data-[state=open]:rotate-180\" />\n        </Button>\n      </DropdownMenuTrigger>\n      <DropdownMenuContent align=\"start\">\n        <DropdownMenuItem>\n          <User className=\"mr-2 h-4 w-4\" />\n          Profile\n        </DropdownMenuItem>\n        <DropdownMenuItem>\n          <Settings className=\"mr-2 h-4 w-4\" />\n          Settings\n        </DropdownMenuItem>\n        <DropdownMenuItem>\n          <LogOut className=\"mr-2 h-4 w-4\" />\n          Sign out\n        </DropdownMenuItem>\n      </DropdownMenuContent>\n    </DropdownMenu>\n  )\n}\n",
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\nimport { ChevronDown, LogOut, Settings, User } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <DropdownMenu>\n      <DropdownMenuTrigger asChild>\n        <Button\n          variant=\"outline\"\n          className=\"data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:ring-2 data-[state=open]:ring-ring\">\n          Account\n          <ChevronDown className=\"ms-2 h-4 w-4 transition-transform data-[state=open]:rotate-180\" />\n        </Button>\n      </DropdownMenuTrigger>\n      <DropdownMenuContent align=\"start\">\n        <DropdownMenuItem>\n          <User className=\"me-2 h-4 w-4\" />\n          Profile\n        </DropdownMenuItem>\n        <DropdownMenuItem>\n          <Settings className=\"me-2 h-4 w-4\" />\n          Settings\n        </DropdownMenuItem>\n        <DropdownMenuItem>\n          <LogOut className=\"me-2 h-4 w-4\" />\n          Sign out\n        </DropdownMenuItem>\n      </DropdownMenuContent>\n    </DropdownMenu>\n  )\n}\n",
       "path": "dropdown-menu/dropdown-menu-5.tsx",
       "target": "components/dropdown-menu-5.tsx",
       "type": "registry:example"
@@ -9,7 +9,12 @@
   ],
   "name": "dropdown-menu-5",
   "registryDependencies": [
-    "dropdown-menu"
+    "dropdown-menu",
+    "button",
+    "dialog",
+    "direction",
+    "label",
+    "switch"
   ],
   "root_folder": "dropdown-menu",
   "source": "/registry-examples/src/dropdown-menu",

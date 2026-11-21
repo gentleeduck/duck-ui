@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "lucide-react"
+  ],
   "files": [
     {
       "content": "import { Alert, AlertDescription, AlertTitle } from '@gentleduck/registry-ui/alert'\nimport { Terminal } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Alert>\n      <Terminal aria-hidden=\"true\" className=\"h-4 w-4\" />\n      <AlertTitle>Heads up!</AlertTitle>\n      <AlertDescription>You can add components to your app using the cli.</AlertDescription>\n    </Alert>\n  )\n}\n",

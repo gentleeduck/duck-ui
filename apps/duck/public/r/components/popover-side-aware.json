@@ -1,4 +1,8 @@
 {
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport * as Popover from '@gentleduck/primitives/popover'\nimport styles from './styles.module.css'\n\nexport default function PopoverSideAwareInternalExample() {\n  return (\n    <Popover.Root>\n      <Popover.Trigger className={styles.trigger}>Open filters</Popover.Trigger>\n      <Popover.Portal>\n        <Popover.Content align=\"start\" className={styles.content} collisionPadding={10} side=\"bottom\" sideOffset={10}>\n          <h4 className={styles.title}>Quick filters</h4>\n          <p className={styles.description}>Uses side, align, offset, and collision padding.</p>\n          <div className={styles.chips}>\n            <span>Recent</span>\n            <span>Assigned</span>\n            <span>Open</span>\n          </div>\n          <Popover.Arrow className={styles.arrow} />\n        </Popover.Content>\n      </Popover.Portal>\n    </Popover.Root>\n  )\n}\n",
@@ -8,9 +12,6 @@
     }
   ],
   "name": "popover-side-aware",
-  "registryDependencies": [
-    "@gentleduck/primitives"
-  ],
   "root_folder": "internal-primitives",
   "source": "/registry-internals/src/internal-primitives",
   "type": "registry:internal"

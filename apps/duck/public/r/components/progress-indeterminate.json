@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Progress from '@gentleduck/primitives/progress'\nimport styles from '../primitives.module.css'\n\nexport default function ProgressIndeterminateExample() {\n  return (\n    <Progress.Root aria-label=\"Connecting\" className={styles.progress} value={null}>\n      <Progress.Indicator className={styles.progressIndicator} />\n    </Progress.Root>\n  )\n}\n",
+      "path": "internal-primitives/progress-indeterminate/progress-indeterminate.tsx",
+      "target": "components/progress-indeterminate.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "progress-indeterminate",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

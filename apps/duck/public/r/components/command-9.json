@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Command,\n  CommandEmpty,\n  CommandInput,\n  CommandItem,\n  CommandList,\n  CommandStatus,\n  useCommandSearch,\n} from '@gentleduck/registry-ui/command'\nimport * as React from 'react'\n\nconst ROW = 32\nconst DRAWN = 14\nconst STATIONS = Array.from({ length: 5000 }, (_, index) => `Station ${String(index + 1).padStart(4, '0')}`)\n\nfunction Stations() {\n  const search = useCommandSearch().trim().toLowerCase()\n  const rows = React.useMemo(() => STATIONS.filter((station) => station.toLowerCase().includes(search)), [search])\n  const [view, setView] = React.useState<HTMLDivElement | null>(null)\n  const [top, setTop] = React.useState(0)\n\n  React.useEffect(() => {\n    if (!view) return\n    const follow = () => setTop(view.scrollTop)\n    view.addEventListener('scroll', follow, { passive: true })\n    return () => view.removeEventListener('scroll', follow)\n  }, [view])\n\n  const virtual = React.useMemo(\n    () => ({\n      count: rows.length,\n      scrollToIndex: (index: number) => {\n        if (!view) return\n        const start = index * ROW\n        if (start < view.scrollTop) view.scrollTop = start\n        else if (start + ROW > view.scrollTop + view.clientHeight) view.scrollTop = start + ROW - view.clientHeight\n        setTop(view.scrollTop)\n      },\n    }),\n    [rows.length, view],\n  )\n\n  const first = Math.max(0, Math.floor(top / ROW) - 2)\n  const drawn = rows.slice(first, first + DRAWN)\n\n  return (\n    <>\n      <CommandList scrollRef={setView} style={{ height: rows.length * ROW, position: 'relative' }} virtual={virtual}>\n        <CommandEmpty>No station found.</CommandEmpty>\n        {drawn.map((station, offset) => (\n          <CommandItem\n            className=\"absolute inset-x-0\"\n            index={first + offset}\n            key={station}\n            style={{ height: ROW, top: (first + offset) * ROW }}\n            value={station}>\n            {station}\n          </CommandItem>\n        ))}\n      </CommandList>\n      <CommandStatus className=\"not-sr-only border-t px-3 py-2 text-muted-foreground text-xs\">\n        {(count) => `${count.toLocaleString()} stations, ${drawn.length} drawn`}\n      </CommandStatus>\n    </>\n  )\n}\n\nexport default function Demo() {\n  return (\n    <Command className=\"h-fit w-80 border pt-0\" shouldFilter={false}>\n      <CommandInput placeholder=\"Search 5,000 stations...\" />\n      <Stations />\n    </Command>\n  )\n}\n",
+      "path": "command/command-9.tsx",
+      "target": "components/command-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "command-9",
+  "registryDependencies": [
+    "command",
+    "button"
+  ],
+  "root_folder": "command",
+  "source": "/registry-examples/src/command",
+  "type": "registry:example"
+}

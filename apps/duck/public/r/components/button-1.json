@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "sonner"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { CommandShortcut } from '@gentleduck/registry-ui/command'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\nimport { ArrowBigUpDash, Command } from 'lucide-react'\nimport React from 'react'\nimport { toast } from 'sonner'\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState<boolean>(false)\n\n  return (\n    <TooltipProvider>\n      <Tooltip>\n        <TooltipTrigger asChild>\n          <Button\n            aria-expanded={open}\n            aria-label={'advanced button'}\n            icon={<ArrowBigUpDash />}\n            isCollapsed={open}\n            loading={false}\n            onClick={() => setOpen((prev) => !prev)}\n            size=\"default\">\n            Button\n          </Button>\n        </TooltipTrigger>\n        <TooltipContent forceMount side=\"top\" className=\"flex items-center gap-2\">\n          <CommandShortcut\n            keys=\"mod+i\"\n            onKeysPressed={() => {\n              setOpen((prev) => !prev)\n              toast.success('Advanced button')\n            }}\n            variant=\"secondary\">\n            <Command />\n            +i\n          </CommandShortcut>\n          <p>Advanced button</p>\n        </TooltipContent>\n      </Tooltip>\n    </TooltipProvider>\n  )\n}\n",
@@ -9,7 +12,11 @@
   ],
   "name": "button-1",
   "registryDependencies": [
-    "button"
+    "button",
+    "command",
+    "direction",
+    "toggle",
+    "tooltip"
   ],
   "root_folder": "button",
   "source": "/registry-examples/src/button",

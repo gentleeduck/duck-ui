@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@gentleduck/hooks"
+  ],
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { Kbd, KbdGroup } from '@gentleduck/registry-ui/kbd'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\nimport { Save } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <TooltipProvider>\n      <Tooltip>\n        <TooltipTrigger asChild>\n          <Button aria-label=\"Save\" size=\"icon\" variant=\"outline\">\n            <Save aria-hidden=\"true\" />\n          </Button>\n        </TooltipTrigger>\n        <TooltipContent aria-label=\"Command S\" className=\"flex items-center gap-2\">\n          Save\n          <KbdGroup>\n            <Kbd>⌘</Kbd>\n            <Kbd>S</Kbd>\n          </KbdGroup>\n        </TooltipContent>\n      </Tooltip>\n    </TooltipProvider>\n  )\n}\n",
+      "path": "tooltip/tooltip-12.tsx",
+      "target": "components/tooltip-12.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "tooltip-12",
+  "registryDependencies": [
+    "tooltip",
+    "button",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "toggle"
+  ],
+  "root_folder": "tooltip",
+  "source": "/registry-examples/src/tooltip",
+  "type": "registry:example"
+}

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as RadioGroup from '@gentleduck/primitives/radio-group'\nimport styles from '../primitives.module.css'\n\nexport default function RadioGroupHorizontalExample() {\n  return (\n    <RadioGroup.Root\n      aria-label=\"Size\"\n      className={styles.choices}\n      defaultValue=\"m\"\n      loop={false}\n      orientation=\"horizontal\">\n      {['s', 'm', 'l', 'xl'].map((value) => (\n        <div className={styles.choice} key={value}>\n          <RadioGroup.Item className={styles.radio} id={`size-${value}`} value={value}>\n            <RadioGroup.Indicator className={styles.dot} />\n          </RadioGroup.Item>\n          <label htmlFor={`size-${value}`}>{value.toUpperCase()}</label>\n        </div>\n      ))}\n    </RadioGroup.Root>\n  )\n}\n",
+      "path": "internal-primitives/radio-group-horizontal/radio-group-horizontal.tsx",
+      "target": "components/radio-group-horizontal.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "radio-group-horizontal",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

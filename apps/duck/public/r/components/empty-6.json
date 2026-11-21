@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "@tabler/icons-react"
+  ],
   "files": [
     {
       "content": "import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@gentleduck/registry-ui/empty'\nimport { InputGroup, InputGroupAddon, InputGroupInput } from '@gentleduck/registry-ui/input-group'\nimport { Kbd } from '@gentleduck/registry-ui/kbd'\nimport { SearchIcon } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Empty>\n      <EmptyHeader>\n        <EmptyTitle>No Results Found</EmptyTitle>\n        <EmptyDescription>\n          We could not find anything matching your query. Try a different search term below.\n        </EmptyDescription>\n      </EmptyHeader>\n      <EmptyContent>\n        <InputGroup className=\"sm:w-3/4\">\n          <InputGroupInput placeholder=\"Search for something else...\" />\n          <InputGroupAddon>\n            <SearchIcon />\n          </InputGroupAddon>\n          <InputGroupAddon align=\"inline-end\">\n            <Kbd>/</Kbd>\n          </InputGroupAddon>\n        </InputGroup>\n        <EmptyDescription>\n          {/* biome-ignore lint/a11y/useValidAnchor: placeholder href in demo component */}\n          Still stuck? <a href=\"#\">Browse all categories</a>\n        </EmptyDescription>\n      </EmptyContent>\n    </Empty>\n  )\n}\n",
@@ -9,7 +12,11 @@
   ],
   "name": "empty-6",
   "registryDependencies": [
-    "empty"
+    "empty",
+    "avatar",
+    "button",
+    "input-group",
+    "kbd"
   ],
   "root_folder": "empty",
   "source": "/registry-examples/src/empty",

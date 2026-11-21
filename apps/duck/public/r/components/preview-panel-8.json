@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { PreviewPanel, type PreviewPanelState } from '@gentleduck/registry-ui/preview-panel'\nimport * as React from 'react'\n\nconst PHOTO = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&q=80'\n\nexport default function Demo() {\n  const [view, setView] = React.useState<PreviewPanelState>({ x: 0, y: 0, zoom: 1 })\n\n  return (\n    <div className=\"grid w-full gap-4 sm:grid-cols-2\">\n      {(['Before', 'After'] as const).map((side) => (\n        <figure className=\"flex flex-col gap-2\" key={side}>\n          <PreviewPanel\n            className=\"rounded-lg border bg-card\"\n            maxHeight=\"280px\"\n            onStateChange={setView}\n            syncState={view}>\n            {/* biome-ignore lint/performance/noImgElement: example component demonstrating PreviewPanel with a plain img */}\n            <img\n              alt={`Landscape, ${side.toLowerCase()} the edit`}\n              className={side === 'Before' ? 'max-w-[320px] rounded-md grayscale' : 'max-w-[320px] rounded-md'}\n              draggable={false}\n              src={PHOTO}\n            />\n          </PreviewPanel>\n          <figcaption className=\"text-muted-foreground text-sm\">\n            {side}, at {Math.round(view.zoom * 100)}%\n          </figcaption>\n        </figure>\n      ))}\n    </div>\n  )\n}\n",
+      "path": "preview-panel/preview-panel-8.tsx",
+      "target": "components/preview-panel-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "preview-panel-8",
+  "registryDependencies": [
+    "preview-panel"
+  ],
+  "root_folder": "preview-panel",
+  "source": "/registry-examples/src/preview-panel",
+  "type": "registry:example"
+}

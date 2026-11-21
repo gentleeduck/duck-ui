@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Menubar from '@gentleduck/primitives/menubar'\nimport styles from '../primitives.module.css'\n\nexport default function MenubarVerticalExample() {\n  return (\n    <Menubar.Root className={styles.menubar} orientation=\"vertical\" style={{ flexDirection: 'column' }}>\n      {['Projects', 'Team', 'Settings'].map((menu) => (\n        <Menubar.Menu key={menu} value={menu}>\n          <Menubar.Trigger className={styles.menubarTrigger}>{menu}</Menubar.Trigger>\n          <Menubar.Portal>\n            <Menubar.Content className={styles.content} sideOffset={6}>\n              <Menubar.Item className={styles.item}>Open {menu.toLowerCase()}</Menubar.Item>\n              <Menubar.Item className={styles.item}>Manage</Menubar.Item>\n            </Menubar.Content>\n          </Menubar.Portal>\n        </Menubar.Menu>\n      ))}\n    </Menubar.Root>\n  )\n}\n",
+      "path": "internal-primitives/menubar-vertical/menubar-vertical.tsx",
+      "target": "components/menubar-vertical.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "menubar-vertical",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

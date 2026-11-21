@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Accordion from '@gentleduck/primitives/accordion'\nimport styles from '../primitives.module.css'\n\nexport default function AccordionHiddenUntilFoundExample() {\n  return (\n    <div className={styles.stack}>\n      <Accordion.Root className={styles.disclosure} collapsible type=\"single\">\n        <Accordion.Item className={styles.disclosureItem} value=\"rivers\">\n          <Accordion.Header className={styles.disclosureHeader}>\n            <Accordion.Trigger className={styles.disclosureTrigger}>Rivers</Accordion.Trigger>\n          </Accordion.Header>\n          <Accordion.Content className={styles.disclosureContent} hiddenUntilFound>\n            <div>An otter can hold its breath for eight minutes.</div>\n          </Accordion.Content>\n        </Accordion.Item>\n        <Accordion.Item className={styles.disclosureItem} value=\"forests\">\n          <Accordion.Header className={styles.disclosureHeader}>\n            <Accordion.Trigger className={styles.disclosureTrigger}>Forests</Accordion.Trigger>\n          </Accordion.Header>\n          <Accordion.Content className={styles.disclosureContent} hiddenUntilFound>\n            <div>A red squirrel buries thousands of seeds each autumn.</div>\n          </Accordion.Content>\n        </Accordion.Item>\n      </Accordion.Root>\n      <p className={styles.note}>Search the page for \"otter\" and the browser opens the item that holds it.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/accordion-hidden-until-found/accordion-hidden-until-found.tsx",
+      "target": "components/accordion-hidden-until-found.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "accordion-hidden-until-found",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

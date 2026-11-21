@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@gentleduck/hooks"
+  ],
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\n\nconst SIDES = [\n  { label: 'Top', side: 'top' },\n  { label: 'Right', side: 'right' },\n  { label: 'Bottom', side: 'bottom' },\n  { label: 'Left', side: 'left' },\n] as const\n\nexport default function Demo() {\n  return (\n    <TooltipProvider>\n      <div className=\"flex flex-wrap gap-2\">\n        {SIDES.map(({ label, side }) => (\n          <Tooltip key={side}>\n            <TooltipTrigger asChild>\n              <Button variant=\"outline\">{label}</Button>\n            </TooltipTrigger>\n            <TooltipContent side={side}>Opens on the {side}</TooltipContent>\n          </Tooltip>\n        ))}\n      </div>\n    </TooltipProvider>\n  )\n}\n",
+      "path": "tooltip/tooltip-9.tsx",
+      "target": "components/tooltip-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "tooltip-9",
+  "registryDependencies": [
+    "tooltip",
+    "button",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "toggle"
+  ],
+  "root_folder": "tooltip",
+  "source": "/registry-examples/src/tooltip",
+  "type": "registry:example"
+}

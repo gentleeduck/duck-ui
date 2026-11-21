@@ -115,6 +115,48 @@ export default function Demo() {
 }
 ```
 
+### Invalid and Warning
+
+Set `aria-invalid="true"` to draw the input in the destructive colour, or `aria-warning="true"` for the warning colour, for a value that is allowed but worth a second look. Point `aria-describedby` at the message so a screen reader reads it too.
+
+```tsx title="components/input-10.tsx"
+// import from your project: import Demo from '@/components/input-10'
+import { Input } from '@gentleduck/registry-ui/input'
+import { Label } from '@gentleduck/registry-ui/label'
+
+export default function Demo() {
+  return (
+    <div className="grid w-full max-w-sm gap-6">
+      <div className="grid gap-2">
+        <Label htmlFor="email-invalid-r4k">Email</Label>
+        <Input
+          aria-describedby="email-invalid-r4k-error"
+          aria-invalid="true"
+          defaultValue="duck@"
+          id="email-invalid-r4k"
+        />
+        <p className="text-destructive text-sm" id="email-invalid-r4k-error">
+          Enter the whole address.
+        </p>
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="password-warning-n8j">Password</Label>
+        <Input
+          aria-describedby="password-warning-n8j-hint"
+          aria-warning="true"
+          defaultValue="quackquack"
+          id="password-warning-n8j"
+          type="password"
+        />
+        <p className="text-sm text-warning" id="password-warning-n8j-hint">
+          This password is allowed, but easy to guess.
+        </p>
+      </div>
+    </div>
+  )
+}
+```
+
 ### Form
 
 ```tsx title="components/input-7.tsx"
@@ -228,14 +270,16 @@ A styled `<input>` element that accepts all standard HTML input attributes.
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `type` | `React.HTMLInputTypeAttribute` | `--` | The HTML input type (e.g., `'text'`, `'password'`, `'email'`, `'file'`). Browsers default to `'text'`. |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
+| `dir` | `'ltr' \| 'rtl' \| 'auto'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). `'auto'` is kept as it is, so the text typed decides |
 | `className` | `string` | `--` | Additional CSS classes to apply |
 | `ref` | `React.Ref<HTMLInputElement>` | `--` | Ref forwarded to the underlying `<input>` element |
+| `aria-invalid` | `boolean \| 'true' \| 'false'` | - | Draws the border, text and ring in the destructive colour. |
+| `aria-warning` | `'true'` | - | Draws the border, text and ring in the warning colour. Not an ARIA attribute, so describe the warning with `aria-describedby` as well. |
 | `...props` | `React.HTMLProps<HTMLInputElement>` | - | Additional props to spread to the input element |
 
 ### MotionInput
 
-Same props as `Input` plus an optional `index` prop for stagger delay (50ms per index). Adds a `scaleIn` entrance animation (fade, scale, and blur) with a bouncy spring transition. Requires the `motion` package.
+Same props as `Input` plus an optional `index` prop for stagger delay (50ms per index), which stays off the `<input>`. Adds a `scaleIn` entrance animation (fade, scale, and blur) with a bouncy spring transition. Requires the `motion` package.
 
 ## See also
 

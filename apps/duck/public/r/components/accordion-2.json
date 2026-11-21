@@ -9,7 +9,8 @@
   ],
   "name": "accordion-2",
   "registryDependencies": [
-    "accordion"
+    "accordion",
+    "direction"
   ],
   "root_folder": "accordion",
   "source": "/registry-examples/src/accordion",

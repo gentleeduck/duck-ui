@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  MotionTypographyH4,\n  MotionTypographyLarge,\n  MotionTypographyList,\n  MotionTypographyListItem,\n  MotionTypographySmall,\n} from '@gentleduck/registry-ui/typography'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex max-w-md flex-col gap-3\">\n      <MotionTypographyH4>Release 2.4</MotionTypographyH4>\n      <MotionTypographyLarge>Faster startup, smaller bundles.</MotionTypographyLarge>\n      <MotionTypographyList>\n        <MotionTypographyListItem>Cold start down by 30%</MotionTypographyListItem>\n        <MotionTypographyListItem>Twelve fewer dependencies</MotionTypographyListItem>\n      </MotionTypographyList>\n      <MotionTypographySmall>Each part animates in as it mounts.</MotionTypographySmall>\n    </div>\n  )\n}\n",
+      "path": "typography/typography-19.tsx",
+      "target": "components/typography-19.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "typography-19",
+  "registryDependencies": [
+    "typography",
+    "direction"
+  ],
+  "root_folder": "typography",
+  "source": "/registry-examples/src/typography",
+  "type": "registry:example"
+}

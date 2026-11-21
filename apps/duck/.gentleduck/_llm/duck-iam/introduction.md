@@ -189,4 +189,4 @@ routed to the `onPolicyError` hook rather than taking down every check.
 
 ## Contributing
 
-Issues and pull requests go to the [GitHub repository](https://github.com/gentleeduck/duck-iam). Security disclosures follow the process in the package's `SECURITY.md`.
+Issues and pull requests go to the [GitHub repository](https://github.com/gentleeduck/duck-iam). Report a vulnerability [privately on GitHub](https://github.com/gentleeduck/duck-iam/security/advisories/new), not in an issue; the process is in the package's `SECURITY.md`.

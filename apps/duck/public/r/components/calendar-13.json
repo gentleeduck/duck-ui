@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport type { Selection } from '@gentleduck/calendar'\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [ranges, setRanges] = React.useState<Selection.DateRange<Date>[]>([])\n\n  return (\n    <div className=\"space-y-4\">\n      <Calendar\n        className=\"rounded-md border shadow-sm\"\n        mode=\"multi-range\"\n        selected={ranges}\n        onSelect={setRanges}\n        showDropdowns={false}\n      />\n      <div className=\"space-y-1 px-1\">\n        <p className=\"font-medium text-sm\">\n          {ranges.filter((r) => r.to !== null).length} range\n          {ranges.filter((r) => r.to !== null).length !== 1 ? 's' : ''} selected\n        </p>\n        {ranges\n          .filter((r) => r.to !== null)\n          .map((r, i) => (\n            <div key={r.from.getTime()} className=\"flex items-center gap-2 text-muted-foreground text-sm\">\n              <span>\n                {r.from.toLocaleDateString()} - {r.to?.toLocaleDateString()}\n              </span>\n              <button\n                type=\"button\"\n                className=\"text-destructive text-xs hover:underline\"\n                onClick={() => setRanges((prev) => prev.filter((_, j) => j !== i))}>\n                remove\n              </button>\n            </div>\n          ))}\n      </div>\n    </div>\n  )\n}\n",
@@ -9,7 +15,13 @@
   ],
   "name": "calendar-13",
   "registryDependencies": [
-    "calendar"
+    "calendar",
+    "direction",
+    "field",
+    "input",
+    "label",
+    "popover",
+    "switch"
   ],
   "root_folder": "calendar",
   "source": "/registry-examples/src/calendar",

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Accordion from '@gentleduck/primitives/accordion'\nimport styles from '../primitives.module.css'\n\nconst SECTIONS = ['Account', 'Billing', 'Notifications']\n\nexport default function AccordionMultipleExample() {\n  return (\n    <Accordion.Root className={styles.disclosure} defaultValue={['Account', 'Notifications']} type=\"multiple\">\n      {SECTIONS.map((section) => (\n        <Accordion.Item className={styles.disclosureItem} key={section} value={section}>\n          <Accordion.Header className={styles.disclosureHeader}>\n            <Accordion.Trigger className={styles.disclosureTrigger}>\n              {section}\n              <Accordion.Indicator className={styles.chevron}>v</Accordion.Indicator>\n            </Accordion.Trigger>\n          </Accordion.Header>\n          <Accordion.Content className={`${styles.disclosureContent} ${styles.animated}`}>\n            <div>Settings for {section.toLowerCase()}, open beside the others.</div>\n          </Accordion.Content>\n        </Accordion.Item>\n      ))}\n    </Accordion.Root>\n  )\n}\n",
+      "path": "internal-primitives/accordion-multiple/accordion-multiple.tsx",
+      "target": "components/accordion-multiple.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "accordion-multiple",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

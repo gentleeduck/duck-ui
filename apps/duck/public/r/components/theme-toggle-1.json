@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "next-themes"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { MoonIcon, SunIcon } from 'lucide-react'\nimport { useTheme } from 'next-themes'\nimport React from 'react'\n\nexport default function Demo() {\n  const { setTheme, resolvedTheme } = useTheme()\n\n  const toggleTheme = React.useCallback(() => {\n    const color = resolvedTheme === 'dark' ? 'light' : 'dark'\n    setTheme(color)\n  }, [resolvedTheme, setTheme])\n\n  return (\n    <Button\n      aria-label=\"toggle theme\"\n      className=\"group/toggle\"\n      icon={\n        <>\n          <SunIcon className=\"hidden [html.dark_&]:block\" />\n          <MoonIcon className=\"hidden [html.light_&]:block\" />\n        </>\n      }\n      onClick={toggleTheme}\n      size={'icon'}\n      variant=\"ghost\"\n    />\n  )\n}\n",
@@ -8,7 +11,9 @@
     }
   ],
   "name": "theme-toggle-1",
-  "registryDependencies": [],
+  "registryDependencies": [
+    "button"
+  ],
   "root_folder": "theme-toggle",
   "source": "/registry-examples/src/theme-toggle",
   "type": "registry:example"

@@ -357,6 +357,37 @@ export default function Demo() {
 }
 ```
 
+### Text
+
+`ButtonGroupText` puts a prefix, a suffix or a label in line with the buttons and inputs. With `asChild` it draws on the element you give it, here a `Label` that names the input.
+
+```tsx title="components/button-group-14.tsx"
+// import from your project: import Demo from '@/components/button-group-14'
+import { Button } from '@gentleduck/registry-ui/button'
+import { ButtonGroup, ButtonGroupText } from '@gentleduck/registry-ui/button-group'
+import { Input } from '@gentleduck/registry-ui/input'
+import { Label } from '@gentleduck/registry-ui/label'
+
+export default function Demo() {
+  return (
+    <div className="flex flex-col gap-4">
+      <ButtonGroup>
+        <ButtonGroupText>https://</ButtonGroupText>
+        <Input aria-label="Site address" placeholder="duck.example" />
+        <ButtonGroupText>.com</ButtonGroupText>
+      </ButtonGroup>
+      <ButtonGroup>
+        <ButtonGroupText asChild>
+          <Label htmlFor="pond-name">Pond</Label>
+        </ButtonGroupText>
+        <Input id="pond-name" placeholder="Mill pond" />
+        <Button variant="outline">Save</Button>
+      </ButtonGroup>
+    </div>
+  )
+}
+```
+
 ### Input Group
 
 Wrap an `InputGroup` component to create complex input layouts.
@@ -448,7 +479,7 @@ export default function Demo() {
       <Button variant="outline">Follow</Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button aria-label="More options" className="!pl-2" variant="outline">
+          <Button aria-label="More options" className="!ps-2" variant="outline">
             <ChevronDownIcon aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>

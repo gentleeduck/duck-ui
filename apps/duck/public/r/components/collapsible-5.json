@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@gentleduck/registry-ui/collapsible'\nimport { ChevronsUpDown } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Collapsible className=\"w-80 space-y-2\" defaultOpen>\n      <div className=\"flex items-center justify-between\">\n        <h4 className=\"font-semibold text-sm\">Release notes</h4>\n        <CollapsibleTrigger asChild>\n          <Button size=\"sm\" variant=\"ghost\">\n            <ChevronsUpDown className=\"h-4 w-4\" />\n            <span className=\"sr-only\">Toggle release notes</span>\n          </Button>\n        </CollapsibleTrigger>\n      </div>\n      <CollapsibleContent className=\"space-y-1 text-muted-foreground text-sm\">\n        <p>Command takes a fuzzy filter and a result limit.</p>\n        <p>Calendar pages every month it shows.</p>\n      </CollapsibleContent>\n    </Collapsible>\n  )\n}\n",
+      "path": "collapsible/collapsible-5.tsx",
+      "target": "components/collapsible-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "collapsible-5",
+  "registryDependencies": [
+    "collapsible"
+  ],
+  "root_folder": "collapsible",
+  "source": "/registry-examples/src/collapsible",
+  "type": "registry:example"
+}

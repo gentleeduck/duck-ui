@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as RadioGroup from '@gentleduck/primitives/radio-group'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function RadioGroupFormExample() {\n  const [sent, setSent] = React.useState('')\n\n  return (\n    <form\n      className={styles.stack}\n      onSubmit={(event) => {\n        event.preventDefault()\n        setSent(String(new FormData(event.currentTarget).get('plan')))\n      }}>\n      <RadioGroup.Root aria-label=\"Plan\" className={styles.choices} name=\"plan\" required>\n        {['free', 'pro', 'team'].map((value) => (\n          <div className={styles.choice} key={value}>\n            <RadioGroup.Item className={styles.radio} id={`plan-${value}`} value={value}>\n              <RadioGroup.Indicator className={styles.dot} />\n            </RadioGroup.Item>\n            <label htmlFor={`plan-${value}`}>{value}</label>\n          </div>\n        ))}\n      </RadioGroup.Root>\n      <div className={styles.row}>\n        <button className={`${styles.button} ${styles.primary}`} type=\"submit\">\n          Continue\n        </button>\n        <button className={styles.button} type=\"reset\">\n          Reset\n        </button>\n      </div>\n      <p className={styles.note}>\n        {sent ? `Submitted plan=${sent}` : 'required refuses to submit with nothing picked.'}\n      </p>\n    </form>\n  )\n}\n",
+      "path": "internal-primitives/radio-group-form/radio-group-form.tsx",
+      "target": "components/radio-group-form.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "radio-group-form",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

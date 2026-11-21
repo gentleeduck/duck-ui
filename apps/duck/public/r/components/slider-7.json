@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Slider } from '@gentleduck/registry-ui/slider'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const id = React.useId()\n  const [zoom, setZoom] = React.useState([100])\n  const [saved, setSaved] = React.useState([100])\n\n  return (\n    <div className=\"mx-auto flex w-full max-w-xs flex-col gap-3\">\n      <div className=\"flex items-center justify-between text-sm\">\n        <span className=\"font-medium\" id={id}>\n          Zoom\n        </span>\n        <span className=\"text-muted-foreground tabular-nums\">{zoom[0]}%</span>\n      </div>\n      <Slider\n        aria-labelledby={id}\n        largeStep={50}\n        max={200}\n        min={50}\n        onValueChange={setZoom}\n        onValueCommit={setSaved}\n        step={10}\n        value={zoom}\n      />\n      <p className=\"text-muted-foreground text-xs\">\n        Saved at {saved[0]}%. Page Up and Page Down move 50, Home and End go to the ends.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "slider/slider-7.tsx",
+      "target": "components/slider-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "slider-7",
+  "registryDependencies": [
+    "slider",
+    "button",
+    "direction"
+  ],
+  "root_folder": "slider",
+  "source": "/registry-examples/src/slider",
+  "type": "registry:example"
+}

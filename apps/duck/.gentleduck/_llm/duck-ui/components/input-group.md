@@ -33,7 +33,7 @@ export default function Demo() {
           <InputGroupAddon align="inline-end">24 entries</InputGroupAddon>
         </InputGroup>
         <InputGroup>
-          <InputGroupInput className="!pl-1" placeholder="github.com/acme/repo" />
+          <InputGroupInput className="!ps-1" placeholder="github.com/acme/repo" />
           <InputGroupAddon>
             <InputGroupText>git clone </InputGroupText>
           </InputGroupAddon>
@@ -64,7 +64,7 @@ export default function Demo() {
                 <DropdownMenuItem>High</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <InputGroupText className="ml-auto">3 attachments</InputGroupText>
+            <InputGroupText className="ms-auto">3 attachments</InputGroupText>
             <Separator className="!h-4" orientation="vertical" />
             <InputGroupButton className="rounded-full" disabled size="icon-xs" variant="default">
               <ArrowUpIcon aria-hidden="true" />
@@ -212,7 +212,7 @@ export default function Demo() {
         <InputGroupAddon>
           <InputGroupText>EUR</InputGroupText>
         </InputGroupAddon>
-        <InputGroupInput className="!pl-0.5" placeholder="0.00" />
+        <InputGroupInput className="!ps-0.5" placeholder="0.00" />
         <InputGroupAddon align="inline-end">
           <InputGroupText>.00</InputGroupText>
         </InputGroupAddon>
@@ -221,7 +221,7 @@ export default function Demo() {
         <InputGroupAddon>
           <InputGroupText>@</InputGroupText>
         </InputGroupAddon>
-        <InputGroupInput className="!pl-0.5" placeholder="handle" />
+        <InputGroupInput className="!ps-0.5" placeholder="handle" />
       </InputGroup>
       <InputGroup>
         <InputGroupTextarea placeholder="Write release notes..." />
@@ -282,7 +282,7 @@ export default function Demo() {
             <p>Connection to this site is encrypted and verified.</p>
           </PopoverContent>
         </Popover>
-        <InputGroupAddon className="pl-1.5 text-muted-foreground">https://</InputGroupAddon>
+        <InputGroupAddon className="ps-1.5 text-muted-foreground">https://</InputGroupAddon>
         <InputGroupInput id="input-secure-19" />
         <InputGroupAddon align="inline-end">
           <InputGroupButton
@@ -399,7 +399,7 @@ export default function Demo() {
         />
         <InputGroupAddon align="block-end" className="border-t">
           <InputGroupText>Row 1, Col 1</InputGroupText>
-          <InputGroupButton className="ml-auto" size="sm" variant="default">
+          <InputGroupButton className="ms-auto" size="sm" variant="default">
             Execute <IconCornerDownLeft />
           </InputGroupButton>
         </InputGroupAddon>
@@ -408,7 +408,7 @@ export default function Demo() {
             <IconDatabase />
             production.sql
           </InputGroupText>
-          <InputGroupButton aria-label="Refresh" className="ml-auto" size="icon-xs">
+          <InputGroupButton aria-label="Refresh" className="ms-auto" size="icon-xs">
             <IconRefresh aria-hidden="true" />
           </InputGroupButton>
           <InputGroupButton aria-label="Copy" size="icon-xs" variant="ghost">
@@ -501,7 +501,7 @@ export default function Demo() {
             </Label>
             <Tooltip>
               <TooltipTrigger asChild>
-                <InputGroupButton aria-label="Help" className="ml-auto rounded-full" size="icon-xs" variant="ghost">
+                <InputGroupButton aria-label="Help" className="ms-auto rounded-full" size="icon-xs" variant="ghost">
                   <InfoIcon />
                 </InputGroupButton>
               </TooltipTrigger>
@@ -557,7 +557,7 @@ export default function Demo() {
         <InputGroupAddon align="inline-end">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <InputGroupButton className="!pr-1.5 text-xs" variant="ghost">
+              <InputGroupButton className="!pe-1.5 text-xs" variant="ghost">
                 Scope... <ChevronDownIcon className="size-3" />
               </InputGroupButton>
             </DropdownMenuTrigger>
@@ -604,9 +604,67 @@ export default function Demo() {
 }
 ```
 
+### Kbd
+
+A `Kbd` in an addon sits closer to the edge, as a button does.
+
+```tsx title="components/input-group-14.tsx"
+// import from your project: import Demo from '@/components/input-group-14'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@gentleduck/registry-ui/input-group'
+import { Kbd } from '@gentleduck/registry-ui/kbd'
+import { Search } from 'lucide-react'
+
+export default function Demo() {
+  return (
+    <div className="grid w-full max-w-sm gap-6">
+      <InputGroup>
+        <InputGroupInput aria-label="Search" placeholder="Search..." />
+        <InputGroupAddon>
+          <Search aria-hidden="true" />
+        </InputGroupAddon>
+        <InputGroupAddon align="inline-end">
+          <Kbd>/</Kbd>
+        </InputGroupAddon>
+      </InputGroup>
+    </div>
+  )
+}
+```
+
+### Invalid
+
+Set `aria-invalid` on the control, and the whole group draws its border in the destructive colour.
+
+```tsx title="components/input-group-15.tsx"
+// import from your project: import Demo from '@/components/input-group-15'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@gentleduck/registry-ui/input-group'
+import { AtSign } from 'lucide-react'
+
+export default function Demo() {
+  return (
+    <div className="grid w-full max-w-sm gap-2">
+      <InputGroup>
+        <InputGroupInput
+          aria-describedby="handle-error-q2w"
+          aria-invalid="true"
+          aria-label="Handle"
+          defaultValue="mill pond"
+        />
+        <InputGroupAddon>
+          <AtSign aria-hidden="true" />
+        </InputGroupAddon>
+      </InputGroup>
+      <p className="text-destructive text-sm" id="handle-error-q2w">
+        A handle has no spaces.
+      </p>
+    </div>
+  )
+}
+```
+
 ### Custom Input
 
-Add the `data-slot="input-group-control"` attribute to your custom input for automatic behavior and focus state handling.
+Add the `data-slot="input-group-control"` attribute to your custom input for automatic behavior and focus state handling: the group draws its focus ring, and a click on an addon focuses the input.
 
 No style is applied to the custom input. Apply your own styles using the `className` prop.
 
@@ -627,7 +685,7 @@ export default function Demo() {
           placeholder="Share your feedback..."
         />
         <InputGroupAddon align="block-end">
-          <InputGroupButton className="ml-auto" size="sm" variant="default">
+          <InputGroupButton className="ms-auto" size="sm" variant="default">
             Send
           </InputGroupButton>
         </InputGroupAddon>
@@ -825,7 +883,7 @@ The root container that wraps inputs and addons into a unified group with shared
 
 ### InputGroupAddon
 
-Displays icons, text, buttons, or other content alongside inputs.
+Displays icons, text, buttons, or other content alongside inputs. A click on the addon, outside a button in it, focuses the group's control: the element marked `data-slot="input-group-control"`, or else its `input`.
 
 } title="Focus Navigation">
   For proper focus navigation, the `InputGroupAddon` component should be placed
@@ -834,6 +892,7 @@ Displays icons, text, buttons, or other content alongside inputs.
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `align` | `'inline-start' \| 'inline-end' \| 'block-start' \| 'block-end'` | `'inline-start'` | Position of the addon relative to the input. Use `inline-start`/`inline-end` with `InputGroupInput` and `block-start`/`block-end` with `InputGroupTextarea`. |
+| `onClick` | `React.MouseEventHandler<HTMLDivElement>` | - | Runs before the addon focuses the group's control. Call `event.preventDefault()` to keep the focus where it is. |
 | `className` | `string` | `--` | Additional CSS classes to apply |
 | `children` | `React.ReactNode` | `--` | Icons, text, buttons, or other content |
 | `...props` | `React.HTMLProps<HTMLDivElement>` | - | Additional props to spread to the content div |

@@ -1,4 +1,8 @@
 {
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport * as Dialog from '@gentleduck/primitives/dialog'\nimport * as React from 'react'\nimport styles from './styles.module.css'\n\nexport default function DialogGuardedAsyncInternalExample() {\n  const [open, setOpen] = React.useState(false)\n  const [busy, setBusy] = React.useState(false)\n\n  async function onConfirm() {\n    try {\n      setBusy(true)\n      await new Promise((resolve) => setTimeout(resolve, 800))\n      setOpen(false)\n    } finally {\n      setBusy(false)\n    }\n  }\n\n  return (\n    <Dialog.Root open={open} onOpenChange={setOpen}>\n      <Dialog.Trigger className={styles.trigger}>Delete project</Dialog.Trigger>\n      <Dialog.Portal>\n        <Dialog.Overlay className={styles.overlay} />\n        <Dialog.Content\n          className={styles.content}\n          onEscapeKeyDown={(event) => {\n            if (busy) event.preventDefault()\n          }}\n          onInteractOutside={(event) => {\n            if (busy) event.preventDefault()\n          }}>\n          <Dialog.Title className={styles.title}>Delete project?</Dialog.Title>\n          <Dialog.Description className={styles.description}>This action cannot be undone.</Dialog.Description>\n          <div className={styles.actions}>\n            <Dialog.Close asChild>\n              <button className={styles.secondary} disabled={busy} type=\"button\">\n                Cancel\n              </button>\n            </Dialog.Close>\n            <button className={styles.danger} disabled={busy} onClick={onConfirm} type=\"button\">\n              {busy ? 'Deleting...' : 'Delete'}\n            </button>\n          </div>\n        </Dialog.Content>\n      </Dialog.Portal>\n    </Dialog.Root>\n  )\n}\n",
@@ -8,9 +12,6 @@
     }
   ],
   "name": "dialog-guarded-async",
-  "registryDependencies": [
-    "@gentleduck/primitives"
-  ],
   "root_folder": "internal-primitives",
   "source": "/registry-internals/src/internal-primitives",
   "type": "registry:internal"

@@ -1,7 +1,13 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
-      "content": "'use client'\nimport { InputOTP, InputOTPGroup, InputOTPSlot, REGEXP_ONLY_DIGITS } from '@gentleduck/registry-ui/input-otp'\n\nexport default function Demo() {\n  return (\n    <InputOTP maxLength={6} pattern={REGEXP_ONLY_DIGITS}>\n      <InputOTPGroup>\n        <InputOTPSlot />\n        <InputOTPSlot />\n        <InputOTPSlot />\n        <InputOTPSlot />\n        <InputOTPSlot />\n        <InputOTPSlot />\n      </InputOTPGroup>\n    </InputOTP>\n  )\n}\n",
+      "content": "'use client'\nimport { InputOTP, InputOTPGroup, InputOTPSlot, REGEXP_ONLY_DIGITS } from '@gentleduck/registry-ui/input-otp'\n\nexport default function Demo() {\n  return (\n    <InputOTP aria-label=\"One-time code\" maxLength={6} pattern={REGEXP_ONLY_DIGITS}>\n      <InputOTPGroup>\n        <InputOTPSlot />\n        <InputOTPSlot />\n        <InputOTPSlot />\n        <InputOTPSlot />\n        <InputOTPSlot />\n        <InputOTPSlot />\n      </InputOTPGroup>\n    </InputOTP>\n  )\n}\n",
       "path": "input-otp/input-otp-2.tsx",
       "target": "components/input-otp-2.tsx",
       "type": "registry:example"

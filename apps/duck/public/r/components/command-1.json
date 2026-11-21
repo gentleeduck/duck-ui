@@ -9,7 +9,8 @@
   ],
   "name": "command-1",
   "registryDependencies": [
-    "command"
+    "command",
+    "button"
   ],
   "root_folder": "command",
   "source": "/registry-examples/src/command",

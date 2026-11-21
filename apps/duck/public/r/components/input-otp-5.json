@@ -1,7 +1,13 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
-      "content": "import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '@gentleduck/registry-ui/input-otp'\nimport { Minus } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <InputOTP maxLength={6}>\n      <InputOTPGroup>\n        <InputOTPSlot />\n        <InputOTPSlot />\n        <InputOTPSlot />\n      </InputOTPGroup>\n      <InputOTPSeparator customIndicator={<Minus aria-hidden=\"true\" />} />\n      <InputOTPGroup>\n        <InputOTPSlot />\n        <InputOTPSlot />\n        <InputOTPSlot />\n      </InputOTPGroup>\n    </InputOTP>\n  )\n}\n",
+      "content": "import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '@gentleduck/registry-ui/input-otp'\nimport { Minus } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <InputOTP aria-label=\"One-time code\" maxLength={6}>\n      <InputOTPGroup>\n        <InputOTPSlot />\n        <InputOTPSlot />\n        <InputOTPSlot />\n      </InputOTPGroup>\n      <InputOTPSeparator>\n        <Minus aria-hidden=\"true\" />\n      </InputOTPSeparator>\n      <InputOTPGroup>\n        <InputOTPSlot />\n        <InputOTPSlot />\n        <InputOTPSlot />\n      </InputOTPGroup>\n    </InputOTP>\n  )\n}\n",
       "path": "input-otp/input-otp-5.tsx",
       "target": "components/input-otp-5.tsx",
       "type": "registry:example"

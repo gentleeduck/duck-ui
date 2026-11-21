@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { DismissableLayer } from '@gentleduck/primitives/dismissable-layer'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function DismissableLayerBlockOutsideExample() {\n  const [open, setOpen] = React.useState(false)\n  const [clicks, setClicks] = React.useState(0)\n\n  return (\n    <div className={styles.stack}>\n      <div className={styles.row}>\n        <button className={styles.button} onClick={() => setOpen(true)} type=\"button\">\n          Open a blocking layer\n        </button>\n        <button className={styles.button} onClick={() => setClicks((count) => count + 1)} type=\"button\">\n          Counter {clicks}\n        </button>\n      </div>\n      {open ? (\n        <DismissableLayer\n          className={`${styles.content} ${styles.panel}`}\n          disableOutsidePointerEvents\n          onDismiss={() => setOpen(false)}>\n          While this is open the counter cannot be pressed: the first press outside only closes it.\n        </DismissableLayer>\n      ) : null}\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/dismissable-layer-block-outside/dismissable-layer-block-outside.tsx",
+      "target": "components/dismissable-layer-block-outside.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dismissable-layer-block-outside",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

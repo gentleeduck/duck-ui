@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { useSvgIndicator } from '@gentleduck/primitives/checkers'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nconst ICON = { fill: 'none', stroke: 'black', strokeLinecap: 'round', strokeWidth: 2.5, viewBox: '0 0 16 16' } as const\n\nexport default function CheckersSvgIndicatorExample() {\n  const all = React.useRef<HTMLInputElement>(null)\n  const [picked, setPicked] = React.useState([true, false, true])\n  const { SvgIndicator, inputStyle } = useSvgIndicator({\n    checkedIndicator: (\n      <svg {...ICON}>\n        <path d=\"M3 8.5l3 3 7-7\" />\n      </svg>\n    ),\n    indeterminateIndicator: (\n      <svg {...ICON}>\n        <path d=\"M3.5 8h9\" />\n      </svg>\n    ),\n  })\n  const count = picked.filter(Boolean).length\n\n  React.useEffect(() => {\n    if (all.current) all.current.indeterminate = count > 0 && count < picked.length\n  }, [count, picked.length])\n\n  return (\n    <div className={styles.choices}>\n      <SvgIndicator />\n      <label className={styles.choice}>\n        <input\n          checked={count === picked.length}\n          className={styles.nativeCheck}\n          onChange={(event) => setPicked(picked.map(() => event.target.checked))}\n          ref={all}\n          style={inputStyle}\n          type=\"checkbox\"\n        />\n        Every channel\n      </label>\n      {['Email', 'Push', 'SMS'].map((channel, index) => (\n        <label className={styles.choice} key={channel} style={{ paddingInlineStart: '1.5rem' }}>\n          <input\n            checked={picked[index]}\n            className={styles.nativeCheck}\n            onChange={(event) => setPicked(picked.map((value, at) => (at === index ? event.target.checked : value)))}\n            style={inputStyle}\n            type=\"checkbox\"\n          />\n          {channel}\n        </label>\n      ))}\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/checkers-svg-indicator/checkers-svg-indicator.tsx",
+      "target": "components/checkers-svg-indicator.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "checkers-svg-indicator",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

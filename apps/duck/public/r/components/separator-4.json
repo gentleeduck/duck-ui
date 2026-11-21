@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { Separator } from '@gentleduck/registry-ui/separator'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-72 gap-4\">\n      <Button>Sign in with a passkey</Button>\n      <div className=\"flex items-center gap-3\">\n        <Separator className=\"flex-1\" />\n        <span className=\"text-muted-foreground text-xs uppercase\">or</span>\n        <Separator className=\"flex-1\" />\n      </div>\n      <Button variant=\"outline\">Email me a link</Button>\n    </div>\n  )\n}\n",
+      "path": "separator/separator-4.tsx",
+      "target": "components/separator-4.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "separator-4",
+  "registryDependencies": [
+    "separator",
+    "button"
+  ],
+  "root_folder": "separator",
+  "source": "/registry-examples/src/separator",
+  "type": "registry:example"
+}

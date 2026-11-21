@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as RovingFocus from '@gentleduck/primitives/roving-focus'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function RovingFocusControlledExample() {\n  const [stop, setStop] = React.useState<string | null>('cut')\n\n  return (\n    <div className={styles.stack}>\n      <RovingFocus.Root\n        className={styles.group}\n        currentTabStopId={stop}\n        onCurrentTabStopIdChange={setStop}\n        orientation=\"vertical\">\n        {['cut', 'copy', 'paste'].map((id) => (\n          <RovingFocus.Item asChild key={id} tabStopId={id}>\n            <button className={styles.button} type=\"button\">\n              {id}\n            </button>\n          </RovingFocus.Item>\n        ))}\n      </RovingFocus.Root>\n      <p className={styles.note}>The tab stop is {stop ?? 'none'}. Tab back in and focus lands on it.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/roving-focus-controlled/roving-focus-controlled.tsx",
+      "target": "components/roving-focus-controlled.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "roving-focus-controlled",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

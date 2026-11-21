@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "sonner"
+  ],
   "files": [
     {
       "content": "import { Button } from '@gentleduck/registry-ui/button'\n\nexport default function Demo() {\n  return (\n    <Button aria-label=\"Inbox button\" type=\"button\" variant={'destructive'}>\n      Button\n    </Button>\n  )\n}\n",
@@ -9,7 +12,11 @@
   ],
   "name": "button-7",
   "registryDependencies": [
-    "button"
+    "button",
+    "command",
+    "direction",
+    "toggle",
+    "tooltip"
   ],
   "root_folder": "button",
   "source": "/registry-examples/src/button",

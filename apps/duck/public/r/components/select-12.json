@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\nimport * as React from 'react'\n\nconst fruits = [\n  { value: 'apple', label: 'Apple' },\n  { value: 'banana', label: 'Banana' },\n  { value: 'blueberry', label: 'Blueberry' },\n  { value: 'grapes', label: 'Grapes' },\n  { value: 'pineapple', label: 'Pineapple' },\n]\n\nexport default function Demo() {\n  const [picked, setPicked] = React.useState<string[]>(['apple', 'grapes'])\n\n  return (\n    <div className=\"flex items-center gap-2\">\n      <Select multiple onValueChange={setPicked} value={picked}>\n        <SelectTrigger aria-label=\"Fruits\" className=\"w-[180px]\">\n          <SelectValue placeholder=\"No fruit picked\">\n            {picked.length === 1 ? '1 fruit' : `${picked.length} fruits`}\n          </SelectValue>\n        </SelectTrigger>\n        <SelectContent>\n          {fruits.map((fruit) => (\n            <SelectItem key={fruit.value} value={fruit.value}>\n              {fruit.label}\n            </SelectItem>\n          ))}\n        </SelectContent>\n      </Select>\n      <Button\n        disabled={picked.length === fruits.length}\n        onClick={() => setPicked(fruits.map((fruit) => fruit.value))}\n        size=\"sm\"\n        variant=\"outline\">\n        All\n      </Button>\n      <Button disabled={picked.length === 0} onClick={() => setPicked([])} size=\"sm\" variant=\"outline\">\n        Clear\n      </Button>\n    </div>\n  )\n}\n",
+      "path": "select/select-12.tsx",
+      "target": "components/select-12.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-12",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

@@ -25,9 +25,9 @@ export default function Demo() {
         <Checkbox disabled id="toggle" />
         <Label htmlFor="toggle">Enable notifications</Label>
       </div>
-      <Label className="flex items-start gap-3 rounded-lg border p-3 hover:bg-accent/50 has-[[aria-checked=true]]:border-blue-600 has-[[aria-checked=true]]:bg-blue-50 dark:has-[[aria-checked=true]]:border-blue-900 dark:has-[[aria-checked=true]]:bg-blue-950">
+      <Label className="flex items-start gap-3 rounded-lg border p-3 hover:bg-accent/50 has-checked:border-blue-600 has-checked:bg-blue-50 dark:has-checked:border-blue-900 dark:has-checked:bg-blue-950">
         <Checkbox
-          className="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700"
+          className="text-white checked:border-blue-600 checked:bg-blue-600 dark:checked:border-blue-700 dark:checked:bg-blue-700"
           defaultChecked
           id="toggle-2"
         />
@@ -106,6 +106,8 @@ export default function Demo() {
 }
 ```
 
+A controlled checkbox shows `checked` and nothing else. A click calls `onCheckedChange` with the value it asks for, and the box moves only once `checked` does, so a handler that ignores the click keeps it where it is.
+
 ### Checkbox with label
 
 ```tsx title="components/checkbox-4.tsx"
@@ -148,6 +150,66 @@ export default function Demo() {
   )
 }
 ```
+
+`'indeterminate'` sets the input's own `indeterminate` property, so assistive technology announces it as mixed, and the input carries `data-checked="indeterminate"` for styling. A click leaves the mixed state for checked.
+
+### Select all
+
+```tsx title="components/checkbox-11.tsx"
+// import from your project: import Demo from '@/components/checkbox-11'
+'use client'
+
+import { Checkbox, type CheckedState } from '@gentleduck/registry-ui/checkbox'
+import { Label } from '@gentleduck/registry-ui/label'
+import { Check, Minus } from 'lucide-react'
+import * as React from 'react'
+
+const permissions = [
+  { id: 'permission-read', label: 'Read' },
+  { id: 'permission-write', label: 'Write' },
+  { id: 'permission-delete', label: 'Delete' },
+]
+
+export default function Demo() {
+  const [granted, setGranted] = React.useState(['permission-read'])
+  const all: CheckedState = granted.length === permissions.length ? true : granted.length > 0 ? 'indeterminate' : false
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-3 border-b pb-3">
+        <Checkbox
+          checked={all}
+          checkedIndicator={<Check />}
+          id="permission-all"
+          indeterminateIndicator={<Minus />}
+          onCheckedChange={(next) => setGranted(next ? permissions.map((permission) => permission.id) : [])}
+        />
+        <Label className="font-medium" htmlFor="permission-all">
+          All permissions
+        </Label>
+      </div>
+      <div className="flex flex-col gap-2 ps-6">
+        {permissions.map((permission) => (
+          <div className="flex items-center gap-3" key={permission.id}>
+            <Checkbox
+              checked={granted.includes(permission.id)}
+              id={permission.id}
+              onCheckedChange={(next) =>
+                setGranted((previous) =>
+                  next ? [...previous, permission.id] : previous.filter((id) => id !== permission.id),
+                )
+              }
+            />
+            <Label htmlFor={permission.id}>{permission.label}</Label>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+```
+
+`indeterminateIndicator` draws the mixed state with an icon of your own. Without one the checkbox draws a short bar.
 
 ### Checkbox group
 
@@ -300,6 +362,29 @@ export default function Demo() {
 }
 ```
 
+Inside a `<form>`, or with `form`, the checkbox submits under `name`, and a form reset puts it back on `defaultChecked`, or on the `checked` it was first given, and calls `onCheckedChange` with that state. A click fires the form's `change` event, even when its handler stops propagation, as a native input's does. A value set through `checked` fires it too, as a click would, without running the checkbox's own `onChange`, `onClick` or `onCheckedChange`; a move between unchecked and mixed fires nothing, since the form sees the box unchecked both times. If the owner does not follow a reset, the checkbox goes back to its `checked` before the next paint.
+
+### Motion checkbox group
+
+```tsx title="components/checkbox-12.tsx"
+// import from your project: import Demo from '@/components/checkbox-12'
+'use client'
+
+import { MotionCheckboxGroup } from '@gentleduck/registry-ui/checkbox'
+
+export default function Demo() {
+  return (
+    <MotionCheckboxGroup
+      subtasks={[
+        { checked: true, id: 'checkbox-12-design', title: 'Design the page' },
+        { id: 'checkbox-12-build', title: 'Build it' },
+        { id: 'checkbox-12-ship', title: 'Ship it' },
+      ]}
+    />
+  )
+}
+```
+
 ## Component Composition
 
 ## RTL Support
@@ -418,15 +503,16 @@ export default function Demo() {
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `indicator` | `React.ReactElement` | - | Custom SVG or icon for unchecked state indicator |
-| `checkedIndicator` | `React.ReactElement` | - | Custom SVG or icon for checked state indicator |
+| `indicator` | `React.ReactElement` | - | Icon shown while unchecked, in the muted foreground colour. Without `checkedIndicator` the check mark is drawn once checked |
+| `checkedIndicator` | `React.ReactElement` | - | Icon shown while checked, in place of the check mark |
+| `indeterminateIndicator` | `React.ReactElement` | - | Custom SVG or icon for the indeterminate state. Without one a short bar is drawn |
 | `checked` | `boolean \| 'indeterminate'` | - | Controlled checked state |
-| `defaultChecked` | `boolean \| 'indeterminate'` | `false` | Initial checked state if uncontrolled |
-| `onCheckedChange` | `(checked: boolean \| 'indeterminate') => void` | - | Callback fired when checked state changes |
+| `defaultChecked` | `boolean \| 'indeterminate'` | `false` | Initial checked state if uncontrolled, and the state a form reset puts it back on |
+| `onCheckedChange` | `(checked: boolean \| 'indeterminate') => void` | - | Called with the state a click asks for, which is always `true` or `false`, and with the state a form reset puts it back on |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `className` | `string` | - | Additional CSS classes applied to the checkbox input |
 | `style` | `React.CSSProperties` | - | Inline styles merged with internal indicator styles |
-| `ref` | `React.Ref<HTMLInputElement>` | - | Ref forwarded to the native checkbox input |
+| `ref` | `React.Ref<HTMLInputElement>` | - | The native checkbox input. Object and callback refs both work |
 | `...props` | `Omit<React.HTMLProps<HTMLInputElement>, 'checked' \| 'onChange' \| 'defaultChecked'>` | - | Additional props to spread to the input element |
 
 ### CheckboxWithLabel
@@ -444,7 +530,7 @@ export default function Demo() {
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `subtasks` | `CheckboxGroupSubtasks[]` | (required) | Array of subtasks to render as individual checkboxes with labels |
+| `subtasks` | `CheckboxGroupSubtasks[]` | (required) | Array of subtasks to render as individual checkboxes with labels. Each `checked` is where that checkbox starts |
 | `defaults` | `CheckboxWithLabelProps` | - | Default props applied to each checkbox and label in the group |
 | `className` | `string` | - | Additional CSS classes applied to the wrapping div |
 | `ref` | `React.Ref<HTMLDivElement>` | - | Ref forwarded to the wrapping div |

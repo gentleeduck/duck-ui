@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\n\nconst countries = [\n  'Argentina',\n  'Australia',\n  'Austria',\n  'Belgium',\n  'Brazil',\n  'Canada',\n  'Chile',\n  'Denmark',\n  'Egypt',\n  'Finland',\n  'France',\n  'Germany',\n  'Greece',\n  'India',\n  'Indonesia',\n  'Ireland',\n  'Italy',\n  'Japan',\n  'Jordan',\n  'Kenya',\n  'Mexico',\n  'Morocco',\n  'Netherlands',\n  'New Zealand',\n  'Nigeria',\n  'Norway',\n  'Peru',\n  'Poland',\n  'Portugal',\n  'Saudi Arabia',\n  'South Africa',\n  'South Korea',\n  'Spain',\n  'Sweden',\n  'Switzerland',\n  'Tunisia',\n  'Turkey',\n  'United Arab Emirates',\n  'United Kingdom',\n  'United States',\n]\n\nexport default function Demo() {\n  return (\n    <Select defaultValue={['Egypt', 'Japan']} multiple>\n      <SelectTrigger aria-label=\"Countries\" className=\"w-[280px]\">\n        <SelectValue placeholder=\"Pick the countries you ship to\" />\n      </SelectTrigger>\n      <SelectContent className=\"h-[320px]\">\n        {countries.map((country) => (\n          <SelectItem key={country} value={country}>\n            {country}\n          </SelectItem>\n        ))}\n      </SelectContent>\n    </Select>\n  )\n}\n",
+      "path": "select/select-18.tsx",
+      "target": "components/select-18.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-18",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

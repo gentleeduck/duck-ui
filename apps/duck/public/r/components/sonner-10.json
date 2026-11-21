@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { toast } from 'sonner'\n\nexport default function Demo() {\n  return (\n    <Button\n      onClick={() =>\n        toast('Message archived', {\n          action: { label: 'Undo', onClick: () => toast.success('Message restored') },\n          cancel: { label: 'Dismiss', onClick: () => {} },\n        })\n      }\n      variant=\"outline\">\n      Archive Message\n    </Button>\n  )\n}\n",
+      "path": "sonner/sonner-10.tsx",
+      "target": "components/sonner-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sonner-10",
+  "registryDependencies": [
+    "sonner"
+  ],
+  "root_folder": "sonner",
+  "source": "/registry-examples/src/sonner",
+  "type": "registry:example"
+}

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Tooltip from '@gentleduck/primitives/tooltip'\nimport styles from '../primitives.module.css'\n\nfunction Tip({ label, disableHoverableContent }: { label: string; disableHoverableContent?: boolean }) {\n  return (\n    <Tooltip.Root disableHoverableContent={disableHoverableContent}>\n      <Tooltip.Trigger className={styles.button}>{label}</Tooltip.Trigger>\n      <Tooltip.Portal>\n        <Tooltip.Content className={`${styles.content} ${styles.panel}`} sideOffset={6} style={{ minWidth: 0 }}>\n          {disableHoverableContent ? 'Closes as the pointer leaves the trigger.' : 'Move onto me and I stay.'}\n        </Tooltip.Content>\n      </Tooltip.Portal>\n    </Tooltip.Root>\n  )\n}\n\nexport default function TooltipHoverableExample() {\n  return (\n    <Tooltip.Provider closeDelay={150} delayDuration={200}>\n      <div className={styles.row}>\n        <Tip label=\"Hoverable\" />\n        <Tip disableHoverableContent label=\"Not hoverable\" />\n      </div>\n    </Tooltip.Provider>\n  )\n}\n",
+      "path": "internal-primitives/tooltip-hoverable/tooltip-hoverable.tsx",
+      "target": "components/tooltip-hoverable.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "tooltip-hoverable",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

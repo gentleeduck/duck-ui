@@ -211,7 +211,7 @@ export default function Demo() {
       </Label>
       <div className="relative flex gap-2">
         <Input
-          className="bg-background pr-10"
+          className="bg-background pe-10"
           id="date"
           onChange={(e) => {
             setValue(e.currentTarget.value)
@@ -234,7 +234,7 @@ export default function Demo() {
           <PopoverTrigger asChild>
             <Button
               variant="nothing"
-              className="absolute top-1/2 right-1 h-fit -translate-y-1/2 p-1 px-1.5 [&_svg]:w-4"
+              className="absolute end-1 top-1/2 h-fit -translate-y-1/2 p-1 px-1.5 [&_svg]:w-4"
               id="date-picker">
               <CalendarIcon />
               <span className="sr-only">Select date</span>
@@ -315,7 +315,7 @@ export default function Demo() {
                 <PopoverTrigger asChild>
                   <Button
                     id="form-rhf-calendar-dob"
-                    className={cn('w-[240px] px-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                    className={cn('w-[240px] px-3 text-start font-normal', !field.value && 'text-muted-foreground')}
                     variant="outline"
                     aria-invalid={fieldState.invalid}>
                     <div className="flex w-full items-center justify-between">
@@ -713,47 +713,36 @@ export default function Demo() {
 // import from your project: import Demo from '@/components/calendar-16'
 'use client'
 
-import { NativeAdapter } from '@gentleduck/calendar'
 import { Calendar } from '@gentleduck/registry-ui/calendar'
 import * as React from 'react'
 
-const adapter = new NativeAdapter()
+const BOOKED_DAYS = [3, 4, 10, 11, 17, 24, 25]
 
-const BOOKED_DATES = [
-  new Date(2026, 2, 3),
-  new Date(2026, 2, 4),
-  new Date(2026, 2, 10),
-  new Date(2026, 2, 11),
-  new Date(2026, 2, 17),
-  new Date(2026, 2, 24),
-  new Date(2026, 2, 25),
-]
-
-function isBooked(date: Date) {
-  return BOOKED_DATES.some((d) => adapter.isSameDay(d, date))
+function thisMonthsDates() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth()
+  return {
+    today: new Date(year, month, now.getDate()),
+    thisMonth: new Date(year, month, 1),
+    booked: BOOKED_DAYS.map((day) => new Date(year, month, day)),
+  }
 }
 
 export default function Demo() {
+  const [{ today, thisMonth, booked }] = React.useState(thisMonthsDates)
   const [date, setDate] = React.useState<Date | null>(null)
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
   return (
     <Calendar
       className="rounded-md border shadow-sm"
       mode="single"
-      defaultMonth={new Date(2026, 2, 1)}
+      defaultMonth={thisMonth}
       selected={date}
       onSelect={setDate}
-      disabled={(d) => isBooked(d)}
+      unavailable={booked}
       fromDate={today}
       showDropdowns={false}
-      renderDay={(day, children) => {
-        if (day.isDisabled && isBooked(day.date)) {
-          return <span className="text-muted-foreground/40 line-through">{children}</span>
-        }
-        return children
-      }}
       renderFooter={() => (
         <div className="flex items-center gap-4 px-0 pt-2 text-muted-foreground text-xs">
           <div className="flex items-center gap-1.5">
@@ -1189,6 +1178,199 @@ export default function Demo() {
 }
 ```
 
+### Week Layout
+
+`weekStartDay` sets the first column, `showWeekNumber` puts each week's ISO number at the start of its row, and `renderWeekday` draws the column headings. `fixedWeeks` keeps six rows in every month so the calendar does not change height as it pages, and `showOutsideDays={false}` leaves the days of the months either side blank.
+
+```tsx title="components/calendar-26.tsx"
+// import from your project: import Demo from '@/components/calendar-26'
+'use client'
+
+import { Calendar } from '@gentleduck/registry-ui/calendar'
+import * as React from 'react'
+
+export default function Demo() {
+  const [date, setDate] = React.useState<Date | null>(new Date())
+
+  return (
+    <Calendar
+      className="rounded-md border shadow-sm"
+      mode="single"
+      selected={date}
+      onSelect={setDate}
+      weekStartDay={1}
+      showWeekNumber
+      fixedWeeks
+      showOutsideDays={false}
+      showDropdowns={false}
+      renderWeekday={(day, index) => <span className={index >= 5 ? 'text-destructive' : undefined}>{day}</span>}
+    />
+  )
+}
+```
+
+### Custom Header
+
+`renderHeader` replaces the header and is handed the title, the paging handlers and whether each way is disabled.
+
+```tsx title="components/calendar-27.tsx"
+// import from your project: import Demo from '@/components/calendar-27'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Calendar } from '@gentleduck/registry-ui/calendar'
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
+import * as React from 'react'
+
+export default function Demo() {
+  const [date, setDate] = React.useState<Date | null>(new Date())
+
+  return (
+    <Calendar
+      className="rounded-md border shadow-sm"
+      mode="single"
+      selected={date}
+      onSelect={setDate}
+      renderHeader={({ title, goToPrevMonth, goToNextMonth, isPrevDisabled, isNextDisabled }) => (
+        <div className="flex items-center justify-between">
+          <span className="font-semibold text-sm">{title}</span>
+          <div className="flex gap-1">
+            <Button
+              aria-label="Previous month"
+              disabled={isPrevDisabled}
+              onClick={goToPrevMonth}
+              size="icon"
+              variant="outline"
+              className="size-7">
+              <ChevronLeftIcon className="rtl:rotate-180" />
+            </Button>
+            <Button
+              aria-label="Next month"
+              disabled={isNextDisabled}
+              onClick={goToNextMonth}
+              size="icon"
+              variant="outline"
+              className="size-7">
+              <ChevronRightIcon className="rtl:rotate-180" />
+            </Button>
+          </div>
+        </div>
+      )}
+    />
+  )
+}
+```
+
+### Paging Every Month Shown
+
+With `numberOfMonths`, the buttons and PageUp/PageDown move one month at a time. `pageBehavior="visible"` moves by every month shown. `buttonVariant` sets the variant of the paging buttons.
+
+```tsx title="components/calendar-28.tsx"
+// import from your project: import Demo from '@/components/calendar-28'
+'use client'
+
+import type { Selection } from '@gentleduck/calendar'
+import { Calendar } from '@gentleduck/registry-ui/calendar'
+import * as React from 'react'
+
+export default function Demo() {
+  const [range, setRange] = React.useState<Selection.DateRange<Date> | null>(null)
+
+  return (
+    <Calendar
+      className="rounded-md border shadow-sm"
+      mode="range"
+      numberOfMonths={2}
+      pageBehavior="visible"
+      buttonVariant="outline"
+      selected={range}
+      onSelect={setRange}
+    />
+  )
+}
+```
+
+### Closing on Escape
+
+`onDismiss` is called on Escape, for a calendar shown in place rather than in a popover, which closes on Escape by itself.
+
+```tsx title="components/calendar-29.tsx"
+// import from your project: import Demo from '@/components/calendar-29'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Calendar } from '@gentleduck/registry-ui/calendar'
+import * as React from 'react'
+
+export default function Demo() {
+  const [date, setDate] = React.useState(new Date())
+  const [editing, setEditing] = React.useState(false)
+
+  return (
+    <div className="flex flex-col items-start gap-3">
+      <Button aria-expanded={editing} onClick={() => setEditing((open) => !open)} variant="outline">
+        Due {date.toLocaleDateString()}
+      </Button>
+      {editing && (
+        <Calendar
+          className="rounded-md border shadow-sm"
+          mode="single"
+          defaultMonth={date}
+          selected={date}
+          onSelect={(picked) => {
+            if (picked) setDate(picked)
+            setEditing(false)
+          }}
+          onDismiss={() => setEditing(false)}
+          showDropdowns={false}
+        />
+      )}
+    </div>
+  )
+}
+```
+
+### Read-Only
+
+`readOnly` keeps the selection and the keyboard moving, but refuses a pick.
+
+```tsx title="components/calendar-30.tsx"
+// import from your project: import Demo from '@/components/calendar-30'
+'use client'
+
+import type { Selection } from '@gentleduck/calendar'
+import { Calendar } from '@gentleduck/registry-ui/calendar'
+import { Label } from '@gentleduck/registry-ui/label'
+import { Switch } from '@gentleduck/registry-ui/switch'
+import * as React from 'react'
+
+export default function Demo() {
+  const today = new Date()
+  const [stay, setStay] = React.useState<Selection.DateRange<Date> | null>({
+    from: new Date(today.getFullYear(), today.getMonth(), 8),
+    to: new Date(today.getFullYear(), today.getMonth(), 12),
+  })
+  const [locked, setLocked] = React.useState(true)
+
+  return (
+    <div className="flex flex-col items-start gap-3">
+      <div className="flex items-center gap-2">
+        <Switch id="stay-locked" checked={locked} onCheckedChange={setLocked} />
+        <Label htmlFor="stay-locked">Booking confirmed</Label>
+      </div>
+      <Calendar
+        className="rounded-md border shadow-sm"
+        mode="range"
+        selected={stay}
+        onSelect={setStay}
+        readOnly={locked}
+        showDropdowns={false}
+      />
+    </div>
+  )
+}
+```
+
 ### Persian (Jalali) Calendar
 
 ```tsx title="components/calendar-18.tsx"
@@ -1389,7 +1571,7 @@ See all calendar blocks in the [Blocks Library](/blocks/calendar) page.
 ### Migrated from react-day-picker
 
 } tone="warning" title="Migrated from react-day-picker">
-  We have replaced `react-day-picker` with our own headless calendar engine  -  [`@gentleduck/calendar`](/duck-calendar). The result is **75% smaller bundle** (~5 KB vs ~20 KB gzipped), zero external dependencies, full keyboard navigation, and complete ARIA compliance. See the [performance benchmarks](/duck-calendar#performance) for detailed comparisons.
+  We have replaced `react-day-picker` with our own headless calendar engine  -  [`@gentleduck/calendar`](/duck-calendar). The result is **about half the bundle** (9.7 KB vs 20.0 KB gzipped), zero external dependencies, full keyboard navigation, and complete ARIA compliance. See the [performance benchmarks](/duck-calendar#performance) for detailed comparisons.
 
 ### Date Picker
 
@@ -1471,6 +1653,12 @@ export default function Demo() {
 | `dir` | `'ltr' \| 'rtl'` | - | Direction override. Defaults to the nearest `DirectionProvider`, then `<html dir>`. |
 | `fromDate` | `Date` | - | Earliest selectable date |
 | `toDate` | `Date` | - | Latest selectable date |
+| `unavailable` | `Date[] \| ((date: Date) => boolean)` | - | Dates that stay focusable but cannot be picked, such as booked days, drawn struck through. A range cannot span one |
+| `readOnly` | `boolean` | `false` | Keeps the selection as it is, while the keys still move focus |
+| `invalid` | `boolean` | `false` | Marks the selection invalid and draws it in the destructive colour. A selection holding a day that cannot be picked is invalid without it |
+| `weekStartDay` | `0 \| 1 \| 2 \| 3 \| 4 \| 5 \| 6` | locale's first day | First day of the week, 0 for Sunday. Sunday with no `locale` |
+| `showWeekNumber` | `boolean` | `false` | Starts each week with its ISO week number |
+| `pageBehavior` | `'single' \| 'visible'` | `'single'` | With several months shown, whether the nav buttons and <Kbd>PageUp</Kbd>/<Kbd>PageDown</Kbd> move one month or the whole view |
 | `buttonVariant` | `string` | `'ghost'` | Variant style for navigation buttons |
 | `onDismiss` | `() => void` | - | Called when the user presses Escape |
 | `className` | `string` | - | Additional CSS classes for the root container |
@@ -1555,6 +1743,8 @@ The calendar uses `data-*` attributes on day cells for styling. Target these in 
 | `data-selected="true"` | Day is selected |
 | `data-selected-single="true"` | Day is selected (single mode, not part of range) |
 | `data-today="true"` | Day is today |
+| `data-unavailable="true"` | Day is `unavailable` |
+| `data-invalid="true"` | Day is selected while the selection is invalid |
 | `data-focused="true"` | Day has keyboard focus |
 | `data-range-start="true"` | Day is the start of a range |
 | `data-range-end="true"` | Day is the end of a range |

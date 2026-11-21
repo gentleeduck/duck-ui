@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "import { Typeset } from '@gentleduck/registry-ui/typeset'\n\nexport default function Demo() {\n  return (\n    <Typeset className=\"w-full max-w-md\" size=\"sm\">\n      <p>This page covers it:</p>\n      <div className=\"flex flex-col gap-2 rounded-lg border p-4\" data-not-typeset=\"\">\n        <span className=\"text-muted-foreground text-xs\">docs / calendar</span>\n        <a className=\"font-semibold hover:underline\" href=\"#selecting-a-range\">\n          Selecting a range\n        </a>\n        <Typeset size=\"sm\">\n          <p>\n            Pass <code>mode=\"range\"</code> and the calendar keeps a start and an end:\n          </p>\n          <ul>\n            <li>The first click sets the start</li>\n            <li>The second click sets the end</li>\n          </ul>\n        </Typeset>\n      </div>\n      <p>The card lays itself out with utilities, and the excerpt inside it is prose again.</p>\n    </Typeset>\n  )\n}\n",
+      "path": "typeset/typeset-7.tsx",
+      "target": "components/typeset-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "typeset-7",
+  "registryDependencies": [
+    "typeset",
+    "button"
+  ],
+  "root_folder": "typeset",
+  "source": "/registry-examples/src/typeset",
+  "type": "registry:example"
+}

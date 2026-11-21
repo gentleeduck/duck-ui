@@ -111,6 +111,160 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 </Tabs>
 ```
 
+## Examples
+
+### Controlled
+
+Pass `value` and `onValueChange` to drive the tabs from your own state. A click or an arrow key calls `onValueChange`, and the selection moves when `value` does, so buttons outside the tabs can move it too. `onValueChange` runs only when the tab changes, never on mount.
+
+```tsx title="components/tabs-6.tsx"
+// import from your project: import Demo from '@/components/tabs-6'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@gentleduck/registry-ui/tabs'
+import * as React from 'react'
+
+const STEPS = [
+  { body: 'Where should we send the order?', label: 'Shipping', value: 'shipping' },
+  { body: 'Pay by card, or on delivery.', label: 'Payment', value: 'payment' },
+  { body: 'Check the order before you place it.', label: 'Review', value: 'review' },
+]
+
+export default function Demo() {
+  const [step, setStep] = React.useState('shipping')
+  const index = STEPS.findIndex((item) => item.value === step)
+
+  return (
+    <Tabs className="w-full max-w-sm" onValueChange={setStep} value={step}>
+      <TabsList className="grid w-full grid-cols-3">
+        {STEPS.map((item) => (
+          <TabsTrigger key={item.value} value={item.value}>
+            {item.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {STEPS.map((item) => (
+        <TabsContent className="rounded-lg border p-4 text-sm" key={item.value} value={item.value}>
+          {item.body}
+        </TabsContent>
+      ))}
+      <div className="mt-4 flex items-center justify-between">
+        <p aria-live="polite" className="text-muted-foreground text-sm">
+          Step {index + 1} of {STEPS.length}
+        </p>
+        <div className="flex gap-2">
+          <Button
+            disabled={index === 0}
+            onClick={() => setStep(STEPS[index - 1]?.value ?? step)}
+            size="sm"
+            variant="outline">
+            Back
+          </Button>
+          <Button
+            disabled={index === STEPS.length - 1}
+            onClick={() => setStep(STEPS[index + 1]?.value ?? step)}
+            size="sm">
+            Next
+          </Button>
+        </div>
+      </div>
+    </Tabs>
+  )
+}
+```
+
+### Vertical, with a disabled tab
+
+`orientation="vertical"` stacks the list, moves between tabs on `ArrowUp` and `ArrowDown`, and sets `aria-orientation` for screen readers. Lay the list beside the panels on `Tabs` itself, as `className="flex gap-4"` does here. The arrow keys skip a disabled tab.
+
+```tsx title="components/tabs-7.tsx"
+// import from your project: import Demo from '@/components/tabs-7'
+import { Label } from '@gentleduck/registry-ui/label'
+import { Switch } from '@gentleduck/registry-ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@gentleduck/registry-ui/tabs'
+import { Bell, CreditCard, User } from 'lucide-react'
+
+export default function Demo() {
+  return (
+    <Tabs className="flex w-full max-w-md gap-4" defaultValue="profile" orientation="vertical">
+      <TabsList aria-label="Settings">
+        <TabsTrigger className="justify-start" value="profile">
+          <User aria-hidden="true" />
+          Profile
+        </TabsTrigger>
+        <TabsTrigger className="justify-start" value="notifications">
+          <Bell aria-hidden="true" />
+          Notifications
+        </TabsTrigger>
+        <TabsTrigger
+          className="justify-start"
+          disabled
+          title="Only the workspace owner can change billing"
+          value="billing">
+          <CreditCard aria-hidden="true" />
+          Billing
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent className="flex-1 space-y-1 rounded-lg border p-4 text-sm" value="profile">
+        <p className="font-medium">Profile</p>
+        <p className="text-muted-foreground">Your name and photo, as other members see them.</p>
+      </TabsContent>
+      <TabsContent className="flex-1 space-y-3 rounded-lg border p-4 text-sm" value="notifications">
+        <p className="font-medium">Notifications</p>
+        <div className="flex items-center gap-2">
+          <Switch defaultChecked id="tabs-vertical-mentions" />
+          <Label htmlFor="tabs-vertical-mentions">Email me when I am mentioned</Label>
+        </div>
+      </TabsContent>
+      <TabsContent className="flex-1 rounded-lg border p-4 text-sm" value="billing">
+        Billing
+      </TabsContent>
+    </Tabs>
+  )
+}
+```
+
+### Kept mounted
+
+```tsx title="components/tabs-8.tsx"
+// import from your project: import Demo from '@/components/tabs-8'
+'use client'
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@gentleduck/registry-ui/tabs'
+import * as React from 'react'
+
+function Draft() {
+  const [text, setText] = React.useState('')
+  return (
+    <textarea
+      className="w-full rounded-md border p-2 text-sm"
+      onChange={(event) => setText(event.target.value)}
+      placeholder="Type, switch tabs and come back"
+      rows={3}
+      value={text}
+    />
+  )
+}
+
+export default function Demo() {
+  return (
+    <Tabs className="w-[360px]" defaultValue="write">
+      <TabsList>
+        <TabsTrigger value="write">Write</TabsTrigger>
+        <TabsTrigger value="preview">Preview</TabsTrigger>
+      </TabsList>
+      <TabsContent forceMount value="write">
+        <Draft />
+      </TabsContent>
+      <TabsContent value="preview">
+        <p className="text-muted-foreground text-sm">forceMount keeps the draft mounted, so its text survives.</p>
+      </TabsContent>
+    </Tabs>
+  )
+}
+```
+
 ## Component Composition
 
 ## Keyboard Navigation
@@ -119,9 +273,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 | --- | --- |
 | `ArrowRight` | Move focus to the next tab and select it (previous tab in RTL) |
 | `ArrowLeft` | Move focus to the previous tab and select it (next tab in RTL) |
+| `ArrowDown` | With `orientation="vertical"`, move focus to the next tab and select it |
+| `ArrowUp` | With `orientation="vertical"`, move focus to the previous tab and select it |
 | `Home` | Move focus to the first tab and select it |
 | `End` | Move focus to the last tab and select it |
-| `Tab` | Move focus onto the active tab, then out of the tab list |
+| `Tab` | Move focus onto the active tab, or the first enabled tab while none is selected, then into its panel |
+
+The arrows wrap at either end and skip a disabled tab.
 
 ## Keeping Panels Mounted
 
@@ -271,7 +429,7 @@ export default function Demo() {
 } title="Alpha: Motion Compositions" tone="warning">
   Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 
-Use `MotionTabs`, `MotionTabsList`, `MotionTabsTrigger`, and `MotionTabsContent` for a sliding active indicator and direction-aware content crossfade powered by [motion](https://motion.dev). The indicator slides between tabs via `layoutId` and content panels crossfade with a directional shift, a slight scale-down, and blur.
+Use `MotionTabs`, `MotionTabsList`, `MotionTabsTrigger`, and `MotionTabsContent` for a sliding active indicator and direction-aware content crossfade powered by [motion](https://motion.dev). The indicator slides between tabs via `layoutId` and content panels crossfade with a directional shift, a slight scale-down, and blur. The shift runs the way the tabs do: sideways for a horizontal list, mirrored in RTL, and up and down for a vertical one.
 
 ```tsx title="components/tabs-3.tsx"
 // import from your project: import Demo from '@/components/tabs-3'
@@ -444,16 +602,16 @@ export default function Demo() {
               <div className="rounded-md border">
                 <div className="grid grid-cols-4 border-b px-2.5 py-1.5 font-medium text-[10px] text-muted-foreground">
                   <span>Page</span>
-                  <span className="text-right">Views</span>
-                  <span className="text-right">Uniques</span>
-                  <span className="text-right">Bounce</span>
+                  <span className="text-end">Views</span>
+                  <span className="text-end">Uniques</span>
+                  <span className="text-end">Bounce</span>
                 </div>
                 {visitors.map((row) => (
                   <div key={row.page} className="grid grid-cols-4 border-b px-2.5 py-1.5 text-xs last:border-0">
                     <span className="truncate font-mono text-[10px]">{row.page}</span>
-                    <span className="text-right">{row.views.toLocaleString()}</span>
-                    <span className="text-right">{row.uniques.toLocaleString()}</span>
-                    <span className="text-right">{row.bounce}</span>
+                    <span className="text-end">{row.views.toLocaleString()}</span>
+                    <span className="text-end">{row.uniques.toLocaleString()}</span>
+                    <span className="text-end">{row.bounce}</span>
                   </div>
                 ))}
               </div>
@@ -481,9 +639,10 @@ export default function Demo() {
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `string` | - | Controlled active tab value. Must be used alongside `onValueChange` |
+| `value` | `string` | - | Controlled active tab. The selection follows it, and wins over `defaultValue` |
 | `defaultValue` | `string` | - | Uncontrolled initial tab value |
-| `onValueChange` | `(value: string) => void` | - | Callback fired when the active tab changes |
+| `onValueChange` | `(value: string) => void` | - | Called when the user picks another tab, by click or key. Not called on mount |
+| `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Which arrow keys move between tabs, and how the list lays out. Sets `aria-orientation` on the list |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction override. Resolved via `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
 | `...props` | `Omit<React.HTMLProps<HTMLDivElement>, 'defaultValue'>` | - | Additional props to spread to the content div |
 
@@ -543,7 +702,7 @@ Replaces `TabsTrigger`. Adds sliding `layoutId` indicator and disabled tab shake
 
 ### MotionTabsContents
 
-Wrapper around all `MotionTabsContent` panels. Provides a single `AnimatePresence` with overflow-hidden for directional slide animation. Requires the `motion` package.
+Wrapper around all `MotionTabsContent` panels. Provides a single `AnimatePresence` with overflow-hidden for directional slide animation, and animates its height to the open panel's, following the panel as it grows or shrinks. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

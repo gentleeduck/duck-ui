@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Sidebar,\n  SidebarContent,\n  SidebarGroup,\n  SidebarGroupContent,\n  SidebarGroupLabel,\n  SidebarInset,\n  SidebarMenu,\n  SidebarMenuButton,\n  SidebarMenuItem,\n  SidebarMenuSkeleton,\n  SidebarProvider,\n  SidebarTrigger,\n} from '@gentleduck/registry-ui/sidebar'\nimport { BarChart3, Box, Home, ShoppingCart, Users } from 'lucide-react'\nimport * as React from 'react'\n\nconst PAGES = [\n  { icon: Home, title: 'Overview' },\n  { icon: ShoppingCart, title: 'Orders' },\n  { icon: Users, title: 'Customers' },\n  { icon: Box, title: 'Products' },\n  { icon: BarChart3, title: 'Reports' },\n]\n\nexport default function Demo() {\n  const [loading, setLoading] = React.useState(true)\n\n  React.useEffect(() => {\n    if (!loading) return\n    const timer = setTimeout(() => setLoading(false), 1500)\n    return () => clearTimeout(timer)\n  }, [loading])\n\n  return (\n    <div className=\"relative flex h-full w-full overflow-hidden [transform:translateZ(0)]\">\n      <SidebarProvider>\n        <Sidebar>\n          <SidebarContent>\n            <SidebarGroup>\n              <SidebarGroupLabel>Store</SidebarGroupLabel>\n              <SidebarGroupContent>\n                <SidebarMenu aria-busy={loading}>\n                  {PAGES.map((page, index) => (\n                    <SidebarMenuItem key={page.title}>\n                      {loading ? (\n                        <SidebarMenuSkeleton index={index} showIcon />\n                      ) : (\n                        <SidebarMenuButton isActive={index === 0}>\n                          <page.icon aria-hidden=\"true\" />\n                          <span>{page.title}</span>\n                        </SidebarMenuButton>\n                      )}\n                    </SidebarMenuItem>\n                  ))}\n                </SidebarMenu>\n              </SidebarGroupContent>\n            </SidebarGroup>\n          </SidebarContent>\n        </Sidebar>\n        <SidebarInset>\n          <header className=\"flex h-16 shrink-0 items-center gap-2 border-b px-4\">\n            <SidebarTrigger />\n            <Button disabled={loading} onClick={() => setLoading(true)} size=\"sm\" variant=\"outline\">\n              Reload\n            </Button>\n          </header>\n        </SidebarInset>\n      </SidebarProvider>\n    </div>\n  )\n}\n",
+      "path": "sidebar/sidebar-9.tsx",
+      "target": "components/sidebar-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sidebar-9",
+  "registryDependencies": [
+    "sidebar",
+    "avatar",
+    "collapsible",
+    "dropdown-menu"
+  ],
+  "root_folder": "sidebar",
+  "source": "/registry-examples/src/sidebar",
+  "type": "registry:example"
+}

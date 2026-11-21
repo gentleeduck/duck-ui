@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { DismissableLayer, DismissableLayerBranch } from '@gentleduck/primitives/dismissable-layer'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function DismissableLayerBranchExample() {\n  const [open, setOpen] = React.useState(true)\n  const [saved, setSaved] = React.useState(0)\n\n  return (\n    <div className={styles.stack}>\n      <button className={styles.button} onClick={() => setOpen(true)} type=\"button\">\n        Open editor\n      </button>\n      {open ? (\n        <DismissableLayer className={`${styles.content} ${styles.panel}`} onDismiss={() => setOpen(false)}>\n          An open editor\n        </DismissableLayer>\n      ) : null}\n      <DismissableLayerBranch className={styles.box}>\n        <button className={styles.button} onClick={() => setSaved((count) => count + 1)} type=\"button\">\n          Save from the toolbar ({saved})\n        </button>\n        <p className={styles.note}>A press in this branch leaves the editor open; one anywhere else closes it.</p>\n      </DismissableLayerBranch>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/dismissable-layer-branch/dismissable-layer-branch.tsx",
+      "target": "components/dismissable-layer-branch.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dismissable-layer-branch",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

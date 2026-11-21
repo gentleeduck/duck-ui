@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "lucide-react"
+  ],
   "files": [
     {
       "content": "import { Badge } from '@gentleduck/registry-ui/badge'\n\nexport default function Demo() {\n  return (\n    <Badge aria-label=\"Badge\" variant={'secondary'}>\n      Badge\n    </Badge>\n  )\n}\n",
@@ -9,7 +12,9 @@
   ],
   "name": "badge-3",
   "registryDependencies": [
-    "badge"
+    "badge",
+    "direction",
+    "tooltip"
   ],
   "root_folder": "badge",
   "source": "/registry-examples/src/badge",

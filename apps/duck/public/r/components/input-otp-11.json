@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { InputOTP, InputOTPGroup, InputOTPSlot } from '@gentleduck/registry-ui/input-otp'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [asked, setAsked] = React.useState(false)\n\n  return (\n    <div className=\"flex flex-col items-center gap-3\">\n      <Button onClick={() => setAsked((value) => !value)} variant=\"outline\">\n        {asked ? 'Cancel' : 'Send me a code'}\n      </Button>\n      {asked ? (\n        <InputOTP aria-label=\"Code\" autoFocus defaultValue=\"4\" maxLength={4}>\n          <InputOTPGroup>\n            <InputOTPSlot />\n            <InputOTPSlot />\n            <InputOTPSlot />\n            <InputOTPSlot />\n          </InputOTPGroup>\n        </InputOTP>\n      ) : null}\n      <p className=\"text-muted-foreground text-sm\">\n        It starts from defaultValue, and autoFocus puts the caret in the slot typing goes to.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "input-otp/input-otp-11.tsx",
+      "target": "components/input-otp-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "input-otp-11",
+  "registryDependencies": [
+    "input-otp",
+    "button",
+    "field"
+  ],
+  "root_folder": "input-otp",
+  "source": "/registry-examples/src/input-otp",
+  "type": "registry:example"
+}

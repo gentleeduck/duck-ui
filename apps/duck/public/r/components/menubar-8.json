@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Menubar,\n  MenubarContent,\n  MenubarItem,\n  MenubarMenu,\n  MenubarSub,\n  MenubarSubContent,\n  MenubarSubTrigger,\n  MenubarTrigger,\n} from '@gentleduck/registry-ui/menubar'\n\nexport default function Demo() {\n  return (\n    <Menubar>\n      <MenubarMenu value=\"view\">\n        <MenubarTrigger>View</MenubarTrigger>\n        <MenubarContent align=\"center\" alignOffset={0} side=\"bottom\" sideOffset={12}>\n          <MenubarItem>Centered under its trigger, 12px down</MenubarItem>\n          <MenubarSub>\n            <MenubarSubTrigger>Panels</MenubarSubTrigger>\n            <MenubarSubContent alignOffset={-4} sideOffset={6}>\n              <MenubarItem>Explorer</MenubarItem>\n              <MenubarItem>Terminal</MenubarItem>\n            </MenubarSubContent>\n          </MenubarSub>\n        </MenubarContent>\n      </MenubarMenu>\n    </Menubar>\n  )\n}\n",
+      "path": "menubar/menubar-8.tsx",
+      "target": "components/menubar-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "menubar-8",
+  "registryDependencies": [
+    "menubar",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "menubar",
+  "source": "/registry-examples/src/menubar",
+  "type": "registry:example"
+}

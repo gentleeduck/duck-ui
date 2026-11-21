@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@gentleduck/registry-ui/field'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { zodResolver } from '@hookform/resolvers/zod'\nimport { Controller, useForm } from 'react-hook-form'\nimport { toast } from 'sonner'\nimport { z } from 'zod'\n\nconst FormSchema = z.object({\n  username: z.string().min(2, {\n    message: 'Username must be at least 2 characters.',\n  }),\n})\n\nexport default function Demo() {\n  const form = useForm<z.infer<typeof FormSchema>>({\n    defaultValues: {\n      username: '',\n    },\n    resolver: zodResolver(FormSchema),\n  })\n\n  function onSubmit(data: z.infer<typeof FormSchema>) {\n    toast.info(\n      <div>\n        <h4 className=\"font-medium text-md\">You submitted the following values:</h4>\n        <pre className=\"mt-2 w-[300px] rounded-md bg-slate-950 p-4\">\n          <code className=\"text-white\">{JSON.stringify(data, null, 2)}</code>\n        </pre>\n      </div>,\n    )\n  }\n\n  return (\n    <form className=\"w-2/3 space-y-6\" onSubmit={form.handleSubmit(onSubmit)}>\n      <FieldGroup>\n        <Controller\n          control={form.control}\n          name=\"username\"\n          render={({ field, fieldState }) => (\n            <Field data-invalid={fieldState.invalid}>\n              <FieldLabel htmlFor={field.name}>Username</FieldLabel>\n              <Input {...field} id={field.name} aria-invalid={fieldState.invalid} placeholder=\"wildduck\" />\n              <FieldDescription>This is your public display name.</FieldDescription>\n              {fieldState.invalid && fieldState.error && <FieldError errors={[fieldState.error]} />}\n            </Field>\n          )}\n        />\n      </FieldGroup>\n      <Button type=\"submit\">Submit</Button>\n    </form>\n  )\n}\n",
@@ -9,7 +15,10 @@
   ],
   "name": "input-7",
   "registryDependencies": [
-    "input"
+    "input",
+    "button",
+    "field",
+    "label"
   ],
   "root_folder": "input",
   "source": "/registry-examples/src/input",

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Menubar from '@gentleduck/primitives/menubar'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function MenubarControlledExample() {\n  const [value, setValue] = React.useState('')\n\n  return (\n    <div className={styles.stack}>\n      <Menubar.Root className={styles.menubar} onValueChange={setValue} value={value}>\n        {['Edit', 'Selection', 'Help'].map((menu) => (\n          <Menubar.Menu key={menu} value={menu}>\n            <Menubar.Trigger className={styles.menubarTrigger}>{menu}</Menubar.Trigger>\n            <Menubar.Portal>\n              <Menubar.Content className={styles.content} sideOffset={6}>\n                <Menubar.Item className={styles.item}>{menu} item</Menubar.Item>\n              </Menubar.Content>\n            </Menubar.Portal>\n          </Menubar.Menu>\n        ))}\n      </Menubar.Root>\n      <div className={styles.row}>\n        <button className={styles.button} onClick={() => setValue('Help')} type=\"button\">\n          Open Help\n        </button>\n        <button className={styles.button} onClick={() => setValue('')} type=\"button\">\n          Close\n        </button>\n      </div>\n      <p className={styles.note}>\n        Open menu: {value || 'none'}. While one is open, the pointer moving across opens the next.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/menubar-controlled/menubar-controlled.tsx",
+      "target": "components/menubar-controlled.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "menubar-controlled",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Sheet from '@gentleduck/primitives/sheet'\nimport styles from '../primitives.module.css'\n\nexport default function SheetRtlExample() {\n  return (\n    <Sheet.Root dir=\"rtl\">\n      <Sheet.Trigger className={styles.button}>القائمة</Sheet.Trigger>\n      <Sheet.Portal>\n        <Sheet.Overlay className={`${styles.overlay} ${styles.fade}`} />\n        <Sheet.Content aria-describedby={undefined} className={styles.sheet}>\n          <Sheet.Title className={styles.title}>القائمة</Sheet.Title>\n          <Sheet.Close className={styles.button}>إغلاق</Sheet.Close>\n        </Sheet.Content>\n      </Sheet.Portal>\n    </Sheet.Root>\n  )\n}\n",
+      "path": "internal-primitives/sheet-rtl/sheet-rtl.tsx",
+      "target": "components/sheet-rtl.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "sheet-rtl",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

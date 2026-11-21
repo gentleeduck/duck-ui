@@ -112,6 +112,70 @@ The component only adds the `typeset` class, so plain HTML works too.
 <article class="typeset">...</article>
 ```
 
+`asChild` puts the class on the element you give it instead of a `div`, such as an `article`.
+
+## What it styles
+
+Everything a markdown renderer writes: headings, paragraphs, links, ordered, nested and task lists, definition lists, inline code, `kbd`, `mark`, `abbr`, `sub` and `sup`, quotes, rules, code blocks, figures with captions, `details` and tables.
+
+```tsx title="components/typeset-9.tsx"
+// import from your project: import Demo from '@/components/typeset-9'
+import { Typeset } from '@gentleduck/registry-ui/typeset'
+
+export default function Demo() {
+  return (
+    <Typeset className="w-full max-w-xl">
+      <h1>Shipping a release</h1>
+      <p>
+        Every element below is what a markdown renderer writes. Press <kbd>Ctrl</kbd> + <kbd>K</kbd> to search, and read
+        the <abbr title="Changelog">CHANGELOG</abbr> first. The build takes <mark>about two minutes</mark>. Lookups take
+        log
+        <sub>2</sub> n steps, and the cache holds 10<sup>4</sup> entries.
+      </p>
+      <h2>Steps</h2>
+      <ol>
+        <li>
+          Bump the version
+          <ul>
+            <li>Patch for fixes</li>
+            <li>Minor for features</li>
+          </ul>
+        </li>
+        <li>Tag the commit</li>
+      </ol>
+      <h3>Checklist</h3>
+      <ul className="contains-task-list">
+        <li className="task-list-item">
+          <input aria-label="Tests pass" checked disabled type="checkbox" /> Tests pass
+        </li>
+        <li className="task-list-item">
+          <input aria-label="Docs updated" disabled type="checkbox" /> Docs updated
+        </li>
+      </ul>
+      <h4>Terms</h4>
+      <dl>
+        <dt>Changeset</dt>
+        <dd>A file naming the packages a change bumps, and by how much.</dd>
+      </dl>
+      <hr />
+      <figure>
+        <pre>
+          <code>git tag v2.4.0 && git push --tags</code>
+        </pre>
+        <figcaption>Tagging starts the release.</figcaption>
+      </figure>
+      <details>
+        <summary>What if the build fails?</summary>
+        <p>Fix it on a branch and tag again. A failed build publishes nothing.</p>
+      </details>
+      <p>
+        <small>Last reviewed in October 2026.</small>
+      </p>
+    </Typeset>
+  )
+}
+```
+
 ## Rhythm
 
 Type has a lot of dials: scale ratios, tracking, measure, the space above and below every element. Exposing all of them makes markdown harder to style, not easier.
@@ -285,7 +349,7 @@ export default function Demo() {
 
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
-      <div className="self-end rounded-2xl rounded-br-md bg-primary px-3.5 py-2 text-primary-foreground text-sm">
+      <div className="self-end rounded-2xl rounded-ee-md bg-primary px-3.5 py-2 text-primary-foreground text-sm">
         How do I style chat answers?
       </div>
       <Typeset aria-live="polite" size="sm">
@@ -335,14 +399,116 @@ export default function Demo() {
 
 A `Typeset` nested inside an opted-out component turns styling back on for its own content, so a preview card can still show prose.
 
+```tsx title="components/typeset-7.tsx"
+// import from your project: import Demo from '@/components/typeset-7'
+import { Typeset } from '@gentleduck/registry-ui/typeset'
+
+export default function Demo() {
+  return (
+    <Typeset className="w-full max-w-md" size="sm">
+      <p>This page covers it:</p>
+      <div className="flex flex-col gap-2 rounded-lg border p-4" data-not-typeset="">
+        <span className="text-muted-foreground text-xs">docs / calendar</span>
+        <a className="font-semibold hover:underline" href="#selecting-a-range">
+          Selecting a range
+        </a>
+        <Typeset size="sm">
+          <p>
+            Pass <code>mode="range"</code> and the calendar keeps a start and an end:
+          </p>
+          <ul>
+            <li>The first click sets the start</li>
+            <li>The second click sets the end</li>
+          </ul>
+        </Typeset>
+      </div>
+      <p>The card lays itself out with utilities, and the excerpt inside it is prose again.</p>
+    </Typeset>
+  )
+}
+```
+
 ## Wide tables
 
-Tables wrap by default. Wrap a wide table in `typeset-scroll` to scroll it instead. The easiest place is your renderer's `table` component.
+A table wraps its text to fit, but one whose columns cannot wrap any narrower is wider than its container and widens the page. Wrap a wide table in `typeset-scroll` so what still does not fit scrolls inside the wrapper. The easiest place is your renderer's `table` component.
 
 ```tsx
 <div className="typeset-scroll">
   <table>...</table>
 </div>
+```
+
+A column marked `align="right"`, which markdown writes for `--:`, lines up at the end of its cells.
+
+```tsx title="components/typeset-6.tsx"
+// import from your project: import Demo from '@/components/typeset-6'
+import { Typeset } from '@gentleduck/registry-ui/typeset'
+
+const RELEASES = [
+  {
+    downloads: '1,204,311',
+    gzip: '12.9 kB',
+    highlight: 'Range selection',
+    released: '2026-10-02',
+    size: '41.2 kB',
+    version: '2.4.0',
+  },
+  {
+    downloads: '1,180,042',
+    gzip: '12.8 kB',
+    highlight: 'Accordion arrow keys',
+    released: '2026-09-14',
+    size: '40.8 kB',
+    version: '2.3.0',
+  },
+  {
+    downloads: '1,091,876',
+    gzip: '12.6 kB',
+    highlight: 'Sheet focus trap',
+    released: '2026-08-30',
+    size: '40.1 kB',
+    version: '2.2.0',
+  },
+]
+
+export default function Demo() {
+  return (
+    <Typeset asChild className="w-full max-w-sm">
+      <article>
+        <h3>Release history</h3>
+        <p>The table wraps its text first. What still does not fit scrolls inside the wrapper, not the page.</p>
+        <div className="typeset-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Version</th>
+                <th>Released</th>
+                <th align="right">Size</th>
+                <th align="right">Gzipped</th>
+                <th align="right">Downloads</th>
+                <th>Highlight</th>
+              </tr>
+            </thead>
+            <tbody>
+              {RELEASES.map((release) => (
+                <tr key={release.version}>
+                  <td>
+                    <code>{release.version}</code>
+                  </td>
+                  <td>{release.released}</td>
+                  <td align="right">{release.size}</td>
+                  <td align="right">{release.gzip}</td>
+                  <td align="right">{release.downloads}</td>
+                  <td>{release.highlight}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </Typeset>
+  )
+}
 ```
 
 ## Overrides
@@ -353,6 +519,27 @@ Typeset lives in `@layer components` and uses `:where()`, so any Tailwind utilit
 <Typeset>
   <h2 className="text-primary">Overrides the heading color</h2>
 </Typeset>
+```
+
+```tsx title="components/typeset-8.tsx"
+// import from your project: import Demo from '@/components/typeset-8'
+import { Typeset } from '@gentleduck/registry-ui/typeset'
+
+export default function Demo() {
+  return (
+    <Typeset className="w-full max-w-xl">
+      <h2 className="text-primary">Version 2.4</h2>
+      <p className="mt-1 text-muted-foreground text-sm">Released on 2 October 2026</p>
+      <p>
+        The calendar selects ranges. Pass <code>mode="range"</code> and read the start and end from{' '}
+        <code>onSelect</code>.
+      </p>
+      <blockquote className="border-s-primary text-foreground">
+        Upgrading needs no code changes unless you styled the selected day yourself.
+      </blockquote>
+    </Typeset>
+  )
+}
 ```
 
 ## Compared with typography plugins
@@ -368,3 +555,21 @@ Typeset lives in `@layer components` and uses `:where()`, so any Tailwind utilit
 | Distribution | npm plugin | One CSS file in your repo |
 
 The `:where()` guard and the opt-out class (in the spirit of `not-prose`) come straight from the plugin.
+
+## API Reference
+
+### Typeset
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `size` | `'sm' \| 'default' \| 'lg'` | `'default'` | Sets `--typeset-size`, `--typeset-leading` and `--typeset-flow` together. A variable in `className` replaces the one the size sets |
+| `asChild` | `boolean` | `false` | Puts the class and props on the child element instead of a `div` |
+| `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Passed to the element |
+
+### Classes
+
+| Class | Effect |
+| --- | --- |
+| `typeset` | Styles everything inside. What `Typeset` renders |
+| `not-typeset`, `data-not-typeset` | Keeps prose styles off an element and its children |
+| `typeset-scroll` | Scrolls a wide table inside its wrapper |

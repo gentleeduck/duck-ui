@@ -9,7 +9,9 @@
   ],
   "name": "skeleton-3",
   "registryDependencies": [
-    "skeleton"
+    "skeleton",
+    "avatar",
+    "button"
   ],
   "root_folder": "skeleton",
   "source": "/registry-examples/src/skeleton",

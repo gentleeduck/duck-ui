@@ -1,0 +1,28 @@
+{
+  "dependencies": [
+    "@gentleduck/hooks",
+    "@tabler/icons-react"
+  ],
+  "files": [
+    {
+      "content": "import { InputGroup, InputGroupAddon, InputGroupInput } from '@gentleduck/registry-ui/input-group'\nimport { AtSign } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-sm gap-2\">\n      <InputGroup>\n        <InputGroupInput\n          aria-describedby=\"handle-error-q2w\"\n          aria-invalid=\"true\"\n          aria-label=\"Handle\"\n          defaultValue=\"mill pond\"\n        />\n        <InputGroupAddon>\n          <AtSign aria-hidden=\"true\" />\n        </InputGroupAddon>\n      </InputGroup>\n      <p className=\"text-destructive text-sm\" id=\"handle-error-q2w\">\n        A handle has no spaces.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "input-group/input-group-15.tsx",
+      "target": "components/input-group-15.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "input-group-15",
+  "registryDependencies": [
+    "input-group",
+    "button-group",
+    "dropdown-menu",
+    "kbd",
+    "label",
+    "popover",
+    "separator",
+    "tooltip"
+  ],
+  "root_folder": "input-group",
+  "source": "/registry-examples/src/input-group",
+  "type": "registry:example"
+}

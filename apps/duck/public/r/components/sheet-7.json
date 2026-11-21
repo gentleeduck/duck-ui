@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport {\n  Sheet,\n  SheetClose,\n  SheetContent,\n  SheetDescription,\n  SheetFooter,\n  SheetHeader,\n  SheetTitle,\n  SheetTrigger,\n} from '@gentleduck/registry-ui/sheet'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n  const [name, setName] = React.useState('Pedro Duarte')\n\n  return (\n    <div className=\"flex items-center gap-3\">\n      <Sheet onOpenChange={setOpen} open={open}>\n        <SheetTrigger asChild>\n          <Button variant=\"outline\">Rename</Button>\n        </SheetTrigger>\n        <SheetContent hideClose>\n          <form\n            className=\"flex flex-1 flex-col gap-4\"\n            onSubmit={(event) => {\n              event.preventDefault()\n              setName(String(new FormData(event.currentTarget).get('name')))\n              setOpen(false)\n            }}>\n            <SheetHeader>\n              <SheetTitle>Rename the account</SheetTitle>\n              <SheetDescription>Saving closes the sheet. Cancel leaves the name as it was.</SheetDescription>\n            </SheetHeader>\n            <div className=\"grid gap-2\">\n              <Label htmlFor=\"sheet-7-name\">Name</Label>\n              <Input defaultValue={name} id=\"sheet-7-name\" name=\"name\" required />\n            </div>\n            <SheetFooter className=\"mt-auto\">\n              <SheetClose asChild>\n                <Button type=\"button\" variant=\"outline\">\n                  Cancel\n                </Button>\n              </SheetClose>\n              <Button type=\"submit\">Save</Button>\n            </SheetFooter>\n          </form>\n        </SheetContent>\n      </Sheet>\n      <span className=\"text-muted-foreground text-sm\">{name}</span>\n    </div>\n  )\n}\n",
+      "path": "sheet/sheet-7.tsx",
+      "target": "components/sheet-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sheet-7",
+  "registryDependencies": [
+    "sheet",
+    "button",
+    "input",
+    "label"
+  ],
+  "root_folder": "sheet",
+  "source": "/registry-examples/src/sheet",
+  "type": "registry:example"
+}

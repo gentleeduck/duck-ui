@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport {\n  Sheet,\n  SheetClose,\n  SheetContent,\n  SheetDescription,\n  SheetFooter,\n  SheetHeader,\n  SheetTitle,\n  SheetTrigger,\n} from '@gentleduck/registry-ui/sheet'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Sheet>\n        <SheetTrigger asChild>\n          <Button variant={'outline'}>فتح اللوحة</Button>\n        </SheetTrigger>\n        <SheetContent className=\"flex flex-col\" closeText=\"إغلاق\">\n          <SheetHeader>\n            <SheetTitle>تعديل الملف الشخصي</SheetTitle>\n            <SheetDescription>عدّل بيانات ملفك الشخصي هنا، ثم اضغط على حفظ عند الانتهاء.</SheetDescription>\n          </SheetHeader>\n          <div className=\"flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto py-4\">\n            <div className=\"grid grid-cols-4 items-center gap-4\">\n              <Label htmlFor=\"name\">الاسم</Label>\n              <Input className=\"col-span-3\" defaultValue=\"أحمد محمد\" id=\"name\" />\n            </div>\n            <div className=\"grid grid-cols-4 items-center gap-4\">\n              <Label htmlFor=\"username\">اسم المستخدم</Label>\n              <Input className=\"col-span-3\" defaultValue=\"ahmad_mohamed\" id=\"username\" />\n            </div>\n          </div>\n          <SheetFooter className=\"mt-2\">\n            <SheetClose asChild>\n              <Button>حفظ التغييرات</Button>\n            </SheetClose>\n          </SheetFooter>\n        </SheetContent>\n      </Sheet>\n    </DirectionProvider>\n  )\n}\n",
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport {\n  Sheet,\n  SheetClose,\n  SheetContent,\n  SheetDescription,\n  SheetFooter,\n  SheetHeader,\n  SheetTitle,\n  SheetTrigger,\n} from '@gentleduck/registry-ui/sheet'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Sheet>\n        <SheetTrigger asChild>\n          <Button variant={'outline'}>فتح اللوحة</Button>\n        </SheetTrigger>\n        <SheetContent closeText=\"إغلاق\">\n          <SheetHeader>\n            <SheetTitle>تعديل الملف الشخصي</SheetTitle>\n            <SheetDescription>عدّل بيانات ملفك الشخصي هنا، ثم اضغط على حفظ عند الانتهاء.</SheetDescription>\n          </SheetHeader>\n          <div className=\"flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto py-4\">\n            <div className=\"grid grid-cols-4 items-center gap-4\">\n              <Label htmlFor=\"name\">الاسم</Label>\n              <Input className=\"col-span-3\" defaultValue=\"أحمد محمد\" id=\"name\" />\n            </div>\n            <div className=\"grid grid-cols-4 items-center gap-4\">\n              <Label htmlFor=\"username\">اسم المستخدم</Label>\n              <Input className=\"col-span-3\" defaultValue=\"ahmad_mohamed\" id=\"username\" />\n            </div>\n          </div>\n          <SheetFooter className=\"mt-2\">\n            <SheetClose asChild>\n              <Button>حفظ التغييرات</Button>\n            </SheetClose>\n          </SheetFooter>\n        </SheetContent>\n      </Sheet>\n    </DirectionProvider>\n  )\n}\n",
       "path": "sheet/sheet-3.tsx",
       "target": "components/sheet-3.tsx",
       "type": "registry:example"
@@ -9,7 +9,10 @@
   ],
   "name": "sheet-3",
   "registryDependencies": [
-    "sheet"
+    "sheet",
+    "button",
+    "input",
+    "label"
   ],
   "root_folder": "sheet",
   "source": "/registry-examples/src/sheet",

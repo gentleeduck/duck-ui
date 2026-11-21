@@ -7,23 +7,30 @@ We replaced `react-day-picker` with `@gentleduck/calendar`. Comparison against t
 
 ### Bundle size across all competitors
 
-| Library | Bundle (gzipped) | Improvement |
+| Library | Bundle (gzipped) | Source |
 | :--- | :--- | :--- |
-| **@gentleduck/calendar** | **4.9 KB** | **Winner** |
-| react-calendar | 15.0 KB | 3.1x larger |
-| react-day-picker v9 | 20.0 KB | 4.1x larger |
-| react-datepicker | 32.0 KB | 6.5x larger |
-| react-aria DatePicker | 45.0 KB | 9.2x larger |
+| **@gentleduck/calendar** (`useCalendar` + `NativeAdapter`) | **5.8 KB** | Measured |
+| **@gentleduck/primitives** Calendar | **9.7 KB** | Measured |
+| React Aria Calendar | 36.9 KB | Measured |
+| Ark UI DatePicker, inline | 43.3 KB | Measured |
+| react-day-picker v10, date-fns included | 20.0 KB | Measured |
+| react-calendar | 15.0 KB | Published |
+| react-datepicker | 32.0 KB | Published |
+
+The hook draws nothing, so the like-for-like row is the primitives Calendar: 9.7 KB against 20.0 KB for
+react-day-picker, 36.9 KB for React Aria and 43.3 KB for Ark UI. Those are measured by `bun run benchmark` in
+`packages/duck-primitives`; the last two are bundlephobia's published sizes.
 
 ### Dependencies
 
 | Library | Runtime Dependencies |
 | :--- | :--- |
 | **@gentleduck/calendar** | **0** |
-| react-calendar | 0 |
-| react-day-picker | 1 (date-fns) |
+| react-calendar | 4 |
+| react-day-picker | 2 (date-fns, @date-fns/tz) |
 | react-datepicker | 3 |
-| react-aria | 8 |
+| react-aria-components | 8 |
+| @ark-ui/react | 69, one per component |
 
 ***
 
@@ -33,10 +40,10 @@ Core function benchmarks (average of 2000 iterations):
 
 | Operation | Time |
 | :--- | :--- |
-| `buildCalendarMonth` | ~8 us |
-| `buildMultiMonth(3)` | ~22 us |
-| `buildMultiMonth(12)` | ~78 us |
-| `applySelection` | ~11 us |
+| `buildCalendarMonth` | ~7 us |
+| `buildMultiMonth(3)` | ~18 us |
+| `buildMultiMonth(12)` | ~69 us |
+| `applySelection` | ~10 us |
 
 Generate benchmarks locally:
 
@@ -58,7 +65,7 @@ cd packages/duck-calendar && bun run benchmark
 
 ## Optimizations
 
-These are the changes that took the core bundle from 7.0 KB down to 4.9 KB gzipped (75% smaller than react-day-picker):
+These keep the hook at 5.8 KB gzipped:
 
 * **Intl.DateTimeFormat caching**: formatters cached per locale+options, avoiding expensive re-instantiation.
 * **Stable keyboard callback**: `configRef` pattern, zero recreation cost.

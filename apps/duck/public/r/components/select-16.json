@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\nimport * as React from 'react'\n\nconst LIMIT = 3\n\nconst toppings = [\n  { value: 'mushroom', label: 'Mushroom' },\n  { value: 'olive', label: 'Olive' },\n  { value: 'onion', label: 'Onion' },\n  { value: 'pepper', label: 'Pepper' },\n  { value: 'pineapple', label: 'Pineapple' },\n  { value: 'sweetcorn', label: 'Sweetcorn' },\n]\n\nexport default function Demo() {\n  const [picked, setPicked] = React.useState<string[]>([])\n  const full = picked.length >= LIMIT\n\n  return (\n    <div className=\"flex flex-col gap-2\">\n      <Select multiple onValueChange={setPicked} value={picked}>\n        <SelectTrigger aria-label=\"Toppings\" className=\"w-[280px]\">\n          <SelectValue placeholder={`Pick up to ${LIMIT} toppings`} />\n        </SelectTrigger>\n        <SelectContent>\n          {toppings.map((topping) => (\n            <SelectItem disabled={full && !picked.includes(topping.value)} key={topping.value} value={topping.value}>\n              {topping.label}\n            </SelectItem>\n          ))}\n        </SelectContent>\n      </Select>\n      <p className=\"text-muted-foreground text-sm\">\n        {picked.length} of {LIMIT} picked\n      </p>\n    </div>\n  )\n}\n",
+      "path": "select/select-16.tsx",
+      "target": "components/select-16.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-16",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

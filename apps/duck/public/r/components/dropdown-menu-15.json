@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  DropdownMenu,\n  DropdownMenuCheckboxItem,\n  DropdownMenuContent,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [shown, setShown] = React.useState({ comments: true, history: false })\n\n  return (\n    <DropdownMenu>\n      <DropdownMenuTrigger asChild>\n        <Button variant=\"outline\">Panels</Button>\n      </DropdownMenuTrigger>\n      <DropdownMenuContent className=\"data-[state=closed]:hidden\" forceMount>\n        <DropdownMenuCheckboxItem\n          checked={shown.comments}\n          onCheckedChange={(comments) => setShown((value) => ({ ...value, comments }))}>\n          Comments\n        </DropdownMenuCheckboxItem>\n        <DropdownMenuCheckboxItem\n          checked={shown.history}\n          onCheckedChange={(history) => setShown((value) => ({ ...value, history }))}>\n          History\n        </DropdownMenuCheckboxItem>\n      </DropdownMenuContent>\n    </DropdownMenu>\n  )\n}\n",
+      "path": "dropdown-menu/dropdown-menu-15.tsx",
+      "target": "components/dropdown-menu-15.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "dropdown-menu-15",
+  "registryDependencies": [
+    "dropdown-menu",
+    "button",
+    "dialog",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "dropdown-menu",
+  "source": "/registry-examples/src/dropdown-menu",
+  "type": "registry:example"
+}

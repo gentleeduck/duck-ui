@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "import { PreviewPanelDialog } from '@gentleduck/registry-ui/preview-panel'\n\nconst DIAGRAM = `<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 320 120\" width=\"320\" height=\"120\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\">\n  <rect x=\"8\" y=\"40\" width=\"80\" height=\"40\" rx=\"6\"/>\n  <rect x=\"120\" y=\"40\" width=\"80\" height=\"40\" rx=\"6\"/>\n  <rect x=\"232\" y=\"40\" width=\"80\" height=\"40\" rx=\"6\"/>\n  <path d=\"M88 60h32M200 60h32\"/>\n  <g fill=\"currentColor\" stroke=\"none\" font-size=\"12\" text-anchor=\"middle\">\n    <text x=\"48\" y=\"64\">Request</text>\n    <text x=\"160\" y=\"64\">Queue</text>\n    <text x=\"272\" y=\"64\">Worker</text>\n  </g>\n</svg>`\n\nexport default function Demo() {\n  return (\n    <PreviewPanelDialog\n      fullscreenText=\"Open the diagram\"\n      maxHeight=\"300px\"\n      panelClassName=\"bg-muted/40\"\n      syncPanels={false}\n      unsafeHtml={DIAGRAM}\n    />\n  )\n}\n",
+      "path": "preview-panel/preview-panel-10.tsx",
+      "target": "components/preview-panel-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "preview-panel-10",
+  "registryDependencies": [
+    "preview-panel"
+  ],
+  "root_folder": "preview-panel",
+  "source": "/registry-examples/src/preview-panel",
+  "type": "registry:example"
+}

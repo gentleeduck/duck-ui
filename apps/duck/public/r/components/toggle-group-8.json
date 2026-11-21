@@ -1,7 +1,10 @@
 {
+  "dependencies": [
+    "lucide-react"
+  ],
   "files": [
     {
-      "content": "import { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { ToggleGroup, ToggleGroupItem } from '@gentleduck/registry-ui/toggle-group'\nimport { Bold, Italic, Underline } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <ToggleGroup type=\"multiple\" variant=\"outline\">\n        <ToggleGroupItem aria-label=\"غامق\" value=\"bold\">\n          <Bold />\n        </ToggleGroupItem>\n        <ToggleGroupItem aria-label=\"مائل\" value=\"italic\">\n          <Italic />\n        </ToggleGroupItem>\n        <ToggleGroupItem aria-label=\"تسطير\" value=\"underline\">\n          <Underline />\n        </ToggleGroupItem>\n      </ToggleGroup>\n    </DirectionProvider>\n  )\n}\n",
+      "content": "import { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { ToggleGroup, ToggleGroupItem } from '@gentleduck/registry-ui/toggle-group'\nimport { Bold, Italic, Underline } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <ToggleGroup aria-label=\"تنسيق النص\" type=\"multiple\" variant=\"outline\">\n        <ToggleGroupItem aria-label=\"غامق\" value=\"bold\">\n          <Bold />\n        </ToggleGroupItem>\n        <ToggleGroupItem aria-label=\"مائل\" value=\"italic\">\n          <Italic />\n        </ToggleGroupItem>\n        <ToggleGroupItem aria-label=\"تسطير\" value=\"underline\">\n          <Underline />\n        </ToggleGroupItem>\n      </ToggleGroup>\n    </DirectionProvider>\n  )\n}\n",
       "path": "toggle-group/toggle-group-8.tsx",
       "target": "components/toggle-group-8.tsx",
       "type": "registry:example"
@@ -9,7 +12,8 @@
   ],
   "name": "toggle-group-8",
   "registryDependencies": [
-    "toggle-group"
+    "toggle-group",
+    "direction"
   ],
   "root_folder": "toggle-group",
   "source": "/registry-examples/src/toggle-group",

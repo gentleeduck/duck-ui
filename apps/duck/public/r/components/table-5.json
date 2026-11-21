@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Table,\n  TableBody,\n  TableCaption,\n  TableCell,\n  TableHead,\n  TableHeader,\n  TableRow,\n} from '@gentleduck/registry-ui/table'\nimport { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'\nimport * as React from 'react'\n\ntype Key = 'city' | 'population' | 'area'\n\nconst cities = [\n  { area: 1572, city: 'London', population: 8_866_000 },\n  { area: 105, city: 'Paris', population: 2_103_000 },\n  { area: 891, city: 'Berlin', population: 3_878_000 },\n  { area: 1302, city: 'Madrid', population: 3_332_000 },\n]\n\nconst COLUMNS: { key: Key; label: string; numeric?: boolean }[] = [\n  { key: 'city', label: 'City' },\n  { key: 'population', label: 'Population', numeric: true },\n  { key: 'area', label: 'Area (km2)', numeric: true },\n]\n\nexport default function Demo() {\n  const [sort, setSort] = React.useState<{ key: Key; direction: 'ascending' | 'descending' }>({\n    direction: 'ascending',\n    key: 'city',\n  })\n  const rows = [...cities].sort((a, b) => {\n    const order = a[sort.key] < b[sort.key] ? -1 : a[sort.key] > b[sort.key] ? 1 : 0\n    return sort.direction === 'ascending' ? order : -order\n  })\n\n  return (\n    <Table>\n      <TableCaption>European capitals. Sort by any column.</TableCaption>\n      <TableHeader>\n        <TableRow>\n          {COLUMNS.map(({ key, label, numeric }) => {\n            const active = sort.key === key\n            const Icon = !active ? ArrowUpDown : sort.direction === 'ascending' ? ArrowUp : ArrowDown\n            return (\n              <TableHead\n                aria-sort={active ? sort.direction : 'none'}\n                className={numeric ? 'text-end' : undefined}\n                key={key}>\n                <Button\n                  className=\"-mx-3\"\n                  onClick={() =>\n                    setSort({\n                      direction: active && sort.direction === 'ascending' ? 'descending' : 'ascending',\n                      key,\n                    })\n                  }\n                  size=\"sm\"\n                  variant=\"ghost\">\n                  {label}\n                  <Icon aria-hidden=\"true\" />\n                </Button>\n              </TableHead>\n            )\n          })}\n        </TableRow>\n      </TableHeader>\n      <TableBody>\n        {rows.map((row) => (\n          <TableRow key={row.city}>\n            <TableHead className=\"font-medium text-foreground\" scope=\"row\">\n              {row.city}\n            </TableHead>\n            <TableCell className=\"text-end tabular-nums\">{row.population.toLocaleString('en')}</TableCell>\n            <TableCell className=\"text-end tabular-nums\">{row.area.toLocaleString('en')}</TableCell>\n          </TableRow>\n        ))}\n      </TableBody>\n    </Table>\n  )\n}\n",
+      "path": "table/table-5.tsx",
+      "target": "components/table-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "table-5",
+  "registryDependencies": [
+    "table",
+    "button",
+    "checkbox"
+  ],
+  "root_folder": "table",
+  "source": "/registry-examples/src/table",
+  "type": "registry:example"
+}

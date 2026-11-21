@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n  const [sent, setSent] = React.useState('')\n\n  return (\n    <form\n      className=\"flex flex-col items-start gap-3\"\n      onSubmit={(event) => {\n        event.preventDefault()\n        setSent(String(new FormData(event.currentTarget).get('country')))\n      }}>\n      <div className=\"flex gap-2\">\n        <Select autoComplete=\"country\" name=\"country\" onOpenChange={setOpen} open={open} required>\n          <SelectTrigger className=\"w-[200px]\">\n            <SelectValue placeholder=\"Country\" />\n          </SelectTrigger>\n          <SelectContent>\n            <SelectItem value=\"EG\">Egypt</SelectItem>\n            <SelectItem value=\"DE\">Germany</SelectItem>\n            <SelectItem value=\"JP\">Japan</SelectItem>\n          </SelectContent>\n        </Select>\n        <Button onClick={() => setOpen(true)} type=\"button\" variant=\"outline\">\n          Open it\n        </Button>\n      </div>\n      <Button type=\"submit\">Save</Button>\n      <p className=\"text-muted-foreground text-sm\">\n        {sent\n          ? `Submitted country=${sent}`\n          : 'The open state is controlled, required refuses no pick, and autoComplete hints autofill.'}\n      </p>\n    </form>\n  )\n}\n",
+      "path": "select/select-21.tsx",
+      "target": "components/select-21.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-21",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

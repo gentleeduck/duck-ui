@@ -25,10 +25,11 @@
 ### Menu / Context Menu / Menubar
 
 * `role="menu"`, `role="menuitem"`, `role="menuitemcheckbox"`, `role="menuitemradio"`
+* `role="menubar"` with `aria-orientation` on a menubar
 * `aria-checked` on checkbox and radio items
 * Arrow key navigation between items
 * Type-ahead character search
-* Submenu opening on <Kbd>ArrowRight</Kbd>
+* Submenu opening on <Kbd>ArrowRight</Kbd>, <Kbd>ArrowLeft</Kbd> right to left
 * `aria-disabled` on disabled items
 
 ### Progress
@@ -98,5 +99,5 @@ Triggers should have descriptive text content or an `aria-label`:
 | Popover | <Kbd>Escape</Kbd> close, <Kbd>Tab</Kbd> move focus |
 | Tooltip | <Kbd>Escape</Kbd> close, focus-triggered |
 | Menu | Arrow keys navigate, <Kbd>Enter</Kbd> / <Kbd>Space</Kbd> activate, <Kbd>Escape</Kbd> close |
-| Menubar | <Kbd>ArrowLeft</Kbd> / <Kbd>ArrowRight</Kbd> switch menus, <Kbd>ArrowUp</Kbd> / <Kbd>ArrowDown</Kbd> navigate items |
+| Menubar | <Kbd>ArrowLeft</Kbd> / <Kbd>ArrowRight</Kbd> switch menus (<Kbd>ArrowUp</Kbd> / <Kbd>ArrowDown</Kbd> in a vertical bar), <Kbd>ArrowUp</Kbd> / <Kbd>ArrowDown</Kbd> navigate items |
 | Progress | None (display-only) |

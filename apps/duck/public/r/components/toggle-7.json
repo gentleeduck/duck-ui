@@ -1,7 +1,10 @@
 {
+  "dependencies": [
+    "lucide-react"
+  ],
   "files": [
     {
-      "content": "import { Toggle } from '@gentleduck/registry-ui/toggle'\nimport { Underline } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Toggle aria-label=\"Toggle underline\" disabled>\n      <Underline className=\"h-4 w-4\" />\n    </Toggle>\n  )\n}\n",
+      "content": "import { Toggle } from '@gentleduck/registry-ui/toggle'\nimport { Underline } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Toggle aria-label=\"Toggle underline\" disabled>\n      <Underline />\n    </Toggle>\n  )\n}\n",
       "path": "toggle/toggle-7.tsx",
       "target": "components/toggle-7.tsx",
       "type": "registry:example"
@@ -9,7 +12,10 @@
   ],
   "name": "toggle-7",
   "registryDependencies": [
-    "toggle"
+    "toggle",
+    "direction",
+    "input",
+    "label"
   ],
   "root_folder": "toggle",
   "source": "/registry-examples/src/toggle",

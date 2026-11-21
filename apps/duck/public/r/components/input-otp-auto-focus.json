@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as InputOTP from '@gentleduck/primitives/input-otp'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function InputOTPAutoFocusExample() {\n  const [shown, setShown] = React.useState(false)\n\n  return (\n    <div className={styles.stack}>\n      <button className={styles.button} onClick={() => setShown((value) => !value)} type=\"button\">\n        {shown ? 'Hide the code' : 'Ask for the code'}\n      </button>\n      {shown ? (\n        <InputOTP.Root aria-label=\"Code\" autoFocus className={styles.otp} defaultValue=\"5\">\n          {[0, 1, 2, 3].map((slot) => (\n            <InputOTP.Slot aria-label={`Digit ${slot + 1}`} className={styles.slot} key={slot} />\n          ))}\n        </InputOTP.Root>\n      ) : null}\n      <p className={styles.note}>autoFocus puts the caret in the slot typing goes to, here the second.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/input-otp-auto-focus/input-otp-auto-focus.tsx",
+      "target": "components/input-otp-auto-focus.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "input-otp-auto-focus",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

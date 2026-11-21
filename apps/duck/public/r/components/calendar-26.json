@@ -1,0 +1,29 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [date, setDate] = React.useState<Date | null>(new Date())\n\n  return (\n    <Calendar\n      className=\"rounded-md border shadow-sm\"\n      mode=\"single\"\n      selected={date}\n      onSelect={setDate}\n      weekStartDay={1}\n      showWeekNumber\n      fixedWeeks\n      showOutsideDays={false}\n      showDropdowns={false}\n      renderWeekday={(day, index) => <span className={index >= 5 ? 'text-destructive' : undefined}>{day}</span>}\n    />\n  )\n}\n",
+      "path": "calendar/calendar-26.tsx",
+      "target": "components/calendar-26.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "calendar-26",
+  "registryDependencies": [
+    "calendar",
+    "direction",
+    "field",
+    "input",
+    "label",
+    "popover",
+    "switch"
+  ],
+  "root_folder": "calendar",
+  "source": "/registry-examples/src/calendar",
+  "type": "registry:example"
+}

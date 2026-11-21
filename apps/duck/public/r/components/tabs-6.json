@@ -1,0 +1,23 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Tabs, TabsContent, TabsList, TabsTrigger } from '@gentleduck/registry-ui/tabs'\nimport * as React from 'react'\n\nconst STEPS = [\n  { body: 'Where should we send the order?', label: 'Shipping', value: 'shipping' },\n  { body: 'Pay by card, or on delivery.', label: 'Payment', value: 'payment' },\n  { body: 'Check the order before you place it.', label: 'Review', value: 'review' },\n]\n\nexport default function Demo() {\n  const [step, setStep] = React.useState('shipping')\n  const index = STEPS.findIndex((item) => item.value === step)\n\n  return (\n    <Tabs className=\"w-full max-w-sm\" onValueChange={setStep} value={step}>\n      <TabsList className=\"grid w-full grid-cols-3\">\n        {STEPS.map((item) => (\n          <TabsTrigger key={item.value} value={item.value}>\n            {item.label}\n          </TabsTrigger>\n        ))}\n      </TabsList>\n      {STEPS.map((item) => (\n        <TabsContent className=\"rounded-lg border p-4 text-sm\" key={item.value} value={item.value}>\n          {item.body}\n        </TabsContent>\n      ))}\n      <div className=\"mt-4 flex items-center justify-between\">\n        <p aria-live=\"polite\" className=\"text-muted-foreground text-sm\">\n          Step {index + 1} of {STEPS.length}\n        </p>\n        <div className=\"flex gap-2\">\n          <Button\n            disabled={index === 0}\n            onClick={() => setStep(STEPS[index - 1]?.value ?? step)}\n            size=\"sm\"\n            variant=\"outline\">\n            Back\n          </Button>\n          <Button\n            disabled={index === STEPS.length - 1}\n            onClick={() => setStep(STEPS[index + 1]?.value ?? step)}\n            size=\"sm\">\n            Next\n          </Button>\n        </div>\n      </div>\n    </Tabs>\n  )\n}\n",
+      "path": "tabs/tabs-6.tsx",
+      "target": "components/tabs-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "tabs-6",
+  "registryDependencies": [
+    "tabs",
+    "button",
+    "card",
+    "input",
+    "label",
+    "switch",
+    "textarea"
+  ],
+  "root_folder": "tabs",
+  "source": "/registry-examples/src/tabs",
+  "type": "registry:example"
+}

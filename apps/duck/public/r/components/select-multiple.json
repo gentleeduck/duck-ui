@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Select from '@gentleduck/primitives/select'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nconst TAGS = ['design', 'frontend', 'backend', 'docs', 'testing']\n\nexport default function SelectMultipleExample() {\n  const [tags, setTags] = React.useState<string[]>(['frontend'])\n\n  return (\n    <Select.Root multiple onValueChange={setTags} value={tags}>\n      <Select.Trigger aria-label=\"Tags\" className={styles.trigger}>\n        <Select.Value placeholder=\"No tags\">{(picked) => `${picked.length} tags: ${picked.join(', ')}`}</Select.Value>\n      </Select.Trigger>\n      <Select.Portal>\n        <Select.Content className={styles.content} position=\"popper\" sideOffset={6}>\n          <Select.Viewport>\n            {TAGS.map((tag) => (\n              <Select.Item className={styles.item} key={tag} value={tag}>\n                <Select.ItemIndicator>x</Select.ItemIndicator>\n                <Select.ItemText>{tag}</Select.ItemText>\n              </Select.Item>\n            ))}\n          </Select.Viewport>\n        </Select.Content>\n      </Select.Portal>\n    </Select.Root>\n  )\n}\n",
+      "path": "internal-primitives/select-multiple/select-multiple.tsx",
+      "target": "components/select-multiple.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "select-multiple",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

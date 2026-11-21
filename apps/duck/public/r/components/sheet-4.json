@@ -9,7 +9,10 @@
   ],
   "name": "sheet-4",
   "registryDependencies": [
-    "sheet"
+    "sheet",
+    "button",
+    "input",
+    "label"
   ],
   "root_folder": "sheet",
   "source": "/registry-examples/src/sheet",

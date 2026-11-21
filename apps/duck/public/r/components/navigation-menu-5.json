@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  NavigationMenu,\n  NavigationMenuContent,\n  NavigationMenuIndicator,\n  NavigationMenuItem,\n  NavigationMenuLink,\n  NavigationMenuList,\n  NavigationMenuTrigger,\n} from '@gentleduck/registry-ui/navigation-menu'\n\nconst sections = [\n  { links: ['Overview', 'Members', 'Billing'], title: 'Workspace' },\n  { links: ['Profile', 'Notifications', 'Security'], title: 'Account' },\n  { links: ['Guides', 'Changelog'], title: 'Help' },\n]\n\nexport default function Demo() {\n  return (\n    <NavigationMenu className=\"items-start\" orientation=\"vertical\">\n      <NavigationMenuList className=\"w-44\">\n        {sections.map((section) => (\n          <NavigationMenuItem key={section.title} value={section.title}>\n            <NavigationMenuTrigger>{section.title}</NavigationMenuTrigger>\n            <NavigationMenuContent>\n              <ul className=\"grid w-48 gap-1\">\n                {section.links.map((link) => (\n                  <li key={link}>\n                    <NavigationMenuLink href={`#${link.toLowerCase()}`}>{link}</NavigationMenuLink>\n                  </li>\n                ))}\n              </ul>\n            </NavigationMenuContent>\n          </NavigationMenuItem>\n        ))}\n        <NavigationMenuIndicator />\n      </NavigationMenuList>\n    </NavigationMenu>\n  )\n}\n",
+      "path": "navigation-menu/navigation-menu-5.tsx",
+      "target": "components/navigation-menu-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "navigation-menu-5",
+  "registryDependencies": [
+    "navigation-menu",
+    "direction"
+  ],
+  "root_folder": "navigation-menu",
+  "source": "/registry-examples/src/navigation-menu",
+  "type": "registry:example"
+}

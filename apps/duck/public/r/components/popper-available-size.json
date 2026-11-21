@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Popper from '@gentleduck/primitives/popper'\nimport styles from '../primitives.module.css'\n\nconst OPTIONS = Array.from({ length: 40 }, (_, index) => `Option ${index + 1}`)\n\nexport default function PopperAvailableSizeExample() {\n  return (\n    <Popper.Root>\n      <Popper.Anchor className={styles.button}>A long list below</Popper.Anchor>\n      <Popper.Content\n        className={styles.content}\n        collisionPadding={16}\n        sideOffset={6}\n        style={{\n          maxHeight: 'var(--gentleduck-popper-available-height)',\n          minWidth: 'var(--gentleduck-popper-anchor-width)',\n          overflowY: 'auto',\n        }}>\n        {OPTIONS.map((option) => (\n          <div className={styles.item} key={option}>\n            {option}\n          </div>\n        ))}\n      </Popper.Content>\n    </Popper.Root>\n  )\n}\n",
+      "path": "internal-primitives/popper-available-size/popper-available-size.tsx",
+      "target": "components/popper-available-size.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "popper-available-size",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

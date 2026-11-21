@@ -9,7 +9,16 @@
   ],
   "name": "dialog-3",
   "registryDependencies": [
-    "dialog"
+    "dialog",
+    "button",
+    "calendar",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "popover",
+    "select",
+    "textarea"
   ],
   "root_folder": "dialog",
   "source": "/registry-examples/src/dialog",

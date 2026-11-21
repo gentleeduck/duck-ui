@@ -1,7 +1,10 @@
 {
+  "dependencies": [
+    "sonner"
+  ],
   "files": [
     {
-      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { CommandShortcut } from '@gentleduck/registry-ui/command'\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\nimport { ArrowBigUpDash, Command } from 'lucide-react'\nimport React from 'react'\nimport { toast } from 'sonner'\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState<boolean>(false)\n\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <TooltipProvider>\n        <Tooltip>\n          <TooltipTrigger asChild>\n            <Button\n              aria-expanded={open}\n              aria-label={'زر متقدم'}\n              icon={<ArrowBigUpDash />}\n              isCollapsed={open}\n              loading={false}\n              onClick={() => setOpen((prev) => !prev)}\n              size=\"default\">\n              زر\n            </Button>\n          </TooltipTrigger>\n          <TooltipContent forceMount side=\"top\" className=\"flex items-center gap-2\">\n            <CommandShortcut\n              keys=\"mod+i\"\n              onKeysPressed={() => {\n                setOpen((prev) => !prev)\n                toast.success('زر متقدم')\n              }}\n              variant=\"secondary\">\n              <Command />\n              +i\n            </CommandShortcut>\n            <p>زر متقدم</p>\n          </TooltipContent>\n        </Tooltip>\n      </TooltipProvider>\n    </DirectionProvider>\n  )\n}\n",
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Toggle } from '@gentleduck/registry-ui/toggle'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\nimport { Archive, Inbox, Send } from 'lucide-react'\nimport * as React from 'react'\n\nconst actions = [\n  { icon: <Inbox />, label: 'Inbox' },\n  { icon: <Send />, label: 'Sent' },\n  { icon: <Archive />, label: 'Archive' },\n]\n\nexport default function Demo() {\n  const [collapsed, setCollapsed] = React.useState(true)\n\n  return (\n    <div className=\"flex flex-col items-start gap-4\">\n      <Toggle onPressedChange={(pressed) => setCollapsed(!pressed)} pressed={!collapsed} size=\"sm\" variant=\"outline\">\n        Show labels\n      </Toggle>\n      <TooltipProvider>\n        <div className=\"flex gap-2\">\n          {actions.map(({ icon, label }) => (\n            <Tooltip key={label}>\n              <TooltipTrigger asChild>\n                <Button\n                  aria-label={collapsed ? label : undefined}\n                  icon={icon}\n                  isCollapsed={collapsed}\n                  variant=\"outline\">\n                  {label}\n                </Button>\n              </TooltipTrigger>\n              {collapsed ? <TooltipContent>{label}</TooltipContent> : null}\n            </Tooltip>\n          ))}\n        </div>\n      </TooltipProvider>\n    </div>\n  )\n}\n",
       "path": "button/button-20.tsx",
       "target": "components/button-20.tsx",
       "type": "registry:example"
@@ -9,7 +12,11 @@
   ],
   "name": "button-20",
   "registryDependencies": [
-    "button"
+    "button",
+    "command",
+    "direction",
+    "toggle",
+    "tooltip"
   ],
   "root_folder": "button",
   "source": "/registry-examples/src/button",

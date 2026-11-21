@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "import { Input } from '@gentleduck/registry-ui/input'\n\nexport default function Demo() {\n  return <Input defaultValue=\"user@example.com\" placeholder=\"Email\" type=\"email\" />\n}\n",
@@ -9,7 +15,10 @@
   ],
   "name": "input-2",
   "registryDependencies": [
-    "input"
+    "input",
+    "button",
+    "field",
+    "label"
   ],
   "root_folder": "input",
   "source": "/registry-examples/src/input",

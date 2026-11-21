@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "import { Avatar, AvatarFallback, AvatarGroup, AvatarImage } from '@gentleduck/registry-ui/avatar'\n\nconst team = [\n  { alt: 'wildduck', fallback: 'WD', id: 'wildduck', src: 'https://avatars.githubusercontent.com/u/108896341?v=4' },\n  { alt: 'Ada Lovelace', fallback: 'AL', id: 'ada' },\n  { alt: 'Grace Hopper', fallback: 'GH', id: 'grace' },\n  { alt: 'Alan Turing', fallback: 'AT', id: 'alan' },\n  { alt: 'Katherine Johnson', fallback: 'KJ', id: 'katherine' },\n]\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-row flex-wrap items-center gap-12\">\n      <Avatar>\n        <AvatarImage alt=\"A photo that is gone\" src=\"/avatars/missing.png\" />\n        <AvatarFallback delayMs={600}>NF</AvatarFallback>\n      </Avatar>\n      <AvatarGroup imgs={team} maxVisible={3} />\n    </div>\n  )\n}\n",
+      "path": "avatar/avatar-4.tsx",
+      "target": "components/avatar-4.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "avatar-4",
+  "registryDependencies": [
+    "avatar",
+    "direction"
+  ],
+  "root_folder": "avatar",
+  "source": "/registry-examples/src/avatar",
+  "type": "registry:example"
+}

@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Combobox, ComboboxGroup, ComboboxItem } from '@gentleduck/registry-ui/combobox'\nimport { PlusCircle } from 'lucide-react'\n\nconst statuses = [\n  { label: 'Backlog', value: 'backlog' },\n  { label: 'Todo', value: 'todo' },\n  { label: 'In progress', value: 'in-progress' },\n  { label: 'Done', value: 'done' },\n  { label: 'Canceled', value: 'canceled' },\n]\n\nexport default function Demo() {\n  return (\n    <Combobox\n      commandInput={{ placeholder: 'Status' }}\n      commandTriggerPlaceholder=\"\"\n      defaultValue={['todo', 'in-progress']}\n      items={statuses}\n      popoverContent={{ className: 'w-50' }}\n      popoverTrigger={{\n        children: (\n          <>\n            <PlusCircle aria-hidden=\"true\" />\n            Status\n          </>\n        ),\n        size: 'sm',\n      }}\n      type=\"multiple\">\n      {(items) => (\n        <ComboboxGroup heading=\"Status\">\n          {items.map((item) => (\n            <ComboboxItem item={item} key={item.value} />\n          ))}\n        </ComboboxGroup>\n      )}\n    </Combobox>\n  )\n}\n",
+      "path": "combobox/combobox-10.tsx",
+      "target": "components/combobox-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "combobox-10",
+  "registryDependencies": [
+    "combobox",
+    "dropdown-menu",
+    "field"
+  ],
+  "root_folder": "combobox",
+  "source": "/registry-examples/src/combobox",
+  "type": "registry:example"
+}

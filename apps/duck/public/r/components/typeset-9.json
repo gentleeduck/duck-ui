@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "import { Typeset } from '@gentleduck/registry-ui/typeset'\n\nexport default function Demo() {\n  return (\n    <Typeset className=\"w-full max-w-xl\">\n      <h1>Shipping a release</h1>\n      <p>\n        Every element below is what a markdown renderer writes. Press <kbd>Ctrl</kbd> + <kbd>K</kbd> to search, and read\n        the <abbr title=\"Changelog\">CHANGELOG</abbr> first. The build takes <mark>about two minutes</mark>. Lookups take\n        log\n        <sub>2</sub> n steps, and the cache holds 10<sup>4</sup> entries.\n      </p>\n      <h2>Steps</h2>\n      <ol>\n        <li>\n          Bump the version\n          <ul>\n            <li>Patch for fixes</li>\n            <li>Minor for features</li>\n          </ul>\n        </li>\n        <li>Tag the commit</li>\n      </ol>\n      <h3>Checklist</h3>\n      <ul className=\"contains-task-list\">\n        <li className=\"task-list-item\">\n          <input aria-label=\"Tests pass\" checked disabled type=\"checkbox\" /> Tests pass\n        </li>\n        <li className=\"task-list-item\">\n          <input aria-label=\"Docs updated\" disabled type=\"checkbox\" /> Docs updated\n        </li>\n      </ul>\n      <h4>Terms</h4>\n      <dl>\n        <dt>Changeset</dt>\n        <dd>A file naming the packages a change bumps, and by how much.</dd>\n      </dl>\n      <hr />\n      <figure>\n        <pre>\n          <code>git tag v2.4.0 && git push --tags</code>\n        </pre>\n        <figcaption>Tagging starts the release.</figcaption>\n      </figure>\n      <details>\n        <summary>What if the build fails?</summary>\n        <p>Fix it on a branch and tag again. A failed build publishes nothing.</p>\n      </details>\n      <p>\n        <small>Last reviewed in October 2026.</small>\n      </p>\n    </Typeset>\n  )\n}\n",
+      "path": "typeset/typeset-9.tsx",
+      "target": "components/typeset-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "typeset-9",
+  "registryDependencies": [
+    "typeset",
+    "button"
+  ],
+  "root_folder": "typeset",
+  "source": "/registry-examples/src/typeset",
+  "type": "registry:example"
+}

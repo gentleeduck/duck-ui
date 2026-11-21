@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Command from '@gentleduck/primitives/command'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function CommandPaletteExample() {\n  const [last, setLast] = React.useState('nothing yet')\n\n  return (\n    <div className={styles.stack}>\n      <Command.Root className={styles.command} aria-label=\"Command palette\">\n        <Command.Input className={styles.commandInput} placeholder=\"Type a command or search...\" />\n        <Command.List className={styles.commandList}>\n          <Command.Empty className={styles.commandEmpty}>No results.</Command.Empty>\n          <Command.Group heading=\"Suggestions\">\n            <Command.Item className={styles.item} keywords={['agenda', 'schedule']} onSelect={setLast} value=\"calendar\">\n              Calendar\n            </Command.Item>\n            <Command.Item className={styles.item} keywords={['emoji']} onSelect={setLast} value=\"smileys\">\n              Search emoji\n            </Command.Item>\n          </Command.Group>\n          <Command.Separator className={styles.separator} />\n          <Command.Group heading=\"Settings\">\n            <Command.Item className={styles.item} onSelect={setLast} value=\"profile\">\n              Profile <span className={styles.shortcut}>Ctrl P</span>\n            </Command.Item>\n            <Command.Item className={styles.item} onSelect={setLast} value=\"billing\">\n              Billing <span className={styles.shortcut}>Ctrl B</span>\n            </Command.Item>\n          </Command.Group>\n        </Command.List>\n      </Command.Root>\n      <p className={styles.note}>Selected: {last}. \"agenda\" finds Calendar through its keywords.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/command-palette/command-palette.tsx",
+      "target": "components/command-palette.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "command-palette",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

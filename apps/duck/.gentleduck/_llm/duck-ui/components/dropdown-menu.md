@@ -239,20 +239,20 @@ export default function Demo() {
           variant="outline"
           className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:ring-2 data-[state=open]:ring-ring">
           Account
-          <ChevronDown className="ml-2 h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+          <ChevronDown className="ms-2 h-4 w-4 transition-transform data-[state=open]:rotate-180" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuItem>
-          <User className="mr-2 h-4 w-4" />
+          <User className="me-2 h-4 w-4" />
           Profile
         </DropdownMenuItem>
         <DropdownMenuItem>
-          <Settings className="mr-2 h-4 w-4" />
+          <Settings className="me-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
         <DropdownMenuItem>
-          <LogOut className="mr-2 h-4 w-4" />
+          <LogOut className="me-2 h-4 w-4" />
           Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -304,11 +304,393 @@ export default function Demo() {
 }
 ```
 
+The arrow fills with `--popover` and outlines its curve in `--dropdown-menu-border-color`, the content's border colour. Change both with a class such as `[--dropdown-menu-border-color:#5865f2]` on `DropdownMenuContent`, or in its `style`. `MotionDropdownMenuContent` takes it too:
+
+```tsx
+<DropdownMenuContent className="[--dropdown-menu-border-color:#5865f2]">
+  <DropdownMenuArrow />
+  ...
+</DropdownMenuContent>
+```
+
+### Escape in a Submenu
+
+Escape inside a submenu closes the whole menu by default. With `closeParentOnEsc={false}` on `DropdownMenuSub`, it closes only the submenu and puts focus back on its trigger, as the WAI-ARIA menu pattern describes.
+
+```tsx title="components/dropdown-menu-8.tsx"
+// import from your project: import Demo from '@/components/dropdown-menu-8'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@gentleduck/registry-ui/dropdown-menu'
+
+export default function Demo() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Edit</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-48">
+        <DropdownMenuItem>Undo</DropdownMenuItem>
+        <DropdownMenuItem>Redo</DropdownMenuItem>
+        <DropdownMenuSub closeParentOnEsc={false}>
+          <DropdownMenuSubTrigger>Find</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem>Find in page</DropdownMenuItem>
+            <DropdownMenuItem>Find and replace</DropdownMenuItem>
+            <DropdownMenuItem>Find next</DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+```
+
+### Shortcuts and a controlled menu
+
+`DropdownMenuShortcut` with `keys` spells the keys out for the platform, and with `onKeysPressed` runs it on them while the menu is open, with no `KeyProvider` needed. `closeOnSelect={false}` keeps the menu open after an item, and `variant="destructive"` marks one that deletes.
+
+```tsx title="components/dropdown-menu-9.tsx"
+// import from your project: import Demo from '@/components/dropdown-menu-9'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from '@gentleduck/registry-ui/dropdown-menu'
+import * as React from 'react'
+
+export default function Demo() {
+  const [open, setOpen] = React.useState(false)
+  const [pinned, setPinned] = React.useState(false)
+  const [last, setLast] = React.useState('nothing yet')
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <DropdownMenu onOpenChange={setOpen} open={open}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline">File</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56">
+          <DropdownMenuItem onSelect={() => setLast('rename')}>
+            Rename
+            <DropdownMenuShortcut keys="mod+shift+r" onKeysPressed={() => setLast('rename, from its keys')} />
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setLast('export')}>
+            Export
+            <DropdownMenuShortcut keys="mod+shift+e" onKeysPressed={() => setLast('export, from its keys')} />
+          </DropdownMenuItem>
+          <DropdownMenuCheckboxItem checked={pinned} closeOnSelect={false} onCheckedChange={setPinned}>
+            Pin to sidebar
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => setLast('delete')} variant="destructive">
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <p className="text-muted-foreground text-sm">
+        Menu {open ? 'open' : 'closed'}, {pinned ? 'pinned' : 'not pinned'}, last: {last}
+      </p>
+    </div>
+  )
+}
+```
+
+### Non-modal and disabled
+
+`modal={false}` leaves the page scrolling and taking clicks while the menu is open, and `disabled` on the trigger keeps it shut.
+
+```tsx title="components/dropdown-menu-10.tsx"
+// import from your project: import Demo from '@/components/dropdown-menu-10'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@gentleduck/registry-ui/dropdown-menu'
+import { Label } from '@gentleduck/registry-ui/label'
+import { Switch } from '@gentleduck/registry-ui/switch'
+import * as React from 'react'
+
+export default function Demo() {
+  const [locked, setLocked] = React.useState(false)
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex items-center gap-2">
+        <Switch checked={locked} id="lock-actions" onCheckedChange={setLocked} />
+        <Label htmlFor="lock-actions">Lock the actions</Label>
+      </div>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild disabled={locked}>
+          <Button variant="outline">Actions</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem>Archive</DropdownMenuItem>
+          <DropdownMenuItem>Move to folder</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <p className="max-w-64 text-center text-muted-foreground text-sm">
+        The page still scrolls and takes clicks while the menu is open.
+      </p>
+    </div>
+  )
+}
+```
+
+### An item that opens a dialog
+
+The menu closes once the item is selected, so the dialog has no trigger of its own to give focus back to. `finalFocus` on `DialogContent` hands it back to the menu's trigger.
+
+```tsx title="components/dropdown-menu-11.tsx"
+// import from your project: import Demo from '@/components/dropdown-menu-11'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@gentleduck/registry-ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@gentleduck/registry-ui/dropdown-menu'
+import * as React from 'react'
+
+export default function Demo() {
+  const actionsRef = React.useRef<HTMLButtonElement>(null)
+  const [deleting, setDeleting] = React.useState(false)
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild ref={actionsRef}>
+          <Button variant="outline">Actions</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem>Rename</DropdownMenuItem>
+          <DropdownMenuItem>Duplicate</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setDeleting(true)} variant="destructive">
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Dialog onOpenChange={setDeleting} open={deleting}>
+        <DialogContent finalFocus={actionsRef}>
+          <DialogHeader>
+            <DialogTitle>Delete the report?</DialogTitle>
+            <DialogDescription>It is removed for everyone on the team.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <DialogClose asChild>
+              <Button variant="destructive">Delete</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+```
+
+### Links
+
+`asChild` renders an item as a link, so it follows the link on Enter as on a click. A disabled one follows nothing.
+
+```tsx title="components/dropdown-menu-12.tsx"
+// import from your project: import Demo from '@/components/dropdown-menu-12'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@gentleduck/registry-ui/dropdown-menu'
+
+export default function Demo() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Account</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem asChild>
+          <a href="#account-profile">Profile</a>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href="#account-billing">Billing</a>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild disabled>
+          <a href="#account-team">Team</a>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <a href="https://github.com/gentleeduck/gentleduck" rel="noreferrer" target="_blank">
+            Source
+          </a>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+```
+
+### Inset items and a submenu open from the start
+
+```tsx title="components/dropdown-menu-13.tsx"
+// import from your project: import Demo from '@/components/dropdown-menu-13'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@gentleduck/registry-ui/dropdown-menu'
+import { Copy, Scissors } from 'lucide-react'
+
+export default function Demo() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Edit</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-52">
+        <DropdownMenuLabel inset>Clipboard</DropdownMenuLabel>
+        <DropdownMenuItem textValue="Cut">
+          <Scissors aria-hidden="true" /> Cut
+        </DropdownMenuItem>
+        <DropdownMenuItem textValue="Copy">
+          <Copy aria-hidden="true" /> Copy
+        </DropdownMenuItem>
+        <DropdownMenuItem inset>Paste</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuSub defaultOpen>
+          <DropdownMenuSubTrigger inset>Paste special</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent alignOffset={-4} sideOffset={6}>
+            <DropdownMenuItem>Values only</DropdownMenuItem>
+            <DropdownMenuItem>Formatting only</DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+```
+
+### Offsets and collision padding
+
+```tsx title="components/dropdown-menu-14.tsx"
+// import from your project: import Demo from '@/components/dropdown-menu-14'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@gentleduck/registry-ui/dropdown-menu'
+
+export default function Demo() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Placed with offsets</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" alignOffset={12} avoidCollisions collisionPadding={24} sideOffset={12}>
+        <DropdownMenuItem>Twelve pixels below</DropdownMenuItem>
+        <DropdownMenuItem>And twelve along</DropdownMenuItem>
+        <DropdownMenuItem>Kept 24px off the viewport edge</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+```
+
+### Kept mounted
+
+```tsx title="components/dropdown-menu-15.tsx"
+// import from your project: import Demo from '@/components/dropdown-menu-15'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@gentleduck/registry-ui/dropdown-menu'
+import * as React from 'react'
+
+export default function Demo() {
+  const [shown, setShown] = React.useState({ comments: true, history: false })
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Panels</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="data-[state=closed]:hidden" forceMount>
+        <DropdownMenuCheckboxItem
+          checked={shown.comments}
+          onCheckedChange={(comments) => setShown((value) => ({ ...value, comments }))}>
+          Comments
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem
+          checked={shown.history}
+          onCheckedChange={(history) => setShown((value) => ({ ...value, history }))}>
+          History
+        </DropdownMenuCheckboxItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+```
+
 ## Component Composition
 
 ## RTL Support
 
-Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the dropdown menu follows. The portaled content gets the resolved `dir`, sub-menus open to the left, the sub-menu chevron flips, and the arrow keys that open and close sub-menus swap.
+Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the dropdown menu follows. The portaled content gets the resolved `dir`, the trigger keeps the page's, sub-menus open to the left, the sub-menu chevron flips, and the arrow keys that open and close sub-menus swap.
 
 ```tsx title="components/dropdown-menu-4.tsx"
 // import from your project: import Demo from '@/components/dropdown-menu-4'
@@ -488,7 +870,7 @@ The root component that manages open/closed state and provides context to all ch
 | `open` | `boolean` | - | Controlled open state |
 | `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
 | `onOpenChange` | `(open: boolean) => void` | - | Callback when open state changes |
-| `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
+| `dir` | `'ltr' \| 'rtl'` | - | Direction of the menu and its sub-menus, resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). The trigger keeps the page's |
 | `modal` | `boolean` | `true` | When true, interaction with outside elements is disabled and only menu content is visible to screen readers |
 
 ### DropdownMenuTrigger
@@ -509,12 +891,15 @@ The dropdown content area. Handles positioning, focus management, keyboard navig
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'` | Preferred side relative to the trigger |
+| `forceMount` | `true` | - | Keeps the content in the page while closed, as `data-state="closed"`, for an exit animation to run on |
 | `sideOffset` | `number` | `4` | Main-axis offset from trigger |
 | `align` | `'start' \| 'center' \| 'end'` | `'start'` | Cross-axis alignment |
 | `alignOffset` | `number` | - | Cross-axis offset |
 | `avoidCollisions` | `boolean` | `true` | Flip to avoid viewport overflow |
 | `collisionPadding` | `number` | - | Padding from viewport edges |
-| `className` | `string` | - | Additional CSS class names |
+| `className` | `string` | - | Additional CSS class names. The arrow fills with `--popover` and draws a 1px outline in `--dropdown-menu-border-color` |
+
+The items scroll inside the content rather than the content itself, so the arrow is never clipped.
 
 Exposes `data-state="open"` / `data-state="closed"` and `data-side` for CSS animation.
 
@@ -553,6 +938,7 @@ An individual menu action item. Renders a `<div>` with `role="menuitem"`.
 | `inset` | `boolean` | - | Adds start padding to align with items that have icons |
 | `disabled` | `boolean` | - | Prevents interaction and styles the item as disabled |
 | `onSelect` | `(event: Event) => void` | - | Called when the item is selected via click or keyboard |
+| `closeOnSelect` | `boolean` | `true` | Close the menu once the item is selected. `DropdownMenuCheckboxItem` and `DropdownMenuRadioItem` take it too |
 | `textValue` | `string` | - | Text override for typeahead search |
 | `className` | `string` | - | Additional CSS class names |
 
@@ -602,7 +988,10 @@ Displays a keyboard shortcut hint next to a menu item.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
+| `keys` | `string` | - | Keyboard shortcut (for example, `"mod+shift+e"`, Cmd on a Mac and Ctrl elsewhere). Shown for the platform when there are no `children` |
+| `onKeysPressed` | `() => void` | - | Runs on `keys` while the shortcut is mounted, that is while the menu is open |
 | `className` | `string` | - | Additional CSS class names |
+| `children` | `React.ReactNode` | - | Shortcut hint content (for example, `Ctrl+K`), shown in place of `keys` |
 
 ### DropdownMenuSub
 
@@ -613,6 +1002,7 @@ Wrapper for a submenu. Manages nested open state.
 | `open` | `boolean` | - | Controlled open state |
 | `defaultOpen` | `boolean` | `false` | Initial open state (uncontrolled) |
 | `onOpenChange` | `(open: boolean) => void` | - | Callback when open state changes |
+| `closeParentOnEsc` | `boolean` | `true` | Whether Escape inside the submenu closes the whole menu, or only the submenu, focusing its sub-trigger |
 
 ### DropdownMenuSubTrigger
 
@@ -626,7 +1016,7 @@ Trigger element for a submenu. Displays a chevron icon indicating a nested menu.
 
 ### DropdownMenuSubContent
 
-Content container for a submenu. Positioned to the side of the sub-trigger.
+Content container for a submenu. Positioned to the side of the sub-trigger, and scrolls when taller than the space it has.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -642,7 +1032,7 @@ Same props as `DropdownMenu`. Wraps with `useMotionRoot` for exit animation supp
 
 ### MotionDropdownMenuContent
 
-Same props as `DropdownMenuContent`. Adds scale, blur, and opacity enter/exit animation with springBouncy transition. Requires the `motion` package.
+Same props as `DropdownMenuContent`, on the same surface, with its items scrolling inside it. Adds scale, blur, and opacity enter/exit animation with springBouncy transition. Requires the `motion` package.
 
 ### MotionDropdownMenuSub
 

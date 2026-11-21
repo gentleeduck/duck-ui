@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "lucide-react"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { type ChartConfig, ChartContainer } from '@gentleduck/registry-ui/chart'\nimport { Bar, BarChart, CartesianGrid } from 'recharts'\n\nconst chartData = [\n  { desktop: 186, mobile: 80, month: 'January' },\n  { desktop: 305, mobile: 200, month: 'February' },\n  { desktop: 237, mobile: 120, month: 'March' },\n  { desktop: 73, mobile: 190, month: 'April' },\n  { desktop: 209, mobile: 130, month: 'May' },\n  { desktop: 214, mobile: 140, month: 'June' },\n]\n\nconst chartConfig = {\n  desktop: {\n    color: '#2563eb',\n    label: 'Desktop',\n  },\n  mobile: {\n    color: '#60a5fa',\n    label: 'Mobile',\n  },\n} satisfies ChartConfig\n\nexport default function Demo() {\n  return (\n    <ChartContainer className=\"min-h-[200px] w-full\" config={chartConfig}>\n      <BarChart data={chartData}>\n        <CartesianGrid vertical={false} />\n        <Bar dataKey=\"desktop\" fill=\"var(--color-desktop)\" radius={4} />\n        <Bar dataKey=\"mobile\" fill=\"var(--color-mobile)\" radius={4} />\n      </BarChart>\n    </ChartContainer>\n  )\n}\n",
@@ -9,7 +12,8 @@
   ],
   "name": "chart-3",
   "registryDependencies": [
-    "chart"
+    "chart",
+    "card"
   ],
   "root_folder": "chart",
   "source": "/registry-examples/src/chart",

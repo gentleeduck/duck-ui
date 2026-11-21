@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { InputOTP, InputOTPGroup, InputOTPSlot, REGEXP_ONLY_DIGITS } from '@gentleduck/registry-ui/input-otp'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport * as React from 'react'\n\nconst MESSAGES = {\n  checking: 'Checking...',\n  idle: 'Type 1234 to unlock.',\n  unlocked: 'Unlocked.',\n  wrong: 'Wrong PIN, try again.',\n}\n\nexport default function Demo() {\n  const [pin, setPin] = React.useState('')\n  const [status, setStatus] = React.useState<keyof typeof MESSAGES>('idle')\n\n  return (\n    <div className=\"flex flex-col items-center gap-3\">\n      <Label id=\"pin-label\">PIN</Label>\n      <InputOTP\n        aria-labelledby=\"pin-label\"\n        disabled={status === 'checking'}\n        maxLength={4}\n        onComplete={(code) => {\n          setStatus('checking')\n          setTimeout(() => {\n            setStatus(code === '1234' ? 'unlocked' : 'wrong')\n            if (code !== '1234') setPin('')\n          }, 800)\n        }}\n        onValueChange={setPin}\n        pattern={REGEXP_ONLY_DIGITS}\n        readOnly={status === 'unlocked'}\n        type=\"password\"\n        value={pin}>\n        <InputOTPGroup>\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n          <InputOTPSlot />\n        </InputOTPGroup>\n      </InputOTP>\n      <p aria-live=\"polite\" className=\"text-muted-foreground text-sm\">\n        {MESSAGES[status]}\n      </p>\n    </div>\n  )\n}\n",
+      "path": "input-otp/input-otp-9.tsx",
+      "target": "components/input-otp-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "input-otp-9",
+  "registryDependencies": [
+    "input-otp",
+    "button",
+    "field"
+  ],
+  "root_folder": "input-otp",
+  "source": "/registry-examples/src/input-otp",
+  "type": "registry:example"
+}

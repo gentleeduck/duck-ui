@@ -9,7 +9,8 @@
   ],
   "name": "avatar-2",
   "registryDependencies": [
-    "avatar"
+    "avatar",
+    "direction"
   ],
   "root_folder": "avatar",
   "source": "/registry-examples/src/avatar",

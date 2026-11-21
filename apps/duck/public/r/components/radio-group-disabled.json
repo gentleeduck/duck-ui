@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as RadioGroup from '@gentleduck/primitives/radio-group'\nimport styles from '../primitives.module.css'\n\nconst OPTIONS = [\n  { value: 'card', label: 'Card' },\n  { value: 'bank', label: 'Bank transfer (unavailable)', disabled: true },\n  { value: 'paypal', label: 'PayPal' },\n]\n\nexport default function RadioGroupDisabledExample() {\n  return (\n    <div className={styles.row} style={{ alignItems: 'start', gap: '2rem' }}>\n      <RadioGroup.Root aria-label=\"Payment\" className={styles.choices} defaultValue=\"card\">\n        {OPTIONS.map((option) => (\n          <div className={styles.choice} key={option.value}>\n            <RadioGroup.Item\n              className={styles.radio}\n              disabled={option.disabled}\n              id={`pay-${option.value}`}\n              value={option.value}>\n              <RadioGroup.Indicator className={styles.dot} />\n            </RadioGroup.Item>\n            <label htmlFor={`pay-${option.value}`}>{option.label}</label>\n          </div>\n        ))}\n      </RadioGroup.Root>\n      <RadioGroup.Root aria-label=\"Locked payment\" className={styles.choices} defaultValue=\"paypal\" readOnly>\n        {OPTIONS.map((option) => (\n          <div className={styles.choice} key={option.value}>\n            <RadioGroup.Item className={styles.radio} id={`locked-${option.value}`} value={option.value}>\n              <RadioGroup.Indicator className={styles.dot} />\n            </RadioGroup.Item>\n            <label htmlFor={`locked-${option.value}`}>{option.label} (read only)</label>\n          </div>\n        ))}\n      </RadioGroup.Root>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/radio-group-disabled/radio-group-disabled.tsx",
+      "target": "components/radio-group-disabled.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "radio-group-disabled",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

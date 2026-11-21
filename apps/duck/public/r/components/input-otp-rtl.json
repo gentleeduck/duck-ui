@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as InputOTP from '@gentleduck/primitives/input-otp'\nimport styles from '../primitives.module.css'\n\nexport default function InputOTPRtlExample() {\n  return (\n    <InputOTP.Root aria-label=\"رمز التحقق\" className={styles.otp} dir=\"rtl\">\n      {[0, 1, 2, 3].map((slot) => (\n        <InputOTP.Slot aria-label={`رقم ${slot + 1}`} className={styles.slot} key={slot} />\n      ))}\n    </InputOTP.Root>\n  )\n}\n",
+      "path": "internal-primitives/input-otp-rtl/input-otp-rtl.tsx",
+      "target": "components/input-otp-rtl.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "input-otp-rtl",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

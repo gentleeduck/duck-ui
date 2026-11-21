@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Command from '@gentleduck/primitives/command'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nconst FRUITS = ['apple', 'banana', 'cherry', 'grape', 'mango']\n\nexport default function CommandControlledExample() {\n  const [value, setValue] = React.useState('cherry')\n\n  return (\n    <div className={styles.stack}>\n      <Command.Root\n        className={styles.command}\n        disablePointerSelection\n        aria-label=\"Fruit\"\n        loop\n        onValueChange={setValue}\n        value={value}>\n        <Command.Input className={styles.commandInput} placeholder=\"Search fruit...\" />\n        <Command.List className={styles.commandList}>\n          {FRUITS.map((fruit) => (\n            <Command.Item className={styles.item} key={fruit} value={fruit}>\n              {fruit}\n            </Command.Item>\n          ))}\n        </Command.List>\n      </Command.Root>\n      <p className={styles.note}>\n        Highlighted: {value || 'nothing'}. The mouse leaves the highlight alone, and the arrow keys wrap with loop.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/command-controlled/command-controlled.tsx",
+      "target": "components/command-controlled.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "command-controlled",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

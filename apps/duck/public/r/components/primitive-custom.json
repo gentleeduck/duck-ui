@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Primitive } from '@gentleduck/primitives/primitive-elements'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nconst Badge = React.forwardRef<HTMLSpanElement, React.ComponentPropsWithoutRef<typeof Primitive.span>>(\n  ({ className, ...props }, ref) => (\n    <Primitive.span className={`${styles.note} ${className ?? ''}`} data-slot=\"badge\" ref={ref} {...props} />\n  ),\n)\n\nexport default function PrimitiveCustomExample() {\n  return (\n    <div className={styles.row}>\n      <Badge>A badge</Badge>\n      <Badge asChild>\n        <a href=\"#releases\">A badge that is a link</a>\n      </Badge>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/primitive-custom/primitive-custom.tsx",
+      "target": "components/primitive-custom.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "primitive-custom",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

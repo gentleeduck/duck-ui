@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Avatar from '@gentleduck/primitives/avatar'\nimport * as HoverCard from '@gentleduck/primitives/hover-card'\nimport styles from '../primitives.module.css'\n\nexport default function HoverCardBasicExample() {\n  return (\n    <HoverCard.Root>\n      <HoverCard.Trigger\n        className={styles.button}\n        href=\"https://github.com/gentleeduck\"\n        rel=\"noreferrer\"\n        target=\"_blank\">\n        @gentleduck\n      </HoverCard.Trigger>\n      <HoverCard.Portal>\n        <HoverCard.Content className={`${styles.content} ${styles.panel}`} sideOffset={8}>\n          <div className={styles.row}>\n            <Avatar.Root className={styles.avatar}>\n              <Avatar.Image\n                alt=\"\"\n                className={styles.avatarImage}\n                src=\"https://avatars.githubusercontent.com/u/108896341?v=4\"\n              />\n              <Avatar.Fallback>GD</Avatar.Fallback>\n            </Avatar.Root>\n            <div className={styles.stack} style={{ gap: '0.15rem' }}>\n              <strong>gentleduck</strong>\n              <span className={styles.note}>Accessible primitives for React.</span>\n            </div>\n          </div>\n          <HoverCard.Arrow className={styles.arrow} />\n        </HoverCard.Content>\n      </HoverCard.Portal>\n    </HoverCard.Root>\n  )\n}\n",
+      "path": "internal-primitives/hover-card-basic/hover-card-basic.tsx",
+      "target": "components/hover-card-basic.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "hover-card-basic",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

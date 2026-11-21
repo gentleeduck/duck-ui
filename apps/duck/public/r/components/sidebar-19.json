@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Sidebar,\n  SidebarContent,\n  SidebarGroup,\n  SidebarMenu,\n  SidebarMenuButton,\n  SidebarMenuItem,\n  SidebarProvider,\n  SidebarTrigger,\n} from '@gentleduck/registry-ui/sidebar'\n\nexport default function Demo() {\n  return (\n    <SidebarProvider className=\"min-h-0\">\n      <Sidebar mobileDescription=\"Every page of the help centre.\" mobileTitle=\"Help centre\">\n        <SidebarContent>\n          <SidebarGroup>\n            <SidebarMenu>\n              {['Getting started', 'Billing', 'Accounts'].map((page) => (\n                <SidebarMenuItem key={page}>\n                  <SidebarMenuButton>{page}</SidebarMenuButton>\n                </SidebarMenuItem>\n              ))}\n            </SidebarMenu>\n          </SidebarGroup>\n        </SidebarContent>\n      </Sidebar>\n      <main className=\"flex items-center gap-2 p-4 text-sm\">\n        <SidebarTrigger />\n        On a phone the sidebar opens as a sheet named by mobileTitle and mobileDescription.\n      </main>\n    </SidebarProvider>\n  )\n}\n",
+      "path": "sidebar/sidebar-19.tsx",
+      "target": "components/sidebar-19.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sidebar-19",
+  "registryDependencies": [
+    "sidebar",
+    "avatar",
+    "collapsible",
+    "dropdown-menu"
+  ],
+  "root_folder": "sidebar",
+  "source": "/registry-examples/src/sidebar",
+  "type": "registry:example"
+}

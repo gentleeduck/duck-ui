@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Sheet,\n  SheetContent,\n  SheetDescription,\n  SheetHeader,\n  SheetTitle,\n  SheetTrigger,\n} from '@gentleduck/registry-ui/sheet'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [count, setCount] = React.useState(0)\n\n  return (\n    <div className=\"flex items-center gap-2\">\n      <Sheet modal={false}>\n        <SheetTrigger asChild>\n          <Button variant=\"outline\">Help</Button>\n        </SheetTrigger>\n        <SheetContent onInteractOutside={(event) => event.preventDefault()}>\n          <SheetHeader>\n            <SheetTitle>Help</SheetTitle>\n            <SheetDescription>\n              The page behind stays usable, and the sheet stays open until it is closed.\n            </SheetDescription>\n          </SheetHeader>\n        </SheetContent>\n      </Sheet>\n      <Button onClick={() => setCount((value) => value + 1)} variant=\"secondary\">\n        Clicked {count} times\n      </Button>\n    </div>\n  )\n}\n",
+      "path": "sheet/sheet-10.tsx",
+      "target": "components/sheet-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sheet-10",
+  "registryDependencies": [
+    "sheet",
+    "button",
+    "input",
+    "label"
+  ],
+  "root_folder": "sheet",
+  "source": "/registry-examples/src/sheet",
+  "type": "registry:example"
+}

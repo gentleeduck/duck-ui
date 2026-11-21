@@ -1,4 +1,11 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "date-fns",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { MotionButton } from '@gentleduck/registry-ui/button'\nimport { MotionCalendar } from '@gentleduck/registry-ui/calendar'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { MotionPopover, MotionPopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'\nimport { ChevronDownIcon } from 'lucide-react'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n  const [date, setDate] = React.useState<Date | undefined>(undefined)\n\n  return (\n    <div className=\"flex flex-col gap-3\">\n      <Label className=\"px-1\" htmlFor=\"motion-date\">\n        Pick a date\n      </Label>\n      <MotionPopover onOpenChange={setOpen} open={open}>\n        <PopoverTrigger asChild>\n          <MotionButton className=\"w-48 justify-between font-normal\" id=\"motion-date\" variant=\"outline\">\n            {date ? date.toLocaleDateString() : 'Select date'}\n            <ChevronDownIcon aria-hidden=\"true\" />\n          </MotionButton>\n        </PopoverTrigger>\n        <MotionPopoverContent side=\"top\" align=\"start\" className=\"w-auto p-0\">\n          <MotionCalendar\n            mode=\"single\"\n            onSelect={(d) => {\n              setDate(d ?? undefined)\n              requestAnimationFrame(() => setOpen(false))\n            }}\n            selected={date}\n          />\n        </MotionPopoverContent>\n      </MotionPopover>\n    </div>\n  )\n}\n",
@@ -11,7 +18,11 @@
   "registryDependencies": [
     "calendar",
     "popover",
-    "button"
+    "button",
+    "direction",
+    "field",
+    "input",
+    "label"
   ],
   "root_folder": "date-picker",
   "source": "/registry-examples/src/date-picker",

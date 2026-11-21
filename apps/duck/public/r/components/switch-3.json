@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Switch } from '@gentleduck/registry-ui/switch'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <div className=\"flex items-center gap-2\">\n        <Switch id=\"airplane-mode-rtl\" />\n        <Label htmlFor=\"airplane-mode-rtl\">وضع الطيران</Label>\n      </div>\n    </DirectionProvider>\n  )\n}\n",
@@ -9,7 +15,10 @@
   ],
   "name": "switch-3",
   "registryDependencies": [
-    "switch"
+    "switch",
+    "button",
+    "field",
+    "label"
   ],
   "root_folder": "switch",
   "source": "/registry-examples/src/switch",

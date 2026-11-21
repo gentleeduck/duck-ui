@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  ContextMenu,\n  ContextMenuContent,\n  ContextMenuItem,\n  ContextMenuTrigger,\n} from '@gentleduck/registry-ui/context-menu'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Switch } from '@gentleduck/registry-ui/switch'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [custom, setCustom] = React.useState(true)\n\n  return (\n    <div className=\"flex flex-col items-center gap-4\">\n      <div className=\"flex items-center gap-2\">\n        <Switch checked={custom} id=\"custom-menu-switch\" onCheckedChange={setCustom} />\n        <Label htmlFor=\"custom-menu-switch\">Custom menu: {custom ? 'on' : 'off, the browser menu shows'}</Label>\n      </div>\n      <ContextMenu modal={false}>\n        <ContextMenuTrigger\n          className=\"flex h-[150px] w-[300px] items-center justify-center rounded-md border border-dashed text-sm data-[disabled]:opacity-60\"\n          disabled={!custom}>\n          Right click here, then scroll the page\n        </ContextMenuTrigger>\n        <ContextMenuContent className=\"w-48\">\n          <ContextMenuItem>Open link</ContextMenuItem>\n          <ContextMenuItem>Copy link</ContextMenuItem>\n        </ContextMenuContent>\n      </ContextMenu>\n    </div>\n  )\n}\n",
+      "path": "context-menu/context-menu-5.tsx",
+      "target": "components/context-menu-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "context-menu-5",
+  "registryDependencies": [
+    "context-menu",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "context-menu",
+  "source": "/registry-examples/src/context-menu",
+  "type": "registry:example"
+}

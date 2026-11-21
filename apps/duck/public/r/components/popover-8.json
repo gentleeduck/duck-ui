@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Popover, PopoverClose, PopoverContent, PopoverTitle, PopoverTrigger } from '@gentleduck/registry-ui/popover'\nimport { Textarea } from '@gentleduck/registry-ui/textarea'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const note = React.useRef<HTMLTextAreaElement>(null)\n\n  return (\n    <Popover>\n      <PopoverTrigger asChild>\n        <Button variant=\"outline\">Add note</Button>\n      </PopoverTrigger>\n      <PopoverContent className=\"grid w-80 gap-3\" initialFocus={note}>\n        <div className=\"flex items-center justify-between\">\n          <PopoverTitle>Note</PopoverTitle>\n          <PopoverClose asChild>\n            <Button size=\"sm\" variant=\"ghost\">\n              Cancel\n            </Button>\n          </PopoverClose>\n        </div>\n        <Textarea placeholder=\"Write a note for this layer.\" ref={note} />\n      </PopoverContent>\n    </Popover>\n  )\n}\n",
+      "path": "popover/popover-8.tsx",
+      "target": "components/popover-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "popover-8",
+  "registryDependencies": [
+    "popover",
+    "button",
+    "direction",
+    "input",
+    "label",
+    "textarea"
+  ],
+  "root_folder": "popover",
+  "source": "/registry-examples/src/popover",
+  "type": "registry:example"
+}

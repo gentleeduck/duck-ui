@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { Kbd } from '@gentleduck/registry-ui/kbd'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-wrap items-center gap-4\">\n      <Button className=\"pr-2\" size=\"sm\" variant=\"outline\">\n        Confirm <Kbd>Enter</Kbd>\n      </Button>\n      <Button className=\"pr-2\" size=\"sm\" variant=\"outline\">\n        Dismiss <Kbd>Esc</Kbd>\n      </Button>\n    </div>\n  )\n}\n",
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { Kbd } from '@gentleduck/registry-ui/kbd'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-wrap items-center gap-4\">\n      <Button className=\"pe-2\" size=\"sm\" variant=\"outline\">\n        Confirm <Kbd>Enter</Kbd>\n      </Button>\n      <Button className=\"pe-2\" size=\"sm\" variant=\"outline\">\n        Dismiss <Kbd>Esc</Kbd>\n      </Button>\n    </div>\n  )\n}\n",
       "path": "kbd/kbd-3.tsx",
       "target": "components/kbd-3.tsx",
       "type": "registry:example"
@@ -9,7 +9,12 @@
   ],
   "name": "kbd-3",
   "registryDependencies": [
-    "kbd"
+    "kbd",
+    "button",
+    "button-group",
+    "direction",
+    "input-group",
+    "tooltip"
   ],
   "root_folder": "kbd",
   "source": "/registry-examples/src/kbd",

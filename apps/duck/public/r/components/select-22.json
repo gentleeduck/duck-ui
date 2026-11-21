@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Select,\n  SelectContent,\n  SelectItem,\n  SelectScrollDownButton,\n  SelectScrollUpButton,\n  SelectTrigger,\n  SelectValue,\n} from '@gentleduck/registry-ui/select'\n\nconst ZONES = Array.from({ length: 24 }, (_, hour) => `UTC${hour - 11 >= 0 ? '+' : ''}${hour - 11}`)\n\nexport default function Demo() {\n  return (\n    <Select defaultValue=\"UTC+0\">\n      <SelectTrigger className=\"w-[180px]\">\n        <SelectValue />\n      </SelectTrigger>\n      <SelectContent\n        align=\"end\"\n        alignOffset={-4}\n        avoidCollisions\n        className=\"max-h-64\"\n        collisionPadding={16}\n        position=\"popper\"\n        side=\"top\"\n        sideOffset={8}>\n        <SelectScrollUpButton />\n        {ZONES.map((zone) => (\n          <SelectItem key={zone} textValue={zone.replace('UTC', 'utc ')} value={zone}>\n            {zone}\n          </SelectItem>\n        ))}\n        <SelectScrollDownButton />\n      </SelectContent>\n    </Select>\n  )\n}\n",
+      "path": "select/select-22.tsx",
+      "target": "components/select-22.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-22",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

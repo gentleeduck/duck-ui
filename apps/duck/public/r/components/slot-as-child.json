@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Slot } from '@gentleduck/primitives/slot'\nimport type * as React from 'react'\nimport styles from '../primitives.module.css'\n\nfunction Button({ asChild, ...props }: React.ComponentProps<'button'> & { asChild?: boolean }) {\n  const Component = asChild ? Slot : 'button'\n  return <Component className={styles.button} {...props} />\n}\n\nexport default function SlotAsChildExample() {\n  return (\n    <div className={styles.row}>\n      <Button type=\"button\">A button</Button>\n      <Button asChild>\n        <a href=\"#docs\">A link styled as one</a>\n      </Button>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/slot-as-child/slot-as-child.tsx",
+      "target": "components/slot-as-child.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "slot-as-child",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "import { Typeset } from '@gentleduck/registry-ui/typeset'\n\nexport default function Demo() {\n  return (\n    <Typeset className=\"w-full max-w-xl\">\n      <h2 className=\"text-primary\">Version 2.4</h2>\n      <p className=\"mt-1 text-muted-foreground text-sm\">Released on 2 October 2026</p>\n      <p>\n        The calendar selects ranges. Pass <code>mode=\"range\"</code> and read the start and end from{' '}\n        <code>onSelect</code>.\n      </p>\n      <blockquote className=\"border-s-primary text-foreground\">\n        Upgrading needs no code changes unless you styled the selected day yourself.\n      </blockquote>\n    </Typeset>\n  )\n}\n",
+      "path": "typeset/typeset-8.tsx",
+      "target": "components/typeset-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "typeset-8",
+  "registryDependencies": [
+    "typeset",
+    "button"
+  ],
+  "root_folder": "typeset",
+  "source": "/registry-examples/src/typeset",
+  "type": "registry:example"
+}

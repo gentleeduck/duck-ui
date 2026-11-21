@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Command,\n  CommandEmpty,\n  CommandGroup,\n  CommandInput,\n  CommandItem,\n  CommandList,\n  CommandSeparator,\n  useCommandSearch,\n} from '@gentleduck/registry-ui/command'\nimport { FileText, Plus } from 'lucide-react'\nimport * as React from 'react'\n\nconst PAGES = ['Billing', 'Branding', 'Integrations', 'Notifications', 'Profile', 'Security', 'Team members']\n\nfunction score(text: string, search: string) {\n  const word = text.toLowerCase()\n  const query = search.toLowerCase()\n  if (word.startsWith(query)) return 1\n  return word.includes(query) ? 0.5 : 0\n}\n\nfunction CreatePage({ onCreate }: { onCreate: (title: string) => void }) {\n  const search = useCommandSearch()\n  if (search === '') return null\n  return (\n    <>\n      <CommandSeparator />\n      <CommandGroup heading=\"Create\">\n        <CommandItem forceMount value=\"create\" textValue=\"New page\" onSelect={() => onCreate(search)}>\n          <Plus />\n          <span>Create \"{search}\"</span>\n        </CommandItem>\n      </CommandGroup>\n    </>\n  )\n}\n\nexport default function Demo() {\n  const [pages, setPages] = React.useState(PAGES)\n  const [value, setValue] = React.useState('Profile')\n\n  return (\n    <div className=\"flex flex-col gap-2\">\n      <Command className=\"h-fit w-80 border pt-0\" filter={score} value={value} onValueChange={setValue}>\n        <CommandInput placeholder=\"Find or create a page...\" />\n        <CommandList>\n          <CommandEmpty>No page matches.</CommandEmpty>\n          <CommandGroup heading=\"Pages\">\n            {pages.map((page) => (\n              <CommandItem key={page} value={page}>\n                <FileText />\n                <span>{page}</span>\n              </CommandItem>\n            ))}\n          </CommandGroup>\n          <CreatePage\n            onCreate={(title) => setPages((current) => (current.includes(title) ? current : [...current, title]))}\n          />\n        </CommandList>\n      </Command>\n      <p className=\"text-muted-foreground text-sm\">Highlighted: {value || 'nothing'}</p>\n    </div>\n  )\n}\n",
+      "path": "command/command-5.tsx",
+      "target": "components/command-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "command-5",
+  "registryDependencies": [
+    "command",
+    "button"
+  ],
+  "root_folder": "command",
+  "source": "/registry-examples/src/command",
+  "type": "registry:example"
+}

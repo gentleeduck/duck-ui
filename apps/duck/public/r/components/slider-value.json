@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Slider from '@gentleduck/primitives/slider'\nimport styles from '../primitives.module.css'\n\nexport default function SliderValueExample() {\n  return (\n    <Slider.Root className={styles.stack} defaultValue={[18, 24]} max={30} min={10} step={0.5}>\n      <Slider.Value className={styles.note}>{(values) => `${values[0]} C to ${values[1]} C`}</Slider.Value>\n      <div className={styles.slider}>\n        <Slider.Track className={styles.track}>\n          <Slider.Range className={styles.range} />\n        </Slider.Track>\n        <Slider.Thumb aria-label=\"Lowest\" className={styles.thumb} />\n        <Slider.Thumb aria-label=\"Highest\" className={styles.thumb} />\n      </div>\n    </Slider.Root>\n  )\n}\n",
+      "path": "internal-primitives/slider-value/slider-value.tsx",
+      "target": "components/slider-value.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "slider-value",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

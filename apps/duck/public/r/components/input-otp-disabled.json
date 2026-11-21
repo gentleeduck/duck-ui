@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as InputOTP from '@gentleduck/primitives/input-otp'\nimport styles from '../primitives.module.css'\n\nexport default function InputOTPDisabledExample() {\n  return (\n    <div className={styles.stack}>\n      <span className={styles.label}>Read only: focus moves, typing changes nothing</span>\n      <InputOTP.Root aria-label=\"Read-only code\" className={styles.otp} defaultValue=\"8261\" readOnly>\n        {[0, 1, 2, 3].map((slot) => (\n          <InputOTP.Slot aria-label={`Read-only digit ${slot + 1}`} className={styles.slot} key={slot} />\n        ))}\n      </InputOTP.Root>\n      <span className={styles.label}>Disabled: no focus at all</span>\n      <InputOTP.Root aria-label=\"Disabled code\" className={styles.otp} defaultValue=\"8261\" disabled>\n        {[0, 1, 2, 3].map((slot) => (\n          <InputOTP.Slot aria-label={`Disabled digit ${slot + 1}`} className={styles.slot} key={slot} />\n        ))}\n      </InputOTP.Root>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/input-otp-disabled/input-otp-disabled.tsx",
+      "target": "components/input-otp-disabled.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "input-otp-disabled",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

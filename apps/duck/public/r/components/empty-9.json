@@ -1,0 +1,24 @@
+{
+  "dependencies": [
+    "@tabler/icons-react"
+  ],
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Empty,\n  EmptyContent,\n  EmptyDescription,\n  EmptyHeader,\n  EmptyMedia,\n  EmptyTitle,\n} from '@gentleduck/registry-ui/empty'\nimport { FolderOpen } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <Empty className=\"border border-dashed\">\n      <EmptyHeader>\n        <EmptyMedia variant=\"icon\">\n          <FolderOpen aria-hidden=\"true\" />\n        </EmptyMedia>\n        <EmptyTitle>No projects yet</EmptyTitle>\n        <EmptyDescription>\n          Create a project to get started, or <a href=\"#import\">import one</a> from another workspace.\n        </EmptyDescription>\n      </EmptyHeader>\n      <EmptyContent>\n        <Button size=\"sm\">Create project</Button>\n      </EmptyContent>\n    </Empty>\n  )\n}\n",
+      "path": "empty/empty-9.tsx",
+      "target": "components/empty-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "empty-9",
+  "registryDependencies": [
+    "empty",
+    "avatar",
+    "button",
+    "input-group",
+    "kbd"
+  ],
+  "root_folder": "empty",
+  "source": "/registry-examples/src/empty",
+  "type": "registry:example"
+}

@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  NavigationMenu,\n  NavigationMenuContent,\n  NavigationMenuIndicator,\n  NavigationMenuItem,\n  NavigationMenuLink,\n  NavigationMenuList,\n  NavigationMenuTrigger,\n  NavigationMenuViewport,\n} from '@gentleduck/registry-ui/navigation-menu'\n\nexport default function Demo() {\n  return (\n    <NavigationMenu closeDelay={400} defaultValue=\"\" delayDuration={500} skipDelayDuration={1000}>\n      <NavigationMenuList>\n        {['Products', 'Solutions', 'Pricing'].map((name) => (\n          <NavigationMenuItem key={name} value={name}>\n            <NavigationMenuTrigger>{name}</NavigationMenuTrigger>\n            <NavigationMenuContent>\n              <div className=\"grid w-60 gap-1 p-2\">\n                <NavigationMenuLink href=\"#\">All {name.toLowerCase()}</NavigationMenuLink>\n                <NavigationMenuLink href=\"#\">What is new</NavigationMenuLink>\n              </div>\n            </NavigationMenuContent>\n          </NavigationMenuItem>\n        ))}\n        <NavigationMenuIndicator forceMount />\n      </NavigationMenuList>\n      <NavigationMenuViewport />\n    </NavigationMenu>\n  )\n}\n",
+      "path": "navigation-menu/navigation-menu-7.tsx",
+      "target": "components/navigation-menu-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "navigation-menu-7",
+  "registryDependencies": [
+    "navigation-menu",
+    "direction"
+  ],
+  "root_folder": "navigation-menu",
+  "source": "/registry-examples/src/navigation-menu",
+  "type": "registry:example"
+}

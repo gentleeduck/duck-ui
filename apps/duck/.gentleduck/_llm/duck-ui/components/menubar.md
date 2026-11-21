@@ -17,8 +17,13 @@ import {
   MenubarSubTrigger,
   MenubarTrigger,
 } from '@gentleduck/registry-ui/menubar'
+import * as React from 'react'
 
 export default function Demo() {
+  const [showBookmarks, setShowBookmarks] = React.useState(false)
+  const [showFullUrls, setShowFullUrls] = React.useState(true)
+  const [profile, setProfile] = React.useState('benoit')
+
   return (
     <Menubar>
       <MenubarMenu>
@@ -77,8 +82,12 @@ export default function Demo() {
       <MenubarMenu>
         <MenubarTrigger>View</MenubarTrigger>
         <MenubarContent>
-          <MenubarCheckboxItem>Always Show Bookmarks Bar</MenubarCheckboxItem>
-          <MenubarCheckboxItem checked>Always Show Full URLs</MenubarCheckboxItem>
+          <MenubarCheckboxItem checked={showBookmarks} onCheckedChange={setShowBookmarks}>
+            Always Show Bookmarks Bar
+          </MenubarCheckboxItem>
+          <MenubarCheckboxItem checked={showFullUrls} onCheckedChange={setShowFullUrls}>
+            Always Show Full URLs
+          </MenubarCheckboxItem>
           <MenubarSeparator />
           <MenubarItem inset>
             Reload <MenubarShortcut>⌘R</MenubarShortcut>
@@ -95,7 +104,7 @@ export default function Demo() {
       <MenubarMenu>
         <MenubarTrigger>Profiles</MenubarTrigger>
         <MenubarContent>
-          <MenubarRadioGroup value="benoit">
+          <MenubarRadioGroup value={profile} onValueChange={setProfile}>
             <MenubarRadioItem value="andy">Andy</MenubarRadioItem>
             <MenubarRadioItem value="benoit">Benoit</MenubarRadioItem>
             <MenubarRadioItem value="Luis">Luis</MenubarRadioItem>
@@ -166,6 +175,240 @@ import {
 </Menubar>
 ```
 
+## Examples
+
+### Shortcuts and a controlled bar
+
+`MenubarShortcut` with `keys` spells the keys out for the platform, and with `onKeysPressed` runs it on them while its menu is open, with no `KeyProvider` needed. `value` and `onValueChange` hold which menu is open, so an item can open another menu. `closeOnSelect={false}` keeps a menu open after an item.
+
+```tsx title="components/menubar-5.tsx"
+// import from your project: import Demo from '@/components/menubar-5'
+'use client'
+
+import {
+  Menubar,
+  MenubarCheckboxItem,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarSeparator,
+  MenubarShortcut,
+  MenubarTrigger,
+} from '@gentleduck/registry-ui/menubar'
+import * as React from 'react'
+
+export default function Demo() {
+  const [menu, setMenu] = React.useState('')
+  const [wrap, setWrap] = React.useState(true)
+  const [last, setLast] = React.useState('nothing yet')
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <Menubar onValueChange={setMenu} value={menu}>
+        <MenubarMenu value="file">
+          <MenubarTrigger>File</MenubarTrigger>
+          <MenubarContent>
+            <MenubarItem onSelect={() => setLast('save')}>
+              Save
+              <MenubarShortcut keys="mod+s" onKeysPressed={() => setLast('save, from its keys')} />
+            </MenubarItem>
+            <MenubarItem onSelect={() => setLast('export')}>
+              Export
+              <MenubarShortcut keys="mod+shift+e" onKeysPressed={() => setLast('export, from its keys')} />
+            </MenubarItem>
+          </MenubarContent>
+        </MenubarMenu>
+        <MenubarMenu value="view">
+          <MenubarTrigger>View</MenubarTrigger>
+          <MenubarContent>
+            <MenubarCheckboxItem checked={wrap} closeOnSelect={false} onCheckedChange={setWrap}>
+              Word wrap
+            </MenubarCheckboxItem>
+            <MenubarSeparator />
+            <MenubarItem onSelect={() => setMenu('file')}>Go to the File menu</MenubarItem>
+          </MenubarContent>
+        </MenubarMenu>
+      </Menubar>
+      <p className="text-muted-foreground text-sm">
+        Open: {menu || 'none'}, wrap {wrap ? 'on' : 'off'}, last: {last}
+      </p>
+    </div>
+  )
+}
+```
+
+### Modal and disabled
+
+`modal` keeps a click outside an open menu from reaching the page, `disabled` on the bar shuts every menu, and `disabled` on one trigger shuts that menu alone. Arrow keys and the pointer pass over a disabled trigger, so an open menu stays open while the pointer crosses it.
+
+```tsx title="components/menubar-6.tsx"
+// import from your project: import Demo from '@/components/menubar-6'
+'use client'
+
+import { Label } from '@gentleduck/registry-ui/label'
+import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from '@gentleduck/registry-ui/menubar'
+import { Switch } from '@gentleduck/registry-ui/switch'
+import * as React from 'react'
+
+export default function Demo() {
+  const [modal, setModal] = React.useState(false)
+  const [locked, setLocked] = React.useState(false)
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex gap-6">
+        <div className="flex items-center gap-2">
+          <Switch checked={modal} id="menubar-modal" onCheckedChange={setModal} />
+          <Label htmlFor="menubar-modal">Modal</Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch checked={locked} id="menubar-locked" onCheckedChange={setLocked} />
+          <Label htmlFor="menubar-locked">Lock the bar</Label>
+        </div>
+      </div>
+      <Menubar disabled={locked} modal={modal}>
+        <MenubarMenu value="file">
+          <MenubarTrigger>File</MenubarTrigger>
+          <MenubarContent>
+            <MenubarItem>New Tab</MenubarItem>
+            <MenubarItem>New Window</MenubarItem>
+          </MenubarContent>
+        </MenubarMenu>
+        <MenubarMenu value="edit">
+          <MenubarTrigger>Edit</MenubarTrigger>
+          <MenubarContent>
+            <MenubarItem>Undo</MenubarItem>
+            <MenubarItem>Redo</MenubarItem>
+          </MenubarContent>
+        </MenubarMenu>
+        <MenubarMenu value="help">
+          <MenubarTrigger disabled>Help</MenubarTrigger>
+        </MenubarMenu>
+      </Menubar>
+      <p className="max-w-64 text-center text-muted-foreground text-sm">
+        {modal
+          ? 'A click outside closes the menu and goes no further.'
+          : 'The page still takes clicks while a menu is open.'}
+      </p>
+    </div>
+  )
+}
+```
+
+### Groups, no looping and open events
+
+```tsx title="components/menubar-7.tsx"
+// import from your project: import Demo from '@/components/menubar-7'
+'use client'
+
+import {
+  Menubar,
+  MenubarContent,
+  MenubarGroup,
+  MenubarItem,
+  MenubarLabel,
+  MenubarMenu,
+  MenubarSeparator,
+  MenubarTrigger,
+} from '@gentleduck/registry-ui/menubar'
+import * as React from 'react'
+
+export default function Demo() {
+  const [log, setLog] = React.useState<string[]>([])
+  const record = (menu: string) => (open: boolean) =>
+    setLog((entries) => [`${menu} ${open ? 'opened' : 'closed'}`, ...entries].slice(0, 3))
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <Menubar defaultValue="" loop={false}>
+        <MenubarMenu onOpenChange={record('File')} value="file">
+          <MenubarTrigger>File</MenubarTrigger>
+          <MenubarContent>
+            <MenubarGroup>
+              <MenubarLabel>Recent</MenubarLabel>
+              <MenubarItem>notes.md</MenubarItem>
+              <MenubarItem>todo.md</MenubarItem>
+            </MenubarGroup>
+            <MenubarSeparator />
+            <MenubarItem>Close window</MenubarItem>
+          </MenubarContent>
+        </MenubarMenu>
+        <MenubarMenu onOpenChange={record('Help')} value="help">
+          <MenubarTrigger>Help</MenubarTrigger>
+          <MenubarContent>
+            <MenubarItem>Documentation</MenubarItem>
+          </MenubarContent>
+        </MenubarMenu>
+      </Menubar>
+      <p className="text-muted-foreground text-sm">
+        {log.join(', ') || 'loop off stops the arrow keys at either end of the bar.'}
+      </p>
+    </div>
+  )
+}
+```
+
+### Content and submenu offsets
+
+```tsx title="components/menubar-8.tsx"
+// import from your project: import Demo from '@/components/menubar-8'
+'use client'
+
+import {
+  Menubar,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarSub,
+  MenubarSubContent,
+  MenubarSubTrigger,
+  MenubarTrigger,
+} from '@gentleduck/registry-ui/menubar'
+
+export default function Demo() {
+  return (
+    <Menubar>
+      <MenubarMenu value="view">
+        <MenubarTrigger>View</MenubarTrigger>
+        <MenubarContent align="center" alignOffset={0} side="bottom" sideOffset={12}>
+          <MenubarItem>Centered under its trigger, 12px down</MenubarItem>
+          <MenubarSub>
+            <MenubarSubTrigger>Panels</MenubarSubTrigger>
+            <MenubarSubContent alignOffset={-4} sideOffset={6}>
+              <MenubarItem>Explorer</MenubarItem>
+              <MenubarItem>Terminal</MenubarItem>
+            </MenubarSubContent>
+          </MenubarSub>
+        </MenubarContent>
+      </MenubarMenu>
+    </Menubar>
+  )
+}
+```
+
+### Kept mounted
+
+```tsx title="components/menubar-9.tsx"
+// import from your project: import Demo from '@/components/menubar-9'
+'use client'
+
+import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from '@gentleduck/registry-ui/menubar'
+
+export default function Demo() {
+  return (
+    <Menubar>
+      <MenubarMenu value="edit">
+        <MenubarTrigger>Edit</MenubarTrigger>
+        <MenubarContent className="data-[state=closed]:hidden" forceMount>
+          <MenubarItem>Undo</MenubarItem>
+          <MenubarItem>Redo</MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+    </Menubar>
+  )
+}
+```
+
 ## Component Composition
 
 ## RTL Support
@@ -192,8 +435,13 @@ import {
   MenubarSubTrigger,
   MenubarTrigger,
 } from '@gentleduck/registry-ui/menubar'
+import * as React from 'react'
 
 export default function Demo() {
+  const [showBookmarks, setShowBookmarks] = React.useState(false)
+  const [showFullUrls, setShowFullUrls] = React.useState(true)
+  const [profile, setProfile] = React.useState('ahmad')
+
   return (
     <DirectionProvider dir="rtl">
       <Menubar>
@@ -253,8 +501,12 @@ export default function Demo() {
         <MenubarMenu>
           <MenubarTrigger>عرض</MenubarTrigger>
           <MenubarContent>
-            <MenubarCheckboxItem>إظهار شريط الإشارات دائمًا</MenubarCheckboxItem>
-            <MenubarCheckboxItem checked>إظهار الروابط كاملة دائمًا</MenubarCheckboxItem>
+            <MenubarCheckboxItem checked={showBookmarks} onCheckedChange={setShowBookmarks}>
+              إظهار شريط الإشارات دائمًا
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem checked={showFullUrls} onCheckedChange={setShowFullUrls}>
+              إظهار الروابط كاملة دائمًا
+            </MenubarCheckboxItem>
             <MenubarSeparator />
             <MenubarItem inset>
               إعادة التحميل <MenubarShortcut>⌘R</MenubarShortcut>
@@ -271,7 +523,7 @@ export default function Demo() {
         <MenubarMenu>
           <MenubarTrigger>الملفات الشخصية</MenubarTrigger>
           <MenubarContent>
-            <MenubarRadioGroup value="ahmad">
+            <MenubarRadioGroup value={profile} onValueChange={setProfile}>
               <MenubarRadioItem value="ali">علي</MenubarRadioItem>
               <MenubarRadioItem value="ahmad">أحمد</MenubarRadioItem>
               <MenubarRadioItem value="omar">عمر</MenubarRadioItem>
@@ -288,12 +540,67 @@ export default function Demo() {
 }
 ```
 
+## Vertical
+
+Set `orientation="vertical"` and the bar stacks its menus. `ArrowUp` and `ArrowDown` move between them, `ArrowRight` opens one beside the bar, and `ArrowLeft` closes it again. Right to left, the menus open on the left and the two side arrows swap.
+
+```tsx title="components/menubar-4.tsx"
+// import from your project: import Demo from '@/components/menubar-4'
+'use client'
+
+import {
+  Menubar,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarSeparator,
+  MenubarShortcut,
+  MenubarTrigger,
+} from '@gentleduck/registry-ui/menubar'
+
+export default function Demo() {
+  return (
+    <Menubar orientation="vertical" className="w-40">
+      <MenubarMenu>
+        <MenubarTrigger>File</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem>
+            New Tab <MenubarShortcut>⌘T</MenubarShortcut>
+          </MenubarItem>
+          <MenubarItem>New Window</MenubarItem>
+          <MenubarSeparator />
+          <MenubarItem>Print</MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+      <MenubarMenu>
+        <MenubarTrigger>Edit</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem>
+            Undo <MenubarShortcut>⌘Z</MenubarShortcut>
+          </MenubarItem>
+          <MenubarItem>
+            Redo <MenubarShortcut>⇧⌘Z</MenubarShortcut>
+          </MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+      <MenubarMenu>
+        <MenubarTrigger>View</MenubarTrigger>
+        <MenubarContent>
+          <MenubarItem>Reload</MenubarItem>
+          <MenubarItem>Toggle Fullscreen</MenubarItem>
+        </MenubarContent>
+      </MenubarMenu>
+    </Menubar>
+  )
+}
+```
+
 ## Motion
 
 } title="Alpha: Motion Compositions" tone="warning">
   Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 
-Use `MotionMenubarContent` for a `scaleIn` enter animation (fade, scale, and blur) with a bouncy spring transition, powered by [motion](https://motion.dev). Exit uses the primitive's built-in CSS animation.
+Use `MotionMenubarContent` for a `scaleIn` enter animation (fade, scale, and blur) with a bouncy spring transition, powered by [motion](https://motion.dev). A menu closes at once, so moving along the bar never shows two menus at the same time.
 
 ```tsx title="components/menubar-3.tsx"
 // import from your project: import Demo from '@/components/menubar-3'
@@ -370,6 +677,9 @@ Components in this file wrap `@gentleduck/primitives/menubar`.
 | `onValueChange` | `(value: string) => void` | - | Callback when open menu value changes |
 | `loop` | `boolean` | `true` | Loops roving focus across triggers |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved by primitives `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
+| `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Which way the bar runs. A vertical bar is a column and opens its menus to the side |
+| `disabled` | `boolean` | `false` | Disables every trigger in the bar |
+| `modal` | `boolean` | `false` | While a menu is open, locks the page's scroll and leaves pointer events to the menu and the bar |
 | `className` | `string` | - | Additional CSS classes |
 | `...props` | `React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Root>` | - | Additional props inherited from `MenubarPrimitive.Root` |
 
@@ -394,15 +704,18 @@ Components in this file wrap `@gentleduck/primitives/menubar`.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `container` | `HTMLElement` | - | Optional portal container |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Optional portal container |
 | `...props` | `React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Portal>` | - | Additional props inherited from `MenubarPrimitive.Portal` |
 
 ### MenubarContent
 
+Scrolls when taller than the space it has.
+
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `className` | `string` | - | Additional CSS classes |
-| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | - | Preferred side relative to the trigger |
+| `forceMount` | `true` | - | Keeps the content in the page while closed, as `data-state="closed"`, for an exit animation to run on |
+| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'`, or `'right'` in a vertical bar | Preferred side relative to the trigger. `right` and `left` mirror right to left |
 | `align` | `'start' \| 'center' \| 'end'` | `'start'` | Alignment on the chosen side |
 | `sideOffset` | `number` | `8` | Main-axis offset from trigger |
 | `alignOffset` | `number` | `-4` | Cross-axis offset from trigger |
@@ -413,6 +726,9 @@ Components in this file wrap `@gentleduck/primitives/menubar`.
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `inset` | `boolean` | `false` | Adds start padding for alignment with indicators/icons |
+| `disabled` | `boolean` | - | Prevents interaction, and the arrow keys pass over the item |
+| `onSelect` | `(event: Event) => void` | - | Called when the item is selected by click or keyboard |
+| `closeOnSelect` | `boolean` | `true` | Closes the menu once the item is selected. `MenubarCheckboxItem` and `MenubarRadioItem` take it too |
 | `className` | `string` | - | Additional CSS classes |
 | `...props` | `React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Item>` | - | Additional props inherited from `MenubarPrimitive.Item` |
 
@@ -458,8 +774,10 @@ Components in this file wrap `@gentleduck/primitives/menubar`.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
+| `keys` | `string` | - | Keyboard shortcut (for example, `"mod+s"`, Cmd on a Mac and Ctrl elsewhere). Shown for the platform when there are no `children` |
+| `onKeysPressed` | `() => void` | - | Runs on `keys` while the shortcut is mounted, that is while its menu is open |
 | `className` | `string` | - | Additional CSS classes |
-| `children` | `React.ReactNode` | - | Shortcut hint content (for example, `⌘S`) |
+| `children` | `React.ReactNode` | - | Shortcut hint content (for example, `⌘S`), shown in place of `keys` |
 | `...props` | `React.HTMLAttributes<HTMLSpanElement>` | - | Additional props to spread to the shortcut `<span>` |
 
 ### MenubarGroup
@@ -485,15 +803,15 @@ Components in this file wrap `@gentleduck/primitives/menubar`.
 
 ### MenubarSubContent
 
+Positioned to the side of the sub-trigger, and scrolls when taller than the space it has.
+
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `className` | `string` | - | Additional CSS classes |
-| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | - | Preferred side relative to the sub-trigger |
-| `align` | `'start' \| 'center' \| 'end'` | - | Alignment on the chosen side |
 | `sideOffset` | `number` | - | Main-axis offset from sub-trigger |
 | `alignOffset` | `number` | - | Cross-axis offset from sub-trigger |
 | `...props` | `React.ComponentPropsWithoutRef<typeof MenubarPrimitive.SubContent>` | - | Additional props inherited from `MenubarPrimitive.SubContent` |
 
 ### MotionMenubarContent
 
-Same props as `MenubarContent`. Adds a `scaleIn` enter animation (fade, scale, and blur) with a bouncy spring transition via motion. Exit uses the primitive's CSS animation. Requires the `motion` package.
+Same props as `MenubarContent`. Adds a `scaleIn` enter animation (fade, scale, and blur) with a bouncy spring transition via motion, growing from its trigger whichever way the menu flips to fit. Requires the `motion` package.

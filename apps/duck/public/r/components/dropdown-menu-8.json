@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuSub,\n  DropdownMenuSubContent,\n  DropdownMenuSubTrigger,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\n\nexport default function Demo() {\n  return (\n    <DropdownMenu>\n      <DropdownMenuTrigger asChild>\n        <Button variant=\"outline\">Edit</Button>\n      </DropdownMenuTrigger>\n      <DropdownMenuContent className=\"w-48\">\n        <DropdownMenuItem>Undo</DropdownMenuItem>\n        <DropdownMenuItem>Redo</DropdownMenuItem>\n        <DropdownMenuSub closeParentOnEsc={false}>\n          <DropdownMenuSubTrigger>Find</DropdownMenuSubTrigger>\n          <DropdownMenuSubContent>\n            <DropdownMenuItem>Find in page</DropdownMenuItem>\n            <DropdownMenuItem>Find and replace</DropdownMenuItem>\n            <DropdownMenuItem>Find next</DropdownMenuItem>\n          </DropdownMenuSubContent>\n        </DropdownMenuSub>\n      </DropdownMenuContent>\n    </DropdownMenu>\n  )\n}\n",
+      "path": "dropdown-menu/dropdown-menu-8.tsx",
+      "target": "components/dropdown-menu-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "dropdown-menu-8",
+  "registryDependencies": [
+    "dropdown-menu",
+    "button",
+    "dialog",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "dropdown-menu",
+  "source": "/registry-examples/src/dropdown-menu",
+  "type": "registry:example"
+}

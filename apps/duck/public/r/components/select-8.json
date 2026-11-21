@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\n\nexport default function Demo() {\n  return (\n    <Select defaultValue=\"m\">\n      <SelectTrigger aria-label=\"T-shirt size\" className=\"w-[160px]\">\n        <SelectValue />\n      </SelectTrigger>\n      <SelectContent position=\"item-aligned\">\n        <SelectItem value=\"xs\">Extra small</SelectItem>\n        <SelectItem value=\"s\">Small</SelectItem>\n        <SelectItem value=\"m\">Medium</SelectItem>\n        <SelectItem value=\"l\">Large</SelectItem>\n        <SelectItem value=\"xl\">Extra large</SelectItem>\n      </SelectContent>\n    </Select>\n  )\n}\n",
+      "path": "select/select-8.tsx",
+      "target": "components/select-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-8",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

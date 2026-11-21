@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Combobox, ComboboxItem } from '@gentleduck/registry-ui/combobox'\n\nconst toppings = [\n  { label: 'Cheese', value: 'cheese' },\n  { label: 'Mushroom', value: 'mushroom' },\n  { label: 'Olive', value: 'olive' },\n]\n\nexport default function Demo() {\n  return (\n    <Combobox commandTriggerPlaceholder=\"Toppings\" defaultValue={['mushroom']} items={toppings} type=\"multiple\">\n      {(items) =>\n        items.map((item) => (\n          <ComboboxItem checked={item.value === 'cheese' ? true : undefined} item={item} key={item.value} />\n        ))\n      }\n    </Combobox>\n  )\n}\n",
+      "path": "combobox/combobox-12.tsx",
+      "target": "components/combobox-12.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "combobox-12",
+  "registryDependencies": [
+    "combobox",
+    "dropdown-menu",
+    "field"
+  ],
+  "root_folder": "combobox",
+  "source": "/registry-examples/src/combobox",
+  "type": "registry:example"
+}

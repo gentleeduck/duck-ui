@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@gentleduck/registry-ui/collapsible'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [unlocked, setUnlocked] = React.useState(false)\n\n  return (\n    <div className=\"flex w-[350px] flex-col gap-3\">\n      <label className=\"flex items-center gap-2 text-sm\">\n        <input checked={unlocked} onChange={(event) => setUnlocked(event.target.checked)} type=\"checkbox\" />I have read\n        the warning\n      </label>\n      <Collapsible>\n        <CollapsibleTrigger asChild onClick={(event) => unlocked || event.preventDefault()}>\n          <Button variant=\"outline\">Advanced settings</Button>\n        </CollapsibleTrigger>\n        <CollapsibleContent className=\"mt-2 rounded-md border p-3 text-sm data-[state=closed]:hidden\" forceMount>\n          Kept in the page while closed, so a search of the page or a form inside still sees it.\n        </CollapsibleContent>\n      </Collapsible>\n      <p className=\"text-muted-foreground text-sm\">\n        The trigger's onClick prevents the toggle until the box is ticked.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "collapsible/collapsible-6.tsx",
+      "target": "components/collapsible-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "collapsible-6",
+  "registryDependencies": [
+    "collapsible"
+  ],
+  "root_folder": "collapsible",
+  "source": "/registry-examples/src/collapsible",
+  "type": "registry:example"
+}

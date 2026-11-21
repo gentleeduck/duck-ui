@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "recharts"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Drawer,\n  DrawerClose,\n  DrawerContent,\n  DrawerDescription,\n  DrawerFooter,\n  DrawerHeader,\n  DrawerTitle,\n  DrawerTrigger,\n} from '@gentleduck/registry-ui/drawer'\n\nexport default function Demo() {\n  return (\n    <Drawer>\n      <DrawerTrigger asChild>\n        <Button variant=\"outline\">Open over a tinted backdrop</Button>\n      </DrawerTrigger>\n      <DrawerContent overlayProps={{ className: 'bg-primary/30 backdrop-blur-sm' }}>\n        <DrawerHeader>\n          <DrawerTitle>Filters</DrawerTitle>\n          <DrawerDescription>overlayProps styles the backdrop behind the drawer.</DrawerDescription>\n        </DrawerHeader>\n        <DrawerFooter>\n          <DrawerClose asChild>\n            <Button>Done</Button>\n          </DrawerClose>\n        </DrawerFooter>\n      </DrawerContent>\n    </Drawer>\n  )\n}\n",
+      "path": "drawer/drawer-11.tsx",
+      "target": "components/drawer-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "drawer-11",
+  "registryDependencies": [
+    "drawer",
+    "button",
+    "dialog",
+    "direction",
+    "input",
+    "label",
+    "separator"
+  ],
+  "root_folder": "drawer",
+  "source": "/registry-examples/src/drawer",
+  "type": "registry:example"
+}

@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Avatar, AvatarFallback } from '@gentleduck/registry-ui/avatar'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Skeleton } from '@gentleduck/registry-ui/skeleton'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [loading, setLoading] = React.useState(true)\n\n  React.useEffect(() => {\n    if (!loading) return\n    const timer = setTimeout(() => setLoading(false), 1500)\n    return () => clearTimeout(timer)\n  }, [loading])\n\n  return (\n    <div className=\"grid w-72 gap-4\">\n      <section aria-busy={loading} aria-label=\"Profile\" className=\"flex items-center gap-4 rounded-lg border p-4\">\n        {loading ? (\n          <>\n            <span className=\"sr-only\" role=\"status\">\n              Loading the profile\n            </span>\n            <Skeleton className=\"size-12 rounded-full\" />\n            <div className=\"grid flex-1 gap-2\">\n              <Skeleton className=\"h-4 w-32\" />\n              <Skeleton className=\"h-3 w-24\" />\n            </div>\n          </>\n        ) : (\n          <>\n            <Avatar className=\"size-12\">\n              <AvatarFallback>AL</AvatarFallback>\n            </Avatar>\n            <div className=\"grid gap-1\">\n              <p className=\"font-medium text-sm leading-4\">Ada Lovelace</p>\n              <p className=\"text-muted-foreground text-xs leading-3\">Analyst, London</p>\n            </div>\n          </>\n        )}\n      </section>\n      <Button disabled={loading} onClick={() => setLoading(true)} size=\"sm\" variant=\"outline\">\n        Reload\n      </Button>\n    </div>\n  )\n}\n",
+      "path": "skeleton/skeleton-5.tsx",
+      "target": "components/skeleton-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "skeleton-5",
+  "registryDependencies": [
+    "skeleton",
+    "avatar",
+    "button"
+  ],
+  "root_folder": "skeleton",
+  "source": "/registry-examples/src/skeleton",
+  "type": "registry:example"
+}

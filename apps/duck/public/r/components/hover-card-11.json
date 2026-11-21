@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { HoverCard, HoverCardContent, HoverCardTrigger } from '@gentleduck/registry-ui/hover-card'\nimport * as React from 'react'\n\nfunction Counter() {\n  const [count, setCount] = React.useState(0)\n  return (\n    <button className=\"underline\" onClick={() => setCount((value) => value + 1)} type=\"button\">\n      Liked {count} times\n    </button>\n  )\n}\n\nexport default function Demo() {\n  return (\n    <HoverCard openDelay={150}>\n      <HoverCardTrigger variant=\"outline\">Hover me</HoverCardTrigger>\n      <HoverCardContent className=\"w-56 text-sm data-[state=closed]:hidden\" forceMount>\n        <Counter />\n        <p className=\"text-muted-foreground text-xs\">The count survives closing, since forceMount keeps it mounted.</p>\n      </HoverCardContent>\n    </HoverCard>\n  )\n}\n",
+      "path": "hover-card/hover-card-11.tsx",
+      "target": "components/hover-card-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "hover-card-11",
+  "registryDependencies": [
+    "hover-card",
+    "avatar",
+    "direction",
+    "label",
+    "skeleton",
+    "switch"
+  ],
+  "root_folder": "hover-card",
+  "source": "/registry-examples/src/hover-card",
+  "type": "registry:example"
+}

@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  DropdownMenu,\n  DropdownMenuContent,\n  DropdownMenuItem,\n  DropdownMenuTrigger,\n} from '@gentleduck/registry-ui/dropdown-menu'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Switch } from '@gentleduck/registry-ui/switch'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [locked, setLocked] = React.useState(false)\n\n  return (\n    <div className=\"flex flex-col items-center gap-4\">\n      <div className=\"flex items-center gap-2\">\n        <Switch checked={locked} id=\"lock-actions\" onCheckedChange={setLocked} />\n        <Label htmlFor=\"lock-actions\">Lock the actions</Label>\n      </div>\n      <DropdownMenu modal={false}>\n        <DropdownMenuTrigger asChild disabled={locked}>\n          <Button variant=\"outline\">Actions</Button>\n        </DropdownMenuTrigger>\n        <DropdownMenuContent>\n          <DropdownMenuItem>Archive</DropdownMenuItem>\n          <DropdownMenuItem>Move to folder</DropdownMenuItem>\n        </DropdownMenuContent>\n      </DropdownMenu>\n      <p className=\"max-w-64 text-center text-muted-foreground text-sm\">\n        The page still scrolls and takes clicks while the menu is open.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "dropdown-menu/dropdown-menu-10.tsx",
+      "target": "components/dropdown-menu-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "dropdown-menu-10",
+  "registryDependencies": [
+    "dropdown-menu",
+    "button",
+    "dialog",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "dropdown-menu",
+  "source": "/registry-examples/src/dropdown-menu",
+  "type": "registry:example"
+}

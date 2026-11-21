@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "embla-carousel-autoplay"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { Card, CardContent } from '@gentleduck/registry-ui/card'\nimport {\n  Carousel,\n  CarouselContent,\n  CarouselItem,\n  CarouselNext,\n  CarouselPrevious,\n} from '@gentleduck/registry-ui/carousel'\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\n\nconst slides = [\n  { number: '١', title: 'الشريحة الأولى' },\n  { number: '٢', title: 'الشريحة الثانية' },\n  { number: '٣', title: 'الشريحة الثالثة' },\n  { number: '٤', title: 'الشريحة الرابعة' },\n  { number: '٥', title: 'الشريحة الخامسة' },\n]\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Carousel className=\"w-full max-w-xs\">\n        <CarouselContent>\n          {slides.map((slide) => (\n            <CarouselItem key={slide.number}>\n              <div className=\"p-1\">\n                <Card>\n                  <CardContent className=\"flex aspect-square flex-col items-center justify-center gap-2 p-6\">\n                    <span className=\"font-semibold text-4xl\">{slide.number}</span>\n                    <span className=\"text-muted-foreground text-sm\">{slide.title}</span>\n                  </CardContent>\n                </Card>\n              </div>\n            </CarouselItem>\n          ))}\n        </CarouselContent>\n        <CarouselPrevious text=\"الشريحة السابقة\" />\n        <CarouselNext text=\"الشريحة التالية\" />\n      </Carousel>\n    </DirectionProvider>\n  )\n}\n",
@@ -9,7 +12,8 @@
   ],
   "name": "carousel-7",
   "registryDependencies": [
-    "carousel"
+    "carousel",
+    "card"
   ],
   "root_folder": "carousel",
   "source": "/registry-examples/src/carousel",

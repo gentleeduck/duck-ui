@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Sheet from '@gentleduck/primitives/sheet'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function SheetControlledExample() {\n  const [open, setOpen] = React.useState(false)\n  const [items, setItems] = React.useState(2)\n\n  return (\n    <Sheet.Root onOpenChange={setOpen} open={open}>\n      <button className={styles.button} onClick={() => setItems((count) => count + 1)} type=\"button\">\n        Add to cart ({items})\n      </button>\n      <Sheet.Trigger className={styles.button}>View cart</Sheet.Trigger>\n      <Sheet.Portal>\n        <Sheet.Overlay className={`${styles.overlay} ${styles.fade}`} />\n        <Sheet.Content aria-describedby={undefined} className={styles.sheet}>\n          <Sheet.Title className={styles.title}>Cart, {items} items</Sheet.Title>\n          <button\n            className={`${styles.button} ${styles.primary}`}\n            onClick={() => {\n              setItems(0)\n              setOpen(false)\n            }}\n            type=\"button\">\n            Check out\n          </button>\n        </Sheet.Content>\n      </Sheet.Portal>\n    </Sheet.Root>\n  )\n}\n",
+      "path": "internal-primitives/sheet-controlled/sheet-controlled.tsx",
+      "target": "components/sheet-controlled.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "sheet-controlled",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

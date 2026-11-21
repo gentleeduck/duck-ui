@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Checkbox, type CheckedState } from '@gentleduck/registry-ui/checkbox'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Check, Minus } from 'lucide-react'\nimport * as React from 'react'\n\nconst permissions = [\n  { id: 'permission-read', label: 'Read' },\n  { id: 'permission-write', label: 'Write' },\n  { id: 'permission-delete', label: 'Delete' },\n]\n\nexport default function Demo() {\n  const [granted, setGranted] = React.useState(['permission-read'])\n  const all: CheckedState = granted.length === permissions.length ? true : granted.length > 0 ? 'indeterminate' : false\n\n  return (\n    <div className=\"flex flex-col gap-3\">\n      <div className=\"flex items-center gap-3 border-b pb-3\">\n        <Checkbox\n          checked={all}\n          checkedIndicator={<Check />}\n          id=\"permission-all\"\n          indeterminateIndicator={<Minus />}\n          onCheckedChange={(next) => setGranted(next ? permissions.map((permission) => permission.id) : [])}\n        />\n        <Label className=\"font-medium\" htmlFor=\"permission-all\">\n          All permissions\n        </Label>\n      </div>\n      <div className=\"flex flex-col gap-2 ps-6\">\n        {permissions.map((permission) => (\n          <div className=\"flex items-center gap-3\" key={permission.id}>\n            <Checkbox\n              checked={granted.includes(permission.id)}\n              id={permission.id}\n              onCheckedChange={(next) =>\n                setGranted((previous) =>\n                  next ? [...previous, permission.id] : previous.filter((id) => id !== permission.id),\n                )\n              }\n            />\n            <Label htmlFor={permission.id}>{permission.label}</Label>\n          </div>\n        ))}\n      </div>\n    </div>\n  )\n}\n",
+      "path": "checkbox/checkbox-11.tsx",
+      "target": "components/checkbox-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "checkbox-11",
+  "registryDependencies": [
+    "checkbox",
+    "button",
+    "field"
+  ],
+  "root_folder": "checkbox",
+  "source": "/registry-examples/src/checkbox",
+  "type": "registry:example"
+}

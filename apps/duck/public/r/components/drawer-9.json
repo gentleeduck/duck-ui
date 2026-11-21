@@ -1,7 +1,10 @@
 {
+  "dependencies": [
+    "recharts"
+  ],
   "files": [
     {
-      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Drawer,\n  DrawerClose,\n  DrawerContent,\n  DrawerDescription,\n  DrawerFooter,\n  DrawerHeader,\n  DrawerTitle,\n  DrawerTrigger,\n} from '@gentleduck/registry-ui/drawer'\n\nconst DRAWER_SIDES = ['top', 'right', 'bottom', 'left'] as const\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-wrap gap-2\">\n      {DRAWER_SIDES.map((side) => (\n        <Drawer key={side} direction={side === 'bottom' ? undefined : (side as 'top' | 'right' | 'left')}>\n          <DrawerTrigger asChild>\n            <Button className=\"capitalize\" variant=\"outline\">\n              {side}\n            </Button>\n          </DrawerTrigger>\n          <DrawerContent className=\"data-[vaul-drawer-direction=bottom]:max-h-[50vh] data-[vaul-drawer-direction=top]:max-h-[50vh]\">\n            <DrawerHeader>\n              <DrawerTitle>Move Goal</DrawerTitle>\n              <DrawerDescription>Set your daily activity goal.</DrawerDescription>\n            </DrawerHeader>\n            <div className=\"no-scrollbar overflow-y-auto px-4\">\n              {Array.from({ length: 10 }).map((_, index) => (\n                <p className=\"mb-4 leading-normal\" key={index}>\n                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et\n                  dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut\n                  aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum\n                  dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui\n                  officia deserunt mollit anim id est laborum.\n                </p>\n              ))}\n            </div>\n            <DrawerFooter>\n              <Button>Submit</Button>\n              <DrawerClose asChild>\n                <Button variant=\"outline\">Cancel</Button>\n              </DrawerClose>\n            </DrawerFooter>\n          </DrawerContent>\n        </Drawer>\n      ))}\n    </div>\n  )\n}\n",
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Drawer,\n  DrawerClose,\n  DrawerContent,\n  DrawerDescription,\n  DrawerFooter,\n  DrawerHeader,\n  DrawerTitle,\n  DrawerTrigger,\n} from '@gentleduck/registry-ui/drawer'\n\nconst PARAGRAPHS = Array.from({ length: 10 }, (_, index) => index + 1)\n\nconst DRAWER_SIDES = ['top', 'right', 'bottom', 'left'] as const\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-wrap gap-2\">\n      {DRAWER_SIDES.map((side) => (\n        <Drawer key={side} direction={side === 'bottom' ? undefined : (side as 'top' | 'right' | 'left')}>\n          <DrawerTrigger asChild>\n            <Button className=\"capitalize\" variant=\"outline\">\n              {side}\n            </Button>\n          </DrawerTrigger>\n          <DrawerContent className=\"data-[vaul-drawer-direction=bottom]:max-h-[50vh] data-[vaul-drawer-direction=top]:max-h-[50vh]\">\n            <DrawerHeader>\n              <DrawerTitle>Move Goal</DrawerTitle>\n              <DrawerDescription>Set your daily activity goal.</DrawerDescription>\n            </DrawerHeader>\n            <div className=\"no-scrollbar overflow-y-auto px-4\">\n              {PARAGRAPHS.map((section) => (\n                <p className=\"mb-4 leading-normal\" key={section}>\n                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et\n                  dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut\n                  aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum\n                  dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui\n                  officia deserunt mollit anim id est laborum.\n                </p>\n              ))}\n            </div>\n            <DrawerFooter>\n              <Button>Submit</Button>\n              <DrawerClose asChild>\n                <Button variant=\"outline\">Cancel</Button>\n              </DrawerClose>\n            </DrawerFooter>\n          </DrawerContent>\n        </Drawer>\n      ))}\n    </div>\n  )\n}\n",
       "path": "drawer/drawer-9.tsx",
       "target": "components/drawer-9.tsx",
       "type": "registry:example"
@@ -9,7 +12,13 @@
   ],
   "name": "drawer-9",
   "registryDependencies": [
-    "drawer"
+    "drawer",
+    "button",
+    "dialog",
+    "direction",
+    "input",
+    "label",
+    "separator"
   ],
   "root_folder": "drawer",
   "source": "/registry-examples/src/drawer",

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Popover from '@gentleduck/primitives/popover'\nimport styles from '../primitives.module.css'\n\nexport default function PopoverRtlExample() {\n  return (\n    <Popover.Root dir=\"rtl\">\n      <Popover.Trigger className={styles.button}>تفاصيل</Popover.Trigger>\n      <Popover.Portal>\n        <Popover.Content className={`${styles.content} ${styles.panel}`} side=\"right\" sideOffset={8}>\n          side right opens to the left here, the way right to left text reads.\n          <Popover.Arrow className={styles.arrow} />\n        </Popover.Content>\n      </Popover.Portal>\n    </Popover.Root>\n  )\n}\n",
+      "path": "internal-primitives/popover-rtl/popover-rtl.tsx",
+      "target": "components/popover-rtl.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "popover-rtl",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

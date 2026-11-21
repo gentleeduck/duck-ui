@@ -929,7 +929,7 @@ export default function FormTanStackRadioGroup() {
                   name={field.name}
                   value={field.state.value}
                   onValueChange={(nextValue) => {
-                    if (isPlan(nextValue)) {
+                    if (nextValue !== null && isPlan(nextValue)) {
                       field.handleChange(nextValue)
                     }
                   }}>
@@ -1269,7 +1269,7 @@ export default function FormTanStackComplex() {
                   name={field.name}
                   value={field.state.value}
                   onValueChange={(nextValue) => {
-                    if (isPlan(nextValue)) {
+                    if (nextValue !== null && isPlan(nextValue)) {
                       field.handleChange(nextValue)
                     }
                   }}>

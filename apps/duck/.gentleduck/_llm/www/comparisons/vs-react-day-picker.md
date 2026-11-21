@@ -2,113 +2,23 @@
 
 | | @gentleduck/calendar | react-day-picker |
 |---|---|---|
-| **Bundle size (gzip)** | ~5 KB | ~20 KB |
-| **Dependencies** | 0 (peer-optional: date-fns, dayjs, luxon) | date-fns (required) |
-| **Tree-shaking** | Full (ESM, `sideEffects: false`) | Partial |
-| **Calendar systems** | Gregorian, Hijri, Persian via adapter pattern | Gregorian default; Persian via separate `react-day-picker/persian` |
+| **Bundle size (gzip)** | 9.7 KB for a calendar, 5.8 KB for the hook | 20.0 KB |
+| **Dependencies** | 0 (peer-optional: date-fns, dayjs, luxon) | date-fns and @date-fns/tz (required) |
+| **Tree-shaking** | Full (ESM, `sideEffects: false`) | ESM, one `DayPicker` component |
+| **Calendar systems** | Gregorian, Islamic, Persian, Hebrew through adapters | Gregorian; others only by overriding `dateLib` |
 | **Selection modes** | single, multiple, range | single, multiple, range |
 | **ARIA compliance** | WAI-ARIA grid pattern, live regions, roving tabindex | ARIA attributes, custom navigation |
 | **CSS approach** | Headless (BYO styles), styled component uses `data-*` selectors + Tailwind | CSS modules, classNames prop, or custom styles |
 | **Multi-month** | Built-in (`numberOfMonths` prop) | Built-in (`numberOfMonths` prop) |
-| **Keyboard navigation** | Arrow keys, Home/End, PageUp/PageDown, Escape | Arrow keys, PageUp/PageDown |
-| **Framework** | React 18+ | React 18+ |
+| **Keyboard navigation** | Arrow keys, Home/End, PageUp/PageDown (Shift for a year), Escape | Arrow keys, Home/End, PageUp/PageDown (Shift for a year) |
+| **Framework** | React 18+ | React 16.8+ |
 | **Date library lock-in** | None (adapter pattern) | date-fns required |
 
 ***
 
 ## Bundle size
 
-```tsx title="components/chart-benchmark-calendar-vs.tsx"
-// import from your project: import Demo from '@/components/chart-benchmark-calendar-vs'
-'use client'
-
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@gentleduck/registry-ui/chart'
-import * as React from 'react'
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
-import data from '../../../../apps/duck/public/data/benchmarks/calendar.json'
-
-const tabs = ['Bundle Size', 'Total Cost'] as const
-type Tab = (typeof tabs)[number]
-
-const bundleConfig = {
-  sizeKB: { label: 'JS Size (KB)', color: 'var(--chart-1)' },
-  deps: { label: 'Dependencies', color: 'var(--chart-3)' },
-} satisfies ChartConfig
-
-const totalCostConfig = {
-  js: { label: 'JavaScript (KB)', color: 'var(--chart-1)' },
-  css: { label: 'CSS (KB)', color: 'var(--chart-2)' },
-} satisfies ChartConfig
-
-const totalCost = (data as Record<string, unknown>).totalCost as { name: string; js: number; css: number }[] | undefined
-
-export default function CalendarBenchmarkVs() {
-  const [tab, setTab] = React.useState<Tab>('Bundle Size')
-
-  return (
-    <div className="w-full space-y-4">
-      <div className="flex w-fit gap-1 rounded-lg bg-muted p-1">
-        {tabs.map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={`rounded-md px-3 py-1.5 font-medium text-xs transition-colors ${tab === t ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-            {t}
-          </button>
-        ))}
-      </div>
-
-      <div className="h-[320px]">
-        {tab === 'Bundle Size' && (
-          <div>
-            <p className="mb-3 text-muted-foreground text-xs">Gzipped JS bundle size + dependency count.</p>
-            <ChartContainer className="aspect-[2/1] min-h-[250px] w-full" config={bundleConfig}>
-              <BarChart data={data.bundleSize} layout="vertical" margin={{ left: 10, right: 30, top: 5, bottom: 5 }}>
-                <CartesianGrid horizontal={false} />
-                <YAxis dataKey="name" type="category" width={160} tickLine={false} axisLine={false} fontSize={11} />
-                <XAxis type="number" tickLine={false} axisLine={false} fontSize={10} />
-                <ChartTooltip content={<ChartTooltipContent indicator="dashed" />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar dataKey="sizeKB" fill="var(--color-sizeKB)" radius={[0, 4, 4, 0]} barSize={14} />
-                <Bar dataKey="deps" fill="var(--color-deps)" radius={[0, 4, 4, 0]} barSize={14} />
-              </BarChart>
-            </ChartContainer>
-          </div>
-        )}
-
-        {tab === 'Total Cost' && totalCost && (
-          <div>
-            <p className="mb-3 text-muted-foreground text-xs">
-              Total download cost: JavaScript + required CSS (stacked).
-            </p>
-            <ChartContainer className="aspect-[2/1] min-h-[250px] w-full" config={totalCostConfig}>
-              <BarChart data={totalCost} layout="vertical" margin={{ left: 10, right: 30, top: 5, bottom: 5 }}>
-                <CartesianGrid horizontal={false} />
-                <YAxis dataKey="name" type="category" width={160} tickLine={false} axisLine={false} fontSize={11} />
-                <XAxis type="number" tickLine={false} axisLine={false} fontSize={10} />
-                <ChartTooltip content={<ChartTooltipContent indicator="dashed" />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar dataKey="js" fill="var(--color-js)" radius={[0, 0, 0, 0]} barSize={16} stackId="cost" />
-                <Bar dataKey="css" fill="var(--color-css)" radius={[0, 4, 4, 0]} barSize={16} stackId="cost" />
-              </BarChart>
-            </ChartContainer>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-```
-
-`@gentleduck/calendar` ships ~5 KB gzipped with zero runtime dependencies. react-day-picker pulls in date-fns, bringing total bundle impact to ~20 KB gzipped. The adapter pattern means you only pay for the date library you already use.
+A whole calendar built on `@gentleduck/calendar` is 9.7 KB gzipped with zero runtime dependencies, and the `useCalendar` hook alone is 5.8 KB. react-day-picker's `DayPicker` is 20.0 KB with the date-fns it requires. The adapter pattern means you only pay for the date library you already use.
 
 Both libraries cover the core calendar feature set. The key differences are in architecture:
 
@@ -258,9 +168,9 @@ Same selection modes, same numberOfMonths, same fixedWeeks. The differences are 
 
 | Feature | gentleduck | react-day-picker |
 |---|---|---|
-| **Bundle** | ~5 KB, 0 dependencies | ~20 KB + date-fns |
-| **Calendar systems** | 4 (Gregorian, Islamic, Persian, Hebrew) | 1 (Gregorian) |
-| **Date adapters** | 7 (Native, date-fns, dayjs, luxon + 3 calendar-specific) | date-fns only |
+| **Bundle** | 9.7 KB, 0 dependencies | 20.0 KB, date-fns included |
+| **Calendar systems** | 4 (Gregorian, Islamic, Persian, Hebrew) | Gregorian, or another through a `dateLib` you supply |
+| **Date adapters** | 7 (Native, date-fns, dayjs, luxon + 3 calendar-specific) | date-fns, overridable through `dateLib` |
 | **Headless hook** | `useCalendar` returns grid data for any UI | Not available |
 | **Render props** | `renderDay`, `renderHeader`, `renderWeekday`, `renderFooter` | Component injection |
 | **Month/year dropdowns** | `showDropdowns` prop, built-in | `captionLayout="dropdown"` |
@@ -269,15 +179,15 @@ Same selection modes, same numberOfMonths, same fixedWeeks. The differences are 
 | **Locale/RTL** | Full i18n with Arabic numerals, Persian text, Hebrew | Basic locale support |
 | **CSS required** | None (headless) | CSS modules or `style.css` import |
 
-The adapter pattern is the key architectural difference. react-day-picker locks you into date-fns. gentleduck lets you use whatever date library your project already depends on, or none at all (NativeAdapter uses the built-in Date object). If your project uses dayjs for everything else, you use DayjsAdapter. No second date library in your bundle.
+The adapter pattern is the key architectural difference. react-day-picker always ships date-fns, and its `dateLib` prop only overrides functions on top of it. gentleduck lets you use whatever date library your project already depends on, or none at all (NativeAdapter uses the built-in Date object). If your project uses dayjs for everything else, you use DayjsAdapter. No second date library in your bundle.
 
-For teams building products that serve Arabic, Persian, or Hebrew-speaking users, gentleduck is the only copy-paste calendar library that supports Islamic (Hijri), Persian (Jalaali), and Hebrew calendar systems through pluggable adapters. react-day-picker ships a limited Persian variant but does not support Islamic or Hebrew calendars.
+For teams building products that serve Arabic, Persian, or Hebrew-speaking users, gentleduck is the only copy-paste calendar library that supports Islamic (Hijri), Persian (Jalaali), and Hebrew calendar systems through pluggable adapters. react-day-picker 10 ships Gregorian only; any other system means writing a `dateLib` yourself.
 
 ***
 
 ## Why teams switch
 
-You drop 15 KB from your bundle immediately. react-day-picker plus date-fns costs ~20 KB gzipped. gentleduck/calendar costs ~5 KB with zero dependencies. If your project already uses dayjs or luxon, the savings are even larger because you stop shipping two date libraries.
+You drop about 10 KB from your bundle immediately: react-day-picker with date-fns is 20.0 KB gzipped, and a gentleduck calendar is 9.7 KB with zero dependencies. If your project already uses dayjs or luxon, the savings are even larger because you stop shipping two date libraries.
 
 You stop being locked into date-fns. The adapter pattern means your calendar uses whatever date library the rest of your project uses. One date library in your bundle instead of two.
 

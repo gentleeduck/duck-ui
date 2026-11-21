@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "lucide-react"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { MotionAlert, MotionAlertDescription, MotionAlertTitle } from '@gentleduck/registry-ui/alert'\nimport { AlertCircle, Terminal } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex w-full max-w-md flex-col gap-4\">\n      <MotionAlert>\n        <Terminal aria-hidden=\"true\" className=\"h-4 w-4\" />\n        <MotionAlertTitle>Heads up!</MotionAlertTitle>\n        <MotionAlertDescription>You can add components to your app using the cli.</MotionAlertDescription>\n      </MotionAlert>\n      <MotionAlert variant=\"destructive\">\n        <AlertCircle aria-hidden=\"true\" className=\"h-4 w-4\" />\n        <MotionAlertTitle>Error</MotionAlertTitle>\n        <MotionAlertDescription>Your session has expired. Please log in again.</MotionAlertDescription>\n      </MotionAlert>\n    </div>\n  )\n}\n",

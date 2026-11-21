@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Menubar from '@gentleduck/primitives/menubar'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function MenubarBasicExample() {\n  const [wrap, setWrap] = React.useState(true)\n  const [theme, setTheme] = React.useState('system')\n\n  return (\n    <Menubar.Root className={styles.menubar}>\n      <Menubar.Menu value=\"file\">\n        <Menubar.Trigger className={styles.menubarTrigger}>File</Menubar.Trigger>\n        <Menubar.Portal>\n          <Menubar.Content className={styles.content} sideOffset={6}>\n            <Menubar.Item className={styles.item}>\n              New file <span className={styles.shortcut}>Ctrl N</span>\n            </Menubar.Item>\n            <Menubar.Sub>\n              <Menubar.SubTrigger className={styles.item}>\n                Open recent <span className={styles.shortcut}>{'>'}</span>\n              </Menubar.SubTrigger>\n              <Menubar.Portal>\n                <Menubar.SubContent className={styles.content}>\n                  <Menubar.Item className={styles.item}>notes.md</Menubar.Item>\n                  <Menubar.Item className={styles.item}>budget.csv</Menubar.Item>\n                </Menubar.SubContent>\n              </Menubar.Portal>\n            </Menubar.Sub>\n            <Menubar.Separator className={styles.separator} />\n            <Menubar.Item className={styles.item} disabled>\n              Print\n            </Menubar.Item>\n          </Menubar.Content>\n        </Menubar.Portal>\n      </Menubar.Menu>\n      <Menubar.Menu value=\"view\">\n        <Menubar.Trigger className={styles.menubarTrigger}>View</Menubar.Trigger>\n        <Menubar.Portal>\n          <Menubar.Content className={styles.content} sideOffset={6}>\n            <Menubar.CheckboxItem checked={wrap} className={styles.item} onCheckedChange={setWrap}>\n              <span className={styles.itemIndicator}>\n                <Menubar.ItemIndicator>x</Menubar.ItemIndicator>\n              </span>\n              Word wrap\n            </Menubar.CheckboxItem>\n            <Menubar.Separator className={styles.separator} />\n            <Menubar.Label className={styles.groupLabel}>Theme</Menubar.Label>\n            <Menubar.RadioGroup onValueChange={setTheme} value={theme}>\n              {['light', 'dark', 'system'].map((value) => (\n                <Menubar.RadioItem className={styles.item} key={value} value={value}>\n                  <span className={styles.itemIndicator}>\n                    <Menubar.ItemIndicator>o</Menubar.ItemIndicator>\n                  </span>\n                  {value}\n                </Menubar.RadioItem>\n              ))}\n            </Menubar.RadioGroup>\n          </Menubar.Content>\n        </Menubar.Portal>\n      </Menubar.Menu>\n    </Menubar.Root>\n  )\n}\n",
+      "path": "internal-primitives/menubar-basic/menubar-basic.tsx",
+      "target": "components/menubar-basic.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "menubar-basic",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

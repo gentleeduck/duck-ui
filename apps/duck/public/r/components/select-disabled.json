@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Select from '@gentleduck/primitives/select'\nimport styles from '../primitives.module.css'\n\nexport default function SelectDisabledExample() {\n  return (\n    <Select.Root defaultValue=\"monthly\" disabled>\n      <Select.Trigger aria-label=\"Billing\" className={styles.trigger}>\n        <Select.Value />\n      </Select.Trigger>\n      <Select.Portal>\n        <Select.Content className={styles.content}>\n          <Select.Viewport>\n            <Select.Item className={styles.item} value=\"monthly\">\n              <Select.ItemText>Monthly</Select.ItemText>\n            </Select.Item>\n          </Select.Viewport>\n        </Select.Content>\n      </Select.Portal>\n    </Select.Root>\n  )\n}\n",
+      "path": "internal-primitives/select-disabled/select-disabled.tsx",
+      "target": "components/select-disabled.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "select-disabled",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

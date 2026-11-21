@@ -1,0 +1,24 @@
+{
+  "dependencies": [
+    "sonner"
+  ],
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-wrap items-center gap-4\">\n      <Button asChild variant=\"outline\">\n        <a href=\"#ponds\">Ponds</a>\n      </Button>\n      <Button asChild disabled variant=\"outline\">\n        <a href=\"#lakes\">Lakes</a>\n      </Button>\n    </div>\n  )\n}\n",
+      "path": "button/button-25.tsx",
+      "target": "components/button-25.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "button-25",
+  "registryDependencies": [
+    "button",
+    "command",
+    "direction",
+    "toggle",
+    "tooltip"
+  ],
+  "root_folder": "button",
+  "source": "/registry-examples/src/button",
+  "type": "registry:example"
+}

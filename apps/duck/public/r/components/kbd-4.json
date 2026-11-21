@@ -9,7 +9,12 @@
   ],
   "name": "kbd-4",
   "registryDependencies": [
-    "kbd"
+    "kbd",
+    "button",
+    "button-group",
+    "direction",
+    "input-group",
+    "tooltip"
   ],
   "root_folder": "kbd",
   "source": "/registry-examples/src/kbd",

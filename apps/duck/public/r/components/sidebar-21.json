@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Sidebar,\n  SidebarContent,\n  SidebarGroup,\n  SidebarMenu,\n  SidebarMenuButton,\n  SidebarMenuItem,\n  SidebarProvider,\n} from '@gentleduck/registry-ui/sidebar'\n\nconst CHANNELS = Array.from({ length: 30 }, (_, index) => `channel-${index + 1}`)\n\nexport default function Demo() {\n  return (\n    <SidebarProvider className=\"h-72 min-h-0\">\n      <Sidebar className=\"h-72 border-e\" collapsible=\"none\">\n        <SidebarContent noScroll={false}>\n          <SidebarGroup>\n            <SidebarMenu>\n              {CHANNELS.map((channel) => (\n                <SidebarMenuItem key={channel}>\n                  <SidebarMenuButton>#{channel}</SidebarMenuButton>\n                </SidebarMenuItem>\n              ))}\n            </SidebarMenu>\n          </SidebarGroup>\n        </SidebarContent>\n      </Sidebar>\n      <main className=\"p-4 text-muted-foreground text-sm\">noScroll off shows the scrollbar on a long list.</main>\n    </SidebarProvider>\n  )\n}\n",
+      "path": "sidebar/sidebar-21.tsx",
+      "target": "components/sidebar-21.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sidebar-21",
+  "registryDependencies": [
+    "sidebar",
+    "avatar",
+    "collapsible",
+    "dropdown-menu"
+  ],
+  "root_folder": "sidebar",
+  "source": "/registry-examples/src/sidebar",
+  "type": "registry:example"
+}

@@ -1,0 +1,21 @@
+{
+  "dependencies": [
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  type ChartConfig,\n  ChartContainer,\n  ChartLegend,\n  ChartLegendContent,\n  ChartTooltip,\n  ChartTooltipContent,\n} from '@gentleduck/registry-ui/chart'\nimport { Bird, Feather } from 'lucide-react'\nimport { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'\n\nconst chartData = [\n  { mallard: 42, month: 'January', swan: 6 },\n  { mallard: 38, month: 'February', swan: 4 },\n  { mallard: 51, month: 'March', swan: 0 },\n  { mallard: 64, month: 'April', swan: 3 },\n]\n\nconst chartConfig = {\n  mallard: {\n    color: '#2563eb',\n    icon: Bird,\n    label: 'Mallards',\n  },\n  swan: {\n    icon: Feather,\n    label: 'Swans',\n    theme: { dark: '#e2e8f0', light: '#64748b' },\n  },\n} satisfies ChartConfig\n\nexport default function Demo() {\n  return (\n    <ChartContainer className=\"min-h-[200px] w-full\" config={chartConfig}>\n      <BarChart accessibilityLayer data={chartData}>\n        <CartesianGrid vertical={false} />\n        <XAxis\n          axisLine={false}\n          dataKey=\"month\"\n          tickFormatter={(value) => value.slice(0, 3)}\n          tickLine={false}\n          tickMargin={10}\n        />\n        <ChartTooltip\n          content={\n            <ChartTooltipContent\n              formatter={(value, name) => (\n                <span className=\"flex w-full justify-between gap-4\">\n                  <span className=\"text-muted-foreground\">{chartConfig[name as keyof typeof chartConfig].label}</span>\n                  <span className=\"font-medium font-mono tabular-nums\">\n                    {value} {value === 1 ? 'bird' : 'birds'}\n                  </span>\n                </span>\n              )}\n            />\n          }\n        />\n        <ChartLegend content={<ChartLegendContent />} verticalAlign=\"top\" />\n        <Bar dataKey=\"mallard\" fill=\"var(--color-mallard)\" radius={4} stackId=\"ponds\" />\n        <Bar dataKey=\"swan\" fill=\"var(--color-swan)\" radius={4} stackId=\"ponds\" />\n      </BarChart>\n    </ChartContainer>\n  )\n}\n",
+      "path": "chart/chart-9.tsx",
+      "target": "components/chart-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "chart-9",
+  "registryDependencies": [
+    "chart",
+    "card"
+  ],
+  "root_folder": "chart",
+  "source": "/registry-examples/src/chart",
+  "type": "registry:example"
+}

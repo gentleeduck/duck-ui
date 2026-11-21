@@ -22,10 +22,7 @@ export default function Demo() {
 ```
 
 }>
-  **Note:** You might wonder why we don't use the `CommandShortcut` component from the `command` module.
-  The reason is that we want to give you the flexibility to use the `kbd` component in any context, not just within a command.
-  Additionally, the `CommandShortcut` component is specifically designed to represent a keyboard shortcut associated with a command, not a plain HTML element.
-  As a result, it has a different API and does not require certain props like `keys` or `onKeyPress`.
+  **Note:** `CommandShortcut` and the menus' shortcuts sit inside their item and can bind the keys they show with `onKeysPressed`. `Kbd` only draws keys, so it fits anywhere a key is named: in text, a button, a tooltip or an input.
 
 ## Philosophy
 
@@ -98,10 +95,10 @@ import { Kbd } from '@gentleduck/registry-ui/kbd'
 export default function Demo() {
   return (
     <div className="flex flex-wrap items-center gap-4">
-      <Button className="pr-2" size="sm" variant="outline">
+      <Button className="pe-2" size="sm" variant="outline">
         Confirm <Kbd>Enter</Kbd>
       </Button>
-      <Button className="pr-2" size="sm" variant="outline">
+      <Button className="pe-2" size="sm" variant="outline">
         Dismiss <Kbd>Esc</Kbd>
       </Button>
     </div>
@@ -192,6 +189,36 @@ export default function Demo() {
 }
 ```
 
+### Platform keys
+
+Pass `keys` instead of a label and `Kbd` writes the binding out for the platform the page runs on: `mod+k` reads `Cmd+K` on a Mac and `Ctrl+K` elsewhere. A server cannot tell the platform, so it draws the Windows and Linux keys and the browser swaps in its own once the page hydrates, without a hydration error.
+
+```tsx title="components/kbd-8.tsx"
+// import from your project: import Demo from '@/components/kbd-8'
+import { Kbd, KbdGroup } from '@gentleduck/registry-ui/kbd'
+
+export default function Demo() {
+  return (
+    <div className="flex flex-col items-start gap-3 text-muted-foreground text-sm">
+      <p className="flex items-center gap-2">
+        Search <Kbd keys="mod+k" />
+      </p>
+      <p className="flex items-center gap-2">
+        Command palette <Kbd keys="mod+shift+p" />
+      </p>
+      <p className="flex items-center gap-2">
+        New line{' '}
+        <KbdGroup>
+          <Kbd keys="shift+enter" />
+          <span>or</span>
+          <Kbd keys="alt+enter" />
+        </KbdGroup>
+      </p>
+    </div>
+  )
+}
+```
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the surrounding layout follows it. `Kbd` and `KbdGroup` take their direction from their own label, so shortcuts such as `Ctrl + S` or `⌘K` keep their order inside right-to-left text.
@@ -266,7 +293,7 @@ Displays an individual keyboard key with consistent styling.
 | --- | --- | --- | --- |
 | `dir` | `'ltr' \| 'rtl' \| 'auto'` | `'auto'` | Text direction. Defaults to `auto`, so it follows the key label rather than the page. |
 | `className` | `string` | - | Additional class names for the kbd element |
-| `keys` | `string` | - | Raw key combo string formatted for display via `@gentleduck/vim`'s `formatForDisplay`. Used as a fallback when `children` is not provided. |
+| `keys` | `string` | - | A binding such as `mod+k`, written out for the platform with `@gentleduck/vim`'s `formatForDisplay`. A server draws the Windows and Linux keys, and the browser swaps in its own once hydrated. Shown when there are no `children`. |
 | `children` | `React.ReactNode` | - | Key label text or icon. Takes precedence over `keys` when both are provided. |
 | `...props` | `React.HTMLProps<HTMLElement>` | - | Additional props to spread to the kbd element |
 
@@ -278,8 +305,8 @@ Groups multiple `Kbd` components together in an inline layout.
 | --- | --- | --- | --- |
 | `className` | `string` | - | Additional class names for the group |
 | `children` | `React.ReactNode` | - | `Kbd` elements to group together |
-| `...props` | `React.ComponentPropsWithoutRef<'div'>` | - | Additional props to spread to the group element (renders as a `kbd`) |
+| `...props` | `React.ComponentPropsWithoutRef<'kbd'>` | - | Additional props to spread to the group's `kbd` element, which its `ref` reaches |
 
 ### MotionKbd
 
-Same props as `Kbd` plus an optional `index` prop for stagger delay (30ms per index). Adds a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition. Requires the `motion` package.
+Same props as `Kbd`, `keys` included, plus an optional `index` prop for stagger delay (30ms per index). Adds a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition. Requires the `motion` package.

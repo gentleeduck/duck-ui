@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "import { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Textarea } from '@gentleduck/registry-ui/textarea'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <div className=\"grid w-full gap-1.5\">\n        <Label htmlFor=\"message-rtl\">رسالتك</Label>\n        <Textarea id=\"message-rtl\" placeholder=\"اكتب رسالتك هنا.\" />\n      </div>\n    </DirectionProvider>\n  )\n}\n",
@@ -9,7 +15,10 @@
   ],
   "name": "textarea-8",
   "registryDependencies": [
-    "textarea"
+    "textarea",
+    "button",
+    "field",
+    "label"
   ],
   "root_folder": "textarea",
   "source": "/registry-examples/src/textarea",

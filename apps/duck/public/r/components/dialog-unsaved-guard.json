@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Dialog from '@gentleduck/primitives/dialog'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function DialogUnsavedGuardExample() {\n  const [open, setOpen] = React.useState(false)\n  const [text, setText] = React.useState('')\n  const [warned, setWarned] = React.useState(false)\n  const guard = (event: Event) => {\n    if (!text) return\n    event.preventDefault()\n    setWarned(true)\n  }\n\n  return (\n    <Dialog.Root\n      onOpenChange={(next) => {\n        setOpen(next)\n        if (!next) {\n          setText('')\n          setWarned(false)\n        }\n      }}\n      open={open}>\n      <Dialog.Trigger className={styles.button}>Write a reply</Dialog.Trigger>\n      <Dialog.Portal>\n        <Dialog.Overlay className={`${styles.overlay} ${styles.fade}`} />\n        <Dialog.Content\n          aria-describedby={undefined}\n          className={styles.dialog}\n          onEscapeKeyDown={guard}\n          onPointerDownOutside={guard}>\n          <Dialog.Title className={styles.title}>Reply</Dialog.Title>\n          <textarea className={styles.input} onChange={(event) => setText(event.target.value)} rows={4} value={text} />\n          {warned ? <p className={styles.note}>You have unsaved text. Use Discard to close.</p> : null}\n          <div className={styles.actions}>\n            <Dialog.Close className={styles.button}>Discard</Dialog.Close>\n            <Dialog.Close className={`${styles.button} ${styles.primary}`}>Send</Dialog.Close>\n          </div>\n        </Dialog.Content>\n      </Dialog.Portal>\n    </Dialog.Root>\n  )\n}\n",
+      "path": "internal-primitives/dialog-unsaved-guard/dialog-unsaved-guard.tsx",
+      "target": "components/dialog-unsaved-guard.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dialog-unsaved-guard",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

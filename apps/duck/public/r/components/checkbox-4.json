@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "import { CheckboxWithLabel } from '@gentleduck/registry-ui/checkbox'\nimport { toast } from 'sonner'\n\nexport default function Demo() {\n  return (\n    <CheckboxWithLabel\n      checkbox={{\n        defaultChecked: false,\n        onCheckedChange: (state) => toast.info(`Checkbox ${state ? 'checked' : 'unchecked'}`),\n      }}\n      label={{ children: 'I agree to the terms and conditions' }}\n      id=\"termss\"\n    />\n  )\n}\n",
@@ -9,7 +15,9 @@
   ],
   "name": "checkbox-4",
   "registryDependencies": [
-    "checkbox"
+    "checkbox",
+    "button",
+    "field"
   ],
   "root_folder": "checkbox",
   "source": "/registry-examples/src/checkbox",

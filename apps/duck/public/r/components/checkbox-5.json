@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\nimport { Checkbox } from '@gentleduck/registry-ui/checkbox'\nimport { useState } from 'react'\n\nexport default function Demo() {\n  const [checked, setChecked] = useState<'indeterminate' | boolean>('indeterminate')\n\n  return (\n    <Checkbox\n      checked={checked}\n      onCheckedChange={() => {\n        setChecked((prev) => (prev === false ? 'indeterminate' : prev === 'indeterminate'))\n      }}\n    />\n  )\n}\n",
@@ -9,7 +15,9 @@
   ],
   "name": "checkbox-5",
   "registryDependencies": [
-    "checkbox"
+    "checkbox",
+    "button",
+    "field"
   ],
   "root_folder": "checkbox",
   "source": "/registry-examples/src/checkbox",

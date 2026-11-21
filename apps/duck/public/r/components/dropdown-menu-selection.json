@@ -1,4 +1,8 @@
 {
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport * as DropdownMenu from '@gentleduck/primitives/dropdown-menu'\nimport * as React from 'react'\nimport styles from './styles.module.css'\n\nexport default function DropdownMenuSelectionInternalExample() {\n  const [showDeleted, setShowDeleted] = React.useState(false)\n  const [view, setView] = React.useState<'grid' | 'list'>('grid')\n\n  return (\n    <DropdownMenu.Root>\n      <DropdownMenu.Trigger className={styles.trigger}>View mode</DropdownMenu.Trigger>\n      <DropdownMenu.Portal>\n        <DropdownMenu.Content className={styles.content} sideOffset={8}>\n          <DropdownMenu.Label className={styles.menuLabel}>Display</DropdownMenu.Label>\n          <DropdownMenu.RadioGroup onValueChange={(v) => setView(v as 'grid' | 'list')} value={view}>\n            <DropdownMenu.RadioItem className={styles.item} value=\"grid\">\n              Grid\n            </DropdownMenu.RadioItem>\n            <DropdownMenu.RadioItem className={styles.item} value=\"list\">\n              List\n            </DropdownMenu.RadioItem>\n          </DropdownMenu.RadioGroup>\n          <DropdownMenu.Separator className={styles.separator} />\n          <DropdownMenu.CheckboxItem\n            checked={showDeleted}\n            className={styles.item}\n            onCheckedChange={(checked) => setShowDeleted(checked === true)}>\n            Show deleted\n          </DropdownMenu.CheckboxItem>\n        </DropdownMenu.Content>\n      </DropdownMenu.Portal>\n    </DropdownMenu.Root>\n  )\n}\n",
@@ -8,9 +12,6 @@
     }
   ],
   "name": "dropdown-menu-selection",
-  "registryDependencies": [
-    "@gentleduck/primitives"
-  ],
   "root_folder": "internal-primitives",
   "source": "/registry-internals/src/internal-primitives",
   "type": "registry:internal"

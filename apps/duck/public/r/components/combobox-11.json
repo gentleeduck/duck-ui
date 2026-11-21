@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Combobox, ComboboxItem } from '@gentleduck/registry-ui/combobox'\nimport * as React from 'react'\n\nconst sizes = [\n  { label: 'Small', value: 's' },\n  { label: 'Medium', value: 'm' },\n  { label: 'Large', value: 'l' },\n]\n\nexport default function Demo() {\n  const [value, setValue] = React.useState('m')\n  const [open, setOpen] = React.useState(false)\n\n  return (\n    <div className=\"flex flex-col items-center gap-3\">\n      <Combobox\n        command={{ loop: true }}\n        commandTriggerPlaceholder=\"Pick a size\"\n        items={sizes}\n        onValueChange={setValue}\n        popover={{ onOpenChange: setOpen, open }}\n        showSelected={false}\n        value={value}\n        withSearch={false}>\n        {(items) => items.map((item) => <ComboboxItem item={item} key={item.value} />)}\n      </Combobox>\n      <p className=\"text-muted-foreground text-sm\">\n        No search box for three items, the trigger keeps its placeholder, and the popover is {open ? 'open' : 'closed'}.\n        Picked: {value || 'nothing'}.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "combobox/combobox-11.tsx",
+      "target": "components/combobox-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "combobox-11",
+  "registryDependencies": [
+    "combobox",
+    "dropdown-menu",
+    "field"
+  ],
+  "root_folder": "combobox",
+  "source": "/registry-examples/src/combobox",
+  "type": "registry:example"
+}

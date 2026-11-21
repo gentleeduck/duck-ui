@@ -1,0 +1,21 @@
+{
+  "dependencies": [
+    "embla-carousel-autoplay"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Card, CardContent } from '@gentleduck/registry-ui/card'\nimport {\n  Carousel,\n  CarouselContent,\n  CarouselItem,\n  CarouselNext,\n  CarouselPrevious,\n} from '@gentleduck/registry-ui/carousel'\n\nexport default function Demo() {\n  return (\n    <Carousel className=\"w-full max-w-xs\">\n      <CarouselContent>\n        {[1, 2, 3, 4, 5].map((slide) => (\n          <CarouselItem key={slide}>\n            <Card>\n              <CardContent className=\"flex aspect-square items-center justify-center p-6\">\n                <span className=\"font-semibold text-4xl\">{slide}</span>\n              </CardContent>\n            </Card>\n          </CarouselItem>\n        ))}\n      </CarouselContent>\n      <CarouselPrevious size=\"icon-sm\" variant=\"secondary\" />\n      <CarouselNext size=\"icon-sm\" variant=\"secondary\" />\n    </Carousel>\n  )\n}\n",
+      "path": "carousel/carousel-9.tsx",
+      "target": "components/carousel-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "carousel-9",
+  "registryDependencies": [
+    "carousel",
+    "card"
+  ],
+  "root_folder": "carousel",
+  "source": "/registry-examples/src/carousel",
+  "type": "registry:example"
+}

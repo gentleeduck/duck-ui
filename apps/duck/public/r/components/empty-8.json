@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "@tabler/icons-react"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { MotionButton } from '@gentleduck/registry-ui/button'\nimport {\n  EmptyHeader,\n  MotionEmpty,\n  MotionEmptyContent,\n  MotionEmptyDescription,\n  MotionEmptyMedia,\n  MotionEmptyTitle,\n} from '@gentleduck/registry-ui/empty'\nimport { IconInbox } from '@tabler/icons-react'\n\nexport default function Demo() {\n  return (\n    <MotionEmpty>\n      <EmptyHeader>\n        <MotionEmptyMedia variant=\"icon\">\n          <IconInbox />\n        </MotionEmptyMedia>\n        <MotionEmptyTitle>Your Inbox is Empty</MotionEmptyTitle>\n        <MotionEmptyDescription>\n          No messages waiting for you. New conversations will show up here when someone reaches out.\n        </MotionEmptyDescription>\n      </EmptyHeader>\n      <MotionEmptyContent>\n        <div className=\"flex gap-2\">\n          <MotionButton>Compose Message</MotionButton>\n          <MotionButton variant=\"outline\">View Archived</MotionButton>\n        </div>\n      </MotionEmptyContent>\n    </MotionEmpty>\n  )\n}\n",
@@ -9,7 +12,11 @@
   ],
   "name": "empty-8",
   "registryDependencies": [
-    "empty"
+    "empty",
+    "avatar",
+    "button",
+    "input-group",
+    "kbd"
   ],
   "root_folder": "empty",
   "source": "/registry-examples/src/empty",

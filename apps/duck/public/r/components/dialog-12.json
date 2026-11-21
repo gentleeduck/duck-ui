@@ -1,0 +1,26 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport {\n  Dialog,\n  DialogClose,\n  DialogContent,\n  DialogDescription,\n  DialogFooter,\n  DialogHeader,\n  DialogTitle,\n  DialogTrigger,\n} from '@gentleduck/registry-ui/dialog'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Popover, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\nimport { CalendarIcon } from 'lucide-react'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [until, setUntil] = React.useState<Date | null>(null)\n  const [picking, setPicking] = React.useState(false)\n\n  return (\n    <Dialog>\n      <DialogTrigger asChild>\n        <Button variant=\"outline\">Invite a member</Button>\n      </DialogTrigger>\n      <DialogContent className=\"sm:max-w-md\">\n        <DialogHeader>\n          <DialogTitle>Invite a member</DialogTitle>\n          <DialogDescription>The role list and the calendar open over the dialog and take focus.</DialogDescription>\n        </DialogHeader>\n        <div className=\"grid gap-4\">\n          <div className=\"grid gap-2\">\n            <Label htmlFor=\"dialog-invite-email\">Email</Label>\n            <Input id=\"dialog-invite-email\" placeholder=\"ada@example.com\" type=\"email\" />\n          </div>\n          <div className=\"grid gap-2\">\n            <Label id=\"dialog-invite-role\">Role</Label>\n            <Select defaultValue=\"viewer\">\n              <SelectTrigger aria-labelledby=\"dialog-invite-role\">\n                <SelectValue />\n              </SelectTrigger>\n              <SelectContent>\n                <SelectItem value=\"viewer\">Viewer</SelectItem>\n                <SelectItem value=\"editor\">Editor</SelectItem>\n                <SelectItem value=\"admin\">Admin</SelectItem>\n              </SelectContent>\n            </Select>\n          </div>\n          <div className=\"grid gap-2\">\n            <Label id=\"dialog-invite-until\">Access until</Label>\n            <Popover onOpenChange={setPicking} open={picking}>\n              <PopoverTrigger asChild>\n                <Button\n                  aria-labelledby=\"dialog-invite-until dialog-invite-until-value\"\n                  className=\"justify-start\"\n                  variant=\"outline\">\n                  <CalendarIcon aria-hidden=\"true\" />\n                  <span id=\"dialog-invite-until-value\">{until ? until.toDateString() : 'No end date'}</span>\n                </Button>\n              </PopoverTrigger>\n              <PopoverContent align=\"start\" className=\"w-auto p-0\">\n                <Calendar\n                  defaultMonth={until ?? undefined}\n                  mode=\"single\"\n                  onSelect={(day) => {\n                    setUntil(day)\n                    requestAnimationFrame(() => setPicking(false))\n                  }}\n                  selected={until}\n                />\n              </PopoverContent>\n            </Popover>\n          </div>\n        </div>\n        <DialogFooter>\n          <DialogClose asChild>\n            <Button variant=\"outline\">Cancel</Button>\n          </DialogClose>\n          <DialogClose asChild>\n            <Button>Send invite</Button>\n          </DialogClose>\n        </DialogFooter>\n      </DialogContent>\n    </Dialog>\n  )\n}\n",
+      "path": "dialog/dialog-12.tsx",
+      "target": "components/dialog-12.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "dialog-12",
+  "registryDependencies": [
+    "dialog",
+    "button",
+    "calendar",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "popover",
+    "select",
+    "textarea"
+  ],
+  "root_folder": "dialog",
+  "source": "/registry-examples/src/dialog",
+  "type": "registry:example"
+}

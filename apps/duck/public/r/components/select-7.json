@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "import {\n  Select,\n  SelectContent,\n  SelectGroup,\n  SelectItem,\n  SelectLabel,\n  SelectSeparator,\n  SelectTrigger,\n  SelectValue,\n} from '@gentleduck/registry-ui/select'\n\nexport default function Demo() {\n  return (\n    <Select>\n      <SelectTrigger aria-label=\"Food\" className=\"w-[220px]\">\n        <SelectValue placeholder=\"Pick a food\" />\n      </SelectTrigger>\n      <SelectContent>\n        <SelectGroup>\n          <SelectLabel>Fruits</SelectLabel>\n          <SelectItem value=\"apple\">Apple</SelectItem>\n          <SelectItem value=\"banana\">Banana</SelectItem>\n          <SelectItem value=\"grapes\">Grapes</SelectItem>\n        </SelectGroup>\n        <SelectSeparator />\n        <SelectGroup>\n          <SelectLabel>Vegetables</SelectLabel>\n          <SelectItem value=\"broccoli\">Broccoli</SelectItem>\n          <SelectItem disabled value=\"carrot\">\n            Carrot (out of season)\n          </SelectItem>\n          <SelectItem value=\"leek\">Leek</SelectItem>\n        </SelectGroup>\n        <SelectSeparator />\n        <SelectGroup>\n          <SelectLabel>Meat</SelectLabel>\n          <SelectItem value=\"chicken\">Chicken</SelectItem>\n          <SelectItem value=\"lamb\">Lamb</SelectItem>\n        </SelectGroup>\n      </SelectContent>\n    </Select>\n  )\n}\n",
+      "path": "select/select-7.tsx",
+      "target": "components/select-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-7",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

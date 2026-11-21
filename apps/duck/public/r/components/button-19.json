@@ -1,7 +1,10 @@
 {
+  "dependencies": [
+    "sonner"
+  ],
   "files": [
     {
-      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { Inbox } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"block\">\n      <Button aria-label=\"Inbox button\" icon={<Inbox />} type=\"button\" variant=\"expandIcon\">\n        Button\n      </Button>\n    </div>\n  )\n}\n",
+      "content": "import { AnimationIcon, Button } from '@gentleduck/registry-ui/button'\nimport { ArrowLeft, ArrowRight } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-wrap items-center gap-4\">\n      <Button variant=\"expandIcon\">\n        <AnimationIcon animationIcon={{ icon: <ArrowLeft aria-hidden=\"true\" />, iconPlacement: 'left' }}>\n          Back\n        </AnimationIcon>\n      </Button>\n      <Button variant=\"expandIcon\">\n        <AnimationIcon animationIcon={{ icon: <ArrowRight aria-hidden=\"true\" />, iconPlacement: 'right' }}>\n          Next\n        </AnimationIcon>\n      </Button>\n    </div>\n  )\n}\n",
       "path": "button/button-19.tsx",
       "target": "components/button-19.tsx",
       "type": "registry:example"
@@ -9,7 +12,11 @@
   ],
   "name": "button-19",
   "registryDependencies": [
-    "button"
+    "button",
+    "command",
+    "direction",
+    "toggle",
+    "tooltip"
   ],
   "root_folder": "button",
   "source": "/registry-examples/src/button",

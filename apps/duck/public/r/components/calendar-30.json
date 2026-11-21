@@ -1,0 +1,29 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport type { Selection } from '@gentleduck/calendar'\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Switch } from '@gentleduck/registry-ui/switch'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const today = new Date()\n  const [stay, setStay] = React.useState<Selection.DateRange<Date> | null>({\n    from: new Date(today.getFullYear(), today.getMonth(), 8),\n    to: new Date(today.getFullYear(), today.getMonth(), 12),\n  })\n  const [locked, setLocked] = React.useState(true)\n\n  return (\n    <div className=\"flex flex-col items-start gap-3\">\n      <div className=\"flex items-center gap-2\">\n        <Switch id=\"stay-locked\" checked={locked} onCheckedChange={setLocked} />\n        <Label htmlFor=\"stay-locked\">Booking confirmed</Label>\n      </div>\n      <Calendar\n        className=\"rounded-md border shadow-sm\"\n        mode=\"range\"\n        selected={stay}\n        onSelect={setStay}\n        readOnly={locked}\n        showDropdowns={false}\n      />\n    </div>\n  )\n}\n",
+      "path": "calendar/calendar-30.tsx",
+      "target": "components/calendar-30.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "calendar-30",
+  "registryDependencies": [
+    "calendar",
+    "direction",
+    "field",
+    "input",
+    "label",
+    "popover",
+    "switch"
+  ],
+  "root_folder": "calendar",
+  "source": "/registry-examples/src/calendar",
+  "type": "registry:example"
+}

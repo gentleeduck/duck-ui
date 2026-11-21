@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { Field, FieldGroup, FieldLabel, FieldSeparator } from '@gentleduck/registry-ui/field'\nimport { Input } from '@gentleduck/registry-ui/input'\n\nexport default function Demo() {\n  return (\n    <div className=\"w-full max-w-sm\">\n      <FieldGroup>\n        <Field>\n          <Button variant=\"outline\">Continue with a passkey</Button>\n        </Field>\n        <FieldSeparator>Or continue with</FieldSeparator>\n        <Field>\n          <FieldLabel htmlFor=\"email-s4p\">Email</FieldLabel>\n          <Input id=\"email-s4p\" placeholder=\"you@example.com\" type=\"email\" />\n        </Field>\n        <Field>\n          <Button>Sign in</Button>\n        </Field>\n      </FieldGroup>\n    </div>\n  )\n}\n",
+      "path": "field/field-17.tsx",
+      "target": "components/field-17.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "field-17",
+  "registryDependencies": [
+    "field",
+    "button",
+    "checkbox",
+    "input",
+    "radio-group",
+    "select",
+    "slider",
+    "switch",
+    "textarea"
+  ],
+  "root_folder": "field",
+  "source": "/registry-examples/src/field",
+  "type": "registry:example"
+}

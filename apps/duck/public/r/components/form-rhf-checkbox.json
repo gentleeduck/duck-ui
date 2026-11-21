@@ -1,4 +1,11 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "@tanstack/react-form",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nexport { default } from '../checkbox/checkbox-8'\n",

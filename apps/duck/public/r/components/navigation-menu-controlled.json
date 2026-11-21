@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as NavigationMenu from '@gentleduck/primitives/navigation-menu'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function NavigationMenuControlledExample() {\n  const [value, setValue] = React.useState('')\n\n  return (\n    <div className={styles.stack}>\n      <NavigationMenu.Root className={styles.relative} onValueChange={setValue} value={value}>\n        <NavigationMenu.List className={styles.navList}>\n          {['Products', 'Pricing'].map((name) => (\n            <NavigationMenu.Item key={name} value={name}>\n              <NavigationMenu.Trigger className={styles.menubarTrigger}>{name}</NavigationMenu.Trigger>\n              <NavigationMenu.Content className={styles.navContent}>\n                <NavigationMenu.Link className={styles.navLink} href={`#${name.toLowerCase()}`}>\n                  All {name.toLowerCase()}\n                </NavigationMenu.Link>\n              </NavigationMenu.Content>\n            </NavigationMenu.Item>\n          ))}\n        </NavigationMenu.List>\n        <NavigationMenu.Viewport className={styles.viewport} />\n      </NavigationMenu.Root>\n      <p className={styles.note} style={{ marginTop: '7rem' }}>\n        Open item: {value || 'none'}.{' '}\n        <button className={styles.button} onClick={() => setValue('Pricing')} type=\"button\">\n          Open Pricing\n        </button>\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/navigation-menu-controlled/navigation-menu-controlled.tsx",
+      "target": "components/navigation-menu-controlled.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "navigation-menu-controlled",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

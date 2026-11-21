@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Select from '@gentleduck/primitives/select'\nimport styles from '../primitives.module.css'\n\nexport default function SelectRtlExample() {\n  return (\n    <Select.Root defaultValue=\"cairo\" dir=\"rtl\">\n      <Select.Trigger aria-label=\"المدينة\" className={styles.trigger}>\n        <Select.Value />\n      </Select.Trigger>\n      <Select.Portal>\n        <Select.Content className={styles.content}>\n          <Select.Viewport>\n            {[\n              { value: 'cairo', label: 'القاهرة' },\n              { value: 'riyadh', label: 'الرياض' },\n              { value: 'amman', label: 'عمّان' },\n            ].map((city) => (\n              <Select.Item className={styles.item} key={city.value} value={city.value}>\n                <Select.ItemText>{city.label}</Select.ItemText>\n              </Select.Item>\n            ))}\n          </Select.Viewport>\n        </Select.Content>\n      </Select.Portal>\n    </Select.Root>\n  )\n}\n",
+      "path": "internal-primitives/select-rtl/select-rtl.tsx",
+      "target": "components/select-rtl.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "select-rtl",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

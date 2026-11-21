@@ -26,7 +26,7 @@ export default function Demo() {
           <SheetTrigger asChild>
             <Button variant={'outline'}>{side}</Button>
           </SheetTrigger>
-          <SheetContent className="flex flex-col" side={side}>
+          <SheetContent side={side}>
             <SheetHeader>
               <SheetTitle>Edit profile</SheetTitle>
               <SheetDescription>Make changes to your profile here. Click save when you're done.</SheetDescription>
@@ -34,16 +34,16 @@ export default function Demo() {
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name">Name</Label>
-                <Input className="col-span-3" id="name" value="Pedro Duarte" />
+                <Input className="col-span-3" id="name" defaultValue="Pedro Duarte" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="username">Username</Label>
-                <Input className="col-span-3" id="username" value="@peduarte" />
+                <Input className="col-span-3" id="username" defaultValue="@peduarte" />
               </div>
             </div>
             <SheetFooter className="mt-2">
-              <SheetClose>
-                <Button variant={'outline'}>Save changes</Button>
+              <SheetClose asChild>
+                <Button>Save changes</Button>
               </SheetClose>
             </SheetFooter>
           </SheetContent>
@@ -141,7 +141,7 @@ export default function Demo() {
           <SheetTrigger asChild>
             <Button variant={'outline'}>{side}</Button>
           </SheetTrigger>
-          <SheetContent className="flex flex-col" side={side}>
+          <SheetContent side={side}>
             <SheetHeader>
               <SheetTitle>Edit profile</SheetTitle>
               <SheetDescription>Make changes to your profile here. Click save when you're done.</SheetDescription>
@@ -149,16 +149,16 @@ export default function Demo() {
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name">Name</Label>
-                <Input className="col-span-3" id="name" value="Pedro Duarte" />
+                <Input className="col-span-3" id="name" defaultValue="Pedro Duarte" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="username">Username</Label>
-                <Input className="col-span-3" id="username" value="@peduarte" />
+                <Input className="col-span-3" id="username" defaultValue="@peduarte" />
               </div>
             </div>
             <SheetFooter className="mt-2">
-              <SheetClose>
-                <Button variant={'outline'}>Save changes</Button>
+              <SheetClose asChild>
+                <Button>Save changes</Button>
               </SheetClose>
             </SheetFooter>
           </SheetContent>
@@ -171,21 +171,262 @@ export default function Demo() {
 
 ### Size
 
-You can adjust the size of the sheet using CSS classes:
+A left or right sheet is three quarters of the screen wide and stops at `max-w-sm` from the `sm` breakpoint up, so a wider sheet lifts that cap with a class such as `sm:max-w-xl`. A width class alone stays under the cap. A top or bottom sheet takes a height class.
 
-```tsx {3}
-<Sheet>
-  <SheetTrigger>Open</SheetTrigger>
-  <SheetContent className="w-[400px] sm:w-[540px]">
-    <SheetHeader>
-      <SheetTitle>Are you absolutely sure?</SheetTitle>
-      <SheetDescription>
-        This action cannot be undone. This will permanently delete your account
-        and remove your data from our servers.
-      </SheetDescription>
-    </SheetHeader>
-  </SheetContent>
-</Sheet>
+```tsx title="components/sheet-6.tsx"
+// import from your project: import Demo from '@/components/sheet-6'
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@gentleduck/registry-ui/sheet'
+
+export default function Demo() {
+  return (
+    <div className="flex gap-2">
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline">Wide</Button>
+        </SheetTrigger>
+        <SheetContent className="sm:max-w-xl">
+          <SheetHeader>
+            <SheetTitle>Release notes</SheetTitle>
+            <SheetDescription>A side sheet stops at a small width unless its class lifts the cap.</SheetDescription>
+          </SheetHeader>
+        </SheetContent>
+      </Sheet>
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline">Short</Button>
+        </SheetTrigger>
+        <SheetContent className="h-1/3" side="bottom">
+          <SheetHeader>
+            <SheetTitle>Cookie settings</SheetTitle>
+            <SheetDescription>A top or bottom sheet takes a height class.</SheetDescription>
+          </SheetHeader>
+        </SheetContent>
+      </Sheet>
+    </div>
+  )
+}
+```
+
+### Controlled
+
+Hold `open` in state to close the sheet from code, here once its form saves. With `hideClose`, a `SheetClose` in the footer is the way out.
+
+```tsx title="components/sheet-7.tsx"
+// import from your project: import Demo from '@/components/sheet-7'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Input } from '@gentleduck/registry-ui/input'
+import { Label } from '@gentleduck/registry-ui/label'
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@gentleduck/registry-ui/sheet'
+import * as React from 'react'
+
+export default function Demo() {
+  const [open, setOpen] = React.useState(false)
+  const [name, setName] = React.useState('Pedro Duarte')
+
+  return (
+    <div className="flex items-center gap-3">
+      <Sheet onOpenChange={setOpen} open={open}>
+        <SheetTrigger asChild>
+          <Button variant="outline">Rename</Button>
+        </SheetTrigger>
+        <SheetContent hideClose>
+          <form
+            className="flex flex-1 flex-col gap-4"
+            onSubmit={(event) => {
+              event.preventDefault()
+              setName(String(new FormData(event.currentTarget).get('name')))
+              setOpen(false)
+            }}>
+            <SheetHeader>
+              <SheetTitle>Rename the account</SheetTitle>
+              <SheetDescription>Saving closes the sheet. Cancel leaves the name as it was.</SheetDescription>
+            </SheetHeader>
+            <div className="grid gap-2">
+              <Label htmlFor="sheet-7-name">Name</Label>
+              <Input defaultValue={name} id="sheet-7-name" name="name" required />
+            </div>
+            <SheetFooter className="mt-auto">
+              <SheetClose asChild>
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+              </SheetClose>
+              <Button type="submit">Save</Button>
+            </SheetFooter>
+          </form>
+        </SheetContent>
+      </Sheet>
+      <span className="text-muted-foreground text-sm">{name}</span>
+    </div>
+  )
+}
+```
+
+### Scrolling body
+
+The content is a column, and a top or bottom sheet is no taller than the screen, so a body with `min-h-0 flex-1 overflow-y-auto` scrolls between a header and a footer that stay put, on every side.
+
+```tsx title="components/sheet-8.tsx"
+// import from your project: import Demo from '@/components/sheet-8'
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@gentleduck/registry-ui/sheet'
+
+const CHAPTERS = Array.from({ length: 30 }, (_, index) => `Chapter ${index + 1}`)
+
+export default function Demo() {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Contents</Button>
+      </SheetTrigger>
+      <SheetContent side="left">
+        <SheetHeader>
+          <SheetTitle>Contents</SheetTitle>
+          <SheetDescription>The list scrolls, and the header and footer stay put.</SheetDescription>
+        </SheetHeader>
+        <nav aria-label="Chapters" className="-mx-6 min-h-0 flex-1 overflow-y-auto px-6">
+          <ul className="grid gap-1 text-sm">
+            {CHAPTERS.map((chapter) => (
+              <li key={chapter}>
+                <a className="block rounded-md px-2 py-1.5 hover:bg-accent" href={`#${chapter.replace(' ', '-')}`}>
+                  {chapter}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <SheetFooter>
+          <Button variant="secondary">Download the book</Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  )
+}
+```
+
+### Nested
+
+A sheet opened from a sheet's content stacks over it with a clear overlay, and Escape closes only the top one.
+
+```tsx title="components/sheet-9.tsx"
+// import from your project: import Demo from '@/components/sheet-9'
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@gentleduck/registry-ui/sheet'
+
+export default function Demo() {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Order</Button>
+      </SheetTrigger>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Order 1042</SheetTitle>
+          <SheetDescription>Two items, paid by card.</SheetDescription>
+        </SheetHeader>
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button className="self-start" variant="secondary">
+              Show the customer
+            </Button>
+          </SheetTrigger>
+          <SheetContent className="sm:max-w-xs">
+            <SheetHeader>
+              <SheetTitle>Ada Lovelace</SheetTitle>
+              <SheetDescription>Escape closes this sheet and leaves the order open.</SheetDescription>
+            </SheetHeader>
+            <SheetFooter className="mt-auto">
+              <SheetClose asChild>
+                <Button variant="outline">Back to the order</Button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      </SheetContent>
+    </Sheet>
+  )
+}
+```
+
+### Non-modal
+
+With `modal={false}` the sheet draws no overlay, leaves focus free and the page usable. A press outside still closes it unless `onInteractOutside` prevents it.
+
+```tsx title="components/sheet-10.tsx"
+// import from your project: import Demo from '@/components/sheet-10'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@gentleduck/registry-ui/sheet'
+import * as React from 'react'
+
+export default function Demo() {
+  const [count, setCount] = React.useState(0)
+
+  return (
+    <div className="flex items-center gap-2">
+      <Sheet modal={false}>
+        <SheetTrigger asChild>
+          <Button variant="outline">Help</Button>
+        </SheetTrigger>
+        <SheetContent onInteractOutside={(event) => event.preventDefault()}>
+          <SheetHeader>
+            <SheetTitle>Help</SheetTitle>
+            <SheetDescription>
+              The page behind stays usable, and the sheet stays open until it is closed.
+            </SheetDescription>
+          </SheetHeader>
+        </SheetContent>
+      </Sheet>
+      <Button onClick={() => setCount((value) => value + 1)} variant="secondary">
+        Clicked {count} times
+      </Button>
+    </div>
+  )
+}
 ```
 
 ### Active Trigger on Open
@@ -230,6 +471,117 @@ export default function Demo() {
 }
 ```
 
+### From the top, with chosen focus
+
+```tsx title="components/sheet-11.tsx"
+// import from your project: import Demo from '@/components/sheet-11'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Input } from '@gentleduck/registry-ui/input'
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@gentleduck/registry-ui/sheet'
+import * as React from 'react'
+
+export default function Demo() {
+  const search = React.useRef<HTMLInputElement>(null)
+  const after = React.useRef<HTMLButtonElement>(null)
+
+  return (
+    <div className="flex items-center gap-2">
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline">Search from the top</Button>
+        </SheetTrigger>
+        <SheetContent finalFocus={after} initialFocus={search} side="top">
+          <SheetHeader>
+            <SheetTitle>Search</SheetTitle>
+            <SheetDescription>Focus starts in the field and lands on Results once closed.</SheetDescription>
+          </SheetHeader>
+          <div className="px-4">
+            <Input placeholder="Search the docs" ref={search} />
+          </div>
+          <SheetFooter>
+            <SheetClose asChild>
+              <Button>Search</Button>
+            </SheetClose>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+      <Button ref={after} variant="outline">
+        Results
+      </Button>
+    </div>
+  )
+}
+```
+
+### Every side
+
+```tsx title="components/sheet-12.tsx"
+// import from your project: import Demo from '@/components/sheet-12'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@gentleduck/registry-ui/sheet'
+
+export default function Demo() {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {(['top', 'right', 'bottom', 'left'] as const).map((side) => (
+        <Sheet key={side}>
+          <SheetTrigger asChild>
+            <Button variant="outline">{side}</Button>
+          </SheetTrigger>
+          <SheetContent side={side}>
+            <SheetHeader>
+              <SheetTitle>From the {side}</SheetTitle>
+            </SheetHeader>
+          </SheetContent>
+        </Sheet>
+      ))}
+    </div>
+  )
+}
+```
+
+### Kept mounted
+
+```tsx title="components/sheet-13.tsx"
+// import from your project: import Demo from '@/components/sheet-13'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Input } from '@gentleduck/registry-ui/input'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@gentleduck/registry-ui/sheet'
+
+export default function Demo() {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Search</Button>
+      </SheetTrigger>
+      <SheetContent aria-describedby={undefined} className="data-[state=closed]:hidden" forceMount>
+        <SheetHeader>
+          <SheetTitle>Search</SheetTitle>
+        </SheetHeader>
+        <div className="px-4">
+          <Input placeholder="The query survives closing" />
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
+}
+```
+
 ## Component Composition
 
 ## RTL Support
@@ -262,7 +614,7 @@ export default function Demo() {
         <SheetTrigger asChild>
           <Button variant={'outline'}>فتح اللوحة</Button>
         </SheetTrigger>
-        <SheetContent className="flex flex-col" closeText="إغلاق">
+        <SheetContent closeText="إغلاق">
           <SheetHeader>
             <SheetTitle>تعديل الملف الشخصي</SheetTitle>
             <SheetDescription>عدّل بيانات ملفك الشخصي هنا، ثم اضغط على حفظ عند الانتهاء.</SheetDescription>
@@ -324,7 +676,7 @@ export default function Demo() {
           <SheetTrigger asChild>
             <Button variant={'outline'}>{side}</Button>
           </SheetTrigger>
-          <MotionSheetContent className="flex flex-col" side={side}>
+          <MotionSheetContent side={side}>
             <SheetHeader>
               <SheetTitle>Edit profile</SheetTitle>
               <SheetDescription>Make changes to your profile here. Click save when you're done.</SheetDescription>
@@ -332,16 +684,16 @@ export default function Demo() {
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="s5-name">Name</Label>
-                <Input className="col-span-3" id="s5-name" value="Pedro Duarte" />
+                <Input className="col-span-3" id="s5-name" defaultValue="Pedro Duarte" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="s5-username">Username</Label>
-                <Input className="col-span-3" id="s5-username" value="@peduarte" />
+                <Input className="col-span-3" id="s5-username" defaultValue="@peduarte" />
               </div>
             </div>
             <SheetFooter className="mt-2">
-              <SheetClose>
-                <Button variant={'outline'}>Save changes</Button>
+              <SheetClose asChild>
+                <Button>Save changes</Button>
               </SheetClose>
             </SheetFooter>
           </MotionSheetContent>
@@ -380,7 +732,7 @@ export default function Demo() {
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `container` | `HTMLElement` | - | Optional portal container |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Optional portal container |
 | `forceMount` | `true` | - | Forces mounted state for all portal children |
 | `...props` | `React.ComponentPropsWithoutRef<typeof SheetPrimitive.Portal>` | - | Additional props inherited from `SheetPrimitive.Portal` |
 
@@ -391,17 +743,25 @@ export default function Demo() {
 | `className` | `string` | - | Additional CSS class names |
 | `...props` | `React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>` | - | Additional props inherited from `SheetPrimitive.Overlay` |
 
+Clear when the sheet is opened from a dialog's content, since the dialog's overlay already dims the page.
+
 ### SheetContent
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'right'` | The side from which the sheet slides in. `left` and `right` mirror in RTL |
 | `closeText` | `string` | `'Close'` | Screen-reader label for the built-in close button |
+| `hideClose` | `boolean` | `false` | When `true`, hides the built-in close button |
+| `forceMount` | `true` | - | Force mounting for animation control |
+| `initialFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on open in place of the first tabbable element. `false` leaves focus on the trigger |
+| `finalFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on close in place of the trigger. `false` moves focus nowhere |
 | `className` | `string` | - | Additional CSS class names |
 | `children` | `React.ReactNode` | - | Sheet content |
 | `...props` | `React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content> & VariantProps<typeof sheetVariants>` | - | Additional props inherited from `SheetPrimitive.Content` and the local `sheetVariants` |
 
-`SheetContent` renders a built-in close button in the top-end corner (top-right in LTR, top-left in RTL).
+`SheetContent` lays its children out in a column with a gap between them, so a header, a scrolling body with `flex-1` and a footer stack without classes of their own.
+
+`SheetContent` renders a built-in close button in the top-end corner (top-right in LTR, top-left in RTL). Set `hideClose` to remove it when you close the sheet from your own UI.
 
 ### SheetHeader
 
@@ -439,15 +799,15 @@ export default function Demo() {
 | `children` | `React.ReactNode` | - | Close control content |
 | `...props` | `React.ComponentPropsWithoutRef<typeof SheetPrimitive.Close>` | - | Additional props inherited from `SheetPrimitive.Close` |
 
-## See also
-
-* [Dialog](/duck-ui/components/dialog)  -  Centered modal overlay
-* [Drawer](/duck-ui/components/drawer)  -  Bottom drawer overlay, great for mobile
-
 ### MotionSheet
 
 Same props as `Sheet`. Wraps with `useMotionRoot` for exit animation support. Requires the `motion` package.
 
 ### MotionSheetContent
 
-Same props as `SheetContent`. Adds directional slide enter/exit animation with blur and opacity fade using tweenSlow (300ms). Requires the `motion` package.
+Same props as `SheetContent`. Adds directional slide enter/exit animation with blur and opacity fade using tweenSlow (300ms). Under `prefers-reduced-motion` the panel and the overlay jump into place. Requires the `motion` package.
+
+## See also
+
+* [Dialog](/duck-ui/components/dialog)  -  Centered modal overlay
+* [Drawer](/duck-ui/components/drawer)  -  Bottom drawer overlay, great for mobile

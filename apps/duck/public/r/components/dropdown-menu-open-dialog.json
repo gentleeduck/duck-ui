@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Dialog from '@gentleduck/primitives/dialog'\nimport * as DropdownMenu from '@gentleduck/primitives/dropdown-menu'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function DropdownMenuOpenDialogExample() {\n  const trigger = React.useRef<HTMLButtonElement>(null)\n  const [open, setOpen] = React.useState(false)\n\n  return (\n    <>\n      <DropdownMenu.Root>\n        <DropdownMenu.Trigger className={styles.button} ref={trigger}>\n          Actions\n        </DropdownMenu.Trigger>\n        <DropdownMenu.Portal>\n          <DropdownMenu.Content align=\"start\" className={styles.content} sideOffset={6}>\n            <DropdownMenu.Item className={styles.item}>Rename</DropdownMenu.Item>\n            <DropdownMenu.Item className={styles.item} onSelect={() => setOpen(true)}>\n              Delete...\n            </DropdownMenu.Item>\n          </DropdownMenu.Content>\n        </DropdownMenu.Portal>\n      </DropdownMenu.Root>\n      <Dialog.Root onOpenChange={setOpen} open={open}>\n        <Dialog.Portal>\n          <Dialog.Overlay className={`${styles.overlay} ${styles.fade}`} />\n          <Dialog.Content className={styles.dialog} finalFocus={trigger}>\n            <Dialog.Title className={styles.title}>Delete the file?</Dialog.Title>\n            <Dialog.Description className={styles.description}>\n              On close, focus goes back to the Actions button.\n            </Dialog.Description>\n            <div className={styles.actions}>\n              <Dialog.Close className={styles.button}>Cancel</Dialog.Close>\n              <Dialog.Close className={`${styles.button} ${styles.danger}`}>Delete</Dialog.Close>\n            </div>\n          </Dialog.Content>\n        </Dialog.Portal>\n      </Dialog.Root>\n    </>\n  )\n}\n",
+      "path": "internal-primitives/dropdown-menu-open-dialog/dropdown-menu-open-dialog.tsx",
+      "target": "components/dropdown-menu-open-dialog.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dropdown-menu-open-dialog",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Portal } from '@gentleduck/primitives/portal'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function PortalContainerExample() {\n  const target = React.useRef<HTMLDivElement>(null)\n\n  return (\n    <div className={styles.row}>\n      <div className={styles.box}>\n        Source\n        <Portal asChild container={target}>\n          <span className={styles.note}>Rendered over there</span>\n        </Portal>\n      </div>\n      <div className={styles.box} ref={target}>\n        Target:{' '}\n      </div>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/portal-container/portal-container.tsx",
+      "target": "components/portal-container.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "portal-container",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -304,12 +304,15 @@ const _Sidebar14 = dynamic(() => import('@gentleduck/registry-blocks/sidebar/sid
 const _Sidebar15 = dynamic(() => import('@gentleduck/registry-blocks/sidebar/sidebar-15/sidebar-15'), { ssr: false })
 const _Sidebar16 = dynamic(() => import('@gentleduck/registry-blocks/sidebar/sidebar-16/sidebar-16'), { ssr: false })
 const _Accordion1 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-1'), { ssr: false })
+const _Accordion10 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-10'), { ssr: false })
 const _Accordion2 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-2'), { ssr: false })
 const _Accordion3 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-3'), { ssr: false })
 const _Accordion4 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-4'), { ssr: false })
 const _Accordion5 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-5'), { ssr: false })
 const _Accordion6 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-6'), { ssr: false })
 const _Accordion7 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-7'), { ssr: false })
+const _Accordion8 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-8'), { ssr: false })
+const _Accordion9 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-9'), { ssr: false })
 const _Alert1 = dynamic(() => import('@gentleduck/registry-examples/alert/alert-1'), { ssr: false })
 const _Alert2 = dynamic(() => import('@gentleduck/registry-examples/alert/alert-2'), { ssr: false })
 const _Alert3 = dynamic(() => import('@gentleduck/registry-examples/alert/alert-3'), { ssr: false })
@@ -319,11 +322,18 @@ const _AlertDialog1 = dynamic(() => import('@gentleduck/registry-examples/alert-
 const _AlertDialog2 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-2'), { ssr: false })
 const _AlertDialog3 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-3'), { ssr: false })
 const _AlertDialog4 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-4'), { ssr: false })
+const _AlertDialog5 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-5'), { ssr: false })
+const _AlertDialog6 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-6'), { ssr: false })
+const _AlertDialog7 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-7'), { ssr: false })
+const _AlertDialog8 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-8'), { ssr: false })
 const _Avatar1 = dynamic(() => import('@gentleduck/registry-examples/avatar/avatar-1'), { ssr: false })
 const _Avatar2 = dynamic(() => import('@gentleduck/registry-examples/avatar/avatar-2'), { ssr: false })
 const _Avatar3 = dynamic(() => import('@gentleduck/registry-examples/avatar/avatar-3'), { ssr: false })
+const _Avatar4 = dynamic(() => import('@gentleduck/registry-examples/avatar/avatar-4'), { ssr: false })
+const _Avatar5 = dynamic(() => import('@gentleduck/registry-examples/avatar/avatar-5'), { ssr: false })
 const _Badge1 = dynamic(() => import('@gentleduck/registry-examples/badge/badge-1'), { ssr: false })
 const _Badge10 = dynamic(() => import('@gentleduck/registry-examples/badge/badge-10'), { ssr: false })
+const _Badge11 = dynamic(() => import('@gentleduck/registry-examples/badge/badge-11'), { ssr: false })
 const _Badge2 = dynamic(() => import('@gentleduck/registry-examples/badge/badge-2'), { ssr: false })
 const _Badge3 = dynamic(() => import('@gentleduck/registry-examples/badge/badge-3'), { ssr: false })
 const _Badge4 = dynamic(() => import('@gentleduck/registry-examples/badge/badge-4'), { ssr: false })
@@ -346,6 +356,10 @@ const _Button19 = dynamic(() => import('@gentleduck/registry-examples/button/but
 const _Button2 = dynamic(() => import('@gentleduck/registry-examples/button/button-2'), { ssr: false })
 const _Button20 = dynamic(() => import('@gentleduck/registry-examples/button/button-20'), { ssr: false })
 const _Button21 = dynamic(() => import('@gentleduck/registry-examples/button/button-21'), { ssr: false })
+const _Button22 = dynamic(() => import('@gentleduck/registry-examples/button/button-22'), { ssr: false })
+const _Button23 = dynamic(() => import('@gentleduck/registry-examples/button/button-23'), { ssr: false })
+const _Button24 = dynamic(() => import('@gentleduck/registry-examples/button/button-24'), { ssr: false })
+const _Button25 = dynamic(() => import('@gentleduck/registry-examples/button/button-25'), { ssr: false })
 const _Button3 = dynamic(() => import('@gentleduck/registry-examples/button/button-3'), { ssr: false })
 const _Button4 = dynamic(() => import('@gentleduck/registry-examples/button/button-4'), { ssr: false })
 const _Button5 = dynamic(() => import('@gentleduck/registry-examples/button/button-5'), { ssr: false })
@@ -362,18 +376,35 @@ const _Breadcrumb5 = dynamic(() => import('@gentleduck/registry-examples/breadcr
 const _Breadcrumb6 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-6'), { ssr: false })
 const _Breadcrumb9 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-9'), { ssr: false })
 const _Dialog1 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-1'), { ssr: false })
+const _Dialog10 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-10'), { ssr: false })
+const _Dialog11 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-11'), { ssr: false })
+const _Dialog12 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-12'), { ssr: false })
+const _Dialog13 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-13'), { ssr: false })
 const _Dialog2 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-2'), { ssr: false })
 const _Dialog3 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-3'), { ssr: false })
 const _Dialog4 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-4'), { ssr: false })
 const _Dialog5 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-5'), { ssr: false })
+const _Dialog6 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-6'), { ssr: false })
+const _Dialog7 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-7'), { ssr: false })
+const _Dialog8 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-8'), { ssr: false })
+const _Dialog9 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-9'), { ssr: false })
 const _Command1 = dynamic(() => import('@gentleduck/registry-examples/command/command-1'), { ssr: false })
+const _Command10 = dynamic(() => import('@gentleduck/registry-examples/command/command-10'), { ssr: false })
+const _Command11 = dynamic(() => import('@gentleduck/registry-examples/command/command-11'), { ssr: false })
+const _Command12 = dynamic(() => import('@gentleduck/registry-examples/command/command-12'), { ssr: false })
 const _Command2 = dynamic(() => import('@gentleduck/registry-examples/command/command-2'), { ssr: false })
 const _Command3 = dynamic(() => import('@gentleduck/registry-examples/command/command-3'), { ssr: false })
 const _Command4 = dynamic(() => import('@gentleduck/registry-examples/command/command-4'), { ssr: false })
+const _Command5 = dynamic(() => import('@gentleduck/registry-examples/command/command-5'), { ssr: false })
+const _Command6 = dynamic(() => import('@gentleduck/registry-examples/command/command-6'), { ssr: false })
+const _Command7 = dynamic(() => import('@gentleduck/registry-examples/command/command-7'), { ssr: false })
+const _Command8 = dynamic(() => import('@gentleduck/registry-examples/command/command-8'), { ssr: false })
+const _Command9 = dynamic(() => import('@gentleduck/registry-examples/command/command-9'), { ssr: false })
 const _Card1 = dynamic(() => import('@gentleduck/registry-examples/card/card-1'), { ssr: false })
 const _Card2 = dynamic(() => import('@gentleduck/registry-examples/card/card-2'), { ssr: false })
 const _Card3 = dynamic(() => import('@gentleduck/registry-examples/card/card-3'), { ssr: false })
 const _Card4 = dynamic(() => import('@gentleduck/registry-examples/card/card-4'), { ssr: false })
+const _Card5 = dynamic(() => import('@gentleduck/registry-examples/card/card-5'), { ssr: false })
 const _Calendar1 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-1'), { ssr: false })
 const _Calendar10 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-10'), { ssr: false })
 const _Calendar11 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-11'), { ssr: false })
@@ -392,7 +423,12 @@ const _Calendar22 = dynamic(() => import('@gentleduck/registry-examples/calendar
 const _Calendar23 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-23'), { ssr: false })
 const _Calendar24 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-24'), { ssr: false })
 const _Calendar25 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-25'), { ssr: false })
+const _Calendar26 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-26'), { ssr: false })
+const _Calendar27 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-27'), { ssr: false })
+const _Calendar28 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-28'), { ssr: false })
+const _Calendar29 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-29'), { ssr: false })
 const _Calendar3 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-3'), { ssr: false })
+const _Calendar30 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-30'), { ssr: false })
 const _Calendar4 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-4'), { ssr: false })
 const _Calendar5 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-5'), { ssr: false })
 const _Calendar6 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-6'), { ssr: false })
@@ -401,6 +437,7 @@ const _Calendar8 = dynamic(() => import('@gentleduck/registry-examples/calendar/
 const _Calendar9 = dynamic(() => import('@gentleduck/registry-examples/calendar/calendar-9'), { ssr: false })
 const _Drawer1 = dynamic(() => import('@gentleduck/registry-examples/drawer/drawer-1'), { ssr: false })
 const _Drawer10 = dynamic(() => import('@gentleduck/registry-examples/drawer/drawer-10'), { ssr: false })
+const _Drawer11 = dynamic(() => import('@gentleduck/registry-examples/drawer/drawer-11'), { ssr: false })
 const _Drawer2 = dynamic(() => import('@gentleduck/registry-examples/drawer/drawer-2'), { ssr: false })
 const _Drawer3 = dynamic(() => import('@gentleduck/registry-examples/drawer/drawer-3'), { ssr: false })
 const _Drawer4 = dynamic(() => import('@gentleduck/registry-examples/drawer/drawer-4'), { ssr: false })
@@ -410,12 +447,22 @@ const _Drawer7 = dynamic(() => import('@gentleduck/registry-examples/drawer/draw
 const _Drawer8 = dynamic(() => import('@gentleduck/registry-examples/drawer/drawer-8'), { ssr: false })
 const _Drawer9 = dynamic(() => import('@gentleduck/registry-examples/drawer/drawer-9'), { ssr: false })
 const _Direction1 = dynamic(() => import('@gentleduck/registry-examples/direction/direction-1'), { ssr: false })
+const _Direction2 = dynamic(() => import('@gentleduck/registry-examples/direction/direction-2'), { ssr: false })
+const _Direction3 = dynamic(() => import('@gentleduck/registry-examples/direction/direction-3'), { ssr: false })
+const _Direction4 = dynamic(() => import('@gentleduck/registry-examples/direction/direction-4'), { ssr: false })
 const _HoverCard1 = dynamic(() => import('@gentleduck/registry-examples/hover-card/hover-card-1'), { ssr: false })
+const _HoverCard10 = dynamic(() => import('@gentleduck/registry-examples/hover-card/hover-card-10'), { ssr: false })
+const _HoverCard11 = dynamic(() => import('@gentleduck/registry-examples/hover-card/hover-card-11'), { ssr: false })
 const _HoverCard2 = dynamic(() => import('@gentleduck/registry-examples/hover-card/hover-card-2'), { ssr: false })
 const _HoverCard3 = dynamic(() => import('@gentleduck/registry-examples/hover-card/hover-card-3'), { ssr: false })
 const _HoverCard4 = dynamic(() => import('@gentleduck/registry-examples/hover-card/hover-card-4'), { ssr: false })
 const _HoverCard5 = dynamic(() => import('@gentleduck/registry-examples/hover-card/hover-card-5'), { ssr: false })
+const _HoverCard6 = dynamic(() => import('@gentleduck/registry-examples/hover-card/hover-card-6'), { ssr: false })
+const _HoverCard7 = dynamic(() => import('@gentleduck/registry-examples/hover-card/hover-card-7'), { ssr: false })
+const _HoverCard8 = dynamic(() => import('@gentleduck/registry-examples/hover-card/hover-card-8'), { ssr: false })
+const _HoverCard9 = dynamic(() => import('@gentleduck/registry-examples/hover-card/hover-card-9'), { ssr: false })
 const _Input1 = dynamic(() => import('@gentleduck/registry-examples/input/input-1'), { ssr: false })
+const _Input10 = dynamic(() => import('@gentleduck/registry-examples/input/input-10'), { ssr: false })
 const _Input2 = dynamic(() => import('@gentleduck/registry-examples/input/input-2'), { ssr: false })
 const _Input3 = dynamic(() => import('@gentleduck/registry-examples/input/input-3'), { ssr: false })
 const _Input4 = dynamic(() => import('@gentleduck/registry-examples/input/input-4'), { ssr: false })
@@ -428,57 +475,116 @@ const _Label1 = dynamic(() => import('@gentleduck/registry-examples/label/label-
 const _Label2 = dynamic(() => import('@gentleduck/registry-examples/label/label-2'), { ssr: false })
 const _Label3 = dynamic(() => import('@gentleduck/registry-examples/label/label-3'), { ssr: false })
 const _Label4 = dynamic(() => import('@gentleduck/registry-examples/label/label-4'), { ssr: false })
+const _Label5 = dynamic(() => import('@gentleduck/registry-examples/label/label-5'), { ssr: false })
+const _Label6 = dynamic(() => import('@gentleduck/registry-examples/label/label-6'), { ssr: false })
 const _Progress1 = dynamic(() => import('@gentleduck/registry-examples/progress/progress-1'), { ssr: false })
 const _Progress2 = dynamic(() => import('@gentleduck/registry-examples/progress/progress-2'), { ssr: false })
 const _Progress3 = dynamic(() => import('@gentleduck/registry-examples/progress/progress-3'), { ssr: false })
+const _Progress4 = dynamic(() => import('@gentleduck/registry-examples/progress/progress-4'), { ssr: false })
+const _Progress5 = dynamic(() => import('@gentleduck/registry-examples/progress/progress-5'), { ssr: false })
+const _Progress6 = dynamic(() => import('@gentleduck/registry-examples/progress/progress-6'), { ssr: false })
 const _RadioGroup1 = dynamic(() => import('@gentleduck/registry-examples/radio-group/radio-group-1'), { ssr: false })
 const _RadioGroup2 = dynamic(() => import('@gentleduck/registry-examples/radio-group/radio-group-2'), { ssr: false })
 const _RadioGroup3 = dynamic(() => import('@gentleduck/registry-examples/radio-group/radio-group-3'), { ssr: false })
 const _RadioGroup4 = dynamic(() => import('@gentleduck/registry-examples/radio-group/radio-group-4'), { ssr: false })
+const _RadioGroup5 = dynamic(() => import('@gentleduck/registry-examples/radio-group/radio-group-5'), { ssr: false })
+const _RadioGroup6 = dynamic(() => import('@gentleduck/registry-examples/radio-group/radio-group-6'), { ssr: false })
+const _RadioGroup7 = dynamic(() => import('@gentleduck/registry-examples/radio-group/radio-group-7'), { ssr: false })
+const _RadioGroup8 = dynamic(() => import('@gentleduck/registry-examples/radio-group/radio-group-8'), { ssr: false })
 const _ScrollArea1 = dynamic(() => import('@gentleduck/registry-examples/scroll-area/scroll-area-1'), { ssr: false })
 const _ScrollArea2 = dynamic(() => import('@gentleduck/registry-examples/scroll-area/scroll-area-2'), { ssr: false })
 const _ScrollArea3 = dynamic(() => import('@gentleduck/registry-examples/scroll-area/scroll-area-3'), { ssr: false })
 const _ScrollArea4 = dynamic(() => import('@gentleduck/registry-examples/scroll-area/scroll-area-4'), { ssr: false })
+const _ScrollArea5 = dynamic(() => import('@gentleduck/registry-examples/scroll-area/scroll-area-5'), { ssr: false })
+const _ScrollArea6 = dynamic(() => import('@gentleduck/registry-examples/scroll-area/scroll-area-6'), { ssr: false })
+const _ScrollArea7 = dynamic(() => import('@gentleduck/registry-examples/scroll-area/scroll-area-7'), { ssr: false })
 const _Select1 = dynamic(() => import('@gentleduck/registry-examples/select/select-1'), { ssr: false })
+const _Select10 = dynamic(() => import('@gentleduck/registry-examples/select/select-10'), { ssr: false })
+const _Select11 = dynamic(() => import('@gentleduck/registry-examples/select/select-11'), { ssr: false })
+const _Select12 = dynamic(() => import('@gentleduck/registry-examples/select/select-12'), { ssr: false })
+const _Select13 = dynamic(() => import('@gentleduck/registry-examples/select/select-13'), { ssr: false })
+const _Select14 = dynamic(() => import('@gentleduck/registry-examples/select/select-14'), { ssr: false })
+const _Select15 = dynamic(() => import('@gentleduck/registry-examples/select/select-15'), { ssr: false })
+const _Select16 = dynamic(() => import('@gentleduck/registry-examples/select/select-16'), { ssr: false })
+const _Select17 = dynamic(() => import('@gentleduck/registry-examples/select/select-17'), { ssr: false })
+const _Select18 = dynamic(() => import('@gentleduck/registry-examples/select/select-18'), { ssr: false })
+const _Select19 = dynamic(() => import('@gentleduck/registry-examples/select/select-19'), { ssr: false })
 const _Select2 = dynamic(() => import('@gentleduck/registry-examples/select/select-2'), { ssr: false })
+const _Select20 = dynamic(() => import('@gentleduck/registry-examples/select/select-20'), { ssr: false })
+const _Select21 = dynamic(() => import('@gentleduck/registry-examples/select/select-21'), { ssr: false })
+const _Select22 = dynamic(() => import('@gentleduck/registry-examples/select/select-22'), { ssr: false })
 const _Select3 = dynamic(() => import('@gentleduck/registry-examples/select/select-3'), { ssr: false })
 const _Select4 = dynamic(() => import('@gentleduck/registry-examples/select/select-4'), { ssr: false })
 const _Select5 = dynamic(() => import('@gentleduck/registry-examples/select/select-5'), { ssr: false })
 const _Select6 = dynamic(() => import('@gentleduck/registry-examples/select/select-6'), { ssr: false })
+const _Select7 = dynamic(() => import('@gentleduck/registry-examples/select/select-7'), { ssr: false })
+const _Select8 = dynamic(() => import('@gentleduck/registry-examples/select/select-8'), { ssr: false })
+const _Select9 = dynamic(() => import('@gentleduck/registry-examples/select/select-9'), { ssr: false })
 const _Separator1 = dynamic(() => import('@gentleduck/registry-examples/separator/separator-1'), { ssr: false })
 const _Separator2 = dynamic(() => import('@gentleduck/registry-examples/separator/separator-2'), { ssr: false })
 const _Separator3 = dynamic(() => import('@gentleduck/registry-examples/separator/separator-3'), { ssr: false })
+const _Separator4 = dynamic(() => import('@gentleduck/registry-examples/separator/separator-4'), { ssr: false })
+const _Separator5 = dynamic(() => import('@gentleduck/registry-examples/separator/separator-5'), { ssr: false })
+const _Separator6 = dynamic(() => import('@gentleduck/registry-examples/separator/separator-6'), { ssr: false })
 const _Sheet1 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-1'), { ssr: false })
+const _Sheet10 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-10'), { ssr: false })
+const _Sheet11 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-11'), { ssr: false })
+const _Sheet12 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-12'), { ssr: false })
+const _Sheet13 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-13'), { ssr: false })
 const _Sheet2 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-2'), { ssr: false })
 const _Sheet3 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-3'), { ssr: false })
 const _Sheet4 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-4'), { ssr: false })
 const _Sheet5 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-5'), { ssr: false })
+const _Sheet6 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-6'), { ssr: false })
+const _Sheet7 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-7'), { ssr: false })
+const _Sheet8 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-8'), { ssr: false })
+const _Sheet9 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-9'), { ssr: false })
 const _Skeleton1 = dynamic(() => import('@gentleduck/registry-examples/skeleton/skeleton-1'), { ssr: false })
 const _Skeleton2 = dynamic(() => import('@gentleduck/registry-examples/skeleton/skeleton-2'), { ssr: false })
 const _Skeleton3 = dynamic(() => import('@gentleduck/registry-examples/skeleton/skeleton-3'), { ssr: false })
 const _Skeleton4 = dynamic(() => import('@gentleduck/registry-examples/skeleton/skeleton-4'), { ssr: false })
+const _Skeleton5 = dynamic(() => import('@gentleduck/registry-examples/skeleton/skeleton-5'), { ssr: false })
 const _Slider1 = dynamic(() => import('@gentleduck/registry-examples/slider/slider-1'), { ssr: false })
+const _Slider10 = dynamic(() => import('@gentleduck/registry-examples/slider/slider-10'), { ssr: false })
+const _Slider11 = dynamic(() => import('@gentleduck/registry-examples/slider/slider-11'), { ssr: false })
 const _Slider2 = dynamic(() => import('@gentleduck/registry-examples/slider/slider-2'), { ssr: false })
 const _Slider3 = dynamic(() => import('@gentleduck/registry-examples/slider/slider-3'), { ssr: false })
 const _Slider4 = dynamic(() => import('@gentleduck/registry-examples/slider/slider-4'), { ssr: false })
 const _Slider5 = dynamic(() => import('@gentleduck/registry-examples/slider/slider-5'), { ssr: false })
 const _Slider6 = dynamic(() => import('@gentleduck/registry-examples/slider/slider-6'), { ssr: false })
+const _Slider7 = dynamic(() => import('@gentleduck/registry-examples/slider/slider-7'), { ssr: false })
+const _Slider8 = dynamic(() => import('@gentleduck/registry-examples/slider/slider-8'), { ssr: false })
+const _Slider9 = dynamic(() => import('@gentleduck/registry-examples/slider/slider-9'), { ssr: false })
 const _Switch1 = dynamic(() => import('@gentleduck/registry-examples/switch/switch-1'), { ssr: false })
 const _Switch2 = dynamic(() => import('@gentleduck/registry-examples/switch/switch-2'), { ssr: false })
 const _Switch3 = dynamic(() => import('@gentleduck/registry-examples/switch/switch-3'), { ssr: false })
 const _Switch4 = dynamic(() => import('@gentleduck/registry-examples/switch/switch-4'), { ssr: false })
+const _Switch5 = dynamic(() => import('@gentleduck/registry-examples/switch/switch-5'), { ssr: false })
+const _Switch6 = dynamic(() => import('@gentleduck/registry-examples/switch/switch-6'), { ssr: false })
+const _Switch7 = dynamic(() => import('@gentleduck/registry-examples/switch/switch-7'), { ssr: false })
 const _Sonner1 = dynamic(() => import('@gentleduck/registry-examples/sonner/sonner-1'), { ssr: false })
+const _Sonner10 = dynamic(() => import('@gentleduck/registry-examples/sonner/sonner-10'), { ssr: false })
+const _Sonner11 = dynamic(() => import('@gentleduck/registry-examples/sonner/sonner-11'), { ssr: false })
 const _Sonner2 = dynamic(() => import('@gentleduck/registry-examples/sonner/sonner-2'), { ssr: false })
 const _Sonner3 = dynamic(() => import('@gentleduck/registry-examples/sonner/sonner-3'), { ssr: false })
 const _Sonner4 = dynamic(() => import('@gentleduck/registry-examples/sonner/sonner-4'), { ssr: false })
 const _Sonner5 = dynamic(() => import('@gentleduck/registry-examples/sonner/sonner-5'), { ssr: false })
 const _Sonner6 = dynamic(() => import('@gentleduck/registry-examples/sonner/sonner-6'), { ssr: false })
+const _Sonner7 = dynamic(() => import('@gentleduck/registry-examples/sonner/sonner-7'), { ssr: false })
+const _Sonner8 = dynamic(() => import('@gentleduck/registry-examples/sonner/sonner-8'), { ssr: false })
+const _Sonner9 = dynamic(() => import('@gentleduck/registry-examples/sonner/sonner-9'), { ssr: false })
 const _Tabs1 = dynamic(() => import('@gentleduck/registry-examples/tabs/tabs-1'), { ssr: false })
 const _Tabs2 = dynamic(() => import('@gentleduck/registry-examples/tabs/tabs-2'), { ssr: false })
 const _Tabs3 = dynamic(() => import('@gentleduck/registry-examples/tabs/tabs-3'), { ssr: false })
 const _Tabs4 = dynamic(() => import('@gentleduck/registry-examples/tabs/tabs-4'), { ssr: false })
 const _Tabs5 = dynamic(() => import('@gentleduck/registry-examples/tabs/tabs-5'), { ssr: false })
+const _Tabs6 = dynamic(() => import('@gentleduck/registry-examples/tabs/tabs-6'), { ssr: false })
+const _Tabs7 = dynamic(() => import('@gentleduck/registry-examples/tabs/tabs-7'), { ssr: false })
+const _Tabs8 = dynamic(() => import('@gentleduck/registry-examples/tabs/tabs-8'), { ssr: false })
 const _Textarea1 = dynamic(() => import('@gentleduck/registry-examples/textarea/textarea-1'), { ssr: false })
+const _Textarea10 = dynamic(() => import('@gentleduck/registry-examples/textarea/textarea-10'), { ssr: false })
+const _Textarea11 = dynamic(() => import('@gentleduck/registry-examples/textarea/textarea-11'), { ssr: false })
+const _Textarea12 = dynamic(() => import('@gentleduck/registry-examples/textarea/textarea-12'), { ssr: false })
 const _Textarea2 = dynamic(() => import('@gentleduck/registry-examples/textarea/textarea-2'), { ssr: false })
 const _Textarea3 = dynamic(() => import('@gentleduck/registry-examples/textarea/textarea-3'), { ssr: false })
 const _Textarea4 = dynamic(() => import('@gentleduck/registry-examples/textarea/textarea-4'), { ssr: false })
@@ -488,6 +594,9 @@ const _Textarea7 = dynamic(() => import('@gentleduck/registry-examples/textarea/
 const _Textarea8 = dynamic(() => import('@gentleduck/registry-examples/textarea/textarea-8'), { ssr: false })
 const _Textarea9 = dynamic(() => import('@gentleduck/registry-examples/textarea/textarea-9'), { ssr: false })
 const _Toggle1 = dynamic(() => import('@gentleduck/registry-examples/toggle/toggle-1'), { ssr: false })
+const _Toggle10 = dynamic(() => import('@gentleduck/registry-examples/toggle/toggle-10'), { ssr: false })
+const _Toggle11 = dynamic(() => import('@gentleduck/registry-examples/toggle/toggle-11'), { ssr: false })
+const _Toggle12 = dynamic(() => import('@gentleduck/registry-examples/toggle/toggle-12'), { ssr: false })
 const _Toggle2 = dynamic(() => import('@gentleduck/registry-examples/toggle/toggle-2'), { ssr: false })
 const _Toggle3 = dynamic(() => import('@gentleduck/registry-examples/toggle/toggle-3'), { ssr: false })
 const _Toggle4 = dynamic(() => import('@gentleduck/registry-examples/toggle/toggle-4'), { ssr: false })
@@ -497,6 +606,18 @@ const _Toggle7 = dynamic(() => import('@gentleduck/registry-examples/toggle/togg
 const _Toggle8 = dynamic(() => import('@gentleduck/registry-examples/toggle/toggle-8'), { ssr: false })
 const _Toggle9 = dynamic(() => import('@gentleduck/registry-examples/toggle/toggle-9'), { ssr: false })
 const _ToggleGroup1 = dynamic(() => import('@gentleduck/registry-examples/toggle-group/toggle-group-1'), { ssr: false })
+const _ToggleGroup10 = dynamic(() => import('@gentleduck/registry-examples/toggle-group/toggle-group-10'), {
+  ssr: false,
+})
+const _ToggleGroup11 = dynamic(() => import('@gentleduck/registry-examples/toggle-group/toggle-group-11'), {
+  ssr: false,
+})
+const _ToggleGroup12 = dynamic(() => import('@gentleduck/registry-examples/toggle-group/toggle-group-12'), {
+  ssr: false,
+})
+const _ToggleGroup13 = dynamic(() => import('@gentleduck/registry-examples/toggle-group/toggle-group-13'), {
+  ssr: false,
+})
 const _ToggleGroup2 = dynamic(() => import('@gentleduck/registry-examples/toggle-group/toggle-group-2'), { ssr: false })
 const _ToggleGroup3 = dynamic(() => import('@gentleduck/registry-examples/toggle-group/toggle-group-3'), { ssr: false })
 const _ToggleGroup4 = dynamic(() => import('@gentleduck/registry-examples/toggle-group/toggle-group-4'), { ssr: false })
@@ -506,12 +627,20 @@ const _ToggleGroup7 = dynamic(() => import('@gentleduck/registry-examples/toggle
 const _ToggleGroup8 = dynamic(() => import('@gentleduck/registry-examples/toggle-group/toggle-group-8'), { ssr: false })
 const _ToggleGroup9 = dynamic(() => import('@gentleduck/registry-examples/toggle-group/toggle-group-9'), { ssr: false })
 const _Tooltip1 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-1'), { ssr: false })
+const _Tooltip10 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-10'), { ssr: false })
+const _Tooltip11 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-11'), { ssr: false })
+const _Tooltip12 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-12'), { ssr: false })
+const _Tooltip13 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-13'), { ssr: false })
+const _Tooltip14 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-14'), { ssr: false })
+const _Tooltip15 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-15'), { ssr: false })
 const _Tooltip2 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-2'), { ssr: false })
 const _Tooltip3 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-3'), { ssr: false })
 const _Tooltip4 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-4'), { ssr: false })
 const _Tooltip5 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-5'), { ssr: false })
 const _Tooltip6 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-6'), { ssr: false })
 const _Tooltip7 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-7'), { ssr: false })
+const _Tooltip8 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-8'), { ssr: false })
+const _Tooltip9 = dynamic(() => import('@gentleduck/registry-examples/tooltip/tooltip-9'), { ssr: false })
 const _AspectRatio1 = dynamic(() => import('@gentleduck/registry-examples/aspect-ratio/aspect-ratio-1'), { ssr: false })
 const _AspectRatio2 = dynamic(() => import('@gentleduck/registry-examples/aspect-ratio/aspect-ratio-2'), { ssr: false })
 const _AspectRatio3 = dynamic(() => import('@gentleduck/registry-examples/aspect-ratio/aspect-ratio-3'), { ssr: false })
@@ -523,6 +652,9 @@ const _Typography13 = dynamic(() => import('@gentleduck/registry-examples/typogr
 const _Typography14 = dynamic(() => import('@gentleduck/registry-examples/typography/typography-14'), { ssr: false })
 const _Typography15 = dynamic(() => import('@gentleduck/registry-examples/typography/typography-15'), { ssr: false })
 const _Typography16 = dynamic(() => import('@gentleduck/registry-examples/typography/typography-16'), { ssr: false })
+const _Typography17 = dynamic(() => import('@gentleduck/registry-examples/typography/typography-17'), { ssr: false })
+const _Typography18 = dynamic(() => import('@gentleduck/registry-examples/typography/typography-18'), { ssr: false })
+const _Typography19 = dynamic(() => import('@gentleduck/registry-examples/typography/typography-19'), { ssr: false })
 const _Typography2 = dynamic(() => import('@gentleduck/registry-examples/typography/typography-2'), { ssr: false })
 const _Typography3 = dynamic(() => import('@gentleduck/registry-examples/typography/typography-3'), { ssr: false })
 const _Typography4 = dynamic(() => import('@gentleduck/registry-examples/typography/typography-4'), { ssr: false })
@@ -534,17 +666,30 @@ const _Typography9 = dynamic(() => import('@gentleduck/registry-examples/typogra
 const _Table1 = dynamic(() => import('@gentleduck/registry-examples/table/table-1'), { ssr: false })
 const _Table2 = dynamic(() => import('@gentleduck/registry-examples/table/table-2'), { ssr: false })
 const _Table3 = dynamic(() => import('@gentleduck/registry-examples/table/table-3'), { ssr: false })
+const _Table4 = dynamic(() => import('@gentleduck/registry-examples/table/table-4'), { ssr: false })
+const _Table5 = dynamic(() => import('@gentleduck/registry-examples/table/table-5'), { ssr: false })
 const _Resizable1 = dynamic(() => import('@gentleduck/registry-examples/resizable/resizable-1'), { ssr: false })
 const _Resizable2 = dynamic(() => import('@gentleduck/registry-examples/resizable/resizable-2'), { ssr: false })
 const _Resizable3 = dynamic(() => import('@gentleduck/registry-examples/resizable/resizable-3'), { ssr: false })
 const _Resizable4 = dynamic(() => import('@gentleduck/registry-examples/resizable/resizable-4'), { ssr: false })
 const _Resizable5 = dynamic(() => import('@gentleduck/registry-examples/resizable/resizable-5'), { ssr: false })
+const _Resizable6 = dynamic(() => import('@gentleduck/registry-examples/resizable/resizable-6'), { ssr: false })
+const _Resizable7 = dynamic(() => import('@gentleduck/registry-examples/resizable/resizable-7'), { ssr: false })
+const _Resizable8 = dynamic(() => import('@gentleduck/registry-examples/resizable/resizable-8'), { ssr: false })
+const _Resizable9 = dynamic(() => import('@gentleduck/registry-examples/resizable/resizable-9'), { ssr: false })
 const _Pagination1 = dynamic(() => import('@gentleduck/registry-examples/pagination/pagination-1'), { ssr: false })
 const _Pagination2 = dynamic(() => import('@gentleduck/registry-examples/pagination/pagination-2'), { ssr: false })
 const _Pagination3 = dynamic(() => import('@gentleduck/registry-examples/pagination/pagination-3'), { ssr: false })
 const _Pagination4 = dynamic(() => import('@gentleduck/registry-examples/pagination/pagination-4'), { ssr: false })
+const _Pagination5 = dynamic(() => import('@gentleduck/registry-examples/pagination/pagination-5'), { ssr: false })
+const _Pagination6 = dynamic(() => import('@gentleduck/registry-examples/pagination/pagination-6'), { ssr: false })
+const _Pagination7 = dynamic(() => import('@gentleduck/registry-examples/pagination/pagination-7'), { ssr: false })
+const _Pagination8 = dynamic(() => import('@gentleduck/registry-examples/pagination/pagination-8'), { ssr: false })
+const _Pagination9 = dynamic(() => import('@gentleduck/registry-examples/pagination/pagination-9'), { ssr: false })
 const _Checkbox1 = dynamic(() => import('@gentleduck/registry-examples/checkbox/checkbox-1'), { ssr: false })
 const _Checkbox10 = dynamic(() => import('@gentleduck/registry-examples/checkbox/checkbox-10'), { ssr: false })
+const _Checkbox11 = dynamic(() => import('@gentleduck/registry-examples/checkbox/checkbox-11'), { ssr: false })
+const _Checkbox12 = dynamic(() => import('@gentleduck/registry-examples/checkbox/checkbox-12'), { ssr: false })
 const _Checkbox2 = dynamic(() => import('@gentleduck/registry-examples/checkbox/checkbox-2'), { ssr: false })
 const _Checkbox3 = dynamic(() => import('@gentleduck/registry-examples/checkbox/checkbox-3'), { ssr: false })
 const _Checkbox4 = dynamic(() => import('@gentleduck/registry-examples/checkbox/checkbox-4'), { ssr: false })
@@ -560,6 +705,8 @@ const _Carousel4 = dynamic(() => import('@gentleduck/registry-examples/carousel/
 const _Carousel5 = dynamic(() => import('@gentleduck/registry-examples/carousel/carousel-5'), { ssr: false })
 const _Carousel6 = dynamic(() => import('@gentleduck/registry-examples/carousel/carousel-6'), { ssr: false })
 const _Carousel7 = dynamic(() => import('@gentleduck/registry-examples/carousel/carousel-7'), { ssr: false })
+const _Carousel8 = dynamic(() => import('@gentleduck/registry-examples/carousel/carousel-8'), { ssr: false })
+const _Carousel9 = dynamic(() => import('@gentleduck/registry-examples/carousel/carousel-9'), { ssr: false })
 const _DatePicker1 = dynamic(() => import('@gentleduck/registry-examples/date-picker/date-picker-1'), { ssr: false })
 const _DatePicker2 = dynamic(() => import('@gentleduck/registry-examples/date-picker/date-picker-2'), { ssr: false })
 const _DatePicker3 = dynamic(() => import('@gentleduck/registry-examples/date-picker/date-picker-3'), { ssr: false })
@@ -569,16 +716,44 @@ const _DatePicker6 = dynamic(() => import('@gentleduck/registry-examples/date-pi
 const _DatePicker7 = dynamic(() => import('@gentleduck/registry-examples/date-picker/date-picker-7'), { ssr: false })
 const _DatePicker8 = dynamic(() => import('@gentleduck/registry-examples/date-picker/date-picker-8'), { ssr: false })
 const _Popover1 = dynamic(() => import('@gentleduck/registry-examples/popover/popover-1'), { ssr: false })
+const _Popover10 = dynamic(() => import('@gentleduck/registry-examples/popover/popover-10'), { ssr: false })
+const _Popover11 = dynamic(() => import('@gentleduck/registry-examples/popover/popover-11'), { ssr: false })
 const _Popover2 = dynamic(() => import('@gentleduck/registry-examples/popover/popover-2'), { ssr: false })
 const _Popover3 = dynamic(() => import('@gentleduck/registry-examples/popover/popover-3'), { ssr: false })
 const _Popover4 = dynamic(() => import('@gentleduck/registry-examples/popover/popover-4'), { ssr: false })
 const _Popover5 = dynamic(() => import('@gentleduck/registry-examples/popover/popover-5'), { ssr: false })
 const _Popover6 = dynamic(() => import('@gentleduck/registry-examples/popover/popover-6'), { ssr: false })
 const _Popover7 = dynamic(() => import('@gentleduck/registry-examples/popover/popover-7'), { ssr: false })
+const _Popover8 = dynamic(() => import('@gentleduck/registry-examples/popover/popover-8'), { ssr: false })
+const _Popover9 = dynamic(() => import('@gentleduck/registry-examples/popover/popover-9'), { ssr: false })
 const _Menubar1 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-1'), { ssr: false })
 const _Menubar2 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-2'), { ssr: false })
 const _Menubar3 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-3'), { ssr: false })
+const _Menubar4 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-4'), { ssr: false })
+const _Menubar5 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-5'), { ssr: false })
+const _Menubar6 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-6'), { ssr: false })
+const _Menubar7 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-7'), { ssr: false })
+const _Menubar8 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-8'), { ssr: false })
+const _Menubar9 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-9'), { ssr: false })
 const _DropdownMenu1 = dynamic(() => import('@gentleduck/registry-examples/dropdown-menu/dropdown-menu-1'), {
+  ssr: false,
+})
+const _DropdownMenu10 = dynamic(() => import('@gentleduck/registry-examples/dropdown-menu/dropdown-menu-10'), {
+  ssr: false,
+})
+const _DropdownMenu11 = dynamic(() => import('@gentleduck/registry-examples/dropdown-menu/dropdown-menu-11'), {
+  ssr: false,
+})
+const _DropdownMenu12 = dynamic(() => import('@gentleduck/registry-examples/dropdown-menu/dropdown-menu-12'), {
+  ssr: false,
+})
+const _DropdownMenu13 = dynamic(() => import('@gentleduck/registry-examples/dropdown-menu/dropdown-menu-13'), {
+  ssr: false,
+})
+const _DropdownMenu14 = dynamic(() => import('@gentleduck/registry-examples/dropdown-menu/dropdown-menu-14'), {
+  ssr: false,
+})
+const _DropdownMenu15 = dynamic(() => import('@gentleduck/registry-examples/dropdown-menu/dropdown-menu-15'), {
   ssr: false,
 })
 const _DropdownMenu2 = dynamic(() => import('@gentleduck/registry-examples/dropdown-menu/dropdown-menu-2'), {
@@ -599,7 +774,16 @@ const _DropdownMenu6 = dynamic(() => import('@gentleduck/registry-examples/dropd
 const _DropdownMenu7 = dynamic(() => import('@gentleduck/registry-examples/dropdown-menu/dropdown-menu-7'), {
   ssr: false,
 })
+const _DropdownMenu8 = dynamic(() => import('@gentleduck/registry-examples/dropdown-menu/dropdown-menu-8'), {
+  ssr: false,
+})
+const _DropdownMenu9 = dynamic(() => import('@gentleduck/registry-examples/dropdown-menu/dropdown-menu-9'), {
+  ssr: false,
+})
 const _Combobox1 = dynamic(() => import('@gentleduck/registry-examples/combobox/combobox-1'), { ssr: false })
+const _Combobox10 = dynamic(() => import('@gentleduck/registry-examples/combobox/combobox-10'), { ssr: false })
+const _Combobox11 = dynamic(() => import('@gentleduck/registry-examples/combobox/combobox-11'), { ssr: false })
+const _Combobox12 = dynamic(() => import('@gentleduck/registry-examples/combobox/combobox-12'), { ssr: false })
 const _Combobox2 = dynamic(() => import('@gentleduck/registry-examples/combobox/combobox-2'), { ssr: false })
 const _Combobox3 = dynamic(() => import('@gentleduck/registry-examples/combobox/combobox-3'), { ssr: false })
 const _Combobox4 = dynamic(() => import('@gentleduck/registry-examples/combobox/combobox-4'), { ssr: false })
@@ -607,11 +791,17 @@ const _Combobox5 = dynamic(() => import('@gentleduck/registry-examples/combobox/
 const _Combobox6 = dynamic(() => import('@gentleduck/registry-examples/combobox/combobox-6'), { ssr: false })
 const _Combobox7 = dynamic(() => import('@gentleduck/registry-examples/combobox/combobox-7'), { ssr: false })
 const _Combobox8 = dynamic(() => import('@gentleduck/registry-examples/combobox/combobox-8'), { ssr: false })
+const _Combobox9 = dynamic(() => import('@gentleduck/registry-examples/combobox/combobox-9'), { ssr: false })
 const _Collapsible1 = dynamic(() => import('@gentleduck/registry-examples/collapsible/collapsible-1'), { ssr: false })
 const _Collapsible2 = dynamic(() => import('@gentleduck/registry-examples/collapsible/collapsible-2'), { ssr: false })
 const _Collapsible3 = dynamic(() => import('@gentleduck/registry-examples/collapsible/collapsible-3'), { ssr: false })
 const _Collapsible4 = dynamic(() => import('@gentleduck/registry-examples/collapsible/collapsible-4'), { ssr: false })
+const _Collapsible5 = dynamic(() => import('@gentleduck/registry-examples/collapsible/collapsible-5'), { ssr: false })
+const _Collapsible6 = dynamic(() => import('@gentleduck/registry-examples/collapsible/collapsible-6'), { ssr: false })
+const _Collapsible7 = dynamic(() => import('@gentleduck/registry-examples/collapsible/collapsible-7'), { ssr: false })
 const _InputOtp1 = dynamic(() => import('@gentleduck/registry-examples/input-otp/input-otp-1'), { ssr: false })
+const _InputOtp10 = dynamic(() => import('@gentleduck/registry-examples/input-otp/input-otp-10'), { ssr: false })
+const _InputOtp11 = dynamic(() => import('@gentleduck/registry-examples/input-otp/input-otp-11'), { ssr: false })
 const _InputOtp2 = dynamic(() => import('@gentleduck/registry-examples/input-otp/input-otp-2'), { ssr: false })
 const _InputOtp3 = dynamic(() => import('@gentleduck/registry-examples/input-otp/input-otp-3'), { ssr: false })
 const _InputOtp4 = dynamic(() => import('@gentleduck/registry-examples/input-otp/input-otp-4'), { ssr: false })
@@ -619,7 +809,9 @@ const _InputOtp5 = dynamic(() => import('@gentleduck/registry-examples/input-otp
 const _InputOtp6 = dynamic(() => import('@gentleduck/registry-examples/input-otp/input-otp-6'), { ssr: false })
 const _InputOtp7 = dynamic(() => import('@gentleduck/registry-examples/input-otp/input-otp-7'), { ssr: false })
 const _InputOtp8 = dynamic(() => import('@gentleduck/registry-examples/input-otp/input-otp-8'), { ssr: false })
+const _InputOtp9 = dynamic(() => import('@gentleduck/registry-examples/input-otp/input-otp-9'), { ssr: false })
 const _Chart1 = dynamic(() => import('@gentleduck/registry-examples/chart/chart-1'), { ssr: false })
+const _Chart10 = dynamic(() => import('@gentleduck/registry-examples/chart/chart-10'), { ssr: false })
 const _Chart2 = dynamic(() => import('@gentleduck/registry-examples/chart/chart-2'), { ssr: false })
 const _Chart3 = dynamic(() => import('@gentleduck/registry-examples/chart/chart-3'), { ssr: false })
 const _Chart4 = dynamic(() => import('@gentleduck/registry-examples/chart/chart-4'), { ssr: false })
@@ -627,43 +819,7 @@ const _Chart5 = dynamic(() => import('@gentleduck/registry-examples/chart/chart-
 const _Chart6 = dynamic(() => import('@gentleduck/registry-examples/chart/chart-6'), { ssr: false })
 const _Chart7 = dynamic(() => import('@gentleduck/registry-examples/chart/chart-7'), { ssr: false })
 const _Chart8 = dynamic(() => import('@gentleduck/registry-examples/chart/chart-8'), { ssr: false })
-const _ChartBenchmarkCalendarCompare = dynamic(
-  () => import('@gentleduck/registry-examples/chart/chart-benchmark-calendar-compare'),
-  { ssr: false },
-)
-const _ChartBenchmarkCalendarVs = dynamic(
-  () => import('@gentleduck/registry-examples/chart/chart-benchmark-calendar-vs'),
-  { ssr: false },
-)
-const _ChartBenchmarkCalendar = dynamic(() => import('@gentleduck/registry-examples/chart/chart-benchmark-calendar'), {
-  ssr: false,
-})
-const _ChartBenchmarkIamCompare = dynamic(
-  () => import('@gentleduck/registry-examples/chart/chart-benchmark-iam-compare'),
-  { ssr: false },
-)
-const _ChartBenchmarkIamVs = dynamic(() => import('@gentleduck/registry-examples/chart/chart-benchmark-iam-vs'), {
-  ssr: false,
-})
-const _ChartBenchmarkIam = dynamic(() => import('@gentleduck/registry-examples/chart/chart-benchmark-iam'), {
-  ssr: false,
-})
-const _ChartBenchmarkPrimitivesAll = dynamic(
-  () => import('@gentleduck/registry-examples/chart/chart-benchmark-primitives-all'),
-  { ssr: false },
-)
-const _ChartBenchmarkPrimitivesVs = dynamic(
-  () => import('@gentleduck/registry-examples/chart/chart-benchmark-primitives-vs'),
-  { ssr: false },
-)
-const _ChartBenchmarkPrimitives = dynamic(
-  () => import('@gentleduck/registry-examples/chart/chart-benchmark-primitives'),
-  { ssr: false },
-)
-const _ChartBenchmarkVariants = dynamic(() => import('@gentleduck/registry-examples/chart/chart-benchmark-variants'), {
-  ssr: false,
-})
-const _ChartTabs = dynamic(() => import('@gentleduck/registry-examples/chart/chart-tabs'), { ssr: false })
+const _Chart9 = dynamic(() => import('@gentleduck/registry-examples/chart/chart-9'), { ssr: false })
 const _NavigationMenu1 = dynamic(() => import('@gentleduck/registry-examples/navigation-menu/navigation-menu-1'), {
   ssr: false,
 })
@@ -673,9 +829,25 @@ const _NavigationMenu2 = dynamic(() => import('@gentleduck/registry-examples/nav
 const _NavigationMenu3 = dynamic(() => import('@gentleduck/registry-examples/navigation-menu/navigation-menu-3'), {
   ssr: false,
 })
+const _NavigationMenu4 = dynamic(() => import('@gentleduck/registry-examples/navigation-menu/navigation-menu-4'), {
+  ssr: false,
+})
+const _NavigationMenu5 = dynamic(() => import('@gentleduck/registry-examples/navigation-menu/navigation-menu-5'), {
+  ssr: false,
+})
+const _NavigationMenu6 = dynamic(() => import('@gentleduck/registry-examples/navigation-menu/navigation-menu-6'), {
+  ssr: false,
+})
+const _NavigationMenu7 = dynamic(() => import('@gentleduck/registry-examples/navigation-menu/navigation-menu-7'), {
+  ssr: false,
+})
 const _ContextMenu1 = dynamic(() => import('@gentleduck/registry-examples/context-menu/context-menu-1'), { ssr: false })
 const _ContextMenu2 = dynamic(() => import('@gentleduck/registry-examples/context-menu/context-menu-2'), { ssr: false })
 const _ContextMenu3 = dynamic(() => import('@gentleduck/registry-examples/context-menu/context-menu-3'), { ssr: false })
+const _ContextMenu4 = dynamic(() => import('@gentleduck/registry-examples/context-menu/context-menu-4'), { ssr: false })
+const _ContextMenu5 = dynamic(() => import('@gentleduck/registry-examples/context-menu/context-menu-5'), { ssr: false })
+const _ContextMenu6 = dynamic(() => import('@gentleduck/registry-examples/context-menu/context-menu-6'), { ssr: false })
+const _ContextMenu7 = dynamic(() => import('@gentleduck/registry-examples/context-menu/context-menu-7'), { ssr: false })
 const _DataTable1 = dynamic(() => import('@gentleduck/registry-examples/data-table/data-table-1'), { ssr: false })
 const _Cva1 = dynamic(() => import('@gentleduck/registry-examples/cva/cva-1'), { ssr: false })
 const _ButtonGroup1 = dynamic(() => import('@gentleduck/registry-examples/button-group/button-group-1'), { ssr: false })
@@ -689,6 +861,9 @@ const _ButtonGroup12 = dynamic(() => import('@gentleduck/registry-examples/butto
   ssr: false,
 })
 const _ButtonGroup13 = dynamic(() => import('@gentleduck/registry-examples/button-group/button-group-13'), {
+  ssr: false,
+})
+const _ButtonGroup14 = dynamic(() => import('@gentleduck/registry-examples/button-group/button-group-14'), {
   ssr: false,
 })
 const _ButtonGroup2 = dynamic(() => import('@gentleduck/registry-examples/button-group/button-group-2'), { ssr: false })
@@ -706,6 +881,7 @@ const _Kbd4 = dynamic(() => import('@gentleduck/registry-examples/kbd/kbd-4'), {
 const _Kbd5 = dynamic(() => import('@gentleduck/registry-examples/kbd/kbd-5'), { ssr: false })
 const _Kbd6 = dynamic(() => import('@gentleduck/registry-examples/kbd/kbd-6'), { ssr: false })
 const _Kbd7 = dynamic(() => import('@gentleduck/registry-examples/kbd/kbd-7'), { ssr: false })
+const _Kbd8 = dynamic(() => import('@gentleduck/registry-examples/kbd/kbd-8'), { ssr: false })
 const _Empty1 = dynamic(() => import('@gentleduck/registry-examples/empty/empty-1'), { ssr: false })
 const _Empty2 = dynamic(() => import('@gentleduck/registry-examples/empty/empty-2'), { ssr: false })
 const _Empty3 = dynamic(() => import('@gentleduck/registry-examples/empty/empty-3'), { ssr: false })
@@ -714,12 +890,17 @@ const _Empty5 = dynamic(() => import('@gentleduck/registry-examples/empty/empty-
 const _Empty6 = dynamic(() => import('@gentleduck/registry-examples/empty/empty-6'), { ssr: false })
 const _Empty7 = dynamic(() => import('@gentleduck/registry-examples/empty/empty-7'), { ssr: false })
 const _Empty8 = dynamic(() => import('@gentleduck/registry-examples/empty/empty-8'), { ssr: false })
+const _Empty9 = dynamic(() => import('@gentleduck/registry-examples/empty/empty-9'), { ssr: false })
 const _Field1 = dynamic(() => import('@gentleduck/registry-examples/field/field-1'), { ssr: false })
 const _Field10 = dynamic(() => import('@gentleduck/registry-examples/field/field-10'), { ssr: false })
 const _Field11 = dynamic(() => import('@gentleduck/registry-examples/field/field-11'), { ssr: false })
 const _Field12 = dynamic(() => import('@gentleduck/registry-examples/field/field-12'), { ssr: false })
 const _Field13 = dynamic(() => import('@gentleduck/registry-examples/field/field-13'), { ssr: false })
 const _Field14 = dynamic(() => import('@gentleduck/registry-examples/field/field-14'), { ssr: false })
+const _Field15 = dynamic(() => import('@gentleduck/registry-examples/field/field-15'), { ssr: false })
+const _Field16 = dynamic(() => import('@gentleduck/registry-examples/field/field-16'), { ssr: false })
+const _Field17 = dynamic(() => import('@gentleduck/registry-examples/field/field-17'), { ssr: false })
+const _Field18 = dynamic(() => import('@gentleduck/registry-examples/field/field-18'), { ssr: false })
 const _Field2 = dynamic(() => import('@gentleduck/registry-examples/field/field-2'), { ssr: false })
 const _Field3 = dynamic(() => import('@gentleduck/registry-examples/field/field-3'), { ssr: false })
 const _Field4 = dynamic(() => import('@gentleduck/registry-examples/field/field-4'), { ssr: false })
@@ -732,6 +913,7 @@ const _Item1 = dynamic(() => import('@gentleduck/registry-examples/item/item-1')
 const _Item10 = dynamic(() => import('@gentleduck/registry-examples/item/item-10'), { ssr: false })
 const _Item11 = dynamic(() => import('@gentleduck/registry-examples/item/item-11'), { ssr: false })
 const _Item12 = dynamic(() => import('@gentleduck/registry-examples/item/item-12'), { ssr: false })
+const _Item13 = dynamic(() => import('@gentleduck/registry-examples/item/item-13'), { ssr: false })
 const _Item2 = dynamic(() => import('@gentleduck/registry-examples/item/item-2'), { ssr: false })
 const _Item3 = dynamic(() => import('@gentleduck/registry-examples/item/item-3'), { ssr: false })
 const _Item4 = dynamic(() => import('@gentleduck/registry-examples/item/item-4'), { ssr: false })
@@ -745,6 +927,8 @@ const _InputGroup10 = dynamic(() => import('@gentleduck/registry-examples/input-
 const _InputGroup11 = dynamic(() => import('@gentleduck/registry-examples/input-group/input-group-11'), { ssr: false })
 const _InputGroup12 = dynamic(() => import('@gentleduck/registry-examples/input-group/input-group-12'), { ssr: false })
 const _InputGroup13 = dynamic(() => import('@gentleduck/registry-examples/input-group/input-group-13'), { ssr: false })
+const _InputGroup14 = dynamic(() => import('@gentleduck/registry-examples/input-group/input-group-14'), { ssr: false })
+const _InputGroup15 = dynamic(() => import('@gentleduck/registry-examples/input-group/input-group-15'), { ssr: false })
 const _InputGroup2 = dynamic(() => import('@gentleduck/registry-examples/input-group/input-group-2'), { ssr: false })
 const _InputGroup3 = dynamic(() => import('@gentleduck/registry-examples/input-group/input-group-3'), { ssr: false })
 const _InputGroup4 = dynamic(() => import('@gentleduck/registry-examples/input-group/input-group-4'), { ssr: false })
@@ -758,8 +942,20 @@ const _JsonEditor2 = dynamic(() => import('@gentleduck/registry-examples/json-ed
 const _JsonEditor3 = dynamic(() => import('@gentleduck/registry-examples/json-editor/json-editor-3'), { ssr: false })
 const _JsonEditor4 = dynamic(() => import('@gentleduck/registry-examples/json-editor/json-editor-4'), { ssr: false })
 const _JsonEditor5 = dynamic(() => import('@gentleduck/registry-examples/json-editor/json-editor-5'), { ssr: false })
+const _JsonEditor6 = dynamic(() => import('@gentleduck/registry-examples/json-editor/json-editor-6'), { ssr: false })
+const _JsonEditor7 = dynamic(() => import('@gentleduck/registry-examples/json-editor/json-editor-7'), { ssr: false })
+const _JsonEditor8 = dynamic(() => import('@gentleduck/registry-examples/json-editor/json-editor-8'), { ssr: false })
 const _ThemeToggle1 = dynamic(() => import('@gentleduck/registry-examples/theme-toggle/theme-toggle-1'), { ssr: false })
 const _PreviewPanel1 = dynamic(() => import('@gentleduck/registry-examples/preview-panel/preview-panel-1'), {
+  ssr: false,
+})
+const _PreviewPanel10 = dynamic(() => import('@gentleduck/registry-examples/preview-panel/preview-panel-10'), {
+  ssr: false,
+})
+const _PreviewPanel11 = dynamic(() => import('@gentleduck/registry-examples/preview-panel/preview-panel-11'), {
+  ssr: false,
+})
+const _PreviewPanel12 = dynamic(() => import('@gentleduck/registry-examples/preview-panel/preview-panel-12'), {
   ssr: false,
 })
 const _PreviewPanel2 = dynamic(() => import('@gentleduck/registry-examples/preview-panel/preview-panel-2'), {
@@ -777,23 +973,38 @@ const _PreviewPanel5 = dynamic(() => import('@gentleduck/registry-examples/previ
 const _PreviewPanel6 = dynamic(() => import('@gentleduck/registry-examples/preview-panel/preview-panel-6'), {
   ssr: false,
 })
+const _PreviewPanel7 = dynamic(() => import('@gentleduck/registry-examples/preview-panel/preview-panel-7'), {
+  ssr: false,
+})
+const _PreviewPanel8 = dynamic(() => import('@gentleduck/registry-examples/preview-panel/preview-panel-8'), {
+  ssr: false,
+})
+const _PreviewPanel9 = dynamic(() => import('@gentleduck/registry-examples/preview-panel/preview-panel-9'), {
+  ssr: false,
+})
 const _Typeset1 = dynamic(() => import('@gentleduck/registry-examples/typeset/typeset-1'), { ssr: false })
 const _Typeset2 = dynamic(() => import('@gentleduck/registry-examples/typeset/typeset-2'), { ssr: false })
 const _Typeset3 = dynamic(() => import('@gentleduck/registry-examples/typeset/typeset-3'), { ssr: false })
 const _Typeset4 = dynamic(() => import('@gentleduck/registry-examples/typeset/typeset-4'), { ssr: false })
 const _Typeset5 = dynamic(() => import('@gentleduck/registry-examples/typeset/typeset-5'), { ssr: false })
+const _Typeset6 = dynamic(() => import('@gentleduck/registry-examples/typeset/typeset-6'), { ssr: false })
+const _Typeset7 = dynamic(() => import('@gentleduck/registry-examples/typeset/typeset-7'), { ssr: false })
+const _Typeset8 = dynamic(() => import('@gentleduck/registry-examples/typeset/typeset-8'), { ssr: false })
+const _Typeset9 = dynamic(() => import('@gentleduck/registry-examples/typeset/typeset-9'), { ssr: false })
 const _Sidebar1 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-1'), { ssr: false })
+const _Sidebar17 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-17'), { ssr: false })
+const _Sidebar18 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-18'), { ssr: false })
+const _Sidebar19 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-19'), { ssr: false })
 const _Sidebar2 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-2'), { ssr: false })
+const _Sidebar20 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-20'), { ssr: false })
+const _Sidebar21 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-21'), { ssr: false })
 const _Sidebar3 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-3'), { ssr: false })
 const _Sidebar4 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-4'), { ssr: false })
 const _Sidebar5 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-5'), { ssr: false })
 const _Sidebar6 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-6'), { ssr: false })
 const _Sidebar7 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-7'), { ssr: false })
-const _Upload1 = dynamic(() => import('@gentleduck/registry-examples/upload/upload-1'), { ssr: false })
-const _Upload2 = dynamic(() => import('@gentleduck/registry-examples/upload/upload-2'), { ssr: false })
-const _Upload3 = dynamic(() => import('@gentleduck/registry-examples/upload/upload-3'), { ssr: false })
-const _Upload4 = dynamic(() => import('@gentleduck/registry-examples/upload/upload-4'), { ssr: false })
-const _Upload5 = dynamic(() => import('@gentleduck/registry-examples/upload/upload-5'), { ssr: false })
+const _Sidebar8 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-8'), { ssr: false })
+const _Sidebar9 = dynamic(() => import('@gentleduck/registry-examples/sidebar/sidebar-9'), { ssr: false })
 const _FormRhfArray = dynamic(() => import('@gentleduck/registry-examples/form/form-rhf-array'), { ssr: false })
 const _FormRhfCheckbox = dynamic(() => import('@gentleduck/registry-examples/form/form-rhf-checkbox'), { ssr: false })
 const _FormRhfComplex = dynamic(() => import('@gentleduck/registry-examples/form/form-rhf-complex'), { ssr: false })
@@ -830,28 +1041,795 @@ const _FormTanstackSwitch = dynamic(() => import('@gentleduck/registry-examples/
 const _FormTanstackTextarea = dynamic(() => import('@gentleduck/registry-examples/form/form-tanstack-textarea'), {
   ssr: false,
 })
+const _AccordionControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/accordion-controlled/accordion-controlled'),
+  { ssr: false },
+)
+const _AccordionDisabled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/accordion-disabled/accordion-disabled'),
+  { ssr: false },
+)
+const _AccordionForceMount = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/accordion-force-mount/accordion-force-mount'),
+  { ssr: false },
+)
+const _AccordionHiddenUntilFound = dynamic(
+  () =>
+    import(
+      '@gentleduck/registry-internals/internal-primitives/accordion-hidden-until-found/accordion-hidden-until-found'
+    ),
+  { ssr: false },
+)
+const _AccordionHorizontal = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/accordion-horizontal/accordion-horizontal'),
+  { ssr: false },
+)
+const _AccordionItemOpenChange = dynamic(
+  () =>
+    import('@gentleduck/registry-internals/internal-primitives/accordion-item-open-change/accordion-item-open-change'),
+  { ssr: false },
+)
+const _AccordionMultiple = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/accordion-multiple/accordion-multiple'),
+  { ssr: false },
+)
+const _AccordionRtl = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/accordion-rtl/accordion-rtl'),
+  { ssr: false },
+)
+const _AccordionSingle = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/accordion-single/accordion-single'),
+  { ssr: false },
+)
+const _AlertDialogAsyncAction = dynamic(
+  () =>
+    import('@gentleduck/registry-internals/internal-primitives/alert-dialog-async-action/alert-dialog-async-action'),
+  { ssr: false },
+)
 const _AlertDialogConfirm = dynamic(
   () => import('@gentleduck/registry-internals/internal-primitives/alert-dialog-confirm/alert-dialog-confirm'),
+  { ssr: false },
+)
+const _AlertDialogInitialFocus = dynamic(
+  () =>
+    import('@gentleduck/registry-internals/internal-primitives/alert-dialog-initial-focus/alert-dialog-initial-focus'),
+  { ssr: false },
+)
+const _AlertDialogRtl = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/alert-dialog-rtl/alert-dialog-rtl'),
+  { ssr: false },
+)
+const _ArrowCustomShape = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/arrow-custom-shape/arrow-custom-shape'),
+  { ssr: false },
+)
+const _ArrowSizes = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/arrow-sizes/arrow-sizes'),
+  { ssr: false },
+)
+const _AvatarDelay = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/avatar-delay/avatar-delay'),
+  { ssr: false },
+)
+const _AvatarFallback = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/avatar-fallback/avatar-fallback'),
+  { ssr: false },
+)
+const _AvatarLoadingStatus = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/avatar-loading-status/avatar-loading-status'),
+  { ssr: false },
+)
+const _AvatarSrcSet = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/avatar-src-set/avatar-src-set'),
+  { ssr: false },
+)
+const _CalendarConstraints = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/calendar-constraints/calendar-constraints'),
+  { ssr: false },
+)
+const _CalendarControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/calendar-controlled/calendar-controlled'),
+  { ssr: false },
+)
+const _CalendarCustomDay = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/calendar-custom-day/calendar-custom-day'),
+  { ssr: false },
+)
+const _CalendarFixedWeeks = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/calendar-fixed-weeks/calendar-fixed-weeks'),
+  { ssr: false },
+)
+const _CalendarMultiRange = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/calendar-multi-range/calendar-multi-range'),
+  { ssr: false },
+)
+const _CalendarMulti = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/calendar-multi/calendar-multi'),
+  { ssr: false },
+)
+const _CalendarRange = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/calendar-range/calendar-range'),
+  { ssr: false },
+)
+const _CalendarReadOnly = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/calendar-read-only/calendar-read-only'),
+  { ssr: false },
+)
+const _CalendarRtl = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/calendar-rtl/calendar-rtl'),
+  { ssr: false },
+)
+const _CalendarSingle = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/calendar-single/calendar-single'),
+  { ssr: false },
+)
+const _CalendarViews = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/calendar-views/calendar-views'),
+  { ssr: false },
+)
+const _CalendarWeekNumbers = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/calendar-week-numbers/calendar-week-numbers'),
+  { ssr: false },
+)
+const _CheckersCheckedSync = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/checkers-checked-sync/checkers-checked-sync'),
+  { ssr: false },
+)
+const _CheckersSvgIndicator = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/checkers-svg-indicator/checkers-svg-indicator'),
+  { ssr: false },
+)
+const _CheckersSwitchIndicator = dynamic(
+  () =>
+    import('@gentleduck/registry-internals/internal-primitives/checkers-switch-indicator/checkers-switch-indicator'),
+  { ssr: false },
+)
+const _CommandAsync = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/command-async/command-async'),
+  { ssr: false },
+)
+const _CommandControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/command-controlled/command-controlled'),
+  { ssr: false },
+)
+const _CommandCreateItem = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/command-create-item/command-create-item'),
+  { ssr: false },
+)
+const _CommandDialog = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/command-dialog/command-dialog'),
+  { ssr: false },
+)
+const _CommandDisabledItems = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/command-disabled-items/command-disabled-items'),
+  { ssr: false },
+)
+const _CommandFilter = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/command-filter/command-filter'),
+  { ssr: false },
+)
+const _CommandPalette = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/command-palette/command-palette'),
+  { ssr: false },
+)
+const _CommandRtl = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/command-rtl/command-rtl'),
+  { ssr: false },
+)
+const _CommandVirtual = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/command-virtual/command-virtual'),
+  { ssr: false },
+)
+const _ContextMenuBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/context-menu-basic/context-menu-basic'),
+  { ssr: false },
+)
+const _ContextMenuCheckboxRadio = dynamic(
+  () =>
+    import(
+      '@gentleduck/registry-internals/internal-primitives/context-menu-checkbox-radio/context-menu-checkbox-radio'
+    ),
+  { ssr: false },
+)
+const _ContextMenuDisabled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/context-menu-disabled/context-menu-disabled'),
+  { ssr: false },
+)
+const _ContextMenuNonModal = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/context-menu-non-modal/context-menu-non-modal'),
+  { ssr: false },
+)
+const _ContextMenuRtl = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/context-menu-rtl/context-menu-rtl'),
+  { ssr: false },
+)
+const _ContextMenuSubmenu = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/context-menu-submenu/context-menu-submenu'),
+  { ssr: false },
+)
+const _DialogBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dialog-basic/dialog-basic'),
+  { ssr: false },
+)
+const _DialogContainer = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dialog-container/dialog-container'),
+  { ssr: false },
+)
+const _DialogFocus = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dialog-focus/dialog-focus'),
   { ssr: false },
 )
 const _DialogGuardedAsync = dynamic(
   () => import('@gentleduck/registry-internals/internal-primitives/dialog-guarded-async/dialog-guarded-async'),
   { ssr: false },
 )
+const _DialogNested = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dialog-nested/dialog-nested'),
+  { ssr: false },
+)
+const _DialogNonModal = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dialog-non-modal/dialog-non-modal'),
+  { ssr: false },
+)
+const _DialogRtl = dynamic(() => import('@gentleduck/registry-internals/internal-primitives/dialog-rtl/dialog-rtl'), {
+  ssr: false,
+})
+const _DialogUnsavedGuard = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dialog-unsaved-guard/dialog-unsaved-guard'),
+  { ssr: false },
+)
+const _DirectionNested = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/direction-nested/direction-nested'),
+  { ssr: false },
+)
+const _DirectionProvider = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/direction-provider/direction-provider'),
+  { ssr: false },
+)
+const _DirectionUseDirection = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/direction-use-direction/direction-use-direction'),
+  { ssr: false },
+)
+const _DismissableLayerBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dismissable-layer-basic/dismissable-layer-basic'),
+  { ssr: false },
+)
+const _DismissableLayerBlockOutside = dynamic(
+  () =>
+    import(
+      '@gentleduck/registry-internals/internal-primitives/dismissable-layer-block-outside/dismissable-layer-block-outside'
+    ),
+  { ssr: false },
+)
+const _DismissableLayerBranch = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dismissable-layer-branch/dismissable-layer-branch'),
+  { ssr: false },
+)
+const _DismissableLayerStacked = dynamic(
+  () =>
+    import('@gentleduck/registry-internals/internal-primitives/dismissable-layer-stacked/dismissable-layer-stacked'),
+  { ssr: false },
+)
+const _DismissableLayerSurface = dynamic(
+  () =>
+    import('@gentleduck/registry-internals/internal-primitives/dismissable-layer-surface/dismissable-layer-surface'),
+  { ssr: false },
+)
+const _DropdownMenuBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dropdown-menu-basic/dropdown-menu-basic'),
+  { ssr: false },
+)
+const _DropdownMenuControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dropdown-menu-controlled/dropdown-menu-controlled'),
+  { ssr: false },
+)
+const _DropdownMenuKeepOpen = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dropdown-menu-keep-open/dropdown-menu-keep-open'),
+  { ssr: false },
+)
+const _DropdownMenuNonModal = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dropdown-menu-non-modal/dropdown-menu-non-modal'),
+  { ssr: false },
+)
+const _DropdownMenuOpenDialog = dynamic(
+  () =>
+    import('@gentleduck/registry-internals/internal-primitives/dropdown-menu-open-dialog/dropdown-menu-open-dialog'),
+  { ssr: false },
+)
+const _DropdownMenuPositioning = dynamic(
+  () =>
+    import('@gentleduck/registry-internals/internal-primitives/dropdown-menu-positioning/dropdown-menu-positioning'),
+  { ssr: false },
+)
+const _DropdownMenuRtl = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dropdown-menu-rtl/dropdown-menu-rtl'),
+  { ssr: false },
+)
 const _DropdownMenuSelection = dynamic(
   () => import('@gentleduck/registry-internals/internal-primitives/dropdown-menu-selection/dropdown-menu-selection'),
+  { ssr: false },
+)
+const _DropdownMenuSubmenu = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dropdown-menu-submenu/dropdown-menu-submenu'),
+  { ssr: false },
+)
+const _DropdownMenuTypeahead = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/dropdown-menu-typeahead/dropdown-menu-typeahead'),
+  { ssr: false },
+)
+const _FocusScopeAutoFocus = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/focus-scope-auto-focus/focus-scope-auto-focus'),
+  { ssr: false },
+)
+const _FocusScopeBranches = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/focus-scope-branches/focus-scope-branches'),
+  { ssr: false },
+)
+const _FocusScopeTrapped = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/focus-scope-trapped/focus-scope-trapped'),
+  { ssr: false },
+)
+const _HooksControllableState = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/hooks-controllable-state/hooks-controllable-state'),
+  { ssr: false },
+)
+const _HooksEscapeKeydown = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/hooks-escape-keydown/hooks-escape-keydown'),
+  { ssr: false },
+)
+const _HooksId = dynamic(() => import('@gentleduck/registry-internals/internal-primitives/hooks-id/hooks-id'), {
+  ssr: false,
+})
+const _HooksPrevious = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/hooks-previous/hooks-previous'),
+  { ssr: false },
+)
+const _HooksSize = dynamic(() => import('@gentleduck/registry-internals/internal-primitives/hooks-size/hooks-size'), {
+  ssr: false,
+})
+const _HooksStateMachine = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/hooks-state-machine/hooks-state-machine'),
+  { ssr: false },
+)
+const _HoverCardBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/hover-card-basic/hover-card-basic'),
+  { ssr: false },
+)
+const _HoverCardControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/hover-card-controlled/hover-card-controlled'),
+  { ssr: false },
+)
+const _HoverCardDelays = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/hover-card-delays/hover-card-delays'),
+  { ssr: false },
+)
+const _InputOtpAutoFocus = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/input-otp-auto-focus/input-otp-auto-focus'),
+  { ssr: false },
+)
+const _InputOtpBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/input-otp-basic/input-otp-basic'),
+  { ssr: false },
+)
+const _InputOtpControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/input-otp-controlled/input-otp-controlled'),
+  { ssr: false },
+)
+const _InputOtpDisabled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/input-otp-disabled/input-otp-disabled'),
+  { ssr: false },
+)
+const _InputOtpForm = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/input-otp-form/input-otp-form'),
+  { ssr: false },
+)
+const _InputOtpMaxLength = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/input-otp-max-length/input-otp-max-length'),
+  { ssr: false },
+)
+const _InputOtpPassword = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/input-otp-password/input-otp-password'),
+  { ssr: false },
+)
+const _InputOtpPattern = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/input-otp-pattern/input-otp-pattern'),
+  { ssr: false },
+)
+const _InputOtpRtl = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/input-otp-rtl/input-otp-rtl'),
+  { ssr: false },
+)
+const _MenuAnchor = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/menu-anchor/menu-anchor'),
+  { ssr: false },
+)
+const _MenuShortcutTrigger = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/menu-shortcut-trigger/menu-shortcut-trigger'),
+  { ssr: false },
+)
+const _MenubarBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/menubar-basic/menubar-basic'),
+  { ssr: false },
+)
+const _MenubarControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/menubar-controlled/menubar-controlled'),
+  { ssr: false },
+)
+const _MenubarDisabled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/menubar-disabled/menubar-disabled'),
+  { ssr: false },
+)
+const _MenubarModal = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/menubar-modal/menubar-modal'),
+  { ssr: false },
+)
+const _MenubarRtl = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/menubar-rtl/menubar-rtl'),
+  { ssr: false },
+)
+const _MenubarVertical = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/menubar-vertical/menubar-vertical'),
+  { ssr: false },
+)
+const _MountMinimal = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/mount-minimal/mount-minimal'),
+  { ssr: false },
+)
+const _MountRenderOnce = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/mount-render-once/mount-render-once'),
+  { ssr: false },
+)
+const _MountTimed = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/mount-timed/mount-timed'),
+  { ssr: false },
+)
+const _NavigationMenuBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/navigation-menu-basic/navigation-menu-basic'),
+  { ssr: false },
+)
+const _NavigationMenuControlled = dynamic(
+  () =>
+    import('@gentleduck/registry-internals/internal-primitives/navigation-menu-controlled/navigation-menu-controlled'),
+  { ssr: false },
+)
+const _NavigationMenuDelays = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/navigation-menu-delays/navigation-menu-delays'),
+  { ssr: false },
+)
+const _NavigationMenuLinks = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/navigation-menu-links/navigation-menu-links'),
+  { ssr: false },
+)
+const _NavigationMenuManual = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/navigation-menu-manual/navigation-menu-manual'),
+  { ssr: false },
+)
+const _NavigationMenuRtl = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/navigation-menu-rtl/navigation-menu-rtl'),
+  { ssr: false },
+)
+const _NavigationMenuSub = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/navigation-menu-sub/navigation-menu-sub'),
+  { ssr: false },
+)
+const _NavigationMenuVertical = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/navigation-menu-vertical/navigation-menu-vertical'),
+  { ssr: false },
+)
+const _PaginationBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/pagination-basic/pagination-basic'),
+  { ssr: false },
+)
+const _PaginationControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/pagination-controlled/pagination-controlled'),
+  { ssr: false },
+)
+const _PaginationCustomPages = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/pagination-custom-pages/pagination-custom-pages'),
+  { ssr: false },
+)
+const _PaginationLinks = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/pagination-links/pagination-links'),
+  { ssr: false },
+)
+const _PaginationRtl = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/pagination-rtl/pagination-rtl'),
+  { ssr: false },
+)
+const _PaginationSiblingBoundary = dynamic(
+  () =>
+    import(
+      '@gentleduck/registry-internals/internal-primitives/pagination-sibling-boundary/pagination-sibling-boundary'
+    ),
+  { ssr: false },
+)
+const _PopoverAnchor = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/popover-anchor/popover-anchor'),
+  { ssr: false },
+)
+const _PopoverBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/popover-basic/popover-basic'),
+  { ssr: false },
+)
+const _PopoverControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/popover-controlled/popover-controlled'),
+  { ssr: false },
+)
+const _PopoverFocus = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/popover-focus/popover-focus'),
+  { ssr: false },
+)
+const _PopoverModal = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/popover-modal/popover-modal'),
+  { ssr: false },
+)
+const _PopoverRtl = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/popover-rtl/popover-rtl'),
   { ssr: false },
 )
 const _PopoverSideAware = dynamic(
   () => import('@gentleduck/registry-internals/internal-primitives/popover-side-aware/popover-side-aware'),
   { ssr: false },
 )
+const _PopperAvailableSize = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/popper-available-size/popper-available-size'),
+  { ssr: false },
+)
+const _PopperBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/popper-basic/popper-basic'),
+  { ssr: false },
+)
+const _PopperCollisions = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/popper-collisions/popper-collisions'),
+  { ssr: false },
+)
+const _PopperVirtual = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/popper-virtual/popper-virtual'),
+  { ssr: false },
+)
+const _PortalBody = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/portal-body/portal-body'),
+  { ssr: false },
+)
+const _PortalContainer = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/portal-container/portal-container'),
+  { ssr: false },
+)
+const _PresenceExitAnimation = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/presence-exit-animation/presence-exit-animation'),
+  { ssr: false },
+)
+const _PresenceRenderFunction = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/presence-render-function/presence-render-function'),
+  { ssr: false },
+)
+const _PrimitiveAsChild = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/primitive-as-child/primitive-as-child'),
+  { ssr: false },
+)
+const _PrimitiveCustom = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/primitive-custom/primitive-custom'),
+  { ssr: false },
+)
+const _ProgressBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/progress-basic/progress-basic'),
+  { ssr: false },
+)
+const _ProgressIndeterminate = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/progress-indeterminate/progress-indeterminate'),
+  { ssr: false },
+)
+const _ProgressMin = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/progress-min/progress-min'),
+  { ssr: false },
+)
+const _ProgressRangeLabel = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/progress-range-label/progress-range-label'),
+  { ssr: false },
+)
+const _RadioGroupBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/radio-group-basic/radio-group-basic'),
+  { ssr: false },
+)
+const _RadioGroupControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/radio-group-controlled/radio-group-controlled'),
+  { ssr: false },
+)
+const _RadioGroupDisabled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/radio-group-disabled/radio-group-disabled'),
+  { ssr: false },
+)
+const _RadioGroupForm = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/radio-group-form/radio-group-form'),
+  { ssr: false },
+)
+const _RadioGroupHorizontal = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/radio-group-horizontal/radio-group-horizontal'),
+  { ssr: false },
+)
+const _RadioGroupRtl = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/radio-group-rtl/radio-group-rtl'),
+  { ssr: false },
+)
+const _RovingFocusActive = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/roving-focus-active/roving-focus-active'),
+  { ssr: false },
+)
+const _RovingFocusControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/roving-focus-controlled/roving-focus-controlled'),
+  { ssr: false },
+)
+const _RovingFocusItemState = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/roving-focus-item-state/roving-focus-item-state'),
+  { ssr: false },
+)
+const _RovingFocusToolbar = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/roving-focus-toolbar/roving-focus-toolbar'),
+  { ssr: false },
+)
+const _SelectBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/select-basic/select-basic'),
+  { ssr: false },
+)
+const _SelectControlledOpen = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/select-controlled-open/select-controlled-open'),
+  { ssr: false },
+)
 const _SelectControlled = dynamic(
   () => import('@gentleduck/registry-internals/internal-primitives/select-controlled/select-controlled'),
   { ssr: false },
 )
+const _SelectDisabled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/select-disabled/select-disabled'),
+  { ssr: false },
+)
+const _SelectForm = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/select-form/select-form'),
+  { ssr: false },
+)
+const _SelectItems = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/select-items/select-items'),
+  { ssr: false },
+)
+const _SelectMultiple = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/select-multiple/select-multiple'),
+  { ssr: false },
+)
+const _SelectPopper = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/select-popper/select-popper'),
+  { ssr: false },
+)
+const _SelectRtl = dynamic(() => import('@gentleduck/registry-internals/internal-primitives/select-rtl/select-rtl'), {
+  ssr: false,
+})
+const _SheetBottom = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/sheet-bottom/sheet-bottom'),
+  { ssr: false },
+)
+const _SheetControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/sheet-controlled/sheet-controlled'),
+  { ssr: false },
+)
+const _SheetRtl = dynamic(() => import('@gentleduck/registry-internals/internal-primitives/sheet-rtl/sheet-rtl'), {
+  ssr: false,
+})
+const _SheetSide = dynamic(() => import('@gentleduck/registry-internals/internal-primitives/sheet-side/sheet-side'), {
+  ssr: false,
+})
+const _SliderBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/slider-basic/slider-basic'),
+  { ssr: false },
+)
+const _SliderCommit = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/slider-commit/slider-commit'),
+  { ssr: false },
+)
+const _SliderDisabled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/slider-disabled/slider-disabled'),
+  { ssr: false },
+)
+const _SliderForm = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/slider-form/slider-form'),
+  { ssr: false },
+)
+const _SliderInverted = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/slider-inverted/slider-inverted'),
+  { ssr: false },
+)
+const _SliderRange = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/slider-range/slider-range'),
+  { ssr: false },
+)
+const _SliderValue = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/slider-value/slider-value'),
+  { ssr: false },
+)
+const _SliderVertical = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/slider-vertical/slider-vertical'),
+  { ssr: false },
+)
+const _SlotAsChild = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/slot-as-child/slot-as-child'),
+  { ssr: false },
+)
+const _SlotMergeProps = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/slot-merge-props/slot-merge-props'),
+  { ssr: false },
+)
+const _SlotSlottable = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/slot-slottable/slot-slottable'),
+  { ssr: false },
+)
+const _ToggleBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/toggle-basic/toggle-basic'),
+  { ssr: false },
+)
+const _ToggleControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/toggle-controlled/toggle-controlled'),
+  { ssr: false },
+)
+const _ToggleGroupMultiple = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/toggle-group-multiple/toggle-group-multiple'),
+  { ssr: false },
+)
+const _ToggleGroupNoRoving = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/toggle-group-no-roving/toggle-group-no-roving'),
+  { ssr: false },
+)
+const _ToggleGroupRtl = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/toggle-group-rtl/toggle-group-rtl'),
+  { ssr: false },
+)
+const _ToggleGroupSegmented = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/toggle-group-segmented/toggle-group-segmented'),
+  { ssr: false },
+)
+const _ToggleGroupSingle = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/toggle-group-single/toggle-group-single'),
+  { ssr: false },
+)
+const _ToggleGroupVertical = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/toggle-group-vertical/toggle-group-vertical'),
+  { ssr: false },
+)
+const _TooltipAriaLabel = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/tooltip-aria-label/tooltip-aria-label'),
+  { ssr: false },
+)
+const _TooltipBasic = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/tooltip-basic/tooltip-basic'),
+  { ssr: false },
+)
+const _TooltipClickStays = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/tooltip-click-stays/tooltip-click-stays'),
+  { ssr: false },
+)
+const _TooltipControlled = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/tooltip-controlled/tooltip-controlled'),
+  { ssr: false },
+)
 const _TooltipDelayProvider = dynamic(
   () => import('@gentleduck/registry-internals/internal-primitives/tooltip-delay-provider/tooltip-delay-provider'),
+  { ssr: false },
+)
+const _TooltipHoverable = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/tooltip-hoverable/tooltip-hoverable'),
+  { ssr: false },
+)
+const _TooltipSides = dynamic(
+  () => import('@gentleduck/registry-internals/internal-primitives/tooltip-sides/tooltip-sides'),
+  { ssr: false },
+)
+const _VisuallyHiddenDialogTitle = dynamic(
+  () =>
+    import(
+      '@gentleduck/registry-internals/internal-primitives/visually-hidden-dialog-title/visually-hidden-dialog-title'
+    ),
+  { ssr: false },
+)
+const _VisuallyHiddenIconLabel = dynamic(
+  () =>
+    import('@gentleduck/registry-internals/internal-primitives/visually-hidden-icon-label/visually-hidden-icon-label'),
   { ssr: false },
 )
 
@@ -860,7 +1838,7 @@ export const Index: Record<string, any> = {
     name: 'signup-1',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['button', 'input', 'avatar', 'separator', 'label'],
+    registryDependencies: ['button', 'input', 'avatar', 'separator', 'label', 'checkbox'],
     files: [
       {
         path: 'authentications/signup-1/signup-1.constants.tsx',
@@ -880,7 +1858,7 @@ export const Index: Record<string, any> = {
     name: 'login-1',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['button', 'input', 'avatar', 'separator', 'label'],
+    registryDependencies: ['button', 'input', 'avatar', 'separator', 'label', 'card'],
     files: [
       {
         path: 'authentications/login-1/login-1.tsx',
@@ -920,7 +1898,7 @@ export const Index: Record<string, any> = {
     name: 'login-3',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['button', 'input', 'avatar', 'separator', 'label'],
+    registryDependencies: ['button', 'input', 'avatar', 'separator', 'label', 'card'],
     files: [
       {
         path: 'authentications/login-3/login-3.tsx',
@@ -940,7 +1918,7 @@ export const Index: Record<string, any> = {
     name: 'login-4',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['button', 'input', 'avatar', 'separator', 'label'],
+    registryDependencies: ['button', 'input', 'avatar', 'separator', 'label', 'card'],
     files: [
       {
         path: 'authentications/login-4/login-4.tsx',
@@ -991,6 +1969,11 @@ export const Index: Record<string, any> = {
       'dropdown-menu',
       'select',
       'badge',
+      'button-group',
+      'calendar',
+      'card',
+      'command',
+      'separator',
     ],
     files: [
       {
@@ -1075,7 +2058,24 @@ export const Index: Record<string, any> = {
     name: 'dashboard-1',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['button', 'input', 'avatar', 'separator', 'label'],
+    registryDependencies: [
+      'button',
+      'input',
+      'avatar',
+      'separator',
+      'label',
+      'badge',
+      'card',
+      'chart',
+      'checkbox',
+      'dropdown-menu',
+      'select',
+      'sheet',
+      'sidebar',
+      'table',
+      'tabs',
+      'toggle-group',
+    ],
     files: [
       {
         path: 'dashboards/dashboard-1/dashboard-1.tsx',
@@ -1655,7 +2655,7 @@ export const Index: Record<string, any> = {
     name: 'chart-pie-interactive',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['card', 'chart'],
+    registryDependencies: ['card', 'chart', 'select'],
     files: [
       {
         path: 'charts/chart-pie-interactive/chart-pie-interactive.tsx',
@@ -2247,7 +3247,7 @@ export const Index: Record<string, any> = {
     name: 'sidebar-01',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['sidebar', 'breadcrumb', 'separator', 'dropdown-menu'],
+    registryDependencies: ['sidebar', 'breadcrumb', 'separator', 'dropdown-menu', 'label'],
     files: [
       {
         path: 'sidebar/sidebar-01/sidebar-01.tsx',
@@ -2275,7 +3275,7 @@ export const Index: Record<string, any> = {
     name: 'sidebar-02',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['sidebar', 'breadcrumb', 'separator', 'dropdown-menu'],
+    registryDependencies: ['sidebar', 'breadcrumb', 'separator', 'dropdown-menu', 'collapsible', 'label'],
     files: [
       {
         path: 'sidebar/sidebar-02/sidebar-02.tsx',
@@ -2343,7 +3343,7 @@ export const Index: Record<string, any> = {
     name: 'sidebar-05',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['sidebar', 'breadcrumb', 'separator'],
+    registryDependencies: ['sidebar', 'breadcrumb', 'separator', 'collapsible', 'label'],
     files: [
       {
         path: 'sidebar/sidebar-05/sidebar-05.tsx',
@@ -2367,7 +3367,7 @@ export const Index: Record<string, any> = {
     name: 'sidebar-06',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['sidebar', 'breadcrumb', 'separator', 'collapsible'],
+    registryDependencies: ['sidebar', 'breadcrumb', 'separator', 'collapsible', 'card', 'dropdown-menu'],
     files: [
       {
         path: 'sidebar/sidebar-06/sidebar-06.tsx',
@@ -2467,7 +3467,7 @@ export const Index: Record<string, any> = {
     name: 'sidebar-09',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['sidebar', 'breadcrumb', 'separator', 'avatar', 'dropdown-menu'],
+    registryDependencies: ['sidebar', 'breadcrumb', 'separator', 'avatar', 'dropdown-menu', 'label', 'switch'],
     files: [
       {
         path: 'sidebar/sidebar-09/sidebar-09.tsx',
@@ -2491,7 +3491,7 @@ export const Index: Record<string, any> = {
     name: 'sidebar-10',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['sidebar', 'breadcrumb', 'separator', 'collapsible', 'dropdown-menu'],
+    registryDependencies: ['sidebar', 'breadcrumb', 'separator', 'collapsible', 'dropdown-menu', 'popover'],
     files: [
       {
         path: 'sidebar/sidebar-10/sidebar-10.tsx',
@@ -2535,7 +3535,7 @@ export const Index: Record<string, any> = {
     name: 'sidebar-11',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['sidebar', 'breadcrumb', 'separator'],
+    registryDependencies: ['sidebar', 'breadcrumb', 'separator', 'collapsible'],
     files: [
       {
         path: 'sidebar/sidebar-11/sidebar-11.tsx',
@@ -2683,7 +3683,16 @@ export const Index: Record<string, any> = {
     name: 'sidebar-16',
     description: '',
     type: 'registry:block',
-    registryDependencies: ['sidebar', 'breadcrumb', 'separator', 'button', 'collapsible', 'avatar', 'dropdown-menu'],
+    registryDependencies: [
+      'sidebar',
+      'breadcrumb',
+      'separator',
+      'button',
+      'collapsible',
+      'avatar',
+      'dropdown-menu',
+      'label',
+    ],
     files: [
       {
         path: 'sidebar/sidebar-16/sidebar-16.tsx',
@@ -2727,7 +3736,7 @@ export const Index: Record<string, any> = {
     name: 'accordion-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['accordion'],
+    registryDependencies: ['accordion', 'direction'],
     files: [
       {
         path: 'accordion/accordion-1.tsx',
@@ -2739,11 +3748,27 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'accordion',
   },
+  'accordion-10': {
+    name: 'accordion-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['accordion', 'direction'],
+    files: [
+      {
+        path: 'accordion/accordion-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Accordion10,
+    source: '/registry-examples/src/accordion',
+    categories: [],
+    root_folder: 'accordion',
+  },
   'accordion-2': {
     name: 'accordion-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['accordion'],
+    registryDependencies: ['accordion', 'direction'],
     files: [
       {
         path: 'accordion/accordion-2.tsx',
@@ -2759,7 +3784,7 @@ export const Index: Record<string, any> = {
     name: 'accordion-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['accordion'],
+    registryDependencies: ['accordion', 'direction'],
     files: [
       {
         path: 'accordion/accordion-3.tsx',
@@ -2775,7 +3800,7 @@ export const Index: Record<string, any> = {
     name: 'accordion-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['accordion'],
+    registryDependencies: ['accordion', 'direction'],
     files: [
       {
         path: 'accordion/accordion-4.tsx',
@@ -2791,7 +3816,7 @@ export const Index: Record<string, any> = {
     name: 'accordion-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['accordion'],
+    registryDependencies: ['accordion', 'direction'],
     files: [
       {
         path: 'accordion/accordion-5.tsx',
@@ -2807,7 +3832,7 @@ export const Index: Record<string, any> = {
     name: 'accordion-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['accordion'],
+    registryDependencies: ['accordion', 'direction'],
     files: [
       {
         path: 'accordion/accordion-6.tsx',
@@ -2823,7 +3848,7 @@ export const Index: Record<string, any> = {
     name: 'accordion-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['accordion'],
+    registryDependencies: ['accordion', 'direction'],
     files: [
       {
         path: 'accordion/accordion-7.tsx',
@@ -2831,6 +3856,38 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _Accordion7,
+    source: '/registry-examples/src/accordion',
+    categories: [],
+    root_folder: 'accordion',
+  },
+  'accordion-8': {
+    name: 'accordion-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['accordion', 'direction'],
+    files: [
+      {
+        path: 'accordion/accordion-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Accordion8,
+    source: '/registry-examples/src/accordion',
+    categories: [],
+    root_folder: 'accordion',
+  },
+  'accordion-9': {
+    name: 'accordion-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['accordion', 'direction'],
+    files: [
+      {
+        path: 'accordion/accordion-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Accordion9,
     source: '/registry-examples/src/accordion',
     categories: [],
     root_folder: 'accordion',
@@ -2919,7 +3976,7 @@ export const Index: Record<string, any> = {
     name: 'alert-dialog-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['alert-dialog'],
+    registryDependencies: ['alert-dialog', 'direction', 'input', 'label'],
     files: [
       {
         path: 'alert-dialog/alert-dialog-1.tsx',
@@ -2935,7 +3992,7 @@ export const Index: Record<string, any> = {
     name: 'alert-dialog-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['alert-dialog'],
+    registryDependencies: ['alert-dialog', 'direction', 'input', 'label'],
     files: [
       {
         path: 'alert-dialog/alert-dialog-2.tsx',
@@ -2951,7 +4008,7 @@ export const Index: Record<string, any> = {
     name: 'alert-dialog-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['alert-dialog'],
+    registryDependencies: ['alert-dialog', 'direction', 'input', 'label'],
     files: [
       {
         path: 'alert-dialog/alert-dialog-3.tsx',
@@ -2967,7 +4024,7 @@ export const Index: Record<string, any> = {
     name: 'alert-dialog-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['alert-dialog'],
+    registryDependencies: ['alert-dialog', 'direction', 'input', 'label'],
     files: [
       {
         path: 'alert-dialog/alert-dialog-4.tsx',
@@ -2979,11 +4036,75 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'alert-dialog',
   },
+  'alert-dialog-5': {
+    name: 'alert-dialog-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['alert-dialog', 'direction', 'input', 'label'],
+    files: [
+      {
+        path: 'alert-dialog/alert-dialog-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _AlertDialog5,
+    source: '/registry-examples/src/alert-dialog',
+    categories: [],
+    root_folder: 'alert-dialog',
+  },
+  'alert-dialog-6': {
+    name: 'alert-dialog-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['alert-dialog', 'direction', 'input', 'label'],
+    files: [
+      {
+        path: 'alert-dialog/alert-dialog-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _AlertDialog6,
+    source: '/registry-examples/src/alert-dialog',
+    categories: [],
+    root_folder: 'alert-dialog',
+  },
+  'alert-dialog-7': {
+    name: 'alert-dialog-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['alert-dialog', 'direction', 'input', 'label'],
+    files: [
+      {
+        path: 'alert-dialog/alert-dialog-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _AlertDialog7,
+    source: '/registry-examples/src/alert-dialog',
+    categories: [],
+    root_folder: 'alert-dialog',
+  },
+  'alert-dialog-8': {
+    name: 'alert-dialog-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['alert-dialog', 'direction', 'input', 'label'],
+    files: [
+      {
+        path: 'alert-dialog/alert-dialog-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _AlertDialog8,
+    source: '/registry-examples/src/alert-dialog',
+    categories: [],
+    root_folder: 'alert-dialog',
+  },
   'avatar-1': {
     name: 'avatar-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['avatar'],
+    registryDependencies: ['avatar', 'direction'],
     files: [
       {
         path: 'avatar/avatar-1.tsx',
@@ -2999,7 +4120,7 @@ export const Index: Record<string, any> = {
     name: 'avatar-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['avatar'],
+    registryDependencies: ['avatar', 'direction'],
     files: [
       {
         path: 'avatar/avatar-2.tsx',
@@ -3015,7 +4136,7 @@ export const Index: Record<string, any> = {
     name: 'avatar-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['avatar'],
+    registryDependencies: ['avatar', 'direction'],
     files: [
       {
         path: 'avatar/avatar-3.tsx',
@@ -3027,11 +4148,43 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'avatar',
   },
+  'avatar-4': {
+    name: 'avatar-4',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['avatar', 'direction'],
+    files: [
+      {
+        path: 'avatar/avatar-4.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Avatar4,
+    source: '/registry-examples/src/avatar',
+    categories: [],
+    root_folder: 'avatar',
+  },
+  'avatar-5': {
+    name: 'avatar-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['avatar', 'direction'],
+    files: [
+      {
+        path: 'avatar/avatar-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Avatar5,
+    source: '/registry-examples/src/avatar',
+    categories: [],
+    root_folder: 'avatar',
+  },
   'badge-1': {
     name: 'badge-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['badge'],
+    registryDependencies: ['badge', 'direction', 'tooltip'],
     files: [
       {
         path: 'badge/badge-1.tsx',
@@ -3047,7 +4200,7 @@ export const Index: Record<string, any> = {
     name: 'badge-10',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['badge'],
+    registryDependencies: ['badge', 'direction', 'tooltip'],
     files: [
       {
         path: 'badge/badge-10.tsx',
@@ -3059,11 +4212,27 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'badge',
   },
+  'badge-11': {
+    name: 'badge-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['badge', 'direction', 'tooltip'],
+    files: [
+      {
+        path: 'badge/badge-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Badge11,
+    source: '/registry-examples/src/badge',
+    categories: [],
+    root_folder: 'badge',
+  },
   'badge-2': {
     name: 'badge-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['badge'],
+    registryDependencies: ['badge', 'direction', 'tooltip'],
     files: [
       {
         path: 'badge/badge-2.tsx',
@@ -3079,7 +4248,7 @@ export const Index: Record<string, any> = {
     name: 'badge-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['badge'],
+    registryDependencies: ['badge', 'direction', 'tooltip'],
     files: [
       {
         path: 'badge/badge-3.tsx',
@@ -3095,7 +4264,7 @@ export const Index: Record<string, any> = {
     name: 'badge-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['badge'],
+    registryDependencies: ['badge', 'direction', 'tooltip'],
     files: [
       {
         path: 'badge/badge-4.tsx',
@@ -3111,7 +4280,7 @@ export const Index: Record<string, any> = {
     name: 'badge-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['badge'],
+    registryDependencies: ['badge', 'direction', 'tooltip'],
     files: [
       {
         path: 'badge/badge-5.tsx',
@@ -3127,7 +4296,7 @@ export const Index: Record<string, any> = {
     name: 'badge-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['badge'],
+    registryDependencies: ['badge', 'direction', 'tooltip'],
     files: [
       {
         path: 'badge/badge-6.tsx',
@@ -3143,7 +4312,7 @@ export const Index: Record<string, any> = {
     name: 'badge-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['badge'],
+    registryDependencies: ['badge', 'direction', 'tooltip'],
     files: [
       {
         path: 'badge/badge-7.tsx',
@@ -3159,7 +4328,7 @@ export const Index: Record<string, any> = {
     name: 'badge-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['badge'],
+    registryDependencies: ['badge', 'direction', 'tooltip'],
     files: [
       {
         path: 'badge/badge-8.tsx',
@@ -3175,7 +4344,7 @@ export const Index: Record<string, any> = {
     name: 'badge-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['badge'],
+    registryDependencies: ['badge', 'direction', 'tooltip'],
     files: [
       {
         path: 'badge/badge-9.tsx',
@@ -3191,7 +4360,7 @@ export const Index: Record<string, any> = {
     name: 'button-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-1.tsx',
@@ -3207,7 +4376,7 @@ export const Index: Record<string, any> = {
     name: 'button-10',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-10.tsx',
@@ -3223,7 +4392,7 @@ export const Index: Record<string, any> = {
     name: 'button-11',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-11.tsx',
@@ -3239,7 +4408,7 @@ export const Index: Record<string, any> = {
     name: 'button-12',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-12.tsx',
@@ -3255,7 +4424,7 @@ export const Index: Record<string, any> = {
     name: 'button-13',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-13.tsx',
@@ -3271,7 +4440,7 @@ export const Index: Record<string, any> = {
     name: 'button-14',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-14.tsx',
@@ -3287,7 +4456,7 @@ export const Index: Record<string, any> = {
     name: 'button-15',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-15.tsx',
@@ -3303,7 +4472,7 @@ export const Index: Record<string, any> = {
     name: 'button-16',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-16.tsx',
@@ -3319,7 +4488,7 @@ export const Index: Record<string, any> = {
     name: 'button-17',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-17.tsx',
@@ -3335,7 +4504,7 @@ export const Index: Record<string, any> = {
     name: 'button-18',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-18.tsx',
@@ -3351,7 +4520,7 @@ export const Index: Record<string, any> = {
     name: 'button-19',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-19.tsx',
@@ -3367,7 +4536,7 @@ export const Index: Record<string, any> = {
     name: 'button-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-2.tsx',
@@ -3383,7 +4552,7 @@ export const Index: Record<string, any> = {
     name: 'button-20',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-20.tsx',
@@ -3399,7 +4568,7 @@ export const Index: Record<string, any> = {
     name: 'button-21',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-21.tsx',
@@ -3411,11 +4580,75 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'button',
   },
+  'button-22': {
+    name: 'button-22',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
+    files: [
+      {
+        path: 'button/button-22.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Button22,
+    source: '/registry-examples/src/button',
+    categories: [],
+    root_folder: 'button',
+  },
+  'button-23': {
+    name: 'button-23',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
+    files: [
+      {
+        path: 'button/button-23.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Button23,
+    source: '/registry-examples/src/button',
+    categories: [],
+    root_folder: 'button',
+  },
+  'button-24': {
+    name: 'button-24',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
+    files: [
+      {
+        path: 'button/button-24.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Button24,
+    source: '/registry-examples/src/button',
+    categories: [],
+    root_folder: 'button',
+  },
+  'button-25': {
+    name: 'button-25',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
+    files: [
+      {
+        path: 'button/button-25.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Button25,
+    source: '/registry-examples/src/button',
+    categories: [],
+    root_folder: 'button',
+  },
   'button-3': {
     name: 'button-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-3.tsx',
@@ -3431,7 +4664,7 @@ export const Index: Record<string, any> = {
     name: 'button-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-4.tsx',
@@ -3447,7 +4680,7 @@ export const Index: Record<string, any> = {
     name: 'button-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-5.tsx',
@@ -3463,7 +4696,7 @@ export const Index: Record<string, any> = {
     name: 'button-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-6.tsx',
@@ -3479,7 +4712,7 @@ export const Index: Record<string, any> = {
     name: 'button-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-7.tsx',
@@ -3495,7 +4728,7 @@ export const Index: Record<string, any> = {
     name: 'button-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-8.tsx',
@@ -3511,7 +4744,7 @@ export const Index: Record<string, any> = {
     name: 'button-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button'],
+    registryDependencies: ['button', 'command', 'direction', 'toggle', 'tooltip'],
     files: [
       {
         path: 'button/button-9.tsx',
@@ -3527,7 +4760,7 @@ export const Index: Record<string, any> = {
     name: 'breadcrumb-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['breadcrumb'],
+    registryDependencies: ['breadcrumb', 'button', 'drawer', 'dropdown-menu'],
     files: [
       {
         path: 'breadcrumb/breadcrumb-1.tsx',
@@ -3543,7 +4776,7 @@ export const Index: Record<string, any> = {
     name: 'breadcrumb-10',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['breadcrumb'],
+    registryDependencies: ['breadcrumb', 'button', 'drawer', 'dropdown-menu'],
     files: [
       {
         path: 'breadcrumb/breadcrumb-10.tsx',
@@ -3559,7 +4792,7 @@ export const Index: Record<string, any> = {
     name: 'breadcrumb-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['breadcrumb'],
+    registryDependencies: ['breadcrumb', 'button', 'drawer', 'dropdown-menu'],
     files: [
       {
         path: 'breadcrumb/breadcrumb-2.tsx',
@@ -3575,7 +4808,7 @@ export const Index: Record<string, any> = {
     name: 'breadcrumb-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['breadcrumb'],
+    registryDependencies: ['breadcrumb', 'button', 'drawer', 'dropdown-menu'],
     files: [
       {
         path: 'breadcrumb/breadcrumb-3.tsx',
@@ -3591,7 +4824,7 @@ export const Index: Record<string, any> = {
     name: 'breadcrumb-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['breadcrumb'],
+    registryDependencies: ['breadcrumb', 'button', 'drawer', 'dropdown-menu'],
     files: [
       {
         path: 'breadcrumb/breadcrumb-4.tsx',
@@ -3607,7 +4840,7 @@ export const Index: Record<string, any> = {
     name: 'breadcrumb-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['breadcrumb'],
+    registryDependencies: ['breadcrumb', 'button', 'drawer', 'dropdown-menu'],
     files: [
       {
         path: 'breadcrumb/breadcrumb-5.tsx',
@@ -3623,7 +4856,7 @@ export const Index: Record<string, any> = {
     name: 'breadcrumb-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['breadcrumb'],
+    registryDependencies: ['breadcrumb', 'button', 'drawer', 'dropdown-menu'],
     files: [
       {
         path: 'breadcrumb/breadcrumb-6.tsx',
@@ -3639,7 +4872,7 @@ export const Index: Record<string, any> = {
     name: 'breadcrumb-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['breadcrumb'],
+    registryDependencies: ['breadcrumb', 'button', 'drawer', 'dropdown-menu'],
     files: [
       {
         path: 'breadcrumb/breadcrumb-9.tsx',
@@ -3655,7 +4888,18 @@ export const Index: Record<string, any> = {
     name: 'dialog-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['dialog'],
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
     files: [
       {
         path: 'dialog/dialog-1.tsx',
@@ -3667,11 +4911,130 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'dialog',
   },
+  'dialog-10': {
+    name: 'dialog-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'dialog/dialog-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Dialog10,
+    source: '/registry-examples/src/dialog',
+    categories: [],
+    root_folder: 'dialog',
+  },
+  'dialog-11': {
+    name: 'dialog-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'dialog/dialog-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Dialog11,
+    source: '/registry-examples/src/dialog',
+    categories: [],
+    root_folder: 'dialog',
+  },
+  'dialog-12': {
+    name: 'dialog-12',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'dialog/dialog-12.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Dialog12,
+    source: '/registry-examples/src/dialog',
+    categories: [],
+    root_folder: 'dialog',
+  },
+  'dialog-13': {
+    name: 'dialog-13',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'dialog/dialog-13.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Dialog13,
+    source: '/registry-examples/src/dialog',
+    categories: [],
+    root_folder: 'dialog',
+  },
   'dialog-2': {
     name: 'dialog-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['dialog'],
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
     files: [
       {
         path: 'dialog/dialog-2.tsx',
@@ -3687,7 +5050,18 @@ export const Index: Record<string, any> = {
     name: 'dialog-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['dialog'],
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
     files: [
       {
         path: 'dialog/dialog-3.tsx',
@@ -3703,7 +5077,18 @@ export const Index: Record<string, any> = {
     name: 'dialog-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['dialog'],
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
     files: [
       {
         path: 'dialog/dialog-4.tsx',
@@ -3719,7 +5104,18 @@ export const Index: Record<string, any> = {
     name: 'dialog-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['dialog'],
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
     files: [
       {
         path: 'dialog/dialog-5.tsx',
@@ -3731,11 +5127,119 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'dialog',
   },
+  'dialog-6': {
+    name: 'dialog-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'dialog/dialog-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Dialog6,
+    source: '/registry-examples/src/dialog',
+    categories: [],
+    root_folder: 'dialog',
+  },
+  'dialog-7': {
+    name: 'dialog-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'dialog/dialog-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Dialog7,
+    source: '/registry-examples/src/dialog',
+    categories: [],
+    root_folder: 'dialog',
+  },
+  'dialog-8': {
+    name: 'dialog-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'dialog/dialog-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Dialog8,
+    source: '/registry-examples/src/dialog',
+    categories: [],
+    root_folder: 'dialog',
+  },
+  'dialog-9': {
+    name: 'dialog-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'dialog/dialog-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Dialog9,
+    source: '/registry-examples/src/dialog',
+    categories: [],
+    root_folder: 'dialog',
+  },
   'command-1': {
     name: 'command-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['command'],
+    registryDependencies: ['command', 'button'],
     files: [
       {
         path: 'command/command-1.tsx',
@@ -3747,11 +5251,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'command',
   },
+  'command-10': {
+    name: 'command-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['command', 'button'],
+    files: [
+      {
+        path: 'command/command-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Command10,
+    source: '/registry-examples/src/command',
+    categories: [],
+    root_folder: 'command',
+  },
+  'command-11': {
+    name: 'command-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['command', 'button'],
+    files: [
+      {
+        path: 'command/command-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Command11,
+    source: '/registry-examples/src/command',
+    categories: [],
+    root_folder: 'command',
+  },
+  'command-12': {
+    name: 'command-12',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['command', 'button'],
+    files: [
+      {
+        path: 'command/command-12.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Command12,
+    source: '/registry-examples/src/command',
+    categories: [],
+    root_folder: 'command',
+  },
   'command-2': {
     name: 'command-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['command'],
+    registryDependencies: ['command', 'button'],
     files: [
       {
         path: 'command/command-2.tsx',
@@ -3767,7 +5319,7 @@ export const Index: Record<string, any> = {
     name: 'command-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['command'],
+    registryDependencies: ['command', 'button'],
     files: [
       {
         path: 'command/command-3.tsx',
@@ -3783,7 +5335,7 @@ export const Index: Record<string, any> = {
     name: 'command-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['command'],
+    registryDependencies: ['command', 'button'],
     files: [
       {
         path: 'command/command-4.tsx',
@@ -3795,11 +5347,91 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'command',
   },
+  'command-5': {
+    name: 'command-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['command', 'button'],
+    files: [
+      {
+        path: 'command/command-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Command5,
+    source: '/registry-examples/src/command',
+    categories: [],
+    root_folder: 'command',
+  },
+  'command-6': {
+    name: 'command-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['command', 'button'],
+    files: [
+      {
+        path: 'command/command-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Command6,
+    source: '/registry-examples/src/command',
+    categories: [],
+    root_folder: 'command',
+  },
+  'command-7': {
+    name: 'command-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['command', 'button'],
+    files: [
+      {
+        path: 'command/command-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Command7,
+    source: '/registry-examples/src/command',
+    categories: [],
+    root_folder: 'command',
+  },
+  'command-8': {
+    name: 'command-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['command', 'button'],
+    files: [
+      {
+        path: 'command/command-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Command8,
+    source: '/registry-examples/src/command',
+    categories: [],
+    root_folder: 'command',
+  },
+  'command-9': {
+    name: 'command-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['command', 'button'],
+    files: [
+      {
+        path: 'command/command-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Command9,
+    source: '/registry-examples/src/command',
+    categories: [],
+    root_folder: 'command',
+  },
   'card-1': {
     name: 'card-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['card'],
+    registryDependencies: ['card', 'button', 'input', 'label', 'select', 'switch'],
     files: [
       {
         path: 'card/card-1.tsx',
@@ -3815,7 +5447,7 @@ export const Index: Record<string, any> = {
     name: 'card-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['card'],
+    registryDependencies: ['card', 'button', 'input', 'label', 'select', 'switch'],
     files: [
       {
         path: 'card/card-2.tsx',
@@ -3831,7 +5463,7 @@ export const Index: Record<string, any> = {
     name: 'card-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['card'],
+    registryDependencies: ['card', 'button', 'input', 'label', 'select', 'switch'],
     files: [
       {
         path: 'card/card-3.tsx',
@@ -3847,7 +5479,7 @@ export const Index: Record<string, any> = {
     name: 'card-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['card'],
+    registryDependencies: ['card', 'button', 'input', 'label', 'select', 'switch'],
     files: [
       {
         path: 'card/card-4.tsx',
@@ -3859,11 +5491,27 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'card',
   },
+  'card-5': {
+    name: 'card-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['card', 'button', 'input', 'label', 'select', 'switch'],
+    files: [
+      {
+        path: 'card/card-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Card5,
+    source: '/registry-examples/src/card',
+    categories: [],
+    root_folder: 'card',
+  },
   'calendar-1': {
     name: 'calendar-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-1.tsx',
@@ -3879,7 +5527,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-10',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-10.tsx',
@@ -3895,7 +5543,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-11',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-11.tsx',
@@ -3911,7 +5559,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-12',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-12.tsx',
@@ -3927,7 +5575,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-13',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-13.tsx',
@@ -3943,7 +5591,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-14',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-14.tsx',
@@ -3959,7 +5607,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-15',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-15.tsx',
@@ -3975,7 +5623,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-16',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-16.tsx',
@@ -3991,7 +5639,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-17',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-17.tsx',
@@ -4007,7 +5655,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-18',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-18.tsx',
@@ -4023,7 +5671,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-19',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-19.tsx',
@@ -4039,7 +5687,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-2.tsx',
@@ -4055,7 +5703,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-20',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-20.tsx',
@@ -4071,7 +5719,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-21',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-21.tsx',
@@ -4087,7 +5735,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-22',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-22.tsx',
@@ -4103,7 +5751,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-23',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-23.tsx',
@@ -4119,7 +5767,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-24',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-24.tsx',
@@ -4135,7 +5783,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-25',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-25.tsx',
@@ -4147,11 +5795,75 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'calendar',
   },
+  'calendar-26': {
+    name: 'calendar-26',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
+    files: [
+      {
+        path: 'calendar/calendar-26.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Calendar26,
+    source: '/registry-examples/src/calendar',
+    categories: [],
+    root_folder: 'calendar',
+  },
+  'calendar-27': {
+    name: 'calendar-27',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
+    files: [
+      {
+        path: 'calendar/calendar-27.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Calendar27,
+    source: '/registry-examples/src/calendar',
+    categories: [],
+    root_folder: 'calendar',
+  },
+  'calendar-28': {
+    name: 'calendar-28',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
+    files: [
+      {
+        path: 'calendar/calendar-28.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Calendar28,
+    source: '/registry-examples/src/calendar',
+    categories: [],
+    root_folder: 'calendar',
+  },
+  'calendar-29': {
+    name: 'calendar-29',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
+    files: [
+      {
+        path: 'calendar/calendar-29.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Calendar29,
+    source: '/registry-examples/src/calendar',
+    categories: [],
+    root_folder: 'calendar',
+  },
   'calendar-3': {
     name: 'calendar-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-3.tsx',
@@ -4163,11 +5875,27 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'calendar',
   },
+  'calendar-30': {
+    name: 'calendar-30',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
+    files: [
+      {
+        path: 'calendar/calendar-30.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Calendar30,
+    source: '/registry-examples/src/calendar',
+    categories: [],
+    root_folder: 'calendar',
+  },
   'calendar-4': {
     name: 'calendar-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-4.tsx',
@@ -4183,7 +5911,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-5.tsx',
@@ -4199,7 +5927,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-6.tsx',
@@ -4215,7 +5943,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-7.tsx',
@@ -4231,7 +5959,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-8.tsx',
@@ -4247,7 +5975,7 @@ export const Index: Record<string, any> = {
     name: 'calendar-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar'],
+    registryDependencies: ['calendar', 'direction', 'field', 'input', 'label', 'popover', 'switch'],
     files: [
       {
         path: 'calendar/calendar-9.tsx',
@@ -4263,7 +5991,7 @@ export const Index: Record<string, any> = {
     name: 'drawer-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['drawer'],
+    registryDependencies: ['drawer', 'button', 'dialog', 'direction', 'input', 'label', 'separator'],
     files: [
       {
         path: 'drawer/drawer-1.tsx',
@@ -4279,7 +6007,7 @@ export const Index: Record<string, any> = {
     name: 'drawer-10',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['drawer'],
+    registryDependencies: ['drawer', 'button', 'dialog', 'direction', 'input', 'label', 'separator'],
     files: [
       {
         path: 'drawer/drawer-10.tsx',
@@ -4291,11 +6019,27 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'drawer',
   },
+  'drawer-11': {
+    name: 'drawer-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['drawer', 'button', 'dialog', 'direction', 'input', 'label', 'separator'],
+    files: [
+      {
+        path: 'drawer/drawer-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Drawer11,
+    source: '/registry-examples/src/drawer',
+    categories: [],
+    root_folder: 'drawer',
+  },
   'drawer-2': {
     name: 'drawer-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['drawer'],
+    registryDependencies: ['drawer', 'button', 'dialog', 'direction', 'input', 'label', 'separator'],
     files: [
       {
         path: 'drawer/drawer-2.tsx',
@@ -4311,7 +6055,7 @@ export const Index: Record<string, any> = {
     name: 'drawer-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['drawer'],
+    registryDependencies: ['drawer', 'button', 'dialog', 'direction', 'input', 'label', 'separator'],
     files: [
       {
         path: 'drawer/drawer-3.tsx',
@@ -4327,7 +6071,7 @@ export const Index: Record<string, any> = {
     name: 'drawer-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['drawer'],
+    registryDependencies: ['drawer', 'button', 'dialog', 'direction', 'input', 'label', 'separator'],
     files: [
       {
         path: 'drawer/drawer-4.tsx',
@@ -4343,7 +6087,7 @@ export const Index: Record<string, any> = {
     name: 'drawer-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['drawer'],
+    registryDependencies: ['drawer', 'button', 'dialog', 'direction', 'input', 'label', 'separator'],
     files: [
       {
         path: 'drawer/drawer-5.tsx',
@@ -4359,7 +6103,7 @@ export const Index: Record<string, any> = {
     name: 'drawer-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['drawer'],
+    registryDependencies: ['drawer', 'button', 'dialog', 'direction', 'input', 'label', 'separator'],
     files: [
       {
         path: 'drawer/drawer-6.tsx',
@@ -4375,7 +6119,7 @@ export const Index: Record<string, any> = {
     name: 'drawer-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['drawer'],
+    registryDependencies: ['drawer', 'button', 'dialog', 'direction', 'input', 'label', 'separator'],
     files: [
       {
         path: 'drawer/drawer-7.tsx',
@@ -4391,7 +6135,7 @@ export const Index: Record<string, any> = {
     name: 'drawer-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['drawer'],
+    registryDependencies: ['drawer', 'button', 'dialog', 'direction', 'input', 'label', 'separator'],
     files: [
       {
         path: 'drawer/drawer-8.tsx',
@@ -4407,7 +6151,7 @@ export const Index: Record<string, any> = {
     name: 'drawer-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['drawer'],
+    registryDependencies: ['drawer', 'button', 'dialog', 'direction', 'input', 'label', 'separator'],
     files: [
       {
         path: 'drawer/drawer-9.tsx',
@@ -4423,7 +6167,19 @@ export const Index: Record<string, any> = {
     name: 'direction-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['direction'],
+    registryDependencies: [
+      'direction',
+      'avatar',
+      'badge',
+      'button',
+      'card',
+      'dropdown-menu',
+      'label',
+      'slider',
+      'switch',
+      'tabs',
+      'toggle-group',
+    ],
     files: [
       {
         path: 'direction/direction-1.tsx',
@@ -4435,11 +6191,95 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'direction',
   },
+  'direction-2': {
+    name: 'direction-2',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'direction',
+      'avatar',
+      'badge',
+      'button',
+      'card',
+      'dropdown-menu',
+      'label',
+      'slider',
+      'switch',
+      'tabs',
+      'toggle-group',
+    ],
+    files: [
+      {
+        path: 'direction/direction-2.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Direction2,
+    source: '/registry-examples/src/direction',
+    categories: [],
+    root_folder: 'direction',
+  },
+  'direction-3': {
+    name: 'direction-3',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'direction',
+      'avatar',
+      'badge',
+      'button',
+      'card',
+      'dropdown-menu',
+      'label',
+      'slider',
+      'switch',
+      'tabs',
+      'toggle-group',
+    ],
+    files: [
+      {
+        path: 'direction/direction-3.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Direction3,
+    source: '/registry-examples/src/direction',
+    categories: [],
+    root_folder: 'direction',
+  },
+  'direction-4': {
+    name: 'direction-4',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'direction',
+      'avatar',
+      'badge',
+      'button',
+      'card',
+      'dropdown-menu',
+      'label',
+      'slider',
+      'switch',
+      'tabs',
+      'toggle-group',
+    ],
+    files: [
+      {
+        path: 'direction/direction-4.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Direction4,
+    source: '/registry-examples/src/direction',
+    categories: [],
+    root_folder: 'direction',
+  },
   'hover-card-1': {
     name: 'hover-card-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['hover-card'],
+    registryDependencies: ['hover-card', 'avatar', 'direction', 'label', 'skeleton', 'switch'],
     files: [
       {
         path: 'hover-card/hover-card-1.tsx',
@@ -4451,11 +6291,43 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'hover-card',
   },
+  'hover-card-10': {
+    name: 'hover-card-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['hover-card', 'avatar', 'direction', 'label', 'skeleton', 'switch'],
+    files: [
+      {
+        path: 'hover-card/hover-card-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _HoverCard10,
+    source: '/registry-examples/src/hover-card',
+    categories: [],
+    root_folder: 'hover-card',
+  },
+  'hover-card-11': {
+    name: 'hover-card-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['hover-card', 'avatar', 'direction', 'label', 'skeleton', 'switch'],
+    files: [
+      {
+        path: 'hover-card/hover-card-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _HoverCard11,
+    source: '/registry-examples/src/hover-card',
+    categories: [],
+    root_folder: 'hover-card',
+  },
   'hover-card-2': {
     name: 'hover-card-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['hover-card'],
+    registryDependencies: ['hover-card', 'avatar', 'direction', 'label', 'skeleton', 'switch'],
     files: [
       {
         path: 'hover-card/hover-card-2.tsx',
@@ -4471,7 +6343,7 @@ export const Index: Record<string, any> = {
     name: 'hover-card-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['hover-card'],
+    registryDependencies: ['hover-card', 'avatar', 'direction', 'label', 'skeleton', 'switch'],
     files: [
       {
         path: 'hover-card/hover-card-3.tsx',
@@ -4487,7 +6359,7 @@ export const Index: Record<string, any> = {
     name: 'hover-card-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['hover-card'],
+    registryDependencies: ['hover-card', 'avatar', 'direction', 'label', 'skeleton', 'switch'],
     files: [
       {
         path: 'hover-card/hover-card-4.tsx',
@@ -4503,7 +6375,7 @@ export const Index: Record<string, any> = {
     name: 'hover-card-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['hover-card'],
+    registryDependencies: ['hover-card', 'avatar', 'direction', 'label', 'skeleton', 'switch'],
     files: [
       {
         path: 'hover-card/hover-card-5.tsx',
@@ -4515,11 +6387,75 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'hover-card',
   },
+  'hover-card-6': {
+    name: 'hover-card-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['hover-card', 'avatar', 'direction', 'label', 'skeleton', 'switch'],
+    files: [
+      {
+        path: 'hover-card/hover-card-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _HoverCard6,
+    source: '/registry-examples/src/hover-card',
+    categories: [],
+    root_folder: 'hover-card',
+  },
+  'hover-card-7': {
+    name: 'hover-card-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['hover-card', 'avatar', 'direction', 'label', 'skeleton', 'switch'],
+    files: [
+      {
+        path: 'hover-card/hover-card-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _HoverCard7,
+    source: '/registry-examples/src/hover-card',
+    categories: [],
+    root_folder: 'hover-card',
+  },
+  'hover-card-8': {
+    name: 'hover-card-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['hover-card', 'avatar', 'direction', 'label', 'skeleton', 'switch'],
+    files: [
+      {
+        path: 'hover-card/hover-card-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _HoverCard8,
+    source: '/registry-examples/src/hover-card',
+    categories: [],
+    root_folder: 'hover-card',
+  },
+  'hover-card-9': {
+    name: 'hover-card-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['hover-card', 'avatar', 'direction', 'label', 'skeleton', 'switch'],
+    files: [
+      {
+        path: 'hover-card/hover-card-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _HoverCard9,
+    source: '/registry-examples/src/hover-card',
+    categories: [],
+    root_folder: 'hover-card',
+  },
   'input-1': {
     name: 'input-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input'],
+    registryDependencies: ['input', 'button', 'field', 'label'],
     files: [
       {
         path: 'input/input-1.tsx',
@@ -4531,11 +6467,27 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'input',
   },
+  'input-10': {
+    name: 'input-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['input', 'button', 'field', 'label'],
+    files: [
+      {
+        path: 'input/input-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Input10,
+    source: '/registry-examples/src/input',
+    categories: [],
+    root_folder: 'input',
+  },
   'input-2': {
     name: 'input-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input'],
+    registryDependencies: ['input', 'button', 'field', 'label'],
     files: [
       {
         path: 'input/input-2.tsx',
@@ -4551,7 +6503,7 @@ export const Index: Record<string, any> = {
     name: 'input-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input'],
+    registryDependencies: ['input', 'button', 'field', 'label'],
     files: [
       {
         path: 'input/input-3.tsx',
@@ -4567,7 +6519,7 @@ export const Index: Record<string, any> = {
     name: 'input-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input'],
+    registryDependencies: ['input', 'button', 'field', 'label'],
     files: [
       {
         path: 'input/input-4.tsx',
@@ -4583,7 +6535,7 @@ export const Index: Record<string, any> = {
     name: 'input-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input'],
+    registryDependencies: ['input', 'button', 'field', 'label'],
     files: [
       {
         path: 'input/input-5.tsx',
@@ -4599,7 +6551,7 @@ export const Index: Record<string, any> = {
     name: 'input-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input'],
+    registryDependencies: ['input', 'button', 'field', 'label'],
     files: [
       {
         path: 'input/input-6.tsx',
@@ -4615,7 +6567,7 @@ export const Index: Record<string, any> = {
     name: 'input-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input'],
+    registryDependencies: ['input', 'button', 'field', 'label'],
     files: [
       {
         path: 'input/input-7.tsx',
@@ -4631,7 +6583,7 @@ export const Index: Record<string, any> = {
     name: 'input-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input'],
+    registryDependencies: ['input', 'button', 'field', 'label'],
     files: [
       {
         path: 'input/input-8.tsx',
@@ -4647,7 +6599,7 @@ export const Index: Record<string, any> = {
     name: 'input-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input'],
+    registryDependencies: ['input', 'button', 'field', 'label'],
     files: [
       {
         path: 'input/input-9.tsx',
@@ -4663,7 +6615,7 @@ export const Index: Record<string, any> = {
     name: 'label-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['label'],
+    registryDependencies: ['label', 'checkbox', 'input', 'switch'],
     files: [
       {
         path: 'label/label-1.tsx',
@@ -4679,7 +6631,7 @@ export const Index: Record<string, any> = {
     name: 'label-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['label'],
+    registryDependencies: ['label', 'checkbox', 'input', 'switch'],
     files: [
       {
         path: 'label/label-2.tsx',
@@ -4695,7 +6647,7 @@ export const Index: Record<string, any> = {
     name: 'label-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['label'],
+    registryDependencies: ['label', 'checkbox', 'input', 'switch'],
     files: [
       {
         path: 'label/label-3.tsx',
@@ -4711,7 +6663,7 @@ export const Index: Record<string, any> = {
     name: 'label-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['label'],
+    registryDependencies: ['label', 'checkbox', 'input', 'switch'],
     files: [
       {
         path: 'label/label-4.tsx',
@@ -4723,11 +6675,43 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'label',
   },
+  'label-5': {
+    name: 'label-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['label', 'checkbox', 'input', 'switch'],
+    files: [
+      {
+        path: 'label/label-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Label5,
+    source: '/registry-examples/src/label',
+    categories: [],
+    root_folder: 'label',
+  },
+  'label-6': {
+    name: 'label-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['label', 'checkbox', 'input', 'switch'],
+    files: [
+      {
+        path: 'label/label-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Label6,
+    source: '/registry-examples/src/label',
+    categories: [],
+    root_folder: 'label',
+  },
   'progress-1': {
     name: 'progress-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['progress'],
+    registryDependencies: ['progress', 'button', 'direction'],
     files: [
       {
         path: 'progress/progress-1.tsx',
@@ -4743,7 +6727,7 @@ export const Index: Record<string, any> = {
     name: 'progress-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['progress'],
+    registryDependencies: ['progress', 'button', 'direction'],
     files: [
       {
         path: 'progress/progress-2.tsx',
@@ -4759,7 +6743,7 @@ export const Index: Record<string, any> = {
     name: 'progress-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['progress'],
+    registryDependencies: ['progress', 'button', 'direction'],
     files: [
       {
         path: 'progress/progress-3.tsx',
@@ -4771,11 +6755,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'progress',
   },
+  'progress-4': {
+    name: 'progress-4',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['progress', 'button', 'direction'],
+    files: [
+      {
+        path: 'progress/progress-4.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Progress4,
+    source: '/registry-examples/src/progress',
+    categories: [],
+    root_folder: 'progress',
+  },
+  'progress-5': {
+    name: 'progress-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['progress', 'button', 'direction'],
+    files: [
+      {
+        path: 'progress/progress-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Progress5,
+    source: '/registry-examples/src/progress',
+    categories: [],
+    root_folder: 'progress',
+  },
+  'progress-6': {
+    name: 'progress-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['progress', 'button', 'direction'],
+    files: [
+      {
+        path: 'progress/progress-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Progress6,
+    source: '/registry-examples/src/progress',
+    categories: [],
+    root_folder: 'progress',
+  },
   'radio-group-1': {
     name: 'radio-group-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['radio-group'],
+    registryDependencies: ['radio-group', 'button', 'field'],
     files: [
       {
         path: 'radio-group/radio-group-1.tsx',
@@ -4791,7 +6823,7 @@ export const Index: Record<string, any> = {
     name: 'radio-group-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['radio-group'],
+    registryDependencies: ['radio-group', 'button', 'field'],
     files: [
       {
         path: 'radio-group/radio-group-2.tsx',
@@ -4807,7 +6839,7 @@ export const Index: Record<string, any> = {
     name: 'radio-group-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['radio-group'],
+    registryDependencies: ['radio-group', 'button', 'field'],
     files: [
       {
         path: 'radio-group/radio-group-3.tsx',
@@ -4823,7 +6855,7 @@ export const Index: Record<string, any> = {
     name: 'radio-group-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['radio-group'],
+    registryDependencies: ['radio-group', 'button', 'field'],
     files: [
       {
         path: 'radio-group/radio-group-4.tsx',
@@ -4835,11 +6867,75 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'radio-group',
   },
+  'radio-group-5': {
+    name: 'radio-group-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['radio-group', 'button', 'field'],
+    files: [
+      {
+        path: 'radio-group/radio-group-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _RadioGroup5,
+    source: '/registry-examples/src/radio-group',
+    categories: [],
+    root_folder: 'radio-group',
+  },
+  'radio-group-6': {
+    name: 'radio-group-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['radio-group', 'button', 'field'],
+    files: [
+      {
+        path: 'radio-group/radio-group-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _RadioGroup6,
+    source: '/registry-examples/src/radio-group',
+    categories: [],
+    root_folder: 'radio-group',
+  },
+  'radio-group-7': {
+    name: 'radio-group-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['radio-group', 'button', 'field'],
+    files: [
+      {
+        path: 'radio-group/radio-group-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _RadioGroup7,
+    source: '/registry-examples/src/radio-group',
+    categories: [],
+    root_folder: 'radio-group',
+  },
+  'radio-group-8': {
+    name: 'radio-group-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['radio-group', 'button', 'field'],
+    files: [
+      {
+        path: 'radio-group/radio-group-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _RadioGroup8,
+    source: '/registry-examples/src/radio-group',
+    categories: [],
+    root_folder: 'radio-group',
+  },
   'scroll-area-1': {
     name: 'scroll-area-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['scroll-area'],
+    registryDependencies: ['scroll-area', 'badge', 'button', 'separator'],
     files: [
       {
         path: 'scroll-area/scroll-area-1.tsx',
@@ -4855,7 +6951,7 @@ export const Index: Record<string, any> = {
     name: 'scroll-area-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['scroll-area'],
+    registryDependencies: ['scroll-area', 'badge', 'button', 'separator'],
     files: [
       {
         path: 'scroll-area/scroll-area-2.tsx',
@@ -4871,7 +6967,7 @@ export const Index: Record<string, any> = {
     name: 'scroll-area-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['scroll-area'],
+    registryDependencies: ['scroll-area', 'badge', 'button', 'separator'],
     files: [
       {
         path: 'scroll-area/scroll-area-3.tsx',
@@ -4887,7 +6983,7 @@ export const Index: Record<string, any> = {
     name: 'scroll-area-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['scroll-area'],
+    registryDependencies: ['scroll-area', 'badge', 'button', 'separator'],
     files: [
       {
         path: 'scroll-area/scroll-area-4.tsx',
@@ -4899,11 +6995,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'scroll-area',
   },
+  'scroll-area-5': {
+    name: 'scroll-area-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['scroll-area', 'badge', 'button', 'separator'],
+    files: [
+      {
+        path: 'scroll-area/scroll-area-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _ScrollArea5,
+    source: '/registry-examples/src/scroll-area',
+    categories: [],
+    root_folder: 'scroll-area',
+  },
+  'scroll-area-6': {
+    name: 'scroll-area-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['scroll-area', 'badge', 'button', 'separator'],
+    files: [
+      {
+        path: 'scroll-area/scroll-area-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _ScrollArea6,
+    source: '/registry-examples/src/scroll-area',
+    categories: [],
+    root_folder: 'scroll-area',
+  },
+  'scroll-area-7': {
+    name: 'scroll-area-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['scroll-area', 'badge', 'button', 'separator'],
+    files: [
+      {
+        path: 'scroll-area/scroll-area-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _ScrollArea7,
+    source: '/registry-examples/src/scroll-area',
+    categories: [],
+    root_folder: 'scroll-area',
+  },
   'select-1': {
     name: 'select-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['select'],
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
     files: [
       {
         path: 'select/select-1.tsx',
@@ -4915,11 +7059,171 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'select',
   },
+  'select-10': {
+    name: 'select-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select10,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
+  'select-11': {
+    name: 'select-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select11,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
+  'select-12': {
+    name: 'select-12',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-12.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select12,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
+  'select-13': {
+    name: 'select-13',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-13.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select13,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
+  'select-14': {
+    name: 'select-14',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-14.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select14,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
+  'select-15': {
+    name: 'select-15',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-15.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select15,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
+  'select-16': {
+    name: 'select-16',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-16.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select16,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
+  'select-17': {
+    name: 'select-17',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-17.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select17,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
+  'select-18': {
+    name: 'select-18',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-18.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select18,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
+  'select-19': {
+    name: 'select-19',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-19.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select19,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
   'select-2': {
     name: 'select-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['select'],
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
     files: [
       {
         path: 'select/select-2.tsx',
@@ -4931,11 +7235,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'select',
   },
+  'select-20': {
+    name: 'select-20',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-20.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select20,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
+  'select-21': {
+    name: 'select-21',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-21.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select21,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
+  'select-22': {
+    name: 'select-22',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-22.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select22,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
   'select-3': {
     name: 'select-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['select'],
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
     files: [
       {
         path: 'select/select-3.tsx',
@@ -4951,7 +7303,7 @@ export const Index: Record<string, any> = {
     name: 'select-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['select'],
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
     files: [
       {
         path: 'select/select-4.tsx',
@@ -4967,7 +7319,7 @@ export const Index: Record<string, any> = {
     name: 'select-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['select'],
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
     files: [
       {
         path: 'select/select-5.tsx',
@@ -4983,7 +7335,7 @@ export const Index: Record<string, any> = {
     name: 'select-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['select'],
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
     files: [
       {
         path: 'select/select-6.tsx',
@@ -4995,11 +7347,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'select',
   },
+  'select-7': {
+    name: 'select-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select7,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
+  'select-8': {
+    name: 'select-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select8,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
+  'select-9': {
+    name: 'select-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select9,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
   'separator-1': {
     name: 'separator-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['separator'],
+    registryDependencies: ['separator', 'button'],
     files: [
       {
         path: 'separator/separator-1.tsx',
@@ -5015,7 +7415,7 @@ export const Index: Record<string, any> = {
     name: 'separator-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['separator'],
+    registryDependencies: ['separator', 'button'],
     files: [
       {
         path: 'separator/separator-2.tsx',
@@ -5031,7 +7431,7 @@ export const Index: Record<string, any> = {
     name: 'separator-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['separator'],
+    registryDependencies: ['separator', 'button'],
     files: [
       {
         path: 'separator/separator-3.tsx',
@@ -5043,11 +7443,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'separator',
   },
+  'separator-4': {
+    name: 'separator-4',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['separator', 'button'],
+    files: [
+      {
+        path: 'separator/separator-4.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Separator4,
+    source: '/registry-examples/src/separator',
+    categories: [],
+    root_folder: 'separator',
+  },
+  'separator-5': {
+    name: 'separator-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['separator', 'button'],
+    files: [
+      {
+        path: 'separator/separator-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Separator5,
+    source: '/registry-examples/src/separator',
+    categories: [],
+    root_folder: 'separator',
+  },
+  'separator-6': {
+    name: 'separator-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['separator', 'button'],
+    files: [
+      {
+        path: 'separator/separator-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Separator6,
+    source: '/registry-examples/src/separator',
+    categories: [],
+    root_folder: 'separator',
+  },
   'sheet-1': {
     name: 'sheet-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['sheet'],
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
     files: [
       {
         path: 'sheet/sheet-1.tsx',
@@ -5059,11 +7507,75 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'sheet',
   },
+  'sheet-10': {
+    name: 'sheet-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
+    files: [
+      {
+        path: 'sheet/sheet-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sheet10,
+    source: '/registry-examples/src/sheet',
+    categories: [],
+    root_folder: 'sheet',
+  },
+  'sheet-11': {
+    name: 'sheet-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
+    files: [
+      {
+        path: 'sheet/sheet-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sheet11,
+    source: '/registry-examples/src/sheet',
+    categories: [],
+    root_folder: 'sheet',
+  },
+  'sheet-12': {
+    name: 'sheet-12',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
+    files: [
+      {
+        path: 'sheet/sheet-12.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sheet12,
+    source: '/registry-examples/src/sheet',
+    categories: [],
+    root_folder: 'sheet',
+  },
+  'sheet-13': {
+    name: 'sheet-13',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
+    files: [
+      {
+        path: 'sheet/sheet-13.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sheet13,
+    source: '/registry-examples/src/sheet',
+    categories: [],
+    root_folder: 'sheet',
+  },
   'sheet-2': {
     name: 'sheet-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['sheet'],
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
     files: [
       {
         path: 'sheet/sheet-2.tsx',
@@ -5079,7 +7591,7 @@ export const Index: Record<string, any> = {
     name: 'sheet-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['sheet'],
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
     files: [
       {
         path: 'sheet/sheet-3.tsx',
@@ -5095,7 +7607,7 @@ export const Index: Record<string, any> = {
     name: 'sheet-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['sheet'],
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
     files: [
       {
         path: 'sheet/sheet-4.tsx',
@@ -5111,7 +7623,7 @@ export const Index: Record<string, any> = {
     name: 'sheet-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['sheet'],
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
     files: [
       {
         path: 'sheet/sheet-5.tsx',
@@ -5123,11 +7635,75 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'sheet',
   },
+  'sheet-6': {
+    name: 'sheet-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
+    files: [
+      {
+        path: 'sheet/sheet-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sheet6,
+    source: '/registry-examples/src/sheet',
+    categories: [],
+    root_folder: 'sheet',
+  },
+  'sheet-7': {
+    name: 'sheet-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
+    files: [
+      {
+        path: 'sheet/sheet-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sheet7,
+    source: '/registry-examples/src/sheet',
+    categories: [],
+    root_folder: 'sheet',
+  },
+  'sheet-8': {
+    name: 'sheet-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
+    files: [
+      {
+        path: 'sheet/sheet-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sheet8,
+    source: '/registry-examples/src/sheet',
+    categories: [],
+    root_folder: 'sheet',
+  },
+  'sheet-9': {
+    name: 'sheet-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
+    files: [
+      {
+        path: 'sheet/sheet-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sheet9,
+    source: '/registry-examples/src/sheet',
+    categories: [],
+    root_folder: 'sheet',
+  },
   'skeleton-1': {
     name: 'skeleton-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['skeleton'],
+    registryDependencies: ['skeleton', 'avatar', 'button'],
     files: [
       {
         path: 'skeleton/skeleton-1.tsx',
@@ -5143,7 +7719,7 @@ export const Index: Record<string, any> = {
     name: 'skeleton-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['skeleton'],
+    registryDependencies: ['skeleton', 'avatar', 'button'],
     files: [
       {
         path: 'skeleton/skeleton-2.tsx',
@@ -5159,7 +7735,7 @@ export const Index: Record<string, any> = {
     name: 'skeleton-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['skeleton'],
+    registryDependencies: ['skeleton', 'avatar', 'button'],
     files: [
       {
         path: 'skeleton/skeleton-3.tsx',
@@ -5175,7 +7751,7 @@ export const Index: Record<string, any> = {
     name: 'skeleton-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['skeleton'],
+    registryDependencies: ['skeleton', 'avatar', 'button'],
     files: [
       {
         path: 'skeleton/skeleton-4.tsx',
@@ -5187,11 +7763,27 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'skeleton',
   },
+  'skeleton-5': {
+    name: 'skeleton-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['skeleton', 'avatar', 'button'],
+    files: [
+      {
+        path: 'skeleton/skeleton-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Skeleton5,
+    source: '/registry-examples/src/skeleton',
+    categories: [],
+    root_folder: 'skeleton',
+  },
   'slider-1': {
     name: 'slider-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['slider'],
+    registryDependencies: ['slider', 'button', 'direction'],
     files: [
       {
         path: 'slider/slider-1.tsx',
@@ -5203,11 +7795,43 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'slider',
   },
+  'slider-10': {
+    name: 'slider-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['slider', 'button', 'direction'],
+    files: [
+      {
+        path: 'slider/slider-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Slider10,
+    source: '/registry-examples/src/slider',
+    categories: [],
+    root_folder: 'slider',
+  },
+  'slider-11': {
+    name: 'slider-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['slider', 'button', 'direction'],
+    files: [
+      {
+        path: 'slider/slider-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Slider11,
+    source: '/registry-examples/src/slider',
+    categories: [],
+    root_folder: 'slider',
+  },
   'slider-2': {
     name: 'slider-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['slider'],
+    registryDependencies: ['slider', 'button', 'direction'],
     files: [
       {
         path: 'slider/slider-2.tsx',
@@ -5223,7 +7847,7 @@ export const Index: Record<string, any> = {
     name: 'slider-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['slider'],
+    registryDependencies: ['slider', 'button', 'direction'],
     files: [
       {
         path: 'slider/slider-3.tsx',
@@ -5239,7 +7863,7 @@ export const Index: Record<string, any> = {
     name: 'slider-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['slider'],
+    registryDependencies: ['slider', 'button', 'direction'],
     files: [
       {
         path: 'slider/slider-4.tsx',
@@ -5255,7 +7879,7 @@ export const Index: Record<string, any> = {
     name: 'slider-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['slider'],
+    registryDependencies: ['slider', 'button', 'direction'],
     files: [
       {
         path: 'slider/slider-5.tsx',
@@ -5271,7 +7895,7 @@ export const Index: Record<string, any> = {
     name: 'slider-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['slider'],
+    registryDependencies: ['slider', 'button', 'direction'],
     files: [
       {
         path: 'slider/slider-6.tsx',
@@ -5283,11 +7907,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'slider',
   },
+  'slider-7': {
+    name: 'slider-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['slider', 'button', 'direction'],
+    files: [
+      {
+        path: 'slider/slider-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Slider7,
+    source: '/registry-examples/src/slider',
+    categories: [],
+    root_folder: 'slider',
+  },
+  'slider-8': {
+    name: 'slider-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['slider', 'button', 'direction'],
+    files: [
+      {
+        path: 'slider/slider-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Slider8,
+    source: '/registry-examples/src/slider',
+    categories: [],
+    root_folder: 'slider',
+  },
+  'slider-9': {
+    name: 'slider-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['slider', 'button', 'direction'],
+    files: [
+      {
+        path: 'slider/slider-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Slider9,
+    source: '/registry-examples/src/slider',
+    categories: [],
+    root_folder: 'slider',
+  },
   'switch-1': {
     name: 'switch-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['switch'],
+    registryDependencies: ['switch', 'button', 'field', 'label'],
     files: [
       {
         path: 'switch/switch-1.tsx',
@@ -5303,7 +7975,7 @@ export const Index: Record<string, any> = {
     name: 'switch-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['switch'],
+    registryDependencies: ['switch', 'button', 'field', 'label'],
     files: [
       {
         path: 'switch/switch-2.tsx',
@@ -5319,7 +7991,7 @@ export const Index: Record<string, any> = {
     name: 'switch-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['switch'],
+    registryDependencies: ['switch', 'button', 'field', 'label'],
     files: [
       {
         path: 'switch/switch-3.tsx',
@@ -5335,7 +8007,7 @@ export const Index: Record<string, any> = {
     name: 'switch-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['switch'],
+    registryDependencies: ['switch', 'button', 'field', 'label'],
     files: [
       {
         path: 'switch/switch-4.tsx',
@@ -5343,6 +8015,54 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _Switch4,
+    source: '/registry-examples/src/switch',
+    categories: [],
+    root_folder: 'switch',
+  },
+  'switch-5': {
+    name: 'switch-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['switch', 'button', 'field', 'label'],
+    files: [
+      {
+        path: 'switch/switch-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Switch5,
+    source: '/registry-examples/src/switch',
+    categories: [],
+    root_folder: 'switch',
+  },
+  'switch-6': {
+    name: 'switch-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['switch', 'button', 'field', 'label'],
+    files: [
+      {
+        path: 'switch/switch-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Switch6,
+    source: '/registry-examples/src/switch',
+    categories: [],
+    root_folder: 'switch',
+  },
+  'switch-7': {
+    name: 'switch-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['switch', 'button', 'field', 'label'],
+    files: [
+      {
+        path: 'switch/switch-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Switch7,
     source: '/registry-examples/src/switch',
     categories: [],
     root_folder: 'switch',
@@ -5359,6 +8079,38 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _Sonner1,
+    source: '/registry-examples/src/sonner',
+    categories: [],
+    root_folder: 'sonner',
+  },
+  'sonner-10': {
+    name: 'sonner-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sonner'],
+    files: [
+      {
+        path: 'sonner/sonner-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sonner10,
+    source: '/registry-examples/src/sonner',
+    categories: [],
+    root_folder: 'sonner',
+  },
+  'sonner-11': {
+    name: 'sonner-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sonner'],
+    files: [
+      {
+        path: 'sonner/sonner-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sonner11,
     source: '/registry-examples/src/sonner',
     categories: [],
     root_folder: 'sonner',
@@ -5443,11 +8195,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'sonner',
   },
+  'sonner-7': {
+    name: 'sonner-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sonner'],
+    files: [
+      {
+        path: 'sonner/sonner-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sonner7,
+    source: '/registry-examples/src/sonner',
+    categories: [],
+    root_folder: 'sonner',
+  },
+  'sonner-8': {
+    name: 'sonner-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sonner'],
+    files: [
+      {
+        path: 'sonner/sonner-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sonner8,
+    source: '/registry-examples/src/sonner',
+    categories: [],
+    root_folder: 'sonner',
+  },
+  'sonner-9': {
+    name: 'sonner-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sonner'],
+    files: [
+      {
+        path: 'sonner/sonner-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sonner9,
+    source: '/registry-examples/src/sonner',
+    categories: [],
+    root_folder: 'sonner',
+  },
   'tabs-1': {
     name: 'tabs-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['tabs'],
+    registryDependencies: ['tabs', 'button', 'card', 'input', 'label', 'switch', 'textarea'],
     files: [
       {
         path: 'tabs/tabs-1.tsx',
@@ -5463,7 +8263,7 @@ export const Index: Record<string, any> = {
     name: 'tabs-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['tabs'],
+    registryDependencies: ['tabs', 'button', 'card', 'input', 'label', 'switch', 'textarea'],
     files: [
       {
         path: 'tabs/tabs-2.tsx',
@@ -5479,7 +8279,7 @@ export const Index: Record<string, any> = {
     name: 'tabs-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['tabs'],
+    registryDependencies: ['tabs', 'button', 'card', 'input', 'label', 'switch', 'textarea'],
     files: [
       {
         path: 'tabs/tabs-3.tsx',
@@ -5495,7 +8295,7 @@ export const Index: Record<string, any> = {
     name: 'tabs-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['tabs'],
+    registryDependencies: ['tabs', 'button', 'card', 'input', 'label', 'switch', 'textarea'],
     files: [
       {
         path: 'tabs/tabs-4.tsx',
@@ -5511,7 +8311,7 @@ export const Index: Record<string, any> = {
     name: 'tabs-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['tabs'],
+    registryDependencies: ['tabs', 'button', 'card', 'input', 'label', 'switch', 'textarea'],
     files: [
       {
         path: 'tabs/tabs-5.tsx',
@@ -5523,11 +8323,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'tabs',
   },
+  'tabs-6': {
+    name: 'tabs-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['tabs', 'button', 'card', 'input', 'label', 'switch', 'textarea'],
+    files: [
+      {
+        path: 'tabs/tabs-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Tabs6,
+    source: '/registry-examples/src/tabs',
+    categories: [],
+    root_folder: 'tabs',
+  },
+  'tabs-7': {
+    name: 'tabs-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['tabs', 'button', 'card', 'input', 'label', 'switch', 'textarea'],
+    files: [
+      {
+        path: 'tabs/tabs-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Tabs7,
+    source: '/registry-examples/src/tabs',
+    categories: [],
+    root_folder: 'tabs',
+  },
+  'tabs-8': {
+    name: 'tabs-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['tabs', 'button', 'card', 'input', 'label', 'switch', 'textarea'],
+    files: [
+      {
+        path: 'tabs/tabs-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Tabs8,
+    source: '/registry-examples/src/tabs',
+    categories: [],
+    root_folder: 'tabs',
+  },
   'textarea-1': {
     name: 'textarea-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['textarea'],
+    registryDependencies: ['textarea', 'button', 'field', 'label'],
     files: [
       {
         path: 'textarea/textarea-1.tsx',
@@ -5539,11 +8387,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'textarea',
   },
+  'textarea-10': {
+    name: 'textarea-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['textarea', 'button', 'field', 'label'],
+    files: [
+      {
+        path: 'textarea/textarea-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Textarea10,
+    source: '/registry-examples/src/textarea',
+    categories: [],
+    root_folder: 'textarea',
+  },
+  'textarea-11': {
+    name: 'textarea-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['textarea', 'button', 'field', 'label'],
+    files: [
+      {
+        path: 'textarea/textarea-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Textarea11,
+    source: '/registry-examples/src/textarea',
+    categories: [],
+    root_folder: 'textarea',
+  },
+  'textarea-12': {
+    name: 'textarea-12',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['textarea', 'button', 'field', 'label'],
+    files: [
+      {
+        path: 'textarea/textarea-12.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Textarea12,
+    source: '/registry-examples/src/textarea',
+    categories: [],
+    root_folder: 'textarea',
+  },
   'textarea-2': {
     name: 'textarea-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['textarea'],
+    registryDependencies: ['textarea', 'button', 'field', 'label'],
     files: [
       {
         path: 'textarea/textarea-2.tsx',
@@ -5559,7 +8455,7 @@ export const Index: Record<string, any> = {
     name: 'textarea-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['textarea'],
+    registryDependencies: ['textarea', 'button', 'field', 'label'],
     files: [
       {
         path: 'textarea/textarea-3.tsx',
@@ -5575,7 +8471,7 @@ export const Index: Record<string, any> = {
     name: 'textarea-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['textarea'],
+    registryDependencies: ['textarea', 'button', 'field', 'label'],
     files: [
       {
         path: 'textarea/textarea-4.tsx',
@@ -5591,7 +8487,7 @@ export const Index: Record<string, any> = {
     name: 'textarea-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['textarea'],
+    registryDependencies: ['textarea', 'button', 'field', 'label'],
     files: [
       {
         path: 'textarea/textarea-5.tsx',
@@ -5607,7 +8503,7 @@ export const Index: Record<string, any> = {
     name: 'textarea-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['textarea'],
+    registryDependencies: ['textarea', 'button', 'field', 'label'],
     files: [
       {
         path: 'textarea/textarea-6.tsx',
@@ -5623,7 +8519,7 @@ export const Index: Record<string, any> = {
     name: 'textarea-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['textarea'],
+    registryDependencies: ['textarea', 'button', 'field', 'label'],
     files: [
       {
         path: 'textarea/textarea-7.tsx',
@@ -5639,7 +8535,7 @@ export const Index: Record<string, any> = {
     name: 'textarea-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['textarea'],
+    registryDependencies: ['textarea', 'button', 'field', 'label'],
     files: [
       {
         path: 'textarea/textarea-8.tsx',
@@ -5655,7 +8551,7 @@ export const Index: Record<string, any> = {
     name: 'textarea-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['textarea'],
+    registryDependencies: ['textarea', 'button', 'field', 'label'],
     files: [
       {
         path: 'textarea/textarea-9.tsx',
@@ -5671,7 +8567,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle'],
+    registryDependencies: ['toggle', 'direction', 'input', 'label'],
     files: [
       {
         path: 'toggle/toggle-1.tsx',
@@ -5683,11 +8579,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'toggle',
   },
+  'toggle-10': {
+    name: 'toggle-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['toggle', 'direction', 'input', 'label'],
+    files: [
+      {
+        path: 'toggle/toggle-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Toggle10,
+    source: '/registry-examples/src/toggle',
+    categories: [],
+    root_folder: 'toggle',
+  },
+  'toggle-11': {
+    name: 'toggle-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['toggle', 'direction', 'input', 'label'],
+    files: [
+      {
+        path: 'toggle/toggle-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Toggle11,
+    source: '/registry-examples/src/toggle',
+    categories: [],
+    root_folder: 'toggle',
+  },
+  'toggle-12': {
+    name: 'toggle-12',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['toggle', 'direction', 'input', 'label'],
+    files: [
+      {
+        path: 'toggle/toggle-12.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Toggle12,
+    source: '/registry-examples/src/toggle',
+    categories: [],
+    root_folder: 'toggle',
+  },
   'toggle-2': {
     name: 'toggle-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle'],
+    registryDependencies: ['toggle', 'direction', 'input', 'label'],
     files: [
       {
         path: 'toggle/toggle-2.tsx',
@@ -5703,7 +8647,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle'],
+    registryDependencies: ['toggle', 'direction', 'input', 'label'],
     files: [
       {
         path: 'toggle/toggle-3.tsx',
@@ -5719,7 +8663,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle'],
+    registryDependencies: ['toggle', 'direction', 'input', 'label'],
     files: [
       {
         path: 'toggle/toggle-4.tsx',
@@ -5735,7 +8679,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle'],
+    registryDependencies: ['toggle', 'direction', 'input', 'label'],
     files: [
       {
         path: 'toggle/toggle-5.tsx',
@@ -5751,7 +8695,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle'],
+    registryDependencies: ['toggle', 'direction', 'input', 'label'],
     files: [
       {
         path: 'toggle/toggle-6.tsx',
@@ -5767,7 +8711,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle'],
+    registryDependencies: ['toggle', 'direction', 'input', 'label'],
     files: [
       {
         path: 'toggle/toggle-7.tsx',
@@ -5783,7 +8727,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle'],
+    registryDependencies: ['toggle', 'direction', 'input', 'label'],
     files: [
       {
         path: 'toggle/toggle-8.tsx',
@@ -5799,7 +8743,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle'],
+    registryDependencies: ['toggle', 'direction', 'input', 'label'],
     files: [
       {
         path: 'toggle/toggle-9.tsx',
@@ -5815,7 +8759,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-group-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle-group'],
+    registryDependencies: ['toggle-group', 'direction'],
     files: [
       {
         path: 'toggle-group/toggle-group-1.tsx',
@@ -5827,11 +8771,75 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'toggle-group',
   },
+  'toggle-group-10': {
+    name: 'toggle-group-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['toggle-group', 'direction'],
+    files: [
+      {
+        path: 'toggle-group/toggle-group-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _ToggleGroup10,
+    source: '/registry-examples/src/toggle-group',
+    categories: [],
+    root_folder: 'toggle-group',
+  },
+  'toggle-group-11': {
+    name: 'toggle-group-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['toggle-group', 'direction'],
+    files: [
+      {
+        path: 'toggle-group/toggle-group-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _ToggleGroup11,
+    source: '/registry-examples/src/toggle-group',
+    categories: [],
+    root_folder: 'toggle-group',
+  },
+  'toggle-group-12': {
+    name: 'toggle-group-12',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['toggle-group', 'direction'],
+    files: [
+      {
+        path: 'toggle-group/toggle-group-12.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _ToggleGroup12,
+    source: '/registry-examples/src/toggle-group',
+    categories: [],
+    root_folder: 'toggle-group',
+  },
+  'toggle-group-13': {
+    name: 'toggle-group-13',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['toggle-group', 'direction'],
+    files: [
+      {
+        path: 'toggle-group/toggle-group-13.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _ToggleGroup13,
+    source: '/registry-examples/src/toggle-group',
+    categories: [],
+    root_folder: 'toggle-group',
+  },
   'toggle-group-2': {
     name: 'toggle-group-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle-group'],
+    registryDependencies: ['toggle-group', 'direction'],
     files: [
       {
         path: 'toggle-group/toggle-group-2.tsx',
@@ -5847,7 +8855,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-group-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle-group'],
+    registryDependencies: ['toggle-group', 'direction'],
     files: [
       {
         path: 'toggle-group/toggle-group-3.tsx',
@@ -5863,7 +8871,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-group-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle-group'],
+    registryDependencies: ['toggle-group', 'direction'],
     files: [
       {
         path: 'toggle-group/toggle-group-4.tsx',
@@ -5879,7 +8887,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-group-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle-group'],
+    registryDependencies: ['toggle-group', 'direction'],
     files: [
       {
         path: 'toggle-group/toggle-group-5.tsx',
@@ -5895,7 +8903,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-group-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle-group'],
+    registryDependencies: ['toggle-group', 'direction'],
     files: [
       {
         path: 'toggle-group/toggle-group-6.tsx',
@@ -5911,7 +8919,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-group-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle-group'],
+    registryDependencies: ['toggle-group', 'direction'],
     files: [
       {
         path: 'toggle-group/toggle-group-7.tsx',
@@ -5927,7 +8935,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-group-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle-group'],
+    registryDependencies: ['toggle-group', 'direction'],
     files: [
       {
         path: 'toggle-group/toggle-group-8.tsx',
@@ -5943,7 +8951,7 @@ export const Index: Record<string, any> = {
     name: 'toggle-group-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['toggle-group'],
+    registryDependencies: ['toggle-group', 'direction'],
     files: [
       {
         path: 'toggle-group/toggle-group-9.tsx',
@@ -5959,7 +8967,7 @@ export const Index: Record<string, any> = {
     name: 'tooltip-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['tooltip'],
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
     files: [
       {
         path: 'tooltip/tooltip-1.tsx',
@@ -5971,11 +8979,107 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'tooltip',
   },
+  'tooltip-10': {
+    name: 'tooltip-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
+    files: [
+      {
+        path: 'tooltip/tooltip-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Tooltip10,
+    source: '/registry-examples/src/tooltip',
+    categories: [],
+    root_folder: 'tooltip',
+  },
+  'tooltip-11': {
+    name: 'tooltip-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
+    files: [
+      {
+        path: 'tooltip/tooltip-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Tooltip11,
+    source: '/registry-examples/src/tooltip',
+    categories: [],
+    root_folder: 'tooltip',
+  },
+  'tooltip-12': {
+    name: 'tooltip-12',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
+    files: [
+      {
+        path: 'tooltip/tooltip-12.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Tooltip12,
+    source: '/registry-examples/src/tooltip',
+    categories: [],
+    root_folder: 'tooltip',
+  },
+  'tooltip-13': {
+    name: 'tooltip-13',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
+    files: [
+      {
+        path: 'tooltip/tooltip-13.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Tooltip13,
+    source: '/registry-examples/src/tooltip',
+    categories: [],
+    root_folder: 'tooltip',
+  },
+  'tooltip-14': {
+    name: 'tooltip-14',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
+    files: [
+      {
+        path: 'tooltip/tooltip-14.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Tooltip14,
+    source: '/registry-examples/src/tooltip',
+    categories: [],
+    root_folder: 'tooltip',
+  },
+  'tooltip-15': {
+    name: 'tooltip-15',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
+    files: [
+      {
+        path: 'tooltip/tooltip-15.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Tooltip15,
+    source: '/registry-examples/src/tooltip',
+    categories: [],
+    root_folder: 'tooltip',
+  },
   'tooltip-2': {
     name: 'tooltip-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['tooltip'],
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
     files: [
       {
         path: 'tooltip/tooltip-2.tsx',
@@ -5991,7 +9095,7 @@ export const Index: Record<string, any> = {
     name: 'tooltip-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['tooltip'],
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
     files: [
       {
         path: 'tooltip/tooltip-3.tsx',
@@ -6007,7 +9111,7 @@ export const Index: Record<string, any> = {
     name: 'tooltip-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['tooltip'],
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
     files: [
       {
         path: 'tooltip/tooltip-4.tsx',
@@ -6023,7 +9127,7 @@ export const Index: Record<string, any> = {
     name: 'tooltip-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['tooltip'],
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
     files: [
       {
         path: 'tooltip/tooltip-5.tsx',
@@ -6039,7 +9143,7 @@ export const Index: Record<string, any> = {
     name: 'tooltip-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['tooltip'],
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
     files: [
       {
         path: 'tooltip/tooltip-6.tsx',
@@ -6055,7 +9159,7 @@ export const Index: Record<string, any> = {
     name: 'tooltip-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['tooltip'],
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
     files: [
       {
         path: 'tooltip/tooltip-7.tsx',
@@ -6063,6 +9167,38 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _Tooltip7,
+    source: '/registry-examples/src/tooltip',
+    categories: [],
+    root_folder: 'tooltip',
+  },
+  'tooltip-8': {
+    name: 'tooltip-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
+    files: [
+      {
+        path: 'tooltip/tooltip-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Tooltip8,
+    source: '/registry-examples/src/tooltip',
+    categories: [],
+    root_folder: 'tooltip',
+  },
+  'tooltip-9': {
+    name: 'tooltip-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['tooltip', 'button', 'direction', 'input', 'kbd', 'label', 'toggle'],
+    files: [
+      {
+        path: 'tooltip/tooltip-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Tooltip9,
     source: '/registry-examples/src/tooltip',
     categories: [],
     root_folder: 'tooltip',
@@ -6119,7 +9255,7 @@ export const Index: Record<string, any> = {
     name: 'typography-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-1.tsx',
@@ -6135,7 +9271,7 @@ export const Index: Record<string, any> = {
     name: 'typography-10',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-10.tsx',
@@ -6151,7 +9287,7 @@ export const Index: Record<string, any> = {
     name: 'typography-11',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-11.tsx',
@@ -6167,7 +9303,7 @@ export const Index: Record<string, any> = {
     name: 'typography-12',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-12.tsx',
@@ -6183,7 +9319,7 @@ export const Index: Record<string, any> = {
     name: 'typography-13',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-13.tsx',
@@ -6199,7 +9335,7 @@ export const Index: Record<string, any> = {
     name: 'typography-14',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-14.tsx',
@@ -6215,7 +9351,7 @@ export const Index: Record<string, any> = {
     name: 'typography-15',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-15.tsx',
@@ -6231,7 +9367,7 @@ export const Index: Record<string, any> = {
     name: 'typography-16',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-16.tsx',
@@ -6243,11 +9379,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'typography',
   },
+  'typography-17': {
+    name: 'typography-17',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['typography', 'direction'],
+    files: [
+      {
+        path: 'typography/typography-17.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Typography17,
+    source: '/registry-examples/src/typography',
+    categories: [],
+    root_folder: 'typography',
+  },
+  'typography-18': {
+    name: 'typography-18',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['typography', 'direction'],
+    files: [
+      {
+        path: 'typography/typography-18.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Typography18,
+    source: '/registry-examples/src/typography',
+    categories: [],
+    root_folder: 'typography',
+  },
+  'typography-19': {
+    name: 'typography-19',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['typography', 'direction'],
+    files: [
+      {
+        path: 'typography/typography-19.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Typography19,
+    source: '/registry-examples/src/typography',
+    categories: [],
+    root_folder: 'typography',
+  },
   'typography-2': {
     name: 'typography-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-2.tsx',
@@ -6263,7 +9447,7 @@ export const Index: Record<string, any> = {
     name: 'typography-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-3.tsx',
@@ -6279,7 +9463,7 @@ export const Index: Record<string, any> = {
     name: 'typography-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-4.tsx',
@@ -6295,7 +9479,7 @@ export const Index: Record<string, any> = {
     name: 'typography-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-5.tsx',
@@ -6311,7 +9495,7 @@ export const Index: Record<string, any> = {
     name: 'typography-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-6.tsx',
@@ -6327,7 +9511,7 @@ export const Index: Record<string, any> = {
     name: 'typography-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-7.tsx',
@@ -6343,7 +9527,7 @@ export const Index: Record<string, any> = {
     name: 'typography-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-8.tsx',
@@ -6359,7 +9543,7 @@ export const Index: Record<string, any> = {
     name: 'typography-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['typography'],
+    registryDependencies: ['typography', 'direction'],
     files: [
       {
         path: 'typography/typography-9.tsx',
@@ -6375,7 +9559,7 @@ export const Index: Record<string, any> = {
     name: 'table-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['table'],
+    registryDependencies: ['table', 'button', 'checkbox'],
     files: [
       {
         path: 'table/table-1.tsx',
@@ -6391,7 +9575,7 @@ export const Index: Record<string, any> = {
     name: 'table-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['table'],
+    registryDependencies: ['table', 'button', 'checkbox'],
     files: [
       {
         path: 'table/table-2.tsx',
@@ -6407,7 +9591,7 @@ export const Index: Record<string, any> = {
     name: 'table-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['table'],
+    registryDependencies: ['table', 'button', 'checkbox'],
     files: [
       {
         path: 'table/table-3.tsx',
@@ -6419,11 +9603,43 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'table',
   },
+  'table-4': {
+    name: 'table-4',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['table', 'button', 'checkbox'],
+    files: [
+      {
+        path: 'table/table-4.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Table4,
+    source: '/registry-examples/src/table',
+    categories: [],
+    root_folder: 'table',
+  },
+  'table-5': {
+    name: 'table-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['table', 'button', 'checkbox'],
+    files: [
+      {
+        path: 'table/table-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Table5,
+    source: '/registry-examples/src/table',
+    categories: [],
+    root_folder: 'table',
+  },
   'resizable-1': {
     name: 'resizable-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['resizable'],
+    registryDependencies: ['resizable', 'button'],
     files: [
       {
         path: 'resizable/resizable-1.tsx',
@@ -6439,7 +9655,7 @@ export const Index: Record<string, any> = {
     name: 'resizable-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['resizable'],
+    registryDependencies: ['resizable', 'button'],
     files: [
       {
         path: 'resizable/resizable-2.tsx',
@@ -6455,7 +9671,7 @@ export const Index: Record<string, any> = {
     name: 'resizable-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['resizable'],
+    registryDependencies: ['resizable', 'button'],
     files: [
       {
         path: 'resizable/resizable-3.tsx',
@@ -6471,7 +9687,7 @@ export const Index: Record<string, any> = {
     name: 'resizable-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['resizable'],
+    registryDependencies: ['resizable', 'button'],
     files: [
       {
         path: 'resizable/resizable-4.tsx',
@@ -6487,7 +9703,7 @@ export const Index: Record<string, any> = {
     name: 'resizable-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['resizable'],
+    registryDependencies: ['resizable', 'button'],
     files: [
       {
         path: 'resizable/resizable-5.tsx',
@@ -6495,6 +9711,70 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _Resizable5,
+    source: '/registry-examples/src/resizable',
+    categories: [],
+    root_folder: 'resizable',
+  },
+  'resizable-6': {
+    name: 'resizable-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['resizable', 'button'],
+    files: [
+      {
+        path: 'resizable/resizable-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Resizable6,
+    source: '/registry-examples/src/resizable',
+    categories: [],
+    root_folder: 'resizable',
+  },
+  'resizable-7': {
+    name: 'resizable-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['resizable', 'button'],
+    files: [
+      {
+        path: 'resizable/resizable-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Resizable7,
+    source: '/registry-examples/src/resizable',
+    categories: [],
+    root_folder: 'resizable',
+  },
+  'resizable-8': {
+    name: 'resizable-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['resizable', 'button'],
+    files: [
+      {
+        path: 'resizable/resizable-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Resizable8,
+    source: '/registry-examples/src/resizable',
+    categories: [],
+    root_folder: 'resizable',
+  },
+  'resizable-9': {
+    name: 'resizable-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['resizable', 'button'],
+    files: [
+      {
+        path: 'resizable/resizable-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Resizable9,
     source: '/registry-examples/src/resizable',
     categories: [],
     root_folder: 'resizable',
@@ -6563,11 +9843,91 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'pagination',
   },
+  'pagination-5': {
+    name: 'pagination-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['pagination'],
+    files: [
+      {
+        path: 'pagination/pagination-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Pagination5,
+    source: '/registry-examples/src/pagination',
+    categories: [],
+    root_folder: 'pagination',
+  },
+  'pagination-6': {
+    name: 'pagination-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['pagination'],
+    files: [
+      {
+        path: 'pagination/pagination-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Pagination6,
+    source: '/registry-examples/src/pagination',
+    categories: [],
+    root_folder: 'pagination',
+  },
+  'pagination-7': {
+    name: 'pagination-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['pagination'],
+    files: [
+      {
+        path: 'pagination/pagination-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Pagination7,
+    source: '/registry-examples/src/pagination',
+    categories: [],
+    root_folder: 'pagination',
+  },
+  'pagination-8': {
+    name: 'pagination-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['pagination'],
+    files: [
+      {
+        path: 'pagination/pagination-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Pagination8,
+    source: '/registry-examples/src/pagination',
+    categories: [],
+    root_folder: 'pagination',
+  },
+  'pagination-9': {
+    name: 'pagination-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['pagination'],
+    files: [
+      {
+        path: 'pagination/pagination-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Pagination9,
+    source: '/registry-examples/src/pagination',
+    categories: [],
+    root_folder: 'pagination',
+  },
   'checkbox-1': {
     name: 'checkbox-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['checkbox'],
+    registryDependencies: ['checkbox', 'button', 'field'],
     files: [
       {
         path: 'checkbox/checkbox-1.tsx',
@@ -6583,7 +9943,7 @@ export const Index: Record<string, any> = {
     name: 'checkbox-10',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['checkbox'],
+    registryDependencies: ['checkbox', 'button', 'field'],
     files: [
       {
         path: 'checkbox/checkbox-10.tsx',
@@ -6595,11 +9955,43 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'checkbox',
   },
+  'checkbox-11': {
+    name: 'checkbox-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['checkbox', 'button', 'field'],
+    files: [
+      {
+        path: 'checkbox/checkbox-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Checkbox11,
+    source: '/registry-examples/src/checkbox',
+    categories: [],
+    root_folder: 'checkbox',
+  },
+  'checkbox-12': {
+    name: 'checkbox-12',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['checkbox', 'button', 'field'],
+    files: [
+      {
+        path: 'checkbox/checkbox-12.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Checkbox12,
+    source: '/registry-examples/src/checkbox',
+    categories: [],
+    root_folder: 'checkbox',
+  },
   'checkbox-2': {
     name: 'checkbox-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['checkbox'],
+    registryDependencies: ['checkbox', 'button', 'field'],
     files: [
       {
         path: 'checkbox/checkbox-2.tsx',
@@ -6615,7 +10007,7 @@ export const Index: Record<string, any> = {
     name: 'checkbox-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['checkbox'],
+    registryDependencies: ['checkbox', 'button', 'field'],
     files: [
       {
         path: 'checkbox/checkbox-3.tsx',
@@ -6631,7 +10023,7 @@ export const Index: Record<string, any> = {
     name: 'checkbox-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['checkbox'],
+    registryDependencies: ['checkbox', 'button', 'field'],
     files: [
       {
         path: 'checkbox/checkbox-4.tsx',
@@ -6647,7 +10039,7 @@ export const Index: Record<string, any> = {
     name: 'checkbox-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['checkbox'],
+    registryDependencies: ['checkbox', 'button', 'field'],
     files: [
       {
         path: 'checkbox/checkbox-5.tsx',
@@ -6663,7 +10055,7 @@ export const Index: Record<string, any> = {
     name: 'checkbox-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['checkbox'],
+    registryDependencies: ['checkbox', 'button', 'field'],
     files: [
       {
         path: 'checkbox/checkbox-6.tsx',
@@ -6679,7 +10071,7 @@ export const Index: Record<string, any> = {
     name: 'checkbox-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['checkbox'],
+    registryDependencies: ['checkbox', 'button', 'field'],
     files: [
       {
         path: 'checkbox/checkbox-7.tsx',
@@ -6695,7 +10087,7 @@ export const Index: Record<string, any> = {
     name: 'checkbox-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['checkbox'],
+    registryDependencies: ['checkbox', 'button', 'field'],
     files: [
       {
         path: 'checkbox/checkbox-8.tsx',
@@ -6711,7 +10103,7 @@ export const Index: Record<string, any> = {
     name: 'checkbox-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['checkbox'],
+    registryDependencies: ['checkbox', 'button', 'field'],
     files: [
       {
         path: 'checkbox/checkbox-9.tsx',
@@ -6727,7 +10119,7 @@ export const Index: Record<string, any> = {
     name: 'carousel-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['carousel'],
+    registryDependencies: ['carousel', 'card'],
     files: [
       {
         path: 'carousel/carousel-1.tsx',
@@ -6743,7 +10135,7 @@ export const Index: Record<string, any> = {
     name: 'carousel-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['carousel'],
+    registryDependencies: ['carousel', 'card'],
     files: [
       {
         path: 'carousel/carousel-2.tsx',
@@ -6759,7 +10151,7 @@ export const Index: Record<string, any> = {
     name: 'carousel-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['carousel'],
+    registryDependencies: ['carousel', 'card'],
     files: [
       {
         path: 'carousel/carousel-3.tsx',
@@ -6775,7 +10167,7 @@ export const Index: Record<string, any> = {
     name: 'carousel-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['carousel'],
+    registryDependencies: ['carousel', 'card'],
     files: [
       {
         path: 'carousel/carousel-4.tsx',
@@ -6791,7 +10183,7 @@ export const Index: Record<string, any> = {
     name: 'carousel-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['carousel'],
+    registryDependencies: ['carousel', 'card'],
     files: [
       {
         path: 'carousel/carousel-5.tsx',
@@ -6807,7 +10199,7 @@ export const Index: Record<string, any> = {
     name: 'carousel-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['carousel'],
+    registryDependencies: ['carousel', 'card'],
     files: [
       {
         path: 'carousel/carousel-6.tsx',
@@ -6823,7 +10215,7 @@ export const Index: Record<string, any> = {
     name: 'carousel-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['carousel'],
+    registryDependencies: ['carousel', 'card'],
     files: [
       {
         path: 'carousel/carousel-7.tsx',
@@ -6835,11 +10227,43 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'carousel',
   },
+  'carousel-8': {
+    name: 'carousel-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['carousel', 'card'],
+    files: [
+      {
+        path: 'carousel/carousel-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Carousel8,
+    source: '/registry-examples/src/carousel',
+    categories: [],
+    root_folder: 'carousel',
+  },
+  'carousel-9': {
+    name: 'carousel-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['carousel', 'card'],
+    files: [
+      {
+        path: 'carousel/carousel-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Carousel9,
+    source: '/registry-examples/src/carousel',
+    categories: [],
+    root_folder: 'carousel',
+  },
   'date-picker-1': {
     name: 'date-picker-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar', 'popover', 'button'],
+    registryDependencies: ['calendar', 'popover', 'button', 'direction', 'field', 'input', 'label'],
     files: [
       {
         path: 'date-picker/date-picker-1.tsx',
@@ -6855,7 +10279,7 @@ export const Index: Record<string, any> = {
     name: 'date-picker-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar', 'popover', 'button'],
+    registryDependencies: ['calendar', 'popover', 'button', 'direction', 'field', 'input', 'label'],
     files: [
       {
         path: 'date-picker/date-picker-2.tsx',
@@ -6871,7 +10295,7 @@ export const Index: Record<string, any> = {
     name: 'date-picker-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar', 'popover', 'button'],
+    registryDependencies: ['calendar', 'popover', 'button', 'direction', 'field', 'input', 'label'],
     files: [
       {
         path: 'date-picker/date-picker-3.tsx',
@@ -6887,7 +10311,7 @@ export const Index: Record<string, any> = {
     name: 'date-picker-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar', 'popover', 'button'],
+    registryDependencies: ['calendar', 'popover', 'button', 'direction', 'field', 'input', 'label'],
     files: [
       {
         path: 'date-picker/date-picker-4.tsx',
@@ -6903,7 +10327,7 @@ export const Index: Record<string, any> = {
     name: 'date-picker-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar', 'popover', 'button'],
+    registryDependencies: ['calendar', 'popover', 'button', 'direction', 'field', 'input', 'label'],
     files: [
       {
         path: 'date-picker/date-picker-5.tsx',
@@ -6919,7 +10343,7 @@ export const Index: Record<string, any> = {
     name: 'date-picker-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar', 'popover', 'button'],
+    registryDependencies: ['calendar', 'popover', 'button', 'direction', 'field', 'input', 'label'],
     files: [
       {
         path: 'date-picker/date-picker-6.tsx',
@@ -6935,7 +10359,7 @@ export const Index: Record<string, any> = {
     name: 'date-picker-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar', 'popover', 'button'],
+    registryDependencies: ['calendar', 'popover', 'button', 'direction', 'field', 'input', 'label'],
     files: [
       {
         path: 'date-picker/date-picker-7.tsx',
@@ -6951,7 +10375,7 @@ export const Index: Record<string, any> = {
     name: 'date-picker-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['calendar', 'popover', 'button'],
+    registryDependencies: ['calendar', 'popover', 'button', 'direction', 'field', 'input', 'label'],
     files: [
       {
         path: 'date-picker/date-picker-8.tsx',
@@ -6967,7 +10391,7 @@ export const Index: Record<string, any> = {
     name: 'popover-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['popover'],
+    registryDependencies: ['popover', 'button', 'direction', 'input', 'label', 'textarea'],
     files: [
       {
         path: 'popover/popover-1.tsx',
@@ -6979,11 +10403,43 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'popover',
   },
+  'popover-10': {
+    name: 'popover-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['popover', 'button', 'direction', 'input', 'label', 'textarea'],
+    files: [
+      {
+        path: 'popover/popover-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Popover10,
+    source: '/registry-examples/src/popover',
+    categories: [],
+    root_folder: 'popover',
+  },
+  'popover-11': {
+    name: 'popover-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['popover', 'button', 'direction', 'input', 'label', 'textarea'],
+    files: [
+      {
+        path: 'popover/popover-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Popover11,
+    source: '/registry-examples/src/popover',
+    categories: [],
+    root_folder: 'popover',
+  },
   'popover-2': {
     name: 'popover-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['popover'],
+    registryDependencies: ['popover', 'button', 'direction', 'input', 'label', 'textarea'],
     files: [
       {
         path: 'popover/popover-2.tsx',
@@ -6999,7 +10455,7 @@ export const Index: Record<string, any> = {
     name: 'popover-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['popover'],
+    registryDependencies: ['popover', 'button', 'direction', 'input', 'label', 'textarea'],
     files: [
       {
         path: 'popover/popover-3.tsx',
@@ -7015,7 +10471,7 @@ export const Index: Record<string, any> = {
     name: 'popover-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['popover'],
+    registryDependencies: ['popover', 'button', 'direction', 'input', 'label', 'textarea'],
     files: [
       {
         path: 'popover/popover-4.tsx',
@@ -7031,7 +10487,7 @@ export const Index: Record<string, any> = {
     name: 'popover-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['popover'],
+    registryDependencies: ['popover', 'button', 'direction', 'input', 'label', 'textarea'],
     files: [
       {
         path: 'popover/popover-5.tsx',
@@ -7047,7 +10503,7 @@ export const Index: Record<string, any> = {
     name: 'popover-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['popover'],
+    registryDependencies: ['popover', 'button', 'direction', 'input', 'label', 'textarea'],
     files: [
       {
         path: 'popover/popover-6.tsx',
@@ -7063,7 +10519,7 @@ export const Index: Record<string, any> = {
     name: 'popover-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['popover'],
+    registryDependencies: ['popover', 'button', 'direction', 'input', 'label', 'textarea'],
     files: [
       {
         path: 'popover/popover-7.tsx',
@@ -7075,11 +10531,43 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'popover',
   },
+  'popover-8': {
+    name: 'popover-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['popover', 'button', 'direction', 'input', 'label', 'textarea'],
+    files: [
+      {
+        path: 'popover/popover-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Popover8,
+    source: '/registry-examples/src/popover',
+    categories: [],
+    root_folder: 'popover',
+  },
+  'popover-9': {
+    name: 'popover-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['popover', 'button', 'direction', 'input', 'label', 'textarea'],
+    files: [
+      {
+        path: 'popover/popover-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Popover9,
+    source: '/registry-examples/src/popover',
+    categories: [],
+    root_folder: 'popover',
+  },
   'menubar-1': {
     name: 'menubar-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['menubar'],
+    registryDependencies: ['menubar', 'direction', 'label', 'switch'],
     files: [
       {
         path: 'menubar/menubar-1.tsx',
@@ -7095,7 +10583,7 @@ export const Index: Record<string, any> = {
     name: 'menubar-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['menubar'],
+    registryDependencies: ['menubar', 'direction', 'label', 'switch'],
     files: [
       {
         path: 'menubar/menubar-2.tsx',
@@ -7111,7 +10599,7 @@ export const Index: Record<string, any> = {
     name: 'menubar-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['menubar'],
+    registryDependencies: ['menubar', 'direction', 'label', 'switch'],
     files: [
       {
         path: 'menubar/menubar-3.tsx',
@@ -7123,11 +10611,107 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'menubar',
   },
+  'menubar-4': {
+    name: 'menubar-4',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['menubar', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'menubar/menubar-4.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Menubar4,
+    source: '/registry-examples/src/menubar',
+    categories: [],
+    root_folder: 'menubar',
+  },
+  'menubar-5': {
+    name: 'menubar-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['menubar', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'menubar/menubar-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Menubar5,
+    source: '/registry-examples/src/menubar',
+    categories: [],
+    root_folder: 'menubar',
+  },
+  'menubar-6': {
+    name: 'menubar-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['menubar', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'menubar/menubar-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Menubar6,
+    source: '/registry-examples/src/menubar',
+    categories: [],
+    root_folder: 'menubar',
+  },
+  'menubar-7': {
+    name: 'menubar-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['menubar', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'menubar/menubar-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Menubar7,
+    source: '/registry-examples/src/menubar',
+    categories: [],
+    root_folder: 'menubar',
+  },
+  'menubar-8': {
+    name: 'menubar-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['menubar', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'menubar/menubar-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Menubar8,
+    source: '/registry-examples/src/menubar',
+    categories: [],
+    root_folder: 'menubar',
+  },
+  'menubar-9': {
+    name: 'menubar-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['menubar', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'menubar/menubar-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Menubar9,
+    source: '/registry-examples/src/menubar',
+    categories: [],
+    root_folder: 'menubar',
+  },
   'dropdown-menu-1': {
     name: 'dropdown-menu-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['dropdown-menu'],
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
     files: [
       {
         path: 'dropdown-menu/dropdown-menu-1.tsx',
@@ -7139,11 +10723,107 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'dropdown-menu',
   },
+  'dropdown-menu-10': {
+    name: 'dropdown-menu-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'dropdown-menu/dropdown-menu-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _DropdownMenu10,
+    source: '/registry-examples/src/dropdown-menu',
+    categories: [],
+    root_folder: 'dropdown-menu',
+  },
+  'dropdown-menu-11': {
+    name: 'dropdown-menu-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'dropdown-menu/dropdown-menu-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _DropdownMenu11,
+    source: '/registry-examples/src/dropdown-menu',
+    categories: [],
+    root_folder: 'dropdown-menu',
+  },
+  'dropdown-menu-12': {
+    name: 'dropdown-menu-12',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'dropdown-menu/dropdown-menu-12.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _DropdownMenu12,
+    source: '/registry-examples/src/dropdown-menu',
+    categories: [],
+    root_folder: 'dropdown-menu',
+  },
+  'dropdown-menu-13': {
+    name: 'dropdown-menu-13',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'dropdown-menu/dropdown-menu-13.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _DropdownMenu13,
+    source: '/registry-examples/src/dropdown-menu',
+    categories: [],
+    root_folder: 'dropdown-menu',
+  },
+  'dropdown-menu-14': {
+    name: 'dropdown-menu-14',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'dropdown-menu/dropdown-menu-14.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _DropdownMenu14,
+    source: '/registry-examples/src/dropdown-menu',
+    categories: [],
+    root_folder: 'dropdown-menu',
+  },
+  'dropdown-menu-15': {
+    name: 'dropdown-menu-15',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'dropdown-menu/dropdown-menu-15.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _DropdownMenu15,
+    source: '/registry-examples/src/dropdown-menu',
+    categories: [],
+    root_folder: 'dropdown-menu',
+  },
   'dropdown-menu-2': {
     name: 'dropdown-menu-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['dropdown-menu'],
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
     files: [
       {
         path: 'dropdown-menu/dropdown-menu-2.tsx',
@@ -7159,7 +10839,7 @@ export const Index: Record<string, any> = {
     name: 'dropdown-menu-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['dropdown-menu'],
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
     files: [
       {
         path: 'dropdown-menu/dropdown-menu-3.tsx',
@@ -7175,7 +10855,7 @@ export const Index: Record<string, any> = {
     name: 'dropdown-menu-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['dropdown-menu'],
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
     files: [
       {
         path: 'dropdown-menu/dropdown-menu-4.tsx',
@@ -7191,7 +10871,7 @@ export const Index: Record<string, any> = {
     name: 'dropdown-menu-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['dropdown-menu'],
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
     files: [
       {
         path: 'dropdown-menu/dropdown-menu-5.tsx',
@@ -7207,7 +10887,7 @@ export const Index: Record<string, any> = {
     name: 'dropdown-menu-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['dropdown-menu'],
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
     files: [
       {
         path: 'dropdown-menu/dropdown-menu-6.tsx',
@@ -7223,7 +10903,7 @@ export const Index: Record<string, any> = {
     name: 'dropdown-menu-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['dropdown-menu'],
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
     files: [
       {
         path: 'dropdown-menu/dropdown-menu-7.tsx',
@@ -7235,11 +10915,43 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'dropdown-menu',
   },
+  'dropdown-menu-8': {
+    name: 'dropdown-menu-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'dropdown-menu/dropdown-menu-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _DropdownMenu8,
+    source: '/registry-examples/src/dropdown-menu',
+    categories: [],
+    root_folder: 'dropdown-menu',
+  },
+  'dropdown-menu-9': {
+    name: 'dropdown-menu-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['dropdown-menu', 'button', 'dialog', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'dropdown-menu/dropdown-menu-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _DropdownMenu9,
+    source: '/registry-examples/src/dropdown-menu',
+    categories: [],
+    root_folder: 'dropdown-menu',
+  },
   'combobox-1': {
     name: 'combobox-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['combobox'],
+    registryDependencies: ['combobox', 'dropdown-menu', 'field'],
     files: [
       {
         path: 'combobox/combobox-1.tsx',
@@ -7251,11 +10963,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'combobox',
   },
+  'combobox-10': {
+    name: 'combobox-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['combobox', 'dropdown-menu', 'field'],
+    files: [
+      {
+        path: 'combobox/combobox-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Combobox10,
+    source: '/registry-examples/src/combobox',
+    categories: [],
+    root_folder: 'combobox',
+  },
+  'combobox-11': {
+    name: 'combobox-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['combobox', 'dropdown-menu', 'field'],
+    files: [
+      {
+        path: 'combobox/combobox-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Combobox11,
+    source: '/registry-examples/src/combobox',
+    categories: [],
+    root_folder: 'combobox',
+  },
+  'combobox-12': {
+    name: 'combobox-12',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['combobox', 'dropdown-menu', 'field'],
+    files: [
+      {
+        path: 'combobox/combobox-12.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Combobox12,
+    source: '/registry-examples/src/combobox',
+    categories: [],
+    root_folder: 'combobox',
+  },
   'combobox-2': {
     name: 'combobox-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['combobox'],
+    registryDependencies: ['combobox', 'dropdown-menu', 'field'],
     files: [
       {
         path: 'combobox/combobox-2.tsx',
@@ -7271,7 +11031,7 @@ export const Index: Record<string, any> = {
     name: 'combobox-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['combobox'],
+    registryDependencies: ['combobox', 'dropdown-menu', 'field'],
     files: [
       {
         path: 'combobox/combobox-3.tsx',
@@ -7287,7 +11047,7 @@ export const Index: Record<string, any> = {
     name: 'combobox-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['combobox'],
+    registryDependencies: ['combobox', 'dropdown-menu', 'field'],
     files: [
       {
         path: 'combobox/combobox-4.tsx',
@@ -7303,7 +11063,7 @@ export const Index: Record<string, any> = {
     name: 'combobox-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['combobox'],
+    registryDependencies: ['combobox', 'dropdown-menu', 'field'],
     files: [
       {
         path: 'combobox/combobox-5.tsx',
@@ -7319,7 +11079,7 @@ export const Index: Record<string, any> = {
     name: 'combobox-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['combobox'],
+    registryDependencies: ['combobox', 'dropdown-menu', 'field'],
     files: [
       {
         path: 'combobox/combobox-6.tsx',
@@ -7335,7 +11095,7 @@ export const Index: Record<string, any> = {
     name: 'combobox-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['combobox'],
+    registryDependencies: ['combobox', 'dropdown-menu', 'field'],
     files: [
       {
         path: 'combobox/combobox-7.tsx',
@@ -7351,7 +11111,7 @@ export const Index: Record<string, any> = {
     name: 'combobox-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['combobox'],
+    registryDependencies: ['combobox', 'dropdown-menu', 'field'],
     files: [
       {
         path: 'combobox/combobox-8.tsx',
@@ -7359,6 +11119,22 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _Combobox8,
+    source: '/registry-examples/src/combobox',
+    categories: [],
+    root_folder: 'combobox',
+  },
+  'combobox-9': {
+    name: 'combobox-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['combobox', 'dropdown-menu', 'field'],
+    files: [
+      {
+        path: 'combobox/combobox-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Combobox9,
     source: '/registry-examples/src/combobox',
     categories: [],
     root_folder: 'combobox',
@@ -7427,6 +11203,54 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'collapsible',
   },
+  'collapsible-5': {
+    name: 'collapsible-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['collapsible'],
+    files: [
+      {
+        path: 'collapsible/collapsible-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Collapsible5,
+    source: '/registry-examples/src/collapsible',
+    categories: [],
+    root_folder: 'collapsible',
+  },
+  'collapsible-6': {
+    name: 'collapsible-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['collapsible'],
+    files: [
+      {
+        path: 'collapsible/collapsible-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Collapsible6,
+    source: '/registry-examples/src/collapsible',
+    categories: [],
+    root_folder: 'collapsible',
+  },
+  'collapsible-7': {
+    name: 'collapsible-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['collapsible'],
+    files: [
+      {
+        path: 'collapsible/collapsible-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Collapsible7,
+    source: '/registry-examples/src/collapsible',
+    categories: [],
+    root_folder: 'collapsible',
+  },
   'input-otp-1': {
     name: 'input-otp-1',
     description: '',
@@ -7439,6 +11263,38 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _InputOtp1,
+    source: '/registry-examples/src/input-otp',
+    categories: [],
+    root_folder: 'input-otp',
+  },
+  'input-otp-10': {
+    name: 'input-otp-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['input-otp', 'button', 'field'],
+    files: [
+      {
+        path: 'input-otp/input-otp-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _InputOtp10,
+    source: '/registry-examples/src/input-otp',
+    categories: [],
+    root_folder: 'input-otp',
+  },
+  'input-otp-11': {
+    name: 'input-otp-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['input-otp', 'button', 'field'],
+    files: [
+      {
+        path: 'input-otp/input-otp-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _InputOtp11,
     source: '/registry-examples/src/input-otp',
     categories: [],
     root_folder: 'input-otp',
@@ -7555,11 +11411,27 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'input-otp',
   },
+  'input-otp-9': {
+    name: 'input-otp-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['input-otp', 'button', 'field'],
+    files: [
+      {
+        path: 'input-otp/input-otp-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _InputOtp9,
+    source: '/registry-examples/src/input-otp',
+    categories: [],
+    root_folder: 'input-otp',
+  },
   'chart-1': {
     name: 'chart-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['chart'],
+    registryDependencies: ['chart', 'card'],
     files: [
       {
         path: 'chart/chart-1.tsx',
@@ -7571,11 +11443,27 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'chart',
   },
+  'chart-10': {
+    name: 'chart-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['chart', 'card'],
+    files: [
+      {
+        path: 'chart/chart-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Chart10,
+    source: '/registry-examples/src/chart',
+    categories: [],
+    root_folder: 'chart',
+  },
   'chart-2': {
     name: 'chart-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['chart'],
+    registryDependencies: ['chart', 'card'],
     files: [
       {
         path: 'chart/chart-2.tsx',
@@ -7591,7 +11479,7 @@ export const Index: Record<string, any> = {
     name: 'chart-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['chart'],
+    registryDependencies: ['chart', 'card'],
     files: [
       {
         path: 'chart/chart-3.tsx',
@@ -7607,7 +11495,7 @@ export const Index: Record<string, any> = {
     name: 'chart-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['chart'],
+    registryDependencies: ['chart', 'card'],
     files: [
       {
         path: 'chart/chart-4.tsx',
@@ -7623,7 +11511,7 @@ export const Index: Record<string, any> = {
     name: 'chart-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['chart'],
+    registryDependencies: ['chart', 'card'],
     files: [
       {
         path: 'chart/chart-5.tsx',
@@ -7639,7 +11527,7 @@ export const Index: Record<string, any> = {
     name: 'chart-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['chart'],
+    registryDependencies: ['chart', 'card'],
     files: [
       {
         path: 'chart/chart-6.tsx',
@@ -7655,7 +11543,7 @@ export const Index: Record<string, any> = {
     name: 'chart-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['chart'],
+    registryDependencies: ['chart', 'card'],
     files: [
       {
         path: 'chart/chart-7.tsx',
@@ -7671,7 +11559,7 @@ export const Index: Record<string, any> = {
     name: 'chart-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['chart'],
+    registryDependencies: ['chart', 'card'],
     files: [
       {
         path: 'chart/chart-8.tsx',
@@ -7683,178 +11571,18 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'chart',
   },
-  'chart-benchmark-calendar-compare': {
-    name: 'chart-benchmark-calendar-compare',
+  'chart-9': {
+    name: 'chart-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['chart'],
+    registryDependencies: ['chart', 'card'],
     files: [
       {
-        path: 'chart/chart-benchmark-calendar-compare.tsx',
+        path: 'chart/chart-9.tsx',
         type: 'registry:example',
       },
     ],
-    component: _ChartBenchmarkCalendarCompare,
-    source: '/registry-examples/src/chart',
-    categories: [],
-    root_folder: 'chart',
-  },
-  'chart-benchmark-calendar-vs': {
-    name: 'chart-benchmark-calendar-vs',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['chart'],
-    files: [
-      {
-        path: 'chart/chart-benchmark-calendar-vs.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _ChartBenchmarkCalendarVs,
-    source: '/registry-examples/src/chart',
-    categories: [],
-    root_folder: 'chart',
-  },
-  'chart-benchmark-calendar': {
-    name: 'chart-benchmark-calendar',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['chart'],
-    files: [
-      {
-        path: 'chart/chart-benchmark-calendar.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _ChartBenchmarkCalendar,
-    source: '/registry-examples/src/chart',
-    categories: [],
-    root_folder: 'chart',
-  },
-  'chart-benchmark-iam-compare': {
-    name: 'chart-benchmark-iam-compare',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['chart'],
-    files: [
-      {
-        path: 'chart/chart-benchmark-iam-compare.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _ChartBenchmarkIamCompare,
-    source: '/registry-examples/src/chart',
-    categories: [],
-    root_folder: 'chart',
-  },
-  'chart-benchmark-iam-vs': {
-    name: 'chart-benchmark-iam-vs',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['chart'],
-    files: [
-      {
-        path: 'chart/chart-benchmark-iam-vs.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _ChartBenchmarkIamVs,
-    source: '/registry-examples/src/chart',
-    categories: [],
-    root_folder: 'chart',
-  },
-  'chart-benchmark-iam': {
-    name: 'chart-benchmark-iam',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['chart'],
-    files: [
-      {
-        path: 'chart/chart-benchmark-iam.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _ChartBenchmarkIam,
-    source: '/registry-examples/src/chart',
-    categories: [],
-    root_folder: 'chart',
-  },
-  'chart-benchmark-primitives-all': {
-    name: 'chart-benchmark-primitives-all',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['chart'],
-    files: [
-      {
-        path: 'chart/chart-benchmark-primitives-all.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _ChartBenchmarkPrimitivesAll,
-    source: '/registry-examples/src/chart',
-    categories: [],
-    root_folder: 'chart',
-  },
-  'chart-benchmark-primitives-vs': {
-    name: 'chart-benchmark-primitives-vs',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['chart'],
-    files: [
-      {
-        path: 'chart/chart-benchmark-primitives-vs.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _ChartBenchmarkPrimitivesVs,
-    source: '/registry-examples/src/chart',
-    categories: [],
-    root_folder: 'chart',
-  },
-  'chart-benchmark-primitives': {
-    name: 'chart-benchmark-primitives',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['chart'],
-    files: [
-      {
-        path: 'chart/chart-benchmark-primitives.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _ChartBenchmarkPrimitives,
-    source: '/registry-examples/src/chart',
-    categories: [],
-    root_folder: 'chart',
-  },
-  'chart-benchmark-variants': {
-    name: 'chart-benchmark-variants',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['chart'],
-    files: [
-      {
-        path: 'chart/chart-benchmark-variants.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _ChartBenchmarkVariants,
-    source: '/registry-examples/src/chart',
-    categories: [],
-    root_folder: 'chart',
-  },
-  'chart-tabs': {
-    name: 'chart-tabs',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['chart'],
-    files: [
-      {
-        path: 'chart/chart-tabs.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _ChartTabs,
+    component: _Chart9,
     source: '/registry-examples/src/chart',
     categories: [],
     root_folder: 'chart',
@@ -7863,7 +11591,7 @@ export const Index: Record<string, any> = {
     name: 'navigation-menu-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['navigation-menu'],
+    registryDependencies: ['navigation-menu', 'direction'],
     files: [
       {
         path: 'navigation-menu/navigation-menu-1.tsx',
@@ -7879,7 +11607,7 @@ export const Index: Record<string, any> = {
     name: 'navigation-menu-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['navigation-menu'],
+    registryDependencies: ['navigation-menu', 'direction'],
     files: [
       {
         path: 'navigation-menu/navigation-menu-2.tsx',
@@ -7895,7 +11623,7 @@ export const Index: Record<string, any> = {
     name: 'navigation-menu-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['navigation-menu'],
+    registryDependencies: ['navigation-menu', 'direction'],
     files: [
       {
         path: 'navigation-menu/navigation-menu-3.tsx',
@@ -7907,11 +11635,75 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'navigation-menu',
   },
+  'navigation-menu-4': {
+    name: 'navigation-menu-4',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['navigation-menu', 'direction'],
+    files: [
+      {
+        path: 'navigation-menu/navigation-menu-4.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _NavigationMenu4,
+    source: '/registry-examples/src/navigation-menu',
+    categories: [],
+    root_folder: 'navigation-menu',
+  },
+  'navigation-menu-5': {
+    name: 'navigation-menu-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['navigation-menu', 'direction'],
+    files: [
+      {
+        path: 'navigation-menu/navigation-menu-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _NavigationMenu5,
+    source: '/registry-examples/src/navigation-menu',
+    categories: [],
+    root_folder: 'navigation-menu',
+  },
+  'navigation-menu-6': {
+    name: 'navigation-menu-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['navigation-menu', 'direction'],
+    files: [
+      {
+        path: 'navigation-menu/navigation-menu-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _NavigationMenu6,
+    source: '/registry-examples/src/navigation-menu',
+    categories: [],
+    root_folder: 'navigation-menu',
+  },
+  'navigation-menu-7': {
+    name: 'navigation-menu-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['navigation-menu', 'direction'],
+    files: [
+      {
+        path: 'navigation-menu/navigation-menu-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _NavigationMenu7,
+    source: '/registry-examples/src/navigation-menu',
+    categories: [],
+    root_folder: 'navigation-menu',
+  },
   'context-menu-1': {
     name: 'context-menu-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['context-menu'],
+    registryDependencies: ['context-menu', 'direction', 'label', 'switch'],
     files: [
       {
         path: 'context-menu/context-menu-1.tsx',
@@ -7927,7 +11719,7 @@ export const Index: Record<string, any> = {
     name: 'context-menu-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['context-menu'],
+    registryDependencies: ['context-menu', 'direction', 'label', 'switch'],
     files: [
       {
         path: 'context-menu/context-menu-2.tsx',
@@ -7943,7 +11735,7 @@ export const Index: Record<string, any> = {
     name: 'context-menu-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['context-menu'],
+    registryDependencies: ['context-menu', 'direction', 'label', 'switch'],
     files: [
       {
         path: 'context-menu/context-menu-3.tsx',
@@ -7955,11 +11747,75 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'context-menu',
   },
+  'context-menu-4': {
+    name: 'context-menu-4',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['context-menu', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'context-menu/context-menu-4.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _ContextMenu4,
+    source: '/registry-examples/src/context-menu',
+    categories: [],
+    root_folder: 'context-menu',
+  },
+  'context-menu-5': {
+    name: 'context-menu-5',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['context-menu', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'context-menu/context-menu-5.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _ContextMenu5,
+    source: '/registry-examples/src/context-menu',
+    categories: [],
+    root_folder: 'context-menu',
+  },
+  'context-menu-6': {
+    name: 'context-menu-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['context-menu', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'context-menu/context-menu-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _ContextMenu6,
+    source: '/registry-examples/src/context-menu',
+    categories: [],
+    root_folder: 'context-menu',
+  },
+  'context-menu-7': {
+    name: 'context-menu-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['context-menu', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'context-menu/context-menu-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _ContextMenu7,
+    source: '/registry-examples/src/context-menu',
+    categories: [],
+    root_folder: 'context-menu',
+  },
   'data-table-1': {
     name: 'data-table-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['data-table', 'table'],
+    registryDependencies: ['table', 'button', 'checkbox', 'dropdown-menu', 'input'],
     files: [
       {
         path: 'data-table/data-table-1.tsx',
@@ -7975,7 +11831,7 @@ export const Index: Record<string, any> = {
     name: 'cva-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: [],
+    registryDependencies: ['button', 'select'],
     files: [
       {
         path: 'cva/cva-1.tsx',
@@ -7991,7 +11847,17 @@ export const Index: Record<string, any> = {
     name: 'button-group-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button-group'],
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
     files: [
       {
         path: 'button-group/button-group-1.tsx',
@@ -8007,7 +11873,17 @@ export const Index: Record<string, any> = {
     name: 'button-group-10',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button-group'],
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
     files: [
       {
         path: 'button-group/button-group-10.tsx',
@@ -8023,7 +11899,17 @@ export const Index: Record<string, any> = {
     name: 'button-group-11',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button-group'],
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
     files: [
       {
         path: 'button-group/button-group-11.tsx',
@@ -8039,7 +11925,17 @@ export const Index: Record<string, any> = {
     name: 'button-group-12',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button-group'],
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
     files: [
       {
         path: 'button-group/button-group-12.tsx',
@@ -8055,7 +11951,17 @@ export const Index: Record<string, any> = {
     name: 'button-group-13',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button-group'],
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
     files: [
       {
         path: 'button-group/button-group-13.tsx',
@@ -8067,11 +11973,47 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'button-group',
   },
+  'button-group-14': {
+    name: 'button-group-14',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
+    files: [
+      {
+        path: 'button-group/button-group-14.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _ButtonGroup14,
+    source: '/registry-examples/src/button-group',
+    categories: [],
+    root_folder: 'button-group',
+  },
   'button-group-2': {
     name: 'button-group-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button-group'],
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
     files: [
       {
         path: 'button-group/button-group-2.tsx',
@@ -8087,7 +12029,17 @@ export const Index: Record<string, any> = {
     name: 'button-group-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button-group'],
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
     files: [
       {
         path: 'button-group/button-group-3.tsx',
@@ -8103,7 +12055,17 @@ export const Index: Record<string, any> = {
     name: 'button-group-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button-group'],
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
     files: [
       {
         path: 'button-group/button-group-4.tsx',
@@ -8119,7 +12081,17 @@ export const Index: Record<string, any> = {
     name: 'button-group-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button-group'],
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
     files: [
       {
         path: 'button-group/button-group-5.tsx',
@@ -8135,7 +12107,17 @@ export const Index: Record<string, any> = {
     name: 'button-group-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button-group'],
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
     files: [
       {
         path: 'button-group/button-group-6.tsx',
@@ -8151,7 +12133,17 @@ export const Index: Record<string, any> = {
     name: 'button-group-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button-group'],
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
     files: [
       {
         path: 'button-group/button-group-7.tsx',
@@ -8167,7 +12159,17 @@ export const Index: Record<string, any> = {
     name: 'button-group-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button-group'],
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
     files: [
       {
         path: 'button-group/button-group-8.tsx',
@@ -8183,7 +12185,17 @@ export const Index: Record<string, any> = {
     name: 'button-group-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['button-group'],
+    registryDependencies: [
+      'button-group',
+      'dropdown-menu',
+      'input',
+      'input-group',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+      'tooltip',
+    ],
     files: [
       {
         path: 'button-group/button-group-9.tsx',
@@ -8199,7 +12211,7 @@ export const Index: Record<string, any> = {
     name: 'kbd-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['kbd'],
+    registryDependencies: ['kbd', 'button', 'button-group', 'direction', 'input-group', 'tooltip'],
     files: [
       {
         path: 'kbd/kbd-1.tsx',
@@ -8215,7 +12227,7 @@ export const Index: Record<string, any> = {
     name: 'kbd-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['kbd'],
+    registryDependencies: ['kbd', 'button', 'button-group', 'direction', 'input-group', 'tooltip'],
     files: [
       {
         path: 'kbd/kbd-2.tsx',
@@ -8231,7 +12243,7 @@ export const Index: Record<string, any> = {
     name: 'kbd-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['kbd'],
+    registryDependencies: ['kbd', 'button', 'button-group', 'direction', 'input-group', 'tooltip'],
     files: [
       {
         path: 'kbd/kbd-3.tsx',
@@ -8247,7 +12259,7 @@ export const Index: Record<string, any> = {
     name: 'kbd-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['kbd'],
+    registryDependencies: ['kbd', 'button', 'button-group', 'direction', 'input-group', 'tooltip'],
     files: [
       {
         path: 'kbd/kbd-4.tsx',
@@ -8263,7 +12275,7 @@ export const Index: Record<string, any> = {
     name: 'kbd-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['kbd'],
+    registryDependencies: ['kbd', 'button', 'button-group', 'direction', 'input-group', 'tooltip'],
     files: [
       {
         path: 'kbd/kbd-5.tsx',
@@ -8279,7 +12291,7 @@ export const Index: Record<string, any> = {
     name: 'kbd-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['kbd'],
+    registryDependencies: ['kbd', 'button', 'button-group', 'direction', 'input-group', 'tooltip'],
     files: [
       {
         path: 'kbd/kbd-6.tsx',
@@ -8295,7 +12307,7 @@ export const Index: Record<string, any> = {
     name: 'kbd-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['kbd'],
+    registryDependencies: ['kbd', 'button', 'button-group', 'direction', 'input-group', 'tooltip'],
     files: [
       {
         path: 'kbd/kbd-7.tsx',
@@ -8307,11 +12319,27 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'kbd',
   },
+  'kbd-8': {
+    name: 'kbd-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['kbd', 'button', 'button-group', 'direction', 'input-group', 'tooltip'],
+    files: [
+      {
+        path: 'kbd/kbd-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Kbd8,
+    source: '/registry-examples/src/kbd',
+    categories: [],
+    root_folder: 'kbd',
+  },
   'empty-1': {
     name: 'empty-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['empty'],
+    registryDependencies: ['empty', 'avatar', 'button', 'input-group', 'kbd'],
     files: [
       {
         path: 'empty/empty-1.tsx',
@@ -8327,7 +12355,7 @@ export const Index: Record<string, any> = {
     name: 'empty-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['empty'],
+    registryDependencies: ['empty', 'avatar', 'button', 'input-group', 'kbd'],
     files: [
       {
         path: 'empty/empty-2.tsx',
@@ -8343,7 +12371,7 @@ export const Index: Record<string, any> = {
     name: 'empty-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['empty'],
+    registryDependencies: ['empty', 'avatar', 'button', 'input-group', 'kbd'],
     files: [
       {
         path: 'empty/empty-3.tsx',
@@ -8359,7 +12387,7 @@ export const Index: Record<string, any> = {
     name: 'empty-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['empty'],
+    registryDependencies: ['empty', 'avatar', 'button', 'input-group', 'kbd'],
     files: [
       {
         path: 'empty/empty-4.tsx',
@@ -8375,7 +12403,7 @@ export const Index: Record<string, any> = {
     name: 'empty-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['empty'],
+    registryDependencies: ['empty', 'avatar', 'button', 'input-group', 'kbd'],
     files: [
       {
         path: 'empty/empty-5.tsx',
@@ -8391,7 +12419,7 @@ export const Index: Record<string, any> = {
     name: 'empty-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['empty'],
+    registryDependencies: ['empty', 'avatar', 'button', 'input-group', 'kbd'],
     files: [
       {
         path: 'empty/empty-6.tsx',
@@ -8407,7 +12435,7 @@ export const Index: Record<string, any> = {
     name: 'empty-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['empty'],
+    registryDependencies: ['empty', 'avatar', 'button', 'input-group', 'kbd'],
     files: [
       {
         path: 'empty/empty-7.tsx',
@@ -8423,7 +12451,7 @@ export const Index: Record<string, any> = {
     name: 'empty-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['empty'],
+    registryDependencies: ['empty', 'avatar', 'button', 'input-group', 'kbd'],
     files: [
       {
         path: 'empty/empty-8.tsx',
@@ -8435,11 +12463,37 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'empty',
   },
+  'empty-9': {
+    name: 'empty-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['empty', 'avatar', 'button', 'input-group', 'kbd'],
+    files: [
+      {
+        path: 'empty/empty-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Empty9,
+    source: '/registry-examples/src/empty',
+    categories: [],
+    root_folder: 'empty',
+  },
   'field-1': {
     name: 'field-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-1.tsx',
@@ -8455,7 +12509,17 @@ export const Index: Record<string, any> = {
     name: 'field-10',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-10.tsx',
@@ -8471,7 +12535,17 @@ export const Index: Record<string, any> = {
     name: 'field-11',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-11.tsx',
@@ -8487,7 +12561,17 @@ export const Index: Record<string, any> = {
     name: 'field-12',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-12.tsx',
@@ -8503,7 +12587,17 @@ export const Index: Record<string, any> = {
     name: 'field-13',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-13.tsx',
@@ -8519,7 +12613,17 @@ export const Index: Record<string, any> = {
     name: 'field-14',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-14.tsx',
@@ -8531,11 +12635,125 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'field',
   },
+  'field-15': {
+    name: 'field-15',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'field/field-15.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Field15,
+    source: '/registry-examples/src/field',
+    categories: [],
+    root_folder: 'field',
+  },
+  'field-16': {
+    name: 'field-16',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'field/field-16.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Field16,
+    source: '/registry-examples/src/field',
+    categories: [],
+    root_folder: 'field',
+  },
+  'field-17': {
+    name: 'field-17',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'field/field-17.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Field17,
+    source: '/registry-examples/src/field',
+    categories: [],
+    root_folder: 'field',
+  },
+  'field-18': {
+    name: 'field-18',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'field/field-18.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Field18,
+    source: '/registry-examples/src/field',
+    categories: [],
+    root_folder: 'field',
+  },
   'field-2': {
     name: 'field-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-2.tsx',
@@ -8551,7 +12769,17 @@ export const Index: Record<string, any> = {
     name: 'field-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-3.tsx',
@@ -8567,7 +12795,17 @@ export const Index: Record<string, any> = {
     name: 'field-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-4.tsx',
@@ -8583,7 +12821,17 @@ export const Index: Record<string, any> = {
     name: 'field-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-5.tsx',
@@ -8599,7 +12847,17 @@ export const Index: Record<string, any> = {
     name: 'field-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-6.tsx',
@@ -8615,7 +12873,17 @@ export const Index: Record<string, any> = {
     name: 'field-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-7.tsx',
@@ -8631,7 +12899,17 @@ export const Index: Record<string, any> = {
     name: 'field-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-8.tsx',
@@ -8647,7 +12925,17 @@ export const Index: Record<string, any> = {
     name: 'field-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['field'],
+    registryDependencies: [
+      'field',
+      'button',
+      'checkbox',
+      'input',
+      'radio-group',
+      'select',
+      'slider',
+      'switch',
+      'textarea',
+    ],
     files: [
       {
         path: 'field/field-9.tsx',
@@ -8663,7 +12951,7 @@ export const Index: Record<string, any> = {
     name: 'item-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['item'],
+    registryDependencies: ['item', 'avatar', 'button', 'dropdown-menu'],
     files: [
       {
         path: 'item/item-1.tsx',
@@ -8679,7 +12967,7 @@ export const Index: Record<string, any> = {
     name: 'item-10',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['item'],
+    registryDependencies: ['item', 'avatar', 'button', 'dropdown-menu'],
     files: [
       {
         path: 'item/item-10.tsx',
@@ -8695,7 +12983,7 @@ export const Index: Record<string, any> = {
     name: 'item-11',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['item'],
+    registryDependencies: ['item', 'avatar', 'button', 'dropdown-menu'],
     files: [
       {
         path: 'item/item-11.tsx',
@@ -8711,7 +12999,7 @@ export const Index: Record<string, any> = {
     name: 'item-12',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['item'],
+    registryDependencies: ['item', 'avatar', 'button', 'dropdown-menu'],
     files: [
       {
         path: 'item/item-12.tsx',
@@ -8723,11 +13011,27 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'item',
   },
+  'item-13': {
+    name: 'item-13',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['item', 'avatar', 'button', 'dropdown-menu'],
+    files: [
+      {
+        path: 'item/item-13.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Item13,
+    source: '/registry-examples/src/item',
+    categories: [],
+    root_folder: 'item',
+  },
   'item-2': {
     name: 'item-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['item'],
+    registryDependencies: ['item', 'avatar', 'button', 'dropdown-menu'],
     files: [
       {
         path: 'item/item-2.tsx',
@@ -8743,7 +13047,7 @@ export const Index: Record<string, any> = {
     name: 'item-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['item'],
+    registryDependencies: ['item', 'avatar', 'button', 'dropdown-menu'],
     files: [
       {
         path: 'item/item-3.tsx',
@@ -8759,7 +13063,7 @@ export const Index: Record<string, any> = {
     name: 'item-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['item'],
+    registryDependencies: ['item', 'avatar', 'button', 'dropdown-menu'],
     files: [
       {
         path: 'item/item-4.tsx',
@@ -8775,7 +13079,7 @@ export const Index: Record<string, any> = {
     name: 'item-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['item'],
+    registryDependencies: ['item', 'avatar', 'button', 'dropdown-menu'],
     files: [
       {
         path: 'item/item-5.tsx',
@@ -8791,7 +13095,7 @@ export const Index: Record<string, any> = {
     name: 'item-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['item'],
+    registryDependencies: ['item', 'avatar', 'button', 'dropdown-menu'],
     files: [
       {
         path: 'item/item-6.tsx',
@@ -8807,7 +13111,7 @@ export const Index: Record<string, any> = {
     name: 'item-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['item'],
+    registryDependencies: ['item', 'avatar', 'button', 'dropdown-menu'],
     files: [
       {
         path: 'item/item-7.tsx',
@@ -8823,7 +13127,7 @@ export const Index: Record<string, any> = {
     name: 'item-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['item'],
+    registryDependencies: ['item', 'avatar', 'button', 'dropdown-menu'],
     files: [
       {
         path: 'item/item-8.tsx',
@@ -8839,7 +13143,7 @@ export const Index: Record<string, any> = {
     name: 'item-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['item'],
+    registryDependencies: ['item', 'avatar', 'button', 'dropdown-menu'],
     files: [
       {
         path: 'item/item-9.tsx',
@@ -8855,7 +13159,16 @@ export const Index: Record<string, any> = {
     name: 'input-group-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input-group'],
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
     files: [
       {
         path: 'input-group/input-group-1.tsx',
@@ -8871,7 +13184,16 @@ export const Index: Record<string, any> = {
     name: 'input-group-10',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input-group'],
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
     files: [
       {
         path: 'input-group/input-group-10.tsx',
@@ -8887,7 +13209,16 @@ export const Index: Record<string, any> = {
     name: 'input-group-11',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input-group'],
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
     files: [
       {
         path: 'input-group/input-group-11.tsx',
@@ -8903,7 +13234,16 @@ export const Index: Record<string, any> = {
     name: 'input-group-12',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input-group'],
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
     files: [
       {
         path: 'input-group/input-group-12.tsx',
@@ -8919,7 +13259,16 @@ export const Index: Record<string, any> = {
     name: 'input-group-13',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input-group'],
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
     files: [
       {
         path: 'input-group/input-group-13.tsx',
@@ -8931,11 +13280,70 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'input-group',
   },
+  'input-group-14': {
+    name: 'input-group-14',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
+    files: [
+      {
+        path: 'input-group/input-group-14.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _InputGroup14,
+    source: '/registry-examples/src/input-group',
+    categories: [],
+    root_folder: 'input-group',
+  },
+  'input-group-15': {
+    name: 'input-group-15',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
+    files: [
+      {
+        path: 'input-group/input-group-15.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _InputGroup15,
+    source: '/registry-examples/src/input-group',
+    categories: [],
+    root_folder: 'input-group',
+  },
   'input-group-2': {
     name: 'input-group-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input-group'],
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
     files: [
       {
         path: 'input-group/input-group-2.tsx',
@@ -8951,7 +13359,16 @@ export const Index: Record<string, any> = {
     name: 'input-group-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input-group'],
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
     files: [
       {
         path: 'input-group/input-group-3.tsx',
@@ -8967,7 +13384,16 @@ export const Index: Record<string, any> = {
     name: 'input-group-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input-group'],
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
     files: [
       {
         path: 'input-group/input-group-4.tsx',
@@ -8983,7 +13409,16 @@ export const Index: Record<string, any> = {
     name: 'input-group-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input-group'],
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
     files: [
       {
         path: 'input-group/input-group-5.tsx',
@@ -8999,7 +13434,16 @@ export const Index: Record<string, any> = {
     name: 'input-group-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input-group'],
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
     files: [
       {
         path: 'input-group/input-group-6.tsx',
@@ -9015,7 +13459,16 @@ export const Index: Record<string, any> = {
     name: 'input-group-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input-group'],
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
     files: [
       {
         path: 'input-group/input-group-7.tsx',
@@ -9031,7 +13484,16 @@ export const Index: Record<string, any> = {
     name: 'input-group-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input-group'],
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
     files: [
       {
         path: 'input-group/input-group-8.tsx',
@@ -9047,7 +13509,16 @@ export const Index: Record<string, any> = {
     name: 'input-group-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['input-group'],
+    registryDependencies: [
+      'input-group',
+      'button-group',
+      'dropdown-menu',
+      'kbd',
+      'label',
+      'popover',
+      'separator',
+      'tooltip',
+    ],
     files: [
       {
         path: 'input-group/input-group-9.tsx',
@@ -9139,11 +13610,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'json-editor',
   },
+  'json-editor-6': {
+    name: 'json-editor-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['json-editor'],
+    files: [
+      {
+        path: 'json-editor/json-editor-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _JsonEditor6,
+    source: '/registry-examples/src/json-editor',
+    categories: [],
+    root_folder: 'json-editor',
+  },
+  'json-editor-7': {
+    name: 'json-editor-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['json-editor'],
+    files: [
+      {
+        path: 'json-editor/json-editor-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _JsonEditor7,
+    source: '/registry-examples/src/json-editor',
+    categories: [],
+    root_folder: 'json-editor',
+  },
+  'json-editor-8': {
+    name: 'json-editor-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['json-editor'],
+    files: [
+      {
+        path: 'json-editor/json-editor-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _JsonEditor8,
+    source: '/registry-examples/src/json-editor',
+    categories: [],
+    root_folder: 'json-editor',
+  },
   'theme-toggle-1': {
     name: 'theme-toggle-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: [],
+    registryDependencies: ['button'],
     files: [
       {
         path: 'theme-toggle/theme-toggle-1.tsx',
@@ -9167,6 +13686,54 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _PreviewPanel1,
+    source: '/registry-examples/src/preview-panel',
+    categories: [],
+    root_folder: 'preview-panel',
+  },
+  'preview-panel-10': {
+    name: 'preview-panel-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['preview-panel'],
+    files: [
+      {
+        path: 'preview-panel/preview-panel-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _PreviewPanel10,
+    source: '/registry-examples/src/preview-panel',
+    categories: [],
+    root_folder: 'preview-panel',
+  },
+  'preview-panel-11': {
+    name: 'preview-panel-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['preview-panel'],
+    files: [
+      {
+        path: 'preview-panel/preview-panel-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _PreviewPanel11,
+    source: '/registry-examples/src/preview-panel',
+    categories: [],
+    root_folder: 'preview-panel',
+  },
+  'preview-panel-12': {
+    name: 'preview-panel-12',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['preview-panel'],
+    files: [
+      {
+        path: 'preview-panel/preview-panel-12.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _PreviewPanel12,
     source: '/registry-examples/src/preview-panel',
     categories: [],
     root_folder: 'preview-panel',
@@ -9251,6 +13818,54 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'preview-panel',
   },
+  'preview-panel-7': {
+    name: 'preview-panel-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['preview-panel'],
+    files: [
+      {
+        path: 'preview-panel/preview-panel-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _PreviewPanel7,
+    source: '/registry-examples/src/preview-panel',
+    categories: [],
+    root_folder: 'preview-panel',
+  },
+  'preview-panel-8': {
+    name: 'preview-panel-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['preview-panel'],
+    files: [
+      {
+        path: 'preview-panel/preview-panel-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _PreviewPanel8,
+    source: '/registry-examples/src/preview-panel',
+    categories: [],
+    root_folder: 'preview-panel',
+  },
+  'preview-panel-9': {
+    name: 'preview-panel-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['preview-panel'],
+    files: [
+      {
+        path: 'preview-panel/preview-panel-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _PreviewPanel9,
+    source: '/registry-examples/src/preview-panel',
+    categories: [],
+    root_folder: 'preview-panel',
+  },
   'typeset-1': {
     name: 'typeset-1',
     description: '',
@@ -9331,11 +13946,75 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'typeset',
   },
+  'typeset-6': {
+    name: 'typeset-6',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['typeset', 'button'],
+    files: [
+      {
+        path: 'typeset/typeset-6.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Typeset6,
+    source: '/registry-examples/src/typeset',
+    categories: [],
+    root_folder: 'typeset',
+  },
+  'typeset-7': {
+    name: 'typeset-7',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['typeset', 'button'],
+    files: [
+      {
+        path: 'typeset/typeset-7.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Typeset7,
+    source: '/registry-examples/src/typeset',
+    categories: [],
+    root_folder: 'typeset',
+  },
+  'typeset-8': {
+    name: 'typeset-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['typeset', 'button'],
+    files: [
+      {
+        path: 'typeset/typeset-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Typeset8,
+    source: '/registry-examples/src/typeset',
+    categories: [],
+    root_folder: 'typeset',
+  },
+  'typeset-9': {
+    name: 'typeset-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['typeset', 'button'],
+    files: [
+      {
+        path: 'typeset/typeset-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Typeset9,
+    source: '/registry-examples/src/typeset',
+    categories: [],
+    root_folder: 'typeset',
+  },
   'sidebar-1': {
     name: 'sidebar-1',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['sidebar'],
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
     files: [
       {
         path: 'sidebar/sidebar-1.tsx',
@@ -9347,11 +14026,59 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'sidebar',
   },
+  'sidebar-17': {
+    name: 'sidebar-17',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
+    files: [
+      {
+        path: 'sidebar/sidebar-17.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sidebar17,
+    source: '/registry-examples/src/sidebar',
+    categories: [],
+    root_folder: 'sidebar',
+  },
+  'sidebar-18': {
+    name: 'sidebar-18',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
+    files: [
+      {
+        path: 'sidebar/sidebar-18.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sidebar18,
+    source: '/registry-examples/src/sidebar',
+    categories: [],
+    root_folder: 'sidebar',
+  },
+  'sidebar-19': {
+    name: 'sidebar-19',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
+    files: [
+      {
+        path: 'sidebar/sidebar-19.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sidebar19,
+    source: '/registry-examples/src/sidebar',
+    categories: [],
+    root_folder: 'sidebar',
+  },
   'sidebar-2': {
     name: 'sidebar-2',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['sidebar'],
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
     files: [
       {
         path: 'sidebar/sidebar-2.tsx',
@@ -9363,11 +14090,43 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'sidebar',
   },
+  'sidebar-20': {
+    name: 'sidebar-20',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
+    files: [
+      {
+        path: 'sidebar/sidebar-20.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sidebar20,
+    source: '/registry-examples/src/sidebar',
+    categories: [],
+    root_folder: 'sidebar',
+  },
+  'sidebar-21': {
+    name: 'sidebar-21',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
+    files: [
+      {
+        path: 'sidebar/sidebar-21.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sidebar21,
+    source: '/registry-examples/src/sidebar',
+    categories: [],
+    root_folder: 'sidebar',
+  },
   'sidebar-3': {
     name: 'sidebar-3',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['sidebar'],
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
     files: [
       {
         path: 'sidebar/sidebar-3.tsx',
@@ -9383,7 +14142,7 @@ export const Index: Record<string, any> = {
     name: 'sidebar-4',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['sidebar'],
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
     files: [
       {
         path: 'sidebar/sidebar-4.tsx',
@@ -9399,7 +14158,7 @@ export const Index: Record<string, any> = {
     name: 'sidebar-5',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['sidebar'],
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
     files: [
       {
         path: 'sidebar/sidebar-5.tsx',
@@ -9415,7 +14174,7 @@ export const Index: Record<string, any> = {
     name: 'sidebar-6',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['sidebar'],
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
     files: [
       {
         path: 'sidebar/sidebar-6.tsx',
@@ -9431,7 +14190,7 @@ export const Index: Record<string, any> = {
     name: 'sidebar-7',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['sidebar'],
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
     files: [
       {
         path: 'sidebar/sidebar-7.tsx',
@@ -9443,85 +14202,37 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'sidebar',
   },
-  'upload-1': {
-    name: 'upload-1',
+  'sidebar-8': {
+    name: 'sidebar-8',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['upload'],
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
     files: [
       {
-        path: 'upload/upload-1.tsx',
+        path: 'sidebar/sidebar-8.tsx',
         type: 'registry:example',
       },
     ],
-    component: _Upload1,
-    source: '/registry-examples/src/upload',
+    component: _Sidebar8,
+    source: '/registry-examples/src/sidebar',
     categories: [],
-    root_folder: 'upload',
+    root_folder: 'sidebar',
   },
-  'upload-2': {
-    name: 'upload-2',
+  'sidebar-9': {
+    name: 'sidebar-9',
     description: '',
     type: 'registry:example',
-    registryDependencies: ['upload'],
+    registryDependencies: ['sidebar', 'avatar', 'collapsible', 'dropdown-menu'],
     files: [
       {
-        path: 'upload/upload-2.tsx',
+        path: 'sidebar/sidebar-9.tsx',
         type: 'registry:example',
       },
     ],
-    component: _Upload2,
-    source: '/registry-examples/src/upload',
+    component: _Sidebar9,
+    source: '/registry-examples/src/sidebar',
     categories: [],
-    root_folder: 'upload',
-  },
-  'upload-3': {
-    name: 'upload-3',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['upload'],
-    files: [
-      {
-        path: 'upload/upload-3.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _Upload3,
-    source: '/registry-examples/src/upload',
-    categories: [],
-    root_folder: 'upload',
-  },
-  'upload-4': {
-    name: 'upload-4',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['upload'],
-    files: [
-      {
-        path: 'upload/upload-4.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _Upload4,
-    source: '/registry-examples/src/upload',
-    categories: [],
-    root_folder: 'upload',
-  },
-  'upload-5': {
-    name: 'upload-5',
-    description: '',
-    type: 'registry:example',
-    registryDependencies: ['upload'],
-    files: [
-      {
-        path: 'upload/upload-5.tsx',
-        type: 'registry:example',
-      },
-    ],
-    component: _Upload5,
-    source: '/registry-examples/src/upload',
-    categories: [],
-    root_folder: 'upload',
+    root_folder: 'sidebar',
   },
   'form-rhf-array': {
     name: 'form-rhf-array',
@@ -9991,11 +14702,171 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'form',
   },
+  'accordion-controlled': {
+    name: 'accordion-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/accordion-controlled/accordion-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AccordionControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'accordion-disabled': {
+    name: 'accordion-disabled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/accordion-disabled/accordion-disabled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AccordionDisabled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'accordion-force-mount': {
+    name: 'accordion-force-mount',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/accordion-force-mount/accordion-force-mount.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AccordionForceMount,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'accordion-hidden-until-found': {
+    name: 'accordion-hidden-until-found',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/accordion-hidden-until-found/accordion-hidden-until-found.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AccordionHiddenUntilFound,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'accordion-horizontal': {
+    name: 'accordion-horizontal',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/accordion-horizontal/accordion-horizontal.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AccordionHorizontal,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'accordion-item-open-change': {
+    name: 'accordion-item-open-change',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/accordion-item-open-change/accordion-item-open-change.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AccordionItemOpenChange,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'accordion-multiple': {
+    name: 'accordion-multiple',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/accordion-multiple/accordion-multiple.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AccordionMultiple,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'accordion-rtl': {
+    name: 'accordion-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/accordion-rtl/accordion-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AccordionRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'accordion-single': {
+    name: 'accordion-single',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/accordion-single/accordion-single.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AccordionSingle,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'alert-dialog-async-action': {
+    name: 'alert-dialog-async-action',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/alert-dialog-async-action/alert-dialog-async-action.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AlertDialogAsyncAction,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
   'alert-dialog-confirm': {
     name: 'alert-dialog-confirm',
     description: '',
     type: 'registry:internal',
-    registryDependencies: ['@gentleduck/primitives'],
+    registryDependencies: undefined,
     files: [
       {
         path: 'internal-primitives/alert-dialog-confirm/alert-dialog-confirm.tsx',
@@ -10007,11 +14878,667 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'internal-primitives',
   },
+  'alert-dialog-initial-focus': {
+    name: 'alert-dialog-initial-focus',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/alert-dialog-initial-focus/alert-dialog-initial-focus.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AlertDialogInitialFocus,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'alert-dialog-rtl': {
+    name: 'alert-dialog-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/alert-dialog-rtl/alert-dialog-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AlertDialogRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'arrow-custom-shape': {
+    name: 'arrow-custom-shape',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/arrow-custom-shape/arrow-custom-shape.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ArrowCustomShape,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'arrow-sizes': {
+    name: 'arrow-sizes',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/arrow-sizes/arrow-sizes.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ArrowSizes,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'avatar-delay': {
+    name: 'avatar-delay',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/avatar-delay/avatar-delay.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AvatarDelay,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'avatar-fallback': {
+    name: 'avatar-fallback',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/avatar-fallback/avatar-fallback.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AvatarFallback,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'avatar-loading-status': {
+    name: 'avatar-loading-status',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/avatar-loading-status/avatar-loading-status.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AvatarLoadingStatus,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'avatar-src-set': {
+    name: 'avatar-src-set',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/avatar-src-set/avatar-src-set.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _AvatarSrcSet,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'calendar-constraints': {
+    name: 'calendar-constraints',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/calendar-constraints/calendar-constraints.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CalendarConstraints,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'calendar-controlled': {
+    name: 'calendar-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/calendar-controlled/calendar-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CalendarControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'calendar-custom-day': {
+    name: 'calendar-custom-day',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/calendar-custom-day/calendar-custom-day.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CalendarCustomDay,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'calendar-fixed-weeks': {
+    name: 'calendar-fixed-weeks',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/calendar-fixed-weeks/calendar-fixed-weeks.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CalendarFixedWeeks,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'calendar-multi-range': {
+    name: 'calendar-multi-range',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/calendar-multi-range/calendar-multi-range.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CalendarMultiRange,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'calendar-multi': {
+    name: 'calendar-multi',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/calendar-multi/calendar-multi.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CalendarMulti,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'calendar-range': {
+    name: 'calendar-range',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/calendar-range/calendar-range.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CalendarRange,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'calendar-read-only': {
+    name: 'calendar-read-only',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/calendar-read-only/calendar-read-only.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CalendarReadOnly,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'calendar-rtl': {
+    name: 'calendar-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/calendar-rtl/calendar-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CalendarRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'calendar-single': {
+    name: 'calendar-single',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/calendar-single/calendar-single.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CalendarSingle,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'calendar-views': {
+    name: 'calendar-views',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/calendar-views/calendar-views.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CalendarViews,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'calendar-week-numbers': {
+    name: 'calendar-week-numbers',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/calendar-week-numbers/calendar-week-numbers.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CalendarWeekNumbers,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'checkers-checked-sync': {
+    name: 'checkers-checked-sync',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/checkers-checked-sync/checkers-checked-sync.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CheckersCheckedSync,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'checkers-svg-indicator': {
+    name: 'checkers-svg-indicator',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/checkers-svg-indicator/checkers-svg-indicator.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CheckersSvgIndicator,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'checkers-switch-indicator': {
+    name: 'checkers-switch-indicator',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/checkers-switch-indicator/checkers-switch-indicator.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CheckersSwitchIndicator,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'command-async': {
+    name: 'command-async',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/command-async/command-async.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CommandAsync,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'command-controlled': {
+    name: 'command-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/command-controlled/command-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CommandControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'command-create-item': {
+    name: 'command-create-item',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/command-create-item/command-create-item.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CommandCreateItem,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'command-dialog': {
+    name: 'command-dialog',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/command-dialog/command-dialog.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CommandDialog,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'command-disabled-items': {
+    name: 'command-disabled-items',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/command-disabled-items/command-disabled-items.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CommandDisabledItems,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'command-filter': {
+    name: 'command-filter',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/command-filter/command-filter.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CommandFilter,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'command-palette': {
+    name: 'command-palette',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/command-palette/command-palette.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CommandPalette,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'command-rtl': {
+    name: 'command-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/command-rtl/command-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CommandRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'command-virtual': {
+    name: 'command-virtual',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/command-virtual/command-virtual.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _CommandVirtual,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'context-menu-basic': {
+    name: 'context-menu-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/context-menu-basic/context-menu-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ContextMenuBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'context-menu-checkbox-radio': {
+    name: 'context-menu-checkbox-radio',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/context-menu-checkbox-radio/context-menu-checkbox-radio.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ContextMenuCheckboxRadio,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'context-menu-disabled': {
+    name: 'context-menu-disabled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/context-menu-disabled/context-menu-disabled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ContextMenuDisabled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'context-menu-non-modal': {
+    name: 'context-menu-non-modal',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/context-menu-non-modal/context-menu-non-modal.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ContextMenuNonModal,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'context-menu-rtl': {
+    name: 'context-menu-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/context-menu-rtl/context-menu-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ContextMenuRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'context-menu-submenu': {
+    name: 'context-menu-submenu',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/context-menu-submenu/context-menu-submenu.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ContextMenuSubmenu,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dialog-basic': {
+    name: 'dialog-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dialog-basic/dialog-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DialogBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dialog-container': {
+    name: 'dialog-container',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dialog-container/dialog-container.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DialogContainer,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dialog-focus': {
+    name: 'dialog-focus',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dialog-focus/dialog-focus.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DialogFocus,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
   'dialog-guarded-async': {
     name: 'dialog-guarded-async',
     description: '',
     type: 'registry:internal',
-    registryDependencies: ['@gentleduck/primitives'],
+    registryDependencies: undefined,
     files: [
       {
         path: 'internal-primitives/dialog-guarded-async/dialog-guarded-async.tsx',
@@ -10023,11 +15550,315 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'internal-primitives',
   },
+  'dialog-nested': {
+    name: 'dialog-nested',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dialog-nested/dialog-nested.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DialogNested,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dialog-non-modal': {
+    name: 'dialog-non-modal',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dialog-non-modal/dialog-non-modal.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DialogNonModal,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dialog-rtl': {
+    name: 'dialog-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dialog-rtl/dialog-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DialogRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dialog-unsaved-guard': {
+    name: 'dialog-unsaved-guard',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dialog-unsaved-guard/dialog-unsaved-guard.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DialogUnsavedGuard,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'direction-nested': {
+    name: 'direction-nested',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/direction-nested/direction-nested.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DirectionNested,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'direction-provider': {
+    name: 'direction-provider',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/direction-provider/direction-provider.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DirectionProvider,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'direction-use-direction': {
+    name: 'direction-use-direction',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/direction-use-direction/direction-use-direction.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DirectionUseDirection,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dismissable-layer-basic': {
+    name: 'dismissable-layer-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dismissable-layer-basic/dismissable-layer-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DismissableLayerBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dismissable-layer-block-outside': {
+    name: 'dismissable-layer-block-outside',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dismissable-layer-block-outside/dismissable-layer-block-outside.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DismissableLayerBlockOutside,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dismissable-layer-branch': {
+    name: 'dismissable-layer-branch',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dismissable-layer-branch/dismissable-layer-branch.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DismissableLayerBranch,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dismissable-layer-stacked': {
+    name: 'dismissable-layer-stacked',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dismissable-layer-stacked/dismissable-layer-stacked.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DismissableLayerStacked,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dismissable-layer-surface': {
+    name: 'dismissable-layer-surface',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dismissable-layer-surface/dismissable-layer-surface.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DismissableLayerSurface,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dropdown-menu-basic': {
+    name: 'dropdown-menu-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dropdown-menu-basic/dropdown-menu-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DropdownMenuBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dropdown-menu-controlled': {
+    name: 'dropdown-menu-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dropdown-menu-controlled/dropdown-menu-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DropdownMenuControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dropdown-menu-keep-open': {
+    name: 'dropdown-menu-keep-open',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dropdown-menu-keep-open/dropdown-menu-keep-open.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DropdownMenuKeepOpen,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dropdown-menu-non-modal': {
+    name: 'dropdown-menu-non-modal',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dropdown-menu-non-modal/dropdown-menu-non-modal.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DropdownMenuNonModal,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dropdown-menu-open-dialog': {
+    name: 'dropdown-menu-open-dialog',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dropdown-menu-open-dialog/dropdown-menu-open-dialog.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DropdownMenuOpenDialog,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dropdown-menu-positioning': {
+    name: 'dropdown-menu-positioning',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dropdown-menu-positioning/dropdown-menu-positioning.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DropdownMenuPositioning,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dropdown-menu-rtl': {
+    name: 'dropdown-menu-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dropdown-menu-rtl/dropdown-menu-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DropdownMenuRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
   'dropdown-menu-selection': {
     name: 'dropdown-menu-selection',
     description: '',
     type: 'registry:internal',
-    registryDependencies: ['@gentleduck/primitives'],
+    registryDependencies: undefined,
     files: [
       {
         path: 'internal-primitives/dropdown-menu-selection/dropdown-menu-selection.tsx',
@@ -10039,11 +15870,875 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'internal-primitives',
   },
+  'dropdown-menu-submenu': {
+    name: 'dropdown-menu-submenu',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dropdown-menu-submenu/dropdown-menu-submenu.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DropdownMenuSubmenu,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'dropdown-menu-typeahead': {
+    name: 'dropdown-menu-typeahead',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/dropdown-menu-typeahead/dropdown-menu-typeahead.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _DropdownMenuTypeahead,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'focus-scope-auto-focus': {
+    name: 'focus-scope-auto-focus',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/focus-scope-auto-focus/focus-scope-auto-focus.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _FocusScopeAutoFocus,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'focus-scope-branches': {
+    name: 'focus-scope-branches',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/focus-scope-branches/focus-scope-branches.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _FocusScopeBranches,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'focus-scope-trapped': {
+    name: 'focus-scope-trapped',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/focus-scope-trapped/focus-scope-trapped.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _FocusScopeTrapped,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'hooks-controllable-state': {
+    name: 'hooks-controllable-state',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/hooks-controllable-state/hooks-controllable-state.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _HooksControllableState,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'hooks-escape-keydown': {
+    name: 'hooks-escape-keydown',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/hooks-escape-keydown/hooks-escape-keydown.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _HooksEscapeKeydown,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'hooks-id': {
+    name: 'hooks-id',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/hooks-id/hooks-id.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _HooksId,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'hooks-previous': {
+    name: 'hooks-previous',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/hooks-previous/hooks-previous.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _HooksPrevious,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'hooks-size': {
+    name: 'hooks-size',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/hooks-size/hooks-size.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _HooksSize,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'hooks-state-machine': {
+    name: 'hooks-state-machine',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/hooks-state-machine/hooks-state-machine.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _HooksStateMachine,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'hover-card-basic': {
+    name: 'hover-card-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/hover-card-basic/hover-card-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _HoverCardBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'hover-card-controlled': {
+    name: 'hover-card-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/hover-card-controlled/hover-card-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _HoverCardControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'hover-card-delays': {
+    name: 'hover-card-delays',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/hover-card-delays/hover-card-delays.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _HoverCardDelays,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'input-otp-auto-focus': {
+    name: 'input-otp-auto-focus',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/input-otp-auto-focus/input-otp-auto-focus.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _InputOtpAutoFocus,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'input-otp-basic': {
+    name: 'input-otp-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/input-otp-basic/input-otp-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _InputOtpBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'input-otp-controlled': {
+    name: 'input-otp-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/input-otp-controlled/input-otp-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _InputOtpControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'input-otp-disabled': {
+    name: 'input-otp-disabled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/input-otp-disabled/input-otp-disabled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _InputOtpDisabled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'input-otp-form': {
+    name: 'input-otp-form',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/input-otp-form/input-otp-form.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _InputOtpForm,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'input-otp-max-length': {
+    name: 'input-otp-max-length',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/input-otp-max-length/input-otp-max-length.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _InputOtpMaxLength,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'input-otp-password': {
+    name: 'input-otp-password',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/input-otp-password/input-otp-password.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _InputOtpPassword,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'input-otp-pattern': {
+    name: 'input-otp-pattern',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/input-otp-pattern/input-otp-pattern.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _InputOtpPattern,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'input-otp-rtl': {
+    name: 'input-otp-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/input-otp-rtl/input-otp-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _InputOtpRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'menu-anchor': {
+    name: 'menu-anchor',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/menu-anchor/menu-anchor.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _MenuAnchor,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'menu-shortcut-trigger': {
+    name: 'menu-shortcut-trigger',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/menu-shortcut-trigger/menu-shortcut-trigger.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _MenuShortcutTrigger,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'menubar-basic': {
+    name: 'menubar-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/menubar-basic/menubar-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _MenubarBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'menubar-controlled': {
+    name: 'menubar-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/menubar-controlled/menubar-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _MenubarControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'menubar-disabled': {
+    name: 'menubar-disabled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/menubar-disabled/menubar-disabled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _MenubarDisabled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'menubar-modal': {
+    name: 'menubar-modal',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/menubar-modal/menubar-modal.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _MenubarModal,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'menubar-rtl': {
+    name: 'menubar-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/menubar-rtl/menubar-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _MenubarRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'menubar-vertical': {
+    name: 'menubar-vertical',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/menubar-vertical/menubar-vertical.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _MenubarVertical,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'mount-minimal': {
+    name: 'mount-minimal',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/mount-minimal/mount-minimal.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _MountMinimal,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'mount-render-once': {
+    name: 'mount-render-once',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/mount-render-once/mount-render-once.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _MountRenderOnce,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'mount-timed': {
+    name: 'mount-timed',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/mount-timed/mount-timed.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _MountTimed,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'navigation-menu-basic': {
+    name: 'navigation-menu-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/navigation-menu-basic/navigation-menu-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _NavigationMenuBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'navigation-menu-controlled': {
+    name: 'navigation-menu-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/navigation-menu-controlled/navigation-menu-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _NavigationMenuControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'navigation-menu-delays': {
+    name: 'navigation-menu-delays',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/navigation-menu-delays/navigation-menu-delays.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _NavigationMenuDelays,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'navigation-menu-links': {
+    name: 'navigation-menu-links',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/navigation-menu-links/navigation-menu-links.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _NavigationMenuLinks,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'navigation-menu-manual': {
+    name: 'navigation-menu-manual',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/navigation-menu-manual/navigation-menu-manual.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _NavigationMenuManual,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'navigation-menu-rtl': {
+    name: 'navigation-menu-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/navigation-menu-rtl/navigation-menu-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _NavigationMenuRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'navigation-menu-sub': {
+    name: 'navigation-menu-sub',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/navigation-menu-sub/navigation-menu-sub.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _NavigationMenuSub,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'navigation-menu-vertical': {
+    name: 'navigation-menu-vertical',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/navigation-menu-vertical/navigation-menu-vertical.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _NavigationMenuVertical,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'pagination-basic': {
+    name: 'pagination-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/pagination-basic/pagination-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PaginationBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'pagination-controlled': {
+    name: 'pagination-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/pagination-controlled/pagination-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PaginationControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'pagination-custom-pages': {
+    name: 'pagination-custom-pages',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/pagination-custom-pages/pagination-custom-pages.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PaginationCustomPages,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'pagination-links': {
+    name: 'pagination-links',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/pagination-links/pagination-links.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PaginationLinks,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'pagination-rtl': {
+    name: 'pagination-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/pagination-rtl/pagination-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PaginationRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'pagination-sibling-boundary': {
+    name: 'pagination-sibling-boundary',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/pagination-sibling-boundary/pagination-sibling-boundary.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PaginationSiblingBoundary,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'popover-anchor': {
+    name: 'popover-anchor',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/popover-anchor/popover-anchor.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PopoverAnchor,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'popover-basic': {
+    name: 'popover-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/popover-basic/popover-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PopoverBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'popover-controlled': {
+    name: 'popover-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/popover-controlled/popover-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PopoverControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'popover-focus': {
+    name: 'popover-focus',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/popover-focus/popover-focus.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PopoverFocus,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'popover-modal': {
+    name: 'popover-modal',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/popover-modal/popover-modal.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PopoverModal,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'popover-rtl': {
+    name: 'popover-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/popover-rtl/popover-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PopoverRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
   'popover-side-aware': {
     name: 'popover-side-aware',
     description: '',
     type: 'registry:internal',
-    registryDependencies: ['@gentleduck/primitives'],
+    registryDependencies: undefined,
     files: [
       {
         path: 'internal-primitives/popover-side-aware/popover-side-aware.tsx',
@@ -10055,11 +16750,427 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'internal-primitives',
   },
+  'popper-available-size': {
+    name: 'popper-available-size',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/popper-available-size/popper-available-size.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PopperAvailableSize,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'popper-basic': {
+    name: 'popper-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/popper-basic/popper-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PopperBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'popper-collisions': {
+    name: 'popper-collisions',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/popper-collisions/popper-collisions.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PopperCollisions,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'popper-virtual': {
+    name: 'popper-virtual',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/popper-virtual/popper-virtual.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PopperVirtual,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'portal-body': {
+    name: 'portal-body',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/portal-body/portal-body.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PortalBody,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'portal-container': {
+    name: 'portal-container',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/portal-container/portal-container.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PortalContainer,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'presence-exit-animation': {
+    name: 'presence-exit-animation',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/presence-exit-animation/presence-exit-animation.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PresenceExitAnimation,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'presence-render-function': {
+    name: 'presence-render-function',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/presence-render-function/presence-render-function.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PresenceRenderFunction,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'primitive-as-child': {
+    name: 'primitive-as-child',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/primitive-as-child/primitive-as-child.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PrimitiveAsChild,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'primitive-custom': {
+    name: 'primitive-custom',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/primitive-custom/primitive-custom.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _PrimitiveCustom,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'progress-basic': {
+    name: 'progress-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/progress-basic/progress-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ProgressBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'progress-indeterminate': {
+    name: 'progress-indeterminate',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/progress-indeterminate/progress-indeterminate.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ProgressIndeterminate,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'progress-min': {
+    name: 'progress-min',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/progress-min/progress-min.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ProgressMin,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'progress-range-label': {
+    name: 'progress-range-label',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/progress-range-label/progress-range-label.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ProgressRangeLabel,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'radio-group-basic': {
+    name: 'radio-group-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/radio-group-basic/radio-group-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _RadioGroupBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'radio-group-controlled': {
+    name: 'radio-group-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/radio-group-controlled/radio-group-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _RadioGroupControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'radio-group-disabled': {
+    name: 'radio-group-disabled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/radio-group-disabled/radio-group-disabled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _RadioGroupDisabled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'radio-group-form': {
+    name: 'radio-group-form',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/radio-group-form/radio-group-form.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _RadioGroupForm,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'radio-group-horizontal': {
+    name: 'radio-group-horizontal',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/radio-group-horizontal/radio-group-horizontal.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _RadioGroupHorizontal,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'radio-group-rtl': {
+    name: 'radio-group-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/radio-group-rtl/radio-group-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _RadioGroupRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'roving-focus-active': {
+    name: 'roving-focus-active',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/roving-focus-active/roving-focus-active.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _RovingFocusActive,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'roving-focus-controlled': {
+    name: 'roving-focus-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/roving-focus-controlled/roving-focus-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _RovingFocusControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'roving-focus-item-state': {
+    name: 'roving-focus-item-state',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/roving-focus-item-state/roving-focus-item-state.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _RovingFocusItemState,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'roving-focus-toolbar': {
+    name: 'roving-focus-toolbar',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/roving-focus-toolbar/roving-focus-toolbar.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _RovingFocusToolbar,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'select-basic': {
+    name: 'select-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/select-basic/select-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SelectBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'select-controlled-open': {
+    name: 'select-controlled-open',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/select-controlled-open/select-controlled-open.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SelectControlledOpen,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
   'select-controlled': {
     name: 'select-controlled',
     description: '',
     type: 'registry:internal',
-    registryDependencies: ['@gentleduck/primitives'],
+    registryDependencies: undefined,
     files: [
       {
         path: 'internal-primitives/select-controlled/select-controlled.tsx',
@@ -10071,11 +17182,539 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'internal-primitives',
   },
+  'select-disabled': {
+    name: 'select-disabled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/select-disabled/select-disabled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SelectDisabled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'select-form': {
+    name: 'select-form',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/select-form/select-form.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SelectForm,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'select-items': {
+    name: 'select-items',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/select-items/select-items.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SelectItems,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'select-multiple': {
+    name: 'select-multiple',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/select-multiple/select-multiple.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SelectMultiple,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'select-popper': {
+    name: 'select-popper',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/select-popper/select-popper.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SelectPopper,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'select-rtl': {
+    name: 'select-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/select-rtl/select-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SelectRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'sheet-bottom': {
+    name: 'sheet-bottom',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/sheet-bottom/sheet-bottom.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SheetBottom,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'sheet-controlled': {
+    name: 'sheet-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/sheet-controlled/sheet-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SheetControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'sheet-rtl': {
+    name: 'sheet-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/sheet-rtl/sheet-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SheetRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'sheet-side': {
+    name: 'sheet-side',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/sheet-side/sheet-side.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SheetSide,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'slider-basic': {
+    name: 'slider-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/slider-basic/slider-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SliderBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'slider-commit': {
+    name: 'slider-commit',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/slider-commit/slider-commit.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SliderCommit,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'slider-disabled': {
+    name: 'slider-disabled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/slider-disabled/slider-disabled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SliderDisabled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'slider-form': {
+    name: 'slider-form',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/slider-form/slider-form.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SliderForm,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'slider-inverted': {
+    name: 'slider-inverted',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/slider-inverted/slider-inverted.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SliderInverted,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'slider-range': {
+    name: 'slider-range',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/slider-range/slider-range.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SliderRange,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'slider-value': {
+    name: 'slider-value',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/slider-value/slider-value.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SliderValue,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'slider-vertical': {
+    name: 'slider-vertical',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/slider-vertical/slider-vertical.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SliderVertical,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'slot-as-child': {
+    name: 'slot-as-child',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/slot-as-child/slot-as-child.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SlotAsChild,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'slot-merge-props': {
+    name: 'slot-merge-props',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/slot-merge-props/slot-merge-props.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SlotMergeProps,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'slot-slottable': {
+    name: 'slot-slottable',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/slot-slottable/slot-slottable.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _SlotSlottable,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'toggle-basic': {
+    name: 'toggle-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/toggle-basic/toggle-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ToggleBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'toggle-controlled': {
+    name: 'toggle-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/toggle-controlled/toggle-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ToggleControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'toggle-group-multiple': {
+    name: 'toggle-group-multiple',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/toggle-group-multiple/toggle-group-multiple.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ToggleGroupMultiple,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'toggle-group-no-roving': {
+    name: 'toggle-group-no-roving',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/toggle-group-no-roving/toggle-group-no-roving.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ToggleGroupNoRoving,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'toggle-group-rtl': {
+    name: 'toggle-group-rtl',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/toggle-group-rtl/toggle-group-rtl.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ToggleGroupRtl,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'toggle-group-segmented': {
+    name: 'toggle-group-segmented',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/toggle-group-segmented/toggle-group-segmented.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ToggleGroupSegmented,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'toggle-group-single': {
+    name: 'toggle-group-single',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/toggle-group-single/toggle-group-single.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ToggleGroupSingle,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'toggle-group-vertical': {
+    name: 'toggle-group-vertical',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/toggle-group-vertical/toggle-group-vertical.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _ToggleGroupVertical,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'tooltip-aria-label': {
+    name: 'tooltip-aria-label',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/tooltip-aria-label/tooltip-aria-label.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _TooltipAriaLabel,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'tooltip-basic': {
+    name: 'tooltip-basic',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/tooltip-basic/tooltip-basic.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _TooltipBasic,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'tooltip-click-stays': {
+    name: 'tooltip-click-stays',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/tooltip-click-stays/tooltip-click-stays.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _TooltipClickStays,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'tooltip-controlled': {
+    name: 'tooltip-controlled',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/tooltip-controlled/tooltip-controlled.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _TooltipControlled,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
   'tooltip-delay-provider': {
     name: 'tooltip-delay-provider',
     description: '',
     type: 'registry:internal',
-    registryDependencies: ['@gentleduck/primitives'],
+    registryDependencies: undefined,
     files: [
       {
         path: 'internal-primitives/tooltip-delay-provider/tooltip-delay-provider.tsx',
@@ -10083,6 +17722,70 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _TooltipDelayProvider,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'tooltip-hoverable': {
+    name: 'tooltip-hoverable',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/tooltip-hoverable/tooltip-hoverable.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _TooltipHoverable,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'tooltip-sides': {
+    name: 'tooltip-sides',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/tooltip-sides/tooltip-sides.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _TooltipSides,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'visually-hidden-dialog-title': {
+    name: 'visually-hidden-dialog-title',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/visually-hidden-dialog-title/visually-hidden-dialog-title.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _VisuallyHiddenDialogTitle,
+    source: '/registry-internals/src/internal-primitives',
+    categories: [],
+    root_folder: 'internal-primitives',
+  },
+  'visually-hidden-icon-label': {
+    name: 'visually-hidden-icon-label',
+    description: '',
+    type: 'registry:internal',
+    registryDependencies: undefined,
+    files: [
+      {
+        path: 'internal-primitives/visually-hidden-icon-label/visually-hidden-icon-label.tsx',
+        type: 'registry:internal',
+      },
+    ],
+    component: _VisuallyHiddenIconLabel,
     source: '/registry-internals/src/internal-primitives',
     categories: [],
     root_folder: 'internal-primitives',

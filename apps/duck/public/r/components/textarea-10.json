@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "import { Label } from '@gentleduck/registry-ui/label'\nimport { Textarea } from '@gentleduck/registry-ui/textarea'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full gap-1.5\">\n      <Label htmlFor=\"textarea-auto\">Review</Label>\n      <Textarea\n        defaultValue=\"شكراً، وصل الطلب في موعده.\"\n        dir=\"auto\"\n        id=\"textarea-auto\"\n        placeholder=\"Write in any language\"\n      />\n      <p className=\"text-muted-foreground text-sm\">\n        With <code>dir=\"auto\"</code> the text sets its own direction: Arabic starts on the right, English on the left.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "textarea/textarea-10.tsx",
+      "target": "components/textarea-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "textarea-10",
+  "registryDependencies": [
+    "textarea",
+    "button",
+    "field",
+    "label"
+  ],
+  "root_folder": "textarea",
+  "source": "/registry-examples/src/textarea",
+  "type": "registry:example"
+}

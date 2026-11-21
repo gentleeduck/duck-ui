@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { cn } from '@gentleduck/libs/cn'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { PreviewPanel } from '@gentleduck/registry-ui/preview-panel'\nimport { Grid3x3 } from 'lucide-react'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [grid, setGrid] = React.useState(true)\n\n  return (\n    <PreviewPanel\n      actions={\n        <Button\n          aria-label=\"Show the grid\"\n          aria-pressed={grid}\n          className=\"rounded-md border bg-background/80 backdrop-blur-sm\"\n          icon={<Grid3x3 aria-hidden=\"true\" />}\n          onClick={() => setGrid((shown) => !shown)}\n          size=\"icon-sm\"\n          variant={grid ? 'secondary' : 'ghost'}\n        />\n      }\n      className=\"rounded-lg border bg-card\"\n      defaultLocked={false}\n      maxHeight=\"400px\"\n      maxZoom={2}\n      minZoom={0.5}>\n      <div\n        className={cn(\n          'flex size-72 flex-col items-center justify-center gap-2 rounded-md border border-dashed',\n          grid &&\n            '[background-image:radial-gradient(var(--color-border)_1px,transparent_1px)] [background-size:16px_16px]',\n        )}>\n        <span className=\"font-semibold text-lg\">Canvas</span>\n        <span className=\"text-muted-foreground text-sm\">Drag, scroll or pinch, from 50% to 200%</span>\n      </div>\n    </PreviewPanel>\n  )\n}\n",
+      "path": "preview-panel/preview-panel-7.tsx",
+      "target": "components/preview-panel-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "preview-panel-7",
+  "registryDependencies": [
+    "preview-panel"
+  ],
+  "root_folder": "preview-panel",
+  "source": "/registry-examples/src/preview-panel",
+  "type": "registry:example"
+}

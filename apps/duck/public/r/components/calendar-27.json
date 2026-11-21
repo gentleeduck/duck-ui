@@ -1,0 +1,29 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [date, setDate] = React.useState<Date | null>(new Date())\n\n  return (\n    <Calendar\n      className=\"rounded-md border shadow-sm\"\n      mode=\"single\"\n      selected={date}\n      onSelect={setDate}\n      renderHeader={({ title, goToPrevMonth, goToNextMonth, isPrevDisabled, isNextDisabled }) => (\n        <div className=\"flex items-center justify-between\">\n          <span className=\"font-semibold text-sm\">{title}</span>\n          <div className=\"flex gap-1\">\n            <Button\n              aria-label=\"Previous month\"\n              disabled={isPrevDisabled}\n              onClick={goToPrevMonth}\n              size=\"icon\"\n              variant=\"outline\"\n              className=\"size-7\">\n              <ChevronLeftIcon className=\"rtl:rotate-180\" />\n            </Button>\n            <Button\n              aria-label=\"Next month\"\n              disabled={isNextDisabled}\n              onClick={goToNextMonth}\n              size=\"icon\"\n              variant=\"outline\"\n              className=\"size-7\">\n              <ChevronRightIcon className=\"rtl:rotate-180\" />\n            </Button>\n          </div>\n        </div>\n      )}\n    />\n  )\n}\n",
+      "path": "calendar/calendar-27.tsx",
+      "target": "components/calendar-27.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "calendar-27",
+  "registryDependencies": [
+    "calendar",
+    "direction",
+    "field",
+    "input",
+    "label",
+    "popover",
+    "switch"
+  ],
+  "root_folder": "calendar",
+  "source": "/registry-examples/src/calendar",
+  "type": "registry:example"
+}

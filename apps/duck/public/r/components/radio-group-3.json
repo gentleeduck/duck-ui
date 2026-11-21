@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport { RadioGroup, RadioGroupItem } from '@gentleduck/registry-ui/radio-group'\n\nexport default function Demo() {\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <RadioGroup defaultValue=\"comfortable\">\n        <RadioGroupItem value=\"default\">افتراضي</RadioGroupItem>\n        <RadioGroupItem value=\"comfortable\">مريح</RadioGroupItem>\n        <RadioGroupItem value=\"compact\">مضغوط</RadioGroupItem>\n      </RadioGroup>\n    </DirectionProvider>\n  )\n}\n",
@@ -9,7 +15,9 @@
   ],
   "name": "radio-group-3",
   "registryDependencies": [
-    "radio-group"
+    "radio-group",
+    "button",
+    "field"
   ],
   "root_folder": "radio-group",
   "source": "/registry-examples/src/radio-group",

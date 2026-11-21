@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Slider } from '@gentleduck/registry-ui/slider'\nimport * as React from 'react'\n\nconst hour = (value: number | undefined) => `${String(value).padStart(2, '0')}:00`\n\nexport default function Demo() {\n  const [hours, setHours] = React.useState([9, 17])\n\n  return (\n    <div className=\"mx-auto flex w-full max-w-xs flex-col gap-3\">\n      <Slider\n        aria-label=\"Opening hours\"\n        max={24}\n        minStepsBetweenThumbs={2}\n        onValueChange={setHours}\n        preserveThumbOrder\n        value={hours}\n      />\n      <p className=\"text-muted-foreground text-sm tabular-nums\">\n        Open {hour(hours[0])} to {hour(hours[1])}, at least two hours.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "slider/slider-9.tsx",
+      "target": "components/slider-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "slider-9",
+  "registryDependencies": [
+    "slider",
+    "button",
+    "direction"
+  ],
+  "root_folder": "slider",
+  "source": "/registry-examples/src/slider",
+  "type": "registry:example"
+}

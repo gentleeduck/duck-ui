@@ -1,7 +1,13 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
-      "content": "'use client'\n\nimport { Checkbox } from '@gentleduck/registry-ui/checkbox'\nimport { Label } from '@gentleduck/registry-ui/label'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-col gap-6\">\n      <div className=\"flex items-center gap-3\">\n        <Checkbox id=\"terms\" />\n        <Label htmlFor=\"terms\">Accept terms and conditions</Label>\n      </div>\n      <div className=\"flex items-start gap-3\">\n        <Checkbox defaultChecked id=\"terms-2\" />\n        <div className=\"grid gap-2\">\n          <Label htmlFor=\"terms-2\">Accept terms and conditions</Label>\n          <p className=\"text-muted-foreground text-sm\">\n            By clicking this checkbox, you agree to the terms and conditions.\n          </p>\n        </div>\n      </div>\n      <div className=\"flex items-start gap-3\">\n        <Checkbox disabled id=\"toggle\" />\n        <Label htmlFor=\"toggle\">Enable notifications</Label>\n      </div>\n      <Label className=\"flex items-start gap-3 rounded-lg border p-3 hover:bg-accent/50 has-[[aria-checked=true]]:border-blue-600 has-[[aria-checked=true]]:bg-blue-50 dark:has-[[aria-checked=true]]:border-blue-900 dark:has-[[aria-checked=true]]:bg-blue-950\">\n        <Checkbox\n          className=\"data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700\"\n          defaultChecked\n          id=\"toggle-2\"\n        />\n        <div className=\"grid gap-1.5 font-normal\">\n          <p className=\"font-medium text-sm leading-none\">Enable notifications</p>\n          <p className=\"text-muted-foreground text-sm\">You can enable or disable notifications at any time.</p>\n        </div>\n      </Label>\n    </div>\n  )\n}\n",
+      "content": "'use client'\n\nimport { Checkbox } from '@gentleduck/registry-ui/checkbox'\nimport { Label } from '@gentleduck/registry-ui/label'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-col gap-6\">\n      <div className=\"flex items-center gap-3\">\n        <Checkbox id=\"terms\" />\n        <Label htmlFor=\"terms\">Accept terms and conditions</Label>\n      </div>\n      <div className=\"flex items-start gap-3\">\n        <Checkbox defaultChecked id=\"terms-2\" />\n        <div className=\"grid gap-2\">\n          <Label htmlFor=\"terms-2\">Accept terms and conditions</Label>\n          <p className=\"text-muted-foreground text-sm\">\n            By clicking this checkbox, you agree to the terms and conditions.\n          </p>\n        </div>\n      </div>\n      <div className=\"flex items-start gap-3\">\n        <Checkbox disabled id=\"toggle\" />\n        <Label htmlFor=\"toggle\">Enable notifications</Label>\n      </div>\n      <Label className=\"flex items-start gap-3 rounded-lg border p-3 hover:bg-accent/50 has-checked:border-blue-600 has-checked:bg-blue-50 dark:has-checked:border-blue-900 dark:has-checked:bg-blue-950\">\n        <Checkbox\n          className=\"text-white checked:border-blue-600 checked:bg-blue-600 dark:checked:border-blue-700 dark:checked:bg-blue-700\"\n          defaultChecked\n          id=\"toggle-2\"\n        />\n        <div className=\"grid gap-1.5 font-normal\">\n          <p className=\"font-medium text-sm leading-none\">Enable notifications</p>\n          <p className=\"text-muted-foreground text-sm\">You can enable or disable notifications at any time.</p>\n        </div>\n      </Label>\n    </div>\n  )\n}\n",
       "path": "checkbox/checkbox-1.tsx",
       "target": "components/checkbox-1.tsx",
       "type": "registry:example"
@@ -9,7 +15,9 @@
   ],
   "name": "checkbox-1",
   "registryDependencies": [
-    "checkbox"
+    "checkbox",
+    "button",
+    "field"
   ],
   "root_folder": "checkbox",
   "source": "/registry-examples/src/checkbox",

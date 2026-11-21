@@ -1,0 +1,26 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Dialog,\n  DialogClose,\n  DialogContent,\n  DialogDescription,\n  DialogFooter,\n  DialogHeader,\n  DialogTitle,\n  DialogTrigger,\n} from '@gentleduck/registry-ui/dialog'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { Textarea } from '@gentleduck/registry-ui/textarea'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n  const [notes, setNotes] = React.useState('')\n  const [warned, setWarned] = React.useState(false)\n  const keepWhileUnsaved = (event: Event) => {\n    if (notes === '') return\n    event.preventDefault()\n    setWarned(true)\n  }\n\n  return (\n    <Dialog\n      onOpenChange={(next) => {\n        setOpen(next)\n        if (!next) {\n          setNotes('')\n          setWarned(false)\n        }\n      }}\n      open={open}>\n      <DialogTrigger asChild>\n        <Button variant=\"outline\">Add a note</Button>\n      </DialogTrigger>\n      <DialogContent className=\"sm:max-w-md\" onEscapeKeyDown={keepWhileUnsaved} onPointerDownOutside={keepWhileUnsaved}>\n        <DialogHeader>\n          <DialogTitle>Add a note</DialogTitle>\n          <DialogDescription>\n            Escape and a click outside close it only while the note is empty. The buttons always do.\n          </DialogDescription>\n        </DialogHeader>\n        <div className=\"grid gap-2\">\n          <Label htmlFor=\"dialog-note\">Note</Label>\n          <Textarea id=\"dialog-note\" onChange={(event) => setNotes(event.target.value)} value={notes} />\n          {warned && <p className=\"text-destructive text-sm\">Save the note or discard it to close.</p>}\n        </div>\n        <DialogFooter>\n          <DialogClose asChild>\n            <Button variant=\"outline\">Discard</Button>\n          </DialogClose>\n          <DialogClose asChild>\n            <Button>Save</Button>\n          </DialogClose>\n        </DialogFooter>\n      </DialogContent>\n    </Dialog>\n  )\n}\n",
+      "path": "dialog/dialog-8.tsx",
+      "target": "components/dialog-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "dialog-8",
+  "registryDependencies": [
+    "dialog",
+    "button",
+    "calendar",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "popover",
+    "select",
+    "textarea"
+  ],
+  "root_folder": "dialog",
+  "source": "/registry-examples/src/dialog",
+  "type": "registry:example"
+}

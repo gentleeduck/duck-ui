@@ -95,7 +95,7 @@ confirmation.
 State model:
 
 1. `mounted`
-2. `unmountSuspended` (exit animation in progress)
+2. `exiting` (exit animation in progress)
 3. `unmounted`
 
 In practice: style enter/exit through `data-state` and CSS keyframes. Use

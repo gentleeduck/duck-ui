@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as AlertDialog from '@gentleduck/primitives/alert-dialog'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function AlertDialogInitialFocusExample() {\n  const confirm = React.useRef<HTMLButtonElement>(null)\n\n  return (\n    <AlertDialog.Root>\n      <AlertDialog.Trigger className={styles.button}>Discard draft</AlertDialog.Trigger>\n      <AlertDialog.Portal>\n        <AlertDialog.Overlay className={`${styles.overlay} ${styles.fade}`} />\n        <AlertDialog.Content className={styles.dialog} initialFocus={confirm}>\n          <AlertDialog.Title className={styles.title}>Discard this draft?</AlertDialog.Title>\n          <AlertDialog.Description className={styles.description}>\n            Focus starts on Discard here, where it would start on Cancel.\n          </AlertDialog.Description>\n          <div className={styles.actions}>\n            <AlertDialog.Cancel className={styles.button}>Keep editing</AlertDialog.Cancel>\n            <AlertDialog.Action className={`${styles.button} ${styles.primary}`} ref={confirm}>\n              Discard\n            </AlertDialog.Action>\n          </div>\n        </AlertDialog.Content>\n      </AlertDialog.Portal>\n    </AlertDialog.Root>\n  )\n}\n",
+      "path": "internal-primitives/alert-dialog-initial-focus/alert-dialog-initial-focus.tsx",
+      "target": "components/alert-dialog-initial-focus.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "alert-dialog-initial-focus",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

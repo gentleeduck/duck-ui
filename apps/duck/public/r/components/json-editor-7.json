@@ -1,0 +1,20 @@
+{
+  "dependencies": [
+    "sonner"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { JsonTextareaField } from '@gentleduck/registry-ui/json-editor'\nimport { FormProvider, useForm } from 'react-hook-form'\n\ntype JsonEditorAuditValues = {\n  event: Record<string, unknown> | null\n}\n\nexport default function Demo() {\n  const form = useForm<JsonEditorAuditValues>({\n    defaultValues: {\n      event: {\n        action: 'member.invited',\n        actor: 'duck@gentleduck.org',\n        at: '2026-11-12T09:30:00Z',\n      },\n    },\n  })\n\n  return (\n    <FormProvider {...form}>\n      <form className=\"w-full max-w-2xl\">\n        <JsonTextareaField\n          control={form.control}\n          description=\"Recorded events cannot be changed.\"\n          expandMode=\"none\"\n          isEditable={false}\n          label=\"Audit event\"\n          lineNumbers={false}\n          name=\"event\"\n          rows={6}\n        />\n      </form>\n    </FormProvider>\n  )\n}\n",
+      "path": "json-editor/json-editor-7.tsx",
+      "target": "components/json-editor-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "json-editor-7",
+  "registryDependencies": [
+    "json-editor"
+  ],
+  "root_folder": "json-editor",
+  "source": "/registry-examples/src/json-editor",
+  "type": "registry:example"
+}

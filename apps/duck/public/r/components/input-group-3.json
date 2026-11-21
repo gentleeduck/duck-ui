@@ -1,7 +1,11 @@
 {
+  "dependencies": [
+    "@gentleduck/hooks",
+    "@tabler/icons-react"
+  ],
   "files": [
     {
-      "content": "import {\n  InputGroup,\n  InputGroupAddon,\n  InputGroupInput,\n  InputGroupText,\n  InputGroupTextarea,\n} from '@gentleduck/registry-ui/input-group'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-sm gap-6\">\n      <InputGroup>\n        <InputGroupInput placeholder=\"0.0\" />\n        <InputGroupAddon align=\"inline-end\">\n          <InputGroupText>kg</InputGroupText>\n        </InputGroupAddon>\n      </InputGroup>\n      <InputGroup>\n        <InputGroupAddon>\n          <InputGroupText>EUR</InputGroupText>\n        </InputGroupAddon>\n        <InputGroupInput className=\"!pl-0.5\" placeholder=\"0.00\" />\n        <InputGroupAddon align=\"inline-end\">\n          <InputGroupText>.00</InputGroupText>\n        </InputGroupAddon>\n      </InputGroup>\n      <InputGroup>\n        <InputGroupAddon>\n          <InputGroupText>@</InputGroupText>\n        </InputGroupAddon>\n        <InputGroupInput className=\"!pl-0.5\" placeholder=\"handle\" />\n      </InputGroup>\n      <InputGroup>\n        <InputGroupTextarea placeholder=\"Write release notes...\" />\n        <InputGroupAddon align=\"block-end\">\n          <InputGroupText className=\"text-muted-foreground text-xs\">500 characters remaining</InputGroupText>\n        </InputGroupAddon>\n      </InputGroup>\n    </div>\n  )\n}\n",
+      "content": "import {\n  InputGroup,\n  InputGroupAddon,\n  InputGroupInput,\n  InputGroupText,\n  InputGroupTextarea,\n} from '@gentleduck/registry-ui/input-group'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-sm gap-6\">\n      <InputGroup>\n        <InputGroupInput placeholder=\"0.0\" />\n        <InputGroupAddon align=\"inline-end\">\n          <InputGroupText>kg</InputGroupText>\n        </InputGroupAddon>\n      </InputGroup>\n      <InputGroup>\n        <InputGroupAddon>\n          <InputGroupText>EUR</InputGroupText>\n        </InputGroupAddon>\n        <InputGroupInput className=\"!ps-0.5\" placeholder=\"0.00\" />\n        <InputGroupAddon align=\"inline-end\">\n          <InputGroupText>.00</InputGroupText>\n        </InputGroupAddon>\n      </InputGroup>\n      <InputGroup>\n        <InputGroupAddon>\n          <InputGroupText>@</InputGroupText>\n        </InputGroupAddon>\n        <InputGroupInput className=\"!ps-0.5\" placeholder=\"handle\" />\n      </InputGroup>\n      <InputGroup>\n        <InputGroupTextarea placeholder=\"Write release notes...\" />\n        <InputGroupAddon align=\"block-end\">\n          <InputGroupText className=\"text-muted-foreground text-xs\">500 characters remaining</InputGroupText>\n        </InputGroupAddon>\n      </InputGroup>\n    </div>\n  )\n}\n",
       "path": "input-group/input-group-3.tsx",
       "target": "components/input-group-3.tsx",
       "type": "registry:example"
@@ -9,7 +13,14 @@
   ],
   "name": "input-group-3",
   "registryDependencies": [
-    "input-group"
+    "input-group",
+    "button-group",
+    "dropdown-menu",
+    "kbd",
+    "label",
+    "popover",
+    "separator",
+    "tooltip"
   ],
   "root_folder": "input-group",
   "source": "/registry-examples/src/input-group",

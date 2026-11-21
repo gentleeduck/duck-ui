@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { RadioGroup, RadioGroupItem } from '@gentleduck/registry-ui/radio-group'\nimport * as React from 'react'\n\nconst PLANS = [\n  { label: 'Hobby, free', text: 'Hobby', value: 'hobby' },\n  { label: 'Pro, 20 a month', text: 'Pro', value: 'pro' },\n  { label: 'Team, 50 a month', text: 'Team', value: 'team' },\n]\n\nexport default function Demo() {\n  const [sent, setSent] = React.useState('')\n\n  return (\n    <form\n      className=\"flex flex-col gap-3\"\n      onSubmit={(event) => {\n        event.preventDefault()\n        setSent(String(new FormData(event.currentTarget).get('plan')))\n      }}>\n      <RadioGroup loop={false} name=\"plan\" required>\n        {PLANS.map((plan) => (\n          <div className=\"flex items-center gap-2\" key={plan.value}>\n            <RadioGroupItem id={`radio-8-${plan.value}`} textValue={plan.text} value={plan.value} />\n            <Label htmlFor={`radio-8-${plan.value}`}>{plan.label}</Label>\n          </div>\n        ))}\n      </RadioGroup>\n      <Button className=\"self-start\" type=\"submit\">\n        Continue\n      </Button>\n      <p className=\"text-muted-foreground text-sm\">\n        {sent\n          ? `Submitted plan=${sent}`\n          : 'required refuses an empty pick. Typing P jumps to Pro through its textValue.'}\n      </p>\n    </form>\n  )\n}\n",
+      "path": "radio-group/radio-group-8.tsx",
+      "target": "components/radio-group-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "radio-group-8",
+  "registryDependencies": [
+    "radio-group",
+    "button",
+    "field"
+  ],
+  "root_folder": "radio-group",
+  "source": "/registry-examples/src/radio-group",
+  "type": "registry:example"
+}

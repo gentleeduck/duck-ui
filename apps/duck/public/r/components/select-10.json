@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\n\nexport default function Demo() {\n  return (\n    <Select defaultValue=\"eu-west\" disabled>\n      <SelectTrigger aria-label=\"Region\" className=\"w-[200px]\">\n        <SelectValue />\n      </SelectTrigger>\n      <SelectContent>\n        <SelectItem value=\"eu-west\">Europe (Ireland)</SelectItem>\n        <SelectItem value=\"us-east\">US East (Virginia)</SelectItem>\n      </SelectContent>\n    </Select>\n  )\n}\n",
+      "path": "select/select-10.tsx",
+      "target": "components/select-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-10",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

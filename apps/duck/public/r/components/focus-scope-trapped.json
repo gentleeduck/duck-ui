@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { FocusScope } from '@gentleduck/primitives/focus-scope'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function FocusScopeTrappedExample() {\n  const [trapped, setTrapped] = React.useState(false)\n  const [loop, setLoop] = React.useState(true)\n\n  return (\n    <div className={styles.stack}>\n      <div className={styles.row}>\n        <button className={styles.button} onClick={() => setTrapped((value) => !value)} type=\"button\">\n          {trapped ? 'Release focus' : 'Trap focus'}\n        </button>\n        <button className={styles.button} onClick={() => setLoop((value) => !value)} type=\"button\">\n          loop {loop ? 'on' : 'off'}\n        </button>\n      </div>\n      <FocusScope className={`${styles.box} ${styles.stack}`} loop={loop} trapped={trapped}>\n        <input className={styles.input} placeholder=\"First\" />\n        <input className={styles.input} placeholder=\"Second\" />\n        <button className={styles.button} onClick={() => setTrapped(false)} type=\"button\">\n          Done\n        </button>\n      </FocusScope>\n      <p className={styles.note}>Trapped, Tab cannot leave the box. loop takes it from Done back to First.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/focus-scope-trapped/focus-scope-trapped.tsx",
+      "target": "components/focus-scope-trapped.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "focus-scope-trapped",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

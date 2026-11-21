@@ -1,7 +1,13 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
-      "content": "'use client'\n\nimport { cn } from '@gentleduck/libs/cn'\nimport { MotionButton } from '@gentleduck/registry-ui/button'\nimport {\n  Command,\n  CommandEmpty,\n  CommandGroup,\n  CommandInput,\n  CommandItem,\n  CommandList,\n} from '@gentleduck/registry-ui/command'\nimport { MotionPopover, MotionPopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'\nimport { Check, ChevronsUpDown } from 'lucide-react'\nimport * as React from 'react'\n\nconst frameworks = [\n  { label: 'Next.js', value: 'next.js' },\n  { label: 'SvelteKit', value: 'sveltekit' },\n  { label: 'Nuxt.js', value: 'nuxt.js' },\n  { label: 'Remix', value: 'remix' },\n  { label: 'Astro', value: 'astro' },\n]\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n  const [value, setValue] = React.useState('')\n\n  return (\n    <MotionPopover onOpenChange={setOpen} open={open}>\n      <PopoverTrigger asChild>\n        <MotionButton aria-expanded={open} className=\"w-57.5 justify-between\" role=\"combobox\" variant=\"outline\">\n          {value ? frameworks.find((f) => f.value === value)?.label : 'Select framework...'}\n          <ChevronsUpDown className=\"opacity-50\" />\n        </MotionButton>\n      </PopoverTrigger>\n      <MotionPopoverContent className=\"w-57.5 min-w-auto p-0\">\n        <Command>\n          <CommandInput className=\"h-9\" placeholder=\"Search framework...\" />\n          <CommandList>\n            <CommandEmpty>No framework found.</CommandEmpty>\n            <CommandGroup>\n              {frameworks.map((framework, _i) => (\n                <CommandItem\n                  key={framework.value}\n                  onSelect={(currentValue) => {\n                    setValue(currentValue === value ? '' : currentValue)\n                    setOpen(false)\n                  }}\n                  value={framework.value}>\n                  {framework.label}\n                  <Check className={cn('ml-auto', value === framework.value ? 'opacity-100' : 'opacity-0')} />\n                </CommandItem>\n              ))}\n            </CommandGroup>\n          </CommandList>\n        </Command>\n      </MotionPopoverContent>\n    </MotionPopover>\n  )\n}\n",
+      "content": "'use client'\n\nimport { MotionCombobox, MotionComboboxItem } from '@gentleduck/registry-ui/combobox'\n\nconst frameworks = [\n  { label: 'Next.js', value: 'next.js' },\n  { label: 'SvelteKit', value: 'sveltekit' },\n  { label: 'Nuxt.js', value: 'nuxt.js' },\n  { label: 'Remix', value: 'remix' },\n  { label: 'Astro', value: 'astro' },\n]\n\nexport default function Demo() {\n  return (\n    <MotionCombobox\n      commandEmpty=\"No framework found.\"\n      commandInput={{ placeholder: 'Search framework...' }}\n      commandTriggerPlaceholder=\"Select frameworks...\"\n      items={frameworks}\n      popoverTrigger={{ className: 'min-w-57.5 justify-start', variant: 'outline' }}\n      type=\"multiple\">\n      {(items) => items.map((item, index) => <MotionComboboxItem index={index} item={item} key={item.value} />)}\n    </MotionCombobox>\n  )\n}\n",
       "path": "combobox/combobox-8.tsx",
       "target": "components/combobox-8.tsx",
       "type": "registry:example"
@@ -9,7 +15,9 @@
   ],
   "name": "combobox-8",
   "registryDependencies": [
-    "combobox"
+    "combobox",
+    "dropdown-menu",
+    "field"
   ],
   "root_folder": "combobox",
   "source": "/registry-examples/src/combobox",

@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "content": "import { MotionProgress, Progress } from '@gentleduck/registry-ui/progress'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex w-[60%] flex-col gap-4\">\n      <Progress aria-label=\"Preparing the export\" value={null} />\n      <MotionProgress aria-label=\"Preparing the import\" value={null} />\n    </div>\n  )\n}\n",
+      "path": "progress/progress-6.tsx",
+      "target": "components/progress-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "progress-6",
+  "registryDependencies": [
+    "progress",
+    "button",
+    "direction"
+  ],
+  "root_folder": "progress",
+  "source": "/registry-examples/src/progress",
+  "type": "registry:example"
+}

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Command from '@gentleduck/primitives/command'\nimport * as Dialog from '@gentleduck/primitives/dialog'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function CommandDialogExample() {\n  const [open, setOpen] = React.useState(false)\n\n  React.useEffect(() => {\n    const onKey = (event: KeyboardEvent) => {\n      if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {\n        event.preventDefault()\n        setOpen((value) => !value)\n      }\n    }\n    document.addEventListener('keydown', onKey)\n    return () => document.removeEventListener('keydown', onKey)\n  }, [])\n\n  return (\n    <Dialog.Root onOpenChange={setOpen} open={open}>\n      <Dialog.Trigger className={styles.button}>Open with Ctrl K</Dialog.Trigger>\n      <Dialog.Portal>\n        <Dialog.Overlay className={`${styles.overlay} ${styles.fade}`} />\n        <Dialog.Content aria-describedby={undefined} className={styles.dialog} style={{ padding: 0 }}>\n          <Dialog.Title className={styles.title} style={{ padding: '0.75rem 0.75rem 0' }}>\n            Jump to\n          </Dialog.Title>\n          <Command.Root className={styles.command} aria-label=\"Jump to\" style={{ border: 0, width: '100%' }}>\n            <Command.Input className={styles.commandInput} placeholder=\"Search pages...\" />\n            <Command.List className={styles.commandList}>\n              <Command.Empty className={styles.commandEmpty}>No page found.</Command.Empty>\n              {['Dashboard', 'Projects', 'Team', 'Settings'].map((page) => (\n                <Command.Item className={styles.item} key={page} onSelect={() => setOpen(false)} value={page}>\n                  {page}\n                </Command.Item>\n              ))}\n            </Command.List>\n          </Command.Root>\n        </Dialog.Content>\n      </Dialog.Portal>\n    </Dialog.Root>\n  )\n}\n",
+      "path": "internal-primitives/command-dialog/command-dialog.tsx",
+      "target": "components/command-dialog.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "command-dialog",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { Calendar } from '@gentleduck/registry-ui/calendar'\nimport { DirectionProvider } from '@gentleduck/registry-ui/direction'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [date, setDate] = React.useState<Date | null>(new Date())\n\n  return (\n    <DirectionProvider dir=\"rtl\">\n      <Calendar\n        className=\"rounded-md border shadow-sm\"\n        locale=\"ar-SA\"\n        mode=\"single\"\n        onSelect={setDate}\n        selected={date}\n      />\n    </DirectionProvider>\n  )\n}\n",
@@ -9,7 +15,13 @@
   ],
   "name": "calendar-9",
   "registryDependencies": [
-    "calendar"
+    "calendar",
+    "direction",
+    "field",
+    "input",
+    "label",
+    "popover",
+    "switch"
   ],
   "root_folder": "calendar",
   "source": "/registry-examples/src/calendar",

@@ -1,4 +1,7 @@
 {
+  "dependencies": [
+    "lucide-react"
+  ],
   "files": [
     {
       "content": "import { Alert, AlertDescription, AlertTitle } from '@gentleduck/registry-ui/alert'\nimport { AlertCircleIcon, CheckCircle2Icon, PopcornIcon } from 'lucide-react'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full max-w-xl items-start gap-4\">\n      <Alert>\n        <CheckCircle2Icon aria-hidden=\"true\" />\n        <AlertTitle>Success! Your changes have been saved</AlertTitle>\n        <AlertDescription>This is an alert with icon, title and description.</AlertDescription>\n      </Alert>\n      <Alert>\n        <PopcornIcon aria-hidden=\"true\" />\n        <AlertTitle>This Alert has a title and an icon. No description.</AlertTitle>\n      </Alert>\n      <Alert variant=\"destructive\">\n        <AlertCircleIcon aria-hidden=\"true\" />\n        <AlertTitle>Unable to process your payment.</AlertTitle>\n        <AlertDescription>\n          <p>Please verify your billing information and try again.</p>\n          <ul className=\"list-inside list-disc text-sm\">\n            <li>Check your card details</li>\n            <li>Ensure sufficient funds</li>\n            <li>Verify billing address</li>\n          </ul>\n        </AlertDescription>\n      </Alert>\n    </div>\n  )\n}\n",

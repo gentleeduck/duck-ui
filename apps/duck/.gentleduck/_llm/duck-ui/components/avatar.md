@@ -7,30 +7,30 @@ export default function Demo() {
     <div className="flex flex-row flex-wrap items-center gap-12">
       <Avatar>
         <AvatarImage
-          alt="GD"
+          alt="gentleduck"
           src="https://github.com/gentleeduck/gentleduck/blob/master/apps/duck-ui-docs/public/static/LOGO.png?raw=true"
         />
         <AvatarFallback>GD</AvatarFallback>
       </Avatar>
       <Avatar className="rounded-lg">
-        <AvatarImage alt="WD" src="https://avatars.githubusercontent.com/u/108896341?v=4" />
+        <AvatarImage alt="wildduck" src="https://avatars.githubusercontent.com/u/108896341?v=4" />
         <AvatarFallback className="rounded-lg">WD</AvatarFallback>
       </Avatar>
       <div className="flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background *:data-[slot=avatar]:grayscale">
         <Avatar>
           <AvatarImage
-            alt="GD"
+            alt="gentleduck"
             src="https://github.com/gentleeduck/gentleduck/blob/master/apps/duck-ui-docs/public/static/LOGO.png?raw=true"
           />
           <AvatarFallback>GD</AvatarFallback>
         </Avatar>
         <Avatar>
-          <AvatarImage alt="WD" src="https://avatars.githubusercontent.com/u/108896341?v=4" />
+          <AvatarImage alt="wildduck" src="https://avatars.githubusercontent.com/u/108896341?v=4" />
           <AvatarFallback>WD</AvatarFallback>
         </Avatar>
         <Avatar>
           <AvatarImage
-            alt="GD"
+            alt="Guest"
             src="https://raw.githubusercontent.com/wildduck2/duck-starter-kit/15fbc61fb02cd21a873108b380ca12fe31f50099/apps/document-client/public/placeholder2.webp"
           />
           <AvatarFallback>GD</AvatarFallback>
@@ -75,6 +75,77 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
   <AvatarImage src="https://github.com/wildduck2.png" alt="wildduck" />
   <AvatarFallback>WD</AvatarFallback>
 </Avatar>
+```
+
+## Examples
+
+### Fallback and a group
+
+A photo that fails to load leaves the fallback in its place. `delayMs` holds the fallback back for that long, so a photo that loads quickly never flashes the initials first. `AvatarGroup` draws the first `maxVisible` of `imgs` and a count of the rest.
+
+```tsx title="components/avatar-4.tsx"
+// import from your project: import Demo from '@/components/avatar-4'
+import { Avatar, AvatarFallback, AvatarGroup, AvatarImage } from '@gentleduck/registry-ui/avatar'
+
+const team = [
+  { alt: 'wildduck', fallback: 'WD', id: 'wildduck', src: 'https://avatars.githubusercontent.com/u/108896341?v=4' },
+  { alt: 'Ada Lovelace', fallback: 'AL', id: 'ada' },
+  { alt: 'Grace Hopper', fallback: 'GH', id: 'grace' },
+  { alt: 'Alan Turing', fallback: 'AT', id: 'alan' },
+  { alt: 'Katherine Johnson', fallback: 'KJ', id: 'katherine' },
+]
+
+export default function Demo() {
+  return (
+    <div className="flex flex-row flex-wrap items-center gap-12">
+      <Avatar>
+        <AvatarImage alt="A photo that is gone" src="/avatars/missing.png" />
+        <AvatarFallback delayMs={600}>NF</AvatarFallback>
+      </Avatar>
+      <AvatarGroup imgs={team} maxVisible={3} />
+    </div>
+  )
+}
+```
+
+### srcSet and an overflow label
+
+```tsx title="components/avatar-5.tsx"
+// import from your project: import Demo from '@/components/avatar-5'
+'use client'
+
+import { Avatar, AvatarFallback, AvatarGroup, AvatarImage } from '@gentleduck/registry-ui/avatar'
+import * as React from 'react'
+
+const team = [
+  { alt: 'Ana', id: 'ana', src: 'https://avatars.githubusercontent.com/u/108896341?v=4' },
+  { alt: 'Bruno', id: 'bruno' },
+  { alt: 'Carla', id: 'carla' },
+  { alt: 'Diego', id: 'diego' },
+  { alt: 'Elena', id: 'elena' },
+]
+
+export default function Demo() {
+  const [status, setStatus] = React.useState('idle')
+
+  return (
+    <div className="flex flex-col items-center gap-6">
+      <div className="flex items-center gap-3">
+        <Avatar className="size-14">
+          <AvatarImage
+            alt="gentleduck"
+            onLoadingStatusChange={setStatus}
+            sizes="56px"
+            srcSet="https://avatars.githubusercontent.com/u/108896341?v=4&s=56 1x, https://avatars.githubusercontent.com/u/108896341?v=4&s=112 2x"
+          />
+          <AvatarFallback>GD</AvatarFallback>
+        </Avatar>
+        <span className="text-muted-foreground text-sm">srcSet alone, status: {status}</span>
+      </div>
+      <AvatarGroup getOverflowLabel={(count) => `${count} personas más`} imgs={team} maxVisible={3} />
+    </div>
+  )
+}
 ```
 
 ## RTL Support
@@ -143,13 +214,13 @@ export default function Demo() {
     <div className="flex flex-row flex-wrap items-center gap-12">
       <MotionAvatar>
         <AvatarImage
-          alt="GD"
+          alt="gentleduck"
           src="https://github.com/gentleeduck/gentleduck/blob/master/apps/duck-ui-docs/public/static/LOGO.png?raw=true"
         />
         <AvatarFallback>GD</AvatarFallback>
       </MotionAvatar>
       <MotionAvatar className="rounded-lg">
-        <AvatarImage alt="WD" src="https://avatars.githubusercontent.com/u/108896341?v=4" />
+        <AvatarImage alt="wildduck" src="https://avatars.githubusercontent.com/u/108896341?v=4" />
         <AvatarFallback className="rounded-lg">WD</AvatarFallback>
       </MotionAvatar>
       <MotionAvatarGroup
@@ -157,18 +228,18 @@ export default function Demo() {
           {
             id: '1',
             src: 'https://github.com/gentleeduck/gentleduck/blob/master/apps/duck-ui-docs/public/static/LOGO.png?raw=true',
-            alt: 'GD',
+            alt: 'gentleduck',
             fallback: 'GD',
           },
-          { id: '2', src: 'https://avatars.githubusercontent.com/u/108896341?v=4', alt: 'WD', fallback: 'WD' },
+          { id: '2', src: 'https://avatars.githubusercontent.com/u/108896341?v=4', alt: 'wildduck', fallback: 'WD' },
           {
             id: '3',
             src: 'https://raw.githubusercontent.com/wildduck2/duck-starter-kit/15fbc61fb02cd21a873108b380ca12fe31f50099/apps/document-client/public/placeholder2.webp',
-            alt: 'GD',
+            alt: 'Guest',
             fallback: 'GD',
           },
-          { id: '4', alt: 'JD', fallback: 'JD' },
-          { id: '5', alt: 'MK', fallback: 'MK' },
+          { id: '4', alt: 'Jane Doe', fallback: 'JD' },
+          { id: '5', alt: 'Max Klein', fallback: 'MK' },
         ]}
         maxVisible={3}
       />
@@ -193,11 +264,12 @@ The root container rendered as a `span`. Provides context for `AvatarImage` and 
 
 ### AvatarImage
 
-The `img` element inside the avatar. Automatically tracks loading status and hides when the image fails.
+The `img` element inside the avatar. It is in the server's HTML, so the download starts before hydration, and it stays hidden until it loads and when it fails. `data-state` is `loading`, `loaded` or `error`.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `src` | `string` | - | Image source URL |
+| `srcSet` | `string` | - | Candidate images for other pixel densities or widths. Enough on its own, without a `src` |
 | `alt` | `string` | - | Alternate text for the image |
 | `onLoadingStatusChange` | `(status: 'idle' \| 'loading' \| 'loaded' \| 'error') => void` | - | Callback when the image loading status changes |
 | `className` | `string` | - | Additional class names for styling the image |
@@ -216,10 +288,13 @@ Content displayed when the image has not loaded. Typically initials or an icon.
 
 ### AvatarGroup
 
+Shows the first `maxVisible` people and a `+N` counter for the rest. Each fallback is named by its `alt`, so a screen reader hears the same name before and after the photo loads.
+
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `imgs` | `{ src?: string; alt?: string; fallback?: string; id?: string }[]` | (required) | Array of avatar data objects. Fallback text is truncated to 2 characters. |
+| `imgs` | `{ src?: string; alt?: string; fallback?: string; id?: string }[]` | (required) | Array of avatar data objects. Each fallback shows the first 2 letters of `fallback`, or of `alt` when there is none, never half of a flag, an emoji or an accented letter |
 | `maxVisible` | `number` | `3` | Maximum number of avatars to display before showing a `+N` overflow counter |
+| `getOverflowLabel` | `(count: number) => string` | `` count => `${count} more` `` | Names the `+N` counter for a screen reader, in the page's language |
 | `className` | `string` | - | Additional class names for styling the avatar group container |
 | `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Additional props to spread to the container div |
 
@@ -229,7 +304,7 @@ Content scales and blurs in on mount using the `scaleIn` preset. Requires the `m
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `...props` | `AvatarProps` | - | All props from `Avatar` are supported |
+| `...props` | `React.ComponentPropsWithoutRef<typeof Avatar>` | - | All props from `Avatar` are supported |
 
 ### MotionAvatarGroup
 
@@ -237,4 +312,4 @@ Each avatar staggers in 80ms apart with `scaleIn` animation. The overflow counte
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `...props` | `AvatarGroupProps` | - | All props from `AvatarGroup` are supported |
+| `...props` | `IAvatarGroupProps` | - | All props from `AvatarGroup` are supported |

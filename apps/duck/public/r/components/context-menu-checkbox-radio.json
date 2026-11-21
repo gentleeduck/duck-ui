@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as ContextMenu from '@gentleduck/primitives/context-menu'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function ContextMenuCheckboxRadioExample() {\n  const [grid, setGrid] = React.useState(true)\n  const [rulers, setRulers] = React.useState(false)\n  const [zoom, setZoom] = React.useState('100')\n\n  return (\n    <ContextMenu.Root>\n      <ContextMenu.Trigger className={styles.contextArea}>\n        Grid {grid ? 'on' : 'off'}, rulers {rulers ? 'on' : 'off'}, {zoom}%\n      </ContextMenu.Trigger>\n      <ContextMenu.Portal>\n        <ContextMenu.Content className={styles.content}>\n          <ContextMenu.CheckboxItem\n            checked={grid}\n            className={styles.item}\n            closeOnSelect={false}\n            onCheckedChange={setGrid}>\n            <span className={styles.itemIndicator}>\n              <ContextMenu.ItemIndicator>x</ContextMenu.ItemIndicator>\n            </span>\n            Show grid\n          </ContextMenu.CheckboxItem>\n          <ContextMenu.CheckboxItem\n            checked={rulers}\n            className={styles.item}\n            closeOnSelect={false}\n            onCheckedChange={setRulers}>\n            <span className={styles.itemIndicator}>\n              <ContextMenu.ItemIndicator>x</ContextMenu.ItemIndicator>\n            </span>\n            Show rulers\n          </ContextMenu.CheckboxItem>\n          <ContextMenu.Separator className={styles.separator} />\n          <ContextMenu.Label className={styles.groupLabel}>Zoom</ContextMenu.Label>\n          <ContextMenu.RadioGroup onValueChange={setZoom} value={zoom}>\n            {['50', '100', '200'].map((level) => (\n              <ContextMenu.RadioItem className={styles.item} key={level} value={level}>\n                <span className={styles.itemIndicator}>\n                  <ContextMenu.ItemIndicator>o</ContextMenu.ItemIndicator>\n                </span>\n                {level}%\n              </ContextMenu.RadioItem>\n            ))}\n          </ContextMenu.RadioGroup>\n        </ContextMenu.Content>\n      </ContextMenu.Portal>\n    </ContextMenu.Root>\n  )\n}\n",
+      "path": "internal-primitives/context-menu-checkbox-radio/context-menu-checkbox-radio.tsx",
+      "target": "components/context-menu-checkbox-radio.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "context-menu-checkbox-radio",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

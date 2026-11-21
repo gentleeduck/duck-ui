@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Command from '@gentleduck/primitives/command'\nimport styles from '../primitives.module.css'\n\nconst COUNTRIES = [\n  'Austria',\n  'Australia',\n  'Belgium',\n  'Brazil',\n  'Canada',\n  'Chile',\n  'China',\n  'Denmark',\n  'Egypt',\n  'Estonia',\n]\n\n// A start of the name ranks first, a match elsewhere in it second.\nfunction prefixFirst(text: string, search: string) {\n  const name = text.toLowerCase()\n  const query = search.toLowerCase()\n  if (name.startsWith(query)) return 1\n  return name.includes(query) ? 0.5 : 0\n}\n\nexport default function CommandFilterExample() {\n  return (\n    <Command.Root className={styles.command} filter={prefixFirst} aria-label=\"Countries\" limit={4}>\n      <Command.Input className={styles.commandInput} placeholder=\"Search countries...\" />\n      <Command.List className={styles.commandList}>\n        <Command.Empty className={styles.commandEmpty}>No country matches.</Command.Empty>\n        {COUNTRIES.map((country) => (\n          <Command.Item className={styles.item} key={country} value={country}>\n            {country}\n          </Command.Item>\n        ))}\n      </Command.List>\n    </Command.Root>\n  )\n}\n",
+      "path": "internal-primitives/command-filter/command-filter.tsx",
+      "target": "components/command-filter.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "command-filter",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

@@ -1,7 +1,13 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
-      "content": "'use client'\n\nimport { MotionSwitch } from '@gentleduck/registry-ui/switch'\n\nexport default function Demo() {\n  return <MotionSwitch />\n}\n",
+      "content": "'use client'\n\nimport { Label } from '@gentleduck/registry-ui/label'\nimport { MotionSwitch } from '@gentleduck/registry-ui/switch'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex items-center gap-2\">\n      <MotionSwitch id=\"motion-wifi\" />\n      <Label htmlFor=\"motion-wifi\">Wi-Fi</Label>\n    </div>\n  )\n}\n",
       "path": "switch/switch-4.tsx",
       "target": "components/switch-4.tsx",
       "type": "registry:example"
@@ -9,7 +15,10 @@
   ],
   "name": "switch-4",
   "registryDependencies": [
-    "switch"
+    "switch",
+    "button",
+    "field",
+    "label"
   ],
   "root_folder": "switch",
   "source": "/registry-examples/src/switch",

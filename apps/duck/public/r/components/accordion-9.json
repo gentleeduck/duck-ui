@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@gentleduck/registry-ui/accordion'\nimport * as React from 'react'\n\nconst DAYS = ['Monday', 'Tuesday', 'Wednesday']\n\nexport default function Demo() {\n  const [focused, setFocused] = React.useState<string | null>(null)\n  const [log, setLog] = React.useState<string[]>([])\n\n  return (\n    <div className=\"flex flex-col gap-3\">\n      <Accordion\n        className=\"flex w-[420px]\"\n        collapsible\n        loop={false}\n        onFocusChange={setFocused}\n        orientation=\"horizontal\"\n        type=\"single\">\n        {DAYS.map((day) => (\n          <AccordionItem\n            className=\"flex-1 border-e last:border-e-0\"\n            key={day}\n            onOpenChange={(open) =>\n              setLog((entries) => [`${day} ${open ? 'opened' : 'closed'}`, ...entries].slice(0, 3))\n            }\n            value={day}>\n            <AccordionTrigger className=\"px-3\">{day}</AccordionTrigger>\n            <AccordionContent className=\"px-3\">Shifts on {day}.</AccordionContent>\n          </AccordionItem>\n        ))}\n      </Accordion>\n      <p className=\"text-muted-foreground text-sm\">\n        Focused: {focused ?? 'none'}. {log.join(', ') || 'ArrowLeft and ArrowRight move, and stop at either end.'}\n      </p>\n    </div>\n  )\n}\n",
+      "path": "accordion/accordion-9.tsx",
+      "target": "components/accordion-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "accordion-9",
+  "registryDependencies": [
+    "accordion",
+    "direction"
+  ],
+  "root_folder": "accordion",
+  "source": "/registry-examples/src/accordion",
+  "type": "registry:example"
+}

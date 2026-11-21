@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as DropdownMenu from '@gentleduck/primitives/dropdown-menu'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function DropdownMenuBasicExample() {\n  const [last, setLast] = React.useState('nothing')\n\n  return (\n    <div className={styles.stack}>\n      <DropdownMenu.Root>\n        <DropdownMenu.Trigger className={styles.button}>My account</DropdownMenu.Trigger>\n        <DropdownMenu.Portal>\n          <DropdownMenu.Content align=\"start\" className={styles.content} sideOffset={6}>\n            <DropdownMenu.Label className={styles.groupLabel}>Signed in as ada@example.com</DropdownMenu.Label>\n            <DropdownMenu.Group>\n              <DropdownMenu.Item className={styles.item} onSelect={() => setLast('Profile')}>\n                Profile <span className={styles.shortcut}>Ctrl P</span>\n              </DropdownMenu.Item>\n              <DropdownMenu.Item className={styles.item} onSelect={() => setLast('Settings')}>\n                Settings <span className={styles.shortcut}>Ctrl ,</span>\n              </DropdownMenu.Item>\n              <DropdownMenu.Item className={styles.item} disabled>\n                Billing (owners only)\n              </DropdownMenu.Item>\n            </DropdownMenu.Group>\n            <DropdownMenu.Separator className={styles.separator} />\n            <DropdownMenu.Item className={styles.item} onSelect={() => setLast('Sign out')}>\n              Sign out\n            </DropdownMenu.Item>\n            <DropdownMenu.Arrow className={styles.arrow} />\n          </DropdownMenu.Content>\n        </DropdownMenu.Portal>\n      </DropdownMenu.Root>\n      <p className={styles.note}>Last chosen: {last}. Typing a letter jumps to the item it starts.</p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/dropdown-menu-basic/dropdown-menu-basic.tsx",
+      "target": "components/dropdown-menu-basic.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dropdown-menu-basic",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

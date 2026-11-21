@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { useSvgIndicator } from '@gentleduck/primitives/checkers'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function CheckersSwitchIndicatorExample() {\n  const [on, setOn] = React.useState(true)\n  const { SvgIndicator, inputStyle } = useSvgIndicator({\n    checkedIndicator: (\n      <svg viewBox=\"0 0 32 16\">\n        <circle cx=\"24\" cy=\"8\" r=\"6\" />\n      </svg>\n    ),\n    indicator: (\n      <svg viewBox=\"0 0 32 16\">\n        <circle cx=\"8\" cy=\"8\" r=\"6\" />\n      </svg>\n    ),\n  })\n\n  return (\n    <label className={styles.choice}>\n      <SvgIndicator />\n      <input\n        aria-checked={on}\n        checked={on}\n        className={styles.nativeSwitch}\n        onChange={(event) => setOn(event.target.checked)}\n        role=\"switch\"\n        style={inputStyle}\n        type=\"checkbox\"\n      />\n      Wi-Fi\n    </label>\n  )\n}\n",
+      "path": "internal-primitives/checkers-switch-indicator/checkers-switch-indicator.tsx",
+      "target": "components/checkers-switch-indicator.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "checkers-switch-indicator",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

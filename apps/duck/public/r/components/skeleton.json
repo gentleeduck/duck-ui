@@ -11,7 +11,7 @@
       "type": "registry:ui"
     },
     {
-      "content": "'use client'\n\nimport { scaleIn } from '@gentleduck/motion/presets/scale-in'\nimport { springBouncy } from '@gentleduck/motion/transitions/springs'\nimport type * as React from 'react'\nimport { withMotion } from '../_internal/motion-shell'\nimport { Skeleton } from './skeleton'\n\nconst MotionSkeleton = withMotion<React.HTMLAttributes<HTMLDivElement> & { index?: number }, HTMLDivElement>(\n  Skeleton,\n  scaleIn,\n  { transition: springBouncy },\n  { optionsFromProps: ({ index = 0 }) => ({ delay: index * 0.05 }) },\n)\n\nexport { MotionSkeleton }\n",
+      "content": "'use client'\n\nimport { scaleIn } from '@gentleduck/motion/presets/scale-in'\nimport { springBouncy } from '@gentleduck/motion/transitions/springs'\nimport type * as React from 'react'\nimport { withMotion } from '../_internal/motion-shell'\nimport { Skeleton } from './skeleton'\n\nconst MotionSkeleton = withMotion<React.HTMLAttributes<HTMLDivElement> & { index?: number }, HTMLDivElement>(\n  Skeleton,\n  scaleIn,\n  { transition: springBouncy },\n  { stagger: 0.05 },\n)\n\nexport { MotionSkeleton }\n",
       "path": "skeleton/motion-skeleton.tsx",
       "target": "components/ui/motion-skeleton.tsx",
       "type": "registry:ui"

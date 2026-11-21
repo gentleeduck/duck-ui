@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Command,\n  CommandEmpty,\n  CommandGroup,\n  CommandInput,\n  CommandItem,\n  CommandList,\n} from '@gentleduck/registry-ui/command'\nimport { Popover, PopoverContent, PopoverTrigger } from '@gentleduck/registry-ui/popover'\nimport * as React from 'react'\n\ntype Status = {\n  value: string\n  label: string\n}\nconst statuses: Status[] = [\n  {\n    label: 'Backlog',\n    value: 'backlog',\n  },\n  {\n    label: 'Todo',\n    value: 'todo',\n  },\n  {\n    label: 'In Progress',\n    value: 'in progress',\n  },\n  {\n    label: 'Done',\n    value: 'done',\n  },\n  {\n    label: 'Canceled',\n    value: 'canceled',\n  },\n]\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n  const [selectedStatus, setSelectedStatus] = React.useState<Status | null>(null)\n  return (\n    <div className=\"flex items-center space-x-4\">\n      <p className=\"text-muted-foreground text-sm\">Status</p>\n      <Popover onOpenChange={setOpen} open={open}>\n        <PopoverTrigger asChild>\n          <Button className=\"w-[150px] justify-start\" variant=\"outline\">\n            {selectedStatus ? selectedStatus.label : '+ Set status'}\n          </Button>\n        </PopoverTrigger>\n        <PopoverContent side=\"bottom\" align=\"end\" className=\"w-[210px] min-w-auto p-0\">\n          <Command>\n            <CommandInput placeholder=\"Change status...\" />\n            <CommandList>\n              <CommandEmpty>No results found.</CommandEmpty>\n              <CommandGroup>\n                {statuses.map((status) => (\n                  <CommandItem\n                    key={status.value}\n                    onSelect={(value) => {\n                      setSelectedStatus(statuses.find((priority) => priority.value === value) || null)\n                      setOpen(false)\n                    }}\n                    value={status.value}>\n                    {status.label}\n                  </CommandItem>\n                ))}\n              </CommandGroup>\n            </CommandList>\n          </Command>\n        </PopoverContent>\n      </Popover>\n    </div>\n  )\n}\n",
@@ -9,7 +15,9 @@
   ],
   "name": "combobox-3",
   "registryDependencies": [
-    "combobox"
+    "combobox",
+    "dropdown-menu",
+    "field"
   ],
   "root_folder": "combobox",
   "source": "/registry-examples/src/combobox",

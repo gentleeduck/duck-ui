@@ -9,7 +9,10 @@
   ],
   "name": "scroll-area-3",
   "registryDependencies": [
-    "scroll-area"
+    "scroll-area",
+    "badge",
+    "button",
+    "separator"
   ],
   "root_folder": "scroll-area",
   "source": "/registry-examples/src/scroll-area",

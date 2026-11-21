@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { RadioGroup, RadioGroupItem } from '@gentleduck/registry-ui/radio-group'\nimport * as React from 'react'\n\nconst PLANS: Record<string, string> = { hobby: 'Hobby', pro: 'Pro', team: 'Team' }\n\nexport default function Demo() {\n  const [plan, setPlan] = React.useState('pro')\n  const [editing, setEditing] = React.useState(false)\n\n  return (\n    <div className=\"flex flex-col gap-4\">\n      <RadioGroup\n        aria-label=\"Plan\"\n        onValueChange={(next) => next !== null && setPlan(next)}\n        readOnly={!editing}\n        value={plan}>\n        {Object.entries(PLANS).map(([value, name]) => (\n          <RadioGroupItem key={value} value={value}>\n            {name}\n          </RadioGroupItem>\n        ))}\n      </RadioGroup>\n      <div className=\"flex items-center gap-3\">\n        <Button onClick={() => setEditing(!editing)} size=\"sm\" variant=\"outline\">\n          {editing ? 'Done' : 'Change plan'}\n        </Button>\n        <span className=\"text-muted-foreground text-sm\">Billed on the {PLANS[plan]} plan</span>\n      </div>\n    </div>\n  )\n}\n",
+      "path": "radio-group/radio-group-7.tsx",
+      "target": "components/radio-group-7.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "radio-group-7",
+  "registryDependencies": [
+    "radio-group",
+    "button",
+    "field"
+  ],
+  "root_folder": "radio-group",
+  "source": "/registry-examples/src/radio-group",
+  "type": "registry:example"
+}

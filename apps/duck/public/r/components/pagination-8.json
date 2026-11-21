@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { PaginationWrapper } from '@gentleduck/registry-ui/pagination'\nimport * as React from 'react'\n\nconst pageCount = 8\n\nexport default function Demo() {\n  const [page, setPage] = React.useState(1)\n  const first = page === 1\n  const last = page === pageCount\n\n  return (\n    <div className=\"flex items-center gap-4\">\n      <p className=\"text-muted-foreground text-sm\">\n        Page {page} of {pageCount}\n      </p>\n      <PaginationWrapper\n        left={{ disabled: first, onClick: () => setPage(page - 1) }}\n        maxLeft={{ disabled: first, onClick: () => setPage(1) }}\n        maxRight={{ disabled: last, onClick: () => setPage(pageCount) }}\n        right={{ disabled: last, onClick: () => setPage(page + 1) }}\n        wrapper={{ 'aria-label': 'Invoices' }}\n      />\n    </div>\n  )\n}\n",
+      "path": "pagination/pagination-8.tsx",
+      "target": "components/pagination-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "pagination-8",
+  "registryDependencies": [
+    "pagination"
+  ],
+  "root_folder": "pagination",
+  "source": "/registry-examples/src/pagination",
+  "type": "registry:example"
+}

@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Arrow from '@gentleduck/primitives/arrow'\nimport styles from '../primitives.module.css'\n\nconst SIZES = [\n  { width: 10, height: 5 },\n  { width: 16, height: 8 },\n  { width: 24, height: 6 },\n]\n\nexport default function ArrowSizesExample() {\n  return (\n    <div className={styles.row}>\n      {SIZES.map(({ width, height }) => (\n        <div className={styles.stack} key={width} style={{ justifyItems: 'center' }}>\n          <div className={`${styles.content} ${styles.panel}`} style={{ minWidth: 0 }}>\n            {width} x {height}\n          </div>\n          <Arrow.Root\n            aria-hidden\n            className={styles.arrow}\n            height={height}\n            style={{ marginTop: '-0.8rem' }}\n            width={width}\n          />\n        </div>\n      ))}\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/arrow-sizes/arrow-sizes.tsx",
+      "target": "components/arrow-sizes.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "arrow-sizes",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

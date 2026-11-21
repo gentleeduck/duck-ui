@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { ScrollArea } from '@gentleduck/registry-ui/scroll-area'\nimport * as React from 'react'\n\nconst lines = Array.from({ length: 40 }, (_, i) => `[12:${String(i).padStart(2, '0')}] build step ${i + 1} finished`)\n\nexport default function Demo() {\n  const viewportRef = React.useRef<HTMLDivElement>(null)\n  const scrollTo = (top: number) => viewportRef.current?.scrollTo({ behavior: 'smooth', top })\n\n  return (\n    <div className=\"flex w-80 flex-col gap-2\">\n      <ScrollArea aria-label=\"Build log\" className=\"h-56 rounded-md border\" role=\"region\" viewportRef={viewportRef}>\n        <pre className=\"p-4 font-mono text-xs leading-6\">{lines.join('\\n')}</pre>\n      </ScrollArea>\n      <div className=\"flex gap-2\">\n        <Button onClick={() => scrollTo(0)} size=\"sm\" variant=\"outline\">\n          Back to top\n        </Button>\n        <Button onClick={() => scrollTo(viewportRef.current?.scrollHeight ?? 0)} size=\"sm\" variant=\"outline\">\n          Jump to latest\n        </Button>\n      </div>\n    </div>\n  )\n}\n",
+      "path": "scroll-area/scroll-area-5.tsx",
+      "target": "components/scroll-area-5.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "scroll-area-5",
+  "registryDependencies": [
+    "scroll-area",
+    "badge",
+    "button",
+    "separator"
+  ],
+  "root_folder": "scroll-area",
+  "source": "/registry-examples/src/scroll-area",
+  "type": "registry:example"
+}

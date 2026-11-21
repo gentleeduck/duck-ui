@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Checkbox } from '@gentleduck/registry-ui/checkbox'\nimport { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@gentleduck/registry-ui/table'\nimport * as React from 'react'\n\nconst members = [\n  { email: 'ada@example.com', name: 'Ada Lovelace', role: 'Owner' },\n  { email: 'alan@example.com', name: 'Alan Turing', role: 'Admin' },\n  { email: 'grace@example.com', name: 'Grace Hopper', role: 'Member' },\n  { email: 'linus@example.com', name: 'Linus Pauling', role: 'Member' },\n]\n\nexport default function Demo() {\n  const [selected, setSelected] = React.useState<string[]>([])\n  const all = selected.length === members.length ? true : selected.length > 0 ? 'indeterminate' : false\n\n  return (\n    <div className=\"flex w-full flex-col gap-2\">\n      <Table>\n        <TableHeader>\n          <TableRow>\n            <TableHead className=\"w-10\">\n              <Checkbox\n                aria-label=\"Select all\"\n                checked={all}\n                onCheckedChange={(checked) => setSelected(checked === true ? members.map((m) => m.email) : [])}\n              />\n            </TableHead>\n            <TableHead>Name</TableHead>\n            <TableHead>Email</TableHead>\n            <TableHead>Role</TableHead>\n          </TableRow>\n        </TableHeader>\n        <TableBody>\n          {members.map((member) => {\n            const isSelected = selected.includes(member.email)\n            return (\n              <TableRow data-state={isSelected ? 'selected' : undefined} key={member.email}>\n                <TableCell>\n                  <Checkbox\n                    aria-label={`Select ${member.name}`}\n                    checked={isSelected}\n                    onCheckedChange={(checked) =>\n                      setSelected((emails) =>\n                        checked === true ? [...emails, member.email] : emails.filter((email) => email !== member.email),\n                      )\n                    }\n                  />\n                </TableCell>\n                <TableCell className=\"font-medium\">{member.name}</TableCell>\n                <TableCell>{member.email}</TableCell>\n                <TableCell>{member.role}</TableCell>\n              </TableRow>\n            )\n          })}\n        </TableBody>\n      </Table>\n      <p aria-live=\"polite\" className=\"text-muted-foreground text-sm\">\n        {selected.length} of {members.length} selected.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "table/table-4.tsx",
+      "target": "components/table-4.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "table-4",
+  "registryDependencies": [
+    "table",
+    "button",
+    "checkbox"
+  ],
+  "root_folder": "table",
+  "source": "/registry-examples/src/table",
+  "type": "registry:example"
+}

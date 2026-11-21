@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Command,\n  CommandEmpty,\n  CommandGroup,\n  CommandInput,\n  CommandItem,\n  CommandList,\n  CommandLoading,\n  CommandStatus,\n  useCommandSearch,\n} from '@gentleduck/registry-ui/command'\nimport { User } from 'lucide-react'\nimport * as React from 'react'\n\nconst PEOPLE = ['Ada Lovelace', 'Alan Turing', 'Barbara Liskov', 'Edsger Dijkstra', 'Grace Hopper', 'Linus Torvalds']\n\nfunction usePeople(search: string) {\n  const query = search.trim().toLowerCase()\n  const [found, setFound] = React.useState({ query: '', people: [] as string[] })\n  React.useEffect(() => {\n    const timer = setTimeout(() => {\n      setFound({ query, people: query ? PEOPLE.filter((person) => person.toLowerCase().includes(query)) : [] })\n    }, 300)\n    return () => clearTimeout(timer)\n  }, [query])\n  return { people: found.people, loading: found.query !== query }\n}\n\nfunction Results() {\n  const search = useCommandSearch()\n  const { people, loading } = usePeople(search)\n  return (\n    <>\n      {loading && <CommandLoading>Searching...</CommandLoading>}\n      <CommandStatus>{(count) => `${count} found`}</CommandStatus>\n      <CommandList>\n        {!loading && <CommandEmpty>{search.trim() ? 'No one found.' : 'Type a name to search.'}</CommandEmpty>}\n        <CommandGroup heading=\"People\">\n          {people.map((person) => (\n            <CommandItem key={person} value={person}>\n              <User />\n              <span>{person}</span>\n            </CommandItem>\n          ))}\n        </CommandGroup>\n      </CommandList>\n    </>\n  )\n}\n\nexport default function Demo() {\n  return (\n    <Command className=\"h-fit w-80 border pt-0\" shouldFilter={false}>\n      <CommandInput placeholder=\"Search people...\" />\n      <Results />\n    </Command>\n  )\n}\n",
+      "path": "command/command-6.tsx",
+      "target": "components/command-6.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "command-6",
+  "registryDependencies": [
+    "command",
+    "button"
+  ],
+  "root_folder": "command",
+  "source": "/registry-examples/src/command",
+  "type": "registry:example"
+}

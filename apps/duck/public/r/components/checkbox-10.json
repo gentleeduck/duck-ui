@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "'use client'\n\nimport { MotionCheckbox, MotionCheckboxWithLabel } from '@gentleduck/registry-ui/checkbox'\nimport { Label } from '@gentleduck/registry-ui/label'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [tasks, setTasks] = React.useState([\n    { id: 'motion-design', label: 'Design system review', checked: true },\n    { id: 'motion-tests', label: 'Write integration tests', checked: false },\n    { id: 'motion-deploy', label: 'Deploy to staging', checked: false },\n  ])\n\n  const allChecked = tasks.every((t) => t.checked)\n  const someChecked = tasks.some((t) => t.checked) && !allChecked\n  const parentState = allChecked ? true : someChecked ? ('indeterminate' as const) : false\n\n  const toggleAll = () => {\n    const next = !allChecked\n    setTasks((prev) => prev.map((t) => ({ ...t, checked: next })))\n  }\n\n  return (\n    <div className=\"flex flex-col gap-3\">\n      <div className=\"flex items-center gap-3 border-b pb-3\">\n        <MotionCheckbox checked={parentState} onCheckedChange={toggleAll} id=\"motion-parent\" />\n        <Label htmlFor=\"motion-parent\" className=\"cursor-pointer font-medium\">\n          Select all tasks\n        </Label>\n      </div>\n      <div className=\"flex flex-col gap-2 ps-6\">\n        {tasks.map((task, i) => (\n          <MotionCheckboxWithLabel\n            key={task.id}\n            id={task.id}\n            index={i}\n            checkbox={{\n              checked: task.checked,\n              onCheckedChange: (next) =>\n                setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, checked: !!next } : t))),\n            }}\n            label={{ children: task.label }}\n          />\n        ))}\n      </div>\n    </div>\n  )\n}\n",
@@ -9,7 +15,9 @@
   ],
   "name": "checkbox-10",
   "registryDependencies": [
-    "checkbox"
+    "checkbox",
+    "button",
+    "field"
   ],
   "root_folder": "checkbox",
   "source": "/registry-examples/src/checkbox",

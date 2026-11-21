@@ -1,0 +1,26 @@
+{
+  "dependencies": [
+    "@gentleduck/hooks"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { useCopyToClipboard } from '@gentleduck/hooks/use-copy-to-clipboard'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'\nimport { Check, Copy } from 'lucide-react'\nimport * as React from 'react'\n\nconst COMMAND = 'npx @gentleduck/cli add tooltip'\n\nexport default function Demo() {\n  const [open, setOpen] = React.useState(false)\n  // A tap opens no tooltip, so the copy opens it to show that it worked.\n  const { copyToClipboard, isCopied } = useCopyToClipboard({ onCopy: () => setOpen(true) })\n\n  return (\n    <TooltipProvider>\n      <div className=\"flex items-center gap-2 rounded-md border py-1 ps-3 pe-1\">\n        <code className=\"text-sm\">{COMMAND}</code>\n        <Tooltip onOpenChange={setOpen} open={open}>\n          <TooltipTrigger asChild disableCloseOnClick>\n            <Button aria-label=\"Copy the command\" onClick={() => copyToClipboard(COMMAND)} size=\"icon\" variant=\"ghost\">\n              {isCopied ? <Check aria-hidden=\"true\" /> : <Copy aria-hidden=\"true\" />}\n            </Button>\n          </TooltipTrigger>\n          <TooltipContent>{isCopied ? 'Copied' : 'Copy'}</TooltipContent>\n        </Tooltip>\n        <span aria-live=\"polite\" className=\"sr-only\">\n          {isCopied ? 'Copied the command.' : ''}\n        </span>\n      </div>\n    </TooltipProvider>\n  )\n}\n",
+      "path": "tooltip/tooltip-10.tsx",
+      "target": "components/tooltip-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "tooltip-10",
+  "registryDependencies": [
+    "tooltip",
+    "button",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "toggle"
+  ],
+  "root_folder": "tooltip",
+  "source": "/registry-examples/src/tooltip",
+  "type": "registry:example"
+}

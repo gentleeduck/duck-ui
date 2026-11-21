@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport { ButtonGroup, ButtonGroupText } from '@gentleduck/registry-ui/button-group'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport { Label } from '@gentleduck/registry-ui/label'\n\nexport default function Demo() {\n  return (\n    <div className=\"flex flex-col gap-4\">\n      <ButtonGroup>\n        <ButtonGroupText>https://</ButtonGroupText>\n        <Input aria-label=\"Site address\" placeholder=\"duck.example\" />\n        <ButtonGroupText>.com</ButtonGroupText>\n      </ButtonGroup>\n      <ButtonGroup>\n        <ButtonGroupText asChild>\n          <Label htmlFor=\"pond-name\">Pond</Label>\n        </ButtonGroupText>\n        <Input id=\"pond-name\" placeholder=\"Mill pond\" />\n        <Button variant=\"outline\">Save</Button>\n      </ButtonGroup>\n    </div>\n  )\n}\n",
+      "path": "button-group/button-group-14.tsx",
+      "target": "components/button-group-14.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "button-group-14",
+  "registryDependencies": [
+    "button-group",
+    "dropdown-menu",
+    "input",
+    "input-group",
+    "label",
+    "popover",
+    "select",
+    "textarea",
+    "tooltip"
+  ],
+  "root_folder": "button-group",
+  "source": "/registry-examples/src/button-group",
+  "type": "registry:example"
+}

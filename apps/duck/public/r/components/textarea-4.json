@@ -1,4 +1,10 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
       "content": "import { Label } from '@gentleduck/registry-ui/label'\nimport { Textarea } from '@gentleduck/registry-ui/textarea'\n\nexport default function Demo() {\n  return (\n    <div className=\"grid w-full gap-1.5\">\n      <Label htmlFor=\"message\">Your message</Label>\n      <Textarea id=\"message\" placeholder=\"Type your message here.\" />\n    </div>\n  )\n}\n",
@@ -9,7 +15,10 @@
   ],
   "name": "textarea-4",
   "registryDependencies": [
-    "textarea"
+    "textarea",
+    "button",
+    "field",
+    "label"
   ],
   "root_folder": "textarea",
   "source": "/registry-examples/src/textarea",

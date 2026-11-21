@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Dialog from '@gentleduck/primitives/dialog'\nimport styles from '../primitives.module.css'\n\nexport default function DialogNestedExample() {\n  return (\n    <Dialog.Root>\n      <Dialog.Trigger className={styles.button}>Open settings</Dialog.Trigger>\n      <Dialog.Portal>\n        <Dialog.Overlay className={`${styles.overlay} ${styles.fade}`} />\n        <Dialog.Content\n          aria-describedby={undefined}\n          className={styles.dialog}\n          style={{\n            scale: 'calc(1 - 0.05 * var(--gentleduck-dialog-nested-dialogs, 0))',\n            transition: 'scale 200ms ease',\n          }}>\n          <Dialog.Title className={styles.title}>Settings</Dialog.Title>\n          <Dialog.Root>\n            <Dialog.Trigger className={styles.button}>Change password</Dialog.Trigger>\n            <Dialog.Portal>\n              <Dialog.Content aria-describedby={undefined} className={styles.dialog}>\n                <Dialog.Title className={styles.title}>Change password</Dialog.Title>\n                <input className={styles.input} placeholder=\"New password\" type=\"password\" />\n                <Dialog.Close className={styles.button}>Back</Dialog.Close>\n              </Dialog.Content>\n            </Dialog.Portal>\n          </Dialog.Root>\n          <Dialog.Close className={styles.button}>Close</Dialog.Close>\n        </Dialog.Content>\n      </Dialog.Portal>\n    </Dialog.Root>\n  )\n}\n",
+      "path": "internal-primitives/dialog-nested/dialog-nested.tsx",
+      "target": "components/dialog-nested.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dialog-nested",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

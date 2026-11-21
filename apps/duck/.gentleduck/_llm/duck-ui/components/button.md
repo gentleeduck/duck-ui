@@ -134,6 +134,26 @@ Alternatively, you can set the `asChild` parameter and nest the link component.
 </Button>
 ```
 
+A link has no `disabled` of its own, so with `disabled` or `loading` the button marks it `aria-disabled`, dims it, and stops its click, from a pointer or from Enter, before the link or anything around it hears it. The link stays in the tab order, so a screen reader still finds it.
+
+```tsx title="components/button-25.tsx"
+// import from your project: import Demo from '@/components/button-25'
+import { Button } from '@gentleduck/registry-ui/button'
+
+export default function Demo() {
+  return (
+    <div className="flex flex-wrap items-center gap-4">
+      <Button asChild variant="outline">
+        <a href="#ponds">Ponds</a>
+      </Button>
+      <Button asChild disabled variant="outline">
+        <a href="#lakes">Lakes</a>
+      </Button>
+    </div>
+  )
+}
+```
+
 ## Examples
 
 ### Primary
@@ -258,51 +278,47 @@ export default function Demo() {
 
 ### Nothing
 
-```tsx title="components/button-10.tsx"
-// import from your project: import Demo from '@/components/button-10'
-'use client'
-
-import { MotionButton } from '@gentleduck/registry-ui/button'
-import { ArrowRight, Mail, PanelLeftClose, RefreshCw, Send } from 'lucide-react'
-import * as React from 'react'
+```tsx title="components/button-22.tsx"
+// import from your project: import Demo from '@/components/button-22'
+import { Button } from '@gentleduck/registry-ui/button'
 
 export default function Demo() {
-  const [loading1, setLoading1] = React.useState(false)
-  const [loading2, setLoading2] = React.useState(false)
-  const [collapsed, setCollapsed] = React.useState(false)
+  return <Button variant="nothing">Button</Button>
+}
+```
 
-  const handleLoad = (setter: React.Dispatch<React.SetStateAction<boolean>>) => {
-    setter(true)
-    setTimeout(() => setter(false), 2000)
-  }
+### Sizes
 
+`sm`, `default` and `lg` set the height and padding, and `icon-sm`, `icon` and `icon-lg` make a square button for an icon alone, which takes an `aria-label`.
+
+```tsx title="components/button-23.tsx"
+// import from your project: import Demo from '@/components/button-23'
+import { Button } from '@gentleduck/registry-ui/button'
+import { Plus } from 'lucide-react'
+
+export default function Demo() {
   return (
-    <div className="flex flex-wrap items-center gap-4">
-      <MotionButton>Default</MotionButton>
-      <MotionButton variant="outline" icon={<Mail />}>
-        Email
-      </MotionButton>
-      <MotionButton variant="ghost" secondIcon={<ArrowRight />}>
-        Next
-      </MotionButton>
-      <MotionButton variant="default" icon={<Send />} loading={loading1} onClick={() => handleLoad(setLoading1)}>
-        Submit
-      </MotionButton>
-      <MotionButton
-        variant="secondary"
-        icon={<RefreshCw />}
-        secondIcon={<ArrowRight />}
-        loading={loading2}
-        onClick={() => handleLoad(setLoading2)}>
-        Sync
-      </MotionButton>
-      <MotionButton
-        variant="outline"
-        icon={<PanelLeftClose />}
-        isCollapsed={collapsed}
-        onClick={() => setCollapsed((c) => !c)}>
-        Sidebar
-      </MotionButton>
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" variant="outline">
+          Small
+        </Button>
+        <Button variant="outline">Default</Button>
+        <Button size="lg" variant="outline">
+          Large
+        </Button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button aria-label="Add, small" size="icon-sm" variant="outline">
+          <Plus aria-hidden="true" />
+        </Button>
+        <Button aria-label="Add" size="icon" variant="outline">
+          <Plus aria-hidden="true" />
+        </Button>
+        <Button aria-label="Add, large" size="icon-lg" variant="outline">
+          <Plus aria-hidden="true" />
+        </Button>
+      </div>
     </div>
   )
 }
@@ -420,6 +436,8 @@ export default function Demo() {
 
 ### Collapsible
 
+`isCollapsed` draws the icon alone and drops `children` and `secondIcon`, so a collapsed button has no name of its own. Give it an `aria-label` while it is collapsed.
+
 ```tsx title="components/button-18.tsx"
 // import from your project: import Demo from '@/components/button-18'
 import { Button } from '@gentleduck/registry-ui/button'
@@ -431,29 +449,87 @@ export default function Demo() {
 
   return (
     <Button
-      aria-label="Inbox button with 23 notifications"
+      aria-label={open ? 'Inbox' : undefined}
       icon={<Inbox />}
       isCollapsed={open}
       onClick={() => setOpen(!open)}
       type="button">
-      Button
+      Inbox
     </Button>
+  )
+}
+```
+
+A row of collapsed buttons shows each one's name in a tooltip, the eye's copy of the `aria-label`. Once the labels show, the tooltips go.
+
+```tsx title="components/button-20.tsx"
+// import from your project: import Demo from '@/components/button-20'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Toggle } from '@gentleduck/registry-ui/toggle'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@gentleduck/registry-ui/tooltip'
+import { Archive, Inbox, Send } from 'lucide-react'
+import * as React from 'react'
+
+const actions = [
+  { icon: <Inbox />, label: 'Inbox' },
+  { icon: <Send />, label: 'Sent' },
+  { icon: <Archive />, label: 'Archive' },
+]
+
+export default function Demo() {
+  const [collapsed, setCollapsed] = React.useState(true)
+
+  return (
+    <div className="flex flex-col items-start gap-4">
+      <Toggle onPressedChange={(pressed) => setCollapsed(!pressed)} pressed={!collapsed} size="sm" variant="outline">
+        Show labels
+      </Toggle>
+      <TooltipProvider>
+        <div className="flex gap-2">
+          {actions.map(({ icon, label }) => (
+            <Tooltip key={label}>
+              <TooltipTrigger asChild>
+                <Button
+                  aria-label={collapsed ? label : undefined}
+                  icon={icon}
+                  isCollapsed={collapsed}
+                  variant="outline">
+                  {label}
+                </Button>
+              </TooltipTrigger>
+              {collapsed ? <TooltipContent>{label}</TooltipContent> : null}
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
+    </div>
   )
 }
 ```
 
 ### Expand Icon
 
+The `expandIcon` variant makes the button a hover group, and `AnimationIcon` slides its icon in on hover, before the label or after it as `iconPlacement` says.
+
 ```tsx title="components/button-19.tsx"
 // import from your project: import Demo from '@/components/button-19'
-import { Button } from '@gentleduck/registry-ui/button'
-import { Inbox } from 'lucide-react'
+import { AnimationIcon, Button } from '@gentleduck/registry-ui/button'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 
 export default function Demo() {
   return (
-    <div className="block">
-      <Button aria-label="Inbox button" icon={<Inbox />} type="button" variant="expandIcon">
-        Button
+    <div className="flex flex-wrap items-center gap-4">
+      <Button variant="expandIcon">
+        <AnimationIcon animationIcon={{ icon: <ArrowLeft aria-hidden="true" />, iconPlacement: 'left' }}>
+          Back
+        </AnimationIcon>
+      </Button>
+      <Button variant="expandIcon">
+        <AnimationIcon animationIcon={{ icon: <ArrowRight aria-hidden="true" />, iconPlacement: 'right' }}>
+          Next
+        </AnimationIcon>
       </Button>
     </div>
   )
@@ -496,7 +572,7 @@ export default function Demo() {
 } title="Alpha: Motion Compositions" tone="warning">
   Motion components work standalone, but some compositions may behave unexpectedly: this is still under active development. If you find a broken composition, please [file an issue](https://github.com/gentleeduck/gentleduck/issues).
 
-Use `MotionButton` for a mount entrance plus press feedback powered by [motion](https://motion.dev). The button uses a `scaleIn` entrance (fade, scale, and blur) with a bouncy spring transition on mount, and scales to 0.97 on tap for a physical press feel.
+Use `MotionButton` for a mount entrance plus press feedback powered by [motion](https://motion.dev). The button fades, scales and sharpens in on mount with a bouncy spring, and scales to 0.97 on tap for a physical press feel. The entrance scales on `scaleX` and `scaleY`, so `scale` keeps the 15ms tap tween and a press releases at once.
 
 ```tsx title="components/button-10.tsx"
 // import from your project: import Demo from '@/components/button-10'
@@ -549,7 +625,27 @@ export default function Demo() {
 ```
 
 }>
-  Requires the `motion` package. Use `MotionButton` instead of `Button`. Same props except `asChild` is not supported. The regular `Button` is perfectly fine - this is an optional enhancement.
+  Requires the `motion` package. Use `MotionButton` instead of `Button`, with the same props. The regular `Button` is perfectly fine - this is an optional enhancement.
+
+With `asChild`, `MotionButton` animates a wrapper around the element you give it, and disables a link the way `Button` does.
+
+```tsx title="components/button-24.tsx"
+// import from your project: import Demo from '@/components/button-24'
+import { MotionButton } from '@gentleduck/registry-ui/button'
+
+export default function Demo() {
+  return (
+    <div className="flex flex-wrap items-center gap-4">
+      <MotionButton asChild variant="outline">
+        <a href="#ponds">Ponds</a>
+      </MotionButton>
+      <MotionButton asChild disabled variant="outline">
+        <a href="#lakes">Lakes</a>
+      </MotionButton>
+    </div>
+  )
+}
+```
 
 ## API Reference
 
@@ -565,7 +661,7 @@ export default function Demo() {
 | `disabled` | `boolean` | `-` | Disables the button manually |
 | `icon` | `React.ReactNode` | `-` | Primary icon displayed before the content (or centered if collapsed) |
 | `secondIcon` | `React.ReactNode` | `-` | Secondary icon displayed after the content |
-| `isCollapsed` | `boolean` | `-` | If `true`, renders icon-only button (hides children and secondIcon) |
+| `isCollapsed` | `boolean` | `-` | Draws the icon alone, at the `icon` size, and drops `children` and `secondIcon`. Pair it with an `aria-label`. |
 | `type` | `'button' \| 'submit' \| 'reset'` | `'button'` | Native HTML button type |
 | `...props` | `Omit<React.HTMLProps<HTMLButtonElement>, 'size'>` | - | Additional props to spread to the button element |
 
@@ -578,8 +674,8 @@ export default function Demo() {
 
 ### MotionButton
 
-Adds a `scaleIn` entrance (fade, scale, and blur) with a `springBouncy` transition on mount, `whileTap` press feedback (scale 0.97), and animated icon/text transitions via `AnimatePresence`. `asChild` is not supported. Requires the `motion` package.
+Adds a `scaleIn` entrance with a `springBouncy` transition on mount, `whileTap` press feedback (scale 0.97) that `useMotionPreset`'s `tap` releases at once, and animated icon/text transitions via `AnimatePresence`. With `asChild` it animates a wrapper around the child and marks the child `aria-disabled` while `disabled` or `loading`. Requires the `motion` package.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `...props` | `Omit<ButtonProps, 'asChild'>` | - | All props from `Button` except `asChild` |
+| `...props` | `ButtonProps` | - | All props from `Button` |

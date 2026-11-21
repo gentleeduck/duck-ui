@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as DropdownMenu from '@gentleduck/primitives/dropdown-menu'\nimport styles from '../primitives.module.css'\n\nconst FLAGS = [\n  { code: 'DE', name: 'Germany' },\n  { code: 'EG', name: 'Egypt' },\n  { code: 'FR', name: 'France' },\n  { code: 'JP', name: 'Japan' },\n]\n\nexport default function DropdownMenuTypeaheadExample() {\n  return (\n    <DropdownMenu.Root>\n      <DropdownMenu.Trigger className={styles.button}>Country</DropdownMenu.Trigger>\n      <DropdownMenu.Portal>\n        <DropdownMenu.Content align=\"start\" className={styles.content} sideOffset={6}>\n          {FLAGS.map(({ code, name }) => (\n            <DropdownMenu.Item className={styles.item} key={code} textValue={name}>\n              <span aria-hidden className={styles.shortcut} style={{ marginInlineStart: 0 }}>\n                {code}\n              </span>\n              {name}\n            </DropdownMenu.Item>\n          ))}\n        </DropdownMenu.Content>\n      </DropdownMenu.Portal>\n    </DropdownMenu.Root>\n  )\n}\n",
+      "path": "internal-primitives/dropdown-menu-typeahead/dropdown-menu-typeahead.tsx",
+      "target": "components/dropdown-menu-typeahead.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dropdown-menu-typeahead",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

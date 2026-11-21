@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Slider } from '@gentleduck/registry-ui/slider'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [depth, setDepth] = React.useState([30])\n\n  return (\n    <div className=\"mx-auto flex items-center gap-4\">\n      <Slider\n        aria-label=\"Depth\"\n        className=\"h-40\"\n        inverted\n        onValueChange={setDepth}\n        orientation=\"vertical\"\n        value={depth}\n      />\n      <span className=\"text-muted-foreground text-sm tabular-nums\">{depth[0]} m down</span>\n    </div>\n  )\n}\n",
+      "path": "slider/slider-11.tsx",
+      "target": "components/slider-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "slider-11",
+  "registryDependencies": [
+    "slider",
+    "button",
+    "direction"
+  ],
+  "root_folder": "slider",
+  "source": "/registry-examples/src/slider",
+  "type": "registry:example"
+}

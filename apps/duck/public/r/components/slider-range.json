@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Slider from '@gentleduck/primitives/slider'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function SliderRangeExample() {\n  const [range, setRange] = React.useState([200, 800])\n\n  return (\n    <div className={styles.stack}>\n      <Slider.Root\n        className={styles.slider}\n        max={1000}\n        minStepsBetweenThumbs={10}\n        onValueChange={setRange}\n        preserveThumbOrder\n        step={10}\n        value={range}>\n        <Slider.Track className={styles.track}>\n          <Slider.Range className={styles.range} />\n        </Slider.Track>\n        <Slider.Thumb aria-label=\"Minimum price\" className={styles.thumb} />\n        <Slider.Thumb aria-label=\"Maximum price\" className={styles.thumb} />\n      </Slider.Root>\n      <p className={styles.note}>\n        ${range[0]} to ${range[1]}. The thumbs stop 10 steps apart instead of crossing.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/slider-range/slider-range.tsx",
+      "target": "components/slider-range.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "slider-range",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

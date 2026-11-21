@@ -4,7 +4,7 @@
   ],
   "files": [
     {
-      "content": "'use client'\n\nimport { useKeyBind } from '@gentleduck/vim/react'\n\n/**\n * Renderless component that binds a global keyboard shortcut while mounted\n * and unbinds it on unmount. Shared by `MenubarShortcut` and\n * `DropdownMenuShortcut` (and any future shortcut-bearing menu item).\n *\n * Always calls `event.preventDefault()` to keep the shortcut from triggering\n * browser-level behaviour (e.g. `Ctrl+S` saving the page).\n */\nexport function ShortcutBinder({ keys, handler }: { keys: string; handler: () => void }) {\n  useKeyBind(keys, handler, { preventDefault: true })\n  return null\n}\n",
+      "content": "'use client'\n\nimport { useKeyBind } from '@gentleduck/vim/react'\n\n/**\n * Renderless component that binds a global keyboard shortcut while mounted\n * and unbinds it on unmount. Shared by every shortcut a menu or a command draws.\n *\n * Always calls `event.preventDefault()` to keep the shortcut from triggering\n * browser-level behaviour (e.g. `Ctrl+S` saving the page).\n */\nexport function ShortcutBinder({ keys, handler }: { keys: string; handler: () => void }) {\n  useKeyBind(keys, handler, { preventDefault: true })\n  return null\n}\n",
       "path": "_internal/shortcut-binder.tsx",
       "target": "components/ui/shortcut-binder.tsx",
       "type": "registry:ui"

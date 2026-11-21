@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@gentleduck/registry-ui/resizable'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [locked, setLocked] = React.useState(true)\n\n  return (\n    <div className=\"flex max-w-md flex-col gap-3 md:min-w-[450px]\">\n      <ResizablePanelGroup className=\"min-h-[160px] rounded-lg border\">\n        <ResizablePanel defaultSize=\"40%\">\n          <div className=\"flex h-full items-center justify-center p-6\">\n            <span className=\"font-semibold\">Preview</span>\n          </div>\n        </ResizablePanel>\n        <ResizableHandle disabled={locked} />\n        <ResizablePanel defaultSize=\"60%\">\n          <div className=\"flex h-full items-center justify-center p-6\">\n            <span className=\"font-semibold\">Code</span>\n          </div>\n        </ResizablePanel>\n      </ResizablePanelGroup>\n      <Button className=\"self-start\" onClick={() => setLocked(!locked)} size=\"sm\" variant=\"outline\">\n        {locked ? 'Unlock the layout' : 'Lock the layout'}\n      </Button>\n    </div>\n  )\n}\n",
+      "path": "resizable/resizable-8.tsx",
+      "target": "components/resizable-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "resizable-8",
+  "registryDependencies": [
+    "resizable",
+    "button"
+  ],
+  "root_folder": "resizable",
+  "source": "/registry-examples/src/resizable",
+  "type": "registry:example"
+}

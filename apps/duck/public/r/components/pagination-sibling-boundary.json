@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as Pagination from '@gentleduck/primitives/pagination'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function PaginationSiblingBoundaryExample() {\n  const [siblingCount, setSiblingCount] = React.useState(1)\n  const [boundaryCount, setBoundaryCount] = React.useState(1)\n\n  return (\n    <div className={styles.stack}>\n      <div className={styles.row}>\n        <button className={styles.button} onClick={() => setSiblingCount((value) => (value + 1) % 3)} type=\"button\">\n          siblingCount {siblingCount}\n        </button>\n        <button className={styles.button} onClick={() => setBoundaryCount((value) => (value + 1) % 3)} type=\"button\">\n          boundaryCount {boundaryCount}\n        </button>\n      </div>\n      <Pagination.Root boundaryCount={boundaryCount} defaultPage={10} pageCount={20} siblingCount={siblingCount}>\n        <Pagination.Content className={styles.pages}>\n          <Pagination.Pages />\n        </Pagination.Content>\n      </Pagination.Root>\n      <p className={styles.note}>\n        The list keeps one length on every page, so the controls never move under the pointer.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/pagination-sibling-boundary/pagination-sibling-boundary.tsx",
+      "target": "components/pagination-sibling-boundary.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "pagination-sibling-boundary",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

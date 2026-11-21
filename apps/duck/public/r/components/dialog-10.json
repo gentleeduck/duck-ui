@@ -1,0 +1,26 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Dialog,\n  DialogClose,\n  DialogContent,\n  DialogDescription,\n  DialogFooter,\n  DialogHeader,\n  DialogTitle,\n  DialogTrigger,\n} from '@gentleduck/registry-ui/dialog'\n\nconst TERMS = [\n  ['Your account', 'You keep your password to yourself and tell us when someone else may have it.'],\n  ['What you post', 'You own what you upload. You let us store it and show it to the people you share it with.'],\n  ['What we keep', 'We keep your files while your account is open, and for 30 days after you close it.'],\n  ['Payment', 'A paid plan renews each month until you cancel it. A cancelled plan runs to the end of its month.'],\n  ['Refunds', 'We refund a plan cancelled within 14 days of its first payment, and none after that.'],\n  ['Fair use', 'You do not use the service to send spam, to break the law, or to slow it down for others.'],\n  ['Changes', 'We tell you a month before these terms change. Using the service after that accepts them.'],\n  ['Ending', 'You can close your account at any time. We close one that breaks these terms, after a warning.'],\n] as const\n\nexport default function Demo() {\n  return (\n    <Dialog>\n      <DialogTrigger asChild>\n        <Button variant=\"outline\">Read the terms</Button>\n      </DialogTrigger>\n      <DialogContent className=\"max-h-[min(32rem,85vh)] grid-rows-[auto_minmax(0,1fr)_auto]\">\n        <DialogHeader>\n          <DialogTitle>Terms of service</DialogTitle>\n          <DialogDescription>The terms scroll inside the dialog, and the page behind it stays put.</DialogDescription>\n        </DialogHeader>\n        <section\n          aria-label=\"Terms\"\n          className=\"-mx-6 overflow-y-auto px-6 text-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring\"\n          // biome-ignore lint/a11y/noNoninteractiveTabindex: the terms hold nothing focusable, so without Tab a keyboard cannot scroll them\n          tabIndex={0}>\n          {TERMS.map(([heading, text]) => (\n            <div className=\"mb-4\" key={heading}>\n              <h3 className=\"mb-1 font-medium\">{heading}</h3>\n              <p className=\"text-muted-foreground\">{text}</p>\n            </div>\n          ))}\n        </section>\n        <DialogFooter>\n          <DialogClose asChild>\n            <Button variant=\"outline\">Decline</Button>\n          </DialogClose>\n          <DialogClose asChild>\n            <Button>Accept</Button>\n          </DialogClose>\n        </DialogFooter>\n      </DialogContent>\n    </Dialog>\n  )\n}\n",
+      "path": "dialog/dialog-10.tsx",
+      "target": "components/dialog-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "dialog-10",
+  "registryDependencies": [
+    "dialog",
+    "button",
+    "calendar",
+    "direction",
+    "input",
+    "kbd",
+    "label",
+    "popover",
+    "select",
+    "textarea"
+  ],
+  "root_folder": "dialog",
+  "source": "/registry-examples/src/dialog",
+  "type": "registry:example"
+}

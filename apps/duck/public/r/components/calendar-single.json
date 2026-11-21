@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { NativeAdapter } from '@gentleduck/calendar'\nimport * as Calendar from '@gentleduck/primitives/calendar'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nconst adapter = new NativeAdapter()\n\nexport default function CalendarSingleExample() {\n  const [picked, setPicked] = React.useState<Date | null>(null)\n\n  return (\n    <div className={styles.stack}>\n      <Calendar.Root\n        adapter={adapter}\n        className={styles.calendar}\n        locale={{ locale: 'en-US' }}\n        mode=\"single\"\n        onSelect={(value) => setPicked(value as Date | null)}>\n        <Calendar.Nav>\n          <Calendar.PrevButton>{'<'}</Calendar.PrevButton>\n          <Calendar.Header />\n          <Calendar.NextButton>{'>'}</Calendar.NextButton>\n        </Calendar.Nav>\n        <Calendar.Grid />\n      </Calendar.Root>\n      <p className={styles.note}>\n        Picked: {picked ? picked.toDateString() : 'none'}. A second press on the day clears it.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/calendar-single/calendar-single.tsx",
+      "target": "components/calendar-single.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "calendar-single",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

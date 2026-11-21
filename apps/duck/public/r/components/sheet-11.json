@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Input } from '@gentleduck/registry-ui/input'\nimport {\n  Sheet,\n  SheetClose,\n  SheetContent,\n  SheetDescription,\n  SheetFooter,\n  SheetHeader,\n  SheetTitle,\n  SheetTrigger,\n} from '@gentleduck/registry-ui/sheet'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const search = React.useRef<HTMLInputElement>(null)\n  const after = React.useRef<HTMLButtonElement>(null)\n\n  return (\n    <div className=\"flex items-center gap-2\">\n      <Sheet>\n        <SheetTrigger asChild>\n          <Button variant=\"outline\">Search from the top</Button>\n        </SheetTrigger>\n        <SheetContent finalFocus={after} initialFocus={search} side=\"top\">\n          <SheetHeader>\n            <SheetTitle>Search</SheetTitle>\n            <SheetDescription>Focus starts in the field and lands on Results once closed.</SheetDescription>\n          </SheetHeader>\n          <div className=\"px-4\">\n            <Input placeholder=\"Search the docs\" ref={search} />\n          </div>\n          <SheetFooter>\n            <SheetClose asChild>\n              <Button>Search</Button>\n            </SheetClose>\n          </SheetFooter>\n        </SheetContent>\n      </Sheet>\n      <Button ref={after} variant=\"outline\">\n        Results\n      </Button>\n    </div>\n  )\n}\n",
+      "path": "sheet/sheet-11.tsx",
+      "target": "components/sheet-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sheet-11",
+  "registryDependencies": [
+    "sheet",
+    "button",
+    "input",
+    "label"
+  ],
+  "root_folder": "sheet",
+  "source": "/registry-examples/src/sheet",
+  "type": "registry:example"
+}

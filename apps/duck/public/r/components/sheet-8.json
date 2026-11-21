@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "import { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Sheet,\n  SheetContent,\n  SheetDescription,\n  SheetFooter,\n  SheetHeader,\n  SheetTitle,\n  SheetTrigger,\n} from '@gentleduck/registry-ui/sheet'\n\nconst CHAPTERS = Array.from({ length: 30 }, (_, index) => `Chapter ${index + 1}`)\n\nexport default function Demo() {\n  return (\n    <Sheet>\n      <SheetTrigger asChild>\n        <Button variant=\"outline\">Contents</Button>\n      </SheetTrigger>\n      <SheetContent side=\"left\">\n        <SheetHeader>\n          <SheetTitle>Contents</SheetTitle>\n          <SheetDescription>The list scrolls, and the header and footer stay put.</SheetDescription>\n        </SheetHeader>\n        <nav aria-label=\"Chapters\" className=\"-mx-6 min-h-0 flex-1 overflow-y-auto px-6\">\n          <ul className=\"grid gap-1 text-sm\">\n            {CHAPTERS.map((chapter) => (\n              <li key={chapter}>\n                <a className=\"block rounded-md px-2 py-1.5 hover:bg-accent\" href={`#${chapter.replace(' ', '-')}`}>\n                  {chapter}\n                </a>\n              </li>\n            ))}\n          </ul>\n        </nav>\n        <SheetFooter>\n          <Button variant=\"secondary\">Download the book</Button>\n        </SheetFooter>\n      </SheetContent>\n    </Sheet>\n  )\n}\n",
+      "path": "sheet/sheet-8.tsx",
+      "target": "components/sheet-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sheet-8",
+  "registryDependencies": [
+    "sheet",
+    "button",
+    "input",
+    "label"
+  ],
+  "root_folder": "sheet",
+  "source": "/registry-examples/src/sheet",
+  "type": "registry:example"
+}

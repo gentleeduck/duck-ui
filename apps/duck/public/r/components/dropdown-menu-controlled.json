@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as DropdownMenu from '@gentleduck/primitives/dropdown-menu'\nimport * as React from 'react'\nimport styles from '../primitives.module.css'\n\nexport default function DropdownMenuControlledExample() {\n  const [open, setOpen] = React.useState(false)\n  const [opens, setOpens] = React.useState(0)\n\n  return (\n    <div className={styles.stack}>\n      <DropdownMenu.Root\n        onOpenChange={(next) => {\n          setOpen(next)\n          if (next) setOpens((count) => count + 1)\n        }}\n        open={open}>\n        <DropdownMenu.Trigger className={styles.button}>Options</DropdownMenu.Trigger>\n        <DropdownMenu.Portal>\n          <DropdownMenu.Content align=\"start\" className={styles.content} sideOffset={6}>\n            <DropdownMenu.Item className={styles.item}>Duplicate</DropdownMenu.Item>\n            <DropdownMenu.Item className={styles.item}>Archive</DropdownMenu.Item>\n          </DropdownMenu.Content>\n        </DropdownMenu.Portal>\n      </DropdownMenu.Root>\n      <p className={styles.note}>\n        {open ? 'Open' : 'Closed'}, opened {opens} times. onOpenChange hears every way it opens and closes.\n      </p>\n    </div>\n  )\n}\n",
+      "path": "internal-primitives/dropdown-menu-controlled/dropdown-menu-controlled.tsx",
+      "target": "components/dropdown-menu-controlled.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "dropdown-menu-controlled",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

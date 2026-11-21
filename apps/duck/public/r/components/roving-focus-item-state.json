@@ -1,0 +1,18 @@
+{
+  "dependencies": [
+    "@gentleduck/calendar",
+    "@gentleduck/primitives"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport * as RovingFocus from '@gentleduck/primitives/roving-focus'\nimport styles from '../primitives.module.css'\n\nexport default function RovingFocusItemStateExample() {\n  return (\n    <RovingFocus.Root className={styles.group} orientation=\"horizontal\">\n      {['One', 'Two', 'Three'].map((name) => (\n        <RovingFocus.Item className={styles.button} key={name}>\n          {({ isCurrentTabStop }) => `${name}${isCurrentTabStop ? ' (tab stop)' : ''}`}\n        </RovingFocus.Item>\n      ))}\n    </RovingFocus.Root>\n  )\n}\n",
+      "path": "internal-primitives/roving-focus-item-state/roving-focus-item-state.tsx",
+      "target": "components/roving-focus-item-state.tsx",
+      "type": "registry:internal"
+    }
+  ],
+  "name": "roving-focus-item-state",
+  "root_folder": "internal-primitives",
+  "source": "/registry-internals/src/internal-primitives",
+  "type": "registry:internal"
+}

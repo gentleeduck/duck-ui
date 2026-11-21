@@ -1,7 +1,13 @@
 {
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
   "files": [
     {
-      "content": "import { Textarea } from '@gentleduck/registry-ui/textarea'\n\nexport default function Demo() {\n  return <Textarea disabled placeholder=\"Type your message here.\" />\n}\n",
+      "content": "import { Textarea } from '@gentleduck/registry-ui/textarea'\n\nexport default function Demo() {\n  return <Textarea aria-label=\"Message\" disabled placeholder=\"Type your message here.\" />\n}\n",
       "path": "textarea/textarea-3.tsx",
       "target": "components/textarea-3.tsx",
       "type": "registry:example"
@@ -9,7 +15,10 @@
   ],
   "name": "textarea-3",
   "registryDependencies": [
-    "textarea"
+    "textarea",
+    "button",
+    "field",
+    "label"
   ],
   "root_folder": "textarea",
   "source": "/registry-examples/src/textarea",

@@ -77,13 +77,7 @@ export const registryUi: RegistryEntry[] = [
     type: 'registry:ui',
   },
   {
-    dependencies: [
-      'react-day-picker',
-      '@gentleduck/libs',
-      '@gentleduck/primitives',
-      'lucide-react',
-      '@gentleduck/calendar',
-    ],
+    dependencies: ['@gentleduck/libs', '@gentleduck/primitives', 'lucide-react', '@gentleduck/calendar'],
     files: [],
     name: 'calendar',
     registryDependencies: ['button'],
@@ -131,10 +125,10 @@ export const registryUi: RegistryEntry[] = [
     type: 'registry:ui',
   },
   {
-    dependencies: ['@gentleduck/vim', '@gentleduck/libs', '@gentleduck/primitives', 'lucide-react'],
+    dependencies: ['@gentleduck/libs', '@gentleduck/primitives', 'lucide-react'],
     files: [],
     name: 'command',
-    registryDependencies: ['scroll-area', 'dialog'],
+    registryDependencies: ['dialog', 'keys-label', 'scroll-area', 'shortcut-binder'],
     root_folder: 'command',
     type: 'registry:ui',
   },
@@ -466,7 +460,7 @@ export const registryUi: RegistryEntry[] = [
     type: 'registry:ui',
   },
   {
-    dependencies: ['@gentleduck/libs', '@gentleduck/primitives', '@gentleduck/vim'],
+    dependencies: ['@gentleduck/libs'],
     files: [],
     name: 'kbd',
     registryDependencies: ['keys-label', 'motion-shell'],

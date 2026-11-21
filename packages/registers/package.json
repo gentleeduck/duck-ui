@@ -6,6 +6,8 @@
   "devDependencies": {
     "@gentleduck/typescript-config": "workspace:*",
     "@types/node": "^26.6.2",
+    "@vitest/coverage-v8": "catalog:",
+    "vitest": "catalog:",
     "zod": "4.3.6"
   },
   "exports": {
@@ -30,7 +32,8 @@
   },
   "scripts": {
     "check-types": "tsc -p tsconfig.json --noEmit --pretty false --skipLibCheck",
-    "test": "bun test"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "type": "module",
   "version": "1.0.2",

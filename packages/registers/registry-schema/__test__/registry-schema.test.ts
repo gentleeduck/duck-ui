@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test'
+import { describe, expect, test } from 'vitest'
 import { registry } from '../../index'
 import { blockSchema, REGISTRY_ITEM_TYPES, registryItemFileSchema, registrySchema } from '../registry-schema'
 

@@ -1,13 +1,13 @@
-import { describe, expect, test } from 'bun:test'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
+import { describe, expect, test } from 'vitest'
 import type { RegistryEntry } from '../../registry-schema'
 import { registryUi } from '../registry-ui'
 
 // `duck add` writes an item's files verbatim, installs its registryDependencies recursively, and
 // installs the npm dependencies of every item it wrote. Each import in a shipped file has to land on
 // a file or a package that this install puts in place.
-const SRC = path.resolve(import.meta.dir, '../../../registry-ui/src')
+const SRC = path.resolve(import.meta.dirname, '../../../registry-ui/src')
 // registry-build's DEFAULT_SOURCE_IGNORE: tests and snapshots never ship.
 const NOT_SHIPPED = /(^|\/)(__tests?__|__snapshots__)\/|\.(test|spec)\.[^/]+$/
 // The host app provides React, so no item declares it.
@@ -114,5 +114,18 @@ describe('registry-ui items install everything they import', () => {
       }
     }
     expect(undeclared).toEqual([])
+  })
+
+  test('every package an item declares is imported by one of its files', () => {
+    const unused = [...shipped].flatMap(([name, files]) => {
+      const imported = new Set(
+        files
+          .flatMap(importsOf)
+          .filter((s) => !s.startsWith('.'))
+          .map(packageOf),
+      )
+      return (byName.get(name)?.dependencies ?? []).filter((pkg) => !imported.has(pkg)).map((pkg) => `${name}: ${pkg}`)
+    })
+    expect(unused).toEqual([])
   })
 })

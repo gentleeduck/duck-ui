@@ -137,7 +137,7 @@ Same as `Dialog.Overlay`.
 
 ### `AlertDialog.Content`
 
-Same as `Dialog.Content`, with `role="alertdialog"`, but a press outside does not dismiss, and it focuses `AlertDialog.Cancel` on open. `initialFocus` names another element to focus in its place, or `false` to leave focus on the trigger. In development, an error is logged when it mounts with no `AlertDialog.Title`, and a warning when it has no `AlertDialog.Description` or `aria-describedby`.
+Same as `Dialog.Content`, with `role="alertdialog"`, but a press outside does not dismiss, and it focuses `AlertDialog.Cancel` on open. `initialFocus` names another element to focus in its place, or `false` to leave focus on the trigger, and `finalFocus` the element to focus on close in place of the trigger, or `false` to move focus nowhere. Inside a dialog's content it is a [nested dialog](/duck-primitives/api/dialog#nested-dialogs), with `data-nested`. In development, an error is logged when it mounts with no `AlertDialog.Title`, and a warning when it has no `AlertDialog.Description` or `aria-describedby`.
 
 ### `AlertDialog.Title`
 

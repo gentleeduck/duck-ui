@@ -265,7 +265,7 @@ Against Radix 1.1.19, the version `@radix-ui/react-dialog` 1.1.23 ships.
 - A press inside the layer that is stopped before it reaches the document no longer makes the layer miss the
   next press outside, and an `onPointerDownCapture` that prevents the default no longer makes a press inside read
   as outside. Radix's layer misses or dismisses on both.
-- These fixes cost 380 bytes, and the module is 4,151 bytes gzipped against Radix's 3,785.
+- These fixes cost 380 bytes, and the module is 4,170 bytes gzipped against Radix's 3,785.
 
 ## Smaller and faster
 

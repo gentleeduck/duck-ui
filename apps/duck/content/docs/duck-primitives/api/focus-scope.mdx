@@ -58,7 +58,9 @@ import { FocusScope } from '@gentleduck/primitives/focus-scope'
 
 Focus that lands in an input selects its text, on mount and when focus comes back to it. A <Kbd>Tab</Kbd> pressed while an input method is composing text is left to the input method. An `onKeyDown` passed to the scope runs before its own handler, and a <Kbd>Tab</Kbd> it prevents does not loop.
 
-A looping scope counts a group of native radios as one stop, as the browser does: <Kbd>Tab</Kbd> leaves the group from any radio in it, and looping into the group lands on its checked radio. A focusable `svg` is a stop. Nothing inside a `hidden` or `inert` element or a disabled `<fieldset>` is a stop, and the scope does not look for stops inside a shadow root it holds.
+A looping scope counts a group of native radios as one stop, as the browser does: <Kbd>Tab</Kbd> leaves the group from any radio in it, and looping into the group lands on its checked radio. A focusable `svg` is a stop, and mount focus passes over a link inside an `svg` as it does an html one. Nothing inside a `hidden` or `inert` element or a disabled `<fieldset>` is a stop. The walk for stops enters each open shadow root inside the scope and follows its slots, so a field inside a custom element at the scope's edge is its first or last stop, and radios in a shadow root are a group apart from those of the same name outside it.
+
+A <Kbd>Tab</Kbd> the browser would take to a positive `tabIndex` outside a trapped scope lands on the next stop inside it, read in the scope's own order, and a <Kbd>Shift+Tab</Kbd> on the one before. A trapped scope whose last focused element has gone, such as a button in a branch that closed, takes focus to its own element when focus leaves.
 
 ## Iframes, shadow roots and a changing element
 

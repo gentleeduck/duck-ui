@@ -192,6 +192,7 @@ export default function SheetRtlExample() {
 * `Sheet.*` and `Dialog.*` map to the same underlying primitives
 * the content writes `dir`, from the root's `dir`, then a `DirectionProvider`, then `<html dir>`, so a panel placed with `start-0` or `end-0` mirrors in right to left, even when portalled out of the provider
 * a sheet opened from a dialog's content, or a dialog from a sheet's, is a [nested dialog](/duck-primitives/api/dialog#nested-dialogs)
+* `Sheet.Content` takes `initialFocus`, `finalFocus` and `forceMount`, and `Sheet.Portal` takes a ref as its `container`, as Dialog's parts do
 
 ## API Mapping
 

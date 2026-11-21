@@ -161,9 +161,10 @@ A button, or a link under `getPageHref`, that moves to its page. Its label is th
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `value` | `number` | - | The page it moves to |
+| `value` | `number` | - | The page it moves to. One outside `1` to `pageCount` is disabled, so it neither moves the page nor links anywhere |
 | `disabled` | `boolean` | `false` | Disables the page |
 | `asChild` | `boolean` | `false` | Renders its child in place of the button or link |
+| `target`, `rel`, `download`, `referrerPolicy` | link attributes | - | Passed to the link under `getPageHref`, as on any `<a>` |
 | `...props` | `React.HTMLAttributes<HTMLElement>` | - | Additional props for the button or link |
 
 | Data attribute | Values |
@@ -176,12 +177,13 @@ A button, or a link under `getPageHref`, that moves to its page. Its label is th
 
 A button, or a link under `getPageHref`, that moves to the first, previous, next or last page. Each is disabled when it has nowhere to go: a button gets `disabled`, and a link loses its address and gets `aria-disabled`, so it leaves the tab order. Each is labelled "First page", "Previous page", "Next page" or "Last page" unless it has an `aria-label`.
 
-On a button, a click handler that calls `event.preventDefault()` keeps the page where it is. On a link it only stops the browser following the link, and the page still moves. A disabled page or trigger runs no click handler, link or button.
+On a button, a click handler that calls `event.preventDefault()` keeps the page where it is. On a link it only stops the browser following the link, and the page still moves. A disabled page or trigger runs no click handler, link or button, a slotted child's included. A click on a link with a modifier key held opens it somewhere else, so the page stays where it is. A child given through `asChild` keeps its own `href`, though a click on it does nothing while the control has nowhere to go.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `disabled` | `boolean` | `false` | Disables the trigger whatever the page |
 | `asChild` | `boolean` | `false` | Renders its child in place of the button or link |
+| `target`, `rel`, `download`, `referrerPolicy` | link attributes | - | Passed to the link under `getPageHref`, as on any `<a>` |
 | `...props` | `React.HTMLAttributes<HTMLElement>` | - | Additional props for the button or link |
 
 | Data attribute | Values |

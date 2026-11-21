@@ -16,7 +16,7 @@ Smaller than all 2.
 
 | | gentleduck | Base UI | Ark UI |
 |---|--:|--:|--:|
-| Size, gzipped bytes | 29,630 | 51,013 (0.58x) | 35,225 (0.84x) |
+| Size, gzipped bytes | 29,813 | 51,013 (0.58x) | 35,225 (0.85x) |
 
 Behind nowhere: smaller than every library here.
 

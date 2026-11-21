@@ -232,7 +232,7 @@ The root container. Renders a `<div>`. Supports two modes: `single` and `multipl
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `type` | `'single'` | - | Only one item can be active |
-| `value` | `string` | - | Controlled active value |
+| `value` | `string` | - | Controlled active value. `''` means no item is on, so an item whose value is empty stays off |
 | `defaultValue` | `string` | - | Initial active value |
 | `onValueChange` | `(value: string) => void` | - | Called when active value changes |
 

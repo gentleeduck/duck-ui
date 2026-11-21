@@ -188,7 +188,7 @@ function ToppingsSelect() {
 
 ### `Select.Root`
 
-The root component that manages open/closed state, selected value, and provides context to all children. Inside a form, or with `form`, it also renders a hidden native `<select>`, so the value submits under `name`, autofill can set it, and a form reset restores the value the select started with.
+The root component that manages open/closed state, selected value, and provides context to all children. Inside a form, or with `form`, it also renders a hidden native `<select>`, so the value submits under `name`, autofill can set it, and a form reset restores the value the select started with. The reset is heard once it has bubbled, from the form the select belongs to at that moment, so a form named by `form` that mounts later still resets it and a reset a handler cancels leaves it alone. When the browser changes the native select, as autofill does, and a controlled owner does not take the change, the native select goes back to the owner's value.
 
 A pick by the user dispatches a bubbling `change` event from that native select, so a form's `onChange` hears it, unless the item's handler stopped propagation. A change made through `value` updates the native select without bubbling.
 
@@ -255,6 +255,7 @@ The dropdown content. Handles focus trapping, dismiss-on-click-outside, escape-t
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `position` | `'item-aligned' \| 'popper'` | `'item-aligned'` | Positioning strategy |
+| `forceMount` | `true` | - | Keep the content mounted while closed, for a JavaScript animation library to drive. The native `<select>` still lists each item once |
 | `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'` | Preferred side (popper only) |
 | `sideOffset` | `number` | - | Main-axis offset (popper only) |
 | `align` | `'start' \| 'center' \| 'end'` | `'start'` | Cross-axis alignment (popper only) |
@@ -265,6 +266,9 @@ The dropdown content. Handles focus trapping, dismiss-on-click-outside, escape-t
 | `arrowPadding` | `number` | `0` | Minimum padding between arrow and content edges (popper only) |
 | `sticky` | `'partial' \| 'always'` | `'partial'` | Keep content in view when trigger is partially hidden (popper only) |
 | `hideWhenDetached` | `boolean` | `false` | Hide content once the trigger is scrolled out of view (popper only) |
+| `shiftCrossAxis` | `boolean` | `false` | Also shift along the side's own axis (popper only) |
+| `updatePositionStrategy` | `'optimized' \| 'always'` | `'optimized'` | Measure on scroll, resize and layout changes, or on every frame (popper only) |
+| `updateOnScroll` | `boolean` | `true` | Measure again when a box around the trigger scrolls (popper only) |
 | `onCloseAutoFocus` | `(event: Event) => void` | - | Called when focus returns to trigger on close |
 | `onEscapeKeyDown` | `(event: KeyboardEvent) => void` | - | Called when Escape is pressed |
 | `onPointerDownOutside` | `(event) => void` | - | Called when clicking outside |
@@ -313,7 +317,7 @@ A selectable item. Renders a `<div>` with `role="option"`.
 | `disabled` | `boolean` | `false` | Disables the item |
 | `textValue` | `string` | - | Text override for typeahead search (defaults to text content) |
 
-Exposes `data-state="checked"` / `data-state="unchecked"`, `data-highlighted`, and `data-disabled`.
+Exposes `data-state="checked"` / `data-state="unchecked"`, `data-highlighted`, and `data-disabled`. A key pressed in a focusable element portalled out of the item is left to that element and does not select the item.
 
 ### `Select.ItemText`
 
@@ -343,7 +347,7 @@ Visual separator between items. Renders a `<div>` with `aria-hidden`.
 </Select.Provider>
 ```
 
-`Select.Provider` takes the same props as `Select.Root`. `Select.BubbleInput` takes the props of a `<select>` except `value`, which comes from the provider.
+`Select.Provider` takes the same props as `Select.Root`. `Select.BubbleInput` takes the props of a `<select>` except `value`, which comes from the provider. An `onChange` given to it runs beside its own handler.
 
 ### `Select.Arrow`
 
@@ -369,7 +373,7 @@ Arrow pointing to the trigger. Only renders when `position="popper"`.
 | <Kbd>PageDown</Kbd> | Moves focus to last item |
 | <Kbd>Escape</Kbd> | Closes the select |
 | <Kbd>Tab</Kbd> | Prevented while open (standard select behavior) |
-| A letter | Focus the next item after the focused one whose text starts with it. On the closed trigger, pick the next one after the selected item, except with `multiple`, where it picks nothing |
+| A letter | Focus the next item after the focused one whose text starts with it, read from the text and `textValue` each item has now. Typing the focused item's name keeps focus on it. On the closed trigger, pick the next one after the selected item, except with `multiple`, where it picks nothing |
 
 ## In an iframe or a shadow root
 

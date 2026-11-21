@@ -195,11 +195,11 @@ The keys move by index. A row they reach that is not drawn is brought in with `s
 | `Meta+ArrowDown` / `Meta+ArrowUp` | Highlights the last or first enabled item, as in cmdk |
 | `Home` / `End` | Highlights the first or last enabled item |
 | `PageDown` / `PageUp` | Moves a page, the height of the nearest box that scrolls the items, or to the last or first item when nothing scrolls, as in React Aria |
-| `Enter` | Selects the highlighted item by clicking it, so an item rendered as a link follows it |
+| `Enter` | Selects the highlighted item by clicking it, so an item rendered as a link follows it. A button, link or field inside the command keeps its own `Enter` |
 | `Space` | Selects the focused item |
-| `Tab` | Stays inside the command |
+| `Tab` / `Shift+Tab` | Leaves the command, as from any field, so a keyboard user can get past an inline palette. A dialog around it still keeps focus inside the dialog |
 
-While an input method is composing text, the command leaves every key to it, so the `Enter` that confirms a word selects nothing.
+While an input method is composing text, the command leaves every key to it, so the `Enter` that confirms a word selects nothing. That includes the `Enter` Safari sends after `compositionend`, with `keyCode` 229.
 
 ## Examples
 
@@ -290,7 +290,7 @@ The root container that manages search state, filtering, and keyboard navigation
 
 ### `Command.Input`
 
-The search input field. Renders an `<input>` that names the highlighted option in `aria-activedescendant`, so a screen reader announces it as the arrow keys move. A controlled `value` filters the list whenever it changes, including when the consumer clears it.
+The search input field. Renders an `<input>` that names the highlighted option in `aria-activedescendant`, so a screen reader announces it as the arrow keys move. A controlled `value` filters the list whenever it changes, including when the consumer clears it, and only by the value the owner commits, so an edit the owner refuses does not filter the list on text the input does not show.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -380,7 +380,7 @@ const search = Command.useCommandSearch()
 
 ### `useCommandState(selector)`
 
-Reads the command's state and renders again only when what `selector` picks from it changes, as in cmdk. The state is `search`, the text typed; `value`, the highlighted item's `value` or `''`; and `count`, how many items match and show, after `limit`.
+Reads the command's state and renders again only when what `selector` picks from it changes, as in cmdk. The state is `search`, the text typed; `value`, the highlighted item's `value` or `''`; and `count`, how many items match and show, after `limit`. What the selector returns is kept until the state changes, so a selector that builds an object does not render again on every read.
 
 ```tsx
 const count = Command.useCommandState((state) => state.count)

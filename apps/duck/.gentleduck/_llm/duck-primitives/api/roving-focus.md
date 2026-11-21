@@ -159,6 +159,7 @@ export default function RovingFocusItemStateExample() {
 | `tabStopId` | `string` | generated | The id the group names in `currentTabStopId` when this item is its tab stop |
 | `focusable` | `boolean` | `true` | `false` keeps the item out of arrow key and Tab navigation, and a mouse down on it moves no focus |
 | `active` | `boolean` | `false` | Focus entering the group goes to this item first, as to the checked radio or the pressed toggle |
+| `textValue` | `string` | - | What a typeahead over the group matches, in place of the item's text |
 | `children` | `ReactNode \| ((state) => ReactNode)` | - | Nodes, or a function called with `isCurrentTabStop` and `hasTabStop` |
 | `asChild` | `boolean` | `false` | Renders the child element instead of a `span` |
 
@@ -185,7 +186,9 @@ export default function RovingFocusItemStateExample() {
 | `Tab` | Into the group on its tab stop, then out past the other items | Same |
 | `Shift+Tab` | Out of the group from any item, or from after it back onto its tab stop | Same |
 
-A group with no `orientation` moves on all four arrows. An arrow held with Shift, Ctrl, Alt or Meta goes to the page. Items that cannot take focus are skipped, and `loop` wraps at either end.
+A group with no `orientation` moves on all four arrows. An arrow held with Shift, Ctrl, Alt or Meta goes to the page. Items that cannot take focus are skipped, and `loop` wraps at either end. <Kbd>Tab</Kbd> enters on an item even after a mouse down that moved no focus, and <Kbd>Shift+Tab</Kbd> leaves the group from any item.
+
+The group writes its `tabindex` after React commits, so server markup carries none. A `tabIndex` given to the group, or carried by the element `asChild` slots it onto, is left alone, and the group takes the tab stop back once that `tabIndex` is dropped.
 
 ## Data attributes
 
@@ -196,6 +199,24 @@ A group with no `orientation` moves on all four arrows. An arrow held with Shift
 | Root | `dir` | `ltr`, `rtl` |
 | Item | `data-slot` | `roving-focus-item` |
 | Item | `data-orientation` | `horizontal`, `vertical` |
+
+## Hooks
+
+`useRovingFocusGroup(options, ref)` and `useRovingFocusItem(props, ref, enabled?)` are the group and an item without an element of their own, for a part that renders its own element, as the radio group and the menus do.
+
+```tsx
+const group = useRovingFocusGroup({ orientation: 'horizontal', dir: 'ltr', loop: true }, forwardedRef)
+return (
+  <RovingFocusProvider scope={undefined} {...group.context}>
+    <div {...props} {...group.props} />
+  </RovingFocusProvider>
+)
+
+const item = useRovingFocusItem({ tabStopId: 'bold', onKeyDown }, forwardedRef)
+return <button {...item.attributes} {...item.handlers} data-current={item.state.isCurrentTabStop || undefined} />
+```
+
+The group hook takes the root's props, with `dir` required, and returns the `context` for `RovingFocusProvider` and the `props`, ref included, for the group's element. The item hook takes an item's props and its `onMouseDown`, `onFocus` and `onKeyDown` to compose with, and returns its `state`, its `attributes` (the tab index and `data-orientation`, or `undefined` while `enabled` is `false`, for the caller to set a tab index of its own) and its `handlers`, ref included. `focusFirst`, `getFocusableItems`, `getFocusIntent` and `wrapArray` are exported too, for a part that moves focus itself.
 
 ## How it works
 

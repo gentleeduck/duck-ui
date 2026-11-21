@@ -16,15 +16,15 @@ Smaller than Ark UI. Faster in 1 of 3 timed comparisons.
 
 | | gentleduck | Ark UI |
 |---|--:|--:|
-| Size, gzipped bytes | 3,506 | 8,317 (0.42x) |
-| Mount x100, ms | 12.0 | **10.5 (1.14x)** |
-| Update x100, ms | 8.02 | 9.12 (0.88x) |
-| Unmount x100, ms | 1.98 | **1.45 (1.36x)** |
+| Size, gzipped bytes | 3,503 | 8,317 (0.42x) |
+| Mount x100, ms | 13.6 | **11.6 (1.18x)** |
+| Update x100, ms | 8.51 | 9.56 (0.89x) |
+| Unmount x100, ms | 1.98 | **1.50 (1.32x)** |
 
 Where gentleduck is behind:
 
-- Unmount x100 against Ark UI: 1.36x, 0.528 ms more.
-- Mount x100 against Ark UI: 1.14x, 1.46 ms more.
+- Unmount x100 against Ark UI: 1.32x, 0.481 ms more.
+- Mount x100 against Ark UI: 1.18x, 2.06 ms more.
 
 Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. Versions: Ark UI 5.40.0.
 

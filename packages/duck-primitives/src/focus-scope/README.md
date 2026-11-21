@@ -240,6 +240,9 @@ Against Radix 1.1.16, the version `@radix-ui/react-dialog` 1.1.23 ships.
   its own element when focus leaves. Radix focuses the element that has gone, so focus stays outside.
 - Mount focus passes over a link inside an svg, as it does an html one. Radix passes over only the html one.
 - A Tab while an input method is composing text is left to the input method.
+- A Tab the browser would take to a positive `tabIndex` outside a trapped scope lands on the next stop inside it, read
+  in the scope's own order, and a Shift+Tab on the one before. Radix sends focus back to the element it left, so the
+  stops after it are never reached.
 - `branches` names nodes outside the scope's DOM that focus may move into, such as a nested layer's portalled
   content, and `FocusScopeBranchProvider`, `useFocusScopeBranchRegistry` and `useFocusScopeBranch` register them.
   Radix has no branches.

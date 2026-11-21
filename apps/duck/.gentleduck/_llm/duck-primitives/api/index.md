@@ -34,7 +34,7 @@
 
 | Primitive | Import | Description |
 | --- | --- | --- |
-| [Checkers](/duck-primitives/api/checkers) | `@gentleduck/primitives/checkers` | SVG-to-data-URI indicator hook |
+| [Checkers](/duck-primitives/api/checkers) | `@gentleduck/primitives/checkers` | Native checkbox and switch hooks: SVG indicators, and a form kept in step with `checked` |
 | [Primitive Elements](/duck-primitives/api/primitive-elements) | `@gentleduck/primitives/primitive-elements` | Base elements with `asChild` |
 | [Slot](/duck-primitives/api/slot) | `@gentleduck/primitives/slot` | Composition utility |
 | [Presence](/duck-primitives/api/presence) | `@gentleduck/primitives/presence` | Animation-aware mount/unmount |

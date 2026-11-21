@@ -458,7 +458,7 @@ An `onOpenAutoFocus` or `onCloseAutoFocus` handler that prevents the default win
 
 Sets `role="dialog"` and `data-state`, and `data-nested`, `data-nested-dialog-open` and `--gentleduck-dialog-nested-dialogs` for [nested dialogs](#nested-dialogs). Its `aria-labelledby` lists the id of every `Dialog.Title` mounted inside it, and its `aria-describedby` lists an `aria-describedby` you pass, then every `Dialog.Description`. An `aria-labelledby` you pass wins. An `id` you pass reaches the trigger's `aria-controls`.
 
-A primary press outside dismisses the dialog once its click lands, so code that stops the pointerup, mouse, touch or click events after it cancels the dismissal. A right or control press dismisses at once, since macOS sends no click for it.
+A primary press outside dismisses the dialog once its click lands, so code that stops the pointerup, mouse, touch or click events after it cancels the dismissal. A right or control press dismisses at once, since macOS sends no click for it. <Kbd>Tab</Kbd> and <Kbd>Escape</Kbd> pressed while an input method is composing text are left to it.
 
 The ids register in a layout effect, so content rendered without a portal has no `aria-labelledby` or `aria-describedby` in the server markup until it hydrates.
 
@@ -491,8 +491,8 @@ Non-modal
 When `modal={true}` (default):
 
 * Focus is trapped inside the content.
-* Body scroll is locked while a `Dialog.Overlay` is rendered, unless its `lockScroll` is `false`.
-* Other content is hidden from screen readers via `aria-hidden`.
+* Body scroll is locked while a `Dialog.Overlay` is rendered, unless its `lockScroll` is `false`. A dialog in another document, such as an iframe's, locks that document's body.
+* Other content is hidden from screen readers via `aria-hidden`, except a layer portalled out of the dialog, such as a popover's content, and a dialog opened from one. A dialog kept mounted with `forceMount` leaves the page to screen readers while it is closed.
 * Clicking outside dismisses the dialog.
 
 A layer portalled out of the content, such as a `Popover.Content`, registers with the dialog, so focus can move into it and it scrolls under the dialog's scroll lock. A layer of your own does the same with `useFocusScopeBranch`, documented under [FocusScope](/duck-primitives/api/focus-scope).

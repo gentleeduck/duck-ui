@@ -234,7 +234,7 @@ Clear when the alert dialog is opened from a dialog's content, since the dialog'
 | --- | --- | --- | --- |
 | `className` | `string` | `-` | Additional class names to apply |
 | `children` | `React.ReactNode` | `-` | Content displayed inside the dialog |
-| `forceMount` | `true` | - | Forces the content to stay mounted in the DOM |
+| `forceMount` | `true` | - | Keeps the content, and what it holds, in the page while the dialog is closed. Its portal is kept with it, and the overlay holds the end of its fade and lets presses through, so it never covers the page |
 | `initialFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on open in place of `AlertDialogCancel`. `false` leaves focus on the trigger |
 | `finalFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on close in place of the trigger. `false` moves focus nowhere |
 | `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>` | - | Additional props inherited from `AlertDialogPrimitive.Content` |

@@ -3,7 +3,7 @@ Or you can ask it on our [GitHub repository](https://github.com/gentleeduck/gent
 
 What makes @gentleduck/ui different from other UI libraries?
 
-57 styled components backed by 23 headless primitives we built ourselves - not Radix. Each primitive is 1% to 67% smaller than its Radix equivalent, gzipped (Accordion: 4.7 KB vs 8.6 KB). The calendar is 9.7 KB with 4 calendar systems, against 20.0 KB for react-day-picker with 1. We also ship a keyboard command system, animation tokens, atom-based state management, and a CLI with interactive merge TUI. See the <a href="/www/comparisons/vs-shadcn" className="text-primary hover:underline">full comparison with shadcn/ui</a>.
+60 styled components backed by 23 headless primitives we built ourselves - not Radix. 15 of the 18 primitives both ship are smaller than Radix's gzipped, by up to 64% (Accordion: 4.9 KB vs 8.6 KB), and Popover, Dialog and Alert Dialog are within 2.4%. The calendar is 10.0 KB with 4 calendar systems, against 20.0 KB for react-day-picker with 1. We also ship a keyboard command system, animation tokens, atom-based state management, and a CLI with interactive merge TUI. See the <a href="/www/comparisons/vs-shadcn" className="text-primary hover:underline">full comparison with shadcn/ui</a>.
 
 Is @gentleduck/ui just another UI clone?
 
@@ -49,7 +49,7 @@ explanations. No corporate bureaucracy.
 
 What's the performance like?
 
-Measured, gzipped: every primitive both libraries ship is 1% to 67% smaller than Radix's (Popover: 23.0 KB vs 23.8 KB, Toggle Group: 4.7 KB vs 8.2 KB). The calendar is 9.7 KB against react-day-picker's 20.0 KB, and the <code className="bg-muted px-2 py-1 rounded">useCalendar</code> hook alone is 5.8 KB. The variant system caches results with a Map-based memoizer so repeated cva() calls in hot render paths return instantly. The primitives, calendar and variants packages are tree-shakeable ESM with <code className="bg-muted px-2 py-1 rounded">sideEffects: false</code>. See the <a href="/duck-primitives/benchmarks" className="text-primary hover:underline">full benchmarks</a>.
+Measured, gzipped: 15 of the 18 primitives both libraries ship are smaller than Radix's, by up to 64% (Toggle Group: 4.9 KB vs 8.2 KB, Slider: 6.6 KB vs 9.5 KB), and Popover, Dialog and Alert Dialog are 1.5% to 2.4% larger (Popover: 24.1 KB vs 23.8 KB). The calendar is 10.0 KB against react-day-picker's 20.0 KB, and the <code className="bg-muted px-2 py-1 rounded">useCalendar</code> hook alone is 5.9 KB. The variant system caches results with a Map-based memoizer so repeated cva() calls in hot render paths return instantly. The primitives, calendar and variants packages are tree-shakeable ESM with <code className="bg-muted px-2 py-1 rounded">sideEffects: false</code>. See the <a href="/duck-primitives/benchmarks" className="text-primary hover:underline">full benchmarks</a>.
 
 Is there documentation and examples?
 

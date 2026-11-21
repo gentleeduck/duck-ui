@@ -12,16 +12,18 @@ A search input over a list of items it filters as you type, with the highlight m
 ## Benchmarks
 
 <!-- benchmarks -->
-Smaller than all 3. Faster in all 9 timed comparisons.
+Smaller than all 3. Faster in 8 of 9 timed comparisons.
 
 | | gentleduck | Base UI | React Aria | cmdk |
 |---|--:|--:|--:|--:|
-| Size, gzipped bytes | 7,642 | 48,724 (0.16x) | 44,329 (0.17x) | 18,812 (0.41x) |
-| Mount x100, ms | 22.4 | 41.1 (0.54x) | 160 (0.14x) | 23.1 (0.97x) |
-| Type x100, ms | 9.15 | 31.8 (0.29x) | 31.3 (0.29x) | 14.5 (0.63x) |
-| Unmount x100, ms | 1.98 | 3.43 (0.58x) | 5.99 (0.33x) | 2.12 (0.93x) |
+| Size, gzipped bytes | 7,663 | 48,724 (0.16x) | 44,329 (0.17x) | 18,812 (0.41x) |
+| Mount x100, ms | 23.7 | 41.6 (0.57x) | 151 (0.16x) | **21.6 (1.09x)** |
+| Type x100, ms | 9.24 | 32.9 (0.28x) | 30.1 (0.31x) | 14.5 (0.64x) |
+| Unmount x100, ms | 2.00 | 3.28 (0.61x) | 5.75 (0.35x) | 2.14 (0.93x) |
 
-Behind nowhere: smaller and faster than every library here, in every case.
+Where gentleduck is behind:
+
+- Mount x100 against cmdk: 1.09x, 2.05 ms more.
 
 Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. Versions: Base UI 1.0.0-rc.0, React Aria 1.22.1 and cmdk 1.1.1.
 

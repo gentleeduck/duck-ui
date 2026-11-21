@@ -16,14 +16,14 @@ Smaller than all 3. Faster in 8 of 9 timed comparisons.
 
 | | gentleduck | React Aria | Ark UI | react-day-picker |
 |---|--:|--:|--:|--:|
-| Size, gzipped bytes | 10,161 | 37,759 (0.27x) | 44,308 (0.23x) | 20,518 (0.50x) |
-| Mount x100, ms | 55.4 | 249 (0.22x) | 94.2 (0.59x) | 97.8 (0.57x) |
-| Update x100, ms | 37.9 | 113 (0.34x) | 74.3 (0.51x) | **28.4 (1.34x)** |
-| Unmount x100, ms | 3.45 | 17.1 (0.20x) | 6.49 (0.53x) | 4.47 (0.77x) |
+| Size, gzipped bytes | 10,193 | 37,759 (0.27x) | 44,308 (0.23x) | 20,518 (0.50x) |
+| Mount x100, ms | 58.2 | 237 (0.25x) | 95.5 (0.61x) | 97.1 (0.60x) |
+| Update x100, ms | 42.7 | 113 (0.38x) | 74.7 (0.57x) | **29.1 (1.47x)** |
+| Unmount x100, ms | 3.54 | 16.8 (0.21x) | 6.88 (0.51x) | 4.55 (0.78x) |
 
 Where gentleduck is behind:
 
-- Update x100 against react-day-picker: 1.34x, 9.55 ms more.
+- Update x100 against react-day-picker: 1.47x, 13.7 ms more.
 
 Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. Versions: React Aria 1.22.1, Ark UI 5.40.0 and react-day-picker 10.0.1.
 

@@ -12,7 +12,7 @@
   <a href="../../LICENSE">MIT</a> -
   <a href="../../CHANGELOG.md">Changelog</a> -
   <a href="../../CONTRIBUTING.md">Contributing</a> -
-  <a href="https://gentleduck.org/duck-ui">Docs</a>
+  <a href="https://gentleduck.org/duck-primitives">Docs</a>
 </p>
 
 <p align="center">
@@ -27,7 +27,7 @@ Unstyled, accessibility-first UI primitives for React.
 
 ## Why primitives
 
-- **50-92% smaller than Radix** - Alert Dialog: 1.6 KB vs 18.6 KB. Popover: 2.4 KB vs 19.6 KB. Dialog: 3.1 KB vs 10.6 KB. Shared internals (Slot, Presence, Popper, focus scope) load once instead of being duplicated per-package.
+- **Smaller than Radix for most components** - 15 of the 18 both ship are smaller gzipped, by up to 64%: Input OTP 3.9 KB vs 10.8 KB, Accordion 4.9 KB vs 8.6 KB, Slider 6.6 KB vs 9.5 KB. Popover, Dialog and Alert Dialog are within 2.4% of Radix's and do more. Shared internals (Slot, Presence, Popper, focus scope) load once instead of being duplicated per package. Every module's README carries its measured table.
 - **Full keyboard navigation + ARIA compliance out of the box** - every component ships with correct roles, states, and keyboard interactions so you don't have to wire them yourself.
 - **Compound component pattern** - compose `Root`, `Trigger`, `Content`, and friends to build exactly the UI you need without prop drilling.
 - **Compatible with Radix API** - same naming, same `asChild` pattern, same `data-state` attributes. Migration from Radix is a namespace change in your imports.
@@ -36,11 +36,12 @@ Unstyled, accessibility-first UI primitives for React.
 
 | Primitive | Description |
 | --- | --- |
+| `accordion` | Stacked items whose triggers open and close their content |
 | `alert-dialog` | Modal dialog that requires user acknowledgment |
 | `arrow` | Positioning arrow for floating elements |
 | `avatar` | User avatar with image and fallback support |
 | `calendar` | Date grid with keyboard navigation and multi-view support |
-| `checkers` | Checkbox and switch toggle primitive |
+| `checkers` | Hooks for a native checkbox or switch: icons drawn from SVG, and a form kept in step with `checked` |
 | `command` | Command palette with search filtering |
 | `context-menu` | Right-click context menu with submenus |
 | `dialog` | Modal and non-modal dialog windows |
@@ -48,18 +49,20 @@ Unstyled, accessibility-first UI primitives for React.
 | `dismissable-layer` | Layer that dismisses on outside interaction |
 | `dropdown-menu` | Dropdown menu with submenus, checkboxes, and radio items |
 | `focus-scope` | Traps and manages focus within a boundary |
+| `hooks` | Controllable state, ids, size, escape key, previous value and the other hooks the parts share |
 | `hover-card` | Card triggered by hover with open/close delay |
 | `input-otp` | One-time password input with slots and separators |
 | `menu` | Base menu primitive used by dropdown, context, and menubar |
-| `menubar` | Horizontal menu bar with keyboard navigation |
-| `mount` | Deferred mounting with lifecycle callbacks |
+| `menubar` | Horizontal or vertical menu bar with keyboard navigation |
+| `mount` | Keeps children mounted for a fixed time, or until an element's CSS transitions end, after closing |
 | `navigation-menu` | Site navigation with animated indicator and viewport |
 | `pagination` | Page navigation controls |
 | `popover` | Floating content anchored to a trigger |
 | `popper` | Low-level floating element positioning via Floating UI |
 | `portal` | Renders children into a DOM portal |
-| `presence` | Animate mount/unmount transitions |
+| `presence` | Keeps content mounted until its CSS exit animations finish |
 | `primitive-elements` | Base `Primitive` element factory (`asChild` support) |
+| `libs` | Shared helpers: scoped context, collections, typeahead, composed handlers and refs |
 | `progress` | Determinate and indeterminate progress indicator |
 | `radio-group` | Radio button group with roving focus |
 | `roving-focus` | Roving tabindex focus management for groups |
@@ -110,7 +113,7 @@ function Demo() {
 
 ## Documentation
 
-[gentleduck.org/docs/packages/duck-primitives](https://gentleduck.org/docs/packages/duck-primitives)
+[gentleduck.org/duck-primitives](https://gentleduck.org/duck-primitives)
 
 ## License
 

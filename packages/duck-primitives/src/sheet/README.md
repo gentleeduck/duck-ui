@@ -18,12 +18,12 @@ Smaller than all 3. Faster in all 15 timed comparisons.
 
 | | gentleduck | React Aria | Ark UI | vaul |
 |---|--:|--:|--:|--:|
-| Size, gzipped bytes | 13,793 | 32,732 (0.42x) | 32,018 (0.43x) | 19,993 (0.69x) |
-| Mount x100, ms | 1.91 | 6.45 (0.30x) | 5.58 (0.34x) | 2.94 (0.65x) |
-| Unmount x100, ms | 0.366 | 0.914 (0.40x) | 0.980 (0.37x) | 0.737 (0.50x) |
-| Unmount open x100, ms | 3.16 | 5.62 (0.56x) | 1277 (0.00x) | 5.32 (0.59x) |
-| Open, ms | 1.10 | 1.83 (0.60x) | 1.98 (0.56x) | 1.91 (0.58x) |
-| Close, ms | 0.805 | 1.00 (0.80x) | 1.44 (0.56x) | 19.0 (0.04x) |
+| Size, gzipped bytes | 13,909 | 32,732 (0.42x) | 32,018 (0.43x) | 19,993 (0.70x) |
+| Mount x100, ms | 1.93 | 6.05 (0.32x) | 5.36 (0.36x) | 3.44 (0.56x) |
+| Unmount x100, ms | 0.409 | 0.990 (0.41x) | 0.955 (0.43x) | 0.732 (0.56x) |
+| Unmount open x100, ms | 3.25 | 5.91 (0.55x) | 1249 (0.00x) | 5.65 (0.57x) |
+| Open, ms | 1.20 | 2.08 (0.58x) | 2.29 (0.53x) | 2.04 (0.59x) |
+| Close, ms | 0.873 | 1.14 (0.77x) | 1.67 (0.52x) | 24.7 (0.04x) |
 
 Behind nowhere: smaller and faster than every library here, in every case.
 

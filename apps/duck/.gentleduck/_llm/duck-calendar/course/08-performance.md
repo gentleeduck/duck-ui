@@ -9,15 +9,15 @@ We replaced `react-day-picker` with `@gentleduck/calendar`. Comparison against t
 
 | Library | Bundle (gzipped) | Source |
 | :--- | :--- | :--- |
-| **@gentleduck/calendar** (`useCalendar` + `NativeAdapter`) | **5.8 KB** | Measured |
-| **@gentleduck/primitives** Calendar | **9.7 KB** | Measured |
+| **@gentleduck/calendar** (`useCalendar` + `NativeAdapter`) | **5.9 KB** | Measured |
+| **@gentleduck/primitives** Calendar | **10.0 KB** | Measured |
 | React Aria Calendar | 36.9 KB | Measured |
 | Ark UI DatePicker, inline | 43.3 KB | Measured |
 | react-day-picker v10, date-fns included | 20.0 KB | Measured |
 | react-calendar | 15.0 KB | Published |
 | react-datepicker | 32.0 KB | Published |
 
-The hook draws nothing, so the like-for-like row is the primitives Calendar: 9.7 KB against 20.0 KB for
+The hook draws nothing, so the like-for-like row is the primitives Calendar: 10.0 KB against 20.0 KB for
 react-day-picker, 36.9 KB for React Aria and 43.3 KB for Ark UI. Those are measured by `bun run benchmark` in
 `packages/duck-primitives`; the last two are bundlephobia's published sizes.
 
@@ -65,7 +65,7 @@ cd packages/duck-calendar && bun run benchmark
 
 ## Optimizations
 
-These keep the hook at 5.8 KB gzipped:
+These keep the hook at 5.9 KB gzipped:
 
 * **Intl.DateTimeFormat caching**: formatters cached per locale+options, avoiding expensive re-instantiation.
 * **Stable keyboard callback**: `configRef` pattern, zero recreation cost.

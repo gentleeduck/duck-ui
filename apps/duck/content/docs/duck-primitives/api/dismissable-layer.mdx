@@ -67,7 +67,20 @@ A press on a scrollbar outside the layer scrolls without dismissing it, whether 
 
 Inside a shadow root the layer reads each event's target from its composed path and also listens for focus on the shadow root, since focus moving between two of its elements never reaches the document. A branch, a surface or a scroll box in the same shadow root counts as it does in the document, focus moving to another element of the shadow root dismisses the layer, and `onPointerDownOutside` and `onFocusOutside` receive the element pressed or focused rather than the shadow host.
 
-The layer works from its element. With `asChild`, a child that never takes the ref leaves the layer out of the stack, so nothing dismisses it.
+A modal layer in another document, such as an iframe's, locks that document's body, and each body gets its own value back when its last modal layer closes. It leaves a layer in this document its pointer events and its presses outside. A press inside the layer that a handler stops before it reaches the document, or whose `onPointerDownCapture` prevents the default, still counts as inside, so the next press outside dismisses the layer as it should.
+
+The layer works from its element. With `asChild`, a child that never takes the ref leaves the layer out of the stack, so nothing dismisses it. The document hears no `dismissableLayer.update` event as layers open and close.
+
+## useDismissableLayer
+
+The layer as props for an element you render, for content that should not add an element of its own. It takes the same options as the component, plus the element's `style`, `onFocusCapture`, `onBlurCapture` and `onPointerDownCapture` to compose with, and returns those three handlers and a `ref` to spread on the element:
+
+```tsx
+const layer = useDismissableLayer({ onDismiss: close, onEscapeKeyDown }, forwardedRef)
+return <div {...props} {...layer} />
+```
+
+The hook reads its element after each render of the component that calls it, so the `ref` goes on an element that component renders. Content that attaches it later, such as through a child's `asChild`, uses `DismissableLayer`.
 
 ## useDismissableLayerSurface
 

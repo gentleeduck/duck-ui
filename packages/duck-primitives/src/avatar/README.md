@@ -18,17 +18,17 @@ Smaller than all 3. Faster in 5 of 9 timed comparisons.
 
 | | gentleduck | Radix | Base UI | Ark UI |
 |---|--:|--:|--:|--:|
-| Size, gzipped bytes | 2,536 | 3,108 (0.82x) | 2,694 (0.94x) | 7,180 (0.35x) |
-| Mount x100, ms | 1.05 | **0.884 (1.19x)** | **0.928 (1.14x)** | 2.64 (0.40x) |
-| Update x100, ms | 0.778 | **0.724 (1.07x)** | 0.782 (0.99x) | 1.71 (0.46x) |
-| Unmount x100, ms | 0.375 | **0.314 (1.19x)** | 0.387 (0.97x) | 0.685 (0.55x) |
+| Size, gzipped bytes | 2,541 | 3,108 (0.82x) | 2,694 (0.94x) | 7,180 (0.35x) |
+| Mount x100, ms | 1.14 | 1.14 (0.99x) | **1.04 (1.09x)** | 2.74 (0.41x) |
+| Update x100, ms | 0.873 | **0.824 (1.06x)** | **0.783 (1.11x)** | 1.76 (0.50x) |
+| Unmount x100, ms | 0.360 | **0.350 (1.03x)** | 0.413 (0.87x) | 0.760 (0.47x) |
 
 Where gentleduck is behind:
 
-- Mount x100 against Radix: 1.19x, 0.170 ms more.
-- Unmount x100 against Radix: 1.19x, 0.061 ms more.
-- Mount x100 against Base UI: 1.14x, 0.126 ms more.
-- Update x100 against Radix: 1.07x, 0.054 ms more.
+- Update x100 against Base UI: 1.11x, 0.090 ms more.
+- Mount x100 against Base UI: 1.09x, 0.090 ms more.
+- Update x100 against Radix: 1.06x, 0.049 ms more.
+- Unmount x100 against Radix: 1.03x, 0.010 ms more.
 
 Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. Versions: Radix 1.2.6, Base UI 1.0.0-rc.0 and Ark UI 5.40.0.
 <!-- /benchmarks -->

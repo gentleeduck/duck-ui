@@ -121,11 +121,13 @@ function Toggle({ checked, onCheckedChange }: { checked: boolean; onCheckedChang
 | `checked` | `boolean \| undefined` | The state the owner holds the input on, or `undefined` while the input keeps its own |
 | `onChange` | `React.ChangeEventHandler<HTMLInputElement>` | The input's own change handler |
 | `onClick` | `React.MouseEventHandler<HTMLInputElement>` | The input's own click handler |
+| `onReset` | `(input: HTMLInputElement) => void` | Runs when the input's own form resets and no handler cancelled the reset, before the form puts the input back, so a component can report the value it returns to |
 
 Returns `onChange` and `onClick` to put on the input, in place of the ones passed in.
 
 - When `checked` moves to a value the input has not reported, and the input is in a form, the hook dispatches a bubbling `click`. The form's `onChange` and native `change` listeners hear it as they would a click. The input's own `onChange` and `onClick` do not run, and the click stops before React hands it to an ancestor's `onClick`.
 - A value the input reported through a click is not sent again when the owner sets it.
+- A reset is heard once it has bubbled past every handler, so one a handler cancels changes nothing, and only for the form the input belongs to when it happens, so a later `form` attribute counts.
 - After a form reset, a controlled input is put back on `checked` in the next animation frame, before the browser paints, since the reset lands after its event. An input whose `checked` is `undefined` is left to the reset.
 - Outside a form it sends nothing.
 

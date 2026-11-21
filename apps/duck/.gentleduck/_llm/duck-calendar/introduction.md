@@ -5,7 +5,7 @@
 
 Built to replace `react-day-picker`. The measurements:
 
-5.8 KB gzipped for `useCalendar` with the `NativeAdapter`, and 9.7 KB for a whole calendar built with `@gentleduck/primitives`, against 20.0 KB for react-day-picker, 36.9 KB for React Aria's and 43.3 KB for Ark UI's. Zero dependencies. 4 calendar systems. 7 date adapters. Full keyboard navigation and WAI-ARIA grid pattern. See the [full benchmarks](/duck-calendar/benchmarks) and the [comparison with react-day-picker](/www/comparisons/vs-react-day-picker).
+5.9 KB gzipped for `useCalendar` with the `NativeAdapter`, and 10.0 KB for a whole calendar built with `@gentleduck/primitives`, against 20.0 KB for react-day-picker, 36.9 KB for React Aria's and 43.3 KB for Ark UI's. Zero dependencies. 4 calendar systems. 7 date adapters. Full keyboard navigation and WAI-ARIA grid pattern. See the [full benchmarks](/duck-calendar/benchmarks) and the [comparison with react-day-picker](/www/comparisons/vs-react-day-picker).
 
 ## The four layers
 
@@ -23,7 +23,7 @@ Built to replace `react-day-picker`. The measurements:
 
 Existing React calendar libraries bundle CSS, mandate a specific date library, or ship monolithic components you cannot tree-shake. `@gentleduck/calendar` addresses each:
 
-* **5.8 KB gzipped** - `useCalendar` with the `NativeAdapter`, measured the way the benchmarks measure React Aria and Ark UI.
+* **5.9 KB gzipped** - `useCalendar` with the `NativeAdapter`, measured the way the benchmarks measure React Aria and Ark UI.
 * **Zero runtime dependencies** - `NativeAdapter` uses `Date` and `Intl.DateTimeFormat`.
 * **Pluggable date backend** - swap `Date` for dayjs, date-fns, Luxon or your own adapter without touching calendar code.
 * **No CSS** - style with data attributes and Tailwind.

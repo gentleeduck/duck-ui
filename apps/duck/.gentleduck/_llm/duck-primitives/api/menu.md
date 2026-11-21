@@ -9,6 +9,8 @@ The anatomy and API are identical to Context Menu's content-level components. Se
 
 Menu does not include a trigger mechanism. Context Menu adds right-click triggering; Menubar adds click-on-menu-title triggering. Use Menu directly when building custom trigger mechanisms.
 
+`Menu.Anchor` is the element the content is placed against, and takes `virtualRef`, as [`Popper.Anchor`](/duck-primitives/api/popper) does, to open at a point such as the pointer. `Menu.Portal` takes `container` and `forceMount`.
+
 ***
 
 ## Examples

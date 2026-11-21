@@ -290,7 +290,7 @@ export default function SliderDisabledExample() {
 
 ### `Slider.Root`
 
-The root component that manages slider state, drag interactions, keyboard stepping, and provides context to all children. Renders a `<span>`. Inside a form, or with `form`, each thumb renders a hidden `<input>`, so the values submit under `name` (as `name[]` with more than one thumb), and a form reset restores the values the slider started with.
+The root component that manages slider state, drag interactions, keyboard stepping, and provides context to all children. Renders a `<span>`. Inside a form, or with `form`, each thumb renders a hidden `<input>`, so the values submit under `name` (as `name[]` with more than one thumb), and a form reset restores the values the slider started with, in an iframe too, and leaves focus where it is.
 
 A press with the main button moves the closest thumb to the pointer and focuses it, even when the value stays where it was. A press on a thumb, or on anything inside it, focuses that thumb without moving it. A right click or a Control click moves nothing, since each opens the context menu. A drag the browser cancels ends where it stopped, as a pointer up does.
 

@@ -8,8 +8,8 @@ description: "Compare @gentleduck/primitives with Radix UI Primitives. Same API,
 | | @gentleduck/primitives | Radix UI Primitives |
 |---|---|---|
 | **API compatibility** | Same compound-component pattern | Original API |
-| **Source ownership** | You own the source (monorepo package) | node_modules dependency |
-| **Customization** | Modify internals directly | Fork or wrap |
+| **Packaging** | One package, `@gentleduck/primitives`, a subpath per primitive | One package per primitive |
+| **Styled layer** | `npx gentleduck add` copies the styled components into your project | shadcn copies its own into your project |
 | **Bundle** | Tree-shakable ESM, built with tsdown | Tree-shakable ESM |
 | **Calendar primitive** | Included (Calendar.Root, Calendar.Grid, Calendar.Day) | Not available |
 | **asChild** | Supported via Slot | Supported via Slot |
@@ -84,11 +84,9 @@ Both implement WAI-ARIA authoring practices. Dialog manages focus trapping, esca
 
 ## What's different
 
-### Source ownership
+### Where behaviour differs
 
-Radix primitives live in `node_modules`. You consume them as a dependency, versioned by the Radix team. Customizing behavior means forking or wrapping.
-
-gentleduck primitives live in your monorepo as `packages/duck-primitives/`. You can modify any internal - focus trapping logic, dismiss behavior, animation integration - directly. The build step (tsdown) produces the same ESM output.
+Both are dependencies you install. The styled components built on gentleduck's primitives are copied into your project by `npx gentleduck add`, as shadcn copies its Radix-based ones, so the layer you style is yours either way. Each primitive's [API page](/duck-primitives/api) says where it behaves differently from Radix, and its README in the repository lists every fix and the test that proves it.
 
 ### Calendar primitive
 
@@ -98,13 +96,28 @@ gentleduck primitives live in your monorepo as `packages/duck-primitives/`. You 
 
 Radix provides a Presence primitive for mount/unmount animations. gentleduck extends this with two improvements:
 
-1. **Animation interrupt** - when a user rapidly toggles a popover or dialog, Radix can glitch because the exit animation's `animationend` event fires after re-mount, unmounting the newly opened content. gentleduck's Presence cancels in-flight exit animations on re-mount by resetting `animationName` and forcing a reflow. No more toggle glitches.
+1. **Exit animations** - Presence waits on the `finished` promise of every CSS animation the content runs as it closes, read from `element.getAnimations()`. An exit with several animations waits for the last, an exit that interrupts an opening animation runs to its end, and an exit animation with no `@keyframes`, or one cancelled in its first frame, unmounts the content at once. Radix waits for `animationend` and `animationcancel` events matched by name, so the first of several animations ends the exit, Firefox's late cancel of the opening animation can end it at once, and content whose exit has no keyframes stays in the page.
 
 2. **Motion tokens** - `@gentleduck/motion` provides prebuilt keyframe sets and reduced-motion utilities that integrate with the Presence lifecycle. Animations automatically respect `prefers-reduced-motion`.
 
 ### Tooltip improvements
 
-gentleduck's Tooltip adds `disableCloseOnClick` on the trigger. In Radix, wrapping an interactive element (like a Toggle button) in a TooltipTrigger causes the tooltip to intercept the click and close instead of letting the toggle work. gentleduck solves this at the primitive level with one prop.
+gentleduck's Tooltip adds `disableCloseOnClick` on the trigger. In Radix, wrapping an interactive element (like a Toggle button) in a TooltipTrigger causes the tooltip to intercept the click and close instead of letting the toggle work. gentleduck solves this at the primitive level with one prop. It also takes `closeDelay` and `disabled`, a press during the open delay drops the open, and a trigger nested in another opens only its own tooltip.
+
+### What else it adds
+
+- **Accordion**: `onOpenChange` on each item, `hiddenUntilFound` for the browser's find-in-page, `Header` and `Indicator` parts, and `disabled`, `loop` and `onFocusChange` on the root.
+- **Dialog, Alert Dialog and Sheet**: nested dialogs with `data-nested` and a stacking variable, `initialFocus` and `finalFocus`, and a ref as the portal's `container`.
+- **Popover**: `initialFocus`, `finalFocus`, and `Title` and `Description` parts that name and describe the content.
+- **Menus**: `closeOnSelect` on an item and `closeParentOnEsc` on a submenu; a controlled `open` on Context Menu; `orientation`, `disabled` and `modal` on Menubar.
+- **Select**: `multiple`, `items` as data, a function child on `Value`, an empty item `value` that clears, and `PageUp` and `PageDown`.
+- **Radio Group**: `readOnly`, `form`, and `aria-disabled` on a disabled group.
+- **Slider**: `largeStep`, `Slider.Value`, `preserveThumbOrder`, and `index` so a range renders its thumbs on the server.
+- **Toggle and Toggle Group**: children as a function of the pressed state, and `deselectable={false}` for a segmented control.
+- **Progress**: `Label`, `Value` and `min`.
+- **Navigation Menu**: `activationMode`, `closeDelay`, and `closeOnSelect` on a link.
+- **Avatar**: the image in the server's HTML, so it downloads before hydration, and `delayMs={0}` shown in the first render.
+- **Popper**: physical sides mirror in right to left, `shiftCrossAxis`, `anchor` and `updateOnScroll`.
 
 ### Bundled together
 
@@ -121,7 +134,7 @@ Both libraries go through the same build: an entry re-exporting the component, b
 
 <Callout icon={<Lightbulb />}>
 
-**Note:** every primitive both libraries ship is smaller in gentleduck, by between 2% (Alert Dialog) and 67% (Input OTP). The margin is thinnest for the overlays, which both position with Floating UI. Over the 18 components both ship, gentleduck's bundle is 60 KB to Radix's 69 KB; gentleduck's whole library, all 36 modules, is 71 KB.
+**Note:** 15 of the 18 primitives both libraries ship are smaller in gentleduck, from 0.1% (Hover Card) to 64% (Input OTP). Popover, Dialog and Alert Dialog are 1.5% to 2.4% larger, and do more: nested dialogs, focus branches for portalled layers, and `initialFocus` and `finalFocus`. The margin is thinnest for the overlays, which both position with Floating UI. Over the 18 components both ship, gentleduck's bundle is 64 KB to Radix's 69 KB; gentleduck's whole library, all 36 modules, is 79 KB.
 
 </Callout>
 
@@ -168,6 +181,20 @@ The component API, data attributes, and ARIA patterns are the same. Run your tes
 - **Animation classes**: If you used Radix's `data-state` for CSS transitions, they still work. If you want motion tokens, add `@gentleduck/motion`.
 - **TypeScript types**: Prop types match. Generic patterns are the same.
 
+Where gentleduck behaves differently, check these:
+
+- `DirectionProvider` renders a `div` with `display: contents`, so a child selector across it, such as `.list > li`, no longer matches. `useDirection` reads `<html dir>` without a provider, where Radix answers `ltr`.
+- `Arrow` draws a rounded tip, and its `asChild` draws your children inside its own svg, where Radix slots onto a child that has to be the whole svg.
+- `Avatar.Image` is in the DOM, hidden, while it loads and after it fails. Check `[data-state="loaded"]` rather than its presence.
+- `ToggleGroup.Root` is a `radiogroup` when single and a `toolbar` when multiple, where Radix's is a `group`. Pass `role="group"` to keep it.
+- A right click on an open context menu closes it, where Radix opens it again at the pointer.
+- `Menubar.Content` takes no `trapFocus`, `disableOutsidePointerEvents` or `disableOutsideScroll`; the root's `modal` decides them for every menu.
+- `Select` dispatches a `change` that does not bubble when its `value` prop changes, so a form's `onChange` hears only the user's picks.
+- `RadioGroup`'s `onValueChange` is typed `string | null`, since a form reset back to no pick calls it with `null`, as Radix's does.
+- `Slot` never passes `dangerouslySetInnerHTML` on, and given two `Slottable`s it lands on the first, where Radix lands on the last.
+- Where the browser has no `element.getAnimations()`, as in jsdom, `Presence` unmounts content at once, so a test that fired `animationend` stubs `getAnimations` instead.
+- `DismissableLayer` dispatches no `dismissableLayer.update` event.
+
 ---
 
 ## Available primitives
@@ -202,11 +229,11 @@ The component API, data attributes, and ARIA patterns are the same. Run your tes
 
 You get the same API with less code. The Dialog, Popover, Select, and Tooltip work identically to their Radix equivalents - same compound pattern, same data-state attributes, same ARIA behavior. Migration is a namespace change in your imports.
 
-You get a smaller bundle for every primitive both libraries ship. A Radio Group is 6.9 KB against 10.1 KB, a Slider 6.4 KB against 9.5 KB, a Dialog 12.9 KB against 13.4 KB.
+You get a smaller bundle for most primitives both libraries ship. A Radio Group is 7.3 KB against 10.1 KB and a Slider 6.6 KB against 9.5 KB. A Dialog is 13.7 KB against 13.4 KB, with nested dialogs and focus targets Radix does not have.
 
 You get primitives Radix does not ship. Calendar with 4 calendar systems, Command for command palettes, Sheet, and Pagination are built-in, and Input OTP is stable where Radix's is a preview. With Radix, these require separate third-party libraries.
 
-You own the source. When a Radix primitive doesn't behave the way you need - focus trapping in a specific edge case, dismiss behavior for nested overlays, animation timing - you modify it directly in your monorepo. No fork. No wrapper hack. No waiting for an upstream release.
+You get the edge cases fixed. Focus trapping inside iframes and shadow roots, dismiss behaviour for nested overlays and scrollbars, exit animations that finish, and forms that reset: each is listed, with its test, in the primitive's README.
 
 **Why some teams stay on Radix:**
 - They prefer an externally maintained dependency over owning the source

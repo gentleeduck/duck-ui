@@ -155,7 +155,16 @@ The area that responds to right-click. Renders a `<span>` by default.
 | --- | --- | --- | --- |
 | `disabled` | `boolean` | `false` | Ignore right-clicks and long presses, so the browser's own menu shows |
 
-A touch or pen press held for 700ms opens the menu too, unless it moves more than 10px first. With triggers nested inside each other, only the innermost one opens. A right-click or control-click while the menu is open closes it rather than opening it again where the pointer is.
+A touch or pen press held for 700ms opens the menu too, unless it moves more than 10px first or a second finger comes down, so a pinch opens nothing. A long press while the menu is open closes it and any submenu, then opens it again where you pressed. With triggers nested inside each other, only the innermost one opens. A right-click or control-click while the menu is open closes it rather than opening it again where the pointer is. A menu still mounted while closed, by `forceMount`, opens where the new right click lands.
+
+### `ContextMenu.Portal`
+
+Renders the content into a portal.
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Portal target |
+| `forceMount` | `true` | - | Keep the content mounted while closed. A submenu takes it only from its own prop or a portal of its own |
 
 ### `ContextMenu.Content`
 
@@ -167,13 +176,20 @@ The menu content. Positioned at the cursor location.
 | `trapFocus` | `boolean` | `open` | Modal only. Override whether focus is trapped inside the content |
 | `disableOutsidePointerEvents` | `boolean` | `open` | Modal only. Override whether pointer events outside are blocked |
 | `disableOutsideScroll` | `boolean` | `true` | Modal only. Override whether body scroll is locked while open |
+| `loop` | `boolean` | `false` | Arrow keys wrap from the last item to the first and back |
 | `onPointerDownOutside` | `(event) => void` | - | Called when clicking outside |
 | `onFocusOutside` | `(event) => void` | - | Called when focus moves outside |
+| `onInteractOutside` | `(event) => void` | - | Called for any outside interaction |
 | `onEscapeKeyDown` | `(event) => void` | - | Called when Escape is pressed |
+| `onCloseAutoFocus` | `(event: Event) => void` | - | Called when focus returns on close |
 
 <Callout>
 On a modal menu, `trapFocus` and `disableOutsidePointerEvents` follow the open state and `disableOutsideScroll` is on. Override them when integrating with animation libraries like [motion](https://motion.dev) that need custom lifecycle control during exit animations. A non-modal menu never traps focus, blocks outside pointer events or locks scroll, and ignores all three.
 </Callout>
+
+It opens at the pointer, so it takes no `side`, `sideOffset` or `align`, and takes the rest of [Popper](/duck-primitives/api/popper)'s positioning props with the same defaults: `alignOffset`, `arrowPadding`, `avoidCollisions`, `collisionBoundary`, `collisionPadding`, `sticky`, `shiftCrossAxis`, `hideWhenDetached`, `updatePositionStrategy` and `updateOnScroll`.
+
+The menu closes, with any open submenu, when the window loses focus. Kept mounted with `forceMount`, it takes focus each time it opens rather than when it mounts closed, and a modal one leaves the page to screen readers while it is closed. A menu that is closing but still mounted lets no item take focus under the pointer.
 
 ### `ContextMenu.Item`
 
@@ -184,6 +200,9 @@ A menu item. Fires `onSelect` when activated.
 | `disabled` | `boolean` | `false` | Disable the item |
 | `onSelect` | `(event) => void` | - | Called when item is selected |
 | `closeOnSelect` | `boolean` | `true` | Close the menu once the item is selected. A checkbox or radio item takes it too |
+| `textValue` | `string` | - | Text typeahead matches, in place of the text the item shows |
+
+Exposes `data-highlighted` when focused and `data-disabled` when disabled. A key typed into a focusable element inside the item, even one portalled out of it, is left to that element. A disabled item rendered as a link with `asChild` does not follow the link.
 
 ### `ContextMenu.CheckboxItem`
 
@@ -194,15 +213,28 @@ A toggleable menu item with checked state.
 | `checked` | `boolean \| 'indeterminate'` | - | Checked state |
 | `onCheckedChange` | `(checked: boolean) => void` | - | Called on toggle |
 
+It takes `disabled`, `onSelect`, `closeOnSelect` and `textValue` as `ContextMenu.Item` does.
+
 ### `ContextMenu.RadioGroup` / `ContextMenu.RadioItem`
 
 Mutually exclusive menu items.
+
+| Prop (RadioGroup) | Type | Default | Description |
+| --- | --- | --- | --- |
+| `value` | `string` | - | The checked item's value |
+| `onValueChange` | `(value: string) => void` | - | Called with the value of the item chosen |
+
+| Prop (RadioItem) | Type | Default | Description |
+| --- | --- | --- | --- |
+| `value` | `string` | - | Value for this item |
+
+A radio item takes `disabled`, `onSelect`, `closeOnSelect` and `textValue` as `ContextMenu.Item` does.
 
 ### `ContextMenu.Sub` / `ContextMenu.SubTrigger` / `ContextMenu.SubContent`
 
 Nested submenus. The sub-trigger points `aria-controls` at its submenu only while the submenu is open, since the id names nothing while it is closed.
 
-`ContextMenu.Sub` takes `open`, `defaultOpen`, `onOpenChange` and `closeParentOnEsc`, as `DropdownMenu.Sub` does. With `closeParentOnEsc={false}`, Escape inside the submenu closes only the submenu and focuses its sub-trigger.
+`ContextMenu.Sub` takes `open`, `defaultOpen`, `onOpenChange` and `closeParentOnEsc`, as `DropdownMenu.Sub` does. With `closeParentOnEsc={false}`, Escape inside the submenu closes only the submenu and focuses its sub-trigger. `ContextMenu.SubTrigger` takes `disabled` and `textValue`. `ContextMenu.SubContent` takes `forceMount`, `loop`, the outside handlers and Popper's positioning props, `sideOffset` and `alignOffset` included. A submenu flipped to the left stays open when the pointer moves straight into it in one jump.
 
 ### `ContextMenu.Separator`
 
@@ -220,7 +252,7 @@ Non-interactive label for a group.
 | --- | --- |
 | <Kbd>ArrowDown</Kbd> | Highlight next item |
 | <Kbd>ArrowUp</Kbd> | Highlight previous item |
-| A letter | Highlight the next item whose text starts with it |
+| A letter | Highlight the next item whose text starts with it, read from the label each item shows now. Typing the focused item's name keeps focus on it, and a letter typed into a field inside the menu is left to the field |
 | <Kbd>ArrowRight</Kbd> | Open submenu (on SubTrigger) |
 | <Kbd>ArrowLeft</Kbd> | Close submenu |
 | <Kbd>Enter</Kbd> / <Kbd>Space</Kbd> | Activate highlighted item |

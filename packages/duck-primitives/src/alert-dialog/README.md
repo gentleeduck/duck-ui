@@ -18,16 +18,16 @@ Smaller than Base UI, React Aria, Ark UI and Headless UI; larger than Radix. Fas
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI | Headless UI |
 |---|--:|--:|--:|--:|--:|--:|
-| Size, gzipped bytes | 14,305 | **14,089 (1.02x)** | 25,060 (0.57x) | 28,852 (0.50x) | 21,680 (0.66x) | 16,899 (0.85x) |
-| Mount x100, ms | 2.24 | 2.70 (0.83x) | 6.22 (0.36x) | 5.95 (0.38x) | 5.42 (0.41x) | 3.67 (0.61x) |
-| Unmount x100, ms | 0.412 | 0.443 (0.93x) | 0.910 (0.45x) | 0.877 (0.47x) | 0.841 (0.49x) | 0.451 (0.91x) |
-| Unmount open x100, ms | 3.25 | 5.83 (0.56x) | 3.91 (0.83x) | 4.08 (0.80x) | 1177 (0.00x) | 19.0 (0.17x) |
-| Open, ms | 1.50 | 1.66 (0.91x) | 2.17 (0.69x) | 2.11 (0.71x) | 2.20 (0.68x) | 1.80 (0.83x) |
-| Close, ms | 1.05 | 1.08 (0.97x) | 1.74 (0.61x) | 1.24 (0.85x) | 1.71 (0.61x) | 1.15 (0.92x) |
+| Size, gzipped bytes | 14,424 | **14,089 (1.02x)** | 25,060 (0.58x) | 28,852 (0.50x) | 21,680 (0.67x) | 16,899 (0.85x) |
+| Mount x100, ms | 2.15 | 2.26 (0.95x) | 6.09 (0.35x) | 5.50 (0.39x) | 4.73 (0.45x) | 3.74 (0.58x) |
+| Unmount x100, ms | 0.448 | 0.491 (0.91x) | 1.10 (0.41x) | 0.954 (0.47x) | 0.940 (0.48x) | 0.513 (0.87x) |
+| Unmount open x100, ms | 3.63 | 6.14 (0.59x) | 4.13 (0.88x) | 4.49 (0.81x) | 1219 (0.00x) | 20.4 (0.18x) |
+| Open, ms | 1.24 | 1.32 (0.93x) | 2.06 (0.60x) | 1.77 (0.70x) | 1.88 (0.66x) | 1.56 (0.79x) |
+| Close, ms | 0.903 | 0.960 (0.94x) | 1.48 (0.61x) | 1.03 (0.87x) | 1.49 (0.60x) | 1.07 (0.85x) |
 
 Where gentleduck is behind:
 
-- Size against Radix: 1.02x, 216 bytes more.
+- Size against Radix: 1.02x, 335 bytes more.
 
 Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. The hundred copies mount and unmount closed, Unmount open tears them down once every one shows, and Open and Close time a single copy. Versions: Radix 1.1.23, Base UI 1.0.0-rc.0, React Aria 1.22.1, Ark UI 5.40.0 and Headless UI 2.2.10.
 

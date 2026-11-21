@@ -209,7 +209,7 @@ Button that toggles the dropdown menu. Renders a `<button>` with `aria-haspopup=
 | `asChild` | `boolean` | - | Render as the child element instead of a `<button>` |
 | `disabled` | `boolean` | `false` | Disables the trigger |
 
-Sets `aria-expanded`, `aria-controls`, and `data-state` automatically.
+Sets `aria-expanded`, `aria-controls`, and `data-state` automatically. Inside a tooltip's trigger, the focus an item chosen with the pointer hands back shows no tooltip; closing the menu with <Kbd>Escape</Kbd> still does.
 
 ### `DropdownMenu.Portal`
 
@@ -218,6 +218,7 @@ Renders the dropdown content into a portal.
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Portal target |
+| `forceMount` | `true` | - | Keep the content mounted while closed, for a JavaScript animation library to drive. A submenu takes it only from its own prop or a portal of its own |
 
 ### `DropdownMenu.Content`
 
@@ -231,9 +232,12 @@ The dropdown content. Handles focus management, keyboard navigation, and dismiss
 | `alignOffset` | `number` | - | Cross-axis offset |
 | `avoidCollisions` | `boolean` | `true` | Flip to avoid viewport overflow |
 | `collisionPadding` | `number` | - | Padding from viewport edges |
+| `forceMount` | `true` | - | Keep mounted while closed. It takes focus each time it opens, not when it mounts closed |
+| `loop` | `boolean` | `false` | Arrow keys wrap from the last item to the first and back |
 | `onCloseAutoFocus` | `(event: Event) => void` | - | Called when focus returns to trigger on close |
 | `onEscapeKeyDown` | `(event: KeyboardEvent) => void` | - | Called when Escape is pressed |
 | `onPointerDownOutside` | `(event) => void` | - | Called when clicking outside |
+| `onFocusOutside` | `(event) => void` | - | Called when focus moves outside |
 | `onInteractOutside` | `(event) => void` | - | Called on any interaction outside |
 | `trapFocus` | `boolean` | `open` | Modal only. Override whether focus is trapped inside the content |
 | `disableOutsidePointerEvents` | `boolean` | `open` | Modal only. Override whether pointer events outside are blocked |
@@ -243,7 +247,9 @@ The dropdown content. Handles focus management, keyboard navigation, and dismiss
 On a modal menu, `trapFocus` and `disableOutsidePointerEvents` follow the open state and `disableOutsideScroll` is on. Override them when integrating with animation libraries like [motion](https://motion.dev) that need custom lifecycle control during exit animations. A non-modal menu never traps focus, blocks outside pointer events or locks scroll, and ignores all three.
 </Callout>
 
-Exposes `data-state="open"` / `data-state="closed"` and `data-side` for CSS animation.
+It also takes the rest of [Popper](/duck-primitives/api/popper)'s positioning props, with the same defaults: `arrowPadding`, `collisionBoundary`, `sticky`, `shiftCrossAxis`, `hideWhenDetached`, `updatePositionStrategy` and `updateOnScroll`.
+
+Exposes `data-state="open"` / `data-state="closed"` and `data-side` for CSS animation. A modal menu kept mounted with `forceMount` leaves the page to screen readers while it is closed, and a menu that is closing but still mounted lets no item take focus under the pointer.
 
 CSS custom properties available:
 
@@ -317,7 +323,7 @@ Nested submenus. The sub-trigger points `aria-controls` at its submenu only whil
 | `onOpenChange` | `(open: boolean) => void` | - | Called when open state changes |
 | `closeParentOnEsc` | `boolean` | `true` | Whether Escape inside the submenu closes the whole menu, or only the submenu, focusing its sub-trigger |
 
-`SubContent` exposes the same `--gentleduck-dropdown-menu-*` CSS custom properties as `Content`.
+`SubContent` takes the same positioning props, `forceMount`, `loop` and outside handlers as `Content`, and exposes the same `--gentleduck-dropdown-menu-*` CSS custom properties. A submenu flipped to the left stays open when the pointer moves straight into it in one jump.
 
 ### `DropdownMenu.Separator`
 
@@ -341,7 +347,7 @@ Arrow pointing to the trigger.
 | <Kbd>Space</Kbd> / <Kbd>Enter</Kbd> | Opens menu (on trigger) or activates highlighted item |
 | <Kbd>ArrowDown</Kbd> | Opens menu or highlights next item |
 | <Kbd>ArrowUp</Kbd> | Highlights previous item |
-| A letter | Highlights the next item whose text starts with it |
+| A letter | Highlights the next item whose text starts with it, read from the label each item shows now. Typing the focused item's name keeps focus on it, and a letter typed into a field inside the menu is left to the field |
 | <Kbd>ArrowRight</Kbd> | Opens submenu (on SubTrigger) |
 | <Kbd>ArrowLeft</Kbd> | Closes submenu |
 | <Kbd>Escape</Kbd> | Closes the menu, or only a submenu given `closeParentOnEsc={false}` |

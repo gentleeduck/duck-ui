@@ -190,7 +190,7 @@ The button that toggles the associated content panel. Must be a descendant of `A
 
 Inherits all standard `<button>` props.
 
-Exposes `data-state` (`open` | `closed`), `data-disabled` and `data-orientation` attributes. Sets `aria-expanded`, `aria-controls` and, when disabled, `aria-disabled` automatically.
+Exposes `data-state` (`open` | `closed`), `data-disabled` and `data-orientation` attributes. Sets `aria-expanded`, `aria-controls` and, when disabled, `aria-disabled` automatically. An `id` given to the trigger is the one the content's `aria-labelledby` names, and an `id={undefined}` passed on, as a wrapper forwarding an optional id does, leaves it the id the accordion made.
 
 ---
 
@@ -211,7 +211,7 @@ The collapsible panel that contains the item's content. Must be a descendant of 
 | `forceMount` | `boolean` | `false` | Keep the content mounted and visible when closed, for a JavaScript animation library to hide |
 | `hiddenUntilFound` | `boolean` | `false` | Keep closed content in the page as `hidden="until-found"`, so the browser's find-in-page opens the item holding the match. A disabled item stays out of the search |
 
-Exposes `data-state` (`open` | `closed`), `data-disabled` and `data-orientation` attributes. Sets `role="region"` and `aria-labelledby` automatically, and `aria-hidden` while closed content stays in the page.
+Exposes `data-state` (`open` | `closed`), `data-disabled` and `data-orientation` attributes. Sets `role="region"` and `aria-labelledby` automatically, and `aria-hidden` while closed content stays in the page. An `id` given to the content is the one the trigger's `aria-controls` names. Content is inert while it animates closed, so `Tab` passes over it.
 
 Closing content stays mounted until its CSS exit animation ends. The content's open size is set as `--gentleduck-accordion-content-height` and `--gentleduck-accordion-content-width`, unless its `style` sets one, and an item open on the first render does not play its open animation:
 
@@ -264,10 +264,10 @@ Smaller than all 4. Faster in all 12 timed comparisons.
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI |
 |---|--:|--:|--:|--:|--:|
-| Size, gzipped bytes | 4,847 | 8,770 (0.55x) | 9,260 (0.52x) | 14,752 (0.33x) | 11,953 (0.41x) |
-| Mount x100, ms | 10.4 | 22.3 (0.47x) | 25.0 (0.42x) | 34.8 (0.30x) | 18.1 (0.57x) |
-| Update x100, ms | 9.76 | 17.2 (0.57x) | 15.5 (0.63x) | 34.1 (0.29x) | 40.2 (0.24x) |
-| Unmount x100, ms | 1.89 | 2.76 (0.68x) | 2.79 (0.68x) | 4.73 (0.40x) | 2.53 (0.74x) |
+| Size, gzipped bytes | 4,975 | 8,770 (0.57x) | 9,260 (0.54x) | 14,752 (0.34x) | 11,953 (0.42x) |
+| Mount x100, ms | 11.2 | 23.0 (0.49x) | 25.5 (0.44x) | 34.5 (0.33x) | 19.2 (0.58x) |
+| Update x100, ms | 11.1 | 17.8 (0.62x) | 15.8 (0.71x) | 35.8 (0.31x) | 40.0 (0.28x) |
+| Unmount x100, ms | 2.17 | 2.98 (0.73x) | 2.92 (0.74x) | 4.86 (0.45x) | 2.63 (0.83x) |
 
 Behind nowhere: smaller and faster than every library here, in every case.
 

@@ -244,7 +244,7 @@ Clear when the sheet is opened from a dialog's content, since the dialog's overl
 | `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'right'` | The side from which the sheet slides in. `left` and `right` mirror in RTL |
 | `closeText` | `string` | `'Close'` | Screen-reader label for the built-in close button |
 | `hideClose` | `boolean` | `false` | When `true`, hides the built-in close button |
-| `forceMount` | `true` | - | Force mounting for animation control |
+| `forceMount` | `true` | - | Keeps the content, and what it holds, in the page while the sheet is closed. Its portal is kept with it, and the overlay holds the end of its fade and lets presses through, so it never covers the page |
 | `initialFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on open in place of the first tabbable element. `false` leaves focus on the trigger |
 | `finalFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on close in place of the trigger. `false` moves focus nowhere |
 | `className` | `string` | - | Additional CSS class names |

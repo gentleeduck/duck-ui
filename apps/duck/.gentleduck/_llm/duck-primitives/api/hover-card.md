@@ -39,17 +39,17 @@ import * as HoverCard from '@gentleduck/primitives/hover-card'
 
 ## Opening and closing
 
-The card opens `openDelay` after a mouse or pen moves onto the trigger, or after the trigger takes keyboard focus. It closes `closeDelay` after the pointer leaves the trigger and the card, or after the trigger loses focus. A pointer that leaves before the open delay ends opens nothing, and one that comes back before the close delay ends keeps the card open.
+The card opens `openDelay` after a mouse or pen moves onto the trigger, or after the trigger takes keyboard focus. It closes `closeDelay` after the pointer leaves the trigger and the card, or after the trigger loses focus. A pointer that leaves before the open delay ends opens nothing, so sweeping across a list of triggers opens none, and one that comes back before the close delay ends keeps the card open. Focus coming back with the window to the trigger it left from leaves the card shut, so a card closed with <Kbd>Escape</Kbd> stays closed when the user returns to the page.
 
 A touch never opens the card: neither the press nor the focus a tap gives the link, so a tap follows the link and a page still scrolls from the trigger. The next keyboard focus opens it as usual.
 
-The card stays open while a pointer that pressed on it is down, and after text inside it is selected. While the press lasts, only the card's text can be selected. A press the browser cancels, as when a touch turns into a scroll, ends like a release.
+The card stays open while a pointer that pressed on it is down, and after text inside it is selected. While the press lasts, only the card's text can be selected. A press the browser cancels, as when a touch turns into a scroll, ends like a release. Whether to close is decided when the close delay ends, so a pointer leaving straight after a press that selected text keeps the card open. Content kept mounted with `forceMount` forgets the press and the selection at each close.
 
 `disabled` keeps the card closed. Setting it while the card is open closes it, and an open still waiting on `openDelay` never happens.
 
 ## Focus
 
-The card opens without taking focus, and nothing inside it is in the tab order, since what it shows previews the link the keyboard is already on. That includes what renders into the card after it opens, such as a profile that loads, and an element given a tab index later.
+The card opens without taking focus, and nothing inside it is in the tab order, since what it shows previews the link the keyboard is already on. That includes a focusable `svg`, what renders into the card after it opens, such as a profile that loads, and an element given a tab index later.
 
 ## In an iframe
 
@@ -186,7 +186,7 @@ export default function HoverCardControlledExample() {
 | `onOpenChange` | `(open: boolean) => void` | - | State change callback |
 | `openDelay` | `number` | `700` | Delay before opening (ms) |
 | `closeDelay` | `number` | `300` | Delay before closing (ms) |
-| `disabled` | `boolean` | `false` | Keeps the card closed, and closes it if it is open |
+| `disabled` | `boolean` | `false` | Keeps the card closed, even while a parent holds `open`, and closes it if it is open |
 | `dir` | `'ltr' \| 'rtl'` | - | Direction of the content. Falls back to `DirectionProvider`, then `<html dir>`. The trigger keeps the page's |
 
 ### `HoverCard.Trigger`
@@ -221,6 +221,8 @@ Positioned floating content. Positioned by the Popper engine.
 | `onPointerDownOutside` | `(event) => void` | - | Called on outside click |
 | `onFocusOutside` | `(event) => void` | - | Called when focus moves outside |
 | `onInteractOutside` | `(event) => void` | - | Called for any outside interaction |
+
+It also takes the rest of [Popper](/duck-primitives/api/popper)'s positioning props, with the same defaults: `arrowPadding`, `avoidCollisions`, `collisionBoundary`, `collisionPadding`, `sticky`, `shiftCrossAxis`, `hideWhenDetached`, `updatePositionStrategy` and `updateOnScroll`.
 
 }>
   Unlike Tooltip, HoverCard content is **interactive**. Users can move their pointer into the content and click links, buttons, etc.

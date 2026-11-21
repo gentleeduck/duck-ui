@@ -252,16 +252,16 @@ export default function RadioGroupRtlExample() {
 
 ### `RadioGroup.Root`
 
-Container for a single-selection radio set. Uses roving focus and, when it has a `name`, a hidden native radio input per item, so a form submits, validates and resets it like native radios.
+Container for a single-selection radio set. Uses roving focus and, when it has a `name`, a hidden native radio input per item, so a form submits, validates and resets it like native radios. The reset is heard once it has bubbled, from the form the group belongs to at that moment, so a form named by `form` that renders later resets it, a reset a handler cancels changes nothing, and a group in an iframe or a shadow root resets too.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `value` | `string \| null` | - | Controlled selected value. `null` or `''` selects nothing |
 | `defaultValue` | `string` | - | Initial selected value (uncontrolled) |
-| `onValueChange` | `(value: string) => void` | - | Called when selected value changes |
-| `disabled` | `boolean` | `false` | Disables all items in the group |
+| `onValueChange` | `(value: string \| null) => void` | - | Called when selected value changes. A form reset calls it with the starting value, `null` when nothing was picked |
+| `disabled` | `boolean` | `false` | Disables all items in the group, and sets `aria-disabled` on it so a screen reader hears the whole group is disabled on entering it |
 | `readOnly` | `boolean` | `false` | Keeps the selection fixed while items stay focusable. Sets `aria-readonly` |
-| `required` | `boolean` | `false` | Marks the hidden inputs required, so the form refuses to submit with nothing selected |
+| `required` | `boolean` | `false` | Marks the hidden inputs required, so the form refuses to submit with nothing selected. The focus the refusal gives a hidden input goes on to the radio it stands for |
 | `name` | `string` | - | Name used for hidden native radio inputs |
 | `form` | `string` | - | Id of a form outside the group that the hidden inputs belong to |
 | `dir` | `'ltr' \| 'rtl'` | - | Text direction. Resolved with `useDirection` (`dir` prop -> `DirectionProvider` -> `<html dir>`). |
@@ -318,7 +318,7 @@ Indicator content that mounts when the parent item is checked.
 | <Kbd>ArrowDown</Kbd> / <Kbd>ArrowRight</Kbd> | Move focus to next item and select it |
 | <Kbd>Home</Kbd> / <Kbd>PageUp</Kbd> | Move to first item and select it |
 | <Kbd>End</Kbd> / <Kbd>PageDown</Kbd> | Move to last item and select it |
-| <Kbd>a-z</Kbd> | Move to the next item after the focused one whose text starts with it, and select it |
+| <Kbd>a-z</Kbd> | Move to the next item after the focused one whose text starts with it, and select it. It matches `textValue`, then `aria-label`, then the text, skips a nested group's radios and a hidden one, and typing the focused radio's name keeps focus on it |
 | <Kbd>g</Kbd> <Kbd>g</Kbd> | Jump to first item and select it |
 | <Kbd>Shift</Kbd>+<Kbd>g</Kbd> (`G`) | Jump to last item and select it |
 | <Kbd>Space</Kbd> | Select focused item |

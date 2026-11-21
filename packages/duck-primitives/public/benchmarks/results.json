@@ -4,7 +4,7 @@
       "name": "Accordion",
       "module": "accordion",
       "bytes": {
-        "duck": 4869,
+        "duck": 4975,
         "radix": 8770,
         "baseui": 9260,
         "react-aria": 14752,
@@ -21,7 +21,7 @@
       "name": "Alert Dialog",
       "module": "alert-dialog",
       "bytes": {
-        "duck": 14305,
+        "duck": 14424,
         "radix": 14089,
         "baseui": 25060,
         "react-aria": 28852,
@@ -41,7 +41,7 @@
       "name": "Avatar",
       "module": "avatar",
       "bytes": {
-        "duck": 2536,
+        "duck": 2541,
         "radix": 3108,
         "baseui": 2694,
         "ark": 7180
@@ -56,7 +56,7 @@
       "name": "Calendar",
       "module": "calendar",
       "bytes": {
-        "duck": 10161,
+        "duck": 10193,
         "react-aria": 37759,
         "ark": 44308,
         "react-day-picker": 20518
@@ -81,7 +81,7 @@
       "name": "Command",
       "module": "command",
       "bytes": {
-        "duck": 7642,
+        "duck": 7663,
         "baseui": 48724,
         "react-aria": 44329,
         "cmdk": 18812
@@ -97,7 +97,7 @@
       "name": "Context Menu",
       "module": "context-menu",
       "bytes": {
-        "duck": 31039,
+        "duck": 31252,
         "radix": 32057,
         "baseui": 51777,
         "ark": 35423
@@ -113,7 +113,7 @@
       "name": "Dialog",
       "module": "dialog",
       "bytes": {
-        "duck": 13865,
+        "duck": 13999,
         "radix": 13725,
         "baseui": 25200,
         "react-aria": 28852,
@@ -132,7 +132,7 @@
       "name": "Dropdown Menu",
       "module": "dropdown-menu",
       "bytes": {
-        "duck": 30723,
+        "duck": 30891,
         "radix": 31764,
         "baseui": 51013,
         "react-aria": 52023,
@@ -152,7 +152,7 @@
       "name": "Hover Card",
       "module": "hover-card",
       "bytes": {
-        "duck": 17688,
+        "duck": 17747,
         "radix": 17770,
         "baseui": 27024,
         "react-aria": 32258,
@@ -170,7 +170,7 @@
       "name": "Input OTP",
       "module": "input-otp",
       "bytes": {
-        "duck": 3995,
+        "duck": 4026,
         "radix": 11051,
         "input-otp": 4101,
         "ark": 11375
@@ -185,7 +185,7 @@
       "name": "Menu",
       "module": "menu",
       "bytes": {
-        "duck": 29630,
+        "duck": 29813,
         "baseui": 51013,
         "ark": 35225
       },
@@ -199,7 +199,7 @@
       "name": "Menubar",
       "module": "menubar",
       "bytes": {
-        "duck": 31447,
+        "duck": 31594,
         "radix": 32339,
         "baseui": 52659
       },
@@ -222,7 +222,7 @@
       "name": "Navigation Menu",
       "module": "navigation-menu",
       "bytes": {
-        "duck": 10036,
+        "duck": 10048,
         "radix": 12837,
         "baseui": 39429,
         "ark": 19523
@@ -237,7 +237,7 @@
       "name": "Pagination",
       "module": "pagination",
       "bytes": {
-        "duck": 3506,
+        "duck": 3503,
         "ark": 8317
       },
       "versions": {
@@ -249,7 +249,7 @@
       "name": "Popover",
       "module": "popover",
       "bytes": {
-        "duck": 24536,
+        "duck": 24701,
         "radix": 24345,
         "baseui": 41743,
         "react-aria": 32305,
@@ -286,7 +286,7 @@
       "name": "Radio Group",
       "module": "radio-group",
       "bytes": {
-        "duck": 7485,
+        "duck": 7494,
         "radix": 10371,
         "baseui": 11893,
         "react-aria": 17931,
@@ -305,7 +305,7 @@
       "name": "Select",
       "module": "select",
       "bytes": {
-        "duck": 31069,
+        "duck": 31289,
         "radix": 31643,
         "baseui": 46138,
         "react-aria": 59115,
@@ -325,7 +325,7 @@
       "name": "Sheet",
       "module": "sheet",
       "bytes": {
-        "duck": 13793,
+        "duck": 13909,
         "vaul": 19993,
         "react-aria": 32732,
         "ark": 32018
@@ -341,7 +341,7 @@
       "name": "Slider",
       "module": "slider",
       "bytes": {
-        "duck": 6768,
+        "duck": 6797,
         "radix": 9743,
         "baseui": 12453,
         "react-aria": 14321,
@@ -392,7 +392,7 @@
       "name": "Tooltip",
       "module": "tooltip",
       "bytes": {
-        "duck": 19232,
+        "duck": 19291,
         "radix": 19402,
         "baseui": 33094,
         "react-aria": 19867,
@@ -409,25 +409,25 @@
   "perComponent": [
     {
       "name": "Accordion",
-      "gentleduck": 4869,
+      "gentleduck": 4975,
       "radix": 8770,
       "baseui": 9260
     },
     {
       "name": "Alert Dialog",
-      "gentleduck": 14305,
+      "gentleduck": 14424,
       "radix": 14089,
       "baseui": 25060
     },
     {
       "name": "Avatar",
-      "gentleduck": 2536,
+      "gentleduck": 2541,
       "radix": 3108,
       "baseui": 2694
     },
     {
       "name": "Calendar",
-      "gentleduck": 10161,
+      "gentleduck": 10193,
       "radix": 0,
       "baseui": 0
     },
@@ -439,49 +439,49 @@
     },
     {
       "name": "Command",
-      "gentleduck": 7642,
+      "gentleduck": 7663,
       "radix": 0,
       "baseui": 48724
     },
     {
       "name": "Context Menu",
-      "gentleduck": 31039,
+      "gentleduck": 31252,
       "radix": 32057,
       "baseui": 51777
     },
     {
       "name": "Dialog",
-      "gentleduck": 13865,
+      "gentleduck": 13999,
       "radix": 13725,
       "baseui": 25200
     },
     {
       "name": "Dropdown Menu",
-      "gentleduck": 30723,
+      "gentleduck": 30891,
       "radix": 31764,
       "baseui": 51013
     },
     {
       "name": "Hover Card",
-      "gentleduck": 17688,
+      "gentleduck": 17747,
       "radix": 17770,
       "baseui": 27024
     },
     {
       "name": "Input OTP",
-      "gentleduck": 3995,
+      "gentleduck": 4026,
       "radix": 11051,
       "baseui": 0
     },
     {
       "name": "Menu",
-      "gentleduck": 29630,
+      "gentleduck": 29813,
       "radix": 0,
       "baseui": 51013
     },
     {
       "name": "Menubar",
-      "gentleduck": 31447,
+      "gentleduck": 31594,
       "radix": 32339,
       "baseui": 52659
     },
@@ -493,19 +493,19 @@
     },
     {
       "name": "Nav Menu",
-      "gentleduck": 10036,
+      "gentleduck": 10048,
       "radix": 12837,
       "baseui": 39429
     },
     {
       "name": "Pagination",
-      "gentleduck": 3506,
+      "gentleduck": 3503,
       "radix": 0,
       "baseui": 0
     },
     {
       "name": "Popover",
-      "gentleduck": 24536,
+      "gentleduck": 24701,
       "radix": 24345,
       "baseui": 41743
     },
@@ -517,25 +517,25 @@
     },
     {
       "name": "Radio Group",
-      "gentleduck": 7485,
+      "gentleduck": 7494,
       "radix": 10371,
       "baseui": 11893
     },
     {
       "name": "Select",
-      "gentleduck": 31069,
+      "gentleduck": 31289,
       "radix": 31643,
       "baseui": 46138
     },
     {
       "name": "Sheet",
-      "gentleduck": 13793,
+      "gentleduck": 13909,
       "radix": 0,
       "baseui": 0
     },
     {
       "name": "Slider",
-      "gentleduck": 6768,
+      "gentleduck": 6797,
       "radix": 9743,
       "baseui": 12453
     },
@@ -553,7 +553,7 @@
     },
     {
       "name": "Tooltip",
-      "gentleduck": 19232,
+      "gentleduck": 19291,
       "radix": 19402,
       "baseui": 33094
     }
@@ -561,13 +561,13 @@
   "savingsVsRadix": [
     {
       "name": "Accordion",
-      "gentleduckKB": 4.8,
+      "gentleduckKB": 4.9,
       "competitorKB": 8.6,
-      "savingPercent": 44
+      "savingPercent": 43
     },
     {
       "name": "Alert Dialog",
-      "gentleduckKB": 14,
+      "gentleduckKB": 14.1,
       "competitorKB": 13.8,
       "savingPercent": -2
     },
@@ -579,19 +579,19 @@
     },
     {
       "name": "Context Menu",
-      "gentleduckKB": 30.3,
+      "gentleduckKB": 30.5,
       "competitorKB": 31.3,
       "savingPercent": 3
     },
     {
       "name": "Dialog",
-      "gentleduckKB": 13.5,
+      "gentleduckKB": 13.7,
       "competitorKB": 13.4,
-      "savingPercent": -1
+      "savingPercent": -2
     },
     {
       "name": "Dropdown Menu",
-      "gentleduckKB": 30,
+      "gentleduckKB": 30.2,
       "competitorKB": 31,
       "savingPercent": 3
     },
@@ -609,9 +609,9 @@
     },
     {
       "name": "Menubar",
-      "gentleduckKB": 30.7,
+      "gentleduckKB": 30.9,
       "competitorKB": 31.6,
-      "savingPercent": 3
+      "savingPercent": 2
     },
     {
       "name": "Nav Menu",
@@ -621,7 +621,7 @@
     },
     {
       "name": "Popover",
-      "gentleduckKB": 24,
+      "gentleduckKB": 24.1,
       "competitorKB": 23.8,
       "savingPercent": -1
     },
@@ -639,15 +639,15 @@
     },
     {
       "name": "Select",
-      "gentleduckKB": 30.3,
+      "gentleduckKB": 30.6,
       "competitorKB": 30.9,
-      "savingPercent": 2
+      "savingPercent": 1
     },
     {
       "name": "Slider",
       "gentleduckKB": 6.6,
       "competitorKB": 9.5,
-      "savingPercent": 31
+      "savingPercent": 30
     },
     {
       "name": "Toggle",
@@ -671,15 +671,15 @@
   "savingsVsBaseui": [
     {
       "name": "Accordion",
-      "gentleduckKB": 4.8,
+      "gentleduckKB": 4.9,
       "competitorKB": 9,
-      "savingPercent": 47
+      "savingPercent": 46
     },
     {
       "name": "Alert Dialog",
-      "gentleduckKB": 14,
+      "gentleduckKB": 14.1,
       "competitorKB": 24.5,
-      "savingPercent": 43
+      "savingPercent": 42
     },
     {
       "name": "Avatar",
@@ -695,37 +695,37 @@
     },
     {
       "name": "Context Menu",
-      "gentleduckKB": 30.3,
+      "gentleduckKB": 30.5,
       "competitorKB": 50.6,
       "savingPercent": 40
     },
     {
       "name": "Dialog",
-      "gentleduckKB": 13.5,
+      "gentleduckKB": 13.7,
       "competitorKB": 24.6,
-      "savingPercent": 45
+      "savingPercent": 44
     },
     {
       "name": "Dropdown Menu",
-      "gentleduckKB": 30,
+      "gentleduckKB": 30.2,
       "competitorKB": 49.8,
-      "savingPercent": 40
+      "savingPercent": 39
     },
     {
       "name": "Hover Card",
       "gentleduckKB": 17.3,
       "competitorKB": 26.4,
-      "savingPercent": 35
+      "savingPercent": 34
     },
     {
       "name": "Menu",
-      "gentleduckKB": 28.9,
+      "gentleduckKB": 29.1,
       "competitorKB": 49.8,
       "savingPercent": 42
     },
     {
       "name": "Menubar",
-      "gentleduckKB": 30.7,
+      "gentleduckKB": 30.9,
       "competitorKB": 51.4,
       "savingPercent": 40
     },
@@ -737,7 +737,7 @@
     },
     {
       "name": "Popover",
-      "gentleduckKB": 24,
+      "gentleduckKB": 24.1,
       "competitorKB": 40.8,
       "savingPercent": 41
     },
@@ -755,15 +755,15 @@
     },
     {
       "name": "Select",
-      "gentleduckKB": 30.3,
+      "gentleduckKB": 30.6,
       "competitorKB": 45.1,
-      "savingPercent": 33
+      "savingPercent": 32
     },
     {
       "name": "Slider",
       "gentleduckKB": 6.6,
       "competitorKB": 12.2,
-      "savingPercent": 46
+      "savingPercent": 45
     },
     {
       "name": "Toggle",
@@ -808,14 +808,14 @@
     {
       "name": "Base UI",
       "sizeKB": 105,
-      "gentleduckKB": 67,
+      "gentleduckKB": 68,
       "components": 19,
       "verified": true
     },
     {
       "name": "React Aria",
       "sizeKB": 107,
-      "gentleduckKB": 67,
+      "gentleduckKB": 68,
       "components": 16,
       "verified": true
     },
@@ -830,8 +830,8 @@
   "calendarComparison": [
     {
       "name": "gentleduck",
-      "sizeBytes": 10161,
-      "sizeKB": 9.9
+      "sizeBytes": 10193,
+      "sizeKB": 10
     },
     {
       "name": "React Aria",
@@ -852,7 +852,7 @@
   "paginationComparison": [
     {
       "name": "gentleduck",
-      "sizeBytes": 3506,
+      "sizeBytes": 3503,
       "sizeKB": 3.4
     },
     {
@@ -864,87 +864,87 @@
   "allSizes": [
     {
       "name": "menubar",
-      "sizeBytes": 31447,
-      "sizeKB": 30.7
+      "sizeBytes": 31594,
+      "sizeKB": 30.9
     },
     {
       "name": "select",
-      "sizeBytes": 31069,
-      "sizeKB": 30.3
+      "sizeBytes": 31289,
+      "sizeKB": 30.6
     },
     {
       "name": "context-menu",
-      "sizeBytes": 31039,
-      "sizeKB": 30.3
+      "sizeBytes": 31252,
+      "sizeKB": 30.5
     },
     {
       "name": "dropdown-menu",
-      "sizeBytes": 30723,
-      "sizeKB": 30
+      "sizeBytes": 30891,
+      "sizeKB": 30.2
     },
     {
       "name": "menu",
-      "sizeBytes": 29630,
-      "sizeKB": 28.9
+      "sizeBytes": 29813,
+      "sizeKB": 29.1
     },
     {
       "name": "popover",
-      "sizeBytes": 24536,
-      "sizeKB": 24
+      "sizeBytes": 24701,
+      "sizeKB": 24.1
     },
     {
       "name": "tooltip",
-      "sizeBytes": 19232,
+      "sizeBytes": 19291,
       "sizeKB": 18.8
     },
     {
       "name": "hover-card",
-      "sizeBytes": 17688,
+      "sizeBytes": 17747,
       "sizeKB": 17.3
     },
     {
       "name": "alert-dialog",
-      "sizeBytes": 14305,
-      "sizeKB": 14
+      "sizeBytes": 14424,
+      "sizeKB": 14.1
     },
     {
       "name": "dialog",
-      "sizeBytes": 13865,
-      "sizeKB": 13.5
+      "sizeBytes": 13999,
+      "sizeKB": 13.7
     },
     {
       "name": "sheet",
-      "sizeBytes": 13793,
-      "sizeKB": 13.5
+      "sizeBytes": 13909,
+      "sizeKB": 13.6
     },
     {
       "name": "popper",
-      "sizeBytes": 13046,
-      "sizeKB": 12.7
+      "sizeBytes": 13083,
+      "sizeKB": 12.8
     },
     {
       "name": "navigation-menu",
-      "sizeBytes": 10036,
+      "sizeBytes": 10048,
       "sizeKB": 9.8
     },
     {
       "name": "calendar",
-      "sizeBytes": 9526,
+      "sizeBytes": 9564,
       "sizeKB": 9.3
     },
     {
       "name": "command",
-      "sizeBytes": 7642,
+      "sizeBytes": 7663,
       "sizeKB": 7.5
     },
     {
       "name": "radio-group",
-      "sizeBytes": 7485,
+      "sizeBytes": 7494,
       "sizeKB": 7.3
     },
     {
       "name": "slider",
-      "sizeBytes": 6768,
+      "sizeBytes": 6797,
       "sizeKB": 6.6
     },
     {
@@ -954,8 +954,8 @@
     },
     {
       "name": "accordion",
-      "sizeBytes": 4869,
-      "sizeKB": 4.8
+      "sizeBytes": 4975,
+      "sizeKB": 4.9
     },
     {
       "name": "roving-focus",
@@ -969,22 +969,22 @@
     },
     {
       "name": "input-otp",
-      "sizeBytes": 3995,
+      "sizeBytes": 4026,
       "sizeKB": 3.9
     },
     {
       "name": "pagination",
-      "sizeBytes": 3506,
+      "sizeBytes": 3503,
       "sizeKB": 3.4
     },
     {
       "name": "focus-scope",
-      "sizeBytes": 3219,
-      "sizeKB": 3.1
+      "sizeBytes": 3337,
+      "sizeKB": 3.3
     },
     {
       "name": "avatar",
-      "sizeBytes": 2536,
+      "sizeBytes": 2541,
       "sizeKB": 2.5
     },
     {
@@ -1044,5 +1044,5 @@
     }
   ],
   "methodology": "Every library is measured the same way: an entry re-exporting what the module's bench file in its __benches__ folder names, bundled and minified by esbuild with react and react-dom external, then gzipped. gentleduck is the whole dist module; Radix, Base UI, Ark UI, cmdk, input-otp and vaul are their whole package or subpath; React Aria, Headless UI and react-day-picker, which ship one entry for everything, are the named parts a component draws. A total is one bundle of every part it covers, so shared code counts once: gentleduck's own row is the whole library, and each other library's row carries gentleduckKB, gentleduck over the same components. The calendar's gentleduck figure includes the NativeAdapter it needs.",
-  "generatedAt": "2026-11-21T03:31:56.590Z"
+  "generatedAt": "2026-11-21T20:39:05.784Z"
 }

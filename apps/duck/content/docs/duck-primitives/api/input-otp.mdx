@@ -45,7 +45,7 @@ import * as InputOTP from '@gentleduck/primitives/input-otp'
 
 | Input | Result |
 | --- | --- |
-| A character the `pattern` accepts | Goes into the focused slot, or the first empty one when the slot is past the end of the code, and focus moves on |
+| A character the `pattern` accepts | Goes into the focused slot, or the first empty one when the slot is past the end of the code, and focus moves on. Typing on in the last slot of a full code replaces its character, so the code keeps its length |
 | A character it refuses | Nothing changes |
 | `Backspace` | Removes the character in the focused slot, or the one before an empty slot, and focus lands where it was |
 | `Delete` | Removes the character in the focused slot, and the rest of the code moves back one |
@@ -55,7 +55,7 @@ import * as InputOTP from '@gentleduck/primitives/input-otp'
 | Paste | Fills from the focused slot with the characters the `pattern` accepts, as far as the slots go |
 | Autofill or an on-screen keyboard | Read from the input event, so a code the browser fills into one slot spreads across all of them |
 
-A slot selects its character when it takes focus. A key held with `Ctrl`, `Meta` or `Alt` is left to the browser.
+A slot selects its character when it takes focus. A key held with `Ctrl`, `Meta` or `Alt` is left to the browser, and the code follows what it does to the slot, so the key that deletes a word removes the slot's character.
 
 Pressing a slot past the end of the code puts the caret in the first empty slot, where typing goes. The arrow keys still reach every slot.
 
@@ -142,6 +142,7 @@ A `role="group"` with no label of its own; pass `aria-label` or `aria-labelledby
 | `defaultValue` | `string` | `''` | Code to start with when uncontrolled, and to go back to when the form is reset |
 | `onValueChange` | `(value: string) => void` | - | Called with the whole code whenever it changes |
 | `onComplete` | `(value: string) => void` | - | Called with the code once every slot is filled |
+| `autoFocus` | `boolean` | `false` | Focuses the slot typing goes to once the root mounts, as `autoFocus` on an input does |
 | `autoSubmit` | `boolean` | `false` | Submits the form the slots sit in once every slot is filled, after `HiddenInput` holds the whole code, as in Ark |
 | `pattern` | `RegExp` | `REGEXP_ONLY_DIGITS_AND_CHARS` | Tested against each character typed, pasted or filled |
 | `maxLength` | `number` | - | Counts only the first `maxLength` slots as part of the code |

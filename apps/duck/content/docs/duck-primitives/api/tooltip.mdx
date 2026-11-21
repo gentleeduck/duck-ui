@@ -132,7 +132,7 @@ Manages state for a single tooltip instance.
 | `delayDuration` | `number` | - | Override Provider's delay for this tooltip |
 | `closeDelay` | `number` | - | Override Provider's close delay for this tooltip |
 | `disableHoverableContent` | `boolean` | - | Override Provider's setting |
-| `disabled` | `boolean` | `false` | Keeps the tooltip closed, and closes it if it is open |
+| `disabled` | `boolean` | `false` | Keeps the tooltip closed, even while a parent holds `open`, closes it if it is open, and drops an open still waiting on its delay |
 | `dir` | `'ltr' \| 'rtl'` | - | Direction of the content. Without it the content takes the nearest `DirectionProvider`, then `<html dir>`. The trigger keeps the page's |
 
 ### `Tooltip.Trigger`
@@ -140,6 +140,8 @@ Manages state for a single tooltip instance.
 The element that activates the tooltip on hover/focus. While the tooltip is open, the trigger's `aria-describedby` adds the content's id after any ids it was given.
 
 Focus opens the tooltip only when the last input was not a pointer press and the trigger matches `:focus-visible`. So a trigger that is also a menu or dialog trigger shows no tooltip when an item chosen with the pointer, or a dialog closed with the pointer, gives focus back to it. <Kbd>Tab</Kbd>, <Kbd>Escape</Kbd> handing focus back, and a focus no input led to, such as a screen reader moving it, open it.
+
+A press on the trigger during the open delay drops the open, so the tooltip does not appear after the click. With a trigger nested inside another trigger, the pointer over the inner one opens only its own tooltip.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -170,6 +172,11 @@ import { Toggle } from '@gentleduck/primitives/toggle'
 
 Portals content to `document.body`.
 
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Portal target |
+| `forceMount` | `true` | - | Keep the content mounted while closed |
+
 ### `Tooltip.Content`
 
 The floating tooltip content. Positioned by the Popper engine.
@@ -185,6 +192,8 @@ The floating tooltip content. Positioned by the Popper engine.
 | `forceMount` | `true` | - | Keep mounted always |
 | `onEscapeKeyDown` | `(event) => void` | - | Called on <Kbd>Escape</Kbd> press |
 | `onPointerDownOutside` | `(event) => void` | - | Called on outside click |
+
+It also takes the rest of [Popper](/duck-primitives/api/popper)'s positioning props, with the same defaults: `arrowPadding`, `avoidCollisions`, `collisionBoundary`, `collisionPadding`, `sticky`, `shiftCrossAxis`, `hideWhenDetached` and `updatePositionStrategy`. `updateOnScroll` is always off, since a scroll closes the tooltip.
 
 ### `Tooltip.Arrow`
 

@@ -2,15 +2,15 @@
   "corePerformance": [
     {
       "label": "buildCalendarMonth",
-      "us": 3.4
+      "us": 3.7
     },
     {
       "label": "buildMultiMonth(3)",
-      "us": 11.9
+      "us": 10.3
     },
     {
       "label": "buildMultiMonth(12)",
-      "us": 37.9
+      "us": 38.7
     },
     {
       "label": "applySelection (single)",
@@ -18,7 +18,7 @@
     },
     {
       "label": "applySelection (range)",
-      "us": 6.4
+      "us": 5.9
     }
   ],
   "adapterPerformance": [
@@ -26,13 +26,13 @@
       "name": "Native (Gregorian)",
       "buildMonth": 2.4,
       "getYear": 0.01,
-      "create": 0.09,
-      "addMonths": 0.16,
+      "create": 0.05,
+      "addMonths": 0.15,
       "format": 0.7
     },
     {
       "name": "Islamic (Hijri)",
-      "buildMonth": 7.7,
+      "buildMonth": 7.6,
       "getYear": 0.01,
       "create": 0.11,
       "addMonths": 0.12,
@@ -40,7 +40,7 @@
     },
     {
       "name": "Persian (Jalali)",
-      "buildMonth": 9,
+      "buildMonth": 9.2,
       "getYear": 0.02,
       "create": 0.13,
       "addMonths": 0.12,
@@ -48,7 +48,7 @@
     },
     {
       "name": "Hebrew",
-      "buildMonth": 12.7,
+      "buildMonth": 12.6,
       "getYear": 0.02,
       "create": 0.24,
       "addMonths": 0.37,
@@ -65,7 +65,7 @@
     },
     {
       "name": "@gentleduck/primitives Calendar",
-      "sizeKB": 9.9,
+      "sizeKB": 10,
       "cssKB": 0,
       "calendars": 4,
       "measured": true
@@ -115,9 +115,9 @@
     },
     {
       "name": "@gentleduck/primitives Calendar",
-      "js": 9.9,
+      "js": 10,
       "css": 0,
-      "total": 9.9
+      "total": 10
     },
     {
       "name": "React Aria Calendar",
@@ -214,7 +214,7 @@
       "comparison": [
         {
           "metric": "Calendar component",
-          "gentleduck": "9.9 KB",
+          "gentleduck": "10 KB",
           "competitor": "20 KB",
           "winner": "gentleduck"
         },
@@ -285,7 +285,7 @@
       "comparison": [
         {
           "metric": "Calendar component",
-          "gentleduck": "9.9 KB",
+          "gentleduck": "10 KB",
           "competitor": "36.9 KB",
           "winner": "gentleduck"
         },
@@ -344,7 +344,7 @@
       "comparison": [
         {
           "metric": "Calendar component",
-          "gentleduck": "9.9 KB",
+          "gentleduck": "10 KB",
           "competitor": "32 KB",
           "winner": "gentleduck"
         },
@@ -403,7 +403,7 @@
       "comparison": [
         {
           "metric": "Calendar component",
-          "gentleduck": "9.9 KB",
+          "gentleduck": "10 KB",
           "competitor": "15 KB",
           "winner": "gentleduck"
         },
@@ -482,5 +482,5 @@
       "sizeKB": 0.4
     }
   ],
-  "generatedAt": "2026-11-21T02:55:56.714Z"
+  "generatedAt": "2026-11-21T21:10:15.609Z"
 }

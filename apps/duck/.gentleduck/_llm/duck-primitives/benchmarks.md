@@ -38,8 +38,8 @@ code the components share counts once.
 | Library | Compared on | Its bundle | gentleduck over the same |
 |---|--:|--:|--:|
 | Radix | 18 components | 69 KB | 64 KB |
-| Base UI | 19 components | 105 KB | 67 KB |
-| React Aria | 16 components | 107 KB | 67 KB |
+| Base UI | 19 components | 105 KB | 68 KB |
+| React Aria | 16 components | 107 KB | 68 KB |
 | Ark UI | 21 components | 124 KB | 72 KB |
 | Headless UI | 6 components | 48 KB | 44 KB |
 
@@ -57,7 +57,7 @@ gentleduck's whole library, all 36 modules, is 79 KB. Over the components each l
 | Alert Dialog | Yes | Yes | Yes | Via Dialog | Via Dialog | Via Dialog |
 | Avatar | Yes | Yes | Yes | - | Yes | - |
 | Calendar | Yes | - | - | Yes | Via DatePicker | - |
-| Checkbox | Indicator hook | Yes | Yes | Yes | Yes | Yes |
+| Checkbox | Indicator and form sync hooks | Yes | Yes | Yes | Yes | Yes |
 | Collapsible | - | Yes | Yes | Disclosure | Yes | Disclosure |
 | Color Picker | - | - | - | Yes | Yes | - |
 | Combobox | - | - | Yes | Yes | Yes | Yes |
@@ -84,7 +84,8 @@ gentleduck's whole library, all 36 modules, is 79 KB. Over the components each l
 | Toggle Group | Yes | Yes | Yes | ToggleButtonGroup | Yes | - |
 | Tooltip | Yes | Yes | Yes | Yes | Yes | - |
 
-gentleduck's Checkbox and Switch are the `checkers` hook, which draws the indicator over a native input; the
+gentleduck's Checkbox and Switch are the `checkers` hooks, which draw the indicator over a native input and keep
+its form in step with `checked`; the
 registry's `checkbox` and `switch` are built on it. Radix's one-time code field is a preview package,
 `@radix-ui/react-one-time-password-field`.
 
@@ -98,33 +99,33 @@ Each module against what every other library ships for it, in gzipped KB. Bold i
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI | Headless UI | Other |
 |---|--:|--:|--:|--:|--:|--:|---|
-| Accordion | **4.8** | 8.6 | 9.0 | 14.4 | 11.7 | - | - |
-| Alert Dialog | 14.0 | **13.8** | 24.5 | 28.2 | 21.2 | 16.5 | - |
+| Accordion | **4.9** | 8.6 | 9.0 | 14.4 | 11.7 | - | - |
+| Alert Dialog | 14.1 | **13.8** | 24.5 | 28.2 | 21.2 | 16.5 | - |
 | Avatar | **2.5** | 3.0 | 2.6 | - | 7.0 | - | - |
-| Calendar | **9.9** | - | - | 36.9 | 43.3 | - | react-day-picker 20.0 |
+| Calendar | **10.0** | - | - | 36.9 | 43.3 | - | react-day-picker 20.0 |
 | Checkers | 1.0 | - | - | - | - | - | - |
 | Command | **7.5** | - | 47.6 | 43.3 | - | - | cmdk 18.4 |
-| Context Menu | **30.3** | 31.3 | 50.6 | - | 34.6 | - | - |
-| Dialog | 13.5 | **13.4** | 24.6 | 28.2 | 21.2 | 20.3 | - |
-| Dropdown Menu | **30.0** | 31.0 | 49.8 | 50.8 | 34.6 | 32.2 | - |
+| Context Menu | **30.5** | 31.3 | 50.6 | - | 34.6 | - | - |
+| Dialog | 13.7 | **13.4** | 24.6 | 28.2 | 21.2 | 20.3 | - |
+| Dropdown Menu | **30.2** | 31.0 | 49.8 | 50.8 | 34.6 | 32.2 | - |
 | Hover Card | **17.3** | 17.4 | 26.4 | 31.5 | 24.4 | - | - |
 | Input OTP | **3.9** | 10.8 | - | - | 11.1 | - | input-otp 4.0 |
-| Menu | **28.9** | - | 49.8 | - | 34.4 | - | - |
-| Menubar | **30.7** | 31.6 | 51.4 | - | - | - | - |
+| Menu | **29.1** | - | 49.8 | - | 34.4 | - | - |
+| Menubar | **30.9** | 31.6 | 51.4 | - | - | - | - |
 | Mount | 0.5 | - | - | - | - | - | - |
 | Navigation Menu | **9.8** | 12.5 | 38.5 | - | 19.1 | - | - |
 | Pagination | **3.4** | - | - | - | 8.1 | - | - |
-| Popover | 24.0 | **23.8** | 40.8 | 31.5 | 31.7 | 30.2 | - |
+| Popover | 24.1 | **23.8** | 40.8 | 31.5 | 31.7 | 30.2 | - |
 | Progress | **2.4** | 2.8 | 2.9 | 4.5 | 8.1 | - | - |
 | Radio Group | **7.3** | 10.1 | 11.6 | 17.5 | 11.1 | 11.7 | - |
-| Select | **30.3** | 30.9 | 45.1 | 57.7 | 34.5 | 34.2 | - |
-| Sheet | **13.5** | - | - | 32.0 | 31.3 | - | vaul 19.5 |
+| Select | **30.6** | 30.9 | 45.1 | 57.7 | 34.5 | 34.2 | - |
+| Sheet | **13.6** | - | - | 32.0 | 31.3 | - | vaul 19.5 |
 | Slider | **6.6** | 9.5 | 12.2 | 14.0 | 14.6 | - | - |
 | Toggle | **1.8** | 2.9 | 4.3 | 11.9 | 6.0 | - | - |
 | Toggle Group | **4.9** | 8.2 | 8.4 | 15.3 | 8.9 | - | - |
 | Tooltip | **18.8** | 18.9 | 32.3 | 19.4 | 22.6 | - | - |
 
-gentleduck is the smallest in 20 of the 23 modules another library ships. The share of each library's size it saves, from its closest component to its furthest: Radix -2% to 64%, Base UI 6% to 84%, React Aria 3% to 85%, Ark UI 12% to 77%, Headless UI 7% to 37%, cmdk 59%, input-otp 3%, vaul 31% and react-day-picker 50%.
+gentleduck is the smallest in 20 of the 23 modules another library ships. The share of each library's size it saves, from its closest component to its furthest: Radix -2% to 64%, Base UI 6% to 84%, React Aria 3% to 85%, Ark UI 12% to 77%, Headless UI 6% to 37%, cmdk 59%, input-otp 2%, vaul 30% and react-day-picker 50%.
 
 Versions: Radix 0.2.1 to 2.3.7, Base UI 1.0.0-rc.0, React Aria 1.22.1, Ark UI 5.40.0, Headless UI 2.2.10, cmdk 1.1.1, input-otp 1.5.0, vaul 1.1.2 and react-day-picker 10.0.1.
 
@@ -162,119 +163,119 @@ Measured in chromium 153.0.8010.12 with React 19.2.6 on Apple M4, over 12 rounds
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI | Headless UI | Other |
 |---|--:|--:|--:|--:|--:|--:|---|
-| Accordion | **10.2** | 21.6 | 25.3 | 34.7 | 17.9 | - | - |
-| Alert Dialog | **2.24** | 2.70 | 6.22 | 5.95 | 5.42 | 3.67 | - |
-| Avatar | 1.05 | **0.884** | 0.928 | - | 2.64 | - | - |
-| Calendar | **55.4** | - | - | 249 | 94.2 | - | react-day-picker 97.8 |
-| Command | **22.4** | - | 41.1 | 160 | - | - | cmdk 23.1 |
-| Context Menu | **2.82** | 3.21 | 8.38 | - | 4.90 | - | - |
-| Dialog | **1.89** | 2.04 | 5.71 | 5.40 | 4.95 | 3.40 | - |
-| Dropdown Menu | **3.42** | 4.28 | 9.09 | 6.79 | 4.88 | 14.9 | - |
-| Hover Card | **2.51** | 2.79 | 6.32 | 6.46 | 4.62 | - | - |
-| Input OTP | **6.18** | 28.7 | - | - | 15.7 | - | input-otp 17.1 |
-| Menubar | **9.91** | 19.8 | 51.8 | - | - | - | - |
-| Navigation Menu | **24.1** | 51.2 | 185 | - | 44.8 | - | - |
-| Pagination | 12.0 | - | - | - | **10.5** | - | - |
-| Popover | **2.50** | 2.82 | 6.85 | 5.51 | 6.61 | 17.5 | - |
-| Progress | 1.13 | **1.00** | 1.51 | 1.87 | 3.63 | - | - |
-| Radio Group | **5.96** | 37.9 | 20.5 | 47.5 | 28.7 | 15.1 | - |
-| Select | **9.70** | 58.5 | 13.9 | 33.9 | 15.3 | 17.8 | - |
-| Sheet | **1.91** | - | - | 6.45 | 5.58 | - | vaul 2.94 |
-| Slider | **7.07** | 10.4 | 11.3 | 12.3 | 13.1 | - | - |
-| Toggle | **1.20** | 1.31 | 1.47 | 4.40 | 2.04 | - | - |
-| Toggle Group | **5.51** | 12.6 | 9.98 | 19.5 | 8.10 | - | - |
-| Tooltip | **3.04** | 3.72 | 6.42 | 5.61 | 4.19 | - | - |
+| Accordion | **11.2** | 23.0 | 25.5 | 34.5 | 19.2 | - | - |
+| Alert Dialog | **2.15** | 2.26 | 6.09 | 5.50 | 4.73 | 3.74 | - |
+| Avatar | 1.14 | 1.14 | **1.04** | - | 2.74 | - | - |
+| Calendar | **58.2** | - | - | 237 | 95.5 | - | react-day-picker 97.1 |
+| Command | 23.7 | - | 41.6 | 151 | - | - | cmdk **21.6** |
+| Context Menu | **3.39** | 3.50 | 8.53 | - | 5.08 | - | - |
+| Dialog | **2.08** | 2.17 | 6.24 | 5.37 | 5.23 | 3.59 | - |
+| Dropdown Menu | **3.66** | 4.56 | 9.84 | 7.65 | 5.08 | 16.5 | - |
+| Hover Card | **2.65** | 3.02 | 6.99 | 6.91 | 4.71 | - | - |
+| Input OTP | **6.34** | 29.1 | - | - | 16.6 | - | input-otp 18.1 |
+| Menubar | **10.4** | 20.5 | 52.5 | - | - | - | - |
+| Navigation Menu | **23.3** | 48.7 | 188 | - | 45.1 | - | - |
+| Pagination | 13.6 | - | - | - | **11.6** | - | - |
+| Popover | **2.48** | 2.86 | 7.10 | 5.39 | 7.14 | 18.2 | - |
+| Progress | 1.17 | **1.02** | 1.47 | 1.99 | 3.58 | - | - |
+| Radio Group | **5.99** | 39.8 | 22.3 | 48.3 | 29.4 | 16.0 | - |
+| Select | **9.96** | 59.5 | 13.8 | 33.7 | 15.2 | 18.3 | - |
+| Sheet | **1.93** | - | - | 6.05 | 5.36 | - | vaul 3.44 |
+| Slider | **7.83** | 10.3 | 13.8 | 12.9 | 14.3 | - | - |
+| Toggle | **1.24** | 1.49 | 1.89 | 5.07 | 2.42 | - | - |
+| Toggle Group | **5.98** | 15.0 | 10.5 | 20.2 | 8.86 | - | - |
+| Tooltip | **3.10** | 4.02 | 6.61 | 5.72 | 4.63 | - | - |
 
 ### Update x100
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI | Headless UI | Other |
 |---|--:|--:|--:|--:|--:|--:|---|
-| Accordion | **10.4** | 18.1 | 16.3 | 34.3 | 41.5 | - | - |
-| Avatar | 0.778 | **0.724** | 0.782 | - | 1.71 | - | - |
-| Calendar | 37.9 | - | - | 113 | 74.3 | - | react-day-picker **28.4** |
-| Command, typed | **9.15** | - | 31.8 | 31.3 | - | - | cmdk 14.5 |
-| Input OTP | **4.38** | 13.7 | - | - | 13.1 | - | input-otp 18.9 |
-| Navigation Menu | **16.1** | 36.4 | 99.7 | - | 71.5 | - | - |
-| Pagination | **8.02** | - | - | - | 9.12 | - | - |
-| Progress | 0.546 | **0.506** | 1.21 | 1.49 | 3.10 | - | - |
-| Radio Group | **5.76** | 13.6 | 12.5 | 20.2 | 20.4 | 7.11 | - |
-| Slider | **3.19** | 3.30 | 4.69 | 6.90 | 6.97 | - | - |
-| Toggle | **0.492** | 0.584 | 0.770 | 3.67 | 1.35 | - | - |
-| Toggle Group | **2.59** | 8.63 | 3.82 | 15.9 | 6.07 | - | - |
+| Accordion | **11.1** | 17.8 | 15.8 | 35.8 | 40.0 | - | - |
+| Avatar | 0.873 | 0.824 | **0.783** | - | 1.76 | - | - |
+| Calendar | 42.7 | - | - | 113 | 74.7 | - | react-day-picker **29.1** |
+| Command, typed | **9.24** | - | 32.9 | 30.1 | - | - | cmdk 14.5 |
+| Input OTP | **4.46** | 14.1 | - | - | 13.4 | - | input-otp 20.2 |
+| Navigation Menu | **15.9** | 42.2 | 108 | - | 86.6 | - | - |
+| Pagination | **8.51** | - | - | - | 9.56 | - | - |
+| Progress | **0.618** | 0.621 | 1.04 | 1.54 | 3.30 | - | - |
+| Radio Group | **6.26** | 13.7 | 12.5 | 20.2 | 20.8 | 7.39 | - |
+| Slider | **3.63** | 3.68 | 5.39 | 7.56 | 7.69 | - | - |
+| Toggle | **0.501** | 0.664 | 0.838 | 4.19 | 1.32 | - | - |
+| Toggle Group | **2.94** | 9.64 | 3.98 | 16.7 | 6.53 | - | - |
 
 ### Unmount x100
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI | Headless UI | Other |
 |---|--:|--:|--:|--:|--:|--:|---|
-| Accordion | **1.80** | 3.04 | 2.92 | 4.78 | 2.58 | - | - |
-| Alert Dialog | **0.412** | 0.443 | 0.910 | 0.877 | 0.841 | 0.451 | - |
-| Avatar | 0.375 | **0.314** | 0.387 | - | 0.685 | - | - |
-| Calendar | **3.45** | - | - | 17.1 | 6.49 | - | react-day-picker 4.47 |
-| Command | **1.98** | - | 3.43 | 5.99 | - | - | cmdk 2.12 |
-| Context Menu | **0.510** | 0.608 | 0.980 | - | 0.905 | - | - |
-| Dialog | **0.377** | 0.410 | 1.08 | 0.919 | 0.917 | 0.476 | - |
-| Dropdown Menu | **0.541** | 0.719 | 1.39 | 1.08 | 0.882 | 2.30 | - |
-| Hover Card | **0.502** | 0.590 | 0.818 | 1.08 | 0.764 | - | - |
-| Input OTP | **0.802** | 2.22 | - | - | 1.41 | - | input-otp 0.921 |
-| Menubar | **1.23** | 2.16 | 5.08 | - | - | - | - |
-| Navigation Menu | **2.87** | 6.39 | 8.32 | - | 3.79 | - | - |
-| Pagination | 1.98 | - | - | - | **1.45** | - | - |
-| Popover | **0.459** | 0.587 | 1.09 | 0.909 | 0.736 | 2.58 | - |
-| Progress | **0.281** | 0.285 | 0.387 | 0.591 | 0.583 | - | - |
-| Radio Group | **1.39** | 2.91 | 2.71 | 4.84 | 1.72 | 1.47 | - |
-| Select | **0.879** | 3.83 | 1.22 | 3.24 | 1.57 | 2.76 | - |
-| Sheet | **0.366** | - | - | 0.914 | 0.980 | - | vaul 0.737 |
-| Slider | **1.00** | 1.04 | 1.23 | 1.35 | 1.06 | - | - |
-| Toggle | **0.333** | 0.367 | 0.392 | 0.660 | 0.513 | - | - |
-| Toggle Group | 1.09 | 1.76 | 1.34 | 1.91 | **1.05** | - | - |
-| Tooltip | **0.649** | 0.774 | 1.27 | 0.849 | 0.760 | - | - |
+| Accordion | **2.17** | 2.98 | 2.92 | 4.86 | 2.63 | - | - |
+| Alert Dialog | **0.448** | 0.491 | 1.10 | 0.954 | 0.940 | 0.513 | - |
+| Avatar | 0.360 | **0.350** | 0.413 | - | 0.760 | - | - |
+| Calendar | **3.54** | - | - | 16.8 | 6.88 | - | react-day-picker 4.55 |
+| Command | **2.00** | - | 3.28 | 5.75 | - | - | cmdk 2.14 |
+| Context Menu | **0.549** | 0.743 | 1.04 | - | 0.931 | - | - |
+| Dialog | **0.417** | 0.519 | 1.20 | 1.02 | 0.978 | 0.564 | - |
+| Dropdown Menu | **0.634** | 0.758 | 1.41 | 1.12 | 0.957 | 2.55 | - |
+| Hover Card | **0.511** | 0.671 | 0.793 | 1.07 | 0.800 | - | - |
+| Input OTP | **0.841** | 2.30 | - | - | 1.41 | - | input-otp 0.948 |
+| Menubar | **1.32** | 2.37 | 5.49 | - | - | - | - |
+| Navigation Menu | **3.07** | 7.41 | 9.86 | - | 4.40 | - | - |
+| Pagination | 1.98 | - | - | - | **1.50** | - | - |
+| Popover | **0.488** | 0.656 | 1.18 | 0.933 | 0.827 | 2.74 | - |
+| Progress | 0.373 | **0.312** | 0.405 | 0.645 | 0.630 | - | - |
+| Radio Group | **1.41** | 2.94 | 2.62 | 5.26 | 1.70 | 1.47 | - |
+| Select | **0.857** | 4.14 | 1.30 | 3.40 | 1.64 | 2.92 | - |
+| Sheet | **0.409** | - | - | 0.990 | 0.955 | - | vaul 0.732 |
+| Slider | 1.14 | **1.05** | 1.28 | 1.51 | 1.08 | - | - |
+| Toggle | **0.373** | 0.388 | 0.436 | 0.825 | 0.529 | - | - |
+| Toggle Group | **1.09** | 2.03 | 1.56 | 2.08 | 1.10 | - | - |
+| Tooltip | **0.642** | 0.814 | 1.29 | 0.924 | 0.928 | - | - |
 
 ### Unmount open x100
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI | Headless UI | Other |
 |---|--:|--:|--:|--:|--:|--:|---|
-| Alert Dialog | **3.25** | 5.83 | 3.91 | 4.08 | 1177 | 19.0 | - |
-| Context Menu | **3.63** | 10.2 | 9.47 | - | 785 | - | - |
-| Dialog | **3.24** | 5.17 | 4.08 | 4.03 | 1187 | 19.0 | - |
-| Dropdown Menu | **3.82** | 10.6 | 12.2 | 16.1 | 811 | - | - |
-| Hover Card | **1.49** | 3.45 | 1.86 | 2.81 | 756 | - | - |
-| Menubar | **3.99** | 12.5 | 14.0 | - | - | - | - |
-| Popover | **1.95** | 3.99 | 6.65 | 4.94 | 780 | - | - |
-| Select | **6.78** | 10.8 | 10.7 | 15.9 | 829 | - | - |
-| Sheet | **3.16** | - | - | 5.62 | 1277 | - | vaul 5.32 |
-| Tooltip | 1.48 | 4.51 | 3.17 | **1.29** | 1.66 | - | - |
+| Alert Dialog | **3.63** | 6.14 | 4.13 | 4.49 | 1219 | 20.4 | - |
+| Context Menu | **4.01** | 11.7 | 10.9 | - | 922 | - | - |
+| Dialog | **3.67** | 6.21 | 4.55 | 4.31 | 1452 | 20.3 | - |
+| Dropdown Menu | **4.24** | 12.8 | 12.8 | 18.7 | 908 | - | - |
+| Hover Card | **1.51** | 3.70 | 1.86 | 3.25 | 768 | - | - |
+| Menubar | **4.09** | 13.2 | 15.4 | - | - | - | - |
+| Popover | **2.09** | 4.30 | 6.75 | 4.79 | 823 | - | - |
+| Select | **6.73** | 11.0 | 10.8 | 16.5 | 828 | - | - |
+| Sheet | **3.25** | - | - | 5.91 | 1249 | - | vaul 5.65 |
+| Tooltip | 1.56 | 4.75 | 3.57 | **1.38** | 1.69 | - | - |
 
 ### Open
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI | Headless UI | Other |
 |---|--:|--:|--:|--:|--:|--:|---|
-| Alert Dialog | **1.50** | 1.66 | 2.17 | 2.11 | 2.20 | 1.80 | - |
-| Context Menu | 1.68 | 2.52 | 2.73 | - | **1.59** | - | - |
-| Dialog | **1.09** | 1.19 | 1.80 | 1.53 | 1.57 | 1.46 | - |
-| Dropdown Menu | **1.71** | 2.73 | 3.49 | 3.58 | 2.48 | - | - |
-| Hover Card | **1.12** | 1.31 | 1.68 | 1.50 | 1.89 | - | - |
-| Menubar | **1.57** | 2.43 | 3.73 | - | - | - | - |
-| Popover | **1.35** | 1.56 | 2.95 | 1.97 | 2.35 | - | - |
-| Select | **2.21** | 2.91 | 2.73 | 3.35 | 2.55 | - | - |
-| Sheet | **1.10** | - | - | 1.83 | 1.98 | - | vaul 1.91 |
-| Tooltip | **1.05** | 1.40 | 2.02 | 1.11 | 1.87 | - | - |
+| Alert Dialog | **1.24** | 1.32 | 2.06 | 1.77 | 1.88 | 1.56 | - |
+| Context Menu | 1.90 | 2.83 | 3.23 | - | **1.73** | - | - |
+| Dialog | **1.25** | 1.38 | 2.13 | 1.61 | 1.91 | 1.60 | - |
+| Dropdown Menu | **1.94** | 3.05 | 3.93 | 4.10 | 2.74 | - | - |
+| Hover Card | **1.18** | 1.46 | 2.02 | 1.69 | 2.09 | - | - |
+| Menubar | **1.63** | 2.64 | 4.28 | - | - | - | - |
+| Popover | **1.47** | 1.77 | 3.22 | 2.14 | 2.43 | - | - |
+| Select | **2.23** | 3.17 | 2.97 | 3.56 | 2.86 | - | - |
+| Sheet | **1.20** | - | - | 2.08 | 2.29 | - | vaul 2.04 |
+| Tooltip | **1.22** | 1.61 | 2.42 | 1.30 | 1.98 | - | - |
 
 ### Close
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI | Headless UI | Other |
 |---|--:|--:|--:|--:|--:|--:|---|
-| Alert Dialog | **1.05** | 1.08 | 1.74 | 1.24 | 1.71 | 1.15 | - |
-| Context Menu | **0.850** | 1.20 | 1.64 | - | 1.15 | - | - |
-| Dialog | **0.796** | 0.848 | 1.33 | 0.930 | 1.23 | 1.00 | - |
-| Dropdown Menu | **0.962** | 1.36 | 2.09 | 1.75 | 1.34 | - | - |
-| Hover Card | **0.524** | 0.588 | 0.717 | 0.714 | 0.847 | - | - |
-| Menubar | **1.00** | 1.38 | 2.44 | - | - | - | - |
-| Popover | **0.778** | 0.780 | 1.57 | 0.943 | 1.07 | - | - |
-| Select | **1.22** | 1.67 | 1.95 | 2.01 | 1.48 | - | - |
-| Sheet | **0.805** | - | - | 1.00 | 1.44 | - | vaul 19.0 |
-| Tooltip | **0.501** | 0.567 | 0.966 | 0.588 | 0.788 | - | - |
+| Alert Dialog | **0.903** | 0.960 | 1.48 | 1.03 | 1.49 | 1.07 | - |
+| Context Menu | **0.930** | 1.35 | 1.93 | - | 1.30 | - | - |
+| Dialog | **0.910** | 1.01 | 1.54 | 0.992 | 1.47 | 1.11 | - |
+| Dropdown Menu | **1.09** | 1.49 | 2.31 | 2.00 | 1.48 | - | - |
+| Hover Card | **0.530** | 0.653 | 0.929 | 0.780 | 0.944 | - | - |
+| Menubar | **1.04** | 1.49 | 2.73 | - | - | - | - |
+| Popover | **0.813** | 0.869 | 1.73 | 1.02 | 1.10 | - | - |
+| Select | **1.23** | 1.83 | 2.13 | 2.11 | 1.67 | - | - |
+| Sheet | **0.873** | - | - | 1.14 | 1.67 | - | vaul 24.7 |
+| Tooltip | **0.592** | 0.655 | 1.14 | 0.661 | 0.831 | - | - |
 
-gentleduck is the fastest in 75 of these 86 rows.
+gentleduck is the fastest in 74 of these 86 rows.
 
 {/* /benchmarks:runtime */}
 
@@ -284,24 +285,25 @@ gentleduck is the fastest in 75 of these 86 rows.
 
 {/* benchmarks:behind */}
 
-gentleduck loses 15 comparisons, in 14 cases. Each row is one case, worst first, with every library that beats it and gentleduck's figure as a multiple of that library's.
+gentleduck loses 17 comparisons, in 15 cases. Each row is one case, worst first, with every library that beats it and gentleduck's figure as a multiple of that library's.
 
 | Module | Case | Behind |
 |---|---|---|
-| Pagination | Unmount x100 | Ark UI 1.36x, +0.528 ms |
-| Calendar | Update x100 | react-day-picker 1.34x, +9.55 ms |
-| Avatar | Mount x100 | Radix 1.19x, +0.170 ms; Base UI 1.14x, +0.126 ms |
-| Avatar | Unmount x100 | Radix 1.19x, +0.061 ms |
-| Tooltip | Unmount open x100 | React Aria 1.15x, +0.196 ms |
-| Pagination | Mount x100 | Ark UI 1.14x, +1.46 ms |
-| Progress | Mount x100 | Radix 1.13x, +0.127 ms |
-| Progress | Update x100 | Radix 1.08x, +0.040 ms |
-| Avatar | Update x100 | Radix 1.07x, +0.054 ms |
-| Context Menu | Open | Ark UI 1.05x, +0.085 ms |
-| Toggle Group | Unmount x100 | Ark UI 1.04x, +0.042 ms |
-| Alert Dialog | Size | Radix 1.02x, +216 bytes |
-| Dialog | Size | Radix 1.01x, +140 bytes |
-| Popover | Size | Radix 1.01x, +191 bytes |
+| Calendar | Update x100 | react-day-picker 1.47x, +13.7 ms |
+| Pagination | Unmount x100 | Ark UI 1.32x, +0.481 ms |
+| Progress | Unmount x100 | Radix 1.20x, +0.061 ms |
+| Pagination | Mount x100 | Ark UI 1.18x, +2.06 ms |
+| Progress | Mount x100 | Radix 1.15x, +0.151 ms |
+| Tooltip | Unmount open x100 | React Aria 1.13x, +0.181 ms |
+| Avatar | Update x100 | Base UI 1.11x, +0.090 ms; Radix 1.06x, +0.049 ms |
+| Context Menu | Open | Ark UI 1.10x, +0.168 ms |
+| Avatar | Mount x100 | Base UI 1.09x, +0.090 ms |
+| Command | Mount x100 | cmdk 1.09x, +2.05 ms |
+| Slider | Unmount x100 | Radix 1.09x, +0.096 ms; Ark UI 1.05x, +0.058 ms |
+| Avatar | Unmount x100 | Radix 1.03x, +0.010 ms |
+| Alert Dialog | Size | Radix 1.02x, +335 bytes |
+| Dialog | Size | Radix 1.02x, +274 bytes |
+| Popover | Size | Radix 1.01x, +356 bytes |
 
 {/* /benchmarks:behind */}
 
@@ -340,7 +342,7 @@ not show.
 * **Maturity**: years in production at thousands of companies.
 * **Ecosystem**: shadcn/ui and many design systems are built on it.
 * **Coverage**: Collapsible, Tabs, Toast, Scroll Area, Separator and Toolbar primitives, and a whole Checkbox and
-  Switch where gentleduck has an indicator hook.
+  Switch where gentleduck has hooks for a native input's indicator and form sync.
 
 ### Base UI
 

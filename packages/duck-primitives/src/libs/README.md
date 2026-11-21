@@ -233,6 +233,8 @@ ship them.
 - Typeahead counts from the item focused inside an iframe or a shadow root, in a menu, a select and a radio group
   alike. It read the top document, which names only the iframe or the shadow host, so a letter went to the first
   item it starts instead of the next one after the focused item, as Radix's menu and select still do.
+- A collection keeps the slot mounted last as its node. A slot that unmounts clears the collection only while it still
+  holds it, where an earlier slot leaving cleared the later one's and the list then read no items.
 - `joinIds` leaves out a list that is not a string, such as the `false` a condition leaves for
   `aria-describedby`, so `Slot`, `Tooltip.Trigger` and `Dialog.Content` no longer write an id named `false`.
 

@@ -130,7 +130,7 @@ toolbar ship. 1.2.1, the latest, behaves the same.
 
 ## Smaller and faster
 
-- The module is 4,326 bytes against Radix's 7,594, each minified and gzipped with everything it imports but React.
+- The module is 4,341 bytes against Radix's 7,594, each minified and gzipped with everything it imports but React.
 - The group keeps its items in a set it sorts into document order on a key press, where a collection gave the
   group two components and each item a slot of its own.
 - `useRovingFocusGroup` returns the group's context and the props for an element of the caller's own, so Toggle

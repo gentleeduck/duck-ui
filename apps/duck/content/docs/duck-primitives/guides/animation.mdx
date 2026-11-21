@@ -50,7 +50,7 @@ Define open and closed animations, then apply them via `data-state`:
 
 <Callout icon={<Lightbulb />}>
 
-Presence detects the `animationend` event and only unmounts after it fires. Make sure you define both open **and** closed animations  -  without a closed animation, Presence unmounts immediately.
+Presence waits on the `finished` promise of every CSS animation the content runs as it closes, read from `element.getAnimations()`, and unmounts once the last of them ends. Make sure you define both open **and** closed animations  -  without a closed animation, or with one whose `@keyframes` are missing, Presence unmounts immediately. Where the browser has no `getAnimations()`, as in jsdom, content leaves at once.
 
 </Callout>
 

@@ -213,5 +213,5 @@ Renders until the image loads, and again if the image unmounts. Renders a `<span
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `delayMs` | `number` | - | Delay in milliseconds before showing the fallback. A new value starts the wait over |
+| `delayMs` | `number` | - | Delay in milliseconds before showing the fallback. `0` shows it in the first render, with no blank frame. A new value starts the wait over |
 | `asChild` | `boolean` | - | Render as child element |

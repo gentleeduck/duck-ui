@@ -108,7 +108,7 @@ export default function ArrowCustomShapeExample() {
 
 ### `Arrow.Arrow`
 
-Also exported as `Arrow.Root`, the name Radix gives it. Renders an `<svg>` holding a downward arrow with a rounded tip, drawn in a `0 0 30 10` viewBox and stretched to `width` and `height`. A `viewBox` or `preserveAspectRatio` passed in replaces its own.
+Also exported as `Arrow.Root`, the name Radix gives it. Renders an `<svg>` holding a downward arrow with a rounded tip, drawn in a `0 0 30 10` viewBox and stretched to `width` and `height`. A `viewBox` or `preserveAspectRatio` passed in replaces its own. Carries `data-slot="arrow"`.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |

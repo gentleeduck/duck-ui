@@ -12,18 +12,16 @@ A set of toggles where one or several are on, with roving focus.
 ## Benchmarks
 
 <!-- benchmarks -->
-Smaller than all 4. Faster in 11 of 12 timed comparisons.
+Smaller than all 4. Faster in all 12 timed comparisons.
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI |
 |---|--:|--:|--:|--:|--:|
 | Size, gzipped bytes | 5,051 | 8,396 (0.60x) | 8,574 (0.59x) | 15,699 (0.32x) | 9,066 (0.56x) |
-| Mount x100, ms | 5.51 | 12.6 (0.44x) | 9.98 (0.55x) | 19.5 (0.28x) | 8.10 (0.68x) |
-| Update x100, ms | 2.59 | 8.63 (0.30x) | 3.82 (0.68x) | 15.9 (0.16x) | 6.07 (0.43x) |
-| Unmount x100, ms | 1.09 | 1.76 (0.62x) | 1.34 (0.81x) | 1.91 (0.57x) | **1.05 (1.04x)** |
+| Mount x100, ms | 5.98 | 15.0 (0.40x) | 10.5 (0.57x) | 20.2 (0.30x) | 8.86 (0.67x) |
+| Update x100, ms | 2.94 | 9.64 (0.31x) | 3.98 (0.74x) | 16.7 (0.18x) | 6.53 (0.45x) |
+| Unmount x100, ms | 1.09 | 2.03 (0.54x) | 1.56 (0.70x) | 2.08 (0.53x) | 1.10 (0.99x) |
 
-Where gentleduck is behind:
-
-- Unmount x100 against Ark UI: 1.04x, 0.042 ms more.
+Behind nowhere: smaller and faster than every library here, in every case.
 
 Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. Versions: Radix 1.1.19, Base UI 1.0.0-rc.0, React Aria 1.22.1 and Ark UI 5.40.0.
 <!-- /benchmarks -->

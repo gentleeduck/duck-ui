@@ -711,7 +711,7 @@ A single day cell. Renders a `button` with full ARIA attributes and data attribu
 | :--- | :--- | :--- | :--- |
 | `day` | `Grid.ICalendarDay<Date>` | **required** | Day data from the calendar grid |
 
-Automatically applies all day props from context: `aria-label`, `aria-selected`, `aria-disabled`, `aria-invalid`, `aria-current`, `tabIndex`, `onClick`, `onKeyDown`, `onMouseEnter`, and all `data-*` styling attributes.
+Automatically applies all day props from context: `aria-label`, `aria-selected`, `aria-disabled`, `aria-invalid`, `aria-current`, `tabIndex`, `onClick`, `onKeyDown`, `onMouseEnter`, and all `data-*` styling attributes. In a range, both ends and every day between them carry `aria-selected`. A day focused some other way than the arrow keys or the pointer, by a screen reader or by code, takes the tab stop, so the next arrow key moves from it.
 
 **Data attributes:**
 
@@ -730,7 +730,7 @@ Automatically applies all day props from context: `aria-label`, `aria-selected`,
 | `data-range-middle` | `"true"` for range middle |
 | `data-range-end` | `"true"` for range end |
 | `data-focused` | `"true"` on the day holding the tab stop |
-| `data-weekend` | `"true"` for weekends |
+| `data-weekend` | `"true"` on the locale's weekend days, Friday and Saturday for `ar-SA` |
 
 ***
 

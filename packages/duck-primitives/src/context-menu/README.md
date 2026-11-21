@@ -18,16 +18,16 @@ Smaller than all 3. Faster in 14 of 15 timed comparisons.
 
 | | gentleduck | Radix | Base UI | Ark UI |
 |---|--:|--:|--:|--:|
-| Size, gzipped bytes | 31,039 | 32,057 (0.97x) | 51,777 (0.60x) | 35,423 (0.88x) |
-| Mount x100, ms | 2.82 | 3.21 (0.88x) | 8.38 (0.34x) | 4.90 (0.58x) |
-| Unmount x100, ms | 0.510 | 0.608 (0.84x) | 0.980 (0.52x) | 0.905 (0.56x) |
-| Unmount open x100, ms | 3.63 | 10.2 (0.36x) | 9.47 (0.38x) | 785 (0.00x) |
-| Open, ms | 1.68 | 2.52 (0.66x) | 2.73 (0.62x) | **1.59 (1.05x)** |
-| Close, ms | 0.850 | 1.20 (0.71x) | 1.64 (0.52x) | 1.15 (0.74x) |
+| Size, gzipped bytes | 31,252 | 32,057 (0.97x) | 51,777 (0.60x) | 35,423 (0.88x) |
+| Mount x100, ms | 3.39 | 3.50 (0.97x) | 8.53 (0.40x) | 5.08 (0.67x) |
+| Unmount x100, ms | 0.549 | 0.743 (0.74x) | 1.04 (0.53x) | 0.931 (0.59x) |
+| Unmount open x100, ms | 4.01 | 11.7 (0.34x) | 10.9 (0.37x) | 922 (0.00x) |
+| Open, ms | 1.90 | 2.83 (0.67x) | 3.23 (0.59x) | **1.73 (1.10x)** |
+| Close, ms | 0.930 | 1.35 (0.69x) | 1.93 (0.48x) | 1.30 (0.71x) |
 
 Where gentleduck is behind:
 
-- Open against Ark UI: 1.05x, 0.085 ms more.
+- Open against Ark UI: 1.10x, 0.168 ms more.
 
 Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. The hundred copies mount and unmount closed, Unmount open tears them down once every one shows, and Open and Close time a single copy. Versions: Radix 2.3.7, Base UI 1.0.0-rc.0 and Ark UI 5.40.0.
 

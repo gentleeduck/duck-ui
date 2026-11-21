@@ -80,6 +80,10 @@ const anchor = React.useRef<IPopper.IMeasurable>({
 
 Connects an anchor to its content. It renders nothing of its own.
 
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `anchor` | `IPopper.IMeasurable \| null` | - | The element to place the content against, for a component that already holds it, in place of a `Popper.Anchor` |
+
 ### `Popper.Anchor`
 
 The reference element that content is positioned relative to.
@@ -108,6 +112,7 @@ The floating content. Positioned relative to the anchor, inside a wrapper with `
 | `shiftCrossAxis` | `boolean` | `false` | Also shift along the side's own axis, such as vertically for a top or bottom placement |
 | `hideWhenDetached` | `boolean` | `false` | Hide content once the anchor is out of view: scrolled out of a scrolling box or the viewport, or out of `collisionBoundary` when set |
 | `updatePositionStrategy` | `'optimized' \| 'always'` | `'optimized'` | `'optimized'` measures again on scroll, resize and layout changes; `'always'` on every animation frame, for an anchor that moves by itself |
+| `updateOnScroll` | `boolean` | `true` | Measure again when a box around the anchor scrolls. Off for content that closes when its anchor scrolls, such as a tooltip, which has no scroll to follow |
 | `onPlaced` | `() => void` | - | Called once the content has been positioned |
 
 `side="left"` and `side="right"` mirror in right to left. The direction comes from `dir` on the content, then the nearest `DirectionProvider`, then `<html dir>`, and the wrapper carries the provider's, so content portalled out of a `DirectionProvider` still aligns its `start` the way the provider reads.

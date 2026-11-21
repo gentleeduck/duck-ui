@@ -16,16 +16,16 @@ Smaller than Base UI, React Aria, Ark UI and Headless UI; larger than Radix. Fas
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI | Headless UI |
 |---|--:|--:|--:|--:|--:|--:|
-| Size, gzipped bytes | 24,536 | **24,345 (1.01x)** | 41,743 (0.59x) | 32,305 (0.76x) | 32,424 (0.76x) | 30,888 (0.79x) |
-| Mount x100, ms | 2.50 | 2.82 (0.89x) | 6.85 (0.37x) | 5.51 (0.45x) | 6.61 (0.38x) | 17.5 (0.14x) |
-| Unmount x100, ms | 0.459 | 0.587 (0.78x) | 1.09 (0.42x) | 0.909 (0.50x) | 0.736 (0.62x) | 2.58 (0.18x) |
-| Unmount open x100, ms | 1.95 | 3.99 (0.49x) | 6.65 (0.29x) | 4.94 (0.40x) | 780 (0.00x) | - |
-| Open, ms | 1.35 | 1.56 (0.87x) | 2.95 (0.46x) | 1.97 (0.68x) | 2.35 (0.57x) | - |
-| Close, ms | 0.778 | 0.780 (1.00x) | 1.57 (0.50x) | 0.943 (0.83x) | 1.07 (0.72x) | - |
+| Size, gzipped bytes | 24,701 | **24,345 (1.01x)** | 41,743 (0.59x) | 32,305 (0.76x) | 32,424 (0.76x) | 30,888 (0.80x) |
+| Mount x100, ms | 2.48 | 2.86 (0.87x) | 7.10 (0.35x) | 5.39 (0.46x) | 7.14 (0.35x) | 18.2 (0.14x) |
+| Unmount x100, ms | 0.488 | 0.656 (0.74x) | 1.18 (0.41x) | 0.933 (0.52x) | 0.827 (0.59x) | 2.74 (0.18x) |
+| Unmount open x100, ms | 2.09 | 4.30 (0.49x) | 6.75 (0.31x) | 4.79 (0.44x) | 823 (0.00x) | - |
+| Open, ms | 1.47 | 1.77 (0.83x) | 3.22 (0.46x) | 2.14 (0.69x) | 2.43 (0.60x) | - |
+| Close, ms | 0.813 | 0.869 (0.94x) | 1.73 (0.47x) | 1.02 (0.80x) | 1.10 (0.74x) | - |
 
 Where gentleduck is behind:
 
-- Size against Radix: 1.01x, 191 bytes more.
+- Size against Radix: 1.01x, 356 bytes more.
 
 Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. The hundred copies mount and unmount closed, Unmount open tears them down once every one shows, and Open and Close time a single copy. Versions: Radix 1.1.23, Base UI 1.0.0-rc.0, React Aria 1.22.1, Ark UI 5.40.0 and Headless UI 2.2.10.
 

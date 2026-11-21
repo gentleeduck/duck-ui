@@ -20,10 +20,10 @@ Smaller than all 4. Faster in all 12 timed comparisons.
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI |
 |---|--:|--:|--:|--:|--:|
-| Size, gzipped bytes | 4,869 | 8,770 (0.56x) | 9,260 (0.53x) | 14,752 (0.33x) | 11,953 (0.41x) |
-| Mount x100, ms | 10.2 | 21.6 (0.47x) | 25.3 (0.40x) | 34.7 (0.29x) | 17.9 (0.57x) |
-| Update x100, ms | 10.4 | 18.1 (0.57x) | 16.3 (0.64x) | 34.3 (0.30x) | 41.5 (0.25x) |
-| Unmount x100, ms | 1.80 | 3.04 (0.59x) | 2.92 (0.61x) | 4.78 (0.38x) | 2.58 (0.70x) |
+| Size, gzipped bytes | 4,975 | 8,770 (0.57x) | 9,260 (0.54x) | 14,752 (0.34x) | 11,953 (0.42x) |
+| Mount x100, ms | 11.2 | 23.0 (0.49x) | 25.5 (0.44x) | 34.5 (0.33x) | 19.2 (0.58x) |
+| Update x100, ms | 11.1 | 17.8 (0.62x) | 15.8 (0.71x) | 35.8 (0.31x) | 40.0 (0.28x) |
+| Unmount x100, ms | 2.17 | 2.98 (0.73x) | 2.92 (0.74x) | 4.86 (0.45x) | 2.63 (0.83x) |
 
 Behind nowhere: smaller and faster than every library here, in every case.
 

@@ -18,10 +18,10 @@ Smaller than all 3. Faster in all 9 timed comparisons.
 
 | | gentleduck | Radix | Ark UI | input-otp |
 |---|--:|--:|--:|--:|
-| Size, gzipped bytes | 3,995 | 11,051 (0.36x) | 11,375 (0.35x) | 4,101 (0.97x) |
-| Mount x100, ms | 6.18 | 28.7 (0.22x) | 15.7 (0.39x) | 17.1 (0.36x) |
-| Update x100, ms | 4.38 | 13.7 (0.32x) | 13.1 (0.34x) | 18.9 (0.23x) |
-| Unmount x100, ms | 0.802 | 2.22 (0.36x) | 1.41 (0.57x) | 0.921 (0.87x) |
+| Size, gzipped bytes | 4,026 | 11,051 (0.36x) | 11,375 (0.35x) | 4,101 (0.98x) |
+| Mount x100, ms | 6.34 | 29.1 (0.22x) | 16.6 (0.38x) | 18.1 (0.35x) |
+| Update x100, ms | 4.46 | 14.1 (0.32x) | 13.4 (0.33x) | 20.2 (0.22x) |
+| Unmount x100, ms | 0.841 | 2.30 (0.37x) | 1.41 (0.60x) | 0.948 (0.89x) |
 
 Behind nowhere: smaller and faster than every library here, in every case.
 

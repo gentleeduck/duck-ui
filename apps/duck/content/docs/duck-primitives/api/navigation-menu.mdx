@@ -134,6 +134,12 @@ Content panel for an item. Supports pointer/focus outside handlers from dismissa
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `forceMount` | `true` | - | Keep mounted for animation control |
+| `onEscapeKeyDown` | `(event: KeyboardEvent) => void` | - | Called on <Kbd>Escape</Kbd>. Prevent default to keep the item open |
+| `onPointerDownOutside` | `(event) => void` | - | Called for a press outside the menu |
+| `onFocusOutside` | `(event) => void` | - | Called when focus moves outside the menu |
+| `onInteractOutside` | `(event) => void` | - | Called for any outside interaction |
+
+It carries `data-slot="navigation-menu-content"`. While its content is closed, its links leave the tab order, and each gets its own `tabindex` back, or none if it had none, when it opens. It finds them as `FocusScope` does, so it skips what is hidden, inert or in a disabled fieldset, and a <Kbd>Tab</Kbd> from a link inside a shadow root moves on through the content.
 
 ### `NavigationMenu.Link`
 

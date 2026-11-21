@@ -281,6 +281,10 @@ Toggles the popover. Sets `aria-expanded`, and `aria-controls` while the popover
 }>
   Optional custom anchor point. By default, content is positioned relative to the Trigger. Use Anchor to position relative to a different element.
 
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `virtualRef` | `React.RefObject<IPopper.IMeasurable \| null>` | - | Position against anything with `getBoundingClientRect()`, such as a text selection, instead of a DOM node. The anchor then renders nothing |
+
 ### `Popover.Portal`
 
 Portals content to `document.body`.
@@ -312,6 +316,8 @@ The floating content, with `role="dialog"`. Positioned by the Popper engine rela
 | `trapFocus` | `boolean` | `open` | Modal only. Override whether focus is trapped inside the content |
 | `disableOutsidePointerEvents` | `boolean` | `open` | Modal only. Override whether pointer events outside are blocked |
 | `lockScroll` | `boolean` | `open` | Modal only. Override whether body scroll is locked |
+
+It also takes the rest of [Popper](/duck-primitives/api/popper)'s positioning props, with the same defaults: `arrowPadding`, `avoidCollisions`, `collisionBoundary`, `collisionPadding`, `sticky`, `shiftCrossAxis`, `hideWhenDetached`, `updatePositionStrategy` and `updateOnScroll`.
 
 On a modal popover, `trapFocus`, `disableOutsidePointerEvents` and `lockScroll` follow the open state. Override them when integrating with animation libraries like [motion](https://motion.dev) that need custom lifecycle control during exit animations. A non-modal popover never traps focus, blocks outside pointer events or locks scroll, and ignores all three.
 

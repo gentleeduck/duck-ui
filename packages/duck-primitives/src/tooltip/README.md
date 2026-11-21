@@ -16,16 +16,16 @@ Smaller than all 4. Faster in 19 of 20 timed comparisons.
 
 | | gentleduck | Radix | Base UI | React Aria | Ark UI |
 |---|--:|--:|--:|--:|--:|
-| Size, gzipped bytes | 19,232 | 19,402 (0.99x) | 33,094 (0.58x) | 19,867 (0.97x) | 23,181 (0.83x) |
-| Mount x100, ms | 3.04 | 3.72 (0.82x) | 6.42 (0.47x) | 5.61 (0.54x) | 4.19 (0.73x) |
-| Unmount x100, ms | 0.649 | 0.774 (0.84x) | 1.27 (0.51x) | 0.849 (0.76x) | 0.760 (0.85x) |
-| Unmount open x100, ms | 1.48 | 4.51 (0.33x) | 3.17 (0.47x) | **1.29 (1.15x)** | 1.66 (0.89x) |
-| Open, ms | 1.05 | 1.40 (0.75x) | 2.02 (0.52x) | 1.11 (0.94x) | 1.87 (0.56x) |
-| Close, ms | 0.501 | 0.567 (0.88x) | 0.966 (0.52x) | 0.588 (0.85x) | 0.788 (0.64x) |
+| Size, gzipped bytes | 19,291 | 19,402 (0.99x) | 33,094 (0.58x) | 19,867 (0.97x) | 23,181 (0.83x) |
+| Mount x100, ms | 3.10 | 4.02 (0.77x) | 6.61 (0.47x) | 5.72 (0.54x) | 4.63 (0.67x) |
+| Unmount x100, ms | 0.642 | 0.814 (0.79x) | 1.29 (0.50x) | 0.924 (0.69x) | 0.928 (0.69x) |
+| Unmount open x100, ms | 1.56 | 4.75 (0.33x) | 3.57 (0.44x) | **1.38 (1.13x)** | 1.69 (0.92x) |
+| Open, ms | 1.22 | 1.61 (0.76x) | 2.42 (0.50x) | 1.30 (0.94x) | 1.98 (0.62x) |
+| Close, ms | 0.592 | 0.655 (0.90x) | 1.14 (0.52x) | 0.661 (0.90x) | 0.831 (0.71x) |
 
 Where gentleduck is behind:
 
-- Unmount open x100 against React Aria: 1.15x, 0.196 ms more.
+- Unmount open x100 against React Aria: 1.13x, 0.181 ms more.
 
 Each cell after gentleduck's is that library's figure, with gentleduck's as a multiple of it in brackets: under 1x is smaller or faster, and bold marks where gentleduck is behind. x100 is a hundred copies at once. A time is the median of the main thread's work in production React on headless Chromium, until the frame that shows the result has painted, including what a library leaves to an effect, a later task or the next frame. The hundred copies mount and unmount closed, Unmount open tears them down once every one shows, and Open and Close time a single copy. Versions: Radix 1.2.16, Base UI 1.0.0-rc.0, React Aria 1.22.1 and Ark UI 5.40.0.
 <!-- /benchmarks -->

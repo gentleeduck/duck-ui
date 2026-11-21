@@ -94,7 +94,7 @@ export default function PortalContainerExample() {
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Target container. A ref is read when the portal renders, and nothing renders while it holds no element |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Target container. A ref is read when the portal renders, and nothing renders while it holds no element. A form is taken as the element itself, even one holding a control named `current` |
 | `asChild` | `boolean` | `false` | Portal the child itself instead of a `<div>`. Only the `<div>` carries `data-slot="portal"`, so the child keeps its own |
 
 }>

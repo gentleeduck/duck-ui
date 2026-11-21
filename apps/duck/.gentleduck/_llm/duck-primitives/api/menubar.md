@@ -333,6 +333,19 @@ Groups a trigger and its content into one menu entry.
 | `value` | `string` | - | Unique value identifying this menu |
 | `onOpenChange` | `(open: boolean) => void` | - | Called when this menu opens or closes. Useful for integrating with animation libraries like `motion` |
 
+### `Menubar.Trigger`
+
+The button that opens its menu. Renders a `<button>`, and takes every button prop.
+
+The pointer moving onto a trigger focuses it, one with no menu content included, and opens its menu while another is open. A disabled trigger, from its own `disabled` or the root's, is skipped by the arrow keys, and the pointer moving onto it leaves the open menu open. A disabled trigger rendered as a link with `asChild` leaves the tab order, as a disabled button does.
+
+### `Menubar.Portal`
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Portal target |
+| `forceMount` | `true` | - | Keep the content mounted while closed. A submenu takes it only from its own prop or a portal of its own |
+
 ### `Menubar.Content`
 
 | Prop | Type | Default | Description |
@@ -349,6 +362,8 @@ Groups a trigger and its content into one menu entry.
 | `onPointerDownOutside` | `(event: PointerDownOutsideEvent) => void` | - | Called when a pointer down event occurs outside |
 | `onFocusOutside` | `(event: FocusOutsideEvent) => void` | - | Called when focus moves outside the content |
 | `onInteractOutside` | `(event: PointerDownOutsideEvent \| FocusOutsideEvent) => void` | - | Called on any outside interaction |
+
+It also takes the rest of [Popper](/duck-primitives/api/popper)'s positioning props, with the same defaults: `arrowPadding`, `avoidCollisions`, `collisionBoundary`, `collisionPadding`, `sticky`, `shiftCrossAxis`, `hideWhenDetached`, `updatePositionStrategy` and `updateOnScroll`. It takes no `trapFocus`, `disableOutsidePointerEvents` or `disableOutsideScroll`: the root's `modal` decides all three for every menu.
 
 }>
   The `forceMount`, `asChild`, and `onPointerDownOutside` / `onFocusOutside` props give you full control over the content lifecycle. This is especially useful when integrating with animation libraries like [motion](https://motion.dev): use `forceMount` + `asChild` to keep the content mounted during exit animations, and the outside-interaction handlers to prevent premature dismissal.
@@ -373,4 +388,4 @@ Groups a trigger and its content into one menu entry.
 | <Kbd>Escape</Kbd> | Close the menu and return to its trigger |
 
 }>
-  All menu-level sub-components (Item, CheckboxItem, RadioGroup, RadioItem, Sub, etc.) work identically to Context Menu.
+  All menu-level sub-components (Item, CheckboxItem, RadioGroup, RadioItem, Sub, etc.) work identically to [Context Menu](/duck-primitives/api/context-menu), `textValue`, `closeOnSelect` and `closeParentOnEsc` included. `Menubar.Sub` takes `open`, `defaultOpen` and `onOpenChange`. A field inside an item keeps its arrow keys, and <Kbd>ArrowRight</Kbd> on a sub-trigger opens its submenu rather than moving to the next menu.

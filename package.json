@@ -42,7 +42,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build --filter='./packages/*'",
-    "test": "turbo run test --filter='./packages/*' --filter='!@gentleduck/ttest' --filter='!@gentleduck/registry-internals' --filter='!@gentleduck/registry-blocks' --filter='!@gentleduck/registry-examples'",
+    "test": "turbo run test --filter='./packages/*' --filter='!@gentleduck/ttest' --filter='!@gentleduck/registry-blocks'",
     "benchmark:variants": "turbo run benchmark --filter=@gentleduck/variants",
     "check": "biome check .",
     "lint": "biome lint .",
@@ -58,7 +58,7 @@
     "lint:ws": "sherif",
     "postinstall": "bun run lint:ws",
     "prepare": "husky",
-    "check-types": "turbo run check-types --filter='./packages/*' --filter='!@gentleduck/ttest' --filter='!@gentleduck/registry-internals' --filter='!@gentleduck/registry-blocks' --filter='!@gentleduck/registry-examples'"
+    "check-types": "turbo run check-types --filter='./packages/*' --filter='!@gentleduck/ttest' --filter='!@gentleduck/registry-blocks'"
   },
   "overrides": {
     "react": "^19.2.4",

@@ -12,6 +12,8 @@ import {
   DrawerTrigger,
 } from '@gentleduck/registry-ui/drawer'
 
+const PARAGRAPHS = Array.from({ length: 10 }, (_, index) => index + 1)
+
 const DRAWER_SIDES = ['top', 'right', 'bottom', 'left'] as const
 
 export default function Demo() {
@@ -30,8 +32,8 @@ export default function Demo() {
               <DrawerDescription>Set your daily activity goal.</DrawerDescription>
             </DrawerHeader>
             <div className="no-scrollbar overflow-y-auto px-4">
-              {Array.from({ length: 10 }).map((_, index) => (
-                <p className="mb-4 leading-normal" key={index}>
+              {PARAGRAPHS.map((section) => (
+                <p className="mb-4 leading-normal" key={section}>
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et
                   dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
                   aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum

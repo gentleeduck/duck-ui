@@ -12,6 +12,8 @@ import {
   DrawerTrigger,
 } from '@gentleduck/registry-ui/drawer'
 
+const SECTIONS = Array.from({ length: 20 }, (_, index) => index + 1)
+
 export default function Demo() {
   return (
     <Drawer direction="right">
@@ -24,9 +26,9 @@ export default function Demo() {
           <DrawerDescription>Scroll through the content below.</DrawerDescription>
         </DrawerHeader>
         <div className="no-scrollbar flex-1 overflow-y-auto px-4">
-          {Array.from({ length: 20 }).map((_, index) => (
-            <p className="mb-4 text-sm leading-normal" key={index}>
-              <strong>Section {index + 1}.</strong> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
+          {SECTIONS.map((section) => (
+            <p className="mb-4 text-sm leading-normal" key={section}>
+              <strong>Section {section}.</strong> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
               eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
               exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
               reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat

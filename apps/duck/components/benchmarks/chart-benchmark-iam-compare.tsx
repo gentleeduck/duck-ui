@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import data from '../../../../apps/duck/public/data/benchmarks/iam.json'
+import data from '../../public/data/benchmarks/iam.json'
 import { ChartTabs } from './chart-tabs'
 
 const tabs = data.libraryComparisons.map((lib) => lib.name)

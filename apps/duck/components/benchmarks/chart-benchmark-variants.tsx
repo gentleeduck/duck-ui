@@ -10,7 +10,7 @@ import {
 } from '@gentleduck/registry-ui/chart'
 import * as React from 'react'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
-import data from '../../../../apps/duck/public/data/benchmarks/variants.json'
+import data from '../../public/data/benchmarks/variants.json'
 
 const tabs = ['Bundle Size', 'Runtime', 'Features'] as const
 type Tab = (typeof tabs)[number]

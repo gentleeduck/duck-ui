@@ -4,7 +4,7 @@ import type { ChartConfig } from '@gentleduck/registry-ui/chart'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@gentleduck/registry-ui/chart'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts'
-import data from '../../../../apps/duck/public/data/benchmarks/iam.json'
+import data from '../../public/data/benchmarks/iam.json'
 import { ChartTabs } from './chart-tabs'
 
 const COLORS = [

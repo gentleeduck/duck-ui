@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import data from '../../../../apps/duck/public/data/benchmarks/calendar.json'
+import data from '../../public/data/benchmarks/calendar.json'
 
 const tabs = ['vs react-day-picker', 'vs react-aria', 'vs react-datepicker', 'vs react-calendar'] as const
 type Tab = (typeof tabs)[number]

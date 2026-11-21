@@ -163,13 +163,14 @@ export function componentPreview({ node }: { node: IUnistNode }) {
     const component = registryIndex[name]
     const files = Array.isArray(component?.files) ? component.files : component?.files ? [component.files] : []
     const src = files[0]?.path
+    const docsOnly = path.join(process.cwd(), 'components/benchmarks', `${name}.tsx`)
 
-    if (!src) {
+    if (!src && !fs.existsSync(docsOnly)) {
       console.warn('no src found for', name)
       return null
     }
 
-    const filePath = resolvePreviewSourcePath(component, src)
+    const filePath = src ? resolvePreviewSourcePath(component, src) : docsOnly
     let source = fs.readFileSync(filePath, 'utf8')
 
     source = source.replaceAll(`@gentleduck/registry-ui`, `~/components`)

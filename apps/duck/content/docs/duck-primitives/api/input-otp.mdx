@@ -20,7 +20,7 @@ import * as InputOTP from '@gentleduck/primitives/input-otp'
 </InputOTP.Root>
 ```
 
-## Example
+## Usage
 
 ```tsx
 <form action="/verify">
@@ -62,6 +62,73 @@ Pressing a slot past the end of the code puts the caret in the first empty slot,
 Resetting the form puts the root back to `defaultValue`, or empties it, and a controlled root is told through `onValueChange`. A reset another listener cancels changes nothing.
 
 A browser fills a code from a text message into the slot with focus, and the root spreads it across the slots. A slot has no `maxLength`, which would cut that code to its first character.
+
+## Examples
+
+### Six digits in two groups
+
+<ComponentPreview
+  name="input-otp-basic"
+  description="Groups and a separator, with onComplete once every slot is filled."
+/>
+
+### Patterns
+
+<ComponentPreview
+  name="input-otp-pattern"
+  description="REGEXP_ONLY_DIGITS, REGEXP_ONLY_CHARS and a pattern of your own for each character."
+/>
+
+### In a form
+
+<ComponentPreview
+  name="input-otp-form"
+  description="name and HiddenInput submit the code, autoSubmit sends the form once full, and a reset goes back to defaultValue."
+/>
+
+### Masked
+
+<ComponentPreview
+  name="input-otp-password"
+  description="type password hides each character."
+/>
+
+### Controlled
+
+<ComponentPreview
+  name="input-otp-controlled"
+  description="value and onValueChange in state, filled and cleared from buttons."
+/>
+
+### Read-only and disabled
+
+<ComponentPreview
+  name="input-otp-disabled"
+  description="readOnly keeps focus moving and typing out, and disabled takes focus away."
+/>
+
+### maxLength
+
+<ComponentPreview
+  name="input-otp-max-length"
+  description="Only the first slots count as the code, so it completes sooner."
+/>
+
+### Focus on mount
+
+<ComponentPreview
+  name="input-otp-auto-focus"
+  description="autoFocus puts the caret in the slot typing goes to."
+/>
+
+### Right to left
+
+<ComponentPreview
+  name="input-otp-rtl"
+  description="dir rtl runs the slots right to left and flips the arrow keys."
+/>
+
+---
 
 ## API
 

@@ -22,7 +22,7 @@ import * as Slider from '@gentleduck/primitives/slider'
 
 ---
 
-## Example
+## Usage
 
 ```tsx
 import * as Slider from '@gentleduck/primitives/slider'
@@ -54,6 +54,66 @@ function PriceRange() {
   )
 }
 ```
+
+---
+
+## Examples
+
+### Basic
+
+<ComponentPreview
+  name="slider-basic"
+  description="One thumb on steps of 5, with Shift and PageUp or PageDown for larger steps."
+/>
+
+### A range
+
+<ComponentPreview
+  name="slider-range"
+  description="Two thumbs kept 10 steps apart by minStepsBetweenThumbs and preserveThumbOrder."
+/>
+
+### Vertical
+
+<ComponentPreview
+  name="slider-vertical"
+  description="orientation vertical, as an equaliser."
+/>
+
+### Change and commit
+
+<ComponentPreview
+  name="slider-commit"
+  description="onValueChange on every move and onValueCommit once the drag ends."
+/>
+
+### Inverted, with a large step
+
+<ComponentPreview
+  name="slider-inverted"
+  description="inverted fills from the far end, and largeStep sets the PageUp and PageDown step."
+/>
+
+### Showing the values
+
+<ComponentPreview
+  name="slider-value"
+  description="Slider.Value draws the values through a function child."
+/>
+
+### In a form
+
+<ComponentPreview
+  name="slider-form"
+  description="name submits one value per thumb, and a reset goes back."
+/>
+
+### Disabled
+
+<ComponentPreview
+  name="slider-disabled"
+  description="disabled takes the slider out of reach."
+/>
 
 ---
 

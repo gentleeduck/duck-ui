@@ -25,7 +25,7 @@ import * as Tooltip from '@gentleduck/primitives/tooltip'
 
 ---
 
-## Example
+## Usage
 
 ```tsx
 import * as Tooltip from '@gentleduck/primitives/tooltip'
@@ -51,6 +51,59 @@ function App() {
   )
 }
 ```
+
+---
+
+## Examples
+
+### Basic
+
+<ComponentPreview
+  name="tooltip-basic"
+  description="A tooltip on hover or focus, with an arrow."
+/>
+
+### Delays across tooltips
+
+<ComponentPreview
+  name="tooltip-delay-provider"
+  description="Tooltip provider delay settings to avoid noisy hover behavior across repeated targets."
+/>
+
+### Sides
+
+<ComponentPreview
+  name="tooltip-sides"
+  description="side places the content on each side of its trigger."
+/>
+
+### Controlled and disabled
+
+<ComponentPreview
+  name="tooltip-controlled"
+  description="open and onOpenChange from other buttons, and disabled keeping it closed."
+/>
+
+### Hoverable content
+
+<ComponentPreview
+  name="tooltip-hoverable"
+  description="The pointer can move onto the content, unless disableHoverableContent closes it as the pointer leaves."
+/>
+
+### Clicks keep it open
+
+<ComponentPreview
+  name="tooltip-click-stays"
+  description="disableCloseOnClick for a trigger that is pressed often."
+/>
+
+### Announced as other text
+
+<ComponentPreview
+  name="tooltip-aria-label"
+  description="aria-label on the content replaces what assistive technology reads."
+/>
 
 ---
 

@@ -29,6 +29,24 @@ const ref = React.useRef<HTMLDivElement>(null)
 <div ref={ref} />
 ```
 
+## Examples
+
+### Into the body
+
+<ComponentPreview
+  name="portal-body"
+  description="A portal escapes a parent that clips its overflow."
+/>
+
+### Into another element
+
+<ComponentPreview
+  name="portal-container"
+  description="container names the element, and asChild portals the child itself."
+/>
+
+---
+
 ## Props
 
 `Portal` is also exported as `Root`, the name Radix gives it.

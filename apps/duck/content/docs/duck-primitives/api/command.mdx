@@ -27,7 +27,7 @@ import * as Command from '@gentleduck/primitives/command'
 
 ---
 
-## Example
+## Usage
 
 ```tsx
 import * as Command from '@gentleduck/primitives/command'
@@ -200,6 +200,73 @@ The keys move by index. A row they reach that is not drawn is brought in with `s
 | `Tab` | Stays inside the command |
 
 While an input method is composing text, the command leaves every key to it, so the `Enter` that confirms a word selects nothing.
+
+## Examples
+
+### Palette
+
+<ComponentPreview
+  name="command-palette"
+  description="Groups, a separator, shortcuts and an empty state, with keywords that find an item by another word."
+/>
+
+### Your own filter and a limit
+
+<ComponentPreview
+  name="command-filter"
+  description="filter ranks a start of the name above a match inside it, and limit keeps the best four."
+/>
+
+### Results from a server
+
+<ComponentPreview
+  name="command-async"
+  description="shouldFilter off with useCommandSearch, Command.Loading while it fetches, and Command.Status counting the matches."
+/>
+
+### Controlled highlight
+
+<ComponentPreview
+  name="command-controlled"
+  description="value and onValueChange hold the highlight, loop wraps the arrow keys, and disablePointerSelection leaves the mouse out."
+/>
+
+### A create item
+
+<ComponentPreview
+  name="command-create-item"
+  description="A forceMount item offers to create what was typed, beside Command.Empty."
+/>
+
+### Disabled items
+
+<ComponentPreview
+  name="command-disabled-items"
+  description="The highlight passes over an item that is disabled."
+/>
+
+### Virtual list
+
+<ComponentPreview
+  name="command-virtual"
+  description="virtual draws only the rows in view out of 5,000, and the keys bring the next one in."
+/>
+
+### In a dialog
+
+<ComponentPreview
+  name="command-dialog"
+  description="A command inside a dialog that Ctrl K opens."
+/>
+
+### Right to left
+
+<ComponentPreview
+  name="command-rtl"
+  description="dir rtl on the root, which its parts inherit."
+/>
+
+---
 
 ## API
 

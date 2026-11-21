@@ -18,7 +18,7 @@ import * as Progress from '@gentleduck/primitives/progress'
 </Progress.Root>
 ```
 
-## Example
+## Usage
 
 ```tsx
 <Progress.Root
@@ -34,6 +34,38 @@ import * as Progress from '@gentleduck/primitives/progress'
   />
 </Progress.Root>
 ```
+
+## Examples
+
+### With a label and a value
+
+<ComponentPreview
+  name="progress-basic"
+  description="Progress.Label names the bar and Progress.Value shows its percentage as it fills."
+/>
+
+### Indeterminate
+
+<ComponentPreview
+  name="progress-indeterminate"
+  description="value null says the amount is unknown."
+/>
+
+### A label of your own
+
+<ComponentPreview
+  name="progress-range-label"
+  description="getValueLabel announces the value in gigabytes, and a function child of Value adds to it."
+/>
+
+### A minimum above zero
+
+<ComponentPreview
+  name="progress-min"
+  description="min and max as years, with the percentage measured between them."
+/>
+
+---
 
 ## API
 

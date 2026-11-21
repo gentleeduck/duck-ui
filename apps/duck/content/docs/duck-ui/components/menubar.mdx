@@ -101,6 +101,27 @@ import {
   description="A menubar whose modal and disabled states two switches set, with a disabled Help menu."
 />
 
+### Groups, no looping and open events
+
+<ComponentPreview
+  name="menubar-7"
+  description="MenubarGroup with a label, loop off, and each menu's onOpenChange."
+/>
+
+### Content and submenu offsets
+
+<ComponentPreview
+  name="menubar-8"
+  description="side, align and offsets on the content, and offsets on a submenu."
+/>
+
+### Kept mounted
+
+<ComponentPreview
+  name="menubar-9"
+  description="forceMount keeps a menu's content in the page while closed."
+/>
+
 ## Component Composition
 
 <MermaidDiagram chart={`graph TD
@@ -294,8 +315,6 @@ Positioned to the side of the sub-trigger, and scrolls when taller than the spac
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `className` | `string` | - | Additional CSS classes |
-| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | - | Preferred side relative to the sub-trigger |
-| `align` | `'start' \| 'center' \| 'end'` | - | Alignment on the chosen side |
 | `sideOffset` | `number` | - | Main-axis offset from sub-trigger |
 | `alignOffset` | `number` | - | Cross-axis offset from sub-trigger |
 | `...props` | `React.ComponentPropsWithoutRef<typeof MenubarPrimitive.SubContent>` | - | Additional props inherited from `MenubarPrimitive.SubContent` |

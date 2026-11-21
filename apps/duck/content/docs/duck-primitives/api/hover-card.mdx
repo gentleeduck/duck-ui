@@ -21,7 +21,7 @@ import * as HoverCard from '@gentleduck/primitives/hover-card'
 </HoverCard.Root>
 ```
 
-## Example
+## Usage
 
 ```tsx
 <HoverCard.Root openDelay={200} closeDelay={300}>
@@ -60,6 +60,31 @@ The card opens without taking focus, and nothing inside it is in the tab order, 
 ## In an iframe
 
 Give `HoverCard.Portal` a `container` inside an iframe and the card follows presses and selection in the iframe's document.
+
+## Examples
+
+### Profile card
+
+<ComponentPreview
+  name="hover-card-basic"
+  description="A link that shows a card on hover or focus, with an arrow."
+/>
+
+### Delays
+
+<ComponentPreview
+  name="hover-card-delays"
+  description="openDelay and closeDelay set how long the pointer must stay, and how long the card lingers."
+/>
+
+### Controlled and disabled
+
+<ComponentPreview
+  name="hover-card-controlled"
+  description="open and onOpenChange in state, and disabled keeps the card closed."
+/>
+
+---
 
 ## API
 

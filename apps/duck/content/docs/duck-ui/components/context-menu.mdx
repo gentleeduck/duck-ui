@@ -93,6 +93,23 @@ import {
 </ContextMenu>
 ```
 
+## Examples
+
+
+### Groups and submenu offsets
+
+<ComponentPreview
+  name="context-menu-6"
+  description="A labelled group, and sideOffset and alignOffset on a submenu."
+/>
+
+### Kept mounted
+
+<ComponentPreview
+  name="context-menu-7"
+  description="forceMount keeps the menu in the page while closed."
+/>
+
 ## Component Composition
 
 <MermaidDiagram chart={`graph TD
@@ -281,8 +298,6 @@ Components in this file wrap `@gentleduck/primitives/context-menu`.
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `className` | `string` | - | Additional CSS classes |
-| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | - | Preferred side relative to the sub-trigger |
-| `align` | `'start' \| 'center' \| 'end'` | - | Alignment on the chosen side |
 | `sideOffset` | `number` | - | Main-axis offset from sub-trigger |
 | `alignOffset` | `number` | - | Cross-axis offset from sub-trigger |
 | `...props` | `React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.SubContent>` | - | Additional props inherited from `ContextMenuPrimitive.SubContent` |

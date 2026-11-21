@@ -20,7 +20,7 @@ This is the single direction module used by primitives and registry-ui component
 
 The provider renders a `div` with `data-slot="direction"`, `dir` and `display: contents`. The `dir` attribute is what makes the page's CSS follow the provider, logical properties and `[dir='rtl']` selectors included, and `display: contents` keeps the `div` out of layout, so a grid or flex parent still lays out the provider's children. Those children are ordered by the parent's direction, though, so put the provider around a row that should mirror, not inside it. A child selector across the provider, such as `.list > li`, does not match, since the `div` sits between the two.
 
-## Example
+## Usage
 
 ```tsx
 import { DirectionProvider } from '@gentleduck/primitives/direction'
@@ -36,6 +36,31 @@ export function App() {
   )
 }
 ```
+
+## Examples
+
+### One provider for every primitive
+
+<ComponentPreview
+  name="direction-provider"
+  description="DirectionProvider flips a slider and a toggle group inside it at once."
+/>
+
+### Reading it in your own component
+
+<ComponentPreview
+  name="direction-use-direction"
+  description="useDirection returns the provider's direction, or the local one it is given."
+/>
+
+### Nested providers
+
+<ComponentPreview
+  name="direction-nested"
+  description="A left to right provider inside a right to left one."
+/>
+
+---
 
 ## API
 

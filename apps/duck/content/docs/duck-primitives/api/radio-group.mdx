@@ -18,7 +18,7 @@ import * as RadioGroup from '@gentleduck/primitives/radio-group'
 </RadioGroup.Root>
 ```
 
-## Example
+## Usage
 
 ```tsx
 import * as RadioGroup from '@gentleduck/primitives/radio-group'
@@ -39,6 +39,52 @@ function DensityPicker() {
   )
 }
 ```
+
+## Examples
+
+### Basic
+
+<ComponentPreview
+  name="radio-group-basic"
+  description="Items with an Indicator and a label each."
+/>
+
+### Horizontal
+
+<ComponentPreview
+  name="radio-group-horizontal"
+  description="orientation horizontal, with loop off stopping the arrow keys at either end."
+/>
+
+### In a form
+
+<ComponentPreview
+  name="radio-group-form"
+  description="name submits the pick, required refuses an empty group, and a reset goes back."
+/>
+
+### Disabled and read-only
+
+<ComponentPreview
+  name="radio-group-disabled"
+  description="A disabled item the arrow keys pass over, and a read-only group whose pick cannot change."
+/>
+
+### Controlled
+
+<ComponentPreview
+  name="radio-group-controlled"
+  description="value and onValueChange, and null to select nothing."
+/>
+
+### Right to left
+
+<ComponentPreview
+  name="radio-group-rtl"
+  description="dir rtl flips the horizontal arrow keys."
+/>
+
+---
 
 ## API
 

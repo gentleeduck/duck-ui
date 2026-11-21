@@ -41,7 +41,7 @@ import * as ContextMenu from '@gentleduck/primitives/context-menu'
 
 ---
 
-## Example
+## Usage
 
 ```tsx
 import * as ContextMenu from '@gentleduck/primitives/context-menu'
@@ -81,6 +81,52 @@ function FileExplorer() {
   )
 }
 ```
+
+---
+
+## Examples
+
+### Basic
+
+<ComponentPreview
+  name="context-menu-basic"
+  description="Items with shortcuts, a label, a separator and a disabled item."
+/>
+
+### Checkbox and radio items
+
+<ComponentPreview
+  name="context-menu-checkbox-radio"
+  description="CheckboxItem and RadioGroup with ItemIndicator, and closeOnSelect off keeps the menu open while toggling."
+/>
+
+### Submenus
+
+<ComponentPreview
+  name="context-menu-submenu"
+  description="Sub, SubTrigger and SubContent, nested two deep."
+/>
+
+### Non-modal
+
+<ComponentPreview
+  name="context-menu-non-modal"
+  description="modal off keeps the page scrollable and clickable while the menu is open."
+/>
+
+### Disabled trigger
+
+<ComponentPreview
+  name="context-menu-disabled"
+  description="A disabled trigger lets the browser's own menu show."
+/>
+
+### Right to left
+
+<ComponentPreview
+  name="context-menu-rtl"
+  description="dir rtl lays the menu out right to left and opens submenus to the left."
+/>
 
 ---
 

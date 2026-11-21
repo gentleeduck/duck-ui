@@ -41,7 +41,7 @@ import * as DropdownMenu from '@gentleduck/primitives/dropdown-menu'
 
 ---
 
-## Example
+## Usage
 
 ```tsx
 import * as DropdownMenu from '@gentleduck/primitives/dropdown-menu'
@@ -109,6 +109,80 @@ const [open, setOpen] = React.useState(false)
   </Dialog.Portal>
 </Dialog.Root>
 ```
+
+---
+
+## Examples
+
+### Basic
+
+<ComponentPreview
+  name="dropdown-menu-basic"
+  description="A label, a group, shortcuts, a disabled item and an arrow, with typeahead on the first letter."
+/>
+
+### Checkbox and radio items
+
+<ComponentPreview
+  name="dropdown-menu-selection"
+  description="Radio group and checkbox item semantics for keyboard-first selection."
+/>
+
+### Submenus
+
+<ComponentPreview
+  name="dropdown-menu-submenu"
+  description="Sub, SubTrigger and SubContent, nested two deep."
+/>
+
+### Side and alignment
+
+<ComponentPreview
+  name="dropdown-menu-positioning"
+  description="side, align, sideOffset and collisionPadding place the content around the trigger."
+/>
+
+### Non-modal
+
+<ComponentPreview
+  name="dropdown-menu-non-modal"
+  description="modal off leaves the page scrollable and clickable while the menu is open."
+/>
+
+### An item that opens a dialog
+
+<ComponentPreview
+  name="dropdown-menu-open-dialog"
+  description="The dialog's finalFocus sends focus back to the menu's trigger, which the dialog does not own."
+/>
+
+### Items that keep it open
+
+<ComponentPreview
+  name="dropdown-menu-keep-open"
+  description="closeOnSelect off keeps the menu open while zooming in and out."
+/>
+
+### Typeahead text
+
+<ComponentPreview
+  name="dropdown-menu-typeahead"
+  description="textValue names an item whose content starts with something else."
+/>
+
+### Controlled
+
+<ComponentPreview
+  name="dropdown-menu-controlled"
+  description="open and onOpenChange in state."
+/>
+
+### Right to left
+
+<ComponentPreview
+  name="dropdown-menu-rtl"
+  description="dir rtl lays the menu out right to left and opens submenus to the left."
+/>
 
 ---
 

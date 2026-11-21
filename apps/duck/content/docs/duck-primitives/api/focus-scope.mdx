@@ -20,6 +20,31 @@ import { FocusScope } from '@gentleduck/primitives/focus-scope'
 </FocusScope>
 ```
 
+## Examples
+
+### Trapped and looping
+
+<ComponentPreview
+  name="focus-scope-trapped"
+  description="trapped keeps Tab inside the scope, and loop wraps it from the last element to the first."
+/>
+
+### Mount and unmount focus
+
+<ComponentPreview
+  name="focus-scope-auto-focus"
+  description="onMountAutoFocus can keep focus where it was, and onUnmountAutoFocus sends it back to the toggle."
+/>
+
+### Branches
+
+<ComponentPreview
+  name="focus-scope-branches"
+  description="branches let a trapped scope take focus into portalled content and back."
+/>
+
+---
+
 ## Props
 
 | Prop | Type | Default | Description |

@@ -142,6 +142,27 @@ A card can load what it shows once it opens, as a profile fetched on hover does.
   description="A hover card that loads a profile once it opens."
 />
 
+### Open from the start, aligned
+
+<ComponentPreview
+  name="hover-card-9"
+  description="defaultOpen, a bordered trigger, and the content aligned to the start with offsets."
+/>
+
+### Motion placement
+
+<ComponentPreview
+  name="hover-card-10"
+  description="MotionHoverCard's placement sets the side each card opens on and animates from."
+/>
+
+### Kept mounted
+
+<ComponentPreview
+  name="hover-card-11"
+  description="forceMount keeps the card's state, a like count, while closed."
+/>
+
 ## RTL Support
 
 Set the direction once with `DirectionProvider` (or `<html dir="rtl">`) and the hover card follows. The portaled content gets the resolved `dir`, the trigger keeps the page's, and `side="left"`/`side="right"` and `align="start"`/`align="end"` mirror with it.

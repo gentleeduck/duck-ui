@@ -25,7 +25,7 @@ import * as Accordion from '@gentleduck/primitives/accordion'
 
 ---
 
-## Example
+## Usage
 
 ```tsx
 import * as Accordion from '@gentleduck/primitives/accordion'
@@ -53,6 +53,73 @@ function BasicAccordion() {
   )
 }
 ```
+
+---
+
+## Examples
+
+### Single, collapsible
+
+<ComponentPreview
+  name="accordion-single"
+  description="One item open at a time, closed again on a second press, with an Indicator and a CSS height animation."
+/>
+
+### Multiple
+
+<ComponentPreview
+  name="accordion-multiple"
+  description="Several items open together, starting from a defaultValue array."
+/>
+
+### Controlled
+
+<ComponentPreview
+  name="accordion-controlled"
+  description="The open item held in state and moved by buttons, with onFocusChange reporting the focused trigger."
+/>
+
+### Disabled
+
+<ComponentPreview
+  name="accordion-disabled"
+  description="A disabled item the arrow keys pass over, and a whole accordion disabled from a button."
+/>
+
+### Horizontal
+
+<ComponentPreview
+  name="accordion-horizontal"
+  description="orientation horizontal moves focus with ArrowLeft and ArrowRight, and loop off stops it at either end."
+/>
+
+### Right to left
+
+<ComponentPreview
+  name="accordion-rtl"
+  description="dir rtl lays the items out right to left and flips the horizontal arrow keys."
+/>
+
+### Found by the browser's search
+
+<ComponentPreview
+  name="accordion-hidden-until-found"
+  description="hiddenUntilFound keeps closed content searchable, and find-in-page opens the item holding a match."
+/>
+
+### Force mounted
+
+<ComponentPreview
+  name="accordion-force-mount"
+  description="forceMount keeps closed content in the page, for the page's own styles to collapse."
+/>
+
+### Each item's onOpenChange
+
+<ComponentPreview
+  name="accordion-item-open-change"
+  description="An item's own onOpenChange hears its trigger, and not another item closing it."
+/>
 
 ---
 

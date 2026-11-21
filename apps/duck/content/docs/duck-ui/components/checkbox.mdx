@@ -120,6 +120,13 @@ A controlled checkbox shows `checked` and nothing else. A click calls `onChecked
 
 Inside a `<form>`, or with `form`, the checkbox submits under `name`, and a form reset puts it back on `defaultChecked`, or on the `checked` it was first given, and calls `onCheckedChange` with that state. A click fires the form's `change` event, even when its handler stops propagation, as a native input's does. A value set through `checked` fires it too, as a click would, without running the checkbox's own `onChange`, `onClick` or `onCheckedChange`; a move between unchecked and mixed fires nothing, since the form sees the box unchecked both times. If the owner does not follow a reset, the checkbox goes back to its `checked` before the next paint.
 
+### Motion checkbox group
+
+<ComponentPreview
+  name="checkbox-12"
+  description="MotionCheckboxGroup draws a list of subtasks with checkboxes."
+/>
+
 ## Component Composition
 
 <MermaidDiagram chart={`graph TD

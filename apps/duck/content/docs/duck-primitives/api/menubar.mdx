@@ -30,7 +30,7 @@ import * as Menubar from '@gentleduck/primitives/menubar'
 </Menubar.Root>
 ```
 
-## Example
+## Usage
 
 ```tsx
 <Menubar.Root className="flex gap-1 bg-white border rounded-md p-1">
@@ -69,6 +69,52 @@ import * as Menubar from '@gentleduck/primitives/menubar'
   {/* the same menus; each opens to the right of its trigger */}
 </Menubar.Root>
 ```
+
+## Examples
+
+### Basic
+
+<ComponentPreview
+  name="menubar-basic"
+  description="Menus with shortcuts, a submenu, a disabled item, a checkbox item and a radio group."
+/>
+
+### Vertical
+
+<ComponentPreview
+  name="menubar-vertical"
+  description="orientation vertical runs the bar down the page and opens its menus to the side."
+/>
+
+### Controlled
+
+<ComponentPreview
+  name="menubar-controlled"
+  description="value and onValueChange hold which menu is open, and buttons open and close it."
+/>
+
+### Modal
+
+<ComponentPreview
+  name="menubar-modal"
+  description="modal locks the page and keeps focus in the open menu."
+/>
+
+### Disabled
+
+<ComponentPreview
+  name="menubar-disabled"
+  description="disabled turns every trigger in the bar off."
+/>
+
+### Right to left
+
+<ComponentPreview
+  name="menubar-rtl"
+  description="dir rtl runs the bar right to left and flips the arrow keys."
+/>
+
+---
 
 ## API
 

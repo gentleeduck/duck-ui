@@ -8,6 +8,31 @@ order: 10
 import { Mount, MountMinimal } from '@gentleduck/primitives/mount'
 ```
 
+## Examples
+
+### A fixed exit time
+
+<ComponentPreview
+  name="mount-timed"
+  description="Mount keeps its children for animationDuration after it closes."
+/>
+
+### Waiting for a transition
+
+<ComponentPreview
+  name="mount-minimal"
+  description="MountMinimal unmounts once another element's CSS transition ends."
+/>
+
+### Mounted once
+
+<ComponentPreview
+  name="mount-render-once"
+  description="renderOnce keeps the children, and their state, after they have opened."
+/>
+
+---
+
 ## `Mount`
 
 Mounts its children in the commit that sets `open`, and unmounts them `animationDuration` after `open` goes false. Opening again before then keeps them.

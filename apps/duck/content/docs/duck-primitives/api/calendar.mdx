@@ -26,7 +26,7 @@ import * as Calendar from '@gentleduck/primitives/calendar'
 
 ---
 
-## Example
+## Usage
 
 ```tsx showLineNumbers
 import { NativeAdapter } from '@gentleduck/calendar'
@@ -57,6 +57,94 @@ function DatePicker() {
   )
 }
 ```
+
+---
+
+## Examples
+
+### Single
+
+<ComponentPreview
+  name="calendar-single"
+  description="One day at a time, with the nav buttons and header around the grid."
+/>
+
+### Range over two months
+
+<ComponentPreview
+  name="calendar-range"
+  description="mode range across numberOfMonths 2, with pageBehavior visible turning both."
+/>
+
+### Several days
+
+<ComponentPreview
+  name="calendar-multi"
+  description="mode multi picks days one by one, and a second press takes one off."
+/>
+
+### Several ranges
+
+<ComponentPreview
+  name="calendar-multi-range"
+  description="mode multi-range keeps each finished range, and Shift with a press splits a long one."
+/>
+
+### Bounds, disabled and booked days
+
+<ComponentPreview
+  name="calendar-constraints"
+  description="fromDate and toDate hold the month, disabled skips weekends, and unavailable days keep focus but break a range."
+/>
+
+### Month and year views
+
+<ComponentPreview
+  name="calendar-views"
+  description="ViewTrigger opens the year and month views, and the root's data-view shows one at a time."
+/>
+
+### Week numbers and a Monday start
+
+<ComponentPreview
+  name="calendar-week-numbers"
+  description="showWeekNumber with a British locale whose week starts on Monday."
+/>
+
+### Right to left
+
+<ComponentPreview
+  name="calendar-rtl"
+  description="An Arabic locale lays the grid out right to left and flips the arrow keys."
+/>
+
+### Read-only and invalid
+
+<ComponentPreview
+  name="calendar-read-only"
+  description="readOnly moves focus without picking, and invalid marks the selection."
+/>
+
+### Six fixed weeks
+
+<ComponentPreview
+  name="calendar-fixed-weeks"
+  description="fixedWeeks always draws six rows, with showOutsideDays off."
+/>
+
+### Controlled month and selection
+
+<ComponentPreview
+  name="calendar-controlled"
+  description="month, selected and their handlers in state, with onDismiss on Escape."
+/>
+
+### Your own day and title
+
+<ComponentPreview
+  name="calendar-custom-day"
+  description="A function child draws each day with a busy marker, and formatMonth shortens the header."
+/>
 
 ---
 

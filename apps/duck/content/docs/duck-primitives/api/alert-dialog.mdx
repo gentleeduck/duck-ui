@@ -41,7 +41,7 @@ Opened from a dialog's content, it is a [nested dialog](/duck-primitives/api/dia
 
 ---
 
-## Example
+## Usage
 
 ```tsx
 import * as AlertDialog from '@gentleduck/primitives/alert-dialog'
@@ -75,6 +75,38 @@ function DeleteButton() {
   )
 }
 ```
+
+---
+
+## Examples
+
+### Confirm a destructive action
+
+<ComponentPreview
+  name="alert-dialog-confirm"
+  description="A press outside does nothing, and focus starts on Cancel."
+/>
+
+### Wait for the action
+
+<ComponentPreview
+  name="alert-dialog-async-action"
+  description="The action prevents the close, runs its work, then closes the dialog, and Escape waits for it too."
+/>
+
+### Start focus elsewhere
+
+<ComponentPreview
+  name="alert-dialog-initial-focus"
+  description="initialFocus moves the first focus from Cancel to another element."
+/>
+
+### Right to left
+
+<ComponentPreview
+  name="alert-dialog-rtl"
+  description="dir rtl lays the content and overlay out right to left."
+/>
 
 ---
 

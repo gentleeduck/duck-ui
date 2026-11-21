@@ -19,7 +19,7 @@ import * as Avatar from '@gentleduck/primitives/avatar'
 
 ---
 
-## Example
+## Usage
 
 ```tsx
 import * as Avatar from '@gentleduck/primitives/avatar'
@@ -39,6 +39,38 @@ function UserAvatar() {
   )
 }
 ```
+
+---
+
+## Examples
+
+### Image and fallback
+
+<ComponentPreview
+  name="avatar-fallback"
+  description="The fallback shows until the image loads, and stays when there is none."
+/>
+
+### Loading status
+
+<ComponentPreview
+  name="avatar-loading-status"
+  description="onLoadingStatusChange reports each image's status, and a broken one keeps its fallback."
+/>
+
+### Delayed fallback
+
+<ComponentPreview
+  name="avatar-delay"
+  description="delayMs holds the fallback back so a fast image never flashes it, and 0 shows it at once."
+/>
+
+### srcSet only
+
+<ComponentPreview
+  name="avatar-src-set"
+  description="Candidates for each pixel density, without a src."
+/>
 
 ---
 

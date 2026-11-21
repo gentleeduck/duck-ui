@@ -33,7 +33,7 @@ const {
 
 ---
 
-## Example
+## Usage
 
 ```tsx
 import { useSvgIndicator } from '@gentleduck/primitives/checkers'
@@ -53,6 +53,31 @@ function CustomIndicatorInput() {
   )
 }
 ```
+
+---
+
+## Examples
+
+### Checked and indeterminate icons
+
+<ComponentPreview
+  name="checkers-svg-indicator"
+  description="useSvgIndicator draws a check and a dash into native checkboxes through mask variables, with a parent that turns indeterminate."
+/>
+
+### A switch drawn from two icons
+
+<ComponentPreview
+  name="checkers-switch-indicator"
+  description="indicator and checkedIndicator give a native input with role switch its off and on thumbs."
+/>
+
+### A form that hears a controlled value
+
+<ComponentPreview
+  name="checkers-checked-sync"
+  description="useCheckedSync lets the form's onChange hear a value set from outside, and puts the box back after a reset."
+/>
 
 ---
 

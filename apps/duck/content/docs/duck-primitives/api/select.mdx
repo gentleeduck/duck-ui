@@ -37,7 +37,7 @@ import * as Select from '@gentleduck/primitives/select'
 
 ---
 
-## Example
+## Usage
 
 ```tsx
 import * as Select from '@gentleduck/primitives/select'
@@ -114,6 +114,73 @@ function ToppingsSelect() {
 - The hidden native select is a `<select multiple>`, so a form gets `name` once per value, `required` asks for one pick, and a form reset restores the starting list.
 - Typing a letter on the closed trigger picks nothing, since the pick would be made out of sight.
 - With `position="item-aligned"`, the list opens with the first pick lined up over the trigger and focused, and holds still while picks are made.
+
+---
+
+## Examples
+
+### Basic
+
+<ComponentPreview
+  name="select-basic"
+  description="Groups, labels, a separator, item indicators, a disabled item and scroll buttons."
+/>
+
+### Controlled
+
+<ComponentPreview
+  name="select-controlled"
+  description="Controlled Select value management with explicit onValueChange handling."
+/>
+
+### Popper position
+
+<ComponentPreview
+  name="select-popper"
+  description="position popper places the content below the trigger at its width, with an arrow."
+/>
+
+### Multiple
+
+<ComponentPreview
+  name="select-multiple"
+  description="multiple keeps a list, and a function child of Value draws it."
+/>
+
+### Items as data
+
+<ComponentPreview
+  name="select-items"
+  description="items gives a closed select the label of its value without rendering its items."
+/>
+
+### In a form
+
+<ComponentPreview
+  name="select-form"
+  description="name, autoComplete and required, with a reset that goes back."
+/>
+
+### Controlled open state
+
+<ComponentPreview
+  name="select-controlled-open"
+  description="open and onOpenChange, opened from another button."
+/>
+
+### Disabled
+
+<ComponentPreview
+  name="select-disabled"
+  description="disabled turns the trigger off."
+/>
+
+### Right to left
+
+<ComponentPreview
+  name="select-rtl"
+  description="dir rtl lays the trigger and content out right to left."
+/>
 
 ---
 
@@ -298,6 +365,8 @@ Arrow pointing to the trigger. Only renders when `position="popper"`.
 | <Kbd>ArrowUp</Kbd> | Opens the select or moves focus to previous item |
 | <Kbd>Home</Kbd> | Moves focus to first item |
 | <Kbd>End</Kbd> | Moves focus to last item |
+| <Kbd>PageUp</Kbd> | Moves focus to first item |
+| <Kbd>PageDown</Kbd> | Moves focus to last item |
 | <Kbd>Escape</Kbd> | Closes the select |
 | <Kbd>Tab</Kbd> | Prevented while open (standard select behavior) |
 | A letter | Focus the next item after the focused one whose text starts with it. On the closed trigger, pick the next one after the selected item, except with `multiple`, where it picks nothing |

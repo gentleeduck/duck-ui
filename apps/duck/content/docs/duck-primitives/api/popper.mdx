@@ -19,7 +19,7 @@ import * as Popper from '@gentleduck/primitives/popper'
 </Popper.Root>
 ```
 
-## Example
+## Usage
 
 Content that follows the pointer, measured from a virtual anchor that `updatePositionStrategy="always"` reads every frame:
 
@@ -41,6 +41,38 @@ const anchor = React.useRef<IPopper.IMeasurable>({
   </Popper.Root>
 </div>
 ```
+
+## Examples
+
+### Sides
+
+<ComponentPreview
+  name="popper-basic"
+  description="Popper places content on any side of its anchor, with an arrow."
+/>
+
+### A virtual anchor
+
+<ComponentPreview
+  name="popper-virtual"
+  description="virtualRef positions the content against the pointer instead of an element."
+/>
+
+### Collisions in a scrolling box
+
+<ComponentPreview
+  name="popper-collisions"
+  description="collisionBoundary, sticky and hideWhenDetached keep the content inside a box and hide it once the anchor leaves."
+/>
+
+### Available size
+
+<ComponentPreview
+  name="popper-available-size"
+  description="--gentleduck-popper-available-height caps a long list at the room left."
+/>
+
+---
 
 ## API
 

@@ -32,7 +32,7 @@ import * as Pagination from '@gentleduck/primitives/pagination'
 
 `Pagination.Pages` renders an `Item` holding a `Page` for each page and one holding an `Ellipsis` for each gap. The list is the same length on every page, so the triggers never move under the pointer. Give an ellipsis the width of a page and nothing shifts at all.
 
-## Example
+## Usage
 
 ```tsx
 const [page, setPage] = React.useState(1)
@@ -66,6 +66,52 @@ const navigate = (event: React.MouseEvent<HTMLElement>) => {
 
 <Pagination.Page value={item} onClick={navigate} />
 ```
+
+## Examples
+
+### Basic
+
+<ComponentPreview
+  name="pagination-basic"
+  description="First, Previous, Pages, Next and Last around twelve pages."
+/>
+
+### Controlled
+
+<ComponentPreview
+  name="pagination-controlled"
+  description="page and onPageChange page through a list."
+/>
+
+### Siblings and boundaries
+
+<ComponentPreview
+  name="pagination-sibling-boundary"
+  description="siblingCount and boundaryCount set how many pages show around the current one and at each end."
+/>
+
+### As links
+
+<ComponentPreview
+  name="pagination-links"
+  description="getPageHref makes every control a link, which takes a link's own target and rel."
+/>
+
+### Your own pages
+
+<ComponentPreview
+  name="pagination-custom-pages"
+  description="A function child draws each page and ellipsis."
+/>
+
+### Right to left
+
+<ComponentPreview
+  name="pagination-rtl"
+  description="dir rtl runs the pages right to left."
+/>
+
+---
 
 ## API
 

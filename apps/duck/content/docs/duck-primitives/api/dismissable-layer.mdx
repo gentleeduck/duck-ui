@@ -8,6 +8,45 @@ order: 10
 import { DismissableLayer, DismissableLayerBranch, useDismissableLayerSurface } from '@gentleduck/primitives/dismissable-layer'
 ```
 
+## Examples
+
+### Why it closed
+
+<ComponentPreview
+  name="dismissable-layer-basic"
+  description="onEscapeKeyDown, onPointerDownOutside and onFocusOutside name what closed the layer."
+/>
+
+### Stacked layers
+
+<ComponentPreview
+  name="dismissable-layer-stacked"
+  description="Escape and a press outside close the newest layer first."
+/>
+
+### A branch
+
+<ComponentPreview
+  name="dismissable-layer-branch"
+  description="A press inside a DismissableLayerBranch leaves the layer open."
+/>
+
+### A surface
+
+<ComponentPreview
+  name="dismissable-layer-surface"
+  description="useDismissableLayerSurface lets a backdrop that stops its own presses still close the layer."
+/>
+
+### Blocking the page
+
+<ComponentPreview
+  name="dismissable-layer-block-outside"
+  description="disableOutsidePointerEvents keeps the page from taking a press while the layer is open."
+/>
+
+---
+
 ## Props
 
 | Prop | Type | Default | Description |

@@ -26,7 +26,7 @@ import * as Dialog from '@gentleduck/primitives/dialog'
 
 ---
 
-## Example
+## Usage
 
 ```tsx
 import * as Dialog from '@gentleduck/primitives/dialog'
@@ -61,6 +61,66 @@ function DeleteConfirmation() {
   )
 }
 ```
+
+---
+
+## Examples
+
+### Basic
+
+<ComponentPreview
+  name="dialog-basic"
+  description="A form in a modal dialog with a title, description and close buttons."
+/>
+
+### Guarded while busy
+
+<ComponentPreview
+  name="dialog-guarded-async"
+  description="Escape and a press outside are blocked while the save runs."
+/>
+
+### Non-modal
+
+<ComponentPreview
+  name="dialog-non-modal"
+  description="modal off traps no focus and locks no scroll, so the page stays usable beside it."
+/>
+
+### Where focus starts and ends
+
+<ComponentPreview
+  name="dialog-focus"
+  description="initialFocus starts in a chosen field and finalFocus lands on another element on close."
+/>
+
+### Unsaved changes
+
+<ComponentPreview
+  name="dialog-unsaved-guard"
+  description="onEscapeKeyDown and onPointerDownOutside prevent the close while there is text, and say why."
+/>
+
+### Nested dialogs
+
+<ComponentPreview
+  name="dialog-nested"
+  description="A dialog opened from a dialog, with the parent scaled by --gentleduck-dialog-nested-dialogs."
+/>
+
+### A portal container
+
+<ComponentPreview
+  name="dialog-container"
+  description="Portal's container renders the content into an element of the page."
+/>
+
+### Right to left
+
+<ComponentPreview
+  name="dialog-rtl"
+  description="dir rtl lays the content and overlay out right to left."
+/>
 
 ---
 

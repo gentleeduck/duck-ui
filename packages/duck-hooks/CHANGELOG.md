@@ -1,5 +1,11 @@
 # @gentleduck/hooks
 
+## 1.0.1
+
+### Patch Changes
+
+- 3390968: `useMediaQuery` no longer throws where there is no `matchMedia`, as on a server render or in jsdom.
+
 ## 1.0.0
 
 ### Major Changes

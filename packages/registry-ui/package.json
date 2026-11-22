@@ -4,11 +4,11 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@gentleduck/calendar": "^0.5.0",
+    "@gentleduck/calendar": "^1.0.0",
     "@gentleduck/hooks": "^1.0.0",
     "@gentleduck/libs": "^1.0.0",
-    "@gentleduck/motion": "^1.0.0",
-    "@gentleduck/primitives": "^0.5.0",
+    "@gentleduck/motion": "^1.1.0",
+    "@gentleduck/primitives": "^1.0.0",
     "@gentleduck/variants": "^1.0.0",
     "@gentleduck/vim": "^0.3.0",
     "embla-carousel-react": "8.6.0",
@@ -72,7 +72,7 @@
   },
   "type": "module",
   "sideEffects": false,
-  "version": "0.8.1",
+  "version": "1.0.0",
   "description": "Styled Tailwind components for Duck UI.",
   "keywords": [
     "gentleduck",

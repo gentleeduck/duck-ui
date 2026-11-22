@@ -1,5 +1,11 @@
 # @gentleduck/registers
 
+## 1.0.3
+
+### Patch Changes
+
+- 3390968: Every example, block and internal item lists the registry parts and npm packages its files import, so an item added through the CLI comes with everything it needs. Command installs `keys-label` and `shortcut-binder` and drops the unused `@gentleduck/vim`.
+
 ## 1.0.2
 
 ### Patch Changes

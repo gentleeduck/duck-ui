@@ -35,7 +35,7 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@gentleduck/hooks": "^1.0.0",
+    "@gentleduck/hooks": "^1.0.1",
     "@gentleduck/libs": "^1.0.0",
     "@gentleduck/vim": "^0.3.0",
     "jotai": "^2.14.0",

@@ -101,8 +101,8 @@ const nextConfig: NextConfig = {
     // forks blow past the 8 GB Netlify build sandbox and SIGKILL.
     cpus: 4,
     workerThreads: false,
-    // Inlines CSS into HTML so no render-blocking <link rel="stylesheet">.
-    inlineCss: true,
+    // Not inlineCss: it copies the 400 KB stylesheet into every page's client manifest, about 100 MB,
+    // and the Netlify server function then passes its 250 MB limit.
     // Rewrites barrel imports to drop unused symbols (lucide alone ~30 KB/route).
     optimizePackageImports: [
       'lucide-react',

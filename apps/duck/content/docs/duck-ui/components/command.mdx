@@ -355,6 +355,13 @@ The palette below starts on `defaultValue`, wraps with `loop`, takes no Ctrl key
   description="MotionCommandDialog animates the palette in and out."
 />
 
+### A text part of your own
+
+<ComponentPreview
+  name="command-13"
+  description="useCommandItemContext registers a label as the item's text, so search reads the label and not its shortcut."
+/>
+
 ## Component Composition
 
 <MermaidDiagram chart={`graph TD
@@ -403,7 +410,7 @@ The rest of what the parts share lives in the primitive, `@gentleduck/primitives
 
 **CommandItemContextValue**
 
-Per-item context. Available via `useCommandItemContext()`.
+Per-item context, read with `useCommandItemContext(consumerName, scope)` from `@gentleduck/primitives/command`. A text part of your own takes `textId` as its `id` and passes `onItemTextChange` as its `ref`, so search reads that part's text rather than the whole item, as the [text part example](#a-text-part-of-your-own) does.
 
 | Property | Type | Description |
 | --- | --- | --- |

@@ -122,6 +122,13 @@ Style the trigger to appear active while the collapsible is expanded using `data
   description="useCollapsible gives a child the open state, its setter and the content's id."
 />
 
+### Its refs
+
+<ComponentPreview
+  name="collapsible-8"
+  description="useCollapsible hands its parts' refs on: show and scroll to the content, focus the trigger, scroll to the section."
+/>
+
 ## Component Composition
 
 <MermaidDiagram chart={`graph TD
@@ -206,6 +213,8 @@ const { open, onOpenChange } = useCollapsible()
 | `triggerRef` | `React.RefObject<HTMLButtonElement \| null>` | Ref to the trigger button |
 | `contentRef` | `React.RefObject<HTMLElement \| null>` | Ref to the content section |
 | `contentId` | `string` | Auto-generated ID linking trigger and content via `aria-controls` |
+
+The refs hold their elements once the parts mount, so read them in a handler or an effect, as the [refs example](#its-refs) does to scroll to the content and focus the trigger.
 
 
 ### MotionCollapsibleContent

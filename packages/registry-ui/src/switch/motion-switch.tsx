@@ -26,7 +26,7 @@ const MotionSwitch = React.forwardRef<
   const isRtl = direction === 'rtl'
   const isControlled = checked !== undefined
   const [internalChecked, setInternalChecked] = React.useState<boolean>(defaultChecked ?? false)
-  const value = isControlled ? (checked ?? false) : internalChecked
+  const value = isControlled ? checked : internalChecked
   const [pressed, setPressed] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
   React.useImperativeHandle(ref, () => inputRef.current as HTMLInputElement, [])

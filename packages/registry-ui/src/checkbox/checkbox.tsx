@@ -43,7 +43,8 @@ const Checkbox = React.forwardRef<HTMLInputElement, ICheckboxProps>(
     const resetTo = checkedProp === undefined ? defaultChecked : firstChecked
 
     useLayoutEffect(() => {
-      if (inputRef.current) inputRef.current.indeterminate = checked === 'indeterminate'
+      // biome-ignore lint/style/noNonNullAssertion: the input renders with the checkbox, so the ref holds it here
+      inputRef.current!.indeterminate = checked === 'indeterminate'
     }, [checked])
 
     const sync = useCheckedSync(inputRef, {
@@ -59,7 +60,8 @@ const Checkbox = React.forwardRef<HTMLInputElement, ICheckboxProps>(
 
     // The form resets the input to this, and the state follows it through onReset.
     useLayoutEffect(() => {
-      if (inputRef.current) inputRef.current.defaultChecked = resetTo === true
+      // biome-ignore lint/style/noNonNullAssertion: the input renders with the checkbox, so the ref holds it here
+      inputRef.current!.defaultChecked = resetTo === true
     }, [resetTo])
 
     return (

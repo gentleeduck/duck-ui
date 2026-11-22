@@ -18,8 +18,14 @@ export function tryParseJson(text: string): IJsonParseResult {
   try {
     return { ok: true, value: JSON.parse(raw) }
   } catch (error) {
-    return { ok: false, message: error instanceof Error ? error.message : 'Invalid JSON' }
+    // JSON.parse throws only a SyntaxError.
+    return { ok: false, message: (error as SyntaxError).message }
   }
+}
+
+/** A value as the pretty-printed JSON the editor shows. */
+export function formatValue(value: unknown): string {
+  return JSON.stringify(value, null, 2)
 }
 
 export function isObjectLike(value: unknown): value is Record<string, unknown> {
@@ -31,5 +37,5 @@ export function formatJson(text: string): { ok: true; formatted: string } | { ok
   if (!parsed.ok) return parsed
   if (parsed.value === null) return { ok: true, formatted: '' }
 
-  return { ok: true, formatted: JSON.stringify(parsed.value, null, 2) }
+  return { ok: true, formatted: formatValue(parsed.value) }
 }

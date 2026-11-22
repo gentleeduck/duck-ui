@@ -3,41 +3,8 @@
 import { cn } from '@gentleduck/libs/cn'
 import * as React from 'react'
 import { buttonVariants } from '../button'
-import { getCachedNumberFormat } from './calendar.libs'
+import { formatDayNumber } from './calendar.libs'
 import type { ICalendarDayCellProps } from './calendar.types'
-
-const HEBREW_ONES = [
-  '',
-  '\u05D0\u05F3',
-  '\u05D1\u05F3',
-  '\u05D2\u05F3',
-  '\u05D3\u05F3',
-  '\u05D4\u05F3',
-  '\u05D5\u05F3',
-  '\u05D6\u05F3',
-  '\u05D7\u05F3',
-  '\u05D8\u05F3',
-]
-const HEBREW_TENS = ['', '\u05D9\u05F3', '\u05DB\u05F3', '\u05DC\u05F3']
-
-function toHebrewNumeral(n: number): string {
-  if (n === 15) return '\u05D8\u05F4\u05D5'
-  if (n === 16) return '\u05D8\u05F4\u05D6'
-  const ten = Math.floor(n / 10)
-  const one = n % 10
-  if (one === 0) return HEBREW_TENS[ten] ?? String(n)
-  if (ten === 0) return HEBREW_ONES[one] ?? String(n)
-  const t = (HEBREW_TENS[ten] ?? '').replace('\u05F3', '')
-  const o = (HEBREW_ONES[one] ?? '').replace('\u05F3', '')
-  return `${t}\u05F4${o}`
-}
-
-function formatDayNumber(d: number, locale?: string): React.ReactNode {
-  if (!locale) return d
-  if (locale.startsWith('ar')) return getCachedNumberFormat(`${locale}-u-nu-arab`).format(d)
-  if (locale.startsWith('he')) return toHebrewNumeral(d)
-  return getCachedNumberFormat(locale).format(d)
-}
 
 export const CalendarDayCell = React.memo(function CalendarDayCell({
   day,
@@ -107,7 +74,6 @@ export const CalendarDayCell = React.memo(function CalendarDayCell({
         isInRange && isFirstInRow && !day.isRangeStart && 'rounded-s-md',
         isInRange && isLastInRow && !day.isRangeEnd && 'rounded-e-md',
         day.isOutside && !day.isHidden && 'text-muted-foreground',
-        day.isOutside && !day.isHidden && day.isSelected && 'text-muted-foreground',
         day.isDisabled && !day.isHidden && 'cursor-not-allowed text-muted-foreground opacity-50',
       )}>
       <button type="button" {...btnProps}>

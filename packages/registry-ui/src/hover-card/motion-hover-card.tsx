@@ -10,7 +10,7 @@ import { LazyMotion, m } from 'motion/react'
 import * as React from 'react'
 import { hoverCardContentStyle } from './hover-card.constants'
 
-export const HoverCardPlacementContext = React.createContext<'top' | 'right' | 'bottom' | 'left' | undefined>('top')
+export const HoverCardPlacementContext = React.createContext<'top' | 'right' | 'bottom' | 'left'>('top')
 
 function MotionHoverCard({
   placement = 'top',
@@ -37,7 +37,7 @@ const MotionHoverCardContent = React.forwardRef<
 >(({ className, children, side, align = 'center', sideOffset = 4, ...props }, ref) => {
   const defaultSide = React.useContext(HoverCardPlacementContext)
   const { isOpen } = useMotionContent()
-  const resolvedSide = side ?? defaultSide ?? 'top'
+  const resolvedSide = side ?? defaultSide
   const preset = React.useMemo(() => createTooltipPreset(resolvedSide, 6), [resolvedSide])
   const shouldRender = useMotionMount(isOpen)
 

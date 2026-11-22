@@ -23,7 +23,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from '../field'
 import { Popover, PopoverContent, PopoverTrigger } from '../popover'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../sheet'
 import { useJsonEditorHotkeys } from './json-editor.hooks'
-import { formatJson, isObjectLike, safeStringify, tryParseJson } from './json-editor.libs'
+import { formatValue, isObjectLike, safeStringify, tryParseJson } from './json-editor.libs'
 import type { IJsonEditorText, IJsonTextareaFieldProps } from './json-editor.types'
 import { JsonEditorView } from './json-editor.view'
 
@@ -127,6 +127,9 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
 
   const draftParsed = tryParseJson(draft)
   const sheetParsed = tryParseJson(sheetDraft)
+  // Format is offered only for a draft that reads as a value, so its handler exists only then.
+  const draftFormatted = draftParsed.ok && draftParsed.value !== null ? formatValue(draftParsed.value) : undefined
+  const sheetFormatted = sheetParsed.ok && sheetParsed.value !== null ? formatValue(sheetParsed.value) : undefined
 
   // Commits the text when the field takes its value, and answers why when it does not.
   const commit = (text: string): string | null => {
@@ -153,10 +156,8 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
     setPopoverOpen(false)
   }
 
-  const formatInline = () => {
-    const result = formatJson(draft)
-    if (!result.ok) return
-    setDraft(result.formatted)
+  const formatInline = (formatted: string) => {
+    setDraft(formatted)
     setDirty(true)
   }
 
@@ -196,10 +197,8 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
     setSheetOpen(false)
   }
 
-  const formatSheet = () => {
-    const result = formatJson(sheetDraft)
-    if (!result.ok) return
-    setSheetDraft(result.formatted)
+  const formatSheet = (formatted: string) => {
+    setSheetDraft(formatted)
     setSheetDirty(true)
   }
 
@@ -276,8 +275,8 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
 
         <div className={cn('flex items-center gap-2', actionsClassName)} data-slot="json-editor-actions">
           <C.Button
-            disabled={!isEditable || !draftParsed.ok || draftParsed.value === null}
-            onClick={formatInline}
+            disabled={!isEditable || draftFormatted === undefined}
+            onClick={draftFormatted === undefined ? undefined : () => formatInline(draftFormatted)}
             size="sm"
             type="button"
             variant="outline">
@@ -370,8 +369,8 @@ export function JsonTextareaField<TFieldValues extends FieldValues>(
 
                 <div className="flex items-center gap-2">
                   <C.Button
-                    disabled={!isEditable || !sheetParsed.ok || sheetParsed.value === null}
-                    onClick={formatSheet}
+                    disabled={!isEditable || sheetFormatted === undefined}
+                    onClick={sheetFormatted === undefined ? undefined : () => formatSheet(sheetFormatted)}
                     size="sm"
                     type="button"
                     variant="outline">

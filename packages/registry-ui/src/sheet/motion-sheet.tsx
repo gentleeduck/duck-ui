@@ -29,8 +29,9 @@ const POSITION_CLASSES: Record<DirectionalSide, string> = {
 /** Carries the root `dir` prop to the content, which needs a physical side for the slide offset. */
 const MotionSheetDirContext = React.createContext<IDirection.Kind | undefined>(undefined)
 
-function resolveSheetSide(side: ISheetContentProps['side'], dir: IDirection.Kind): DirectionalSide {
-  const physical = (Array.isArray(side) ? side[0] : (side ?? 'right')) as DirectionalSide
+function resolveSheetSide(side: Exclude<ISheetContentProps['side'], undefined>, dir: IDirection.Kind): DirectionalSide {
+  // `null` and `unset` skip a cva variant, and the slide still needs an edge, so they slide in from the right.
+  const physical = side === null || side === 'unset' ? 'right' : side
   if (dir !== 'rtl') return physical
   return physical === 'left' ? 'right' : physical === 'right' ? 'left' : physical
 }

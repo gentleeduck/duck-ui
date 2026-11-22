@@ -77,7 +77,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         type={type}>
         {loading ? <Loader aria-hidden="true" className="animate-spin motion-reduce:animate-none" /> : icon}
         <Slottable>{!isCollapsed && children}</Slottable>
-        {!isCollapsed && secondIcon && secondIcon}
+        {!isCollapsed && secondIcon}
       </button>
     )
   },

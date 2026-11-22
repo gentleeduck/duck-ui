@@ -20,7 +20,7 @@ export interface ICalendarHeaderContext {
 }
 
 export interface ICalendarHeaderProps {
-  adapter?: Adapter.IDateAdapter<Date>
+  adapter: Adapter.IDateAdapter<Date>
   month: Date
   title: string
   direction: 'ltr' | 'rtl'

@@ -150,8 +150,11 @@ const MotionPreviewPanel = React.forwardRef<
     },
     ref,
   ) => {
-    const containerRef = useRef<HTMLDivElement>(null)
-    const contentRef = useRef<HTMLDivElement>(null)
+    // The panel always renders its container and its content, so each ref holds its element from the first effect on.
+    // biome-ignore lint/style/noNonNullAssertion: typed as always set, for the reason above
+    const containerRef = useRef<HTMLDivElement>(null!)
+    // biome-ignore lint/style/noNonNullAssertion: typed as always set, for the reason above
+    const contentRef = useRef<HTMLDivElement>(null!)
     const content = useMotionPreset(scaleIn, MOTION_PREVIEW_PANEL_OPTIONS)
 
     const s = useRef({
@@ -193,14 +196,13 @@ const MotionPreviewPanel = React.forwardRef<
 
     const applyTransform = useCallback((animate: boolean) => {
       const el = contentRef.current
-      if (!el) return
       const { x, y, zoom } = s.current
       el.style.transform = `translate3d(${x}px,${y}px,0) scale(${zoom})`
       el.style.transition = animate ? 'transform 0.15s ease-out' : 'none'
       el.style.willChange = 'transform'
       clearTimeout(s.current.willChangeTimer)
       s.current.willChangeTimer = window.setTimeout(() => {
-        if (contentRef.current && !s.current.dragging) {
+        if (!s.current.dragging) {
           contentRef.current.style.willChange = 'auto'
         }
       }, 200)
@@ -257,7 +259,6 @@ const MotionPreviewPanel = React.forwardRef<
 
     useEffect(() => {
       const el = containerRef.current
-      if (!el) return
       const onDown = (e: PointerEvent) => {
         if (lockedRef.current || e.button !== 0 || s.current.dragging) return
         e.preventDefault()
@@ -302,7 +303,6 @@ const MotionPreviewPanel = React.forwardRef<
 
     useEffect(() => {
       const el = containerRef.current
-      if (!el) return
       const onWheel = (e: WheelEvent) => {
         if (lockedRef.current) return
         e.preventDefault()
@@ -319,10 +319,8 @@ const MotionPreviewPanel = React.forwardRef<
 
     useEffect(() => {
       const el = containerRef.current
-      if (!el) return
       const dist = (e: TouchEvent) => {
-        const a = e.touches[0] ?? { clientX: 0, clientY: 0 }
-        const b = e.touches[1] ?? { clientX: 0, clientY: 0 }
+        const [a, b] = [e.touches[0], e.touches[1]]
         return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
       }
       const onTouchStart = (e: TouchEvent) => {

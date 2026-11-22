@@ -65,7 +65,7 @@ export function withMotion<TProps extends object, TRef>(
   options?: IUseMotionPresetOptions,
   config?: string | IWithMotionConfig,
 ): React.ForwardRefExoticComponent<TProps & React.RefAttributes<TRef>> {
-  const displayName = `Motion(${Component.displayName ?? Component.name ?? 'Component'})`
+  const displayName = `Motion(${Component.displayName ?? 'Component'})`
   const wrapperClassName = typeof config === 'string' ? config : config?.wrapperClassName
   const stagger = typeof config === 'object' ? config.stagger : undefined
   const Motionised = React.forwardRef<TRef, TProps>((props, ref) => {

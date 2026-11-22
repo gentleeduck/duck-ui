@@ -33,7 +33,7 @@ const MotionTooltipContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
 >(({ className, sideOffset = 4, side = 'top', children, ...props }, ref) => {
   const { isOpen } = useMotionContent()
-  const preset = React.useMemo(() => createTooltipPreset(side ?? 'top'), [side])
+  const preset = React.useMemo(() => createTooltipPreset(side), [side])
   const shouldRender = useMotionMount(isOpen)
 
   if (!shouldRender) return null

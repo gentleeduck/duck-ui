@@ -1,6 +1,6 @@
 'use client'
 
-import { buildCalendarYear, goToMonth, goToYear, NativeAdapter } from '@gentleduck/calendar'
+import { buildCalendarYear, goToMonth, goToYear } from '@gentleduck/calendar'
 import { cn } from '@gentleduck/libs/cn'
 import { tapScale } from '@gentleduck/motion/presets/content'
 import { CheckIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
@@ -9,8 +9,6 @@ import * as React from 'react'
 import { buttonVariants } from '../button'
 import { getCachedNumberFormat } from './calendar.libs'
 import type { ICalendarHeaderProps } from './calendar.types'
-
-const defaultAdapter = new NativeAdapter()
 
 const ITEM_HEIGHT = 28
 const VISIBLE_ITEMS = 9
@@ -134,7 +132,7 @@ function stopPopoverDismiss(e: React.PointerEvent) {
 }
 
 export function MotionCalendarHeader({
-  adapter: adapterProp,
+  adapter,
   month,
   title,
   direction,
@@ -146,7 +144,6 @@ export function MotionCalendarHeader({
   getHeaderProps,
   onMonthSelect,
 }: IMotionCalendarHeaderProps) {
-  const adapter = adapterProp ?? defaultAdapter
   const headerProps = getHeaderProps()
   const currentYear = adapter.getYear(month)
   const currentMonth = adapter.getMonth(month)

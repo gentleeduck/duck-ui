@@ -62,12 +62,13 @@ SelectScrollDownButton.displayName = SelectPrimitive.ScrollDownButton.displayNam
 
 // One highlight slides to each item that takes focus, so a fast pointer still passes over the items it skips.
 function SelectHighlight() {
-  const ref = React.useRef<HTMLDivElement>(null)
+  // biome-ignore lint/style/noNonNullAssertion: the highlight renders inside the viewport, so its ref and parent are set by its effect
+  const ref = React.useRef<HTMLDivElement>(null!)
 
   React.useEffect(() => {
     const highlight = ref.current
-    const viewport = highlight?.parentElement
-    if (!highlight || !viewport) return
+    // biome-ignore lint/style/noNonNullAssertion: the viewport is the highlight's parent, as above
+    const viewport = highlight.parentElement!
     const itemOf = (node: EventTarget | null) =>
       node instanceof HTMLElement ? node.closest<HTMLElement>('[role="option"]') : null
 

@@ -13,7 +13,6 @@
     "node_modules",
     "dist",
     "./src/_old",
-    "./src/_audio",
     "**/__tests__/**",
     "**/*.test.ts",
     "**/*.test.tsx",

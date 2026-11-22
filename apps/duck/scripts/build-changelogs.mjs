@@ -77,6 +77,45 @@ function escapeForMdx(text) {
   return lines.join('\n')
 }
 
+const BUMPS = [
+  ['major', 'Major Changes'],
+  ['minor', 'Minor Changes'],
+  ['patch', 'Patch Changes'],
+]
+
+// A pending changeset shows as Unreleased until the version PR moves it into CHANGELOG.md and deletes it.
+async function readPendingChangesets() {
+  const dir = path.join(REPO_ROOT, '.changeset')
+  const byName = {}
+  if (!existsSync(dir)) return byName
+  const files = (await readdir(dir)).filter((f) => f.endsWith('.md') && f !== 'README.md').sort()
+  for (const file of files) {
+    const m = (await readFile(path.join(dir, file), 'utf8')).match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
+    if (!m) continue
+    const summary = m[2].trim()
+    for (const line of m[1].split('\n')) {
+      const entry = line.match(/^["']@gentleduck\/([a-z0-9-]+)["']:\s*(major|minor|patch)\s*$/)
+      if (!entry) continue
+      const [, name, bump] = entry
+      byName[name] ??= { major: [], minor: [], patch: [] }
+      byName[name][bump].push(summary)
+    }
+  }
+  return byName
+}
+
+// A one-line summary is a bullet, as the release writes it; a longer one keeps its own paragraphs and lists, which a
+// bullet would fold into one indented block.
+function unreleasedSection(pending) {
+  if (!pending) return ''
+  const groups = BUMPS.filter(([bump]) => pending[bump].length).map(([bump, heading]) => {
+    const entries = pending[bump].map((summary) => (summary.includes('\n') ? summary : `- ${summary}`))
+    return `### ${heading}\n\n${entries.join('\n\n')}`
+  })
+  return `## Unreleased\n\nMerged, and out with the next release.\n\n${groups.join('\n\n')}\n\n`
+}
+
+const pending = await readPendingChangesets()
 const written = []
 
 for (const cl of await findChangelogs(PKG_DIR)) {
@@ -88,7 +127,7 @@ for (const cl of await findChangelogs(PKG_DIR)) {
   if (!slug) continue
   const targetDir = path.join(CONTENT_DIR, slug)
   if (!existsSync(targetDir)) continue
-  const body = raw.slice(raw.indexOf(m[0]) + m[0].length).trim()
+  const body = unreleasedSection(pending[name]) + raw.slice(raw.indexOf(m[0]) + m[0].length).trim()
   if (!body) continue
   const frontmatter = `---
 title: Changelog

@@ -707,6 +707,97 @@ export default function Demo() {
 }
 ```
 
+### Into an element of your own
+
+```tsx title="components/dialog-14.tsx"
+// import from your project: import Demo from '@/components/dialog-14'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@gentleduck/registry-ui/dialog'
+import * as React from 'react'
+
+export default function Demo() {
+  const panel = React.useRef<HTMLDivElement>(null)
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline">Open in the dark panel</Button>
+        </DialogTrigger>
+        <DialogContent container={panel}>
+          <DialogHeader>
+            <DialogTitle>Rendered in the panel</DialogTitle>
+            <DialogDescription>
+              The dialog portals into the panel below, so it takes the dark theme the panel carries.
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+      <div className="dark rounded-md border bg-background p-4 text-foreground text-sm" ref={panel}>
+        The dialog renders inside this element.
+      </div>
+    </div>
+  )
+}
+```
+
+### Open on mount
+
+```tsx title="components/dialog-15.tsx"
+// import from your project: import Demo from '@/components/dialog-15'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@gentleduck/registry-ui/dialog'
+import * as React from 'react'
+
+export default function Demo() {
+  const [shown, setShown] = React.useState(false)
+
+  return (
+    <>
+      <Button onClick={() => setShown(true)} variant="outline">
+        Show what is new
+      </Button>
+      {shown && (
+        <Dialog defaultOpen onOpenChange={(open) => !open && setShown(false)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>What is new</DialogTitle>
+              <DialogDescription>
+                defaultOpen opens the dialog as it mounts, with no trigger of its own.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button>Got it</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
+  )
+}
+```
+
 ## Component Composition
 
 ## Notes
@@ -909,6 +1000,8 @@ export default function Demo() {
 | `forceMount` | `true` | - | Forces mounted state for all portal children |
 | `...props` | `React.ComponentPropsWithoutRef<typeof DialogPrimitive.Portal>` | - | Additional props inherited from `DialogPrimitive.Portal` |
 
+`DialogContent` renders a portal of its own, so pass `container` to `DialogContent` to place it; `DialogPortal` is for a content built from the primitive.
+
 ### DialogOverlay
 
 | Prop | Type | Default | Description |
@@ -922,6 +1015,7 @@ Clear on a dialog opened from another dialog's content, since the overlay under 
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Where the content portals to, such as an element carrying another theme |
 | `forceMount` | `true` | - | Keeps the content, and what it holds, in the page while the dialog is closed. Its portal is kept with it, and the overlay holds the end of its fade and lets presses through, so it never covers the page |
 | `initialFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on open in place of the first tabbable element. `false` leaves focus on the trigger |
 | `finalFocus` | `RefObject<HTMLElement \| null> \| false` | - | Focused on close in place of the trigger. `false` moves focus nowhere |

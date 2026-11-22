@@ -871,6 +871,44 @@ export default function Demo() {
 }
 ```
 
+### A text part of your own
+
+```tsx title="components/command-13.tsx"
+// import from your project: import Demo from '@/components/command-13'
+'use client'
+
+import { useCommandItemContext } from '@gentleduck/primitives/command'
+import { Command, CommandInput, CommandItem, CommandList, CommandShortcut } from '@gentleduck/registry-ui/command'
+import type * as React from 'react'
+
+function Label({ children }: { children: React.ReactNode }) {
+  const { onItemTextChange, textId } = useCommandItemContext('Label', undefined)
+  return (
+    <span id={textId} ref={onItemTextChange}>
+      {children}
+    </span>
+  )
+}
+
+export default function Demo() {
+  return (
+    <Command className="w-[320px] rounded-lg border">
+      <CommandInput placeholder="Search the labels, not the keys..." />
+      <CommandList>
+        <CommandItem>
+          <Label>Copy</Label>
+          <CommandShortcut keys="mod+c" />
+        </CommandItem>
+        <CommandItem>
+          <Label>Paste</Label>
+          <CommandShortcut keys="mod+v" />
+        </CommandItem>
+      </CommandList>
+    </Command>
+  )
+}
+```
+
 ## Component Composition
 
 ## Types
@@ -905,7 +943,7 @@ The rest of what the parts share lives in the primitive, `@gentleduck/primitives
 
 **CommandItemContextValue**
 
-Per-item context. Available via `useCommandItemContext()`.
+Per-item context, read with `useCommandItemContext(consumerName, scope)` from `@gentleduck/primitives/command`. A text part of your own takes `textId` as its `id` and passes `onItemTextChange` as its `ref`, so search reads that part's text rather than the whole item, as the [text part example](#a-text-part-of-your-own) does.
 
 | Property | Type | Description |
 | --- | --- | --- |

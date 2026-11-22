@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  ContextMenu,\n  ContextMenuContent,\n  ContextMenuItem,\n  ContextMenuTrigger,\n} from '@gentleduck/registry-ui/context-menu'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const panel = React.useRef<HTMLDivElement>(null)\n\n  return (\n    <div\n      className=\"dark flex flex-col items-center gap-4 rounded-md border bg-background p-4 text-foreground\"\n      ref={panel}>\n      <ContextMenu>\n        <ContextMenuTrigger className=\"flex h-[120px] w-[260px] items-center justify-center rounded-md border border-dashed text-sm\">\n          Right click here\n        </ContextMenuTrigger>\n        <ContextMenuContent className=\"w-48\" container={panel}>\n          <ContextMenuItem>Copy</ContextMenuItem>\n          <ContextMenuItem>Paste</ContextMenuItem>\n        </ContextMenuContent>\n      </ContextMenu>\n      <p className=\"text-muted-foreground text-sm\">The menu portals into this dark panel.</p>\n    </div>\n  )\n}\n",
+      "path": "context-menu/context-menu-8.tsx",
+      "target": "components/context-menu-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "context-menu-8",
+  "registryDependencies": [
+    "context-menu",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "context-menu",
+  "source": "/registry-examples/src/context-menu",
+  "type": "registry:example"
+}

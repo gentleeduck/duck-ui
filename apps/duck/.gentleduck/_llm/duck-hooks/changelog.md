@@ -1,3 +1,11 @@
+## Unreleased
+
+Merged, and out with the next release.
+
+### Patch Changes
+
+* `useMediaQuery` no longer throws where there is no `matchMedia`, as on a server render or in jsdom.
+
 ## 1.0.0
 
 ### Major Changes

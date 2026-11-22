@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@gentleduck/registry-ui/sheet'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [shown, setShown] = React.useState(false)\n\n  return (\n    <>\n      <Button onClick={() => setShown(true)} variant=\"outline\">\n        Show the filters\n      </Button>\n      {shown && (\n        <Sheet defaultOpen onOpenChange={(open) => !open && setShown(false)}>\n          <SheetContent>\n            <SheetHeader>\n              <SheetTitle>Filters</SheetTitle>\n              <SheetDescription>defaultOpen opens the sheet as it mounts, with no trigger of its own.</SheetDescription>\n            </SheetHeader>\n          </SheetContent>\n        </Sheet>\n      )}\n    </>\n  )\n}\n",
+      "path": "sheet/sheet-15.tsx",
+      "target": "components/sheet-15.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sheet-15",
+  "registryDependencies": [
+    "sheet",
+    "button",
+    "input",
+    "label"
+  ],
+  "root_folder": "sheet",
+  "source": "/registry-examples/src/sheet",
+  "type": "registry:example"
+}

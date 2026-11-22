@@ -305,6 +305,7 @@ const _Sidebar15 = dynamic(() => import('@gentleduck/registry-blocks/sidebar/sid
 const _Sidebar16 = dynamic(() => import('@gentleduck/registry-blocks/sidebar/sidebar-16/sidebar-16'), { ssr: false })
 const _Accordion1 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-1'), { ssr: false })
 const _Accordion10 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-10'), { ssr: false })
+const _Accordion11 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-11'), { ssr: false })
 const _Accordion2 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-2'), { ssr: false })
 const _Accordion3 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-3'), { ssr: false })
 const _Accordion4 = dynamic(() => import('@gentleduck/registry-examples/accordion/accordion-4'), { ssr: false })
@@ -319,6 +320,9 @@ const _Alert3 = dynamic(() => import('@gentleduck/registry-examples/alert/alert-
 const _Alert4 = dynamic(() => import('@gentleduck/registry-examples/alert/alert-4'), { ssr: false })
 const _Alert5 = dynamic(() => import('@gentleduck/registry-examples/alert/alert-5'), { ssr: false })
 const _AlertDialog1 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-1'), { ssr: false })
+const _AlertDialog10 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-10'), {
+  ssr: false,
+})
 const _AlertDialog2 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-2'), { ssr: false })
 const _AlertDialog3 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-3'), { ssr: false })
 const _AlertDialog4 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-4'), { ssr: false })
@@ -326,6 +330,7 @@ const _AlertDialog5 = dynamic(() => import('@gentleduck/registry-examples/alert-
 const _AlertDialog6 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-6'), { ssr: false })
 const _AlertDialog7 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-7'), { ssr: false })
 const _AlertDialog8 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-8'), { ssr: false })
+const _AlertDialog9 = dynamic(() => import('@gentleduck/registry-examples/alert-dialog/alert-dialog-9'), { ssr: false })
 const _Avatar1 = dynamic(() => import('@gentleduck/registry-examples/avatar/avatar-1'), { ssr: false })
 const _Avatar2 = dynamic(() => import('@gentleduck/registry-examples/avatar/avatar-2'), { ssr: false })
 const _Avatar3 = dynamic(() => import('@gentleduck/registry-examples/avatar/avatar-3'), { ssr: false })
@@ -369,6 +374,7 @@ const _Button8 = dynamic(() => import('@gentleduck/registry-examples/button/butt
 const _Button9 = dynamic(() => import('@gentleduck/registry-examples/button/button-9'), { ssr: false })
 const _Breadcrumb1 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-1'), { ssr: false })
 const _Breadcrumb10 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-10'), { ssr: false })
+const _Breadcrumb11 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-11'), { ssr: false })
 const _Breadcrumb2 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-2'), { ssr: false })
 const _Breadcrumb3 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-3'), { ssr: false })
 const _Breadcrumb4 = dynamic(() => import('@gentleduck/registry-examples/breadcrumb/breadcrumb-4'), { ssr: false })
@@ -380,6 +386,8 @@ const _Dialog10 = dynamic(() => import('@gentleduck/registry-examples/dialog/dia
 const _Dialog11 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-11'), { ssr: false })
 const _Dialog12 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-12'), { ssr: false })
 const _Dialog13 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-13'), { ssr: false })
+const _Dialog14 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-14'), { ssr: false })
+const _Dialog15 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-15'), { ssr: false })
 const _Dialog2 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-2'), { ssr: false })
 const _Dialog3 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-3'), { ssr: false })
 const _Dialog4 = dynamic(() => import('@gentleduck/registry-examples/dialog/dialog-4'), { ssr: false })
@@ -392,6 +400,7 @@ const _Command1 = dynamic(() => import('@gentleduck/registry-examples/command/co
 const _Command10 = dynamic(() => import('@gentleduck/registry-examples/command/command-10'), { ssr: false })
 const _Command11 = dynamic(() => import('@gentleduck/registry-examples/command/command-11'), { ssr: false })
 const _Command12 = dynamic(() => import('@gentleduck/registry-examples/command/command-12'), { ssr: false })
+const _Command13 = dynamic(() => import('@gentleduck/registry-examples/command/command-13'), { ssr: false })
 const _Command2 = dynamic(() => import('@gentleduck/registry-examples/command/command-2'), { ssr: false })
 const _Command3 = dynamic(() => import('@gentleduck/registry-examples/command/command-3'), { ssr: false })
 const _Command4 = dynamic(() => import('@gentleduck/registry-examples/command/command-4'), { ssr: false })
@@ -491,6 +500,7 @@ const _RadioGroup5 = dynamic(() => import('@gentleduck/registry-examples/radio-g
 const _RadioGroup6 = dynamic(() => import('@gentleduck/registry-examples/radio-group/radio-group-6'), { ssr: false })
 const _RadioGroup7 = dynamic(() => import('@gentleduck/registry-examples/radio-group/radio-group-7'), { ssr: false })
 const _RadioGroup8 = dynamic(() => import('@gentleduck/registry-examples/radio-group/radio-group-8'), { ssr: false })
+const _RadioGroup9 = dynamic(() => import('@gentleduck/registry-examples/radio-group/radio-group-9'), { ssr: false })
 const _ScrollArea1 = dynamic(() => import('@gentleduck/registry-examples/scroll-area/scroll-area-1'), { ssr: false })
 const _ScrollArea2 = dynamic(() => import('@gentleduck/registry-examples/scroll-area/scroll-area-2'), { ssr: false })
 const _ScrollArea3 = dynamic(() => import('@gentleduck/registry-examples/scroll-area/scroll-area-3'), { ssr: false })
@@ -513,6 +523,7 @@ const _Select2 = dynamic(() => import('@gentleduck/registry-examples/select/sele
 const _Select20 = dynamic(() => import('@gentleduck/registry-examples/select/select-20'), { ssr: false })
 const _Select21 = dynamic(() => import('@gentleduck/registry-examples/select/select-21'), { ssr: false })
 const _Select22 = dynamic(() => import('@gentleduck/registry-examples/select/select-22'), { ssr: false })
+const _Select23 = dynamic(() => import('@gentleduck/registry-examples/select/select-23'), { ssr: false })
 const _Select3 = dynamic(() => import('@gentleduck/registry-examples/select/select-3'), { ssr: false })
 const _Select4 = dynamic(() => import('@gentleduck/registry-examples/select/select-4'), { ssr: false })
 const _Select5 = dynamic(() => import('@gentleduck/registry-examples/select/select-5'), { ssr: false })
@@ -531,6 +542,8 @@ const _Sheet10 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet
 const _Sheet11 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-11'), { ssr: false })
 const _Sheet12 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-12'), { ssr: false })
 const _Sheet13 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-13'), { ssr: false })
+const _Sheet14 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-14'), { ssr: false })
+const _Sheet15 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-15'), { ssr: false })
 const _Sheet2 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-2'), { ssr: false })
 const _Sheet3 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-3'), { ssr: false })
 const _Sheet4 = dynamic(() => import('@gentleduck/registry-examples/sheet/sheet-4'), { ssr: false })
@@ -727,6 +740,7 @@ const _Popover7 = dynamic(() => import('@gentleduck/registry-examples/popover/po
 const _Popover8 = dynamic(() => import('@gentleduck/registry-examples/popover/popover-8'), { ssr: false })
 const _Popover9 = dynamic(() => import('@gentleduck/registry-examples/popover/popover-9'), { ssr: false })
 const _Menubar1 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-1'), { ssr: false })
+const _Menubar10 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-10'), { ssr: false })
 const _Menubar2 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-2'), { ssr: false })
 const _Menubar3 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-3'), { ssr: false })
 const _Menubar4 = dynamic(() => import('@gentleduck/registry-examples/menubar/menubar-4'), { ssr: false })
@@ -799,6 +813,7 @@ const _Collapsible4 = dynamic(() => import('@gentleduck/registry-examples/collap
 const _Collapsible5 = dynamic(() => import('@gentleduck/registry-examples/collapsible/collapsible-5'), { ssr: false })
 const _Collapsible6 = dynamic(() => import('@gentleduck/registry-examples/collapsible/collapsible-6'), { ssr: false })
 const _Collapsible7 = dynamic(() => import('@gentleduck/registry-examples/collapsible/collapsible-7'), { ssr: false })
+const _Collapsible8 = dynamic(() => import('@gentleduck/registry-examples/collapsible/collapsible-8'), { ssr: false })
 const _InputOtp1 = dynamic(() => import('@gentleduck/registry-examples/input-otp/input-otp-1'), { ssr: false })
 const _InputOtp10 = dynamic(() => import('@gentleduck/registry-examples/input-otp/input-otp-10'), { ssr: false })
 const _InputOtp11 = dynamic(() => import('@gentleduck/registry-examples/input-otp/input-otp-11'), { ssr: false })
@@ -848,6 +863,7 @@ const _ContextMenu4 = dynamic(() => import('@gentleduck/registry-examples/contex
 const _ContextMenu5 = dynamic(() => import('@gentleduck/registry-examples/context-menu/context-menu-5'), { ssr: false })
 const _ContextMenu6 = dynamic(() => import('@gentleduck/registry-examples/context-menu/context-menu-6'), { ssr: false })
 const _ContextMenu7 = dynamic(() => import('@gentleduck/registry-examples/context-menu/context-menu-7'), { ssr: false })
+const _ContextMenu8 = dynamic(() => import('@gentleduck/registry-examples/context-menu/context-menu-8'), { ssr: false })
 const _DataTable1 = dynamic(() => import('@gentleduck/registry-examples/data-table/data-table-1'), { ssr: false })
 const _Cva1 = dynamic(() => import('@gentleduck/registry-examples/cva/cva-1'), { ssr: false })
 const _ButtonGroup1 = dynamic(() => import('@gentleduck/registry-examples/button-group/button-group-1'), { ssr: false })
@@ -3764,6 +3780,22 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'accordion',
   },
+  'accordion-11': {
+    name: 'accordion-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['accordion', 'direction'],
+    files: [
+      {
+        path: 'accordion/accordion-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Accordion11,
+    source: '/registry-examples/src/accordion',
+    categories: [],
+    root_folder: 'accordion',
+  },
   'accordion-2': {
     name: 'accordion-2',
     description: '',
@@ -3988,6 +4020,22 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'alert-dialog',
   },
+  'alert-dialog-10': {
+    name: 'alert-dialog-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['alert-dialog', 'direction', 'input', 'label'],
+    files: [
+      {
+        path: 'alert-dialog/alert-dialog-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _AlertDialog10,
+    source: '/registry-examples/src/alert-dialog',
+    categories: [],
+    root_folder: 'alert-dialog',
+  },
   'alert-dialog-2': {
     name: 'alert-dialog-2',
     description: '',
@@ -4096,6 +4144,22 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _AlertDialog8,
+    source: '/registry-examples/src/alert-dialog',
+    categories: [],
+    root_folder: 'alert-dialog',
+  },
+  'alert-dialog-9': {
+    name: 'alert-dialog-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['alert-dialog', 'direction', 'input', 'label'],
+    files: [
+      {
+        path: 'alert-dialog/alert-dialog-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _AlertDialog9,
     source: '/registry-examples/src/alert-dialog',
     categories: [],
     root_folder: 'alert-dialog',
@@ -4788,6 +4852,22 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'breadcrumb',
   },
+  'breadcrumb-11': {
+    name: 'breadcrumb-11',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['breadcrumb', 'button', 'drawer', 'dropdown-menu'],
+    files: [
+      {
+        path: 'breadcrumb/breadcrumb-11.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Breadcrumb11,
+    source: '/registry-examples/src/breadcrumb',
+    categories: [],
+    root_folder: 'breadcrumb',
+  },
   'breadcrumb-2': {
     name: 'breadcrumb-2',
     description: '',
@@ -5015,6 +5095,60 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _Dialog13,
+    source: '/registry-examples/src/dialog',
+    categories: [],
+    root_folder: 'dialog',
+  },
+  'dialog-14': {
+    name: 'dialog-14',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'dialog/dialog-14.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Dialog14,
+    source: '/registry-examples/src/dialog',
+    categories: [],
+    root_folder: 'dialog',
+  },
+  'dialog-15': {
+    name: 'dialog-15',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: [
+      'dialog',
+      'button',
+      'calendar',
+      'direction',
+      'input',
+      'kbd',
+      'label',
+      'popover',
+      'select',
+      'textarea',
+    ],
+    files: [
+      {
+        path: 'dialog/dialog-15.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Dialog15,
     source: '/registry-examples/src/dialog',
     categories: [],
     root_folder: 'dialog',
@@ -5295,6 +5429,22 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _Command12,
+    source: '/registry-examples/src/command',
+    categories: [],
+    root_folder: 'command',
+  },
+  'command-13': {
+    name: 'command-13',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['command', 'button'],
+    files: [
+      {
+        path: 'command/command-13.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Command13,
     source: '/registry-examples/src/command',
     categories: [],
     root_folder: 'command',
@@ -6931,6 +7081,22 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'radio-group',
   },
+  'radio-group-9': {
+    name: 'radio-group-9',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['radio-group', 'button', 'field'],
+    files: [
+      {
+        path: 'radio-group/radio-group-9.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _RadioGroup9,
+    source: '/registry-examples/src/radio-group',
+    categories: [],
+    root_folder: 'radio-group',
+  },
   'scroll-area-1': {
     name: 'scroll-area-1',
     description: '',
@@ -7283,6 +7449,22 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'select',
   },
+  'select-23': {
+    name: 'select-23',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['select', 'badge', 'button', 'direction', 'field'],
+    files: [
+      {
+        path: 'select/select-23.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Select23,
+    source: '/registry-examples/src/select',
+    categories: [],
+    root_folder: 'select',
+  },
   'select-3': {
     name: 'select-3',
     description: '',
@@ -7567,6 +7749,38 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _Sheet13,
+    source: '/registry-examples/src/sheet',
+    categories: [],
+    root_folder: 'sheet',
+  },
+  'sheet-14': {
+    name: 'sheet-14',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
+    files: [
+      {
+        path: 'sheet/sheet-14.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sheet14,
+    source: '/registry-examples/src/sheet',
+    categories: [],
+    root_folder: 'sheet',
+  },
+  'sheet-15': {
+    name: 'sheet-15',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['sheet', 'button', 'input', 'label'],
+    files: [
+      {
+        path: 'sheet/sheet-15.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Sheet15,
     source: '/registry-examples/src/sheet',
     categories: [],
     root_folder: 'sheet',
@@ -10579,6 +10793,22 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'menubar',
   },
+  'menubar-10': {
+    name: 'menubar-10',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['menubar', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'menubar/menubar-10.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Menubar10,
+    source: '/registry-examples/src/menubar',
+    categories: [],
+    root_folder: 'menubar',
+  },
   'menubar-2': {
     name: 'menubar-2',
     description: '',
@@ -11251,6 +11481,22 @@ export const Index: Record<string, any> = {
     categories: [],
     root_folder: 'collapsible',
   },
+  'collapsible-8': {
+    name: 'collapsible-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['collapsible'],
+    files: [
+      {
+        path: 'collapsible/collapsible-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _Collapsible8,
+    source: '/registry-examples/src/collapsible',
+    categories: [],
+    root_folder: 'collapsible',
+  },
   'input-otp-1': {
     name: 'input-otp-1',
     description: '',
@@ -11807,6 +12053,22 @@ export const Index: Record<string, any> = {
       },
     ],
     component: _ContextMenu7,
+    source: '/registry-examples/src/context-menu',
+    categories: [],
+    root_folder: 'context-menu',
+  },
+  'context-menu-8': {
+    name: 'context-menu-8',
+    description: '',
+    type: 'registry:example',
+    registryDependencies: ['context-menu', 'direction', 'label', 'switch'],
+    files: [
+      {
+        path: 'context-menu/context-menu-8.tsx',
+        type: 'registry:example',
+      },
+    ],
+    component: _ContextMenu8,
     source: '/registry-examples/src/context-menu',
     categories: [],
     root_folder: 'context-menu',

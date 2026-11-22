@@ -582,6 +582,80 @@ export default function Demo() {
 }
 ```
 
+### Into an element of your own
+
+```tsx title="components/sheet-14.tsx"
+// import from your project: import Demo from '@/components/sheet-14'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@gentleduck/registry-ui/sheet'
+import * as React from 'react'
+
+export default function Demo() {
+  const panel = React.useRef<HTMLDivElement>(null)
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline">Open in the dark panel</Button>
+        </SheetTrigger>
+        <SheetContent container={panel}>
+          <SheetHeader>
+            <SheetTitle>Rendered in the panel</SheetTitle>
+            <SheetDescription>The sheet portals into the panel below and takes its dark theme.</SheetDescription>
+          </SheetHeader>
+        </SheetContent>
+      </Sheet>
+      <div className="dark rounded-md border bg-background p-4 text-foreground text-sm" ref={panel}>
+        The sheet renders inside this element.
+      </div>
+    </div>
+  )
+}
+```
+
+### Open on mount
+
+```tsx title="components/sheet-15.tsx"
+// import from your project: import Demo from '@/components/sheet-15'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@gentleduck/registry-ui/sheet'
+import * as React from 'react'
+
+export default function Demo() {
+  const [shown, setShown] = React.useState(false)
+
+  return (
+    <>
+      <Button onClick={() => setShown(true)} variant="outline">
+        Show the filters
+      </Button>
+      {shown && (
+        <Sheet defaultOpen onOpenChange={(open) => !open && setShown(false)}>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Filters</SheetTitle>
+              <SheetDescription>defaultOpen opens the sheet as it mounts, with no trigger of its own.</SheetDescription>
+            </SheetHeader>
+          </SheetContent>
+        </Sheet>
+      )}
+    </>
+  )
+}
+```
+
 ## Component Composition
 
 ## RTL Support
@@ -736,6 +810,8 @@ export default function Demo() {
 | `forceMount` | `true` | - | Forces mounted state for all portal children |
 | `...props` | `React.ComponentPropsWithoutRef<typeof SheetPrimitive.Portal>` | - | Additional props inherited from `SheetPrimitive.Portal` |
 
+`SheetContent` renders a portal of its own, so pass `container` to `SheetContent` to place it; `SheetPortal` is for a content built from the primitive.
+
 ### SheetOverlay
 
 | Prop | Type | Default | Description |
@@ -749,6 +825,7 @@ Clear when the sheet is opened from a dialog's content, since the dialog's overl
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Where the content portals to, such as an element carrying another theme |
 | `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'right'` | The side from which the sheet slides in. `left` and `right` mirror in RTL |
 | `closeText` | `string` | `'Close'` | Screen-reader label for the built-in close button |
 | `hideClose` | `boolean` | `false` | When `true`, hides the built-in close button |

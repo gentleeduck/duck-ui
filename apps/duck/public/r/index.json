@@ -3788,6 +3788,11 @@
         "type": "file"
       },
       {
+        "name": "accordion-11.tsx",
+        "path": "accordion/accordion-11.tsx",
+        "type": "file"
+      },
+      {
         "name": "accordion-2.tsx",
         "path": "accordion/accordion-2.tsx",
         "type": "file"
@@ -3853,6 +3858,84 @@
       {
         "name": "accordion-10.tsx",
         "path": "accordion/accordion-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-11.tsx",
+        "path": "accordion/accordion-11.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-2.tsx",
+        "path": "accordion/accordion-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-3.tsx",
+        "path": "accordion/accordion-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-4.tsx",
+        "path": "accordion/accordion-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-5.tsx",
+        "path": "accordion/accordion-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-6.tsx",
+        "path": "accordion/accordion-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-7.tsx",
+        "path": "accordion/accordion-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-8.tsx",
+        "path": "accordion/accordion-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-9.tsx",
+        "path": "accordion/accordion-9.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "files": [
+      {
+        "path": "accordion/accordion-11.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "accordion-11",
+    "registryDependencies": [
+      "accordion",
+      "direction"
+    ],
+    "root_folder": "accordion",
+    "type": "registry:example",
+    "source": "/registry-examples/src/accordion",
+    "tree": [
+      {
+        "name": "accordion-1.tsx",
+        "path": "accordion/accordion-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-10.tsx",
+        "path": "accordion/accordion-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-11.tsx",
+        "path": "accordion/accordion-11.tsx",
         "type": "file"
       },
       {
@@ -3924,6 +4007,11 @@
         "type": "file"
       },
       {
+        "name": "accordion-11.tsx",
+        "path": "accordion/accordion-11.tsx",
+        "type": "file"
+      },
+      {
         "name": "accordion-2.tsx",
         "path": "accordion/accordion-2.tsx",
         "type": "file"
@@ -3989,6 +4077,11 @@
       {
         "name": "accordion-10.tsx",
         "path": "accordion/accordion-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-11.tsx",
+        "path": "accordion/accordion-11.tsx",
         "type": "file"
       },
       {
@@ -4060,6 +4153,11 @@
         "type": "file"
       },
       {
+        "name": "accordion-11.tsx",
+        "path": "accordion/accordion-11.tsx",
+        "type": "file"
+      },
+      {
         "name": "accordion-2.tsx",
         "path": "accordion/accordion-2.tsx",
         "type": "file"
@@ -4125,6 +4223,11 @@
       {
         "name": "accordion-10.tsx",
         "path": "accordion/accordion-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-11.tsx",
+        "path": "accordion/accordion-11.tsx",
         "type": "file"
       },
       {
@@ -4196,6 +4299,11 @@
         "type": "file"
       },
       {
+        "name": "accordion-11.tsx",
+        "path": "accordion/accordion-11.tsx",
+        "type": "file"
+      },
+      {
         "name": "accordion-2.tsx",
         "path": "accordion/accordion-2.tsx",
         "type": "file"
@@ -4261,6 +4369,11 @@
       {
         "name": "accordion-10.tsx",
         "path": "accordion/accordion-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-11.tsx",
+        "path": "accordion/accordion-11.tsx",
         "type": "file"
       },
       {
@@ -4332,6 +4445,11 @@
         "type": "file"
       },
       {
+        "name": "accordion-11.tsx",
+        "path": "accordion/accordion-11.tsx",
+        "type": "file"
+      },
+      {
         "name": "accordion-2.tsx",
         "path": "accordion/accordion-2.tsx",
         "type": "file"
@@ -4397,6 +4515,11 @@
       {
         "name": "accordion-10.tsx",
         "path": "accordion/accordion-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "accordion-11.tsx",
+        "path": "accordion/accordion-11.tsx",
         "type": "file"
       },
       {
@@ -4690,6 +4813,11 @@
         "type": "file"
       },
       {
+        "name": "alert-dialog-10.tsx",
+        "path": "alert-dialog/alert-dialog-10.tsx",
+        "type": "file"
+      },
+      {
         "name": "alert-dialog-2.tsx",
         "path": "alert-dialog/alert-dialog-2.tsx",
         "type": "file"
@@ -4722,6 +4850,81 @@
       {
         "name": "alert-dialog-8.tsx",
         "path": "alert-dialog/alert-dialog-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-9.tsx",
+        "path": "alert-dialog/alert-dialog-9.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "files": [
+      {
+        "path": "alert-dialog/alert-dialog-10.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "alert-dialog-10",
+    "registryDependencies": [
+      "alert-dialog",
+      "direction",
+      "input",
+      "label"
+    ],
+    "root_folder": "alert-dialog",
+    "type": "registry:example",
+    "source": "/registry-examples/src/alert-dialog",
+    "tree": [
+      {
+        "name": "alert-dialog-1.tsx",
+        "path": "alert-dialog/alert-dialog-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-10.tsx",
+        "path": "alert-dialog/alert-dialog-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-2.tsx",
+        "path": "alert-dialog/alert-dialog-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-3.tsx",
+        "path": "alert-dialog/alert-dialog-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-4.tsx",
+        "path": "alert-dialog/alert-dialog-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-5.tsx",
+        "path": "alert-dialog/alert-dialog-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-6.tsx",
+        "path": "alert-dialog/alert-dialog-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-7.tsx",
+        "path": "alert-dialog/alert-dialog-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-8.tsx",
+        "path": "alert-dialog/alert-dialog-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-9.tsx",
+        "path": "alert-dialog/alert-dialog-9.tsx",
         "type": "file"
       }
     ]
@@ -4750,6 +4953,11 @@
         "type": "file"
       },
       {
+        "name": "alert-dialog-10.tsx",
+        "path": "alert-dialog/alert-dialog-10.tsx",
+        "type": "file"
+      },
+      {
         "name": "alert-dialog-2.tsx",
         "path": "alert-dialog/alert-dialog-2.tsx",
         "type": "file"
@@ -4782,6 +4990,11 @@
       {
         "name": "alert-dialog-8.tsx",
         "path": "alert-dialog/alert-dialog-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-9.tsx",
+        "path": "alert-dialog/alert-dialog-9.tsx",
         "type": "file"
       }
     ]
@@ -4810,6 +5023,11 @@
         "type": "file"
       },
       {
+        "name": "alert-dialog-10.tsx",
+        "path": "alert-dialog/alert-dialog-10.tsx",
+        "type": "file"
+      },
+      {
         "name": "alert-dialog-2.tsx",
         "path": "alert-dialog/alert-dialog-2.tsx",
         "type": "file"
@@ -4842,6 +5060,11 @@
       {
         "name": "alert-dialog-8.tsx",
         "path": "alert-dialog/alert-dialog-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-9.tsx",
+        "path": "alert-dialog/alert-dialog-9.tsx",
         "type": "file"
       }
     ]
@@ -4870,6 +5093,11 @@
         "type": "file"
       },
       {
+        "name": "alert-dialog-10.tsx",
+        "path": "alert-dialog/alert-dialog-10.tsx",
+        "type": "file"
+      },
+      {
         "name": "alert-dialog-2.tsx",
         "path": "alert-dialog/alert-dialog-2.tsx",
         "type": "file"
@@ -4902,6 +5130,11 @@
       {
         "name": "alert-dialog-8.tsx",
         "path": "alert-dialog/alert-dialog-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-9.tsx",
+        "path": "alert-dialog/alert-dialog-9.tsx",
         "type": "file"
       }
     ]
@@ -4930,6 +5163,11 @@
         "type": "file"
       },
       {
+        "name": "alert-dialog-10.tsx",
+        "path": "alert-dialog/alert-dialog-10.tsx",
+        "type": "file"
+      },
+      {
         "name": "alert-dialog-2.tsx",
         "path": "alert-dialog/alert-dialog-2.tsx",
         "type": "file"
@@ -4962,6 +5200,11 @@
       {
         "name": "alert-dialog-8.tsx",
         "path": "alert-dialog/alert-dialog-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-9.tsx",
+        "path": "alert-dialog/alert-dialog-9.tsx",
         "type": "file"
       }
     ]
@@ -4990,6 +5233,11 @@
         "type": "file"
       },
       {
+        "name": "alert-dialog-10.tsx",
+        "path": "alert-dialog/alert-dialog-10.tsx",
+        "type": "file"
+      },
+      {
         "name": "alert-dialog-2.tsx",
         "path": "alert-dialog/alert-dialog-2.tsx",
         "type": "file"
@@ -5022,6 +5270,11 @@
       {
         "name": "alert-dialog-8.tsx",
         "path": "alert-dialog/alert-dialog-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-9.tsx",
+        "path": "alert-dialog/alert-dialog-9.tsx",
         "type": "file"
       }
     ]
@@ -5050,6 +5303,11 @@
         "type": "file"
       },
       {
+        "name": "alert-dialog-10.tsx",
+        "path": "alert-dialog/alert-dialog-10.tsx",
+        "type": "file"
+      },
+      {
         "name": "alert-dialog-2.tsx",
         "path": "alert-dialog/alert-dialog-2.tsx",
         "type": "file"
@@ -5082,6 +5340,11 @@
       {
         "name": "alert-dialog-8.tsx",
         "path": "alert-dialog/alert-dialog-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-9.tsx",
+        "path": "alert-dialog/alert-dialog-9.tsx",
         "type": "file"
       }
     ]
@@ -5110,6 +5373,11 @@
         "type": "file"
       },
       {
+        "name": "alert-dialog-10.tsx",
+        "path": "alert-dialog/alert-dialog-10.tsx",
+        "type": "file"
+      },
+      {
         "name": "alert-dialog-2.tsx",
         "path": "alert-dialog/alert-dialog-2.tsx",
         "type": "file"
@@ -5142,6 +5410,81 @@
       {
         "name": "alert-dialog-8.tsx",
         "path": "alert-dialog/alert-dialog-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-9.tsx",
+        "path": "alert-dialog/alert-dialog-9.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "files": [
+      {
+        "path": "alert-dialog/alert-dialog-9.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "alert-dialog-9",
+    "registryDependencies": [
+      "alert-dialog",
+      "direction",
+      "input",
+      "label"
+    ],
+    "root_folder": "alert-dialog",
+    "type": "registry:example",
+    "source": "/registry-examples/src/alert-dialog",
+    "tree": [
+      {
+        "name": "alert-dialog-1.tsx",
+        "path": "alert-dialog/alert-dialog-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-10.tsx",
+        "path": "alert-dialog/alert-dialog-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-2.tsx",
+        "path": "alert-dialog/alert-dialog-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-3.tsx",
+        "path": "alert-dialog/alert-dialog-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-4.tsx",
+        "path": "alert-dialog/alert-dialog-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-5.tsx",
+        "path": "alert-dialog/alert-dialog-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-6.tsx",
+        "path": "alert-dialog/alert-dialog-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-7.tsx",
+        "path": "alert-dialog/alert-dialog-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-8.tsx",
+        "path": "alert-dialog/alert-dialog-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "alert-dialog-9.tsx",
+        "path": "alert-dialog/alert-dialog-9.tsx",
         "type": "file"
       }
     ]
@@ -9965,6 +10308,11 @@
         "type": "file"
       },
       {
+        "name": "breadcrumb-11.tsx",
+        "path": "breadcrumb/breadcrumb-11.tsx",
+        "type": "file"
+      },
+      {
         "name": "breadcrumb-2.tsx",
         "path": "breadcrumb/breadcrumb-2.tsx",
         "type": "file"
@@ -10025,6 +10373,79 @@
       {
         "name": "breadcrumb-10.tsx",
         "path": "breadcrumb/breadcrumb-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "breadcrumb-11.tsx",
+        "path": "breadcrumb/breadcrumb-11.tsx",
+        "type": "file"
+      },
+      {
+        "name": "breadcrumb-2.tsx",
+        "path": "breadcrumb/breadcrumb-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "breadcrumb-3.tsx",
+        "path": "breadcrumb/breadcrumb-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "breadcrumb-4.tsx",
+        "path": "breadcrumb/breadcrumb-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "breadcrumb-5.tsx",
+        "path": "breadcrumb/breadcrumb-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "breadcrumb-6.tsx",
+        "path": "breadcrumb/breadcrumb-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "breadcrumb-9.tsx",
+        "path": "breadcrumb/breadcrumb-9.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "dependencies": [
+      "@gentleduck/hooks"
+    ],
+    "files": [
+      {
+        "path": "breadcrumb/breadcrumb-11.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "breadcrumb-11",
+    "registryDependencies": [
+      "breadcrumb",
+      "button",
+      "drawer",
+      "dropdown-menu"
+    ],
+    "root_folder": "breadcrumb",
+    "type": "registry:example",
+    "source": "/registry-examples/src/breadcrumb",
+    "tree": [
+      {
+        "name": "breadcrumb-1.tsx",
+        "path": "breadcrumb/breadcrumb-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "breadcrumb-10.tsx",
+        "path": "breadcrumb/breadcrumb-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "breadcrumb-11.tsx",
+        "path": "breadcrumb/breadcrumb-11.tsx",
         "type": "file"
       },
       {
@@ -10091,6 +10512,11 @@
         "type": "file"
       },
       {
+        "name": "breadcrumb-11.tsx",
+        "path": "breadcrumb/breadcrumb-11.tsx",
+        "type": "file"
+      },
+      {
         "name": "breadcrumb-2.tsx",
         "path": "breadcrumb/breadcrumb-2.tsx",
         "type": "file"
@@ -10151,6 +10577,11 @@
       {
         "name": "breadcrumb-10.tsx",
         "path": "breadcrumb/breadcrumb-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "breadcrumb-11.tsx",
+        "path": "breadcrumb/breadcrumb-11.tsx",
         "type": "file"
       },
       {
@@ -10217,6 +10648,11 @@
         "type": "file"
       },
       {
+        "name": "breadcrumb-11.tsx",
+        "path": "breadcrumb/breadcrumb-11.tsx",
+        "type": "file"
+      },
+      {
         "name": "breadcrumb-2.tsx",
         "path": "breadcrumb/breadcrumb-2.tsx",
         "type": "file"
@@ -10277,6 +10713,11 @@
       {
         "name": "breadcrumb-10.tsx",
         "path": "breadcrumb/breadcrumb-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "breadcrumb-11.tsx",
+        "path": "breadcrumb/breadcrumb-11.tsx",
         "type": "file"
       },
       {
@@ -10343,6 +10784,11 @@
         "type": "file"
       },
       {
+        "name": "breadcrumb-11.tsx",
+        "path": "breadcrumb/breadcrumb-11.tsx",
+        "type": "file"
+      },
+      {
         "name": "breadcrumb-2.tsx",
         "path": "breadcrumb/breadcrumb-2.tsx",
         "type": "file"
@@ -10403,6 +10849,11 @@
       {
         "name": "breadcrumb-10.tsx",
         "path": "breadcrumb/breadcrumb-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "breadcrumb-11.tsx",
+        "path": "breadcrumb/breadcrumb-11.tsx",
         "type": "file"
       },
       {
@@ -10484,6 +10935,16 @@
       {
         "name": "dialog-13.tsx",
         "path": "dialog/dialog-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
         "type": "file"
       },
       {
@@ -10578,6 +11039,16 @@
         "type": "file"
       },
       {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "dialog-2.tsx",
         "path": "dialog/dialog-2.tsx",
         "type": "file"
@@ -10666,6 +11137,16 @@
       {
         "name": "dialog-13.tsx",
         "path": "dialog/dialog-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
         "type": "file"
       },
       {
@@ -10760,6 +11241,16 @@
         "type": "file"
       },
       {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "dialog-2.tsx",
         "path": "dialog/dialog-2.tsx",
         "type": "file"
@@ -10848,6 +11339,218 @@
       {
         "name": "dialog-13.tsx",
         "path": "dialog/dialog-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-2.tsx",
+        "path": "dialog/dialog-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-3.tsx",
+        "path": "dialog/dialog-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-4.tsx",
+        "path": "dialog/dialog-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-5.tsx",
+        "path": "dialog/dialog-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-6.tsx",
+        "path": "dialog/dialog-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-7.tsx",
+        "path": "dialog/dialog-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-8.tsx",
+        "path": "dialog/dialog-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-9.tsx",
+        "path": "dialog/dialog-9.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "files": [
+      {
+        "path": "dialog/dialog-14.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "dialog-14",
+    "registryDependencies": [
+      "dialog",
+      "button",
+      "calendar",
+      "direction",
+      "input",
+      "kbd",
+      "label",
+      "popover",
+      "select",
+      "textarea"
+    ],
+    "root_folder": "dialog",
+    "type": "registry:example",
+    "source": "/registry-examples/src/dialog",
+    "tree": [
+      {
+        "name": "dialog-1.tsx",
+        "path": "dialog/dialog-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-10.tsx",
+        "path": "dialog/dialog-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-11.tsx",
+        "path": "dialog/dialog-11.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-12.tsx",
+        "path": "dialog/dialog-12.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-13.tsx",
+        "path": "dialog/dialog-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-2.tsx",
+        "path": "dialog/dialog-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-3.tsx",
+        "path": "dialog/dialog-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-4.tsx",
+        "path": "dialog/dialog-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-5.tsx",
+        "path": "dialog/dialog-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-6.tsx",
+        "path": "dialog/dialog-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-7.tsx",
+        "path": "dialog/dialog-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-8.tsx",
+        "path": "dialog/dialog-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-9.tsx",
+        "path": "dialog/dialog-9.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "files": [
+      {
+        "path": "dialog/dialog-15.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "dialog-15",
+    "registryDependencies": [
+      "dialog",
+      "button",
+      "calendar",
+      "direction",
+      "input",
+      "kbd",
+      "label",
+      "popover",
+      "select",
+      "textarea"
+    ],
+    "root_folder": "dialog",
+    "type": "registry:example",
+    "source": "/registry-examples/src/dialog",
+    "tree": [
+      {
+        "name": "dialog-1.tsx",
+        "path": "dialog/dialog-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-10.tsx",
+        "path": "dialog/dialog-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-11.tsx",
+        "path": "dialog/dialog-11.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-12.tsx",
+        "path": "dialog/dialog-12.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-13.tsx",
+        "path": "dialog/dialog-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
         "type": "file"
       },
       {
@@ -10942,6 +11645,16 @@
         "type": "file"
       },
       {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "dialog-2.tsx",
         "path": "dialog/dialog-2.tsx",
         "type": "file"
@@ -11030,6 +11743,16 @@
       {
         "name": "dialog-13.tsx",
         "path": "dialog/dialog-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
         "type": "file"
       },
       {
@@ -11124,6 +11847,16 @@
         "type": "file"
       },
       {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "dialog-2.tsx",
         "path": "dialog/dialog-2.tsx",
         "type": "file"
@@ -11212,6 +11945,16 @@
       {
         "name": "dialog-13.tsx",
         "path": "dialog/dialog-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
         "type": "file"
       },
       {
@@ -11306,6 +12049,16 @@
         "type": "file"
       },
       {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "dialog-2.tsx",
         "path": "dialog/dialog-2.tsx",
         "type": "file"
@@ -11394,6 +12147,16 @@
       {
         "name": "dialog-13.tsx",
         "path": "dialog/dialog-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
         "type": "file"
       },
       {
@@ -11488,6 +12251,16 @@
         "type": "file"
       },
       {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "dialog-2.tsx",
         "path": "dialog/dialog-2.tsx",
         "type": "file"
@@ -11579,6 +12352,16 @@
         "type": "file"
       },
       {
+        "name": "dialog-14.tsx",
+        "path": "dialog/dialog-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "dialog-15.tsx",
+        "path": "dialog/dialog-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "dialog-2.tsx",
         "path": "dialog/dialog-2.tsx",
         "type": "file"
@@ -11654,6 +12437,11 @@
       {
         "name": "command-12.tsx",
         "path": "command/command-12.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-13.tsx",
+        "path": "command/command-13.tsx",
         "type": "file"
       },
       {
@@ -11735,6 +12523,11 @@
         "type": "file"
       },
       {
+        "name": "command-13.tsx",
+        "path": "command/command-13.tsx",
+        "type": "file"
+      },
+      {
         "name": "command-2.tsx",
         "path": "command/command-2.tsx",
         "type": "file"
@@ -11810,6 +12603,11 @@
       {
         "name": "command-12.tsx",
         "path": "command/command-12.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-13.tsx",
+        "path": "command/command-13.tsx",
         "type": "file"
       },
       {
@@ -11891,6 +12689,94 @@
         "type": "file"
       },
       {
+        "name": "command-13.tsx",
+        "path": "command/command-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-2.tsx",
+        "path": "command/command-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-3.tsx",
+        "path": "command/command-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-4.tsx",
+        "path": "command/command-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-5.tsx",
+        "path": "command/command-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-6.tsx",
+        "path": "command/command-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-7.tsx",
+        "path": "command/command-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-8.tsx",
+        "path": "command/command-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-9.tsx",
+        "path": "command/command-9.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "files": [
+      {
+        "path": "command/command-13.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "command-13",
+    "registryDependencies": [
+      "command",
+      "button"
+    ],
+    "root_folder": "command",
+    "type": "registry:example",
+    "source": "/registry-examples/src/command",
+    "tree": [
+      {
+        "name": "command-1.tsx",
+        "path": "command/command-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-10.tsx",
+        "path": "command/command-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-11.tsx",
+        "path": "command/command-11.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-12.tsx",
+        "path": "command/command-12.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-13.tsx",
+        "path": "command/command-13.tsx",
+        "type": "file"
+      },
+      {
         "name": "command-2.tsx",
         "path": "command/command-2.tsx",
         "type": "file"
@@ -11966,6 +12852,11 @@
       {
         "name": "command-12.tsx",
         "path": "command/command-12.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-13.tsx",
+        "path": "command/command-13.tsx",
         "type": "file"
       },
       {
@@ -12047,6 +12938,11 @@
         "type": "file"
       },
       {
+        "name": "command-13.tsx",
+        "path": "command/command-13.tsx",
+        "type": "file"
+      },
+      {
         "name": "command-2.tsx",
         "path": "command/command-2.tsx",
         "type": "file"
@@ -12122,6 +13018,11 @@
       {
         "name": "command-12.tsx",
         "path": "command/command-12.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-13.tsx",
+        "path": "command/command-13.tsx",
         "type": "file"
       },
       {
@@ -12203,6 +13104,11 @@
         "type": "file"
       },
       {
+        "name": "command-13.tsx",
+        "path": "command/command-13.tsx",
+        "type": "file"
+      },
+      {
         "name": "command-2.tsx",
         "path": "command/command-2.tsx",
         "type": "file"
@@ -12278,6 +13184,11 @@
       {
         "name": "command-12.tsx",
         "path": "command/command-12.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-13.tsx",
+        "path": "command/command-13.tsx",
         "type": "file"
       },
       {
@@ -12359,6 +13270,11 @@
         "type": "file"
       },
       {
+        "name": "command-13.tsx",
+        "path": "command/command-13.tsx",
+        "type": "file"
+      },
+      {
         "name": "command-2.tsx",
         "path": "command/command-2.tsx",
         "type": "file"
@@ -12437,6 +13353,11 @@
         "type": "file"
       },
       {
+        "name": "command-13.tsx",
+        "path": "command/command-13.tsx",
+        "type": "file"
+      },
+      {
         "name": "command-2.tsx",
         "path": "command/command-2.tsx",
         "type": "file"
@@ -12512,6 +13433,11 @@
       {
         "name": "command-12.tsx",
         "path": "command/command-12.tsx",
+        "type": "file"
+      },
+      {
+        "name": "command-13.tsx",
+        "path": "command/command-13.tsx",
         "type": "file"
       },
       {
@@ -21503,6 +22429,11 @@
         "name": "radio-group-8.tsx",
         "path": "radio-group/radio-group-8.tsx",
         "type": "file"
+      },
+      {
+        "name": "radio-group-9.tsx",
+        "path": "radio-group/radio-group-9.tsx",
+        "type": "file"
       }
     ]
   },
@@ -21567,6 +22498,11 @@
       {
         "name": "radio-group-8.tsx",
         "path": "radio-group/radio-group-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "radio-group-9.tsx",
+        "path": "radio-group/radio-group-9.tsx",
         "type": "file"
       }
     ]
@@ -21633,6 +22569,11 @@
         "name": "radio-group-8.tsx",
         "path": "radio-group/radio-group-8.tsx",
         "type": "file"
+      },
+      {
+        "name": "radio-group-9.tsx",
+        "path": "radio-group/radio-group-9.tsx",
+        "type": "file"
       }
     ]
   },
@@ -21697,6 +22638,11 @@
       {
         "name": "radio-group-8.tsx",
         "path": "radio-group/radio-group-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "radio-group-9.tsx",
+        "path": "radio-group/radio-group-9.tsx",
         "type": "file"
       }
     ]
@@ -21763,6 +22709,11 @@
         "name": "radio-group-8.tsx",
         "path": "radio-group/radio-group-8.tsx",
         "type": "file"
+      },
+      {
+        "name": "radio-group-9.tsx",
+        "path": "radio-group/radio-group-9.tsx",
+        "type": "file"
       }
     ]
   },
@@ -21827,6 +22778,11 @@
       {
         "name": "radio-group-8.tsx",
         "path": "radio-group/radio-group-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "radio-group-9.tsx",
+        "path": "radio-group/radio-group-9.tsx",
         "type": "file"
       }
     ]
@@ -21893,6 +22849,11 @@
         "name": "radio-group-8.tsx",
         "path": "radio-group/radio-group-8.tsx",
         "type": "file"
+      },
+      {
+        "name": "radio-group-9.tsx",
+        "path": "radio-group/radio-group-9.tsx",
+        "type": "file"
       }
     ]
   },
@@ -21957,6 +22918,81 @@
       {
         "name": "radio-group-8.tsx",
         "path": "radio-group/radio-group-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "radio-group-9.tsx",
+        "path": "radio-group/radio-group-9.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "dependencies": [
+      "@hookform/resolvers",
+      "react-hook-form",
+      "sonner",
+      "zod"
+    ],
+    "files": [
+      {
+        "path": "radio-group/radio-group-9.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "radio-group-9",
+    "registryDependencies": [
+      "radio-group",
+      "button",
+      "field"
+    ],
+    "root_folder": "radio-group",
+    "type": "registry:example",
+    "source": "/registry-examples/src/radio-group",
+    "tree": [
+      {
+        "name": "radio-group-1.tsx",
+        "path": "radio-group/radio-group-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "radio-group-2.tsx",
+        "path": "radio-group/radio-group-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "radio-group-3.tsx",
+        "path": "radio-group/radio-group-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "radio-group-4.tsx",
+        "path": "radio-group/radio-group-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "radio-group-5.tsx",
+        "path": "radio-group/radio-group-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "radio-group-6.tsx",
+        "path": "radio-group/radio-group-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "radio-group-7.tsx",
+        "path": "radio-group/radio-group-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "radio-group-8.tsx",
+        "path": "radio-group/radio-group-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "radio-group-9.tsx",
+        "path": "radio-group/radio-group-9.tsx",
         "type": "file"
       }
     ]
@@ -22447,6 +23483,11 @@
         "type": "file"
       },
       {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
+        "type": "file"
+      },
+      {
         "name": "select-3.tsx",
         "path": "select/select-3.tsx",
         "type": "file"
@@ -22581,6 +23622,11 @@
       {
         "name": "select-22.tsx",
         "path": "select/select-22.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
         "type": "file"
       },
       {
@@ -22721,6 +23767,11 @@
         "type": "file"
       },
       {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
+        "type": "file"
+      },
+      {
         "name": "select-3.tsx",
         "path": "select/select-3.tsx",
         "type": "file"
@@ -22855,6 +23906,11 @@
       {
         "name": "select-22.tsx",
         "path": "select/select-22.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
         "type": "file"
       },
       {
@@ -22995,6 +24051,11 @@
         "type": "file"
       },
       {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
+        "type": "file"
+      },
+      {
         "name": "select-3.tsx",
         "path": "select/select-3.tsx",
         "type": "file"
@@ -23129,6 +24190,11 @@
       {
         "name": "select-22.tsx",
         "path": "select/select-22.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
         "type": "file"
       },
       {
@@ -23269,6 +24335,11 @@
         "type": "file"
       },
       {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
+        "type": "file"
+      },
+      {
         "name": "select-3.tsx",
         "path": "select/select-3.tsx",
         "type": "file"
@@ -23403,6 +24474,11 @@
       {
         "name": "select-22.tsx",
         "path": "select/select-22.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
         "type": "file"
       },
       {
@@ -23543,6 +24619,11 @@
         "type": "file"
       },
       {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
+        "type": "file"
+      },
+      {
         "name": "select-3.tsx",
         "path": "select/select-3.tsx",
         "type": "file"
@@ -23677,6 +24758,11 @@
       {
         "name": "select-22.tsx",
         "path": "select/select-22.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
         "type": "file"
       },
       {
@@ -23817,6 +24903,11 @@
         "type": "file"
       },
       {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
+        "type": "file"
+      },
+      {
         "name": "select-3.tsx",
         "path": "select/select-3.tsx",
         "type": "file"
@@ -23951,6 +25042,11 @@
       {
         "name": "select-22.tsx",
         "path": "select/select-22.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
         "type": "file"
       },
       {
@@ -24091,6 +25187,11 @@
         "type": "file"
       },
       {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
+        "type": "file"
+      },
+      {
         "name": "select-3.tsx",
         "path": "select/select-3.tsx",
         "type": "file"
@@ -24225,6 +25326,11 @@
       {
         "name": "select-22.tsx",
         "path": "select/select-22.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
         "type": "file"
       },
       {
@@ -24365,6 +25471,153 @@
         "type": "file"
       },
       {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-3.tsx",
+        "path": "select/select-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-4.tsx",
+        "path": "select/select-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-5.tsx",
+        "path": "select/select-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-6.tsx",
+        "path": "select/select-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-7.tsx",
+        "path": "select/select-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-8.tsx",
+        "path": "select/select-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-9.tsx",
+        "path": "select/select-9.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "dependencies": [
+      "@hookform/resolvers",
+      "react-hook-form",
+      "sonner",
+      "zod"
+    ],
+    "files": [
+      {
+        "path": "select/select-23.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "select-23",
+    "registryDependencies": [
+      "select",
+      "badge",
+      "button",
+      "direction",
+      "field"
+    ],
+    "root_folder": "select",
+    "type": "registry:example",
+    "source": "/registry-examples/src/select",
+    "tree": [
+      {
+        "name": "select-1.tsx",
+        "path": "select/select-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-10.tsx",
+        "path": "select/select-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-11.tsx",
+        "path": "select/select-11.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-12.tsx",
+        "path": "select/select-12.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-13.tsx",
+        "path": "select/select-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-14.tsx",
+        "path": "select/select-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-15.tsx",
+        "path": "select/select-15.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-16.tsx",
+        "path": "select/select-16.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-17.tsx",
+        "path": "select/select-17.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-18.tsx",
+        "path": "select/select-18.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-19.tsx",
+        "path": "select/select-19.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-2.tsx",
+        "path": "select/select-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-20.tsx",
+        "path": "select/select-20.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-21.tsx",
+        "path": "select/select-21.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-22.tsx",
+        "path": "select/select-22.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
+        "type": "file"
+      },
+      {
         "name": "select-3.tsx",
         "path": "select/select-3.tsx",
         "type": "file"
@@ -24499,6 +25752,11 @@
       {
         "name": "select-22.tsx",
         "path": "select/select-22.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
         "type": "file"
       },
       {
@@ -24639,6 +25897,11 @@
         "type": "file"
       },
       {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
+        "type": "file"
+      },
+      {
         "name": "select-3.tsx",
         "path": "select/select-3.tsx",
         "type": "file"
@@ -24773,6 +26036,11 @@
       {
         "name": "select-22.tsx",
         "path": "select/select-22.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
         "type": "file"
       },
       {
@@ -24913,6 +26181,11 @@
         "type": "file"
       },
       {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
+        "type": "file"
+      },
+      {
         "name": "select-3.tsx",
         "path": "select/select-3.tsx",
         "type": "file"
@@ -25047,6 +26320,11 @@
       {
         "name": "select-22.tsx",
         "path": "select/select-22.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
         "type": "file"
       },
       {
@@ -25187,6 +26465,11 @@
         "type": "file"
       },
       {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
+        "type": "file"
+      },
+      {
         "name": "select-3.tsx",
         "path": "select/select-3.tsx",
         "type": "file"
@@ -25321,6 +26604,11 @@
       {
         "name": "select-22.tsx",
         "path": "select/select-22.tsx",
+        "type": "file"
+      },
+      {
+        "name": "select-23.tsx",
+        "path": "select/select-23.tsx",
         "type": "file"
       },
       {
@@ -25692,6 +26980,16 @@
         "type": "file"
       },
       {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "sheet-2.tsx",
         "path": "sheet/sheet-2.tsx",
         "type": "file"
@@ -25774,6 +27072,16 @@
       {
         "name": "sheet-13.tsx",
         "path": "sheet/sheet-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
         "type": "file"
       },
       {
@@ -25862,6 +27170,16 @@
         "type": "file"
       },
       {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "sheet-2.tsx",
         "path": "sheet/sheet-2.tsx",
         "type": "file"
@@ -25944,6 +27262,16 @@
       {
         "name": "sheet-13.tsx",
         "path": "sheet/sheet-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
         "type": "file"
       },
       {
@@ -26032,6 +27360,206 @@
         "type": "file"
       },
       {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-2.tsx",
+        "path": "sheet/sheet-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-3.tsx",
+        "path": "sheet/sheet-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-4.tsx",
+        "path": "sheet/sheet-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-5.tsx",
+        "path": "sheet/sheet-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-6.tsx",
+        "path": "sheet/sheet-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-7.tsx",
+        "path": "sheet/sheet-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-8.tsx",
+        "path": "sheet/sheet-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-9.tsx",
+        "path": "sheet/sheet-9.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "files": [
+      {
+        "path": "sheet/sheet-14.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "sheet-14",
+    "registryDependencies": [
+      "sheet",
+      "button",
+      "input",
+      "label"
+    ],
+    "root_folder": "sheet",
+    "type": "registry:example",
+    "source": "/registry-examples/src/sheet",
+    "tree": [
+      {
+        "name": "sheet-1.tsx",
+        "path": "sheet/sheet-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-10.tsx",
+        "path": "sheet/sheet-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-11.tsx",
+        "path": "sheet/sheet-11.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-12.tsx",
+        "path": "sheet/sheet-12.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-13.tsx",
+        "path": "sheet/sheet-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-2.tsx",
+        "path": "sheet/sheet-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-3.tsx",
+        "path": "sheet/sheet-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-4.tsx",
+        "path": "sheet/sheet-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-5.tsx",
+        "path": "sheet/sheet-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-6.tsx",
+        "path": "sheet/sheet-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-7.tsx",
+        "path": "sheet/sheet-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-8.tsx",
+        "path": "sheet/sheet-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-9.tsx",
+        "path": "sheet/sheet-9.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "files": [
+      {
+        "path": "sheet/sheet-15.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "sheet-15",
+    "registryDependencies": [
+      "sheet",
+      "button",
+      "input",
+      "label"
+    ],
+    "root_folder": "sheet",
+    "type": "registry:example",
+    "source": "/registry-examples/src/sheet",
+    "tree": [
+      {
+        "name": "sheet-1.tsx",
+        "path": "sheet/sheet-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-10.tsx",
+        "path": "sheet/sheet-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-11.tsx",
+        "path": "sheet/sheet-11.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-12.tsx",
+        "path": "sheet/sheet-12.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-13.tsx",
+        "path": "sheet/sheet-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "sheet-2.tsx",
         "path": "sheet/sheet-2.tsx",
         "type": "file"
@@ -26114,6 +27642,16 @@
       {
         "name": "sheet-13.tsx",
         "path": "sheet/sheet-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
         "type": "file"
       },
       {
@@ -26202,6 +27740,16 @@
         "type": "file"
       },
       {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "sheet-2.tsx",
         "path": "sheet/sheet-2.tsx",
         "type": "file"
@@ -26284,6 +27832,16 @@
       {
         "name": "sheet-13.tsx",
         "path": "sheet/sheet-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
         "type": "file"
       },
       {
@@ -26372,6 +27930,16 @@
         "type": "file"
       },
       {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "sheet-2.tsx",
         "path": "sheet/sheet-2.tsx",
         "type": "file"
@@ -26454,6 +28022,16 @@
       {
         "name": "sheet-13.tsx",
         "path": "sheet/sheet-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
         "type": "file"
       },
       {
@@ -26542,6 +28120,16 @@
         "type": "file"
       },
       {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "sheet-2.tsx",
         "path": "sheet/sheet-2.tsx",
         "type": "file"
@@ -26627,6 +28215,16 @@
         "type": "file"
       },
       {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
+        "type": "file"
+      },
+      {
         "name": "sheet-2.tsx",
         "path": "sheet/sheet-2.tsx",
         "type": "file"
@@ -26709,6 +28307,16 @@
       {
         "name": "sheet-13.tsx",
         "path": "sheet/sheet-13.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-14.tsx",
+        "path": "sheet/sheet-14.tsx",
+        "type": "file"
+      },
+      {
+        "name": "sheet-15.tsx",
+        "path": "sheet/sheet-15.tsx",
         "type": "file"
       },
       {
@@ -40804,6 +42412,81 @@
         "type": "file"
       },
       {
+        "name": "menubar-10.tsx",
+        "path": "menubar/menubar-10.tsx",
+        "type": "file"
+      },
+      {
+        "name": "menubar-2.tsx",
+        "path": "menubar/menubar-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "menubar-3.tsx",
+        "path": "menubar/menubar-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "menubar-4.tsx",
+        "path": "menubar/menubar-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "menubar-5.tsx",
+        "path": "menubar/menubar-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "menubar-6.tsx",
+        "path": "menubar/menubar-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "menubar-7.tsx",
+        "path": "menubar/menubar-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "menubar-8.tsx",
+        "path": "menubar/menubar-8.tsx",
+        "type": "file"
+      },
+      {
+        "name": "menubar-9.tsx",
+        "path": "menubar/menubar-9.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "files": [
+      {
+        "path": "menubar/menubar-10.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "menubar-10",
+    "registryDependencies": [
+      "menubar",
+      "direction",
+      "label",
+      "switch"
+    ],
+    "root_folder": "menubar",
+    "type": "registry:example",
+    "source": "/registry-examples/src/menubar",
+    "tree": [
+      {
+        "name": "menubar-1.tsx",
+        "path": "menubar/menubar-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "menubar-10.tsx",
+        "path": "menubar/menubar-10.tsx",
+        "type": "file"
+      },
+      {
         "name": "menubar-2.tsx",
         "path": "menubar/menubar-2.tsx",
         "type": "file"
@@ -40866,6 +42549,11 @@
       {
         "name": "menubar-1.tsx",
         "path": "menubar/menubar-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "menubar-10.tsx",
+        "path": "menubar/menubar-10.tsx",
         "type": "file"
       },
       {
@@ -40934,6 +42622,11 @@
         "type": "file"
       },
       {
+        "name": "menubar-10.tsx",
+        "path": "menubar/menubar-10.tsx",
+        "type": "file"
+      },
+      {
         "name": "menubar-2.tsx",
         "path": "menubar/menubar-2.tsx",
         "type": "file"
@@ -40996,6 +42689,11 @@
       {
         "name": "menubar-1.tsx",
         "path": "menubar/menubar-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "menubar-10.tsx",
+        "path": "menubar/menubar-10.tsx",
         "type": "file"
       },
       {
@@ -41064,6 +42762,11 @@
         "type": "file"
       },
       {
+        "name": "menubar-10.tsx",
+        "path": "menubar/menubar-10.tsx",
+        "type": "file"
+      },
+      {
         "name": "menubar-2.tsx",
         "path": "menubar/menubar-2.tsx",
         "type": "file"
@@ -41126,6 +42829,11 @@
       {
         "name": "menubar-1.tsx",
         "path": "menubar/menubar-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "menubar-10.tsx",
+        "path": "menubar/menubar-10.tsx",
         "type": "file"
       },
       {
@@ -41194,6 +42902,11 @@
         "type": "file"
       },
       {
+        "name": "menubar-10.tsx",
+        "path": "menubar/menubar-10.tsx",
+        "type": "file"
+      },
+      {
         "name": "menubar-2.tsx",
         "path": "menubar/menubar-2.tsx",
         "type": "file"
@@ -41259,6 +42972,11 @@
         "type": "file"
       },
       {
+        "name": "menubar-10.tsx",
+        "path": "menubar/menubar-10.tsx",
+        "type": "file"
+      },
+      {
         "name": "menubar-2.tsx",
         "path": "menubar/menubar-2.tsx",
         "type": "file"
@@ -41321,6 +43039,11 @@
       {
         "name": "menubar-1.tsx",
         "path": "menubar/menubar-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "menubar-10.tsx",
+        "path": "menubar/menubar-10.tsx",
         "type": "file"
       },
       {
@@ -43889,6 +45612,11 @@
         "name": "collapsible-7.tsx",
         "path": "collapsible/collapsible-7.tsx",
         "type": "file"
+      },
+      {
+        "name": "collapsible-8.tsx",
+        "path": "collapsible/collapsible-8.tsx",
+        "type": "file"
       }
     ]
   },
@@ -43940,6 +45668,11 @@
       {
         "name": "collapsible-7.tsx",
         "path": "collapsible/collapsible-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "collapsible-8.tsx",
+        "path": "collapsible/collapsible-8.tsx",
         "type": "file"
       }
     ]
@@ -43993,6 +45726,11 @@
         "name": "collapsible-7.tsx",
         "path": "collapsible/collapsible-7.tsx",
         "type": "file"
+      },
+      {
+        "name": "collapsible-8.tsx",
+        "path": "collapsible/collapsible-8.tsx",
+        "type": "file"
       }
     ]
   },
@@ -44044,6 +45782,11 @@
       {
         "name": "collapsible-7.tsx",
         "path": "collapsible/collapsible-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "collapsible-8.tsx",
+        "path": "collapsible/collapsible-8.tsx",
         "type": "file"
       }
     ]
@@ -44097,6 +45840,11 @@
         "name": "collapsible-7.tsx",
         "path": "collapsible/collapsible-7.tsx",
         "type": "file"
+      },
+      {
+        "name": "collapsible-8.tsx",
+        "path": "collapsible/collapsible-8.tsx",
+        "type": "file"
       }
     ]
   },
@@ -44149,6 +45897,11 @@
         "name": "collapsible-7.tsx",
         "path": "collapsible/collapsible-7.tsx",
         "type": "file"
+      },
+      {
+        "name": "collapsible-8.tsx",
+        "path": "collapsible/collapsible-8.tsx",
+        "type": "file"
       }
     ]
   },
@@ -44200,6 +45953,68 @@
       {
         "name": "collapsible-7.tsx",
         "path": "collapsible/collapsible-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "collapsible-8.tsx",
+        "path": "collapsible/collapsible-8.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "files": [
+      {
+        "path": "collapsible/collapsible-8.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "collapsible-8",
+    "registryDependencies": [
+      "collapsible"
+    ],
+    "root_folder": "collapsible",
+    "type": "registry:example",
+    "source": "/registry-examples/src/collapsible",
+    "tree": [
+      {
+        "name": "collapsible-1.tsx",
+        "path": "collapsible/collapsible-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "collapsible-2.tsx",
+        "path": "collapsible/collapsible-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "collapsible-3.tsx",
+        "path": "collapsible/collapsible-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "collapsible-4.tsx",
+        "path": "collapsible/collapsible-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "collapsible-5.tsx",
+        "path": "collapsible/collapsible-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "collapsible-6.tsx",
+        "path": "collapsible/collapsible-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "collapsible-7.tsx",
+        "path": "collapsible/collapsible-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "collapsible-8.tsx",
+        "path": "collapsible/collapsible-8.tsx",
         "type": "file"
       }
     ]
@@ -46217,6 +48032,11 @@
         "name": "context-menu-7.tsx",
         "path": "context-menu/context-menu-7.tsx",
         "type": "file"
+      },
+      {
+        "name": "context-menu-8.tsx",
+        "path": "context-menu/context-menu-8.tsx",
+        "type": "file"
       }
     ]
   },
@@ -46271,6 +48091,11 @@
       {
         "name": "context-menu-7.tsx",
         "path": "context-menu/context-menu-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "context-menu-8.tsx",
+        "path": "context-menu/context-menu-8.tsx",
         "type": "file"
       }
     ]
@@ -46327,6 +48152,11 @@
         "name": "context-menu-7.tsx",
         "path": "context-menu/context-menu-7.tsx",
         "type": "file"
+      },
+      {
+        "name": "context-menu-8.tsx",
+        "path": "context-menu/context-menu-8.tsx",
+        "type": "file"
       }
     ]
   },
@@ -46381,6 +48211,11 @@
       {
         "name": "context-menu-7.tsx",
         "path": "context-menu/context-menu-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "context-menu-8.tsx",
+        "path": "context-menu/context-menu-8.tsx",
         "type": "file"
       }
     ]
@@ -46437,6 +48272,11 @@
         "name": "context-menu-7.tsx",
         "path": "context-menu/context-menu-7.tsx",
         "type": "file"
+      },
+      {
+        "name": "context-menu-8.tsx",
+        "path": "context-menu/context-menu-8.tsx",
+        "type": "file"
       }
     ]
   },
@@ -46492,6 +48332,11 @@
         "name": "context-menu-7.tsx",
         "path": "context-menu/context-menu-7.tsx",
         "type": "file"
+      },
+      {
+        "name": "context-menu-8.tsx",
+        "path": "context-menu/context-menu-8.tsx",
+        "type": "file"
       }
     ]
   },
@@ -46546,6 +48391,71 @@
       {
         "name": "context-menu-7.tsx",
         "path": "context-menu/context-menu-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "context-menu-8.tsx",
+        "path": "context-menu/context-menu-8.tsx",
+        "type": "file"
+      }
+    ]
+  },
+  {
+    "files": [
+      {
+        "path": "context-menu/context-menu-8.tsx",
+        "type": "registry:example"
+      }
+    ],
+    "name": "context-menu-8",
+    "registryDependencies": [
+      "context-menu",
+      "direction",
+      "label",
+      "switch"
+    ],
+    "root_folder": "context-menu",
+    "type": "registry:example",
+    "source": "/registry-examples/src/context-menu",
+    "tree": [
+      {
+        "name": "context-menu-1.tsx",
+        "path": "context-menu/context-menu-1.tsx",
+        "type": "file"
+      },
+      {
+        "name": "context-menu-2.tsx",
+        "path": "context-menu/context-menu-2.tsx",
+        "type": "file"
+      },
+      {
+        "name": "context-menu-3.tsx",
+        "path": "context-menu/context-menu-3.tsx",
+        "type": "file"
+      },
+      {
+        "name": "context-menu-4.tsx",
+        "path": "context-menu/context-menu-4.tsx",
+        "type": "file"
+      },
+      {
+        "name": "context-menu-5.tsx",
+        "path": "context-menu/context-menu-5.tsx",
+        "type": "file"
+      },
+      {
+        "name": "context-menu-6.tsx",
+        "path": "context-menu/context-menu-6.tsx",
+        "type": "file"
+      },
+      {
+        "name": "context-menu-7.tsx",
+        "path": "context-menu/context-menu-7.tsx",
+        "type": "file"
+      },
+      {
+        "name": "context-menu-8.tsx",
+        "path": "context-menu/context-menu-8.tsx",
         "type": "file"
       }
     ]

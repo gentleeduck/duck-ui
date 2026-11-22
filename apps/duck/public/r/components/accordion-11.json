@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  Accordion,\n  MotionAccordionContent,\n  MotionAccordionItem,\n  MotionAccordionTrigger,\n} from '@gentleduck/registry-ui/accordion'\n\nconst questions = [\n  { answer: 'Within three working days.', question: 'When does it ship?', value: 'ship' },\n  { answer: 'Free within thirty days.', question: 'Can I return it?', value: 'return' },\n  { answer: 'Two years on every part.', question: 'Is there a warranty?', value: 'warranty' },\n]\n\nexport default function Demo() {\n  return (\n    <Accordion className=\"w-[350px]\" collapsible type=\"single\">\n      {questions.map((item, place) => (\n        <MotionAccordionItem index={questions.length - 1 - place} key={item.value} value={item.value}>\n          <MotionAccordionTrigger>{item.question}</MotionAccordionTrigger>\n          <MotionAccordionContent>{item.answer}</MotionAccordionContent>\n        </MotionAccordionItem>\n      ))}\n    </Accordion>\n  )\n}\n",
+      "path": "accordion/accordion-11.tsx",
+      "target": "components/accordion-11.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "accordion-11",
+  "registryDependencies": [
+    "accordion",
+    "direction"
+  ],
+  "root_folder": "accordion",
+  "source": "/registry-examples/src/accordion",
+  "type": "registry:example"
+}

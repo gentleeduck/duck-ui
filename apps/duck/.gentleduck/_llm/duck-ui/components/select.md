@@ -505,6 +505,43 @@ export default function Demo() {
 }
 ```
 
+### Open on mount
+
+```tsx title="components/select-23.tsx"
+// import from your project: import Demo from '@/components/select-23'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'
+import * as React from 'react'
+
+export default function Demo() {
+  const [editing, setEditing] = React.useState(false)
+  const [fruit, setFruit] = React.useState('apple')
+
+  if (!editing) {
+    return (
+      <Button onClick={() => setEditing(true)} variant="outline">
+        Change the fruit ({fruit})
+      </Button>
+    )
+  }
+
+  return (
+    <Select defaultOpen onOpenChange={(open) => !open && setEditing(false)} onValueChange={setFruit} value={fruit}>
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder="A fruit" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="apple">Apple</SelectItem>
+        <SelectItem value="banana">Banana</SelectItem>
+        <SelectItem value="cherry">Cherry</SelectItem>
+      </SelectContent>
+    </Select>
+  )
+}
+```
+
 ## Multiple
 
 Pass `multiple` and the select holds a list of values. `value`, `defaultValue` and `onValueChange` take and give `string[]`, in the order the values were picked. A click, Enter or Space toggles the item and leaves the list open, so several can be picked in one go, and Escape or a press outside closes it. The trigger shows the picked labels joined by ", ", or the placeholder while none is picked.

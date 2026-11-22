@@ -1,0 +1,25 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { MotionRadioGroupItem, RadioGroup } from '@gentleduck/registry-ui/radio-group'\n\nconst plans = [\n  { label: 'Starter', value: 'starter' },\n  { label: 'Team', value: 'team' },\n  { label: 'Pro', value: 'pro' },\n]\n\nexport default function Demo() {\n  return (\n    <RadioGroup className=\"flex flex-col gap-2\" defaultValue=\"pro\">\n      {plans.map((plan, place) => (\n        <MotionRadioGroupItem index={plans.length - 1 - place} key={plan.value} value={plan.value}>\n          {plan.label}\n        </MotionRadioGroupItem>\n      ))}\n    </RadioGroup>\n  )\n}\n",
+      "path": "radio-group/radio-group-9.tsx",
+      "target": "components/radio-group-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "radio-group-9",
+  "registryDependencies": [
+    "radio-group",
+    "button",
+    "field"
+  ],
+  "root_folder": "radio-group",
+  "source": "/registry-examples/src/radio-group",
+  "type": "registry:example"
+}

@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from '@gentleduck/registry-ui/menubar'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const panel = React.useRef<HTMLDivElement>(null)\n\n  return (\n    <div\n      className=\"dark flex flex-col items-center gap-4 rounded-md border bg-background p-4 text-foreground\"\n      ref={panel}>\n      <Menubar>\n        <MenubarMenu value=\"file\">\n          <MenubarTrigger>File</MenubarTrigger>\n          <MenubarContent container={panel}>\n            <MenubarItem>New tab</MenubarItem>\n            <MenubarItem>New window</MenubarItem>\n          </MenubarContent>\n        </MenubarMenu>\n      </Menubar>\n      <p className=\"text-muted-foreground text-sm\">The menu portals into this dark panel.</p>\n    </div>\n  )\n}\n",
+      "path": "menubar/menubar-10.tsx",
+      "target": "components/menubar-10.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "menubar-10",
+  "registryDependencies": [
+    "menubar",
+    "direction",
+    "label",
+    "switch"
+  ],
+  "root_folder": "menubar",
+  "source": "/registry-examples/src/menubar",
+  "type": "registry:example"
+}

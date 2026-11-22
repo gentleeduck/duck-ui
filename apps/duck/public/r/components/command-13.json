@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { useCommandItemContext } from '@gentleduck/primitives/command'\nimport { Command, CommandInput, CommandItem, CommandList, CommandShortcut } from '@gentleduck/registry-ui/command'\nimport type * as React from 'react'\n\nfunction Label({ children }: { children: React.ReactNode }) {\n  const { onItemTextChange, textId } = useCommandItemContext('Label', undefined)\n  return (\n    <span id={textId} ref={onItemTextChange}>\n      {children}\n    </span>\n  )\n}\n\nexport default function Demo() {\n  return (\n    <Command className=\"w-[320px] rounded-lg border\">\n      <CommandInput placeholder=\"Search the labels, not the keys...\" />\n      <CommandList>\n        <CommandItem>\n          <Label>Copy</Label>\n          <CommandShortcut keys=\"mod+c\" />\n        </CommandItem>\n        <CommandItem>\n          <Label>Paste</Label>\n          <CommandShortcut keys=\"mod+v\" />\n        </CommandItem>\n      </CommandList>\n    </Command>\n  )\n}\n",
+      "path": "command/command-13.tsx",
+      "target": "components/command-13.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "command-13",
+  "registryDependencies": [
+    "command",
+    "button"
+  ],
+  "root_folder": "command",
+  "source": "/registry-examples/src/command",
+  "type": "registry:example"
+}

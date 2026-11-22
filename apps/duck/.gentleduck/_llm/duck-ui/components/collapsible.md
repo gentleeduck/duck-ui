@@ -224,6 +224,57 @@ export default function Demo() {
 }
 ```
 
+### Its refs
+
+```tsx title="components/collapsible-8.tsx"
+// import from your project: import Demo from '@/components/collapsible-8'
+'use client'
+
+import { Button } from '@gentleduck/registry-ui/button'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  useCollapsible,
+} from '@gentleduck/registry-ui/collapsible'
+
+function Actions() {
+  const { contentRef, onOpenChange, triggerRef, wrapperRef } = useCollapsible()
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Button
+        onClick={() => {
+          onOpenChange(true)
+          requestAnimationFrame(() => contentRef.current?.scrollIntoView({ block: 'nearest' }))
+        }}
+        size="sm"
+        variant="outline">
+        Show the notes
+      </Button>
+      <Button onClick={() => triggerRef.current?.focus()} size="sm" variant="outline">
+        Focus the toggle
+      </Button>
+      <Button onClick={() => wrapperRef.current?.scrollIntoView({ block: 'nearest' })} size="sm" variant="outline">
+        Scroll to the section
+      </Button>
+    </div>
+  )
+}
+
+export default function Demo() {
+  return (
+    <Collapsible className="flex w-[350px] flex-col gap-3 rounded-md border p-3">
+      <Actions />
+      <CollapsibleTrigger className="text-start font-medium">Release notes</CollapsibleTrigger>
+      <CollapsibleContent className="text-muted-foreground text-sm">
+        Fixed the date picker in Safari, and the calendar keeps its tab stop.
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+```
+
 ## Component Composition
 
 ## RTL Support
@@ -351,6 +402,8 @@ const { open, onOpenChange } = useCollapsible()
 | `triggerRef` | `React.RefObject<HTMLButtonElement \| null>` | Ref to the trigger button |
 | `contentRef` | `React.RefObject<HTMLElement \| null>` | Ref to the content section |
 | `contentId` | `string` | Auto-generated ID linking trigger and content via `aria-controls` |
+
+The refs hold their elements once the parts mount, so read them in a handler or an effect, as the [refs example](#its-refs) does to scroll to the content and focus the trigger.
 
 ### MotionCollapsibleContent
 

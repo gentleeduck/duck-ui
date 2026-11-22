@@ -367,6 +367,104 @@ export default function Demo() {
 }
 ```
 
+### Into an element of your own
+
+```tsx title="components/alert-dialog-9.tsx"
+// import from your project: import Demo from '@/components/alert-dialog-9'
+'use client'
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@gentleduck/registry-ui/alert-dialog'
+import { Button } from '@gentleduck/registry-ui/button'
+import * as React from 'react'
+
+export default function Demo() {
+  const panel = React.useRef<HTMLDivElement>(null)
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline">Ask in the dark panel</Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent container={panel}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive the project?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The question portals into the panel below and takes its dark theme.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction>Archive</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <div className="dark rounded-md border bg-background p-4 text-foreground text-sm" ref={panel}>
+        The alert dialog renders inside this element.
+      </div>
+    </div>
+  )
+}
+```
+
+### Open on mount
+
+```tsx title="components/alert-dialog-10.tsx"
+// import from your project: import Demo from '@/components/alert-dialog-10'
+'use client'
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@gentleduck/registry-ui/alert-dialog'
+import { Button } from '@gentleduck/registry-ui/button'
+import * as React from 'react'
+
+export default function Demo() {
+  const [leaving, setLeaving] = React.useState(false)
+
+  return (
+    <>
+      <Button onClick={() => setLeaving(true)} variant="outline">
+        Leave the editor
+      </Button>
+      {leaving && (
+        <AlertDialog defaultOpen onOpenChange={(open) => !open && setLeaving(false)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Leave without saving?</AlertDialogTitle>
+              <AlertDialogDescription>
+                defaultOpen asks as soon as the question mounts, here once you try to leave.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Stay</AlertDialogCancel>
+              <AlertDialogAction>Leave</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </>
+  )
+}
+```
+
 ## Component Composition
 
 ## RTL Support
@@ -518,6 +616,8 @@ export default function Demo() {
 | `forceMount` | `true` | - | Forces mounted state for all portal children |
 | `...props` | `React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Portal>` | - | Additional props inherited from `AlertDialogPrimitive.Portal` |
 
+`AlertDialogContent` renders a portal of its own, so pass `container` to `AlertDialogContent` to place it; `AlertDialogPortal` is for a content built from the primitive.
+
 ### AlertDialogOverlay
 
 | Prop | Type | Default | Description |
@@ -531,6 +631,7 @@ Clear when the alert dialog is opened from a dialog's content, since the dialog'
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Where the content portals to, such as an element carrying another theme |
 | `className` | `string` | `-` | Additional class names to apply |
 | `children` | `React.ReactNode` | `-` | Content displayed inside the dialog |
 | `forceMount` | `true` | - | Keeps the content, and what it holds, in the page while the dialog is closed. Its portal is kept with it, and the overlay holds the end of its fade and lets presses through, so it never covers the page |

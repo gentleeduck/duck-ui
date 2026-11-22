@@ -409,6 +409,37 @@ export default function Demo() {
 }
 ```
 
+### Into an element of your own
+
+```tsx title="components/menubar-10.tsx"
+// import from your project: import Demo from '@/components/menubar-10'
+'use client'
+
+import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from '@gentleduck/registry-ui/menubar'
+import * as React from 'react'
+
+export default function Demo() {
+  const panel = React.useRef<HTMLDivElement>(null)
+
+  return (
+    <div
+      className="dark flex flex-col items-center gap-4 rounded-md border bg-background p-4 text-foreground"
+      ref={panel}>
+      <Menubar>
+        <MenubarMenu value="file">
+          <MenubarTrigger>File</MenubarTrigger>
+          <MenubarContent container={panel}>
+            <MenubarItem>New tab</MenubarItem>
+            <MenubarItem>New window</MenubarItem>
+          </MenubarContent>
+        </MenubarMenu>
+      </Menubar>
+      <p className="text-muted-foreground text-sm">The menu portals into this dark panel.</p>
+    </div>
+  )
+}
+```
+
 ## Component Composition
 
 ## RTL Support
@@ -707,12 +738,15 @@ Components in this file wrap `@gentleduck/primitives/menubar`.
 | `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Optional portal container |
 | `...props` | `React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Portal>` | - | Additional props inherited from `MenubarPrimitive.Portal` |
 
+`MenubarContent` renders a portal of its own, so pass `container` to `MenubarContent` to place it; `MenubarPortal` is for a content built from the primitive.
+
 ### MenubarContent
 
 Scrolls when taller than the space it has.
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Where the content portals to, such as an element carrying another theme |
 | `className` | `string` | - | Additional CSS classes |
 | `forceMount` | `true` | - | Keeps the content in the page while closed, as `data-state="closed"`, for an exit animation to run on |
 | `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'`, or `'right'` in a vertical bar | Preferred side relative to the trigger. `right` and `left` mirror right to left |

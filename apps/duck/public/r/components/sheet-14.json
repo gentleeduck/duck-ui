@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Sheet,\n  SheetContent,\n  SheetDescription,\n  SheetHeader,\n  SheetTitle,\n  SheetTrigger,\n} from '@gentleduck/registry-ui/sheet'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const panel = React.useRef<HTMLDivElement>(null)\n\n  return (\n    <div className=\"flex flex-col items-center gap-4\">\n      <Sheet>\n        <SheetTrigger asChild>\n          <Button variant=\"outline\">Open in the dark panel</Button>\n        </SheetTrigger>\n        <SheetContent container={panel}>\n          <SheetHeader>\n            <SheetTitle>Rendered in the panel</SheetTitle>\n            <SheetDescription>The sheet portals into the panel below and takes its dark theme.</SheetDescription>\n          </SheetHeader>\n        </SheetContent>\n      </Sheet>\n      <div className=\"dark rounded-md border bg-background p-4 text-foreground text-sm\" ref={panel}>\n        The sheet renders inside this element.\n      </div>\n    </div>\n  )\n}\n",
+      "path": "sheet/sheet-14.tsx",
+      "target": "components/sheet-14.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "sheet-14",
+  "registryDependencies": [
+    "sheet",
+    "button",
+    "input",
+    "label"
+  ],
+  "root_folder": "sheet",
+  "source": "/registry-examples/src/sheet",
+  "type": "registry:example"
+}

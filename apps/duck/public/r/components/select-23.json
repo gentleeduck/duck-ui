@@ -1,0 +1,27 @@
+{
+  "dependencies": [
+    "@hookform/resolvers",
+    "react-hook-form",
+    "sonner",
+    "zod"
+  ],
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@gentleduck/registry-ui/select'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const [editing, setEditing] = React.useState(false)\n  const [fruit, setFruit] = React.useState('apple')\n\n  if (!editing) {\n    return (\n      <Button onClick={() => setEditing(true)} variant=\"outline\">\n        Change the fruit ({fruit})\n      </Button>\n    )\n  }\n\n  return (\n    <Select defaultOpen onOpenChange={(open) => !open && setEditing(false)} onValueChange={setFruit} value={fruit}>\n      <SelectTrigger className=\"w-[180px]\">\n        <SelectValue placeholder=\"A fruit\" />\n      </SelectTrigger>\n      <SelectContent>\n        <SelectItem value=\"apple\">Apple</SelectItem>\n        <SelectItem value=\"banana\">Banana</SelectItem>\n        <SelectItem value=\"cherry\">Cherry</SelectItem>\n      </SelectContent>\n    </Select>\n  )\n}\n",
+      "path": "select/select-23.tsx",
+      "target": "components/select-23.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "select-23",
+  "registryDependencies": [
+    "select",
+    "badge",
+    "button",
+    "direction",
+    "field"
+  ],
+  "root_folder": "select",
+  "source": "/registry-examples/src/select",
+  "type": "registry:example"
+}

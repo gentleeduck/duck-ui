@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport { Button } from '@gentleduck/registry-ui/button'\nimport {\n  Collapsible,\n  CollapsibleContent,\n  CollapsibleTrigger,\n  useCollapsible,\n} from '@gentleduck/registry-ui/collapsible'\n\nfunction Actions() {\n  const { contentRef, onOpenChange, triggerRef, wrapperRef } = useCollapsible()\n\n  return (\n    <div className=\"flex flex-wrap gap-2\">\n      <Button\n        onClick={() => {\n          onOpenChange(true)\n          requestAnimationFrame(() => contentRef.current?.scrollIntoView({ block: 'nearest' }))\n        }}\n        size=\"sm\"\n        variant=\"outline\">\n        Show the notes\n      </Button>\n      <Button onClick={() => triggerRef.current?.focus()} size=\"sm\" variant=\"outline\">\n        Focus the toggle\n      </Button>\n      <Button onClick={() => wrapperRef.current?.scrollIntoView({ block: 'nearest' })} size=\"sm\" variant=\"outline\">\n        Scroll to the section\n      </Button>\n    </div>\n  )\n}\n\nexport default function Demo() {\n  return (\n    <Collapsible className=\"flex w-[350px] flex-col gap-3 rounded-md border p-3\">\n      <Actions />\n      <CollapsibleTrigger className=\"text-start font-medium\">Release notes</CollapsibleTrigger>\n      <CollapsibleContent className=\"text-muted-foreground text-sm\">\n        Fixed the date picker in Safari, and the calendar keeps its tab stop.\n      </CollapsibleContent>\n    </Collapsible>\n  )\n}\n",
+      "path": "collapsible/collapsible-8.tsx",
+      "target": "components/collapsible-8.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "collapsible-8",
+  "registryDependencies": [
+    "collapsible"
+  ],
+  "root_folder": "collapsible",
+  "source": "/registry-examples/src/collapsible",
+  "type": "registry:example"
+}

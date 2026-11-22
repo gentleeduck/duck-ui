@@ -199,6 +199,42 @@ export default function Demo() {
 }
 ```
 
+### Into an element of your own
+
+```tsx title="components/context-menu-8.tsx"
+// import from your project: import Demo from '@/components/context-menu-8'
+'use client'
+
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@gentleduck/registry-ui/context-menu'
+import * as React from 'react'
+
+export default function Demo() {
+  const panel = React.useRef<HTMLDivElement>(null)
+
+  return (
+    <div
+      className="dark flex flex-col items-center gap-4 rounded-md border bg-background p-4 text-foreground"
+      ref={panel}>
+      <ContextMenu>
+        <ContextMenuTrigger className="flex h-[120px] w-[260px] items-center justify-center rounded-md border border-dashed text-sm">
+          Right click here
+        </ContextMenuTrigger>
+        <ContextMenuContent className="w-48" container={panel}>
+          <ContextMenuItem>Copy</ContextMenuItem>
+          <ContextMenuItem>Paste</ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+      <p className="text-muted-foreground text-sm">The menu portals into this dark panel.</p>
+    </div>
+  )
+}
+```
+
 ## Component Composition
 
 ## Behavior
@@ -508,10 +544,13 @@ Components in this file wrap `@gentleduck/primitives/context-menu`.
 | `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Optional portal container |
 | `...props` | `React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Portal>` | - | Additional props inherited from `ContextMenuPrimitive.Portal` |
 
+`ContextMenuContent` renders a portal of its own, so pass `container` to `ContextMenuContent` to place it; `ContextMenuPortal` is for a content built from the primitive.
+
 ### ContextMenuContent
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
+| `container` | `Element \| DocumentFragment \| RefObject \| null` | `document.body` | Where the content portals to, such as an element carrying another theme |
 | `className` | `string` | - | Additional CSS classes |
 | `children` | `React.ReactNode` | - | Menu items and groups |
 | `forceMount` | `true` | - | Keeps the content in the page while closed, as `data-state="closed"`, for an exit animation to run on |

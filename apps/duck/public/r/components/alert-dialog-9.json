@@ -1,0 +1,20 @@
+{
+  "files": [
+    {
+      "content": "'use client'\n\nimport {\n  AlertDialog,\n  AlertDialogAction,\n  AlertDialogCancel,\n  AlertDialogContent,\n  AlertDialogDescription,\n  AlertDialogFooter,\n  AlertDialogHeader,\n  AlertDialogTitle,\n  AlertDialogTrigger,\n} from '@gentleduck/registry-ui/alert-dialog'\nimport { Button } from '@gentleduck/registry-ui/button'\nimport * as React from 'react'\n\nexport default function Demo() {\n  const panel = React.useRef<HTMLDivElement>(null)\n\n  return (\n    <div className=\"flex flex-col items-center gap-4\">\n      <AlertDialog>\n        <AlertDialogTrigger asChild>\n          <Button variant=\"outline\">Ask in the dark panel</Button>\n        </AlertDialogTrigger>\n        <AlertDialogContent container={panel}>\n          <AlertDialogHeader>\n            <AlertDialogTitle>Archive the project?</AlertDialogTitle>\n            <AlertDialogDescription>\n              The question portals into the panel below and takes its dark theme.\n            </AlertDialogDescription>\n          </AlertDialogHeader>\n          <AlertDialogFooter>\n            <AlertDialogCancel>Keep it</AlertDialogCancel>\n            <AlertDialogAction>Archive</AlertDialogAction>\n          </AlertDialogFooter>\n        </AlertDialogContent>\n      </AlertDialog>\n      <div className=\"dark rounded-md border bg-background p-4 text-foreground text-sm\" ref={panel}>\n        The alert dialog renders inside this element.\n      </div>\n    </div>\n  )\n}\n",
+      "path": "alert-dialog/alert-dialog-9.tsx",
+      "target": "components/alert-dialog-9.tsx",
+      "type": "registry:example"
+    }
+  ],
+  "name": "alert-dialog-9",
+  "registryDependencies": [
+    "alert-dialog",
+    "direction",
+    "input",
+    "label"
+  ],
+  "root_folder": "alert-dialog",
+  "source": "/registry-examples/src/alert-dialog",
+  "type": "registry:example"
+}

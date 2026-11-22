@@ -116,8 +116,8 @@ At most one visual, and only when it says the change faster than a sentence: a c
 before and after, or a module's file layout.
 
 The proof names what ran, since each proves something different: `bun run test` runs each
-package's unit suite, and in `@gentleduck/primitives` also the ported Radix suites and the
-coverage floor. `bun run test:e2e` in `packages/duck-primitives` drives the stories in real
+package's unit suite, in `@gentleduck/primitives` also the ported Radix suites and the coverage
+floor, and in `@gentleduck/registry-ui` its coverage floor. `bun run test:e2e` in `packages/duck-primitives` drives the stories in real
 browsers. A test that pins a fix is named, with the fact that it failed before. For a visual
 change, a screenshot beats both.
 

@@ -46,7 +46,7 @@ names its source and every case left out, and not every case in them was proven 
 |---|--:|---|
 | Unit | 156 | `dialog.ark.test.tsx` 5, `dialog.base-ui.test.tsx` 12, `dialog.headless.test.tsx` 12, `dialog.radix.test.tsx` 48, `dialog.react-aria.test.tsx` 2, `dialog.test.tsx` 77 |
 | End to end | 22 | `dialog.e2e.ts` 12, `dialog.radix.e2e.ts` 10 |
-| registry-ui | 7 | `dialog-responsive.test.tsx` 2, `dialog.test.tsx` 5 |
+| registry-ui | 10 | `dialog-responsive.test.tsx` 2, `dialog.test.tsx` 8 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -382,6 +382,11 @@ names its source and every case left out, and not every case in them was proven 
 - `DialogContent` with `forceMount` stays in the page while closed. It drew its portal without the prop, so the
   portal unmounted it and the documented `forceMount` did nothing. Its overlay, kept with it, holds the end of
   its fade and lets presses through, so it never covers the page once closed.
+- `DialogContent` and `MotionDialogContent` take `container`, handed to its portal, so the dialog renders into an
+  element of your own, such as one carrying another theme. It always portalled to `document.body`, so the
+  `container` documented on `DialogPortal` could not reach it.
+- Two examples: a dialog portalled into a dark panel, and one rendered on demand that opens as it mounts through
+  `defaultOpen`.
 
 ## Later
 

@@ -50,7 +50,7 @@ out, and not every case in them was proven that way.
 |---|--:|---|
 | Unit | 121 | `context-menu.base-ui.test.tsx` 7, `context-menu.radix.test.tsx` 56, `context-menu.test.tsx` 58 |
 | End to end | 25 | `context-menu.e2e.ts` 6, `context-menu.radix.e2e.ts` 19 |
-| registry-ui | 12 | `context-menu-force-mount.test.tsx` 1, `context-menu.test.tsx` 11 |
+| registry-ui | 17 | `context-menu-force-mount.test.tsx` 1, `context-menu.test.tsx` 16 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -317,6 +317,10 @@ out, and not every case in them was proven that way.
 - `MotionContextMenuContent` grows from the corner at the cursor whichever way the menu flips, where it
   always grew from its top-left corner.
 - Submenus scroll when taller than the space they have.
+- `ContextMenuContent` and `MotionContextMenuContent` take `container`, handed to its portal, so the menu renders
+  into an element of your own, such as one carrying another theme. It always portalled to `document.body`, so the
+  `container` documented on `ContextMenuPortal` could not reach it. Their props are `IContextMenuContentProps`.
+- A new example portals the menu into the dark panel it opens from.
 
 ## Later
 

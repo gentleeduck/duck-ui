@@ -49,7 +49,7 @@ its source and every case left out, and not every case in them was proven that w
 |---|--:|---|
 | Unit | 75 | `avatar.ark.test.tsx` 2, `avatar.base-ui.test.tsx` 5, `avatar.radix.test.tsx` 35, `avatar.test.tsx` 33 |
 | End to end | 5 | `avatar.e2e.ts` 5 |
-| registry-ui | 16 | `avatar.test.tsx` 14, `motion-avatar.test.tsx` 2 |
+| registry-ui | 18 | `avatar.test.tsx` 16, `motion-avatar.test.tsx` 2 |
 <!-- /tests -->
 
 <!-- behaviour -->

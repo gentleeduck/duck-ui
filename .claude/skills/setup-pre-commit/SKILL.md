@@ -36,8 +36,8 @@ they are the source of truth and this is a summary of them.
   push that took a while is worth reading.
 - **The push runs no types and no build.** `check-types` and `build` run only in CI. A branch
   that pushes cleanly can still fail CI, so run both before asking for review.
-- **`test` reads the primitives coverage floor.** `bun run test` in
-  `packages/duck-primitives` runs `vitest run --coverage`, which fails the push when the suite
+- **`test` reads the coverage floors.** `bun run test` in `packages/duck-primitives` and in
+  `packages/registry-ui` runs `vitest run --coverage`, which fails the push when either suite
   falls below the thresholds in its `vitest.config.ts`.
 - **One definition for the full gate.** The root `ci` script is `check`, `lint:ws` (sherif),
   `check-types`, `test` and `build`, the same steps CI runs plus the workspace lint. `release`

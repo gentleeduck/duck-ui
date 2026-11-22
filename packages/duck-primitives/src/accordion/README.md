@@ -49,7 +49,7 @@ and every case left out, and not every case in them was proven that way.
 |---|--:|---|
 | Unit | 166 | `accordion.ark.test.tsx` 14, `accordion.base-ui.test.tsx` 8, `accordion.radix.test.tsx` 84, `accordion.react-aria.test.tsx` 4, `accordion.test.tsx` 56 |
 | End to end | 116 | `accordion.e2e.ts` 116 |
-| registry-ui | 19 | `accordion.test.tsx` 7, `collapsible.test.tsx` 11, `motion-collapsible.test.tsx` 1 |
+| registry-ui | 23 | `accordion.dom.test.tsx` 3, `accordion.test.tsx` 7, `collapsible.test.tsx` 12, `motion-collapsible.test.tsx` 1 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -526,6 +526,9 @@ and every case left out, and not every case in them was proven that way.
   mounted before the first open. `MotionCollapsibleContent` fills `useCollapsible().contentRef` too.
 - The collapsible parts run the cleanup a callback ref returns, where they called the ref again with `null`.
 - `Collapsible` carries a `dir` attribute only when given one (breaking).
+- New examples stagger `MotionAccordionItem`s in an order of their own through `index`, and use the
+  `wrapperRef`, `triggerRef` and `contentRef` that `useCollapsible` hands on to scroll to the content and focus the
+  trigger.
 
 ## Later
 

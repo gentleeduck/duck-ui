@@ -47,7 +47,7 @@ and every case left out, and not every case in them was proven that way.
 |---|--:|---|
 | Unit | 137 | `calendar-a11y.test.tsx` 16, `calendar.react-aria.test.tsx` 5, `calendar.react-day-picker.test.tsx` 14, `calendar.test.tsx` 102 |
 | End to end | 17 | `calendar.e2e.ts` 17 |
-| registry-ui | 38 | `calendar.libs.test.ts` 2, `calendar.test.tsx` 36 |
+| registry-ui | 54 | `calendar.libs.test.ts` 2, `calendar.test.tsx` 52 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -302,6 +302,9 @@ and every case left out, and not every case in them was proven that way.
   selection is drawn in the destructive colour.
 - The focus ring comes from the day's `data-focused`, so it sits on the one day holding the tab stop,
   where two months drawing the same day drew two rings.
+- `ICalendarHeaderProps.adapter` is required (breaking for a header rendered by hand). `Calendar` and
+  `MotionCalendar` always hand theirs on, so the header's own `NativeAdapter` default never ran.
+- A day in Hebrew numerals is one helper, `toHebrewNumeral` in `calendar.libs.ts`, shared by both day cells.
 - The `calendar-16` example works out today and its booked days when it mounts, where it did so once
   when the module loaded, so a page open past midnight or a long-running server showed a stale day.
 

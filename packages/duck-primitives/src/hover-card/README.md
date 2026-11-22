@@ -46,7 +46,7 @@ case left out, and not every case in them was proven that way.
 |---|--:|---|
 | Unit | 76 | `hover-card.ark.test.tsx` 4, `hover-card.base-ui.test.tsx` 7, `hover-card.radix.test.tsx` 10, `hover-card.test.tsx` 55 |
 | End to end | 30 | `hover-card.e2e.ts` 30 |
-| registry-ui | 9 | `hover-card-force-mount.test.tsx` 1, `hover-card.test.tsx` 8 |
+| registry-ui | 10 | `hover-card-force-mount.test.tsx` 1, `hover-card.test.tsx` 9 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -260,6 +260,8 @@ case left out, and not every case in them was proven that way.
 - A new example turns link previews off with `disabled`.
 - A new example loads a profile once the card opens, its button kept out of the tab order with the rest of the
   card.
+- `HoverCardPlacementContext` holds a side, never `undefined`, so `MotionHoverCardContent` falls back to the root's
+  `placement` and no further (breaking for a provider written by hand with `undefined`).
 
 ## Later
 

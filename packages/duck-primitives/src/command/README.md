@@ -484,3 +484,5 @@ and not every case in them was proven that way.
   `CommandItem`.
 - The search example shows `CommandLoading` and `CommandStatus`, and a new one ranks by `fuzzyFilter` with
   a `limit` of four.
+- A new example builds a text part of its own with `useCommandItemContext` from the primitive: the part takes
+  `textId` as its id and registers through `onItemTextChange`, so search reads the label and not its shortcut.

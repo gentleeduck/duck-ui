@@ -50,7 +50,7 @@ names its source and every case left out, and not every case in them was proven 
 |---|--:|---|
 | Unit | 173 | `dropdown-menu.ark.test.tsx` 7, `dropdown-menu.base-ui.test.tsx` 4, `dropdown-menu.headless.test.tsx` 44, `dropdown-menu.radix.test.tsx` 40, `dropdown-menu.react-aria.test.tsx` 3, `dropdown-menu.test.tsx` 75 |
 | End to end | 50 | `dropdown-menu.e2e.ts` 33, `dropdown-menu.radix.e2e.ts` 17 |
-| registry-ui | 15 | `dropdown-menu-force-mount.test.tsx` 1, `dropdown-menu.test.tsx` 14 |
+| registry-ui | 16 | `dropdown-menu-force-mount.test.tsx` 1, `dropdown-menu.test.tsx` 15 |
 <!-- /tests -->
 
 <!-- behaviour -->

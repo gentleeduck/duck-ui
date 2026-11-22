@@ -49,7 +49,7 @@ out, and not every case in them was proven that way.
 |---|--:|---|
 | Unit | 107 | `menubar.base-ui.test.tsx` 13, `menubar.radix.test.tsx` 30, `menubar.test.tsx` 64 |
 | End to end | 35 | `menubar.e2e.ts` 17, `menubar.radix.e2e.ts` 18 |
-| registry-ui | 11 | `menubar-force-mount.test.tsx` 2, `menubar.test.tsx` 9 |
+| registry-ui | 13 | `menubar-force-mount.test.tsx` 2, `menubar.test.tsx` 11 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -313,6 +313,10 @@ out, and not every case in them was proven that way.
 - The closing-animation classes that never ran are gone.
 - `MotionMenubarContent` animates once, with the spring, from its trigger, where a CSS zoom and the spring
   ran at once.
+- `MenubarContent` and `MotionMenubarContent` take `container`, handed to its portal, so the menu renders into an
+  element of your own, such as one carrying another theme. It always portalled to `document.body`, so the
+  `container` documented on `MenubarPortal` could not reach it. Their props are `IMenubarContentProps`.
+- A new example portals each menu into a dark panel.
 
 ## Later
 

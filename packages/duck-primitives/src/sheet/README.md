@@ -49,7 +49,7 @@ case left out, and not every case in them was proven that way.
 |---|--:|---|
 | Unit | 13 | `sheet.react-aria.test.tsx` 3, `sheet.test.tsx` 1, `sheet.vaul.test.tsx` 9 |
 | End to end | 6 | `sheet.e2e.ts` 6 |
-| registry-ui | 25 | `sheet.test.tsx` 25 |
+| registry-ui | 30 | `sheet.test.tsx` 30 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -132,6 +132,8 @@ portalled out of the content takes focus and scrolls under its lock. The rest st
 
 ## registry-ui
 
+- `MotionSheetContent` given `side="unset"` slides in from the right, as it does for `null`. It looked the edge up as
+  `unset`, so the panel had no position and slid in from the left.
 - `MotionSheetContent` jumps into place under `prefers-reduced-motion`, as its overlay already did. Its slide
   was built outside the motion presets, so the panel still slid and blurred in for 300ms while the overlay
   appeared at once.
@@ -155,6 +157,10 @@ portalled out of the content takes focus and scrolls under its lock. The rest st
 - `SheetContent` with `forceMount` stays in the page while closed. It drew its portal without the prop, so the
   portal unmounted it and the documented `forceMount` did nothing. Its overlay, kept with it, holds the end of
   its fade and lets presses through, so it never covers the page once closed.
+- `SheetContent` and `MotionSheetContent` take `container`, handed to its portal, so the sheet renders into an
+  element of your own, such as one carrying another theme. It always portalled to `document.body`, so the
+  `container` documented on `SheetPortal` could not reach it.
+- Two examples: a sheet portalled into a dark panel, and one that opens as it mounts through `defaultOpen`.
 
 ## Later
 

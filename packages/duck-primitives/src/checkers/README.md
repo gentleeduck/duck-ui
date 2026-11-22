@@ -35,7 +35,7 @@ Each test was proven by changing the code and watching a test fail.
 |---|--:|---|
 | Unit | 24 | `checkers.test.tsx` 24 |
 | End to end | 9 | `checkers.e2e.ts` 9 |
-| registry-ui | 84 | `checkbox.radix.test.tsx` 26, `checkbox.test.tsx` 22, `motion-checkbox.test.tsx` 3, `switch.radix.test.tsx` 13, `switch.test.tsx` 20 |
+| registry-ui | 92 | `checkbox.radix.test.tsx` 26, `checkbox.test.tsx` 25, `motion-checkbox.test.tsx` 3, `switch.radix.test.tsx` 13, `switch.test.tsx` 25 |
 <!-- /tests -->
 
 <!-- behaviour -->

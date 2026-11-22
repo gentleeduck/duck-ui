@@ -53,7 +53,7 @@ names its source and every case left out, and not every case in them was proven 
 |---|--:|---|
 | Unit | 284 | `select.ark.test.tsx` 8, `select.base-ui.test.tsx` 12, `select.headless.test.tsx` 49, `select.radix.test.tsx` 65, `select.react-aria.test.tsx` 7, `select.test.tsx` 143 |
 | End to end | 34 | `select.e2e.ts` 25, `select.radix.e2e.ts` 9 |
-| registry-ui | 10 | `select.test.tsx` 10 |
+| registry-ui | 11 | `select.test.tsx` 11 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -580,3 +580,4 @@ fieldset defect under Fixed.
   model is unchanged.
 - `SelectItem` no longer paints its own focused background.
 - A `className` or `style` given to `SelectValue` reaches its span.
+- A new example shows the list as the select mounts, through `defaultOpen`, for a value edited on demand.

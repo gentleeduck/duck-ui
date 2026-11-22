@@ -43,7 +43,7 @@ names its source and every case left out, and not every case in them was proven 
 |---|--:|---|
 | Unit | 169 | `radio-group.ark.test.tsx` 2, `radio-group.base-ui.test.tsx` 9, `radio-group.headless.test.tsx` 15, `radio-group.radix.test.tsx` 49, `radio-group.react-aria.test.tsx` 4, `radio-group.test.tsx` 90 |
 | End to end | 10 | `radio-group.e2e.ts` 10 |
-| registry-ui | 12 | `radio-group.test.tsx` 12 |
+| registry-ui | 18 | `radio-group.test.tsx` 18 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -378,6 +378,7 @@ names its source and every case left out, and not every case in them was proven 
 - `indicator` shows while not selected, and with only `indicator` a selected item draws its dot.
 - A label of `0` renders as the label and names the radio, where it was printed as bare text beside a radio
   with no name.
+- A new example staggers `MotionRadioGroupItem`s in an order of its own through `index`.
 
 ## Later
 

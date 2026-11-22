@@ -46,7 +46,7 @@ and every case left out, and not every case in them was proven that way.
 |---|--:|---|
 | Unit | 132 | `tooltip-libs.test.ts` 7, `tooltip.ark.test.tsx` 5, `tooltip.base-ui.test.tsx` 17, `tooltip.radix.test.tsx` 19, `tooltip.react-aria.test.tsx` 3, `tooltip.test.tsx` 81 |
 | End to end | 12 | `tooltip.e2e.ts` 12 |
-| registry-ui | 7 | `tooltip-force-mount.test.tsx` 1, `tooltip.test.tsx` 6 |
+| registry-ui | 8 | `tooltip-force-mount.test.tsx` 1, `tooltip.test.tsx` 7 |
 <!-- /tests -->
 
 <!-- behaviour -->

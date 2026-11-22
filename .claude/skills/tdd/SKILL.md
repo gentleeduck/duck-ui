@@ -113,13 +113,16 @@ leverage and locality terms, and it is a reference to consult, not a session to 
 
 ## Coverage
 
-`@gentleduck/primitives` holds 100% coverage, enforced by the thresholds in its
-`vitest.config.ts` whenever `bun run test` runs, and a source file no test loads counts as never
-run. The thresholds are a ratchet: a drop is the thing to fix rather than the number to lower.
+`@gentleduck/primitives` and `@gentleduck/registry-ui` hold 100% coverage, enforced by the
+thresholds in each `vitest.config.ts` whenever `bun run test` runs, and a source file no test loads
+counts as never run. The thresholds are a ratchet: a drop is the thing to fix rather than the number to lower.
 
 - **An uncovered line is a design signal first.** Before writing a test to reach it, ask
   whether the line should exist. An unreachable `catch` or a defensive branch the types forbid
   is deleted, not tested.
+- **A ref to an element the component always renders is typed as always set**, as
+  `useRef<HTMLDivElement>(null!)` with its biome-ignore reason, rather than guarded by an `if` no
+  test can reach.
 - **Raise the bar, never lower it.** No ignore pragma, no excluding a file to go green, no
   asserting on a mock where the real thing was available.
 

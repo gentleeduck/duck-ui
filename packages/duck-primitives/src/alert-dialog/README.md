@@ -49,7 +49,7 @@ out, and not every case in them was proven that way.
 |---|--:|---|
 | Unit | 50 | `alert-dialog.base-ui.test.tsx` 3, `alert-dialog.radix.test.tsx` 18, `alert-dialog.test.tsx` 29 |
 | End to end | 6 | `alert-dialog.e2e.ts` 6 |
-| registry-ui | 8 | `alert-dialog.test.tsx` 6, `motion-alert-dialog.test.tsx` 2 |
+| registry-ui | 10 | `alert-dialog.test.tsx` 6, `motion-alert-dialog.test.tsx` 4 |
 <!-- /tests -->
 
 <!-- behaviour -->
@@ -183,6 +183,12 @@ out, and not every case in them was proven that way.
 - `AlertDialogContent` with `forceMount` stays in the page while closed. It drew its portal without the prop, so
   the portal unmounted it and the documented `forceMount` did nothing. Its overlay, kept with it, holds the end
   of its fade and lets presses through, so it never covers the page once closed.
+- `AlertDialogContent` and `MotionAlertDialogContent` take `container`, handed to its portal, so the question
+  renders into an element of your own, such as one carrying another theme. It always portalled to `document.body`,
+  so the `container` documented on `AlertDialogPortal` could not reach it. Their props are
+  `IAlertDialogContentProps`.
+- Two examples: a question portalled into a dark panel, and one asked as it mounts through `defaultOpen`, once
+  the user tries to leave.
 
 ## Later
 

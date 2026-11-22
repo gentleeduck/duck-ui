@@ -3,6 +3,7 @@ import { render } from '@testing-library/react'
 import axe from 'axe-core'
 import * as React from 'react'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { freshDom } from '../../__tests__/dom'
 import { Calendar } from '../calendar'
 import type { ICalendar } from '../calendar.types'
 import { CalendarDay } from '../day'
@@ -12,6 +13,8 @@ import { CalendarMonthView } from '../month-view'
 import { CalendarNav } from '../nav'
 import { CalendarWeekdays } from '../weekdays'
 import { CalendarYearView } from '../year-view'
+
+freshDom()
 
 const adapter = new NativeAdapter()
 const march2026 = new Date(2026, 2, 1)

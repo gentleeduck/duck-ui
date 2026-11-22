@@ -2,6 +2,7 @@ import { NativeAdapter } from '@gentleduck/calendar'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import * as React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { freshDom } from '../../__tests__/dom'
 import { DirectionProvider } from '../../direction'
 import { Calendar } from '../calendar'
 import { CalendarDay } from '../day'
@@ -11,6 +12,8 @@ import { CalendarMonthView } from '../month-view'
 import { CalendarNav, CalendarNextButton, CalendarPrevButton, CalendarViewTrigger } from '../nav'
 import { CalendarWeekdays } from '../weekdays'
 import { CalendarYearView } from '../year-view'
+
+freshDom()
 
 const adapter = new NativeAdapter()
 const march2026 = new Date(2026, 2, 1)

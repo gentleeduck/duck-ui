@@ -1,3 +1,4 @@
+export type { IContextMenuContentProps } from './context-menu'
 export {
   ContextMenu,
   ContextMenuCheckboxItem,
@@ -15,7 +16,6 @@ export {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from './context-menu'
-
 export {
   MotionContextMenu,
   MotionContextMenuContent,

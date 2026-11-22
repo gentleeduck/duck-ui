@@ -10,7 +10,7 @@ import { MotionRootContext, useMotionContent, useMotionMount, useMotionRoot } fr
 import * as AlertDialogPrimitive from '@gentleduck/primitives/alert-dialog'
 import { LazyMotion, m } from 'motion/react'
 import * as React from 'react'
-import { AlertDialogPortal } from './alert-dialog'
+import { AlertDialogPortal, type IAlertDialogContentProps } from './alert-dialog'
 
 function MotionAlertDialog({
   children,
@@ -32,8 +32,8 @@ MotionAlertDialog.displayName = 'MotionAlertDialog'
 
 const MotionAlertDialogContent = React.forwardRef<
   React.ComponentRef<typeof AlertDialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, children, ...props }, ref) => {
+  IAlertDialogContentProps
+>(({ className, children, container, ...props }, ref) => {
   const { isOpen } = useMotionContent()
   const overlay = useMotionPreset(fadeIn, { transition: springStiff })
   const content = useMotionPreset(scaleIn, { transition: springStiff })
@@ -43,7 +43,7 @@ const MotionAlertDialogContent = React.forwardRef<
 
   return (
     <LazyMotion features={loadDomAnimation}>
-      <AlertDialogPortal forceMount>
+      <AlertDialogPortal container={container} forceMount>
         <AlertDialogPrimitive.Overlay forceMount asChild>
           <m.div
             className="fixed inset-0 z-50 bg-black/80 data-[nested]:bg-transparent"

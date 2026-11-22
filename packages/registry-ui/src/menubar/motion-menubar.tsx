@@ -8,16 +8,17 @@ import { springBouncy } from '@gentleduck/motion/transitions/springs'
 import * as MenubarPrimitive from '@gentleduck/primitives/menubar'
 import { LazyMotion, m } from 'motion/react'
 import * as React from 'react'
+import type { IMenubarContentProps } from './menubar'
 import { menubarContentStyle } from './menubar.constants'
 
 const MotionMenubarContent = React.forwardRef<
   React.ComponentRef<typeof MenubarPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Content>
->(({ className, align = 'start', alignOffset = -4, sideOffset = 8, children, ...props }, ref) => {
+  IMenubarContentProps
+>(({ className, align = 'start', alignOffset = -4, sideOffset = 8, children, container, ...props }, ref) => {
   const content = useMotionPreset(scaleIn, { transition: springBouncy })
   return (
     <LazyMotion features={loadDomAnimation}>
-      <MenubarPrimitive.Portal>
+      <MenubarPrimitive.Portal container={container}>
         <MenubarPrimitive.Content
           ref={ref}
           align={align}

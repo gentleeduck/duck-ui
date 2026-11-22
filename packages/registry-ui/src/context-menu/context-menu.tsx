@@ -2,6 +2,7 @@
 
 import { cn } from '@gentleduck/libs/cn'
 import * as ContextMenuPrimitive from '@gentleduck/primitives/context-menu'
+import type { IPortal } from '@gentleduck/primitives/portal'
 import { Check, ChevronRight, Circle } from 'lucide-react'
 import * as React from 'react'
 import { useKeysLabel } from '../_internal/keys-label'
@@ -57,11 +58,16 @@ const ContextMenuSubContent = React.forwardRef<
 ))
 ContextMenuSubContent.displayName = ContextMenuPrimitive.SubContent.displayName
 
+export interface IContextMenuContentProps extends React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Content> {
+  /** Where the content portals to, in place of `document.body`: an element, or a ref to one. */
+  container?: IPortal.IProps['container']
+}
+
 const ContextMenuContent = React.forwardRef<
   React.ComponentRef<typeof ContextMenuPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <ContextMenuPrimitive.Portal forceMount={props.forceMount}>
+  IContextMenuContentProps
+>(({ className, container, ...props }, ref) => (
+  <ContextMenuPrimitive.Portal container={container} forceMount={props.forceMount}>
     <ContextMenuPrimitive.Content
       ref={ref}
       className={cn(

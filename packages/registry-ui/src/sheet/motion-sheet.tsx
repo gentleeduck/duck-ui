@@ -57,7 +57,7 @@ function MotionSheet({
 MotionSheet.displayName = 'MotionSheet'
 
 const MotionSheetContent = React.forwardRef<React.ComponentRef<typeof SheetPrimitive.Content>, ISheetContentProps>(
-  ({ side = 'right', className, children, closeText = 'Close', hideClose = false, ...props }, ref) => {
+  ({ side = 'right', className, children, closeText = 'Close', hideClose = false, container, ...props }, ref) => {
     const { isOpen } = useMotionContent()
     const overlay = useMotionPreset(fadeIn, MOTION_OPTIONS)
     const rootDir = React.useContext(MotionSheetDirContext)
@@ -73,7 +73,7 @@ const MotionSheetContent = React.forwardRef<React.ComponentRef<typeof SheetPrimi
 
     return (
       <LazyMotion features={loadDomAnimation}>
-        <SheetPortal forceMount>
+        <SheetPortal container={container} forceMount>
           <SheetPrimitive.Overlay forceMount asChild>
             <m.div
               className="fixed inset-0 z-50 bg-black/80 data-[nested]:bg-transparent"

@@ -359,3 +359,23 @@ describe('registry-ui MotionSheet edges', () => {
     await waitFor(() => expect(screen.queryByText('Pond')).toBeNull(), { timeout: 3000 })
   })
 })
+
+describe('registry-ui Sheet container', () => {
+  test.each([
+    ['SheetContent', Sheet, SheetContent],
+    ['MotionSheetContent', MotionSheet, MotionSheetContent],
+  ] as const)('%s portals into the element it is given', (_, Root, Content) => {
+    const element = document.createElement('section')
+    document.body.append(element)
+    render(
+      <Root defaultOpen>
+        <Content aria-describedby={undefined} container={element}>
+          <SheetTitle>Pond</SheetTitle>
+        </Content>
+      </Root>,
+    )
+
+    expect(element.contains(screen.getByText('Pond'))).toBe(true)
+    element.remove()
+  })
+})

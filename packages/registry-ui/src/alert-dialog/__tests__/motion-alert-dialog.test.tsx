@@ -1,7 +1,14 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
 import { afterEach, describe, expect, test } from 'vitest'
-import { AlertDialogCancel, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger } from '../alert-dialog'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../alert-dialog'
 import { MotionAlertDialog, MotionAlertDialogContent } from '../motion-alert-dialog'
 
 afterEach(cleanup)
@@ -39,5 +46,25 @@ describe('registry-ui MotionAlertDialog', () => {
 
     expect(dialogs()[0]?.getAttribute('data-state')).toBe('closed')
     await waitFor(() => expect(dialogs().length).toBe(0))
+  })
+})
+
+describe('registry-ui AlertDialog container', () => {
+  test.each([
+    ['AlertDialogContent', AlertDialog, AlertDialogContent],
+    ['MotionAlertDialogContent', MotionAlertDialog, MotionAlertDialogContent],
+  ] as const)('%s portals into the element it is given', (_, Root, Content) => {
+    const element = document.createElement('section')
+    document.body.append(element)
+    render(
+      <Root defaultOpen>
+        <Content aria-describedby={undefined} container={element}>
+          <AlertDialogTitle>Drain the pond?</AlertDialogTitle>
+        </Content>
+      </Root>,
+    )
+
+    expect(element.contains(screen.getByText('Drain the pond?'))).toBe(true)
+    element.remove()
   })
 })

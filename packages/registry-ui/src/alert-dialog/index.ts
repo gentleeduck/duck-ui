@@ -1,3 +1,4 @@
+export type { IAlertDialogContentProps } from './alert-dialog'
 export {
   AlertDialog,
   AlertDialogAction,
@@ -11,7 +12,6 @@ export {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from './alert-dialog'
-
 export {
   MotionAlertDialog,
   MotionAlertDialogContent,

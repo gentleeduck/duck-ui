@@ -2,6 +2,7 @@
 
 import { cn } from '@gentleduck/libs/cn'
 import * as MenubarPrimitive from '@gentleduck/primitives/menubar'
+import type { IPortal } from '@gentleduck/primitives/portal'
 import { Check, ChevronRight, Circle } from 'lucide-react'
 import * as React from 'react'
 import { useKeysLabel } from '../_internal/keys-label'
@@ -82,26 +83,30 @@ const MenubarSubContent = React.forwardRef<
 ))
 MenubarSubContent.displayName = MenubarPrimitive.SubContent.displayName
 
-const MenubarContent = React.forwardRef<
-  React.ComponentRef<typeof MenubarPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Content>
->(({ className, align = 'start', alignOffset = -4, sideOffset = 8, ...props }, ref) => (
-  <MenubarPrimitive.Portal forceMount={props.forceMount}>
-    <MenubarPrimitive.Content
-      ref={ref}
-      align={align}
-      alignOffset={alignOffset}
-      sideOffset={sideOffset}
-      className={cn(
-        'data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=open]:animate-in',
-        'animation-duration-200 ease-(--gentleduck-motion-ease)',
-        menubarContentStyle,
-        className,
-      )}
-      {...props}
-    />
-  </MenubarPrimitive.Portal>
-))
+export interface IMenubarContentProps extends React.ComponentPropsWithoutRef<typeof MenubarPrimitive.Content> {
+  /** Where the content portals to, in place of `document.body`: an element, or a ref to one. */
+  container?: IPortal.IProps['container']
+}
+
+const MenubarContent = React.forwardRef<React.ComponentRef<typeof MenubarPrimitive.Content>, IMenubarContentProps>(
+  ({ className, align = 'start', alignOffset = -4, sideOffset = 8, container, ...props }, ref) => (
+    <MenubarPrimitive.Portal container={container} forceMount={props.forceMount}>
+      <MenubarPrimitive.Content
+        ref={ref}
+        align={align}
+        alignOffset={alignOffset}
+        sideOffset={sideOffset}
+        className={cn(
+          'data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=open]:animate-in',
+          'animation-duration-200 ease-(--gentleduck-motion-ease)',
+          menubarContentStyle,
+          className,
+        )}
+        {...props}
+      />
+    </MenubarPrimitive.Portal>
+  ),
+)
 MenubarContent.displayName = MenubarPrimitive.Content.displayName
 
 const MenubarItem = React.forwardRef<

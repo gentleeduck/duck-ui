@@ -103,3 +103,23 @@ describe('registry-ui MotionDialog closing', () => {
     await waitFor(() => expect(screen.queryByText('Pond')).toBeNull(), { timeout: 3000 })
   })
 })
+
+describe('registry-ui Dialog container', () => {
+  test.each([
+    ['DialogContent', Dialog, DialogContent],
+    ['MotionDialogContent', MotionDialog, MotionDialogContent],
+  ] as const)('%s portals into the element it is given', (_, Root, Content) => {
+    const element = document.createElement('section')
+    document.body.append(element)
+    render(
+      <Root defaultOpen>
+        <Content aria-describedby={undefined} container={element}>
+          <DialogTitle>Pond</DialogTitle>
+        </Content>
+      </Root>,
+    )
+
+    expect(element.contains(screen.getByText('Pond'))).toBe(true)
+    element.remove()
+  })
+})

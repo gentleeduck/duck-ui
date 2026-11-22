@@ -216,3 +216,26 @@ describe('registry-ui menubar items', () => {
     expect(onSort.mock.calls).toEqual([['date']])
   })
 })
+
+describe('registry-ui Menubar container', () => {
+  test.each(CONTENTS)('%s portals into the element it is given', async (_, Content) => {
+    const element = document.createElement('section')
+    document.body.append(element)
+    render(
+      <Menubar>
+        <MenubarMenu value="file">
+          <MenubarTrigger>File</MenubarTrigger>
+          <Content container={element}>
+            <MenubarItem>New tab</MenubarItem>
+          </Content>
+        </MenubarMenu>
+      </Menubar>,
+    )
+
+    fireEvent.pointerDown(screen.getByRole('menuitem', { name: 'File' }), { button: 0, ctrlKey: false })
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
+
+    expect(element.contains(screen.getByRole('menuitem', { name: 'New tab' }))).toBe(true)
+    element.remove()
+  })
+})

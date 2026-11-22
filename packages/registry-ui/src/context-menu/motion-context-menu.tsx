@@ -9,6 +9,7 @@ import { MotionRootContext, useMotionContent, useMotionMount, useMotionRoot } fr
 import * as ContextMenuPrimitive from '@gentleduck/primitives/context-menu'
 import { LazyMotion, m } from 'motion/react'
 import * as React from 'react'
+import type { IContextMenuContentProps } from './context-menu'
 import { contextMenuContentStyle, contextMenuSubContentStyle } from './context-menu.constants'
 
 function MotionContextMenu({
@@ -30,8 +31,8 @@ MotionContextMenu.displayName = 'MotionContextMenu'
 
 const MotionContextMenuContent = React.forwardRef<
   React.ComponentRef<typeof ContextMenuPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Content>
->(({ className, children, ...props }, ref) => {
+  IContextMenuContentProps
+>(({ className, children, container, ...props }, ref) => {
   const { isOpen } = useMotionContent()
   const content = useMotionPreset(scaleIn, { transition: springBouncy })
   const isOpenRef = React.useRef(isOpen)
@@ -42,7 +43,7 @@ const MotionContextMenuContent = React.forwardRef<
 
   return (
     <LazyMotion features={loadDomAnimation}>
-      <ContextMenuPrimitive.Portal forceMount>
+      <ContextMenuPrimitive.Portal container={container} forceMount>
         <ContextMenuPrimitive.Content
           ref={ref}
           forceMount

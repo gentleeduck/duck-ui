@@ -306,3 +306,27 @@ describe('registry-ui MotionContextMenu closing', () => {
     await waitFor(() => expect(sub.style.pointerEvents).toBe('none'))
   })
 })
+
+describe('registry-ui ContextMenu container', () => {
+  test.each([
+    ['ContextMenuContent', ContextMenu, ContextMenuContent],
+    ['MotionContextMenuContent', MotionContextMenu, MotionContextMenuContent],
+  ] as const)('%s portals into the element it is given', async (_, Root, Content) => {
+    const element = document.createElement('section')
+    document.body.append(element)
+    render(
+      <Root>
+        <ContextMenuTrigger>Canvas</ContextMenuTrigger>
+        <Content container={element}>
+          <ContextMenuItem>Paste</ContextMenuItem>
+        </Content>
+      </Root>,
+    )
+
+    fireEvent.contextMenu(screen.getByText('Canvas'))
+    await act(async () => {})
+
+    expect(element.contains(screen.getByRole('menuitem', { name: 'Paste' }))).toBe(true)
+    element.remove()
+  })
+})

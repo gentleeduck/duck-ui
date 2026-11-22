@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@gentleduck/libs/cn'
+import type { IPortal } from '@gentleduck/primitives/portal'
 import * as SheetPrimitive from '@gentleduck/primitives/sheet'
 import type { Variants } from '@gentleduck/variants'
 import { X } from 'lucide-react'
@@ -36,11 +37,13 @@ interface ISheetContentProps
     Variants.VariantProps<typeof sheetVariants> {
   closeText?: string
   hideClose?: boolean
+  /** Where the content portals to, in place of `document.body`: an element, or a ref to one. */
+  container?: IPortal.IProps['container']
 }
 
 const SheetContent = React.forwardRef<React.ComponentRef<typeof SheetPrimitive.Content>, ISheetContentProps>(
-  ({ side = 'right', className, children, closeText = 'Close', hideClose = false, ...props }, ref) => (
-    <SheetPortal forceMount={props.forceMount}>
+  ({ side = 'right', className, children, closeText = 'Close', hideClose = false, container, ...props }, ref) => (
+    <SheetPortal container={container} forceMount={props.forceMount}>
       <SheetOverlay />
       <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
         {children}

@@ -1,3 +1,4 @@
+export type { IMenubarContentProps } from './menubar'
 export {
   Menubar,
   MenubarCheckboxItem,

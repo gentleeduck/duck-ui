@@ -2,6 +2,7 @@
 
 import { cn } from '@gentleduck/libs/cn'
 import * as AlertDialogPrimitive from '@gentleduck/primitives/alert-dialog'
+import type { IPortal } from '@gentleduck/primitives/portal'
 import * as React from 'react'
 import { buttonVariants } from '../button'
 
@@ -27,11 +28,16 @@ const AlertDialogOverlay = React.forwardRef<
 ))
 AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName
 
+export interface IAlertDialogContentProps extends React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content> {
+  /** Where the content portals to, in place of `document.body`: an element, or a ref to one. */
+  container?: IPortal.IProps['container']
+}
+
 const AlertDialogContent = React.forwardRef<
   React.ComponentRef<typeof AlertDialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <AlertDialogPortal forceMount={props.forceMount}>
+  IAlertDialogContentProps
+>(({ className, container, ...props }, ref) => (
+  <AlertDialogPortal container={container} forceMount={props.forceMount}>
     <AlertDialogOverlay />
     <AlertDialogPrimitive.Content
       ref={ref}

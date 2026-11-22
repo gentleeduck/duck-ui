@@ -34,7 +34,7 @@ function MotionDialog({
 MotionDialog.displayName = 'MotionDialog'
 
 const MotionDialogContent = React.forwardRef<React.ComponentRef<typeof DialogPrimitive.Content>, IDialogContentProps>(
-  ({ className, children, closeText = 'Close', hideClose = false, ...props }, ref) => {
+  ({ className, children, closeText = 'Close', hideClose = false, container, ...props }, ref) => {
     const { isOpen } = useMotionContent()
     const overlay = useMotionPreset(fadeIn, { transition: springBouncy })
     const content = useMotionPreset(rotateIn, { transition: springBouncy })
@@ -44,7 +44,7 @@ const MotionDialogContent = React.forwardRef<React.ComponentRef<typeof DialogPri
 
     return (
       <LazyMotion features={loadDomAnimation}>
-        <DialogPortal forceMount>
+        <DialogPortal container={container} forceMount>
           <DialogPrimitive.Overlay forceMount asChild>
             <m.div
               className="fixed inset-0 z-50 bg-black/80 data-[nested]:bg-transparent"

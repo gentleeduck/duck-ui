@@ -78,4 +78,11 @@ describe.each([
     expect(names).toEqual(['Ada Lovelace'])
     expect(labels).toEqual(['AL', 'GH'])
   })
+
+  test('draws an empty, unnamed fallback for someone with neither an alt nor a fallback', () => {
+    const { names, labels } = group({ imgs: [{ src: '/ada.png' }] })
+
+    expect(names).toEqual([])
+    expect(labels).toEqual([''])
+  })
 })

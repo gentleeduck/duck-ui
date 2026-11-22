@@ -61,6 +61,12 @@ describe('registry-ui button', () => {
     expect(html).not.toContain('data-icon="right"')
   })
 
+  test('Button shows its second icon after the label', () => {
+    const html = renderToStaticMarkup(<Button secondIcon={<span data-icon="right">R</span>}>Save</Button>)
+
+    expect(html).toMatch(/Save.*data-icon="right"/)
+  })
+
   test('Button asChild merges button styles onto child element without type/disabled', () => {
     const html = renderToStaticMarkup(
       <Button asChild variant="outline">

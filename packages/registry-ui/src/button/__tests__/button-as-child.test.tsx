@@ -101,3 +101,30 @@ describe('registry-ui MotionButton asChild', () => {
     expect(onClick).not.toHaveBeenCalled()
   })
 })
+
+describe('registry-ui Button asChild edges', () => {
+  test('a disabled button given text rather than an element fails as Slot does, naming itself', () => {
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      expect(() =>
+        render(
+          <Button asChild disabled>
+            Lakes
+          </Button>,
+        ),
+      ).toThrow(/failed to slot onto its children/)
+    } finally {
+      quiet.mockRestore()
+    }
+  })
+
+  test('a collapsed MotionButton draws its child at the icon size', () => {
+    render(
+      <MotionButton asChild isCollapsed>
+        <a aria-label="Lakes" href="/lakes" />
+      </MotionButton>,
+    )
+
+    expect(screen.getByRole('link', { name: 'Lakes' }).className.split(' ')).toContain('size-9')
+  })
+})

@@ -144,4 +144,21 @@ describe('Collapsible refs', () => {
 
     expect(cleanup).toHaveBeenCalledTimes(3)
   })
+
+  test('calls a callback ref that returns no cleanup with null once the part unmounts', () => {
+    const calls: (HTMLElement | null)[] = []
+    const { unmount } = render(
+      <Collapsible
+        open
+        ref={(node) => {
+          calls.push(node)
+        }}>
+        <CollapsibleContent>Body</CollapsibleContent>
+      </Collapsible>,
+    )
+
+    unmount()
+
+    expect(calls.map((node) => node?.tagName ?? null)).toEqual(['DIV', null])
+  })
 })

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { MotionTooltip, MotionTooltipContent } from '../motion-tooltip'
 import { Tooltip, TooltipArrow, TooltipContent, TooltipProvider } from '../tooltip'
@@ -92,4 +92,25 @@ describe('registry-ui TooltipArrow', () => {
       expect(outline?.getAttribute('vector-effect')).toBe('non-scaling-stroke')
     },
   )
+})
+
+describe('registry-ui MotionTooltip closing', () => {
+  test('draws nothing closed, and holds its content in the page, taking no presses, until the exit ends', async () => {
+    const view = (open: boolean) => (
+      <TooltipProvider>
+        <MotionTooltip open={open}>
+          <MotionTooltipContent>Ducks only</MotionTooltipContent>
+        </MotionTooltip>
+      </TooltipProvider>
+    )
+    const { rerender } = render(view(false))
+    expect(screen.queryByRole('tooltip')).toBeNull()
+
+    rerender(view(true))
+    rerender(view(false))
+
+    const content = screen.getByRole('tooltip')
+    await waitFor(() => expect(content.style.pointerEvents).toBe('none'))
+    await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull(), { timeout: 3000 })
+  })
 })

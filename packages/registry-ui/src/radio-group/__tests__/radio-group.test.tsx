@@ -53,6 +53,57 @@ describe.each(items)('registry-ui %s label', (_, Group, Item) => {
   })
 })
 
+describe.each(items)('registry-ui %s indicators', (_, Group, Item) => {
+  const glyph = (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+      <circle cx="8" cy="8" r="4" />
+    </svg>
+  )
+  const classes = () => screen.getByRole('radio').className.split(/\s+/)
+
+  test('masks an unchecked radio with its indicator, and plainly once checked', () => {
+    render(
+      <Group>
+        <Item indicator={glyph} value="apple" />
+      </Group>,
+    )
+
+    expect(classes()).toEqual(
+      expect.arrayContaining(['after:mask-[var(--svg-off)]', 'data-[state=checked]:after:mask-none']),
+    )
+  })
+
+  test('masks a checked radio with its checked indicator', () => {
+    render(
+      <Group>
+        <Item checkedIndicator={glyph} value="apple" />
+      </Group>,
+    )
+
+    expect(classes()).toContain('data-[state=checked]:after:mask-[var(--svg-on)]')
+    expect(classes()).not.toContain('after:mask-[var(--svg-off)]')
+  })
+
+  test('draws no label without children, and names nothing for typeahead from an element child', () => {
+    const { unmount } = render(
+      <Group>
+        <Item value="apple" />
+      </Group>,
+    )
+    expect(document.querySelector('[data-slot="radio-label"]')).toBeNull()
+    unmount()
+
+    render(
+      <Group>
+        <Item value="apple">
+          <strong>Apple</strong>
+        </Item>
+      </Group>,
+    )
+    expect(screen.getByRole('radio').hasAttribute('data-text-value')).toBe(false)
+  })
+})
+
 describe('registry-ui RadioGroup', () => {
   test('hands the label to typeahead as the radio text value', () => {
     const html = renderToStaticMarkup(

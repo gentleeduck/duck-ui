@@ -96,6 +96,37 @@ describe('registry-ui Switch in a form that is reset', () => {
   })
 })
 
+describe('registry-ui Switch indicators', () => {
+  const glyph = (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+      <circle cx="8" cy="8" r="4" />
+    </svg>
+  )
+  const classes = () => (screen.getByRole('switch') as HTMLInputElement).className.split(/\s+/)
+
+  test('masks the thumb with an unchecked indicator, and plainly once on', () => {
+    render(<Switch indicator={glyph} />)
+
+    expect(classes()).toEqual(expect.arrayContaining(['after:mask-[var(--svg-off)]', 'checked:after:mask-none']))
+  })
+
+  test('masks the thumb with a checked indicator only once on', () => {
+    render(<Switch checkedIndicator={glyph} />)
+
+    expect(classes()).toContain('checked:after:mask-[var(--svg-on)]')
+    expect(classes()).not.toContain('checked:after:mask-none')
+  })
+
+  test('masks the thumb with each indicator in its own state', () => {
+    render(<Switch checkedIndicator={glyph} indicator={glyph} />)
+
+    expect(classes()).toEqual(
+      expect.arrayContaining(['after:mask-[var(--svg-off)]', 'checked:after:mask-[var(--svg-on)]']),
+    )
+    expect(classes()).not.toContain('checked:after:mask-none')
+  })
+})
+
 describe('registry-ui MotionSwitch', () => {
   test('moves on a click and leaves its state to the input', () => {
     const onCheckedChange = vi.fn()
@@ -268,3 +299,27 @@ for (const [name, Control] of [
     })
   })
 }
+
+describe('registry-ui MotionSwitch right to left and controlled', () => {
+  test('runs its thumb right to left, stretching from the side it rests on', async () => {
+    const { container, rerender } = render(<MotionSwitch checked={false} dir="rtl" />)
+    const thumb = () => (container.querySelector('[data-slot="switch"] span') as HTMLElement).style
+
+    expect(thumb().transformOrigin).toBe('right center')
+
+    rerender(<MotionSwitch checked dir="rtl" />)
+    expect(thumb().transformOrigin).toBe('left center')
+    await waitFor(() => expect(thumb().transform).toContain('translateX(-1.25em)'))
+  })
+
+  test('asks the owner of a controlled switch to move, and stays put until it does', () => {
+    const onCheckedChange = vi.fn()
+    render(<MotionSwitch checked={false} onCheckedChange={onCheckedChange} />)
+    const control = screen.getByRole('switch') as HTMLInputElement
+
+    fireEvent.click(control)
+
+    expect(onCheckedChange).toHaveBeenCalledWith(true)
+    expect(control.checked).toBe(false)
+  })
+})

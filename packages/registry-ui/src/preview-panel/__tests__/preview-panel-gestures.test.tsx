@@ -134,6 +134,18 @@ describe.each(panels)('registry-ui %s gestures', (_, Panel) => {
     expect(screen.getByText('100%')).toBeTruthy()
   })
 
+  test('a button pressed between a wheel turn and its frame sends the state once, with the frame sending nothing more', async () => {
+    const onStateChange = vi.fn()
+    render(<Panel defaultLocked={false} onStateChange={onStateChange} />)
+    const { viewport } = parts()
+
+    fireEvent(viewport, wheel(-100))
+    fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }))
+    await frame()
+
+    expect(onStateChange.mock.calls).toEqual([[{ x: 0, y: 0, zoom: 1.35 }]])
+  })
+
   test('unlocked, a drag pans the content from where the last one ended', async () => {
     const onStateChange = vi.fn()
     render(<Panel defaultLocked={false} onStateChange={onStateChange} />)

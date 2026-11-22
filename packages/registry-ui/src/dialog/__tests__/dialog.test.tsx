@@ -1,5 +1,5 @@
 import * as DialogPrimitive from '@gentleduck/primitives/dialog'
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, test } from 'vitest'
@@ -79,5 +79,27 @@ describe('registry-ui Dialog opened from another', () => {
         overlay?.classList.contains(name),
       ),
     ]).toEqual(['closed', 'closed', true])
+  })
+})
+
+describe('registry-ui MotionDialog closing', () => {
+  test('draws nothing closed, and holds its content in the page, taking no presses, until the exit ends', async () => {
+    const view = (open: boolean) => (
+      <MotionDialog open={open}>
+        <MotionDialogContent aria-describedby={undefined}>
+          <DialogTitle>Pond</DialogTitle>
+        </MotionDialogContent>
+      </MotionDialog>
+    )
+    const { rerender } = render(view(false))
+    expect(screen.queryByText('Pond')).toBeNull()
+
+    rerender(view(true))
+    rerender(view(false))
+
+    const content = screen.getByText('Pond').closest('[role="dialog"]') as HTMLElement
+    const overlay = document.querySelector('[data-slot="dialog-overlay"]') as HTMLElement
+    await waitFor(() => expect([content.style.pointerEvents, overlay.style.pointerEvents]).toEqual(['none', 'none']))
+    await waitFor(() => expect(screen.queryByText('Pond')).toBeNull(), { timeout: 3000 })
   })
 })

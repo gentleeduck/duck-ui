@@ -1,5 +1,5 @@
 import { useMotionContent } from '@gentleduck/motion/use-motion-root'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, test, vi } from 'vitest'
@@ -124,6 +124,13 @@ describe('registry-ui ContextMenu items', () => {
             <ContextMenuRadioItem value="fit">Fit</ContextMenuRadioItem>
             <ContextMenuRadioItem value="actual">Actual size</ContextMenuRadioItem>
           </ContextMenuRadioGroup>
+          <ContextMenuItem inset>Reset zoom</ContextMenuItem>
+          <ContextMenuSub>
+            <ContextMenuSubTrigger inset>Export</ContextMenuSubTrigger>
+            <ContextMenuSubContent>
+              <ContextMenuItem>PNG</ContextMenuItem>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
         </ContextMenuContent>
       </ContextMenu>
     )
@@ -137,6 +144,8 @@ describe('registry-ui ContextMenu items', () => {
     await act(async () => {})
     const ruler = screen.getByRole('menuitemcheckbox', { name: 'Ruler' })
     const actual = screen.getByRole('menuitemradio', { name: 'Actual size' })
+    expect(screen.getByRole('menuitem', { name: 'Reset zoom' }).className.split(' ')).toContain('ps-8')
+    expect(screen.getByRole('menuitem', { name: 'Export' }).className.split(' ')).toContain('ps-8')
     expect([ruler.getAttribute('aria-checked'), ruler.querySelector('svg') !== null]).toEqual(['true', true])
     expect([actual.getAttribute('aria-checked'), actual.querySelector('svg')]).toEqual(['false', null])
     expect(screen.getByText('View').className).toContain('ps-8')
@@ -229,5 +238,71 @@ describe('registry-ui MotionContextMenuContent while it closes', () => {
     act(() => elsewhere.focus())
 
     expect(onOpenChange.mock.calls).toEqual([[true], [false]])
+  })
+})
+
+describe('registry-ui MotionContextMenu closing', () => {
+  function view(props: { modal?: boolean } = {}) {
+    return (
+      <MotionContextMenu {...props}>
+        <ContextMenuTrigger>Canvas</ContextMenuTrigger>
+        <MotionContextMenuContent>
+          <ContextMenuItem>Paste</ContextMenuItem>
+        </MotionContextMenuContent>
+      </MotionContextMenu>
+    )
+  }
+
+  test('closes on a press outside, holding the menu without presses until its exit ends', async () => {
+    render(view())
+    fireEvent.contextMenu(screen.getByText('Canvas'))
+    await act(async () => {})
+    const menu = screen.getByRole('menu')
+
+    fireEvent.pointerDown(document.body, { button: 0 })
+
+    await waitFor(() => expect(menu.style.pointerEvents).toBe('none'))
+    await waitFor(() => expect(screen.queryByText('Paste')).toBeNull(), { timeout: 3000 })
+  })
+
+  test('closes a non-modal menu when focus moves outside it', async () => {
+    render(
+      <>
+        <button type="button">Elsewhere</button>
+        {view({ modal: false })}
+      </>,
+    )
+    fireEvent.contextMenu(screen.getByText('Canvas'))
+    await act(async () => {})
+    const menu = screen.getByRole('menu')
+
+    act(() => screen.getByRole('button', { name: 'Elsewhere' }).focus())
+
+    await waitFor(() => expect(menu.style.pointerEvents).toBe('none'))
+  })
+
+  test('holds a closing submenu in the page without presses', async () => {
+    render(
+      <MotionContextMenu>
+        <ContextMenuTrigger>Canvas</ContextMenuTrigger>
+        <MotionContextMenuContent>
+          <MotionContextMenuSub>
+            <ContextMenuSubTrigger>Share</ContextMenuSubTrigger>
+            <MotionContextMenuSubContent data-testid="sub">
+              <ContextMenuItem>Mail</ContextMenuItem>
+            </MotionContextMenuSubContent>
+          </MotionContextMenuSub>
+        </MotionContextMenuContent>
+      </MotionContextMenu>,
+    )
+    fireEvent.contextMenu(screen.getByText('Canvas'))
+    await act(async () => {})
+    fireEvent.keyDown(screen.getByText('Share'), { key: 'ArrowRight' })
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
+    const sub = screen.getByTestId('sub')
+
+    fireEvent.keyDown(screen.getByText('Mail'), { key: 'ArrowLeft' })
+
+    await waitFor(() => expect(sub.style.pointerEvents).toBe('none'))
   })
 })

@@ -172,6 +172,12 @@ function View({ onShow, onSort }: { onShow: (show: boolean) => void; onSort: (so
             <MenubarRadioItem value="date">Date</MenubarRadioItem>
           </MenubarRadioGroup>
           <MenubarItem inset>Reset</MenubarItem>
+          <MenubarSub>
+            <MenubarSubTrigger inset>Share</MenubarSubTrigger>
+            <MenubarSubContent>
+              <MenubarItem>Link</MenubarItem>
+            </MenubarSubContent>
+          </MenubarSub>
         </MenubarContent>
       </MenubarMenu>
     </Menubar>
@@ -199,6 +205,7 @@ describe('registry-ui menubar items', () => {
     expect(screen.getByTestId('separator').getAttribute('role')).toBe('separator')
     expect(screen.getByTestId('separator').className.split(' ')).toContain('bg-muted')
     expect(screen.getByRole('menuitem', { name: 'Reset' }).className.split(' ')).toContain('ps-8')
+    expect(screen.getByRole('menuitem', { name: 'Share' }).className.split(' ')).toContain('ps-8')
 
     fireEvent.click(status)
     expect(onShow.mock.calls).toEqual([[false]])

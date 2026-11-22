@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
 import { afterAll, afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import { hydrateOnMac } from '../../_internal/__tests__/hydrate-on-mac'
@@ -169,6 +169,12 @@ function View({ onShow, onSort }: { onShow: (show: boolean) => void; onSort: (so
         <DropdownMenuItem inset variant="destructive">
           Delete view
         </DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger inset>Share</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <DropdownMenuItem>Link</DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
         <DropdownMenuArrow className="drop-shadow" />
       </DropdownMenuContent>
     </DropdownMenu>
@@ -211,6 +217,7 @@ describe('registry-ui DropdownMenu items', () => {
     const remove = screen.getByRole('menuitem', { name: 'Delete view' }).className.split(' ')
     expect(remove).toContain('ps-8')
     expect(remove).toContain('text-destructive')
+    expect(screen.getByRole('menuitem', { name: 'Share' }).className.split(' ')).toContain('ps-8')
 
     fireEvent.click(status)
     expect(onShow.mock.calls).toEqual([[false]])
@@ -268,5 +275,49 @@ describe('registry-ui DropdownMenuShortcut', () => {
     expect(errors).toEqual([])
     expect(container.querySelector('[data-slot="dropdown-menu-shortcut"]')?.textContent).toBe('Cmd+Shift+E')
     unmount()
+  })
+})
+
+describe('registry-ui MotionDropdownMenu closing', () => {
+  beforeAll(() => {
+    Object.assign(globalThis, {
+      ResizeObserver: class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    })
+  })
+  afterAll(() => {
+    Reflect.deleteProperty(globalThis, 'ResizeObserver')
+  })
+
+  test('draws nothing closed, and holds a menu and a submenu in the page, taking no presses, until each exit ends', async () => {
+    const view = (open: boolean) => (
+      <MotionDropdownMenu open={open}>
+        <MotionDropdownMenuContent>
+          <MotionDropdownMenuSub>
+            <DropdownMenuSubTrigger>More</DropdownMenuSubTrigger>
+            <MotionDropdownMenuSubContent data-testid="sub">
+              <DropdownMenuItem>Grape</DropdownMenuItem>
+            </MotionDropdownMenuSubContent>
+          </MotionDropdownMenuSub>
+        </MotionDropdownMenuContent>
+      </MotionDropdownMenu>
+    )
+    const { rerender } = render(view(false))
+    expect(screen.queryByRole('menu')).toBeNull()
+
+    rerender(view(true))
+    fireEvent.keyDown(screen.getByText('More'), { key: 'ArrowRight' })
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
+    const sub = screen.getByTestId('sub')
+    fireEvent.keyDown(screen.getByText('Grape'), { key: 'ArrowLeft' })
+    await waitFor(() => expect(sub.style.pointerEvents).toBe('none'))
+
+    rerender(view(false))
+    const menu = screen.getAllByRole('menu', { hidden: true })[0] as HTMLElement
+    await waitFor(() => expect(menu.style.pointerEvents).toBe('none'))
+    await waitFor(() => expect(screen.queryByText('More')).toBeNull(), { timeout: 3000 })
   })
 })

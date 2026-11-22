@@ -103,6 +103,28 @@ describe('registry-ui Checkbox', () => {
     expect(box().className).toContain('data-[checked="indeterminate"]:after:mask-[var(--svg-indeterminate)]')
   })
 
+  test.each([
+    [
+      'an unchecked indicator',
+      { indicator: glyph },
+      ['after:mask-[var(--svg-off)]', 'checked:after:mask-none', 'after:bg-muted-foreground'],
+    ],
+    [
+      'a checked indicator',
+      { checkedIndicator: glyph },
+      ['checked:after:mask-[var(--svg-on)]', 'checked:after:bg-current'],
+    ],
+    [
+      'both indicators',
+      { checkedIndicator: glyph, indicator: glyph },
+      ['after:mask-[var(--svg-off)]', 'checked:after:mask-[var(--svg-on)]'],
+    ],
+  ])('masks itself with %s', (_, indicators, classes) => {
+    render(<Checkbox {...indicators} />)
+
+    expect(box().className.split(/\s+/)).toEqual(expect.arrayContaining(classes))
+  })
+
   test('keeps its own bar for the mixed state without one', () => {
     render(<Checkbox />)
 

@@ -16,6 +16,17 @@ describe('registry-ui carousel', () => {
     expect(html).not.toContain('lucide-arrow-left')
   })
 
+  test('CarouselNext prefers a provided icon over the default arrow icon', () => {
+    const html = renderToStaticMarkup(
+      <Carousel>
+        <CarouselNext icon={<span data-icon="custom-next">N</span>} />
+      </Carousel>,
+    )
+
+    expect(html).toContain('data-icon="custom-next"')
+    expect(html).not.toContain('lucide-arrow-right')
+  })
+
   test('CarouselNext still renders the default arrow icon when no icon is provided', () => {
     const html = renderToStaticMarkup(
       <Carousel>

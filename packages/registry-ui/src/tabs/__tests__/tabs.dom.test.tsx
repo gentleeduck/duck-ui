@@ -304,6 +304,28 @@ describe('registry-ui Tabs parts', () => {
 describe('registry-ui MotionTabs parts', () => {
   const transform = (panel: string) => (screen.getByText(panel).parentElement as HTMLElement).style.transform
 
+  test('shakes a disabled tab on each click, settling between them', async () => {
+    render(<MotionDemo defaultValue="a" disabledBeta />)
+    const beta = tab('Beta')
+
+    fireEvent.click(beta)
+    await waitFor(() => expect(beta.style.transform).toMatch(/translateX\(-?[1-9]/))
+    await waitFor(() => expect(beta.style.transform).toMatch(/^(none|translateX\(0px\))$/), { timeout: 3000 })
+
+    fireEvent.click(beta)
+    await waitFor(() => expect(beta.style.transform).toMatch(/translateX\(-?[1-9]/))
+  })
+
+  test('a trigger outside a tab list renders without one to watch', () => {
+    render(
+      <MotionTabs defaultValue="a">
+        <MotionTabsTrigger value="a">Alone</MotionTabsTrigger>
+      </MotionTabs>,
+    )
+
+    expect(tab('Alone').getAttribute('aria-selected')).toBe('true')
+  })
+
   test('a later tab slides in from the end, an earlier one from the start, mirrored in RTL and for a controlled value', async () => {
     render(<MotionDemo defaultValue="a" />)
 

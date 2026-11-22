@@ -83,6 +83,35 @@ describe('registry-ui ChartTooltipContent', () => {
     expect(value?.textContent).toBe('0')
   })
 
+  test('names a row by its dataKey, then its own name, and by nothing without either', () => {
+    chart(
+      <ChartTooltipContent
+        active
+        hideLabel
+        payload={
+          [
+            { dataKey: 'mallard', value: 1, payload: {} },
+            { name: 'heron', value: 2, payload: {} },
+            { value: 3, payload: {} },
+          ] as Entry[]
+        }
+      />,
+    )
+
+    expect(rows()).toEqual(['Mallards1', 'heron2', '3'])
+  })
+
+  test("takes the label from the first series' name without a dataKey, and shows none without either", () => {
+    const { unmount } = chart(
+      <ChartTooltipContent active payload={[{ name: 'teal', value: 2, payload: {} }] as Entry[]} />,
+    )
+    expect(document.querySelector('[data-slot="tooltip-label"]')?.textContent).toBe('Teals')
+    unmount()
+
+    chart(<ChartTooltipContent active payload={[{ value: 3, payload: {} }] as Entry[]} />)
+    expect(document.querySelector('[data-slot="tooltip-label"]')).toBeNull()
+  })
+
   test('reads the label from the config, by the label or by labelKey', () => {
     const { unmount } = chart(<ChartTooltipContent active label="january" payload={[mallards] as Entry[]} />)
     expect(screen.getByText('January, all ponds')).toBeTruthy()
@@ -193,6 +222,12 @@ describe('registry-ui ChartLegendContent', () => {
     expect(screen.queryByTestId('duck-icon')).toBeNull()
     expect(document.querySelector('[data-slot="legend-item"]')?.textContent).toBe('Teals')
     expect(document.querySelector('[data-slot="legend-content"]')?.className.split(' ')).toContain('pb-3')
+  })
+
+  test('names an item that has no dataKey by its value', () => {
+    chart(<ChartLegendContent payload={[{ color: '#2a9d8f', value: 'mallard', type: 'square' }] as LegendPayload[]} />)
+
+    expect(document.querySelector('[data-slot="legend-item"]')?.textContent).toBe('Mallards')
   })
 
   test('shows nothing without a series', () => {

@@ -1,6 +1,6 @@
 import * as DialogPrimitive from '@gentleduck/primitives/dialog'
 import { DirectionProvider } from '@gentleduck/primitives/direction'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, test, vi } from 'vitest'
@@ -322,5 +322,40 @@ describe('registry-ui MotionSheet', () => {
     )
 
     expect(document.querySelector('[role="dialog"]')?.getAttribute('data-state')).toBe('closed')
+  })
+})
+
+describe('registry-ui MotionSheet edges', () => {
+  test.each([null, 'unset'] as const)(
+    'slides in from the right given side %s, which skips the variant',
+    async (side) => {
+      render(
+        <MotionSheet defaultOpen>
+          <MotionSheetContent side={side} />
+        </MotionSheet>,
+      )
+      await act(async () => {})
+
+      expect(offscreen()).toBe('X1')
+    },
+  )
+
+  test('draws nothing closed, and holds its panel in the page, taking no presses, until the exit ends', async () => {
+    const view = (open: boolean) => (
+      <MotionSheet open={open}>
+        <MotionSheetContent aria-describedby={undefined}>
+          <SheetTitle>Pond</SheetTitle>
+        </MotionSheetContent>
+      </MotionSheet>
+    )
+    const { rerender } = render(view(false))
+    expect(screen.queryByText('Pond')).toBeNull()
+
+    rerender(view(true))
+    rerender(view(false))
+
+    const panel = screen.getByText('Pond').closest('[role="dialog"]') as HTMLElement
+    await waitFor(() => expect(panel.style.pointerEvents).toBe('none'))
+    await waitFor(() => expect(screen.queryByText('Pond')).toBeNull(), { timeout: 3000 })
   })
 })

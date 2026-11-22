@@ -29,7 +29,7 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from '../sidebar'
-import { getPhysicalSidebarSide } from '../sidebar.constants'
+import { getPhysicalSidebarSide, persistSidebarOpen } from '../sidebar.constants'
 import { SidebarContext, useSidebar } from '../sidebar.hooks'
 
 const sidebarContextValue = {
@@ -151,6 +151,27 @@ describe('registry-ui SidebarProvider', () => {
 
     expect(reached).toBe(false)
     expect(part('sidebar')?.getAttribute('data-state')).toBe('collapsed')
+  })
+
+  test('setOpen takes a value too', () => {
+    function Close() {
+      const { setOpen } = useSidebar()
+      return (
+        <button onClick={() => setOpen(false)} type="button">
+          Close
+        </button>
+      )
+    }
+    render(
+      <SidebarProvider>
+        <Close />
+        <State />
+      </SidebarProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+
+    expect(screen.getByLabelText('state').textContent).toBe('collapsed ltr false false')
   })
 
   test('setOpen takes an updater, as a state setter does', () => {
@@ -566,5 +587,29 @@ describe('registry-ui sidebar parts', () => {
     expect(active.getAttribute('data-active')).toBe('true')
     expect(small.getAttribute('data-size')).toBe('sm')
     expect(small.hasAttribute('data-active')).toBe(false)
+  })
+})
+
+describe('persistSidebarOpen', () => {
+  test('marks the cookie Secure on an https page', () => {
+    const cookie = vi.spyOn(document, 'cookie', 'set')
+    vi.stubGlobal('location', { protocol: 'https:' })
+    try {
+      persistSidebarOpen(true)
+
+      expect(cookie.mock.calls[0]?.[0]).toMatch(/^sidebar_state=true; .*SameSite=Lax; Secure$/)
+    } finally {
+      vi.unstubAllGlobals()
+      cookie.mockRestore()
+    }
+  })
+
+  test('writes nothing where there is no document, as on the server', () => {
+    vi.stubGlobal('document', undefined)
+    try {
+      expect(() => persistSidebarOpen(true)).not.toThrow()
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })

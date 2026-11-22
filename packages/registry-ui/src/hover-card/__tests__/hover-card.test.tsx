@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { HoverCard, HoverCardArrow, HoverCardContent, HoverCardTrigger } from '../hover-card'
 import { MotionHoverCard, MotionHoverCardContent } from '../motion-hover-card'
@@ -111,5 +111,24 @@ describe('registry-ui HoverCardArrow', () => {
       null,
       'var(--hover-card-border-color)',
     ])
+  })
+})
+
+describe('registry-ui MotionHoverCard closing', () => {
+  test('draws nothing closed, and holds its content in the page, taking no presses, until the exit ends', async () => {
+    const view = (open: boolean) => (
+      <MotionHoverCard open={open}>
+        <MotionHoverCardContent>Ducks only</MotionHoverCardContent>
+      </MotionHoverCard>
+    )
+    const { rerender } = render(view(false))
+    expect(screen.queryByText('Ducks only')).toBeNull()
+
+    rerender(view(true))
+    rerender(view(false))
+
+    const content = screen.getByText('Ducks only')
+    await waitFor(() => expect(content.style.pointerEvents).toBe('none'))
+    await waitFor(() => expect(screen.queryByText('Ducks only')).toBeNull(), { timeout: 3000 })
   })
 })

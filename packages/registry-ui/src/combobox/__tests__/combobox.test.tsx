@@ -227,4 +227,27 @@ describe.each([
     expect(onSelect).toHaveBeenCalledWith('mill')
     expect(screen.getByRole('option', { name: 'Lake' }).getAttribute('data-value')).toBe('lake')
   })
+
+  test('names a picked value no item holds by the value itself', () => {
+    render(
+      <Root defaultValue="pond-9" items={ponds}>
+        {(items) => items.map((pond) => <Item item={pond} key={pond.value} />)}
+      </Root>,
+    )
+
+    expect(trigger().textContent).toBe('pond-9')
+  })
+
+  test('tells assistive technology an item partly picked is mixed', async () => {
+    const { Command, CommandList } = await import('../../command')
+    render(
+      <Command>
+        <CommandList>
+          <Item checked="indeterminate" item={ponds[0]} />
+        </CommandList>
+      </Command>,
+    )
+
+    expect(screen.getByRole('option', { name: 'Mill pond' }).getAttribute('aria-checked')).toBe('mixed')
+  })
 })

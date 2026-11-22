@@ -110,6 +110,16 @@ describe('registry-ui Select highlight', () => {
     expect(highlight()?.style.transform).toBe('translate(4px, 68px)')
   })
 
+  test('hides once focus leaves the items for nothing, and ignores focus on something in the list that is no item', async () => {
+    await renderOpen()
+
+    act(() => option('Apple').blur())
+    expect(highlight()?.hasAttribute('data-visible')).toBe(false)
+
+    fireEvent.focusIn(highlight() as HTMLElement)
+    expect(highlight()?.hasAttribute('data-visible')).toBe(false)
+  })
+
   test('hides once focus leaves the items, and appears in place again after', async () => {
     await renderOpen()
 

@@ -174,6 +174,26 @@ describe('registry-ui JsonTextareaField', () => {
     expect(committed()).toBe('{"theme":"dark"}')
   })
 
+  test('read only: the sheet saves nothing on its key either', () => {
+    render(<Harness isEditable={false} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Full' }))
+    const sheetEditor = within(screen.getByRole('dialog', { name: 'Edit JSON' })).getByRole('textbox', {
+      name: 'Settings',
+    })
+    type(sheetEditor, '{"theme":"light"}')
+    save(sheetEditor)
+
+    expect(screen.getByRole('dialog', { name: 'Edit JSON' })).toBeTruthy()
+    expect(committed()).toBe('{"theme":"dark"}')
+  })
+
+  test('shows a description under the label', () => {
+    render(<Harness description="Stored per account." />)
+
+    expect(screen.getByText('Stored per account.').getAttribute('data-slot')).toBe('field-description')
+  })
+
   test("a form's own error marks the editor invalid and describes it", () => {
     render(<Harness formError="Settings are required." />)
 

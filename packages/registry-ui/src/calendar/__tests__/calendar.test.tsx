@@ -203,4 +203,59 @@ describe.each([
     fireEvent.pointerDown(document.body)
     expect(screen.getByRole('button', { name: 'Mar', expanded: false })).toBeTruthy()
   })
+
+  const cellOf = (container: HTMLElement, day: number) =>
+    screen.getByRole('button', { name: new RegExp(`March ${day}, 2026`) }).closest('[role="gridcell"]') as HTMLElement
+
+  test('draws a day as renderDay returns it, given the number it would show', () => {
+    render(<Component defaultMonth={march2026} renderDay={(_, number) => <span>{number}th</span>} />)
+
+    expect(screen.getByRole('button', { name: /March 12, 2026/ }).textContent).toBe('12th')
+  })
+
+  test('draws each weekday as renderWeekday returns it', () => {
+    const html = draw({ renderWeekday: (day, index) => `${index}:${day.slice(0, 2)}` })
+
+    expect(weekdays(html)[0]).toBe('0:Su')
+  })
+
+  test('keeps the cells of hidden neighbouring days in the grid, invisible', () => {
+    const html = draw({ showOutsideDays: false })
+
+    expect(html).toMatch(/role="gridcell"[^>]*class="[^"]* invisible/)
+  })
+
+  test('rounds a range where it breaks across week rows, and marks an invalid range', () => {
+    const range = { from: new Date(2026, 2, 3), to: new Date(2026, 2, 18) }
+    const { container } = render(
+      <Component defaultMonth={march2026} {...({ mode: 'range', selected: range, invalid: true } as ICalendarProps)} />,
+    )
+
+    const classes = (day: number) => cellOf(container, day).className.split(' ')
+    expect(classes(8)).toContain('rounded-s-md')
+    expect(classes(14)).toContain('rounded-e-md')
+    expect(classes(10)).toContain('bg-destructive/15')
+  })
+
+  test.each([{ showDropdowns: false }, { showDropdowns: true }, { numberOfMonths: 2 }])(
+    'turns its chevrons right to left, given %o',
+    (props) => {
+      const html = renderToStaticMarkup(<Component defaultMonth={march2026} dir="rtl" {...props} />)
+
+      expect(html.match(/lucide-chevron-(left|right)[^"]*rotate-180/g)).toHaveLength(2)
+    },
+  )
+
+  test('stays in keyboard mode over several keys, and out of it over several presses', () => {
+    const { container } = render(<Component defaultMonth={march2026} selected={new Date(2026, 2, 12)} />)
+    const calendar = container.querySelector<HTMLElement>('[data-slot="calendar"]') as HTMLElement
+
+    fireEvent.keyDown(calendar, { key: 'Shift' })
+    fireEvent.keyDown(calendar, { key: 'Shift' })
+    expect(focusedCells(container)).toHaveLength(1)
+
+    fireEvent.pointerDown(calendar)
+    fireEvent.pointerDown(calendar)
+    expect(focusedCells(container)).toHaveLength(0)
+  })
 })

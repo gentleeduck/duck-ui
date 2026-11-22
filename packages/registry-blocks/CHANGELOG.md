@@ -1,5 +1,12 @@
 # @gentleduck/registry-blocks
 
+## 0.1.10
+
+### Patch Changes
+
+- Updated dependencies [3390968]
+  - @gentleduck/hooks@1.0.1
+
 ## 0.1.9
 
 ### Patch Changes

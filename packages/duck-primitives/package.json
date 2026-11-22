@@ -125,10 +125,10 @@
   },
   "types": "./dist/index.d.ts",
   "type": "module",
-  "version": "0.5.1",
+  "version": "1.0.0",
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.7",
-    "@gentleduck/calendar": "^0.5.0",
+    "@gentleduck/calendar": "^1.0.0",
     "aria-hidden": "^1.2.6",
     "react-remove-scroll": "^2.7.2"
   }

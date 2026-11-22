@@ -1,5 +1,11 @@
 # @gentleduck/registry-build
 
+## 1.0.3
+
+### Patch Changes
+
+- 3390968: A build stops on two registry items of one name and says which two types share it. Both wrote the same JSON file and two index constants of one name, which Turbopack refuses, so the docs build failed further on.
+
 ## 1.0.2
 
 ### Patch Changes

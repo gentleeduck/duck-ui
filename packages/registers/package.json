@@ -36,7 +36,7 @@
     "test:watch": "vitest"
   },
   "type": "module",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Component registry system for Duck UI.",
   "keywords": [
     "gentleduck",

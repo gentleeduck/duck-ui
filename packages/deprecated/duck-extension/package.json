@@ -88,5 +88,5 @@
     "check-types": "tsc -p tsconfig.json --noEmit --pretty false --skipLibCheck"
   },
   "type": "module",
-  "version": "1.0.13"
+  "version": "1.0.14"
 }

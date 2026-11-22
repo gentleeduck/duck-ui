@@ -1,5 +1,14 @@
 # @gentleduck/registry-ui
 
+## 0.2.20
+
+### Patch Changes
+
+- Updated dependencies [3390968]
+- Updated dependencies [3390968]
+  - @gentleduck/calendar@1.0.0
+  - @gentleduck/primitives@1.0.0
+
 ## 0.2.19
 
 ### Patch Changes
